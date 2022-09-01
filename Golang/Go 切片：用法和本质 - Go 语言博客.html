@@ -1,0 +1,611 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8"/><meta name="exporter-version" content="Evernote Mac 9.4.17 (463232)"/><meta name="created" content="2022-06-16 16:15:35 +0000"/><meta name="source" content="web.clip7"/><meta name="source-application" content="webclipper.evernote"/><meta name="source-url" content="https://blog.go-zh.org/go-slices-usage-and-internals"/><meta name="updated" content="2022-06-16 16:15:35 +0000"/><title>Go 切片：用法和本质 - Go 语言博客</title></head><body>
+  <div style="--en-clipped-content:article; --en-clipped-source-url:https://blog.go-zh.org/go-slices-usage-and-internals; --en-clipped-source-title:Go 切片：用法和本质 - Go 语言博客;">
+<div><br/></div><div style="min-height: 6220px; font-size: 16px; display: block; min-width: 100%; position: relative;"> <div><div style="font-family:Helvetica, Arial, sans-serif;font-size:16px;color:rgb(34, 34, 34);text-align:center;"><div style="outline:0px;"><div style="text-align:left;"><div><div>
+		<h3 style="padding:0px;color:rgb(55, 94, 171);font-weight:bold;font-size:20px;margin:20px 0px;"><a href="https://blog.go-zh.org/go-slices-usage-and-internals" style="color:rgb(55, 94, 171);text-decoration:none;">Go 切片：用法和本质</a></h3>
+		<p style="margin:20px;color:rgb(153, 153, 153);">2011/01/05</p>
+		
+
+  
+  
+    
+      
+  <h4 style="padding:0px;color:rgb(55, 94, 171);font-weight:bold;margin:20px 5px;font-size:16px;">引言</h4>
+  
+  
+  <p style="margin:20px;">
+    Go的切片类型为处理同类型数据序列提供一个方便而高效的方式。
+
+
+    切片有些类似于其他语言中的数组，但是有一些不同寻常的特性。
+
+
+    本文将深入切片的本质，并讲解它的用法。
+  </p>
+  
+
+
+    
+      
+  <h4 style="padding:0px;color:rgb(55, 94, 171);font-weight:bold;margin:20px 5px;font-size:16px;">数组</h4>
+  
+  
+  <p style="margin:20px;">
+    Go的切片是在数组之上的抽象数据类型，因此在了解切片之前必须要先理解数组。
+  </p>
+  
+
+  
+  <p style="margin:20px;">
+    数组类型定义了长度和元素类型。例如， <code style="font-family:Menlo, monospace;font-size:14px;">[4]int</code> 类型表示一个四个整数的数组。
+
+
+    数组的长度是固定的，长度是数组类型的一部分（ <code style="font-family:Menlo, monospace;font-size:14px;">[4]int</code> 和 <code style="font-family:Menlo, monospace;font-size:14px;">[5]int</code> 是完全不同的类型）。
+
+
+    数组可以以常规的索引方式访问，表达式 <code style="font-family:Menlo, monospace;font-size:14px;">s[n]</code> 访问数组的第 n 个元素。
+  </p>
+  
+
+  
+  <div style="width:auto;margin:20px;padding:10px;border-radius:5px;background:rgb(233, 233, 233);"><pre style="font-family:Menlo, monospace;font-size:14px;line-height:18px;border-radius:5px;border:none;outline:transparent solid 0px;overflow:auto;margin:0px;background:none;padding:0px;">var a [4]int
+a[0] = 1
+i := a[0]
+// i == 1</pre></div>
+  
+
+  
+  <p style="margin:20px;">
+    数组不需要显式的初始化；数组的零值是可以直接使用的，数组元素会自动初始化为其对应类型的零值：
+  </p>
+  
+
+  
+  <div style="width:auto;margin:20px;padding:10px;border-radius:5px;background:rgb(233, 233, 233);"><pre style="font-family:Menlo, monospace;font-size:14px;line-height:18px;border-radius:5px;border:none;outline:transparent solid 0px;overflow:auto;margin:0px;background:none;padding:0px;">// a[2] == 0, int 类型的零值</pre></div>
+  
+
+  
+  <p style="margin:20px;">
+    类型 <code style="font-family:Menlo, monospace;font-size:14px;">[4]int</code> 对应内存中四个连续的整数：
+  </p>
+  
+
+<div style="margin:20px;">
+  <img src="Go%20%E5%88%87%E7%89%87%EF%BC%9A%E7%94%A8%E6%B3%95%E5%92%8C%E6%9C%AC%E8%B4%A8%20-%20Go%20%E8%AF%AD%E8%A8%80%E5%8D%9A%E5%AE%A2.resources/go-slices-usage-and-internals_slice-array.png" height="68" width="517"/>
+</div>
+
+  
+  <p style="margin:20px;">
+    Go的数组是值语义。一个数组变量表示整个数组，它不是指向第一个元素的指针（不像 C 语言的数组）。
+
+
+    当一个数组变量被赋值或者被传递的时候，实际上会复制整个数组。
+
+
+    （为了避免复制数组，你可以传递一个指向数组的指针，但是数组指针并不是数组。）
+
+
+    可以将数组看作一个特殊的struct，结构的字段名对应数组的索引，同时成员的数目固定。
+  </p>
+  
+
+  
+  <p style="margin:20px;">
+    数组的字面值像这样：
+  </p>
+  
+
+  
+  <div style="width:auto;margin:20px;padding:10px;border-radius:5px;background:rgb(233, 233, 233);"><pre style="font-family:Menlo, monospace;font-size:14px;line-height:18px;border-radius:5px;border:none;outline:transparent solid 0px;overflow:auto;margin:0px;background:none;padding:0px;">b := [2]string{"Penn", "Teller"}</pre></div>
+  
+
+  
+  <p style="margin:20px;">
+    当然，也可以让编译器统计数组字面值中元素的数目：
+  </p>
+  
+
+  
+  <div style="width:auto;margin:20px;padding:10px;border-radius:5px;background:rgb(233, 233, 233);"><pre style="font-family:Menlo, monospace;font-size:14px;line-height:18px;border-radius:5px;border:none;outline:transparent solid 0px;overflow:auto;margin:0px;background:none;padding:0px;">b := [...]string{"Penn", "Teller"}</pre></div>
+  
+
+  
+  <p style="margin:20px;">
+    这两种写法， <code style="font-family:Menlo, monospace;font-size:14px;">b</code> 都是对应 <code style="font-family:Menlo, monospace;font-size:14px;">[2]string</code> 类型。
+  </p>
+  
+
+
+    
+      
+  <h4 style="padding:0px;color:rgb(55, 94, 171);font-weight:bold;margin:20px 5px;font-size:16px;">切片</h4>
+  
+  
+  <p style="margin:20px;">
+    数组虽然有适用它们的地方，但是数组不够灵活，因此在Go代码中数组使用的并不多。
+
+
+    但是，切片则使用得相当广泛。切片基于数组构建，但是提供更强的功能和便利。
+  </p>
+  
+
+  
+  <p style="margin:20px;">
+    切片类型的写法是 <code style="font-family:Menlo, monospace;font-size:14px;">[]T</code> ， <code style="font-family:Menlo, monospace;font-size:14px;">T</code> 是切片元素的类型。和数组不同的是，切片类型并没有给定固定的长度。
+  </p>
+  
+
+  
+  <p style="margin:20px;">
+    切片的字面值和数组字面值很像，不过切片没有指定元素个数：
+  </p>
+  
+
+  
+  <div style="width:auto;margin:20px;padding:10px;border-radius:5px;background:rgb(233, 233, 233);"><pre style="font-family:Menlo, monospace;font-size:14px;line-height:18px;border-radius:5px;border:none;outline:transparent solid 0px;overflow:auto;margin:0px;background:none;padding:0px;">letters := []string{"a", "b", "c", "d"}</pre></div>
+  
+
+  
+  <p style="margin:20px;">
+    切片可以使用内置函数 <code style="font-family:Menlo, monospace;font-size:14px;">make</code> 创建，函数签名为：
+  </p>
+  
+
+  
+  <div style="width:auto;margin:20px;padding:10px;border-radius:5px;background:rgb(233, 233, 233);"><pre style="font-family:Menlo, monospace;font-size:14px;line-height:18px;border-radius:5px;border:none;outline:transparent solid 0px;overflow:auto;margin:0px;background:none;padding:0px;">func make([]T, len, cap) []T</pre></div>
+  
+
+  
+  <p style="margin:20px;">
+    其中T代表被创建的切片元素的类型。函数 <code style="font-family:Menlo, monospace;font-size:14px;">make</code> 接受一个类型、一个长度和一个可选的容量参数。
+
+
+    调用 <code style="font-family:Menlo, monospace;font-size:14px;">make</code> 时，内部会分配一个数组，然后返回数组对应的切片。
+  </p>
+  
+
+  
+  <div style="width:auto;margin:20px;padding:10px;border-radius:5px;background:rgb(233, 233, 233);"><pre style="font-family:Menlo, monospace;font-size:14px;line-height:18px;border-radius:5px;border:none;outline:transparent solid 0px;overflow:auto;margin:0px;background:none;padding:0px;">var s []byte
+s = make([]byte, 5, 5)
+// s == []byte{0, 0, 0, 0, 0}</pre></div>
+  
+
+  
+  <p style="margin:20px;">
+    当容量参数被忽略时，它默认为指定的长度。下面是简洁的写法：
+  </p>
+  
+
+  
+  <div style="width:auto;margin:20px;padding:10px;border-radius:5px;background:rgb(233, 233, 233);"><pre style="font-family:Menlo, monospace;font-size:14px;line-height:18px;border-radius:5px;border:none;outline:transparent solid 0px;overflow:auto;margin:0px;background:none;padding:0px;">s := make([]byte, 5)</pre></div>
+  
+
+  
+  <p style="margin:20px;">
+    可以使用内置函数 <code style="font-family:Menlo, monospace;font-size:14px;">len</code> 和 <code style="font-family:Menlo, monospace;font-size:14px;">cap</code> 获取切片的长度和容量信息。
+  </p>
+  
+
+  
+  <div style="width:auto;margin:20px;padding:10px;border-radius:5px;background:rgb(233, 233, 233);"><pre style="font-family:Menlo, monospace;font-size:14px;line-height:18px;border-radius:5px;border:none;outline:transparent solid 0px;overflow:auto;margin:0px;background:none;padding:0px;">len(s) == 5
+cap(s) == 5</pre></div>
+  
+
+  
+  <p style="margin:20px;">
+    接下来的两个小节将讨论长度和容量之间的关系。
+  </p>
+  
+
+  
+  <p style="margin:20px;">
+    切片的零值为 <code style="font-family:Menlo, monospace;font-size:14px;">nil</code> 。对于切片的零值， <code style="font-family:Menlo, monospace;font-size:14px;">len</code> 和 <code style="font-family:Menlo, monospace;font-size:14px;">cap</code> 都将返回0。
+  </p>
+  
+
+  
+  <p style="margin:20px;">
+    切片也可以基于现有的切片或数组生成。切分的范围由两个由冒号分割的索引对应的半开区间指定。
+
+
+    例如，表达式 <code style="font-family:Menlo, monospace;font-size:14px;">b[1:4]</code> 创建的切片引用数组 <code style="font-family:Menlo, monospace;font-size:14px;">b</code> 的第1到3个元素空间（对应切片的索引为0到2）。
+  </p>
+  
+
+  
+  <div style="width:auto;margin:20px;padding:10px;border-radius:5px;background:rgb(233, 233, 233);"><pre style="font-family:Menlo, monospace;font-size:14px;line-height:18px;border-radius:5px;border:none;outline:transparent solid 0px;overflow:auto;margin:0px;background:none;padding:0px;">b := []byte{'g', 'o', 'l', 'a', 'n', 'g'}
+// b[1:4] == []byte{'o', 'l', 'a'}, sharing the same storage as b</pre></div>
+  
+
+  
+  <p style="margin:20px;">
+    切片的开始和结束的索引都是可选的；它们分别默认为零和数组的长度。
+  </p>
+  
+
+  
+  <div style="width:auto;margin:20px;padding:10px;border-radius:5px;background:rgb(233, 233, 233);"><pre style="font-family:Menlo, monospace;font-size:14px;line-height:18px;border-radius:5px;border:none;outline:transparent solid 0px;overflow:auto;margin:0px;background:none;padding:0px;">// b[:2] == []byte{'g', 'o'}
+// b[2:] == []byte{'l', 'a', 'n', 'g'}
+// b[:] == b</pre></div>
+  
+
+  
+  <p style="margin:20px;">
+    下面语法也是基于数组创建一个切片：
+  </p>
+  
+
+  
+  <div style="width:auto;margin:20px;padding:10px;border-radius:5px;background:rgb(233, 233, 233);"><pre style="font-family:Menlo, monospace;font-size:14px;line-height:18px;border-radius:5px;border:none;outline:transparent solid 0px;overflow:auto;margin:0px;background:none;padding:0px;">x := [3]string{"Лайка", "Белка", "Стрелка"}
+s := x[:] // a slice referencing the storage of x</pre></div>
+  
+
+
+    
+      
+  <h4 style="padding:0px;color:rgb(55, 94, 171);font-weight:bold;margin:20px 5px;font-size:16px;">切片的内幕</h4>
+  
+  
+  <p style="margin:20px;">
+    一个切片是一个数组片段的描述。它包含了指向数组的指针，片段的长度，
+
+
+    和容量（片段的最大长度）。
+  </p>
+  
+
+<div style="margin:20px;">
+  <img src="Go%20%E5%88%87%E7%89%87%EF%BC%9A%E7%94%A8%E6%B3%95%E5%92%8C%E6%9C%AC%E8%B4%A8%20-%20Go%20%E8%AF%AD%E8%A8%80%E5%8D%9A%E5%AE%A2.resources/go-slices-usage-and-internals_slice-struct.png" height="198" width="517"/>
+</div>
+
+  
+  <p style="margin:20px;">
+    前面使用 <code style="font-family:Menlo, monospace;font-size:14px;">make([]byte, 5)</code> 创建的切片变量 <code style="font-family:Menlo, monospace;font-size:14px;">s</code> 的结构如下：
+  </p>
+  
+
+<div style="margin:20px;">
+  <img src="Go%20%E5%88%87%E7%89%87%EF%BC%9A%E7%94%A8%E6%B3%95%E5%92%8C%E6%9C%AC%E8%B4%A8%20-%20Go%20%E8%AF%AD%E8%A8%80%E5%8D%9A%E5%AE%A2.resources/go-slices-usage-and-internals_slice-1.png" height="193" width="517"/>
+</div>
+
+  
+  <p style="margin:20px;">
+    长度是切片引用的元素数目。容量是底层数组的元素数目（从切片指针开始）。
+
+
+    关于长度和容量和区域将在下一个例子说明。
+  </p>
+  
+
+  
+  <p style="margin:20px;">
+    我们继续对 <code style="font-family:Menlo, monospace;font-size:14px;">s</code> 进行切片，观察切片的数据结构和它引用的底层数组：
+  </p>
+  
+
+  
+  <div style="width:auto;margin:20px;padding:10px;border-radius:5px;background:rgb(233, 233, 233);"><pre style="font-family:Menlo, monospace;font-size:14px;line-height:18px;border-radius:5px;border:none;outline:transparent solid 0px;overflow:auto;margin:0px;background:none;padding:0px;">s = s[2:4]</pre></div>
+  
+
+<div style="margin:20px;">
+  <img src="Go%20%E5%88%87%E7%89%87%EF%BC%9A%E7%94%A8%E6%B3%95%E5%92%8C%E6%9C%AC%E8%B4%A8%20-%20Go%20%E8%AF%AD%E8%A8%80%E5%8D%9A%E5%AE%A2.resources/go-slices-usage-and-internals_slice-2.png" height="192" width="517"/>
+</div>
+
+  
+  <p style="margin:20px;">
+    切片操作并不复制切片指向的元素。它创建一个新的切片并复用原来切片的底层数组。
+
+
+    这使得切片操作和数组索引一样高效。因此，通过一个新切片修改元素会影响到原始切片的对应元素。
+  </p>
+  
+
+  
+  <div style="width:auto;margin:20px;padding:10px;border-radius:5px;background:rgb(233, 233, 233);"><pre style="font-family:Menlo, monospace;font-size:14px;line-height:18px;border-radius:5px;border:none;outline:transparent solid 0px;overflow:auto;margin:0px;background:none;padding:0px;">d := []byte{'r', 'o', 'a', 'd'}
+e := d[2:]
+// e == []byte{'a', 'd'}
+e[1] = 'm'
+// e == []byte{'a', 'm'}
+// d == []byte{'r', 'o', 'a', 'm'}</pre></div>
+  
+
+  
+  <p style="margin:20px;">
+    前面创建的切片 <code style="font-family:Menlo, monospace;font-size:14px;">s</code> 长度小于它的容量。我们可以增长切片的长度为它的容量：
+  </p>
+  
+
+  
+  <div style="width:auto;margin:20px;padding:10px;border-radius:5px;background:rgb(233, 233, 233);"><pre style="font-family:Menlo, monospace;font-size:14px;line-height:18px;border-radius:5px;border:none;outline:transparent solid 0px;overflow:auto;margin:0px;background:none;padding:0px;">s = s[:cap(s)]</pre></div>
+  
+
+<div style="margin:20px;">
+  <img src="Go%20%E5%88%87%E7%89%87%EF%BC%9A%E7%94%A8%E6%B3%95%E5%92%8C%E6%9C%AC%E8%B4%A8%20-%20Go%20%E8%AF%AD%E8%A8%80%E5%8D%9A%E5%AE%A2.resources/go-slices-usage-and-internals_slice-3.png" height="191" width="517"/>
+</div>
+
+  
+  <p style="margin:20px;">
+    切片增长不能超出其容量。增长超出切片容量将会导致运行时异常，就像切片或数组的索引超
+
+
+    出范围引起异常一样。同样，不能使用小于零的索引去访问切片之前的元素。
+  </p>
+  
+
+
+    
+      
+  <h4 style="padding:0px;color:rgb(55, 94, 171);font-weight:bold;margin:20px 5px;font-size:16px;">切片的生长（copy and append 函数）</h4>
+  
+  
+  <p style="margin:20px;">
+    要增加切片的容量必须创建一个新的、更大容量的切片，然后将原有切片的内容复制到新的切片。
+
+
+    整个技术是一些支持动态数组语言的常见实现。下面的例子将切片 <code style="font-family:Menlo, monospace;font-size:14px;">s</code> 容量翻倍，先创建一个2倍
+
+
+    容量的新切片 <code style="font-family:Menlo, monospace;font-size:14px;">t</code> ，复制 <code style="font-family:Menlo, monospace;font-size:14px;">s</code> 的元素到 <code style="font-family:Menlo, monospace;font-size:14px;">t</code> ，然后将 <code style="font-family:Menlo, monospace;font-size:14px;">t</code> 赋值给 <code style="font-family:Menlo, monospace;font-size:14px;">s</code> ：
+  </p>
+  
+
+  
+  <div style="width:auto;margin:20px;padding:10px;border-radius:5px;background:rgb(233, 233, 233);"><pre style="font-family:Menlo, monospace;font-size:14px;line-height:18px;border-radius:5px;border:none;outline:transparent solid 0px;overflow:auto;margin:0px;background:none;padding:0px;">t := make([]byte, len(s), (cap(s)+1)*2) // +1 in case cap(s) == 0
+for i := range s {
+        t[i] = s[i]
+}
+s = t</pre></div>
+  
+
+  
+  <p style="margin:20px;">
+    循环中复制的操作可以由 copy 内置函数替代。copy 函数将源切片的元素复制到目的切片。
+
+
+    它返回复制元素的数目。
+  </p>
+  
+
+  
+  <div style="width:auto;margin:20px;padding:10px;border-radius:5px;background:rgb(233, 233, 233);"><pre style="font-family:Menlo, monospace;font-size:14px;line-height:18px;border-radius:5px;border:none;outline:transparent solid 0px;overflow:auto;margin:0px;background:none;padding:0px;">func copy(dst, src []T) int</pre></div>
+  
+
+  
+  <p style="margin:20px;">
+    <code style="font-family:Menlo, monospace;font-size:14px;">copy</code> 函数支持不同长度的切片之间的复制（它只复制较短切片的长度个元素）。
+
+
+    此外， <code style="font-family:Menlo, monospace;font-size:14px;">copy</code> 函数可以正确处理源和目的切片有重叠的情况。
+  </p>
+  
+
+  
+  <p style="margin:20px;">
+    使用 <code style="font-family:Menlo, monospace;font-size:14px;">copy</code> 函数，我们可以简化上面的代码片段：
+  </p>
+  
+
+  
+  <div style="width:auto;margin:20px;padding:10px;border-radius:5px;background:rgb(233, 233, 233);"><pre style="font-family:Menlo, monospace;font-size:14px;line-height:18px;border-radius:5px;border:none;outline:transparent solid 0px;overflow:auto;margin:0px;background:none;padding:0px;">t := make([]byte, len(s), (cap(s)+1)*2)
+copy(t, s)
+s = t</pre></div>
+  
+
+  
+  <p style="margin:20px;">
+    一个常见的操作是将数据追加到切片的尾部。下面的函数将元素追加到切片尾部，
+
+
+    必要的话会增加切片的容量，最后返回更新的切片：
+  </p>
+  
+
+  
+  <div style="width:auto;margin:20px;padding:10px;border-radius:5px;background:rgb(233, 233, 233);"><pre style="font-family:Menlo, monospace;font-size:14px;line-height:18px;border-radius:5px;border:none;outline:transparent solid 0px;overflow:auto;margin:0px;background:none;padding:0px;">func AppendByte(slice []byte, data ...byte) []byte {
+    m := len(slice)
+    n := m + len(data)
+    if n &gt; cap(slice) { // if necessary, reallocate
+        // allocate double what's needed, for future growth.
+        newSlice := make([]byte, (n+1)*2)
+        copy(newSlice, slice)
+        slice = newSlice
+    }
+    slice = slice[0:n]
+    copy(slice[m:n], data)
+    return slice
+}</pre></div>
+  
+
+  
+  <p style="margin:20px;">
+    下面是 <code style="font-family:Menlo, monospace;font-size:14px;">AppendByte</code> 的一种用法：
+  </p>
+  
+
+  
+  <div style="width:auto;margin:20px;padding:10px;border-radius:5px;background:rgb(233, 233, 233);"><pre style="font-family:Menlo, monospace;font-size:14px;line-height:18px;border-radius:5px;border:none;outline:transparent solid 0px;overflow:auto;margin:0px;background:none;padding:0px;">p := []byte{2, 3, 5}
+p = AppendByte(p, 7, 11, 13)
+// p == []byte{2, 3, 5, 7, 11, 13}</pre></div>
+  
+
+  
+  <p style="margin:20px;">
+    类似 <code style="font-family:Menlo, monospace;font-size:14px;">AppendByte</code> 的函数比较实用，因为它提供了切片容量增长的完全控制。
+
+
+    根据程序的特点，可能希望分配较小的活较大的块，或则是超过某个大小再分配。
+  </p>
+  
+
+  
+  <p style="margin:20px;">
+    但大多数程序不需要完全的控制，因此Go提供了一个内置函数 <code style="font-family:Menlo, monospace;font-size:14px;">append</code> ，
+
+
+    用于大多数场合；它的函数签名：
+  </p>
+  
+
+  
+  <div style="width:auto;margin:20px;padding:10px;border-radius:5px;background:rgb(233, 233, 233);"><pre style="font-family:Menlo, monospace;font-size:14px;line-height:18px;border-radius:5px;border:none;outline:transparent solid 0px;overflow:auto;margin:0px;background:none;padding:0px;">func append(s []T, x ...T) []T</pre></div>
+  
+
+  
+  <p style="margin:20px;">
+    <code style="font-family:Menlo, monospace;font-size:14px;">append</code> 函数将 <code style="font-family:Menlo, monospace;font-size:14px;">x</code> 追加到切片 <code style="font-family:Menlo, monospace;font-size:14px;">s</code> 的末尾，并且在必要的时候增加容量。
+  </p>
+  
+
+  
+  <div style="width:auto;margin:20px;padding:10px;border-radius:5px;background:rgb(233, 233, 233);"><pre style="font-family:Menlo, monospace;font-size:14px;line-height:18px;border-radius:5px;border:none;outline:transparent solid 0px;overflow:auto;margin:0px;background:none;padding:0px;">a := make([]int, 1)
+// a == []int{0}
+a = append(a, 1, 2, 3)
+// a == []int{0, 1, 2, 3}</pre></div>
+  
+
+  
+  <p style="margin:20px;">
+    如果是要将一个切片追加到另一个切片尾部，需要使用 <code style="font-family:Menlo, monospace;font-size:14px;">...</code> 语法将第2个参数展开为参数列表。
+  </p>
+  
+
+  
+  <div style="width:auto;margin:20px;padding:10px;border-radius:5px;background:rgb(233, 233, 233);"><pre style="font-family:Menlo, monospace;font-size:14px;line-height:18px;border-radius:5px;border:none;outline:transparent solid 0px;overflow:auto;margin:0px;background:none;padding:0px;">a := []string{"John", "Paul"}
+b := []string{"George", "Ringo", "Pete"}
+a = append(a, b...) // equivalent to "append(a, b[0], b[1], b[2])"
+// a == []string{"John", "Paul", "George", "Ringo", "Pete"}</pre></div>
+  
+
+  
+  <p style="margin:20px;">
+    由于切片的零值 <code style="font-family:Menlo, monospace;font-size:14px;">nil</code> 用起来就像一个长度为零的切片，我们可以声明一个切片变量然后在循环
+
+
+    中向它追加数据：
+  </p>
+  
+
+  
+  <div style="width:auto;margin:20px;padding:10px;border-radius:5px;background:rgb(233, 233, 233);"><pre style="font-family:Menlo, monospace;font-size:14px;line-height:18px;border-radius:5px;border:none;outline:transparent solid 0px;overflow:auto;margin:0px;background:none;padding:0px;">// Filter returns a new slice holding only
+// the elements of s that satisfy fn()
+func Filter(s []int, fn func(int) bool) []int {
+    var p []int // == nil
+    for _, v := range s {
+        if fn(v) {
+            p = append(p, v)
+        }
+    }
+    return p
+}</pre></div>
+  
+
+
+    
+      
+  <h4 style="padding:0px;color:rgb(55, 94, 171);font-weight:bold;margin:20px 5px;font-size:16px;">可能的“陷阱”</h4>
+  
+  
+  <p style="margin:20px;">
+    正如前面所说，切片操作并不会复制底层的数组。整个数组将被保存在内存中，直到它不再被引用。
+
+
+    有时候可能会因为一个小的内存引用导致保存所有的数据。
+  </p>
+  
+
+  
+  <p style="margin:20px;">
+    例如， <code style="font-family:Menlo, monospace;font-size:14px;">FindDigits</code> 函数加载整个文件到内存，然后搜索第一个连续的数字，最后结果以切片方式返回。
+  </p>
+  
+
+  
+  <div style="width:auto;margin:20px;padding:10px;border-radius:5px;background:rgb(233, 233, 233);"><pre style="font-family:Menlo, monospace;font-size:14px;line-height:18px;border-radius:5px;border:none;outline:transparent solid 0px;overflow:auto;margin:0px;background:none;padding:0px;">var digitRegexp = regexp.MustCompile("[0-9]+")
+
+func FindDigits(filename string) []byte {
+    b, _ := ioutil.ReadFile(filename)
+    return digitRegexp.Find(b)
+}</pre></div>
+  
+
+  
+  <p style="margin:20px;">
+    这段代码的行为和描述类似，返回的 <code style="font-family:Menlo, monospace;font-size:14px;">[]byte</code> 指向保存整个文件的数组。因为切片引用了原始的数组，
+
+
+    导致 GC 不能释放数组的空间；只用到少数几个字节却导致整个文件的内容都一直保存在内存里。
+  </p>
+  
+
+  
+  <p style="margin:20px;">
+    要修复整个问题，可以将感兴趣的数据复制到一个新的切片中：
+  </p>
+  
+
+  
+  <div style="width:auto;margin:20px;padding:10px;border-radius:5px;background:rgb(233, 233, 233);"><pre style="font-family:Menlo, monospace;font-size:14px;line-height:18px;border-radius:5px;border:none;outline:transparent solid 0px;overflow:auto;margin:0px;background:none;padding:0px;">func CopyDigits(filename string) []byte {
+    b, _ := ioutil.ReadFile(filename)
+    b = digitRegexp.Find(b)
+    c := make([]byte, len(b))
+    copy(c, b)
+    return c
+}</pre></div>
+  
+
+  
+  <p style="margin:20px;">
+    可以使用 <code style="font-family:Menlo, monospace;font-size:14px;">append</code> 实现一个更简洁的版本。这留给读者作为练习。
+  </p>
+  
+
+
+    
+      
+  <h4 style="padding:0px;color:rgb(55, 94, 171);font-weight:bold;margin:20px 5px;font-size:16px;">延伸阅读</h4>
+  
+  
+  <p style="margin:20px;">
+    <a href="https://go-zh.org/doc/effective_go.html" target="_blank" style="color:rgb(55, 94, 171);text-decoration:none;">实效 Go 编程</a> 包含了对
+
+
+    <a href="https://go-zh.org/doc/effective_go.html#%E5%88%87%E7%89%87" target="_blank" style="color:rgb(55, 94, 171);text-decoration:none;">切片</a> 和
+
+
+    <a href="https://go-zh.org/doc/effective_go.html#%E6%95%B0%E7%BB%84" target="_blank" style="color:rgb(55, 94, 171);text-decoration:none;">数组</a> 更深入的探讨；
+
+
+    <a href="https://go-zh.org/ref/spec" target="_blank" style="color:rgb(55, 94, 171);text-decoration:none;">Go 编程语言规范</a> 对
+
+
+    <a href="https://go-zh.org/ref/spec#Slice_types" target="_blank" style="color:rgb(55, 94, 171);text-decoration:none;">切片类型</a> 和
+
+
+    <a href="https://go-zh.org/ref/spec#Array_types" target="_blank" style="color:rgb(55, 94, 171);text-decoration:none;">数组类型</a>
+
+
+    以及与它们 <a href="https://go-zh.org/ref/spec#Length_and_capacity" target="_blank" style="color:rgb(55, 94, 171);text-decoration:none;">相关的</a>
+
+
+    <a href="https://go-zh.org/ref/spec#Making_slices_maps_and_channels" target="_blank" style="color:rgb(55, 94, 171);text-decoration:none;">辅助</a>
+
+
+    <a href="https://go-zh.org/ref/spec#Appending_and_copying_slices" target="_blank" style="color:rgb(55, 94, 171);text-decoration:none;">函数</a>
+
+
+    进行了定义。
+  </p>
+  
+
+
+    
+  
+
+
+		
+			<p style="margin:20px;font-style:italic;">Andrew Gerrand 编写</p>
+		
+	</div></div></div></div></div></div></div>
+</div>
+</body></html>

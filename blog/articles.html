@@ -1,280 +1,414 @@
 <!DOCTYPE html>
-<html lang="zh-CN">
+<html lang="zh-CN" data-theme="light">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta name="description" content="龙浩然的技术文章目录 - 涵盖云原生、AI、编程语言、网络安全等20+技术领域">
-  <title>文章目录 | 龙浩然</title>
+  <title>技术笔记 — 龙浩然 | Long HaoRan</title>
+  <meta name="description" content="龙浩然的技术笔记归档，涵盖云原生、AI、编程语言、网络安全等领域，435篇笔记">
   <link rel="stylesheet" href="assets/css/style.css">
 </head>
 <body>
-
   <!-- Navbar -->
   <nav class="navbar">
     <div class="navbar-container">
-      <a href="index.html" class="navbar-logo">Long Haoran</a>
+      <a href="index.html" class="navbar-logo">LongHaoRan</a>
       <ul class="navbar-links">
-        <li><a href="index.html">首页</a></li>
-        <li><a href="articles.html">文章</a></li>
-        <li><a href="resume.html">简历</a></li>
+        <li><a href="index.html">关于我</a></li>
+        <li><a href="articles.html" class="active">技术笔记</a></li>
+        <li><a href="resume.html">在线简历</a></li>
       </ul>
-      <button class="theme-toggle" aria-label="切换主题">&#127769;</button>
+      <button class="theme-toggle" onclick="toggleTheme()" title="切换主题" aria-label="切换暗色/亮色主题">🌙</button>
     </div>
   </nav>
 
-  <!-- Header -->
-  <section class="section" style="padding-top: 8rem; padding-bottom: 1rem;">
-    <div class="section-header">
-      <h1 class="section-title" style="font-size: 2.2rem;">技术文章目录</h1>
-      <p class="section-subtitle">
-        按技术领域分类整理的学习笔记与实践总结，持续更新中
-      </p>
+  <!-- Main Content -->
+  <main class="section" style="padding-top: 7rem; min-height: 80vh;">
+
+    <!-- Breadcrumb -->
+    <div class="breadcrumb" id="breadcrumb">
+      <a href="index.html">首页</a>
+      <span class="separator">/</span>
+      <span class="current" id="breadcrumb-current">技术笔记</span>
     </div>
 
     <!-- Search -->
-    <div style="max-width: 500px; margin: 1.5rem auto 0;">
-      <input type="text" id="article-search" placeholder="搜索文章分类..."
-        style="width: 100%; padding: 0.75rem 1.25rem; border: 1px solid var(--border-color); border-radius: 12px; background: var(--bg-card); color: var(--text-primary); font-size: 0.95rem; outline: none; transition: var(--transition);"
-        onfocus="this.style.borderColor='var(--accent)'" onblur="this.style.borderColor='var(--border-color)'">
+    <div class="article-search">
+      <span class="search-icon">🔍</span>
+      <input type="text" id="noteSearch" placeholder="搜索笔记标题... (435篇笔记中搜索)" oninput="performSearch()">
     </div>
-  </section>
 
-  <!-- Category Filter -->
-  <section style="max-width: 1200px; margin: 0 auto; padding: 0 2rem 1rem;">
-    <div class="category-filter">
-      <button class="filter-btn active" data-category="all">全部</button>
-      <button class="filter-btn" data-category="lang">编程语言</button>
-      <button class="filter-btn" data-category="infra">基础设施</button>
-      <button class="filter-btn" data-category="net">网络协议</button>
-      <button class="filter-btn" data-category="security">安全加密</button>
-      <button class="filter-btn" data-category="ai">AI与计算</button>
-      <button class="filter-btn" data-category="data">数据库</button>
-      <button class="filter-btn" data-category="api">API与工具</button>
+    <!-- View: Group Grid (default) -->
+    <div id="view-groups">
+      <div class="section-nav-bar">
+        <span class="view-title">📚 笔记本组</span>
+        <span style="color: var(--text-muted); font-size: 0.9rem;" id="total-stats"></span>
+      </div>
+      <div class="group-grid" id="groupGrid"></div>
     </div>
-  </section>
 
-  <!-- Articles Grid -->
-  <section class="section" style="padding-top: 1rem;">
-    <div class="articles-grid">
-      <div class="article-card reveal" data-category="security">
-        <div class="article-card-header">
-          <div class="article-card-icon">&#128737;&#65039;</div>
-          <h3 class="article-card-title">安全防护</h3>
-        </div>
-        <p class="article-card-desc">系统与网络安全防护笔记，涵盖访问控制、认证授权、漏洞防护、容器安全、统一认证平台对接等安全实践。</p>
-        <p class="article-card-count"><span class="count-num">1</span> 篇已分享</p>
-        <a href="https://app.yinxiang.com/fx/72bdc1e5-3ef2-43e6-a786-b416577dbab9" class="article-link" target="_blank" rel="noopener">阅读笔记 &rarr;</a>
+    <!-- View: Notebook Detail (after clicking a group) -->
+    <div id="view-detail" style="display:none;">
+      <div class="section-nav-bar">
+        <button class="back-btn" onclick="goBackToGroups()">← 返回笔记本组</button>
+        <span class="view-title" id="detail-title"></span>
+        <span style="color: var(--text-muted); font-size: 0.9rem;" id="detail-stats"></span>
       </div>
-      <div class="article-card reveal" data-category="infra">
-        <div class="article-card-header">
-          <div class="article-card-icon">&#128451;</div>
-          <h3 class="article-card-title">分布式存储</h3>
-        </div>
-        <p class="article-card-desc">分布式存储系统笔记，涵盖DragonBoat/Raft、Minio纠删码、CSI驱动开发、分布式缓存、Alluxio统一命名空间等。</p>
-        <p class="article-card-count"><span class="count-num">3</span> 篇已分享</p>
-        <a href="https://app.yinxiang.com/fx/4f2feec5-fb1e-4959-b721-2d30e55ab46b" class="article-link" target="_blank" rel="noopener">阅读笔记 &rarr;</a>
-      </div>
-      <div class="article-card reveal" data-category="net">
-        <div class="article-card-header">
-          <div class="article-card-icon">&#127760;</div>
-          <h3 class="article-card-title">计算机网络</h3>
-        </div>
-        <p class="article-card-desc">计算机网络基础笔记，涵盖TCP/IP协议栈、路由交换、DNS、负载均衡、网络性能优化、NetQoS等网络知识。</p>
-        <p class="article-card-count">待分享</p>
-        <a href="#" class="article-link disabled">暂无分享链接</a>
-      </div>
-      <div class="article-card reveal" data-category="security">
-        <div class="article-card-header">
-          <div class="article-card-icon">&#128274;</div>
-          <h3 class="article-card-title">加密解密</h3>
-        </div>
-        <p class="article-card-desc">密码学笔记，涵盖对称加密、非对称加密、哈希算法、数字签名、TLS/SSL握手、证书管理、雅可比矩阵等。</p>
-        <p class="article-card-count">待分享</p>
-        <a href="#" class="article-link disabled">暂无分享链接</a>
-      </div>
-      <div class="article-card reveal" data-category="ai">
-        <div class="article-card-header">
-          <div class="article-card-icon">&#129504;</div>
-          <h3 class="article-card-title">AI</h3>
-        </div>
-        <p class="article-card-desc">人工智能学习笔记，涵盖RAG、PyTorch、CLIP多模态、YOLOv5、ArcFace、PaddleOCR、llama.cpp端侧推理等。</p>
-        <p class="article-card-count">待分享</p>
-        <a href="#" class="article-link disabled">暂无分享链接</a>
-      </div>
-      <div class="article-card reveal" data-category="infra">
-        <div class="article-card-header">
-          <div class="article-card-icon">&#128187;</div>
-          <h3 class="article-card-title">虚拟化</h3>
-        </div>
-        <p class="article-card-desc">虚拟化技术笔记，涵盖libvirt、KVM/QEMU、kubevirt、虚拟机网络管理等虚拟化方案。</p>
-        <p class="article-card-count">待分享</p>
-        <a href="#" class="article-link disabled">暂无分享链接</a>
-      </div>
-      <div class="article-card reveal" data-category="infra">
-        <div class="article-card-header">
-          <div class="article-card-icon">&#9729;&#65039;</div>
-          <h3 class="article-card-title">云原生</h3>
-        </div>
-        <p class="article-card-desc">云原生技术笔记，深度覆盖Kubernetes、CSI、Operator、容器混部、Docker、Helm等技术栈。</p>
-        <p class="article-card-count">待分享</p>
-        <a href="#" class="article-link disabled">暂无分享链接</a>
-      </div>
-      <div class="article-card reveal" data-category="lang">
-        <div class="article-card-header">
-          <div class="article-card-icon">&#128181;</div>
-          <h3 class="article-card-title">C 语言</h3>
-        </div>
-        <p class="article-card-desc">C语言学习笔记，涵盖结构体、指针、内存管理、系统编程等底层编程知识。</p>
-        <p class="article-card-count">待分享</p>
-        <a href="#" class="article-link disabled">暂无分享链接</a>
-      </div>
-      <div class="article-card reveal" data-category="lang">
-        <div class="article-card-header">
-          <div class="article-card-icon">&#128181;</div>
-          <h3 class="article-card-title">C++</h3>
-        </div>
-        <p class="article-card-desc">C++面向对象编程、STL、模板元编程、现代C++特性及性能优化实践笔记。</p>
-        <p class="article-card-count">待分享</p>
-        <a href="#" class="article-link disabled">暂无分享链接</a>
-      </div>
-      <div class="article-card reveal" data-category="infra">
-        <div class="article-card-header">
-          <div class="article-card-icon">&#128260;</div>
-          <h3 class="article-card-title">CI/CD</h3>
-        </div>
-        <p class="article-card-desc">持续集成与持续交付笔记，涵盖GitLab CI/CD、Jenkins、自动化测试与发布流水线等实践。</p>
-        <p class="article-card-count">待分享</p>
-        <a href="#" class="article-link disabled">暂无分享链接</a>
-      </div>
-      <div class="article-card reveal" data-category="ai">
-        <div class="article-card-header">
-          <div class="article-card-icon">&#128293;</div>
-          <h3 class="article-card-title">CUDA</h3>
-        </div>
-        <p class="article-card-desc">CUDA并行计算笔记，涵盖矩阵乘法优化策略、GPU编程模型、内存层次与优化技术等。</p>
-        <p class="article-card-count">待分享</p>
-        <a href="#" class="article-link disabled">暂无分享链接</a>
-      </div>
-      <div class="article-card reveal" data-category="lang">
-        <div class="article-card-header">
-          <div class="article-card-icon">&#128049;</div>
-          <h3 class="article-card-title">Golang</h3>
-        </div>
-        <p class="article-card-desc">Go语言学习笔记，包含reflect、并发编程、内存模型、性能调优(pprof)、Gin/Kratos框架实战等。</p>
-        <p class="article-card-count">待分享</p>
-        <a href="#" class="article-link disabled">暂无分享链接</a>
-      </div>
-      <div class="article-card reveal" data-category="net">
-        <div class="article-card-header">
-          <div class="article-card-icon">&#128268;</div>
-          <h3 class="article-card-title">gRPC</h3>
-        </div>
-        <p class="article-card-desc">gRPC框架笔记，涵盖Protobuf序列化、服务定义、流式通信、拦截器、负载均衡等微服务通信实践。</p>
-        <p class="article-card-count">待分享</p>
-        <a href="#" class="article-link disabled">暂无分享链接</a>
-      </div>
-      <div class="article-card reveal" data-category="net">
-        <div class="article-card-header">
-          <div class="article-card-icon">&#128279;</div>
-          <h3 class="article-card-title">HTTP</h3>
-        </div>
-        <p class="article-card-desc">HTTP协议笔记，涵盖长连接、chunked传输、HTTPS/TLS、RESTful设计、WebSocket等网络协议知识。</p>
-        <p class="article-card-count">待分享</p>
-        <a href="#" class="article-link disabled">暂无分享链接</a>
-      </div>
-      <div class="article-card reveal" data-category="lang">
-        <div class="article-card-header">
-          <div class="article-card-icon">&#9749;</div>
-          <h3 class="article-card-title">Java</h3>
-        </div>
-        <p class="article-card-desc">Java编程笔记，涵盖JVM原理、并发编程、Android开发(AIDL/Binder/RoomDB/Gradle)等内容。</p>
-        <p class="article-card-count">待分享</p>
-        <a href="#" class="article-link disabled">暂无分享链接</a>
-      </div>
-      <div class="article-card reveal" data-category="lang">
-        <div class="article-card-header">
-          <div class="article-card-icon">&#128142;</div>
-          <h3 class="article-card-title">Ruby</h3>
-        </div>
-        <p class="article-card-desc">Ruby及Ruby on Rails框架笔记，涵盖Ruby源码解读、Rails全栈开发、Gem开发等实践经验。</p>
-        <p class="article-card-count">待分享</p>
-        <a href="#" class="article-link disabled">暂无分享链接</a>
-      </div>
-      <div class="article-card reveal" data-category="lang">
-        <div class="article-card-header">
-          <div class="article-card-icon">&#128013;</div>
-          <h3 class="article-card-title">Python</h3>
-        </div>
-        <p class="article-card-desc">Python编程笔记，包含类与面向对象、Django框架、AI/ML工具链(PyTorch/CLIP/YOLOv5)、自动化脚本等。</p>
-        <p class="article-card-count">待分享</p>
-        <a href="#" class="article-link disabled">暂无分享链接</a>
-      </div>
-      <div class="article-card reveal" data-category="infra">
-        <div class="article-card-header">
-          <div class="article-card-icon">&#129518;</div>
-          <h3 class="article-card-title">Puppet</h3>
-        </div>
-        <p class="article-card-desc">Puppet配置管理笔记，涵盖证书管理、Manifest编写、Module开发、Hiera数据分层等运维自动化实践。</p>
-        <p class="article-card-count">待分享</p>
-        <a href="#" class="article-link disabled">暂无分享链接</a>
-      </div>
-      <div class="article-card reveal" data-category="api">
-        <div class="article-card-header">
-          <div class="article-card-icon">&#128221;</div>
-          <h3 class="article-card-title">OpenAPI</h3>
-        </div>
-        <p class="article-card-desc">OpenAPI规范笔记，涵盖Swagger/OpenAPI 3.0规范编写、API文档自动化生成与版本管理。</p>
-        <p class="article-card-count">待分享</p>
-        <a href="#" class="article-link disabled">暂无分享链接</a>
-      </div>
-      <div class="article-card reveal" data-category="infra">
-        <div class="article-card-header">
-          <div class="article-card-icon">&#128440;&#65039;</div>
-          <h3 class="article-card-title">Linux</h3>
-        </div>
-        <p class="article-card-desc">Linux系统管理笔记，涵盖Unix环境编程、cgroup v2、LVM、Systemd、inode、零拷贝、IO性能、eBPF等。</p>
-        <p class="article-card-count">待分享</p>
-        <a href="#" class="article-link disabled">暂无分享链接</a>
-      </div>
-      <div class="article-card reveal" data-category="data">
-        <div class="article-card-header">
-          <div class="article-card-icon">&#128452;</div>
-          <h3 class="article-card-title">MySQL</h3>
-        </div>
-        <p class="article-card-desc">MySQL数据库笔记，涵盖索引与B+Tree、主从复制、性能优化、字符集配置、SQL查询优化等实践。</p>
-        <p class="article-card-count">待分享</p>
-        <a href="#" class="article-link disabled">暂无分享链接</a>
+      <div class="notebook-list" id="notebookList"></div>
+      <div class="empty-state" id="searchEmpty" style="display:none;">
+        <div class="empty-icon">🔍</div>
+        <div class="empty-text">没有找到匹配的笔记</div>
+        <p style="font-size:0.85rem;">尝试使用不同的关键词</p>
       </div>
     </div>
-  </section>
 
-  <!-- Notice -->
-  <section class="section" style="padding-top: 1rem;">
-    <div class="info-card reveal" style="max-width: 800px; margin: 0 auto; border-left: 4px solid var(--accent);">
-      <h3 style="font-size: 1.1rem; font-weight: 600; margin-bottom: 0.75rem; color: var(--accent);">&#128221; 关于文章链接</h3>
-      <p style="color: var(--text-secondary); font-size: 0.92rem; line-height: 1.8;">
-        以上文章分类对应作者在<strong>印象笔记</strong>中的技术笔记本。正在将笔记逐步设置为公开分享，
-        公开链接将陆续更新到各分类卡片中。
-      </p>
-      <p style="color: var(--text-muted); font-size: 0.85rem; margin-top: 0.5rem;">
-        如需提前查看某个分类的笔记，欢迎通过首页联系方式与作者联系。
-      </p>
-    </div>
-  </section>
+  </main>
 
   <!-- Footer -->
   <footer class="footer">
     <div class="footer-content">
       <div class="footer-links">
-        <a href="index.html">首页</a>
-        <a href="articles.html">文章</a>
-        <a href="resume.html">简历</a>
-        <a href="https://github.com/LongLonghaoran" target="_blank" rel="noopener">GitHub</a>
+        <a href="index.html">关于我</a>
+        <a href="articles.html">技术笔记</a>
+        <a href="resume.html">在线简历</a>
       </div>
-      <p class="footer-text">&copy; 2026 龙浩然 &middot; Powered by GitHub Pages</p>
+      <p class="footer-text">&copy; 2026 LongHaoRan. Powered by GitHub Pages.</p>
     </div>
   </footer>
 
-  <script src="assets/js/main.js"></script>
+  <!-- Data Layer -->
+  <script>
+    // ========== 数据（从 JSON 文件加载） ==========
+    let articlesData = null;
+    let currentView = 'groups'; // 'groups' | 'detail'
+    let currentGroupIdx = -1;
+
+    // 笔记本显示名
+    const DISPLAY_NAMES = {
+      "云原生": "Kubernetes / 云原生",
+      "分布式存储": "分布式存储",
+      "虚拟化": "虚拟化技术",
+      "Linux": "Linux 系统",
+      "puppet": "Puppet 配置管理",
+      "Golang": "Golang",
+      "python": "Python",
+      "ruby笔记本组": "Ruby",
+      "C": "C 语言",
+      "C++": "C++",
+      "java": "Java",
+      "AI": "人工智能",
+      "CUDA": "CUDA",
+      "计算机网络": "计算机网络",
+      "HTTP": "HTTP 协议",
+      "Grpc": "gRPC",
+      "安全防护": "安全防护",
+      "关于加密解密": "加密解密",
+      "CI/CD笔记本组": "CI/CD",
+      "OpenApi": "OpenAPI",
+      "Mysql": "MySQL",
+    };
+
+    // ========== 加载数据 ==========
+    fetch('assets/data/articles-data.json')
+      .then(r => r.json())
+      .then(data => {
+        articlesData = data;
+        initPage();
+      })
+      .catch(() => {
+        // 离线回退: 使用内联数据
+        console.warn('无法加载数据文件，尝试使用内联回退');
+      });
+
+    function getDisplayName(key) {
+      return DISPLAY_NAMES[key] || key;
+    }
+
+    function getTotalStats() {
+      if (!articlesData) return '';
+      let totalNotebooks = 0, totalNotes = 0;
+      articlesData.groups.forEach(g => {
+        totalNotebooks += g.notebooks.length;
+        g.notebooks.forEach(n => totalNotes += n.count);
+      });
+      return `${articlesData.groups.length} 个笔记本组 · ${totalNotebooks} 个笔记本 · ${totalNotes} 篇笔记`;
+    }
+
+    // ========== 初始化 ==========
+    function initPage() {
+      document.getElementById('total-stats').textContent = getTotalStats();
+      renderGroupGrid();
+    }
+
+    // ========== 渲染笔记本组网格 ==========
+    function renderGroupGrid() {
+      const grid = document.getElementById('groupGrid');
+      grid.innerHTML = articlesData.groups.map((g, idx) => {
+        const notebooks = g.notebooks;
+        const totalNotes = notebooks.reduce((s, n) => s + n.count, 0);
+        const nbPreview = notebooks.slice(0, 3).map(n => getDisplayName(n.key)).join(' · ');
+        const more = notebooks.length > 3 ? ` +${notebooks.length - 3}` : '';
+
+        return `
+        <div class="group-card" onclick="openGroup(${idx})" tabindex="0" role="button" 
+             onkeydown="if(event.key==='Enter')openGroup(${idx})">
+          <div class="group-card-header">
+            <div class="group-card-icon">${g.icon}</div>
+            <div class="group-card-info">
+              <div class="group-card-name">${g.name}</div>
+              <div class="group-card-desc">${g.desc}</div>
+              <div class="group-card-meta">📒 ${notebooks.length} 个笔记本 · 📝 ${totalNotes} 篇笔记</div>
+              <div class="group-stats">
+                <span class="group-stat-badge">${nbPreview}${more}</span>
+              </div>
+            </div>
+            <div class="group-card-arrow">→</div>
+          </div>
+        </div>`;
+      }).join('');
+    }
+
+    // ========== 打开笔记本组 ==========
+    function openGroup(idx) {
+      currentGroupIdx = idx;
+      currentView = 'detail';
+      const group = articlesData.groups[idx];
+
+      document.getElementById('view-groups').style.display = 'none';
+      document.getElementById('view-detail').style.display = 'block';
+      document.getElementById('breadcrumb-current').textContent = group.name;
+      document.getElementById('detail-title').textContent = `${group.icon} ${group.name}`;
+
+      const totalNotes = group.notebooks.reduce((s, n) => s + n.count, 0);
+      document.getElementById('detail-stats').textContent = `${group.notebooks.length} 个笔记本 · ${totalNotes} 篇笔记`;
+
+      renderNotebookList(group);
+      document.getElementById('noteSearch').value = '';
+      document.getElementById('searchEmpty').style.display = 'none';
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    // ========== 返回笔记本组 ==========
+    function goBackToGroups() {
+      currentView = 'groups';
+      currentGroupIdx = -1;
+      document.getElementById('view-groups').style.display = 'block';
+      document.getElementById('view-detail').style.display = 'none';
+      document.getElementById('breadcrumb-current').textContent = '技术笔记';
+      document.getElementById('noteSearch').value = '';
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    // ========== 渲染笔记本列表 ==========
+    function renderNotebookList(group, filterText) {
+      const list = document.getElementById('notebookList');
+      let html = '';
+
+      group.notebooks.forEach(nb => {
+        const displayName = getDisplayName(nb.key);
+        const notes = nb.notes;
+        const filteredNotes = filterText
+          ? notes.filter(n => n.title.toLowerCase().includes(filterText.toLowerCase()))
+          : notes;
+
+        html += `
+        <div class="notebook-item" id="nb-${nb.key.replace(/[^a-zA-Z0-9]/g,'_')}">
+          <div class="notebook-item-header" onclick="toggleNotebook(this.parentElement)" tabindex="0" role="button"
+               onkeydown="if(event.key==='Enter')toggleNotebook(this.parentElement)">
+            <div class="notebook-item-icon">📒</div>
+            <div class="notebook-item-info">
+              <div class="notebook-item-name">${displayName}</div>
+              <div class="notebook-item-desc">${nb.desc || ''}</div>
+            </div>
+            <div class="notebook-item-meta">
+              <span class="notebook-item-count">${notes.length} 篇</span>
+              <span class="notebook-item-chevron">▾</span>
+            </div>
+          </div>
+          <div class="notes-container">
+            <div class="notes-header">
+              <span>📝 ${filteredNotes.length} 篇笔记${filterText ? ' (匹配)' : ''}</span>
+            </div>
+            <div class="notes-list">
+              ${filteredNotes.map(n => `
+              <div class="note-list-item">
+                <span class="note-bullet"></span>
+                <a href="${n.url}" target="_blank" rel="noopener" title="${n.title}"
+                   onclick="if(this.getAttribute('href')==='#'){alert('请先在印象笔记 App 中分享这篇笔记获取链接');return false;}">
+                  <span class="note-title">${escapeHtml(n.title)}</span>
+                </a>
+                <span class="note-arrow">↗</span>
+              </div>`).join('')}
+              ${filteredNotes.length === 0 ? '<div class="note-list-item"><span style="color:var(--text-muted);padding:1rem;">无匹配笔记</span></div>' : ''}
+            </div>
+          </div>
+        </div>`;
+      });
+
+      list.innerHTML = html;
+
+      // 如果搜索有结果，自动展开所有有结果的笔记本
+      if (filterText) {
+        group.notebooks.forEach(nb => {
+          const filteredNotes = nb.notes.filter(n =>
+            n.title.toLowerCase().includes(filterText.toLowerCase())
+          );
+          const el = document.getElementById('nb-' + nb.key.replace(/[^a-zA-Z0-9]/g, '_'));
+          if (el && filteredNotes.length > 0) {
+            el.classList.add('expanded');
+          }
+        });
+      }
+    }
+
+    // ========== 展开/折叠笔记本 ==========
+    function toggleNotebook(item) {
+      item.classList.toggle('expanded');
+    }
+
+    // ========== 搜索 ==========
+    function performSearch() {
+      const query = document.getElementById('noteSearch').value.trim();
+
+      if (currentView === 'groups') {
+        // 在笔记本组视图中搜索：直接切换到结果展示
+        if (query.length === 0) {
+          document.getElementById('view-detail').style.display = 'none';
+          document.getElementById('view-groups').style.display = 'block';
+          return;
+        }
+
+        // 全局搜索所有笔记
+        const results = [];
+        articlesData.groups.forEach(g => {
+          g.notebooks.forEach(nb => {
+            const matches = nb.notes.filter(n =>
+              n.title.toLowerCase().includes(query.toLowerCase())
+            );
+            if (matches.length > 0) {
+              results.push({
+                group: g,
+                notebook: nb,
+                matches: matches
+              });
+            }
+          });
+        });
+
+        renderSearchResults(results, query);
+      } else if (currentView === 'detail') {
+        // 在当前笔记本组内搜索
+        const group = articlesData.groups[currentGroupIdx];
+        const hasResults = group.notebooks.some(nb =>
+          nb.notes.some(n => n.title.toLowerCase().includes(query.toLowerCase()))
+        );
+
+        document.getElementById('searchEmpty').style.display = hasResults || !query ? 'none' : 'block';
+        renderNotebookList(group, query || null);
+      }
+    }
+
+    function renderSearchResults(results, query) {
+      document.getElementById('view-groups').style.display = 'none';
+      document.getElementById('view-detail').style.display = 'block';
+      document.getElementById('breadcrumb-current').textContent = `搜索: "${query}"`;
+      document.getElementById('detail-title').textContent = `🔍 搜索结果: "${query}"`;
+
+      let totalMatches = 0;
+      results.forEach(r => totalMatches += r.matches.length);
+      document.getElementById('detail-stats').textContent = `在 ${results.length} 个笔记本中找到 ${totalMatches} 篇笔记`;
+
+      const list = document.getElementById('notebookList');
+      let html = '';
+
+      if (results.length === 0) {
+        html = ''; // will show empty state
+      } else {
+        results.forEach(r => {
+          const displayName = getDisplayName(r.notebook.key);
+          html += `
+          <div class="notebook-item expanded" id="nb-search-${r.notebook.key.replace(/[^a-zA-Z0-9]/g,'_')}">
+            <div class="notebook-item-header" onclick="toggleNotebook(this.parentElement)" tabindex="0" role="button"
+                 onkeydown="if(event.key==='Enter')toggleNotebook(this.parentElement)">
+              <div class="notebook-item-icon">📒</div>
+              <div class="notebook-item-info">
+                <div class="notebook-item-name">${r.group.icon} ${displayName}</div>
+                <div class="notebook-item-desc">${r.group.name}</div>
+              </div>
+              <div class="notebook-item-meta">
+                <span class="notebook-item-count">${r.matches.length} 篇</span>
+                <span class="notebook-item-chevron">▾</span>
+              </div>
+            </div>
+            <div class="notes-container">
+              <div class="notes-header">
+                <span>📝 匹配的笔记</span>
+              </div>
+              <div class="notes-list">
+                ${r.matches.map(n => `
+                <div class="note-list-item">
+                  <span class="note-bullet"></span>
+                  <a href="${n.url}" target="_blank" rel="noopener" title="${n.title}"
+                     onclick="if(this.getAttribute('href')==='#'){alert('请先在印象笔记 App 中分享这篇笔记获取链接');return false;}">
+                    <span class="note-title">${highlightMatch(n.title, query)}</span>
+                  </a>
+                  <span class="note-arrow">↗</span>
+                </div>`).join('')}
+              </div>
+            </div>
+          </div>`;
+        });
+      }
+
+      list.innerHTML = html;
+      document.getElementById('searchEmpty').style.display = results.length === 0 ? 'block' : 'none';
+    }
+
+    function highlightMatch(text, query) {
+      const re = new RegExp(`(${escapeRegex(query)})`, 'gi');
+      return escapeHtml(text).replace(re, '<mark style="background:var(--accent);color:white;padding:0 2px;border-radius:3px;">$1</mark>');
+    }
+
+    // ========== 工具函数 ==========
+    function escapeHtml(str) {
+      const div = document.createElement('div');
+      div.textContent = str;
+      return div.innerHTML;
+    }
+
+    function escapeRegex(str) {
+      return str.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    }
+
+    // ========== 键盘导航 ==========
+    document.addEventListener('keydown', function(e) {
+      if (e.key === 'Escape' && currentView === 'detail') {
+        goBackToGroups();
+      }
+    });
+
+    // ========== 主题切换 ==========
+    function toggleTheme() {
+      const html = document.documentElement;
+      const btn = document.querySelector('.theme-toggle');
+      if (html.getAttribute('data-theme') === 'dark') {
+        html.setAttribute('data-theme', 'light');
+        btn.textContent = '🌙';
+        localStorage.setItem('theme', 'light');
+      } else {
+        html.setAttribute('data-theme', 'dark');
+        btn.textContent = '☀️';
+        localStorage.setItem('theme', 'dark');
+      }
+    }
+
+    // 初始化主题
+    (function() {
+      const saved = localStorage.getItem('theme');
+      if (saved === 'dark') {
+        document.documentElement.setAttribute('data-theme', 'dark');
+        document.querySelector('.theme-toggle').textContent = '☀️';
+      }
+    })();
+  </script>
 </body>
 </html>

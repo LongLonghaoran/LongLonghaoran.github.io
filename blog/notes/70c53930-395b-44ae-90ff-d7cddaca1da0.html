@@ -1,0 +1,253 @@
+<!DOCTYPE html>
+<html lang="zh-CN" data-theme="light">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Golang内存泄漏的7种场景 — 技术笔记</title>
+<style>
+:root {
+  --bg: #ffffff;
+  --text: #1a1a1a;
+  --muted: #666;
+  --border: #e0e0e0;
+  --code-bg: #f5f5f5;
+  --link: #0066cc;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #1a1a1a;
+    --text: #e0e0e0;
+    --muted: #999;
+    --border: #333;
+    --code-bg: #2a2a2a;
+    --link: #66bbff;
+  }
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  line-height: 1.7;
+  color: var(--text);
+  background: var(--bg);
+  max-width: 860px;
+  margin: 0 auto;
+  padding: 2rem 1.5rem;
+}
+.note-header {
+  border-bottom: 2px solid var(--border);
+  padding-bottom: 1rem;
+  margin-bottom: 2rem;
+}
+.note-title {
+  font-size: 1.6rem;
+  font-weight: 700;
+  margin-bottom: 0.3rem;
+}
+.note-meta {
+  color: var(--muted);
+  font-size: 0.85rem;
+}
+.note-content {
+  font-size: 0.95rem;
+}
+.note-content h1 { font-size: 1.4rem; margin: 1.2rem 0 0.6rem; }
+.note-content h2 { font-size: 1.2rem; margin: 1rem 0 0.5rem; }
+.note-content h3 { font-size: 1.05rem; margin: 0.8rem 0 0.4rem; }
+.note-content p { margin: 0.5rem 0; }
+.note-content ul, .note-content ol { margin: 0.5rem 0 0.5rem 2rem; }
+.note-content li { margin: 0.2rem 0; }
+.note-content pre {
+  background: var(--code-bg);
+  padding: 1rem;
+  border-radius: 6px;
+  overflow-x: auto;
+  margin: 0.8rem 0;
+  font-size: 0.85rem;
+}
+.note-content code {
+  background: var(--code-bg);
+  padding: 0.1rem 0.3rem;
+  border-radius: 3px;
+  font-size: 0.88em;
+}
+.note-content pre code {
+  background: none;
+  padding: 0;
+}
+.note-content blockquote {
+  border-left: 3px solid var(--border);
+  padding-left: 1rem;
+  color: var(--muted);
+  margin: 0.8rem 0;
+}
+.note-content a { color: var(--link); }
+.note-content img {
+  max-width: 100%;
+  height: auto;
+  border-radius: 6px;
+  margin: 0.5rem 0;
+}
+.note-content table {
+  border-collapse: collapse;
+  width: 100%;
+  margin: 0.8rem 0;
+}
+.note-content th, .note-content td {
+  border: 1px solid var(--border);
+  padding: 0.5rem;
+}
+.note-content th { background: var(--code-bg); }
+.media-placeholder {
+  background: var(--code-bg);
+  padding: 1rem;
+  text-align: center;
+  color: var(--muted);
+  border-radius: 6px;
+  margin: 0.5rem 0;
+  font-size: 0.85rem;
+}
+.encrypt-placeholder {
+  background: #fff3cd;
+  padding: 0.5rem;
+  text-align: center;
+  color: #856404;
+  border-radius: 6px;
+  margin: 0.5rem 0;
+  font-size: 0.85rem;
+}
+.back-link {
+  display: inline-block;
+  margin-top: 2rem;
+  color: var(--link);
+  text-decoration: none;
+  font-size: 0.85rem;
+}
+</style>
+</head>
+<body>
+<div class="note-header">
+  <div class="note-title">Golang内存泄漏的7种场景</div>
+  <div class="note-meta">笔记本：Go语言</div>
+</div>
+<div class="note-content">
+<div style="--en-clipped-content:article">
+<div><br/></div><div style="font-size: 16px; display:block; min-width: 100%; position: relative;"> <div><div style="font-family:-apple-system, BlinkMacSystemFont, &quot;Helvetica Neue&quot;, &quot;PingFang SC&quot;, &quot;Microsoft YaHei&quot;, &quot;Source Han Sans SC&quot;, &quot;Noto Sans CJK SC&quot;, &quot;WenQuanYi Micro Hei&quot;, sans-serif;color:rgb(25, 27, 31);-webkit-tap-highlight-color:rgba(25, 27, 31, 0);background:rgb(255, 255, 255);"><div><div><span><div style="background:rgb(255, 255, 255);min-width:1000px;"><div style="box-sizing:border-box;"><div style="margin:0px auto;width:690px;"><h1 style="font:inherit;font-synthesis:style;font-weight:600;overflow-wrap:break-word;font-size:24px;line-height:1.22;margin:24px 0px;">Golang内存泄漏的7种场景</h1><div style="-webkit-box-align:center;align-items:center;display:flex;"><div style="-webkit-box-align:center;-webkit-box-pack:justify;align-items:center;display:flex;justify-content:space-between;max-width:654px;position:relative;-webkit-box-flex:1;flex:1 1 0%;overflow:hidden;white-space:nowrap;"><div style="-webkit-box-align:center;-webkit-box-pack:justify;align-items:center;display:flex;justify-content:space-between;max-width:654px;position:relative;-webkit-box-flex:1;flex:1 1 0%;overflow:hidden;white-space:nowrap;"><span><div style="position:relative;display:inline-block;"><a href="https://www.zhihu.com/people/li-hao-11-79-29" target="_blank" style="color:inherit;text-decoration:none;"><img width="96" height="23" src="https://picx.zhimg.com/v2-f04afe30679135994ed77a7990c07e02_l.jpg?source=172ae18b" style="box-sizing:border-box;margin:0px;min-width:0px;max-width:100%;width:38px;height:38px;background:rgb(255, 255, 255);border-radius:2px;vertical-align:top;"/></a></div></span><div style="-webkit-box-flex:1;flex:1 1 0%;margin-left:14px;overflow:hidden;"><div style="-webkit-box-align:center;align-items:center;display:flex;flex-shrink:0;font-size:15px;line-height:1.1;"><span style="font-synthesis:style;font-weight:600;color:rgb(55, 58, 64);"><div style="position:relative;display:inline-block;"><a href="https://www.zhihu.com/people/li-hao-11-79-29" target="_blank" style="color:inherit;text-decoration:none;">上山打老虎</a></div></span></div><div style="overflow:hidden;color:rgb(83, 88, 97);"><div style="-webkit-box-align:center;align-items:center;display:flex;font-size:14px;margin-top:2px;"></div></div></div></div></div></div><div style="margin:0px;"></div><div><div style="box-sizing:border-box;margin:12px 0px;min-width:0px;-webkit-box-align:center;align-items:center;cursor:pointer;display:inline-flex;"><div style="box-sizing:border-box;margin:0px;min-width:0px;font-size:14px;font-weight:normal;color:rgb(132, 145, 165);display:-webkit-box;text-overflow:ellipsis;overflow:hidden;-webkit-box-orient:vertical;-webkit-line-clamp:1;">24 人赞同了该文章</div></div></div><span style="color:rgb(132, 145, 165);"></span></div><div style="position:relative;margin:0px auto;width:690px;overflow:visible;"><div style="margin-top:16px;"><div style="position:relative;display:inline;"><div style="word-break:break-word;line-height:1.6;"><p style="margin:1.4em 0px;margin-top:0px;">上文说到面试官考察了超超<a href="https://link.zhihu.com/?target=https%3A//mp.weixin.qq.com/s%3F__biz%3DMzk0OTMyMjkxMQ%3D%3D%26mid%3D2247485668%26idx%3D1%26sn%3Dcaf35a110c53492df88bfe22fae44737%26scene%3D21%23wechat_redirect" target="_blank" rel="nofollow noreferrer" style="color:inherit;cursor:pointer;border-bottom:1px solid rgb(129, 133, 143);text-decoration:none;">数组和切片的区别</a>，超超答道了切片使用不当会导致内存泄漏的场景。那么除了切片的错误使用会导致内存泄漏，有没有其他场景会导致内存泄漏呢？来看看超超是怎么理解的吧～</p><h2 style="font:inherit;margin:0px;font-synthesis:style;clear:left;margin-top:2.33333em;margin-bottom:1.16667em;font-size:1.2em;line-height:1.5;font-weight:600;">数组的错误使用</h2><p style="margin:1.4em 0px;">面试官：在开发中数组使用不当会导致内存泄漏吗？</p><p style="margin:1.4em 0px;">超超：由于数组是Golang的基本数据类型，每个数组占用不同的内存空间，生命周期互不干扰，很难出现内存泄漏的情况。但是数组作为形参传输时，遵循的是值拷贝，如果函数被多次调用且数组过大时，则会导致内存使用激增。</p><div style="margin:1em 0px;"><pre style="border-radius:4px;background-color: #fbfaf8;border: 1px solid rgba(0,0,0,.14902);color: #333;font-size: 12px;padding: 8px;font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif;box-sizing: border-box;"><code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif">//统计nums中target出现的次数
+func countTarget(nums [1000000]int, target int) int {
+    num := 0
+    for i := 0; i &lt; len(nums) &amp;&amp; nums[i] == target; i++ {
+        num++
+    }
+    return num
+}</code></pre></div><p style="margin:1.4em 0px;">例如上面的函数中，每次调用countTarget函数传参时都需要新建一个大小为100万的int数组，大约为8MB内存，如果在短时间内调用100次就需要约800MB的内存空间了。（未达到GC时间或者GC阀值是不会触发GC的）如果是在高并发场景下每个协程都同时调用该函数，内存占用量是非常恐怖的。因此对于大数组放在形参场景下，通常使用切片或者指针进行传递，避免短时间的内存使用激增。</p><h2 style="font:inherit;margin:0px;font-synthesis:style;clear:left;margin-top:2.33333em;margin-bottom:1.16667em;font-size:1.2em;line-height:1.5;font-weight:600;">Goroutine泄漏</h2><p style="margin:1.4em 0px;">面试官：对于内存泄漏，还会在哪些场景下会触发？</p><p style="margin:1.4em 0px;">超超：实际开发中更多的还是Goroutine引起的内存泄漏，因为Goroutine的创建非常简单，通过关键字go即可创建，由于开发的进度大部分程序猿只会关心代码的功能是否实现，很少会关心Goroutine何时退出。如果Goroutine在执行时被阻塞而无法退出，就会导致Goroutine的内存泄漏，一个Goroutine的最低栈大小为2KB，在高并发的场景下，对内存的消耗也是非常恐怖的！</p><p style="margin:1.4em 0px;"><b style="font-synthesis:style;font-weight:600;">互斥锁未释放</b></p><div style="margin:1em 0px;"><pre style="border-radius:4px;background-color: #fbfaf8;border: 1px solid rgba(0,0,0,.14902);color: #333;font-size: 12px;padding: 8px;font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif;box-sizing: border-box;"><code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"> 1//协程拿到锁未释放，其他协程获取锁会阻塞
+ 2func mutexTest() {
+ 3    mutex := sync.Mutex{}
+ 4    for i := 0; i &lt; 10; i++ {
+ 5        go func() {
+ 6            mutex.Lock()
+ 7            fmt.Printf("%d goroutine get mutex", i)
+ 8      //模拟实际开发中的操作耗时
+ 9            time.Sleep(100 * time.Millisecond)
+10        }()
+11    }
+12    time.Sleep(10 * time.Second)
+13}
+</code></pre></div><p style="margin:1.4em 0px;"><b style="font-synthesis:style;font-weight:600;">死锁</b></p><div style="margin:1em 0px;"><pre style="border-radius:4px;background-color: #fbfaf8;border: 1px solid rgba(0,0,0,.14902);color: #333;font-size: 12px;padding: 8px;font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif;box-sizing: border-box;"><code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"> 1func mutexTest() {
+ 2    m1, m2 := sync.Mutex{}, sync.RWMutex{}
+ 3  //g1得到锁1去获取锁2
+ 4    go func() {
+ 5        m1.Lock()
+ 6        fmt.Println("g1 get m1")
+ 7        time.Sleep(1 * time.Second)
+ 8        m2.Lock()
+ 9        fmt.Println("g1 get m2")
+10    }()
+11    //g2得到锁2去获取锁1
+12    go func() {
+13        m2.Lock()
+14        fmt.Println("g2 get m2")
+15        time.Sleep(1 * time.Second)
+16        m1.Lock()
+17        fmt.Println("g2 get m1")
+18    }()
+19  //其余协程获取锁都会失败
+20    go func() {
+21        m1.Lock()
+22        fmt.Println("g3 get m1")
+23    }()
+24    time.Sleep(10 * time.Second)
+25}
+</code></pre></div><p style="margin:1.4em 0px;"><b style="font-synthesis:style;font-weight:600;">空channel</b></p><div style="margin:1em 0px;"><pre style="border-radius:4px;background-color: #fbfaf8;border: 1px solid rgba(0,0,0,.14902);color: #333;font-size: 12px;padding: 8px;font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif;box-sizing: border-box;"><code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"> 1func channelTest() {
+ 2  //声明未初始化的channel读写都会阻塞
+ 3    var c chan int
+ 4  //向channel中写数据
+ 5    go func() {
+ 6        c &lt;- 1
+ 7        fmt.Println("g1 send succeed")
+ 8        time.Sleep(1 * time.Second)
+ 9    }()
+10  //从channel中读数据
+11    go func() {
+12        &lt;-c
+13        fmt.Println("g2 receive succeed")
+14        time.Sleep(1 * time.Second)
+15    }()
+16    time.Sleep(10 * time.Second)
+17}
+</code></pre></div><p style="margin:1.4em 0px;"><b style="font-synthesis:style;font-weight:600;">能出不能进</b></p><div style="margin:1em 0px;"><pre style="border-radius:4px;background-color: #fbfaf8;border: 1px solid rgba(0,0,0,.14902);color: #333;font-size: 12px;padding: 8px;font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif;box-sizing: border-box;"><code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"> 1func channelTest() {
+ 2    var c = make(chan int)
+ 3  //10个协程向channel中写数据
+ 4    for i := 0; i &lt; 10; i++ {
+ 5        go func() {
+ 6            c &lt;- 1
+ 7            fmt.Println("g1 send succeed")
+ 8            time.Sleep(1 * time.Second)
+ 9        }()
+10    }
+11  //1个协程丛channel中读数据
+12    go func() {
+13        &lt;-c
+14        fmt.Println("g2 receive succeed")
+15        time.Sleep(1 * time.Second)
+16    }()
+17  //会有写的9个协程阻塞得不到释放
+18    time.Sleep(10 * time.Second)
+19}
+</code></pre></div><p style="margin:1.4em 0px;"><b style="font-synthesis:style;font-weight:600;">能进不能出</b></p><div style="margin:1em 0px;"><pre style="border-radius:4px;background-color: #fbfaf8;border: 1px solid rgba(0,0,0,.14902);color: #333;font-size: 12px;padding: 8px;font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif;box-sizing: border-box;"><code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"> 1func channelTest() {
+ 2    var c = make(chan int)
+ 3  //10个协程向channel中读数据
+ 4    for i := 0; i &lt; 10; i++ {
+ 5        go func() {
+ 6            &lt;- c
+ 7            fmt.Println("g1 receive succeed")
+ 8            time.Sleep(1 * time.Second)
+ 9        }()
+10    }
+11  //1个协程丛channel写读数据
+12    go func() {
+13        c &lt;- 1
+14        fmt.Println("g2 send succeed")
+15        time.Sleep(1 * time.Second)
+16    }()
+17  //会有读的9个协程阻塞得不到释放
+18    time.Sleep(10 * time.Second)
+19}
+</code></pre></div><h2 style="font:inherit;margin:0px;font-synthesis:style;clear:left;margin-top:2.33333em;margin-bottom:1.16667em;font-size:1.2em;line-height:1.5;font-weight:600;">定时器的使用</h2><p style="margin:1.4em 0px;">面试官：你知道time.Ticker吗？<br/>超超：知道的，time.Ticker是每隔指定的时间就会向通道内写数据。作为循环触发器，必须调用stop方法才会停止，从而被GC掉，否则会一直占用内存空间。</p><div style="margin:1em 0px;"><pre style="border-radius:4px;background-color: #fbfaf8;border: 1px solid rgba(0,0,0,.14902);color: #333;font-size: 12px;padding: 8px;font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif;box-sizing: border-box;"><code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"> 1func tickerTest() {
+ 2    //定义一个ticker，每隔500毫秒触发
+ 3    ticker := time.NewTicker(time.Second * 1)
+ 4    //Ticker触发
+ 5    go func() {
+ 6        for t := range ticker.C {
+ 7            fmt.Println("ticker被触发", t)
+ 8        }
+ 9    }()
+10
+11    time.Sleep(time.Second * 10)
+12    //停止ticker
+13    ticker.Stop()
+14}
+</code></pre></div><p style="margin:1.4em 0px;">面试官：在开发中你知道哪些工具可以来排查内存泄漏吗？</p><p style="margin:1.4em 0px;">超超：了解的….</p><p style="margin:-0.8em 0px;"><br/></p><div style="margin:1.4em 0px;"><div><div class="media-placeholder">[图片/附件]</div></en-media></div></div><p style="margin:-0.8em 0px;"><br/></p><p style="margin:1.4em 0px;">对于Golang的内存泄漏场景欢迎小伙伴在下方留言讨论呀！同样欢迎添加我的微信，进读者群和超超一起讨论开发中的难题！</p><p style="margin:-0.8em 0px;"><br/></p><p style="margin:1.4em 0px;"></p><p style="margin:1.4em 0px;margin-bottom:0px;"></p></div></div></div></div><div style="color:rgb(132, 145, 165);font-size:14px;padding:16px 0px;margin:0px auto;overflow:hidden;width:690px;">发布于 2022-02-20 14:11</div><div style="margin:0px auto;overflow:hidden;width:690px;display:flex;"><div style="-webkit-box-orient:horizontal;-webkit-box-direction:normal;-webkit-box-align:center;align-items:center;display:flex;flex-flow:wrap;margin-bottom:-10px;padding:16px 0px;"><div style="position:relative;display:inline-block;padding:0px 12px;color:rgb(23, 114, 246);vertical-align:top;border-radius:100px;background:rgba(23, 114, 246, 0.1);margin-bottom:10px;overflow:hidden;height:33px;font-size:13px;line-height:33px;margin-right:5px;"><span><a href="https://www.zhihu.com/topic/19625982" target="_blank" style="color:inherit;text-decoration:none;"><div style="position:relative;display:inline-block;">Go 语言</div></a></span></div><div style="position:relative;display:inline-block;padding:0px 12px;color:rgb(23, 114, 246);border-radius:100px;background:rgba(23, 114, 246, 0.1);vertical-align:middle;margin-bottom:10px;overflow:hidden;height:33px;font-size:13px;line-height:33px;margin-right:5px;"><span><a href="https://www.zhihu.com/topic/19620078" target="_blank" style="color:inherit;text-decoration:none;"><div style="position:relative;display:inline-block;">内存泄露</div></a></span></div><div style="position:relative;display:inline-block;padding:0px 12px;color:rgb(23, 114, 246);border-radius:100px;background:rgba(23, 114, 246, 0.1);vertical-align:middle;margin-bottom:10px;overflow:hidden;height:33px;font-size:13px;line-height:33px;"><span><a href="https://www.zhihu.com/topic/19959825" target="_blank" style="color:inherit;text-decoration:none;"><div style="position:relative;display:inline-block;">隐私泄露</div></a></span></div></div></div><div style="margin:0px auto;overflow:hidden;width:690px;"><div style="visibility:hidden;position:static;inset:auto auto 0px 0px;display:block;float:none;margin:0px 0px 10px;height:54px;"></div></div></div></div></span></div></div></div></div></div>
+</div>
+</div>
+<a class="back-link" href="../articles.html">← 返回笔记列表</a>
+</body>
+</html>

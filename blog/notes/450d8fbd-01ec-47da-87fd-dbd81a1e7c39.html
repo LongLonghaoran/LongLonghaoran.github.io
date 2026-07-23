@@ -1,0 +1,450 @@
+<!DOCTYPE html>
+<html lang="zh-CN" data-theme="light">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>High Memory Management — 技术笔记</title>
+<style>
+:root {
+  --bg: #ffffff;
+  --text: #1a1a1a;
+  --muted: #666;
+  --border: #e0e0e0;
+  --code-bg: #f5f5f5;
+  --link: #0066cc;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #1a1a1a;
+    --text: #e0e0e0;
+    --muted: #999;
+    --border: #333;
+    --code-bg: #2a2a2a;
+    --link: #66bbff;
+  }
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  line-height: 1.7;
+  color: var(--text);
+  background: var(--bg);
+  max-width: 860px;
+  margin: 0 auto;
+  padding: 2rem 1.5rem;
+}
+.note-header {
+  border-bottom: 2px solid var(--border);
+  padding-bottom: 1rem;
+  margin-bottom: 2rem;
+}
+.note-title {
+  font-size: 1.6rem;
+  font-weight: 700;
+  margin-bottom: 0.3rem;
+}
+.note-meta {
+  color: var(--muted);
+  font-size: 0.85rem;
+}
+.note-content {
+  font-size: 0.95rem;
+}
+.note-content h1 { font-size: 1.4rem; margin: 1.2rem 0 0.6rem; }
+.note-content h2 { font-size: 1.2rem; margin: 1rem 0 0.5rem; }
+.note-content h3 { font-size: 1.05rem; margin: 0.8rem 0 0.4rem; }
+.note-content p { margin: 0.5rem 0; }
+.note-content ul, .note-content ol { margin: 0.5rem 0 0.5rem 2rem; }
+.note-content li { margin: 0.2rem 0; }
+.note-content pre {
+  background: var(--code-bg);
+  padding: 1rem;
+  border-radius: 6px;
+  overflow-x: auto;
+  margin: 0.8rem 0;
+  font-size: 0.85rem;
+}
+.note-content code {
+  background: var(--code-bg);
+  padding: 0.1rem 0.3rem;
+  border-radius: 3px;
+  font-size: 0.88em;
+}
+.note-content pre code {
+  background: none;
+  padding: 0;
+}
+.note-content blockquote {
+  border-left: 3px solid var(--border);
+  padding-left: 1rem;
+  color: var(--muted);
+  margin: 0.8rem 0;
+}
+.note-content a { color: var(--link); }
+.note-content img {
+  max-width: 100%;
+  height: auto;
+  border-radius: 6px;
+  margin: 0.5rem 0;
+}
+.note-content table {
+  border-collapse: collapse;
+  width: 100%;
+  margin: 0.8rem 0;
+}
+.note-content th, .note-content td {
+  border: 1px solid var(--border);
+  padding: 0.5rem;
+}
+.note-content th { background: var(--code-bg); }
+.media-placeholder {
+  background: var(--code-bg);
+  padding: 1rem;
+  text-align: center;
+  color: var(--muted);
+  border-radius: 6px;
+  margin: 0.5rem 0;
+  font-size: 0.85rem;
+}
+.encrypt-placeholder {
+  background: #fff3cd;
+  padding: 0.5rem;
+  text-align: center;
+  color: #856404;
+  border-radius: 6px;
+  margin: 0.5rem 0;
+  font-size: 0.85rem;
+}
+.back-link {
+  display: inline-block;
+  margin-top: 2rem;
+  color: var(--link);
+  text-decoration: none;
+  font-size: 0.85rem;
+}
+</style>
+</head>
+<body>
+<div class="note-header">
+  <div class="note-title">High Memory Management</div>
+  <div class="note-meta">笔记本：Linux</div>
+</div>
+<div class="note-content">
+<div style="--en-clipped-content:article">
+<div><br/></div><div style="font-size: 16px; display:block; min-width: 100%; position: relative;"> <div><div>
+<a href="https://www.kernel.org/doc/gorman/html/understand/understand011.html"><div class="media-placeholder">[图片/附件]</div></en-media></a>
+<a href="https://www.kernel.org/doc/gorman/html/understand/index.html"><div class="media-placeholder">[图片/附件]</div></en-media></a>
+<a href="https://www.kernel.org/doc/gorman/html/understand/understand013.html"><div class="media-placeholder">[图片/附件]</div></en-media></a>
+<hr/>
+<h1><a name="htoc62">Chapter 9</a>  High Memory Management</h1><p>
+<a name="chap: High Memory Management"></a>
+<a name="@mainindex782"></a></p><p>The kernel may only directly address memory for which it has set up a page
+table entry. In the most common case, the user/kernel address space split
+of 3GiB/1GiB<a name="@mainindex783"></a> implies that at best only 896MiB of memory
+may be directly accessed at any given time on a 32-bit machine as explained
+in Section <a href="https://www.kernel.org/doc/gorman/html/understand/understand007.html#sec:%20Linear%20Address%20Space">4.1</a>. On 64-bit hardware, this is not
+really an issue as there is more than enough virtual address space. It is
+highly unlikely there will be machines running 2.4 kernels with more than
+terabytes of RAM.</p><p>There are many high end 32-bit machines that have more than 1GiB of memory
+and the inconveniently located memory cannot be simply ignored. The solution
+Linux uses is to temporarily map pages from high memory into the lower page
+tables. This will be discussed in Section <a href="https://www.kernel.org/doc/gorman/html/understand/understand012.html#sec:%20Mapping%20High%20Memory%20Pages">9.2</a>.</p><p>High memory and IO have a related problem which must be addressed, as not
+all devices are able to address high memory or all the memory available
+to the CPU. This may be the case if the CPU has PAE extensions enabled,
+the device is limited to addresses the size of a signed 32-bit integer
+(2GiB) or a 32-bit device is being used on a 64-bit architecture. Asking
+the device to write to memory will fail at best and possibly disrupt the
+kernel at worst. The solution to this problem is to use a 
+<em>bounce buffer</em><a name="@mainindex784"></a> and this will be discussed in
+Section <a href="https://www.kernel.org/doc/gorman/html/understand/understand012.html#sec:%20Bounce%20Buffers">9.4</a>.</p><p>This chapter begins with a brief description of how the <em>Persistent
+Kernel Map (PKMap)</em><a name="@mainindex785"></a> address space is managed before talking about how pages
+are mapped and unmapped from high memory. The subsequent section will deal
+with the case where the mapping must be atomic before discussing bounce
+buffers in depth. Finally we will talk about how emergency pools are used
+for when memory is very tight.</p><h2><a name="toc60"></a><a name="htoc63">9.1</a>  Managing the PKMap Address Space</h2><p>
+<a name="sec: Managing the PKMap Address Space"></a>
+<a name="@mainindex786"></a></p><p>Space is reserved at the top of the kernel page tables from
+<tt>PKMAP_BASE</tt><a name="@mainindex787"></a> to <tt>FIXADDR_START</tt><a name="@mainindex788"></a> for a PKMap. The
+size of the space reserved varies slightly. On the x86, <tt>PKMAP_BASE</tt>
+is at 0xFE000000 and the address of <tt>FIXADDR_START</tt> is a compile
+time constant that varies with configure options but is typically only a
+few pages located near the end of the linear address space. This means that
+there is slightly below 32MiB of page table space for mapping pages from
+high memory into usable space.</p><p>For mapping pages, a single page set of PTEs is stored at the beginning of
+the PKMap area to allow 1024 high pages to be mapped into low memory for short
+periods with the function <tt>kmap()</tt> and unmapped with <tt>kunmap()</tt>.
+The pool seems very small but the page is only mapped by <tt>kmap()</tt>
+for a <em>very</em> short time. Comments in the code indicate that there was
+a plan to allocate contiguous page table entries to expand this area but
+it has remained just that, comments in the code, so a large portion of the
+PKMap is unused.</p><p>The page table entry for use with <tt>kmap()</tt> is called
+<tt>pkmap_page_table</tt><a name="@mainindex789"></a> which is located at <tt>PKMAP_BASE</tt>
+and set up during system initialisation. On the x86, this takes place at the
+end of the <tt>pagetable_init()</tt> function. The pages for the PGD and
+PMD entries are allocated by the boot memory allocator to ensure they exist.</p><p>The current state of the page table entries is managed by a simple array
+called called <tt>pkmap_count</tt><a name="@mainindex790"></a> which has <tt>LAST_PKMAP</tt><a name="@mainindex791"></a>
+entries in it. On an x86 system without PAE, this is 1024 and with PAE, it is
+512. More accurately, albeit not expressed in code, the <tt>LAST_PKMAP</tt>
+variable is equivalent to <tt>PTRS_PER_PTE</tt>.</p><p>Each element is not exactly a reference count but it is very close. If the
+entry is 0, the page is free and has not been used since the last TLB flush. If
+it is 1, the slot is unused but a page is still mapped there waiting for a
+TLB flush. Flushes are delayed until every slot has been used at least once
+as a global flush is required for all CPUs when the global page tables are
+modified and is extremely expensive. Any higher value is a reference count
+of <tt>n-1</tt> users of the page.</p><h2><a name="toc61"></a><a name="htoc64">9.2</a>  Mapping High Memory Pages</h2><p>
+<a name="sec: Mapping High Memory Pages"></a>
+<a name="@mainindex792"></a></p><p>The API for mapping pages from high memory is described in Table 
+<a href="https://www.kernel.org/doc/gorman/html/understand/understand012.html#tab:%20High%20Memory%20Mapping%20API">9.1</a>. The main function for mapping
+a page is <tt>kmap()</tt><a name="@mainindex793"></a>. For users that do not wish to block,
+<tt>kmap_nonblock()</tt><a name="@mainindex794"></a> is available and interrupt users have
+<tt>kmap_atomic()</tt><a name="@mainindex795"></a>. The kmap pool is quite small so it is important
+that users of <tt>kmap()</tt> call <tt>kunmap()</tt><a name="@mainindex796"></a> as quickly as possible
+because the pressure on this small window grows incrementally worse as the
+size of high memory grows in comparison to low memory.</p><blockquote style="margin-left:4ex;margin-right:4ex;text-align:left;"><div style="text-align:center;margin-left:auto;margin-right:auto;"><hr width="80%" size="2"/></div>
+<div style="text-align:center;margin-left:auto;margin-right:auto;"><div class="media-placeholder">[图片/附件]</div></en-media></div>
+<div style="padding-left:2ex;padding-right:2ex;margin-left:auto;margin-right:auto;"><table cellspacing="6" cellpadding="0" style="margin-left:inherit;margin-right:inherit;"><tbody><tr><td valign="top" align="left">Figure 9.1: Call Graph: <tt>kmap()</tt></td></tr>
+</tbody></table></div>
+<a name="fig: kmap"></a>
+<div style="text-align:center;margin-left:auto;margin-right:auto;"><hr width="80%" size="2"/></div></blockquote><p>The <tt>kmap()</tt> function itself is fairly simple. It first checks to
+make sure an interrupt is not calling this function(as it may sleep) and
+calls <tt>out_of_line_bug()</tt> if true. An interrupt handler calling
+<tt>BUG()</tt> would panic the system so <tt>out_of_line_bug()</tt>
+prints out bug information and exits cleanly. The second check is that the
+page is below <tt>highmem_start_page</tt> as pages below this mark are
+already visible and do not need to be mapped.</p><p>It then checks if the page is already in low memory and simply returns
+the address if it is. This way, users that need <tt>kmap()</tt> may use it
+unconditionally knowing that if it is already a low memory page, the function
+is still safe. If it is a high page to be mapped, <tt>kmap_high()</tt><a name="@mainindex797"></a>
+is called to begin the real work.</p><p>The <tt>kmap_high()</tt><a name="@mainindex798"></a> function begins with checking the
+<tt>page</tt>→<tt>virtual</tt> field which is set if the page is already
+mapped. If it is NULL, <tt>map_new_virtual()</tt><a name="@mainindex799"></a> provides a mapping
+for the page.</p><p>Creating a new virtual mapping with <tt>map_new_virtual()</tt> is a
+simple case of linearly scanning <tt>pkmap_count</tt>. The scan starts at
+<tt>last_pkmap_nr</tt><a name="@mainindex800"></a> instead of 0 to prevent searching over the same
+areas repeatedly between <tt>kmap()</tt>s. When <tt>last_pkmap_nr</tt>
+wraps around to 0, <tt>flush_all_zero_pkmaps()</tt> is called to set all
+entries from 1 to 0 before flushing the TLB.</p><p>If, after another scan, an entry is still not found, the process sleeps on
+the <tt>pkmap_map_wait</tt><a name="@mainindex801"></a> wait queue until it is woken up after the
+next <tt>kunmap()</tt>.</p><p>Once a mapping has been created, the corresponding entry in
+the <tt>pkmap_count</tt> array is incremented and the virtual address in
+low memory returned.</p><blockquote style="margin-left:4ex;margin-right:4ex;text-align:left;"><div style="text-align:center;margin-left:auto;margin-right:auto;"><hr width="80%" size="2"/></div>
+<div style="text-align:center;margin-left:auto;margin-right:auto;">
+<table border="1" cellspacing="0" cellpadding="1" style="margin-left:inherit;margin-right:inherit;"><tbody><tr><td valign="top" align="left"> 
+<a name="@mainindex802"></a><tt>void * kmap(struct page *page)</tt></td></tr>
+<tr><td valign="top" align="left"> Takes a struct page from high memory and maps it into low memory.
+The address returned is the virtual address of the mapping</td></tr>
+<tr><td valign="top" align="left"> </td></tr>
+<tr><td valign="top" align="left">
+<a name="@mainindex803"></a><tt>void * kmap_nonblock(struct page *page)</tt></td></tr>
+<tr><td valign="top" align="left"> This is the same as <tt>kmap()</tt> except it will not block if
+no slots are available and will instead return NULL. This is not the same as
+<tt>kmap_atomic()</tt> which uses specially reserved slots</td></tr>
+<tr><td valign="top" align="left"> </td></tr>
+<tr><td valign="top" align="left">
+<a name="@mainindex804"></a><tt>void * kmap_atomic(struct page *page, enum km_type type)</tt></td></tr>
+<tr><td valign="top" align="left"> There are slots maintained in the map for atomic use by interrupts
+(see Section <a href="https://www.kernel.org/doc/gorman/html/understand/understand012.html#sec:%20Mapping%20High%20Memory%20Pages%20Atomically">9.3</a>). Their use is
+heavily discouraged and callers of this function may not sleep or schedule. This
+function will map a page from high memory atomically for a specific purpose</td></tr>
+<tr><td valign="top" align="left"> </td></tr>
+</tbody></table> 
+<div style="padding-left:2ex;padding-right:2ex;margin-left:auto;margin-right:auto;"><table cellspacing="6" cellpadding="0" style="margin-left:inherit;margin-right:inherit;"><tbody><tr><td valign="top" align="left">Table 9.1: High Memory Mapping API</td></tr>
+</tbody></table></div> 
+<a name="tab: High Memory Mapping API"></a>
+</div>
+<div style="text-align:center;margin-left:auto;margin-right:auto;"><hr width="80%" size="2"/></div></blockquote><h3>9.2.1  Unmapping Pages</h3><p>The API for unmapping pages from high memory is described in Table
+<a href="https://www.kernel.org/doc/gorman/html/understand/understand012.html#tab:%20High%20Memory%20Unmapping%20API">9.2</a>. The <tt>kunmap()</tt><a name="@mainindex805"></a> function,
+like its complement, performs two checks. The first is an identical check to
+<tt>kmap()</tt> for usage from interrupt context. The second is that the page
+is below <tt>highmem_start_page</tt>. If it is, the page already exists in
+low memory and needs no further handling. Once established that it is a page
+to be unmapped, <tt>kunmap_high()</tt><a name="@mainindex806"></a> is called to perform the unmapping.</p><blockquote style="margin-left:4ex;margin-right:4ex;text-align:left;"><div style="text-align:center;margin-left:auto;margin-right:auto;"><hr width="80%" size="2"/></div>
+<div style="text-align:center;margin-left:auto;margin-right:auto;"><div class="media-placeholder">[图片/附件]</div></en-media></div>
+<div style="padding-left:2ex;padding-right:2ex;margin-left:auto;margin-right:auto;"><table cellspacing="6" cellpadding="0" style="margin-left:inherit;margin-right:inherit;"><tbody><tr><td valign="top" align="left">Figure 9.2: Call Graph: <tt>kunmap()</tt></td></tr>
+</tbody></table></div>
+<a name="fig: kunmap"></a>
+<div style="text-align:center;margin-left:auto;margin-right:auto;"><hr width="80%" size="2"/></div></blockquote><p>The <tt>kunmap_high()</tt><a name="@mainindex807"></a> is simple in principle. It decrements the
+corresponding element for this page in <tt>pkmap_count</tt>. If it reaches 1
+(remember this means no more users but a TLB flush is required), any process
+waiting on the <tt>pkmap_map_wait</tt> is woken up as a slot is now
+available. The page is not unmapped from the page tables then as that would
+require a TLB flush. It is delayed until <tt>flush_all_zero_pkmaps()</tt>
+is called.</p><blockquote style="margin-left:4ex;margin-right:4ex;text-align:left;"><div style="text-align:center;margin-left:auto;margin-right:auto;"><hr width="80%" size="2"/></div>
+<div style="text-align:center;margin-left:auto;margin-right:auto;">
+<table border="1" cellspacing="0" cellpadding="1" style="margin-left:inherit;margin-right:inherit;"><tbody><tr><td valign="top" align="left"> 
+<a name="@mainindex808"></a><tt>void kunmap(struct page *page)</tt></td></tr>
+<tr><td valign="top" align="left"> Unmaps a struct page from low memory and frees up the page table
+entry mapping it</td></tr>
+<tr><td valign="top" align="left"> </td></tr>
+<tr><td valign="top" align="left">
+<a name="@mainindex809"></a><tt>void kunmap_atomic(void *kvaddr, enum km_type type)</tt></td></tr>
+<tr><td valign="top" align="left"> Unmap a page that was mapped atomically</td></tr>
+<tr><td valign="top" align="left"> </td></tr>
+</tbody></table> 
+<div style="padding-left:2ex;padding-right:2ex;margin-left:auto;margin-right:auto;"><table cellspacing="6" cellpadding="0" style="margin-left:inherit;margin-right:inherit;"><tbody><tr><td valign="top" align="left">Table 9.2: High Memory Unmapping API</td></tr>
+</tbody></table></div> 
+<a name="tab: High Memory Unmapping API"></a>
+</div>
+<div style="text-align:center;margin-left:auto;margin-right:auto;"><hr width="80%" size="2"/></div></blockquote><h2><a name="toc62"></a><a name="htoc65">9.3</a>  Mapping High Memory Pages Atomically</h2><p>
+<a name="sec: Mapping High Memory Pages Atomically"></a>
+<a name="@mainindex810"></a></p><p>The use of <tt>kmap_atomic()</tt> is discouraged but slots are reserved
+for each CPU for when they are necessary, such as when bounce buffers, are
+used by devices from interrupt. There are a varying number of different
+requirements an architecture has for atomic high memory mapping which
+are enumerated by <tt>km_type</tt><a name="@mainindex811"></a>. The total number of uses is
+<tt>KM_TYPE_NR</tt><a name="@mainindex812"></a>. On the x86, there are a total of six different
+uses for atomic kmaps.</p><p>There are <tt>KM_TYPE_NR</tt> entries per processor are reserved at boot
+time for atomic mapping at the location <tt>FIX_KMAP_BEGIN</tt><a name="@mainindex813"></a> and
+ending at <tt>FIX_KMAP_END</tt><a name="@mainindex814"></a>. Obviously a user of an atomic kmap
+may not sleep or exit before calling <tt>kunmap_atomic()</tt> as the next
+process on the processor may try to use the same entry and fail.</p><p>The function <tt>kmap_atomic()</tt><a name="@mainindex815"></a> has the very simple task of mapping
+the requested page to the slot set aside in the page tables for the requested
+type of operation and processor. The function <tt>kunmap_atomic()</tt><a name="@mainindex816"></a>
+is interesting as it will only clear the PTE with <tt>pte_clear()</tt>
+if debugging is enabled. It is considered unnecessary to bother unmapping
+atomic pages as the next call to <tt>kmap_atomic()</tt> will simply replace
+it making TLB flushes unnecessary.</p><h2><a name="toc63"></a><a name="htoc66">9.4</a>  Bounce Buffers</h2><p>
+<a name="sec: Bounce Buffers"></a>
+<a name="@mainindex817"></a>
+<a name="@mainindex818"></a></p><p>Bounce buffers are required for devices that cannot access the full range
+of memory available to the CPU. An obvious example of this is when a device
+does not address with as many bits as the CPU, such as 32-bit devices on
+64-bit architectures or recent Intel processors with PAE enabled.</p><p>The basic concept is very simple. A bounce buffer resides in memory low
+enough for a device to copy from and write data to. It is then copied to
+the desired user page in high memory. This additional copy is undesirable,
+but unavoidable. Pages are allocated in low memory which are used as buffer
+pages for DMA to and from the device. This is then copied by the kernel to
+the buffer page in high memory when IO completes so the bounce buffer acts
+as a type of bridge. There is significant overhead to this operation as at
+the very least it involves copying a full page but it is insignificant in
+comparison to swapping out pages in low memory.</p><h3>9.4.1  Disk Buffering</h3><p>
+<a name="sec: Disk Buffering"></a></p><p>Blocks, typically around 1KiB are packed into pages and managed
+by a <tt>struct</tt> <tt>buffer_head</tt><a name="@mainindex819"></a> allocated
+by the slab allocator. Users of buffer heads have the option
+of registering a callback function. This function is stored in
+<tt>buffer_head</tt>→<tt>b_end_io()</tt> and called when IO
+completes. It is this mechanism that bounce buffers uses to have data
+copied out of the bounce buffers. The callback registered is the function
+<tt>bounce_end_io_write()</tt><a name="@mainindex820"></a>.</p><p>Any other feature of buffer heads or how they are used by the block layer is
+beyond the scope of this document and more the concern of the IO layer.</p><h3>9.4.2  Creating Bounce Buffers</h3><p>The creation of a bounce buffer is a simple affair which is started by the
+<tt>create_bounce()</tt><a name="@mainindex821"></a> function. The principle is very simple, create a
+new buffer using a provided buffer head as a template. The function takes two
+parameters which are a read/write parameter (<tt>rw</tt>) and the template
+buffer head to use (<tt>bh_orig</tt>).</p><blockquote style="margin-left:4ex;margin-right:4ex;text-align:left;"><div style="text-align:center;margin-left:auto;margin-right:auto;"><hr width="80%" size="2"/></div>
+<div style="text-align:center;margin-left:auto;margin-right:auto;"><div class="media-placeholder">[图片/附件]</div></en-media></div>
+<div style="padding-left:2ex;padding-right:2ex;margin-left:auto;margin-right:auto;"><table cellspacing="6" cellpadding="0" style="margin-left:inherit;margin-right:inherit;"><tbody><tr><td valign="top" align="left">Figure 9.3: Call Graph: <tt>create_bounce()</tt></td></tr>
+</tbody></table></div>
+<a name="fig: create_bounce"></a>
+<div style="text-align:center;margin-left:auto;margin-right:auto;"><hr width="80%" size="2"/></div></blockquote><p>A page is allocated for the buffer itself with the function
+<tt>alloc_bounce_page()</tt><a name="@mainindex822"></a> which is a wrapper around
+<tt>alloc_page()</tt> with one important addition. If the allocation is
+unsuccessful, there is an emergency pool of pages and buffer heads available
+for bounce buffers. This is discussed further in Section 
+<a href="https://www.kernel.org/doc/gorman/html/understand/understand012.html#sec:%20Emergency%20Pools">9.5</a>.</p><p>The buffer head is, predictably enough, allocated with
+<tt>alloc_bounce_bh()</tt><a name="@mainindex823"></a> which, similar in principle to
+<tt>alloc_bounce_page()</tt>, calls the slab allocator for a
+<tt>buffer_head</tt> and uses the emergency pool if one cannot be
+allocated. Additionally, <b>bdflush</b> is woken up to start flushing
+dirty buffers out to disk so that buffers are more likely to be freed soon.</p><p>Once the page and <tt>buffer_head</tt> have been allocated, information
+is copied from the template <tt>buffer_head</tt> into the new one. Since
+part of this operation may use <tt>kmap_atomic()</tt>, bounce buffers
+are only created with the IRQ safe <tt>io_request_lock</tt> held. The IO
+completion callbacks are changed to be either <tt>bounce_end_io_write()</tt>
+or <tt>bounce_end_io_read()</tt> depending on whether this is a read or
+write buffer so the data will be copied to and from high memory.</p><p>The most important aspect of the allocations to note is that the GFP flags
+specify that no IO operations involving high memory may be used. This
+is specified with <tt>SLAB_NOHIGHIO</tt> to the slab allocator and
+<tt>GFP_NOHIGHIO</tt> to the buddy allocator. This is important as bounce
+buffers are used for IO operations with high memory. If the allocator tries
+to perform high memory IO, it will recurse and eventually crash.</p><h3>9.4.3  Copying via bounce buffers</h3><blockquote style="margin-left:4ex;margin-right:4ex;text-align:left;"><div style="text-align:center;margin-left:auto;margin-right:auto;"><hr width="80%" size="2"/></div>
+<div style="text-align:center;margin-left:auto;margin-right:auto;"><div class="media-placeholder">[图片/附件]</div></en-media></div>
+<div style="padding-left:2ex;padding-right:2ex;margin-left:auto;margin-right:auto;"><table cellspacing="6" cellpadding="0" style="margin-left:inherit;margin-right:inherit;"><tbody><tr><td valign="top" align="left">Figure 9.4: Call Graph: <tt>bounce_end_io_read/write()</tt></td></tr>
+</tbody></table></div>
+<a name="fig: bounce_end_io_read"></a>
+<div style="text-align:center;margin-left:auto;margin-right:auto;"><hr width="80%" size="2"/></div></blockquote><p>Data is copied via the bounce buffer differently depending on whether it is a
+read or write buffer. If the buffer is for writes to the device, the buffer
+is populated with the data from high memory during bounce buffer creation
+with the function <tt>copy_from_high_bh()</tt><a name="@mainindex824"></a>. The callback function
+<tt>bounce_end_io_write()</tt> will complete the IO later when the device
+is ready for the data.</p><p>If the buffer is for reading from the device, no data transfer may take
+place until the device is ready. When it is, the interrupt handler for the
+device calls the callback function <tt>bounce_end_io_read()</tt> which
+copies the data to high memory with <tt>copy_to_high_bh_irq()</tt>.</p><p>In either case the buffer head and page may be reclaimed by
+<tt>bounce_end_io()</tt><a name="@mainindex825"></a> once the IO has completed and the IO completion
+function for the template <tt>buffer_head()</tt> is called. If the emergency
+pools are not full, the resources are added to the pools otherwise they are
+freed back to the respective allocators.</p><h2><a name="toc64"></a><a name="htoc67">9.5</a>  Emergency Pools</h2><p>
+<a name="sec: Emergency Pools"></a></p><p>Two emergency pools of <tt>buffer_heads</tt> and pages are maintained
+for the express use by bounce buffers. If memory is too tight for allocations,
+failing to complete IO requests is going to compound the situation as buffers
+from high memory cannot be freed until low memory is available. This leads
+to processes halting, thus preventing the possibility of them freeing up their
+own memory.</p><p>The pools are initialised by <tt>init_emergency_pool()</tt><a name="@mainindex826"></a> to contain
+<tt>POOL_SIZE</tt> entries each which is currently defined as 32. The
+pages are linked via the <tt>page</tt>→<tt>list</tt> field on a list headed
+by <tt>emergency_pages</tt>. Figure 
+<a href="https://www.kernel.org/doc/gorman/html/understand/understand012.html#fig:%20Acquiring%20Pages%20from%20Emergency%20Pools">9.5</a> illustrates how pages are
+stored on emergency pools and acquired when necessary.</p><p>The <tt>buffer_head</tt>s are very similar as they linked via the
+<tt>buffer_head</tt>→<tt>inode_buffers</tt> on a list headed by
+<tt>emergency_bh</tt>s. The number of entries left on the pages and
+buffer lists are recorded by two counters <tt>nr_emergency_pages</tt>
+and <tt>nr_emergency_bhs</tt> respectively and the two lists are protected
+by the <tt>emergency_lock</tt> spinlock.</p><blockquote style="margin-left:4ex;margin-right:4ex;text-align:left;"><div style="text-align:center;margin-left:auto;margin-right:auto;"><hr width="80%" size="2"/></div>
+<div style="text-align:center;margin-left:auto;margin-right:auto;"><div class="media-placeholder">[图片/附件]</div></en-media></div>
+<div style="padding-left:2ex;padding-right:2ex;margin-left:auto;margin-right:auto;"><table cellspacing="6" cellpadding="0" style="margin-left:inherit;margin-right:inherit;"><tbody><tr><td valign="top" align="left">Figure 9.5: Acquiring Pages from Emergency
+Pools</td></tr>
+</tbody></table></div>
+<a name="fig: Acquiring Pages from Emergency Pools"></a>
+<div style="text-align:center;margin-left:auto;margin-right:auto;"><hr width="80%" size="2"/></div></blockquote><h2><a name="toc65"></a><a name="htoc68">9.6</a>  What's New in 2.6</h2><p>
+<a name="new: High Memory Management"></a></p><h5>Memory Pools</h5><p>
+<a name="@mainindex827"></a></p><p>In 2.4, the high memory manager was the only subsystem that maintained
+emergency pools of pages. In 2.6, memory pools are implemented as a generic
+concept when a minimum amount of “stuff” needs to be reserved for when memory
+is tight. “Stuff” in this case can be any type of object such as pages in
+the case of the high memory manager or, more frequently, some object managed
+by the slab allocator. Pools are initialised with <tt>mempool_create()</tt>
+which takes a number of arguments. They are the minimum number of objects
+that should be reserved (<tt>min_nr</tt>), an allocator function for the
+object type (<tt>alloc_fn()</tt>), a free function (<tt>free_fn()</tt>)
+and optional private data that is passed to the allocate and free functions.</p><p>The memory pool API provides two generic allocate and free functions called
+<tt>mempool_alloc_slab()</tt> and <tt>mempool_free_slab()</tt>. When the
+generic functions are used, the private data is the slab cache that objects
+are to be allocated and freed from.</p><p>In the case of the high memory manager, two pools of pages are created. On
+page pool is for normal use and the second page pool is for use with ISA
+devices that must allocate from <tt>ZONE_DMA</tt>. The allocate function is
+<tt>page_pool_alloc()</tt> and the private data parameter passed indicates
+the GFP flags to use. The free function is <tt>page_pool_free()</tt>. The
+memory pools replace the emergency pool code that exists in 2.4.</p><p>To allocate or free objects from the memory pool, the memory pool API functions
+<tt>mempool_alloc()</tt> and <tt>mempool_free()</tt> are provided. Memory
+pools are destroyed with <tt>mempool_destroy()</tt>.</p><h5>Mapping High Memory Pages</h5><p>In 2.4, the field <tt>page</tt>→<tt>virtual</tt> was used to store the
+address of the page within the <tt>pkmap_count</tt> array. Due to the
+number of <tt>struct page</tt>s that exist in a high memory system,
+this is a very large penalty to pay for the relatively small number of
+pages that need to be mapped into <tt>ZONE_NORMAL</tt>. 2.6 still has this
+<tt>pkmap_count</tt> array but it is managed very differently.</p><p>In 2.6, a hash table called <tt>page_address_htable</tt> is created. This
+table is hashed based on the address of the <tt>struct page</tt> and
+the list is used to locate <tt>struct page_address_slot</tt>. This
+struct has two fields of interest, a <tt>struct page</tt> and a virtual
+address. When the kernel needs to find the virtual address used by a mapped
+page, it is located by traversing through this hash bucket. How the page is
+actually mapped into lower memory is essentially the same as 2.4 except now
+<tt>page</tt>→<tt>virtual</tt> is no longer required.</p><h5>Performing IO</h5><p>The last major change is that the <tt>struct bio</tt> is now used
+instead of the <tt>struct buffer_head</tt> when performing IO. How
+<tt>bio</tt> structures work is beyond the scope of this book. However,
+the principle reason that <tt>bio</tt> structures were introduced is
+so that IO could be performed in blocks of whatever size the underlying
+device supports. In 2.4, all IO had to be broken up into page sized chunks
+regardless of the transfer rate of the underlying device.
+
+	</p><hr/>
+<a href="https://www.kernel.org/doc/gorman/html/understand/understand011.html"><div class="media-placeholder">[图片/附件]</div></en-media></a>
+<a href="https://www.kernel.org/doc/gorman/html/understand/index.html"><div class="media-placeholder">[图片/附件]</div></en-media></a>
+<a href="https://www.kernel.org/doc/gorman/html/understand/understand013.html"><div class="media-placeholder">[图片/附件]</div></en-media></a>
+
+
+</div></div></div>
+</div>
+</div>
+<a class="back-link" href="../articles.html">← 返回笔记列表</a>
+</body>
+</html>

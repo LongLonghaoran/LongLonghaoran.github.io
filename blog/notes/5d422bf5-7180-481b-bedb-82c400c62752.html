@@ -1,0 +1,448 @@
+<!DOCTYPE html>
+<html lang="zh-CN" data-theme="light">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>2021年，用更现代的方法使用PGP（中） - C的博客 |UlyC — 技术笔记</title>
+<style>
+:root { --bg:#fff; --text:#1a1a1a; --muted:#666; --border:#e0e0e0; --code-bg:#f5f5f5; --link:#0066cc; }
+@media (prefers-color-scheme: dark) { :root { --bg:#1a1a1a; --text:#e0e0e0; --muted:#999; --border:#333; --code-bg:#2a2a2a; --link:#66bbff; } }
+* { box-sizing:border-box; margin:0; padding:0; }
+body { font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Arial,sans-serif; line-height:1.7; color:var(--text); background:var(--bg); max-width:860px; margin:0 auto; padding:2rem 1.5rem; }
+.note-header { border-bottom:2px solid var(--border); padding-bottom:1rem; margin-bottom:2rem; }
+.note-title { font-size:1.6rem; font-weight:700; margin-bottom:0.3rem; }
+.note-meta { color:var(--muted); font-size:0.85rem; }
+.note-content { font-size:0.95rem; }
+.note-content h1 { font-size:1.4rem; margin:1.2rem 0 0.6rem; }
+.note-content h2 { font-size:1.2rem; margin:1rem 0 0.5rem; }
+.note-content h3 { font-size:1.05rem; margin:0.8rem 0 0.4rem; }
+.note-content p { margin:0.5rem 0; }
+.note-content ul,.note-content ol { margin:0.5rem 0 0.5rem 2rem; }
+.note-content li { margin:0.2rem 0; }
+.note-content pre { background:var(--code-bg); padding:1rem; border-radius:6px; overflow-x:auto; margin:0.8rem 0; font-size:0.85rem; }
+.note-content code { background:var(--code-bg); padding:0.1rem 0.3rem; border-radius:3px; font-size:0.88em; }
+.note-content pre code { background:none; padding:0; }
+.note-content blockquote { border-left:3px solid var(--border); padding-left:1rem; color:var(--muted); margin:0.8rem 0; }
+.note-content a { color:var(--link); }
+.note-content img { max-width:100%; height:auto; border-radius:6px; margin:0.5rem 0; }
+.note-content table { border-collapse:collapse; width:100%; margin:0.8rem 0; }
+.note-content th,.note-content td { border:1px solid var(--border); padding:0.5rem; }
+.note-content th { background:var(--code-bg); }
+.media-placeholder { background:var(--code-bg); padding:1rem; text-align:center; color:var(--muted); border-radius:6px; margin:0.5rem 0; font-size:0.85rem; }
+.encrypt-placeholder { background:#fff3cd; padding:0.5rem; text-align:center; color:#856404; border-radius:6px; margin:0.5rem 0; font-size:0.85rem; }
+.back-link { display:inline-block; margin-top:2rem; color:var(--link); text-decoration:none; font-size:0.85rem; }
+</style>
+</head>
+<body>
+<div class="note-header"><div class="note-title">2021年，用更现代的方法使用PGP（中） - C的博客 |UlyC</div><div class="note-meta">笔记本：关于加密、解密、签名</div></div>
+<div class="note-content"><div style="--en-clipped-content:article">
+<div><br/></div><div style="font-size: 16px; display:block; min-width: 100%; position: relative;"> <div style="font-family:sans-serif;text-size-adjust:100%;box-sizing:border-box;font-size:10px;-webkit-tap-highlight-color:rgba(0, 0, 0, 0);"><div style="box-sizing:border-box;background-color:rgb(255, 255, 255);overflow-x:hidden;text-rendering:auto;-webkit-font-smoothing:antialiased;font-family:-apple-system, BlinkMacSystemFont, &quot;Helvetica Neue&quot;, Arial, &quot;PingFang SC&quot;, &quot;Hiragino Sans GB&quot;, STHeiti, &quot;Microsoft YaHei&quot;, &quot;Microsoft JhengHei&quot;, &quot;Source Han Sans SC&quot;, &quot;Noto Sans CJK SC&quot;, &quot;Source Han Sans CN&quot;, &quot;Noto Sans SC&quot;, &quot;Source Han Sans TC&quot;, &quot;Noto Sans CJK TC&quot;, &quot;WenQuanYi Micro Hei&quot;, SimSun, sans-serif;font-size:16px;line-height:1.7;color:rgb(64, 64, 64);"><div style="box-sizing:border-box;overflow:hidden;"><div style="box-sizing:border-box;"><div style="box-sizing:border-box;"><div style="box-sizing:border-box;">
+
+                <blockquote style="box-sizing:border-box;padding:10px 20px;border-left:5px solid rgb(238, 238, 238);color:gray;font-style:italic;margin:20px 0px;font-size:0.95em;">
+  <p style="box-sizing:border-box;margin:0px;">世界上有两种密码:一种是防止你的小妹妹偷看你的文件;另一种是防止当局阅读你的文件.</p>
+
+  <p style="box-sizing:border-box;margin:0px;margin-bottom:0px;">​																												—— Bruce Schneier《应用密码学》</p>
+</blockquote>
+
+<h1 style="box-sizing:border-box;color:inherit;font-size:36px;font-family:-apple-system, BlinkMacSystemFont, &quot;Helvetica Neue&quot;, Arial, &quot;PingFang SC&quot;, &quot;Hiragino Sans GB&quot;, STHeiti, &quot;Microsoft YaHei&quot;, &quot;Microsoft JhengHei&quot;, &quot;Source Han Sans SC&quot;, &quot;Noto Sans CJK SC&quot;, &quot;Source Han Sans CN&quot;, &quot;Noto Sans SC&quot;, &quot;Source Han Sans TC&quot;, &quot;Noto Sans CJK TC&quot;, &quot;WenQuanYi Micro Hei&quot;, SimSun, sans-serif;font-weight:700;margin:50px 0px 20px;line-height:1.4;">2021年，用更现代的方法使用PGP（中）<a href="https://ulyc.github.io/2021/01/18/2021%E5%B9%B4-%E7%94%A8%E6%9B%B4%E7%8E%B0%E4%BB%A3%E7%9A%84%E6%96%B9%E6%B3%95%E4%BD%BF%E7%94%A8PGP-%E4%B8%AD/#2021%E5%B9%B4%E7%94%A8%E6%9B%B4%E7%8E%B0%E4%BB%A3%E7%9A%84%E6%96%B9%E6%B3%95%E4%BD%BF%E7%94%A8pgp%E4%B8%AD" style="opacity:1;background-color:transparent;box-sizing:border-box;-webkit-font-smoothing:antialiased;color:rgb(51, 122, 183);left:-0.75em;font-size:1.1em;margin-top:-0.1em;position:absolute;text-decoration:none;padding-left:0.375em;"><span style="color:rgb(51, 122, 183);font-size:1.1em;">#</span></a></h1>
+
+<h4 style="box-sizing:border-box;font-family:-apple-system, BlinkMacSystemFont, &quot;Helvetica Neue&quot;, Arial, &quot;PingFang SC&quot;, &quot;Hiragino Sans GB&quot;, STHeiti, &quot;Microsoft YaHei&quot;, &quot;Microsoft JhengHei&quot;, &quot;Source Han Sans SC&quot;, &quot;Noto Sans CJK SC&quot;, &quot;Source Han Sans CN&quot;, &quot;Noto Sans SC&quot;, &quot;Source Han Sans TC&quot;, &quot;Noto Sans CJK TC&quot;, &quot;WenQuanYi Micro Hei&quot;, SimSun, sans-serif;margin:50px 0px 20px;line-height:1.4;font-weight:600;color:gray;font-size:22px;">上篇链接:<a href="https://ulyc.github.io/2021/01/18/2021%E5%B9%B4-%E7%94%A8%E6%9B%B4%E7%8E%B0%E4%BB%A3%E7%9A%84%E6%96%B9%E6%B3%95%E4%BD%BF%E7%94%A8PGP-%E4%B8%AD/#%E4%B8%8A%E7%AF%87%E9%93%BE%E6%8E%A5" style="opacity:1;background-color:transparent;box-sizing:border-box;-webkit-font-smoothing:antialiased;color:rgb(51, 122, 183);left:-0.75em;font-size:1.1em;margin-top:-0.1em;position:absolute;text-decoration:none;padding-left:0.375em;"><span style="color:rgb(51, 122, 183);font-size:1.1em;">#</span></a></h4>
+
+<p style="box-sizing:border-box;margin:30px 0px;margin-top:10px;"><a href="https://ulyc.github.io/2021/01/13/2021%E5%B9%B4-%E7%94%A8%E6%9B%B4%E7%8E%B0%E4%BB%A3%E7%9A%84%E6%96%B9%E6%B3%95%E4%BD%BF%E7%94%A8PGP-%E4%B8%8A/" style="background-color:transparent;box-sizing:border-box;text-decoration:none;color:rgb(51, 122, 183);">2021年，用更现代的方法使用PGP（上）</a></p>
+
+<h2 style="box-sizing:border-box;color:inherit;font-size:30px;font-family:-apple-system, BlinkMacSystemFont, &quot;Helvetica Neue&quot;, Arial, &quot;PingFang SC&quot;, &quot;Hiragino Sans GB&quot;, STHeiti, &quot;Microsoft YaHei&quot;, &quot;Microsoft JhengHei&quot;, &quot;Source Han Sans SC&quot;, &quot;Noto Sans CJK SC&quot;, &quot;Source Han Sans CN&quot;, &quot;Noto Sans SC&quot;, &quot;Source Han Sans TC&quot;, &quot;Noto Sans CJK TC&quot;, &quot;WenQuanYi Micro Hei&quot;, SimSun, sans-serif;font-weight:700;margin:50px 0px 20px;line-height:1.4;"><span style="font-family:-apple-system, BlinkMacSystemFont, Helvetica Neue, Arial, PingFang SC, Hiragino Sans GB, STHeiti, Microsoft YaHei, Microsoft JhengHei, Source Han Sans SC, Noto Sans CJK SC, Source Han Sans CN, Noto Sans SC, Source Han Sans TC, Noto Sans CJK TC, WenQuanYi Micro Hei, SimSun, sans-serif;font-weight:700;line-height:1.4;color:inherit;font-size:30px;display:block;border-bottom:1px solid rgb(236, 236, 236);margin-top:44px;margin-bottom:30px;"> </span>三、安全使用和备份<a href="https://ulyc.github.io/2021/01/18/2021%E5%B9%B4-%E7%94%A8%E6%9B%B4%E7%8E%B0%E4%BB%A3%E7%9A%84%E6%96%B9%E6%B3%95%E4%BD%BF%E7%94%A8PGP-%E4%B8%AD/#%E4%B8%89%E5%AE%89%E5%85%A8%E4%BD%BF%E7%94%A8%E5%92%8C%E5%A4%87%E4%BB%BD" style="opacity:1;background-color:transparent;box-sizing:border-box;-webkit-font-smoothing:antialiased;color:rgb(51, 122, 183);left:-0.75em;font-size:1.1em;margin-top:-0.1em;position:absolute;text-decoration:none;padding-left:0.375em;"><span style="color:rgb(51, 122, 183);font-size:1.1em;">#</span></a></h2>
+
+<h3 style="box-sizing:border-box;color:inherit;font-size:24px;font-family:-apple-system, BlinkMacSystemFont, &quot;Helvetica Neue&quot;, Arial, &quot;PingFang SC&quot;, &quot;Hiragino Sans GB&quot;, STHeiti, &quot;Microsoft YaHei&quot;, &quot;Microsoft JhengHei&quot;, &quot;Source Han Sans SC&quot;, &quot;Noto Sans CJK SC&quot;, &quot;Source Han Sans CN&quot;, &quot;Noto Sans SC&quot;, &quot;Source Han Sans TC&quot;, &quot;Noto Sans CJK TC&quot;, &quot;WenQuanYi Micro Hei&quot;, SimSun, sans-serif;font-weight:700;margin:50px 0px 20px;line-height:1.4;">准备<a href="https://ulyc.github.io/2021/01/18/2021%E5%B9%B4-%E7%94%A8%E6%9B%B4%E7%8E%B0%E4%BB%A3%E7%9A%84%E6%96%B9%E6%B3%95%E4%BD%BF%E7%94%A8PGP-%E4%B8%AD/#%E5%87%86%E5%A4%87" style="opacity:1;background-color:transparent;box-sizing:border-box;-webkit-font-smoothing:antialiased;color:rgb(51, 122, 183);left:-0.75em;font-size:1.1em;margin-top:-0.1em;position:absolute;text-decoration:none;padding-left:0.375em;"><span style="color:rgb(51, 122, 183);font-size:1.1em;">#</span></a></h3>
+
+<p style="box-sizing:border-box;margin:30px 0px;margin-top:20px;">为了安全性，建议在一台断网的Linux或者BSD系统上生成你的密钥对。</p>
+
+<p style="box-sizing:border-box;margin:30px 0px;">特别推荐使用 <a href="https://tails.boum.org/" style="background-color:transparent;box-sizing:border-box;text-decoration:none;color:rgb(51, 122, 183);">Tails (boum.org)</a>发行版，系统自带gpg和paperkey 等工具, 可以确保全程断网操作, 同时此系统重启会擦除所有内容，还免去了擦除密钥的麻烦。
+需要工具：</p>
+
+<ul style="box-sizing:border-box;margin-top:0px;margin-bottom:40px;">
+  <li style="box-sizing:border-box;">一台电脑</li>
+  <li style="box-sizing:border-box;">一个装有Tails系统的U盘0 , 使用它生成密钥</li>
+  <li style="box-sizing:border-box;">一个已经全盘加密的U盘/TF 卡 1（推荐），或者智能卡 ,  用来存储主密钥</li>
+  <li style="box-sizing:border-box;">一个智能卡  (推荐) ，或者已经全盘加密的U盘/TF 卡  2,  用来存放子密钥，日常使用</li>
+</ul>
+
+<h3 style="box-sizing:border-box;color:inherit;font-size:24px;font-family:-apple-system, BlinkMacSystemFont, &quot;Helvetica Neue&quot;, Arial, &quot;PingFang SC&quot;, &quot;Hiragino Sans GB&quot;, STHeiti, &quot;Microsoft YaHei&quot;, &quot;Microsoft JhengHei&quot;, &quot;Source Han Sans SC&quot;, &quot;Noto Sans CJK SC&quot;, &quot;Source Han Sans CN&quot;, &quot;Noto Sans SC&quot;, &quot;Source Han Sans TC&quot;, &quot;Noto Sans CJK TC&quot;, &quot;WenQuanYi Micro Hei&quot;, SimSun, sans-serif;font-weight:700;margin:50px 0px 20px;line-height:1.4;">备份策略<a href="https://ulyc.github.io/2021/01/18/2021%E5%B9%B4-%E7%94%A8%E6%9B%B4%E7%8E%B0%E4%BB%A3%E7%9A%84%E6%96%B9%E6%B3%95%E4%BD%BF%E7%94%A8PGP-%E4%B8%AD/#%E5%A4%87%E4%BB%BD%E7%AD%96%E7%95%A5" style="opacity:1;background-color:transparent;box-sizing:border-box;-webkit-font-smoothing:antialiased;color:rgb(51, 122, 183);left:-0.75em;font-size:1.1em;margin-top:-0.1em;position:absolute;text-decoration:none;padding-left:0.375em;"><span style="color:rgb(51, 122, 183);font-size:1.1em;">#</span></a></h3>
+
+<p style="box-sizing:border-box;margin:30px 0px;margin-top:20px;">我的备份策略：</p>
+
+<ul style="box-sizing:border-box;margin-top:0px;margin-bottom:40px;">
+  <li style="box-sizing:border-box;">主密钥只保留一份，离线。</li>
+  <li style="box-sizing:border-box;">子密钥可以复制多份，通过U盘导入各个设备，专密专用， 日常使用推荐用智能卡（比如Yubikey），还能免去每次输密码的麻烦</li>
+  <li style="box-sizing:border-box;">撤销凭证可以和主密钥放在一起备份一份， 另外单独备份一份（这样丢失密钥，起码还可以撤销）</li>
+</ul>
+
+<p style="box-sizing:border-box;margin:30px 0px;">主密钥备份建议备份在一个全盘加密的U盘中，然后放在一个绝对安全的地方。</p>
+
+<h3 style="box-sizing:border-box;color:inherit;font-size:24px;font-family:-apple-system, BlinkMacSystemFont, &quot;Helvetica Neue&quot;, Arial, &quot;PingFang SC&quot;, &quot;Hiragino Sans GB&quot;, STHeiti, &quot;Microsoft YaHei&quot;, &quot;Microsoft JhengHei&quot;, &quot;Source Han Sans SC&quot;, &quot;Noto Sans CJK SC&quot;, &quot;Source Han Sans CN&quot;, &quot;Noto Sans SC&quot;, &quot;Source Han Sans TC&quot;, &quot;Noto Sans CJK TC&quot;, &quot;WenQuanYi Micro Hei&quot;, SimSun, sans-serif;font-weight:700;margin:50px 0px 20px;line-height:1.4;">备份介质：<a href="https://ulyc.github.io/2021/01/18/2021%E5%B9%B4-%E7%94%A8%E6%9B%B4%E7%8E%B0%E4%BB%A3%E7%9A%84%E6%96%B9%E6%B3%95%E4%BD%BF%E7%94%A8PGP-%E4%B8%AD/#%E5%A4%87%E4%BB%BD%E4%BB%8B%E8%B4%A8" style="opacity:1;background-color:transparent;box-sizing:border-box;-webkit-font-smoothing:antialiased;color:rgb(51, 122, 183);left:-0.75em;font-size:1.1em;margin-top:-0.1em;position:absolute;text-decoration:none;padding-left:0.375em;"><span style="color:rgb(51, 122, 183);font-size:1.1em;">#</span></a></h3>
+
+<h5 style="box-sizing:border-box;font-family:-apple-system, BlinkMacSystemFont, &quot;Helvetica Neue&quot;, Arial, &quot;PingFang SC&quot;, &quot;Hiragino Sans GB&quot;, STHeiti, &quot;Microsoft YaHei&quot;, &quot;Microsoft JhengHei&quot;, &quot;Source Han Sans SC&quot;, &quot;Noto Sans CJK SC&quot;, &quot;Source Han Sans CN&quot;, &quot;Noto Sans SC&quot;, &quot;Source Han Sans TC&quot;, &quot;Noto Sans CJK TC&quot;, &quot;WenQuanYi Micro Hei&quot;, SimSun, sans-serif;margin:50px 0px 20px;line-height:1.4;font-weight:600;color:gray;font-size:20px;">智能卡<a href="https://ulyc.github.io/2021/01/18/2021%E5%B9%B4-%E7%94%A8%E6%9B%B4%E7%8E%B0%E4%BB%A3%E7%9A%84%E6%96%B9%E6%B3%95%E4%BD%BF%E7%94%A8PGP-%E4%B8%AD/#%E6%99%BA%E8%83%BD%E5%8D%A1" style="opacity:1;background-color:transparent;box-sizing:border-box;-webkit-font-smoothing:antialiased;color:rgb(51, 122, 183);left:-0.75em;font-size:1.1em;margin-top:-0.1em;position:absolute;text-decoration:none;padding-left:0.375em;"><span style="color:rgb(51, 122, 183);font-size:1.1em;">#</span></a></h5>
+
+<p style="box-sizing:border-box;margin:30px 0px;margin-top:10px;">主密钥<strong style="font-weight:700;box-sizing:border-box;">不建议</strong>导入智能卡设备，因为智能卡的使用场景是随身携带，随时取用，虽然智能卡中的密钥无法导出，但是随身携带增加了丢失的风险，主密钥一旦丢失，将会非常麻烦。</p>
+
+<p style="box-sizing:border-box;margin:30px 0px;">如果是土豪，当然导入智能卡中更好，因为智能卡中密钥无法导出，只不过这个智能卡不能再随身携带，而同样应该在一个安全的地方， 不到万不得已不再取用， 不过这样有些浪费，也是我不推荐的理由。</p>
+
+<h5 style="box-sizing:border-box;font-family:-apple-system, BlinkMacSystemFont, &quot;Helvetica Neue&quot;, Arial, &quot;PingFang SC&quot;, &quot;Hiragino Sans GB&quot;, STHeiti, &quot;Microsoft YaHei&quot;, &quot;Microsoft JhengHei&quot;, &quot;Source Han Sans SC&quot;, &quot;Noto Sans CJK SC&quot;, &quot;Source Han Sans CN&quot;, &quot;Noto Sans SC&quot;, &quot;Source Han Sans TC&quot;, &quot;Noto Sans CJK TC&quot;, &quot;WenQuanYi Micro Hei&quot;, SimSun, sans-serif;margin:50px 0px 20px;line-height:1.4;font-weight:600;color:gray;font-size:20px;">网盘存储<a href="https://ulyc.github.io/2021/01/18/2021%E5%B9%B4-%E7%94%A8%E6%9B%B4%E7%8E%B0%E4%BB%A3%E7%9A%84%E6%96%B9%E6%B3%95%E4%BD%BF%E7%94%A8PGP-%E4%B8%AD/#%E7%BD%91%E7%9B%98%E5%AD%98%E5%82%A8" style="opacity:1;background-color:transparent;box-sizing:border-box;-webkit-font-smoothing:antialiased;color:rgb(51, 122, 183);left:-0.75em;font-size:1.1em;margin-top:-0.1em;position:absolute;text-decoration:none;padding-left:0.375em;"><span style="color:rgb(51, 122, 183);font-size:1.1em;">#</span></a></h5>
+
+<p style="box-sizing:border-box;margin:30px 0px;margin-top:10px;">你可以将主私钥加密后上传到网盘或其他线上服务。</p>
+
+<h5 style="box-sizing:border-box;font-family:-apple-system, BlinkMacSystemFont, &quot;Helvetica Neue&quot;, Arial, &quot;PingFang SC&quot;, &quot;Hiragino Sans GB&quot;, STHeiti, &quot;Microsoft YaHei&quot;, &quot;Microsoft JhengHei&quot;, &quot;Source Han Sans SC&quot;, &quot;Noto Sans CJK SC&quot;, &quot;Source Han Sans CN&quot;, &quot;Noto Sans SC&quot;, &quot;Source Han Sans TC&quot;, &quot;Noto Sans CJK TC&quot;, &quot;WenQuanYi Micro Hei&quot;, SimSun, sans-serif;margin:50px 0px 20px;line-height:1.4;font-weight:600;color:gray;font-size:20px;">PaperKey<a href="https://ulyc.github.io/2021/01/18/2021%E5%B9%B4-%E7%94%A8%E6%9B%B4%E7%8E%B0%E4%BB%A3%E7%9A%84%E6%96%B9%E6%B3%95%E4%BD%BF%E7%94%A8PGP-%E4%B8%AD/#paperkey" style="opacity:1;background-color:transparent;box-sizing:border-box;-webkit-font-smoothing:antialiased;color:rgb(51, 122, 183);left:-0.75em;font-size:1.1em;margin-top:-0.1em;position:absolute;text-decoration:none;padding-left:0.375em;"><span style="color:rgb(51, 122, 183);font-size:1.1em;">#</span></a></h5>
+
+<p style="box-sizing:border-box;margin:30px 0px;margin-top:10px;">又是断网操作，又是非对称算法，还要好好保存一份私钥，这一套流程走下来你也发现了跟数字货币的相似性，很多备份方式都可以借鉴他们的思路，比如上面网盘存储就是数字货币热钱包的思路。</p>
+
+<p style="box-sizing:border-box;margin:30px 0px;">冷钱包很经典的一种方式，就是将私钥写/打印在纸上， 当然我们也可以借鉴，不过若你想将这一眼望不到头的私钥抄下来， 或者打印下来，将来需要恢复的时候再一个个输入进电脑，显然不现实。</p>
+
+<p style="box-sizing:border-box;margin:30px 0px;"><div class="media-placeholder">[图片/附件]</div></en-media></p>
+
+<p style="box-sizing:border-box;margin:30px 0px;">（示例私钥的一部分，用完即废，如果是你自己的私钥，打死也不要给别人看）</p>
+
+<p style="box-sizing:border-box;margin:30px 0px;">比如比特币， 私钥长这样：</p>
+
+<div style="box-sizing:border-box;"><div style="box-sizing:border-box;background:rgb(42, 41, 41);color:rgb(241, 241, 2);margin-bottom:10px;border-radius:6px;"><pre style="border-radius:4px;background-color: #fbfaf8;border: 1px solid rgba(0,0,0,.14902);color: #333;font-size: 12px;padding: 8px;font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif;box-sizing: border-box;"><code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif">5KYZdUEo39z3FPrtuX2QbbwGnNP5zTd7yyr2SC1j299sBCnWjss          <span style="box-sizing:border-box;font-style:italic;color:rgb(245, 242, 235);"># 这么短很容易抄写和输入</span>
+</code></pre></div></div>
+
+<p style="box-sizing:border-box;margin:30px 0px;">同样是非对称算法,为什么PGP的私钥就长这么多呢？</p>
+
+<p style="box-sizing:border-box;margin:30px 0px;">因为他们用的算法不同，比特币默认使用的是ECDSA的 secp256k1算法， 该算法只是用来签名和认证，并不用来加密（很多科普文章会说这是加密算法，比特币的算法也可以用来加密，这是错的，比特币之所以有时被称作加密货币只是因为它依赖了密码学中的非对称算法，并不是它能加密…），PGP默认的是RSA算法，可以同时用来签名和加密，前面说过目前RSA密钥长度不小于2048 bit才安全，而且PGP导出的私钥中不止密钥信息，还包含了全部的公钥信息，UID，子密钥信息，以及设置密码时的混淆。</p>
+
+<p style="box-sizing:border-box;margin:30px 0px;">Linux下有一个工具叫做<code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif">paperkey</code>， 可以用来消去私钥中 冗余的公钥信息，极大减少私钥长度，然后可以将精简过的私钥(base 16格式)打印出来，或者将Raw格式转换成二维码，打印出来。</p>
+
+<blockquote style="box-sizing:border-box;padding:10px 20px;border-left:5px solid rgb(238, 238, 238);color:gray;font-style:italic;margin:20px 0px;font-size:0.95em;">
+  <p style="box-sizing:border-box;margin:0px;">注意：</p>
+
+  <ul style="box-sizing:border-box;margin-top:0px;margin-bottom:0px;">
+    <li style="box-sizing:border-box;">
+      <p style="box-sizing:border-box;margin:0px 0px 5px;">既然决定用PaperKey， 还是不要使用网络打印机了，</p>
+    </li>
+    <li style="box-sizing:border-box;">paperkey这个工具在Tails新版中是默认软件</li>
+    <li style="box-sizing:border-box;">paperkey 手册中推荐 恢复私钥时使用OCR扫描， 而大部分OCR服务都要联网， 请注意这点。</li>
+  </ul>
+</blockquote>
+
+<h5 style="box-sizing:border-box;font-family:-apple-system, BlinkMacSystemFont, &quot;Helvetica Neue&quot;, Arial, &quot;PingFang SC&quot;, &quot;Hiragino Sans GB&quot;, STHeiti, &quot;Microsoft YaHei&quot;, &quot;Microsoft JhengHei&quot;, &quot;Source Han Sans SC&quot;, &quot;Noto Sans CJK SC&quot;, &quot;Source Han Sans CN&quot;, &quot;Noto Sans SC&quot;, &quot;Source Han Sans TC&quot;, &quot;Noto Sans CJK TC&quot;, &quot;WenQuanYi Micro Hei&quot;, SimSun, sans-serif;margin:50px 0px 20px;line-height:1.4;font-weight:600;color:gray;font-size:20px;">其他<a href="https://ulyc.github.io/2021/01/18/2021%E5%B9%B4-%E7%94%A8%E6%9B%B4%E7%8E%B0%E4%BB%A3%E7%9A%84%E6%96%B9%E6%B3%95%E4%BD%BF%E7%94%A8PGP-%E4%B8%AD/#%E5%85%B6%E4%BB%96" style="opacity:1;background-color:transparent;box-sizing:border-box;-webkit-font-smoothing:antialiased;color:rgb(51, 122, 183);left:-0.75em;font-size:1.1em;margin-top:-0.1em;position:absolute;text-decoration:none;padding-left:0.375em;"><span style="color:rgb(51, 122, 183);font-size:1.1em;">#</span></a></h5>
+
+<p style="box-sizing:border-box;margin:30px 0px;margin-top:10px;">密钥只是一段信息，理论上可以放在其他任何可以存储信息的介质中，例如光盘，<a href="https://ulyc.github.io/2019/03/15/%E7%9B%B2%E6%B0%B4%E5%8D%B0%E5%92%8C%E5%9B%BE%E7%89%87%E9%9A%90%E5%86%99%E6%9C%AF/" style="background-color:transparent;box-sizing:border-box;text-decoration:none;color:rgb(51, 122, 183);">隐写在图片中</a>， <a href="https://ulyc.github.io/2020/01/18/%E5%B8%B8%E8%A7%81RFID%E5%8D%A1%E7%89%87%E4%BB%8B%E7%BB%8D-%E7%A0%B4%E8%A7%A3%E6%80%9D%E8%B7%AF-%E5%8F%8A-Proxmark3%E7%AE%80%E4%BB%8B/" style="background-color:transparent;box-sizing:border-box;text-decoration:none;color:rgb(51, 122, 183);">写入IC卡</a> ， <del style="box-sizing:border-box;">纹身，</del>， <del style="box-sizing:border-box;">X光片</del> ，<del style="box-sizing:border-box;">背下来</del> 等等等等，可以发挥你的想象力。</p>
+
+<h3 style="box-sizing:border-box;color:inherit;font-size:24px;font-family:-apple-system, BlinkMacSystemFont, &quot;Helvetica Neue&quot;, Arial, &quot;PingFang SC&quot;, &quot;Hiragino Sans GB&quot;, STHeiti, &quot;Microsoft YaHei&quot;, &quot;Microsoft JhengHei&quot;, &quot;Source Han Sans SC&quot;, &quot;Noto Sans CJK SC&quot;, &quot;Source Han Sans CN&quot;, &quot;Noto Sans SC&quot;, &quot;Source Han Sans TC&quot;, &quot;Noto Sans CJK TC&quot;, &quot;WenQuanYi Micro Hei&quot;, SimSun, sans-serif;font-weight:700;margin:50px 0px 20px;line-height:1.4;">安全使用<a href="https://ulyc.github.io/2021/01/18/2021%E5%B9%B4-%E7%94%A8%E6%9B%B4%E7%8E%B0%E4%BB%A3%E7%9A%84%E6%96%B9%E6%B3%95%E4%BD%BF%E7%94%A8PGP-%E4%B8%AD/#%E5%AE%89%E5%85%A8%E4%BD%BF%E7%94%A8" style="opacity:1;background-color:transparent;box-sizing:border-box;-webkit-font-smoothing:antialiased;color:rgb(51, 122, 183);left:-0.75em;font-size:1.1em;margin-top:-0.1em;position:absolute;text-decoration:none;padding-left:0.375em;"><span style="color:rgb(51, 122, 183);font-size:1.1em;">#</span></a></h3>
+
+<p style="box-sizing:border-box;margin:30px 0px;margin-top:20px;">请在你信任的电脑上使用子密钥，主密钥不到万不得已不要拿出来用，如果你将子密钥放在智能卡中使用，可以忽略这部分。</p>
+
+<p style="box-sizing:border-box;margin:30px 0px;">子密钥可以放在移动存储设备上直接使用，而无需拷贝/导入到电脑使用， 使用方法：</p>
+
+<div style="box-sizing:border-box;"><div style="box-sizing:border-box;background:rgb(42, 41, 41);color:rgb(241, 241, 2);margin-bottom:10px;border-radius:6px;"><pre style="border-radius:4px;background-color: #fbfaf8;border: 1px solid rgba(0,0,0,.14902);color: #333;font-size: 12px;padding: 8px;font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif;box-sizing: border-box;"><code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif">gpg <span style="box-sizing:border-box;color:rgb(249, 38, 114);">--homedir</span> <span style="box-sizing:border-box;color:rgb(249, 38, 114);">[</span>你的存储设备的路径]
+</code></pre></div></div>
+
+<h2 style="box-sizing:border-box;color:inherit;font-size:30px;font-family:-apple-system, BlinkMacSystemFont, &quot;Helvetica Neue&quot;, Arial, &quot;PingFang SC&quot;, &quot;Hiragino Sans GB&quot;, STHeiti, &quot;Microsoft YaHei&quot;, &quot;Microsoft JhengHei&quot;, &quot;Source Han Sans SC&quot;, &quot;Noto Sans CJK SC&quot;, &quot;Source Han Sans CN&quot;, &quot;Noto Sans SC&quot;, &quot;Source Han Sans TC&quot;, &quot;Noto Sans CJK TC&quot;, &quot;WenQuanYi Micro Hei&quot;, SimSun, sans-serif;font-weight:700;margin:50px 0px 20px;line-height:1.4;"><span style="font-family:-apple-system, BlinkMacSystemFont, Helvetica Neue, Arial, PingFang SC, Hiragino Sans GB, STHeiti, Microsoft YaHei, Microsoft JhengHei, Source Han Sans SC, Noto Sans CJK SC, Source Han Sans CN, Noto Sans SC, Source Han Sans TC, Noto Sans CJK TC, WenQuanYi Micro Hei, SimSun, sans-serif;font-weight:700;line-height:1.4;color:inherit;font-size:30px;display:block;border-bottom:1px solid rgb(236, 236, 236);margin-top:44px;margin-bottom:30px;"> </span>四、进阶使用<a href="https://ulyc.github.io/2021/01/18/2021%E5%B9%B4-%E7%94%A8%E6%9B%B4%E7%8E%B0%E4%BB%A3%E7%9A%84%E6%96%B9%E6%B3%95%E4%BD%BF%E7%94%A8PGP-%E4%B8%AD/#%E5%9B%9B%E8%BF%9B%E9%98%B6%E4%BD%BF%E7%94%A8" style="opacity:1;background-color:transparent;box-sizing:border-box;-webkit-font-smoothing:antialiased;color:rgb(51, 122, 183);left:-0.75em;font-size:1.1em;margin-top:-0.1em;position:absolute;text-decoration:none;padding-left:0.375em;"><span style="color:rgb(51, 122, 183);font-size:1.1em;">#</span></a></h2>
+
+<h3 style="box-sizing:border-box;color:inherit;font-size:24px;font-family:-apple-system, BlinkMacSystemFont, &quot;Helvetica Neue&quot;, Arial, &quot;PingFang SC&quot;, &quot;Hiragino Sans GB&quot;, STHeiti, &quot;Microsoft YaHei&quot;, &quot;Microsoft JhengHei&quot;, &quot;Source Han Sans SC&quot;, &quot;Noto Sans CJK SC&quot;, &quot;Source Han Sans CN&quot;, &quot;Noto Sans SC&quot;, &quot;Source Han Sans TC&quot;, &quot;Noto Sans CJK TC&quot;, &quot;WenQuanYi Micro Hei&quot;, SimSun, sans-serif;font-weight:700;margin:50px 0px 20px;line-height:1.4;">使用其他算法<a href="https://ulyc.github.io/2021/01/18/2021%E5%B9%B4-%E7%94%A8%E6%9B%B4%E7%8E%B0%E4%BB%A3%E7%9A%84%E6%96%B9%E6%B3%95%E4%BD%BF%E7%94%A8PGP-%E4%B8%AD/#%E4%BD%BF%E7%94%A8%E5%85%B6%E4%BB%96%E7%AE%97%E6%B3%95" style="opacity:1;background-color:transparent;box-sizing:border-box;-webkit-font-smoothing:antialiased;color:rgb(51, 122, 183);left:-0.75em;font-size:1.1em;margin-top:-0.1em;position:absolute;text-decoration:none;padding-left:0.375em;"><span style="color:rgb(51, 122, 183);font-size:1.1em;">#</span></a></h3>
+
+<p style="box-sizing:border-box;margin:30px 0px;margin-top:20px;">在<a href="https://ulyc.github.io/2021/01/18/2021%E5%B9%B4-%E7%94%A8%E6%9B%B4%E7%8E%B0%E4%BB%A3%E7%9A%84%E6%96%B9%E6%B3%95%E4%BD%BF%E7%94%A8PGP-%E4%B8%AD/#%E4%B8%BA%E4%BB%80%E4%B9%88%E5%AE%89%E5%85%A8%EF%BC%9F" style="background-color:transparent;box-sizing:border-box;text-decoration:none;color:rgb(51, 122, 183);">为什么安全？</a>一节中 提到PGP支持很多算法，可是前面我们生成密钥时，只见到了很少的几种。</p>
+
+<p style="box-sizing:border-box;margin:30px 0px;">因为gpg还有一种隐藏模式—- 专家模式，生成密钥时可以使用</p>
+
+<div style="box-sizing:border-box;"><div style="box-sizing:border-box;background:rgb(42, 41, 41);color:rgb(241, 241, 2);margin-bottom:10px;border-radius:6px;"><pre style="border-radius:4px;background-color: #fbfaf8;border: 1px solid rgba(0,0,0,.14902);color: #333;font-size: 12px;padding: 8px;font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif;box-sizing: border-box;"><code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif">gpg <span style="box-sizing:border-box;color:rgb(249, 38, 114);">--expert</span> <span style="box-sizing:border-box;color:rgb(249, 38, 114);">--full-gen-key</span>
+<span style="box-sizing:border-box;font-style:italic;color:rgb(245, 242, 235);"># 输出</span>
+
+Please <span style="box-sizing:border-box;color:rgb(102, 217, 239);">select </span>what kind of key you want:
+   <span style="box-sizing:border-box;color:rgb(249, 38, 114);">(</span>1<span style="box-sizing:border-box;color:rgb(249, 38, 114);">)</span> RSA and RSA <span style="box-sizing:border-box;color:rgb(249, 38, 114);">(</span>default<span style="box-sizing:border-box;color:rgb(249, 38, 114);">)</span>
+   <span style="box-sizing:border-box;color:rgb(249, 38, 114);">(</span>2<span style="box-sizing:border-box;color:rgb(249, 38, 114);">)</span> DSA and Elgamal
+   <span style="box-sizing:border-box;color:rgb(249, 38, 114);">(</span>3<span style="box-sizing:border-box;color:rgb(249, 38, 114);">)</span> DSA <span style="box-sizing:border-box;color:rgb(249, 38, 114);">(</span>sign only<span style="box-sizing:border-box;color:rgb(249, 38, 114);">)</span>
+   <span style="box-sizing:border-box;color:rgb(249, 38, 114);">(</span>4<span style="box-sizing:border-box;color:rgb(249, 38, 114);">)</span> RSA <span style="box-sizing:border-box;color:rgb(249, 38, 114);">(</span>sign only<span style="box-sizing:border-box;color:rgb(249, 38, 114);">)</span>
+   <span style="box-sizing:border-box;color:rgb(249, 38, 114);">(</span>7<span style="box-sizing:border-box;color:rgb(249, 38, 114);">)</span> DSA <span style="box-sizing:border-box;color:rgb(249, 38, 114);">(</span><span style="box-sizing:border-box;color:rgb(248, 248, 242);">set </span>your own capabilities<span style="box-sizing:border-box;color:rgb(249, 38, 114);">)</span>
+   <span style="box-sizing:border-box;color:rgb(249, 38, 114);">(</span>8<span style="box-sizing:border-box;color:rgb(249, 38, 114);">)</span> RSA <span style="box-sizing:border-box;color:rgb(249, 38, 114);">(</span><span style="box-sizing:border-box;color:rgb(248, 248, 242);">set </span>your own capabilities<span style="box-sizing:border-box;color:rgb(249, 38, 114);">)</span>
+   <span style="box-sizing:border-box;color:rgb(249, 38, 114);">(</span>9<span style="box-sizing:border-box;color:rgb(249, 38, 114);">)</span> ECC and ECC
+  <span style="box-sizing:border-box;color:rgb(249, 38, 114);">(</span>10<span style="box-sizing:border-box;color:rgb(249, 38, 114);">)</span> ECC <span style="box-sizing:border-box;color:rgb(249, 38, 114);">(</span>sign only<span style="box-sizing:border-box;color:rgb(249, 38, 114);">)</span>
+  <span style="box-sizing:border-box;color:rgb(249, 38, 114);">(</span>11<span style="box-sizing:border-box;color:rgb(249, 38, 114);">)</span> ECC <span style="box-sizing:border-box;color:rgb(249, 38, 114);">(</span><span style="box-sizing:border-box;color:rgb(248, 248, 242);">set </span>your own capabilities<span style="box-sizing:border-box;color:rgb(249, 38, 114);">)</span>
+  <span style="box-sizing:border-box;color:rgb(249, 38, 114);">(</span>13<span style="box-sizing:border-box;color:rgb(249, 38, 114);">)</span> Existing key
+  <span style="box-sizing:border-box;color:rgb(249, 38, 114);">(</span>14<span style="box-sizing:border-box;color:rgb(249, 38, 114);">)</span> Existing key from card
+  
+
+</code></pre></div></div>
+
+<p style="box-sizing:border-box;margin:30px 0px;">就可以看到多出来不少选项，其中ECC算法 全称Elliptic Curve Cryptography 椭圆曲线密码算法。</p>
+
+<p style="box-sizing:border-box;margin:30px 0px;">上面我选了 9 , 继续</p>
+
+<div style="box-sizing:border-box;"><div style="box-sizing:border-box;background:rgb(42, 41, 41);color:rgb(241, 241, 2);margin-bottom:10px;border-radius:6px;"><pre style="border-radius:4px;background-color: #fbfaf8;border: 1px solid rgba(0,0,0,.14902);color: #333;font-size: 12px;padding: 8px;font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif;box-sizing: border-box;"><code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif">  Please select which elliptic curve you want
+   (1) Curve 25519
+   (3) NIST P-256
+   (4) NIST P-384
+   (5) NIST P-521
+   (6) Brainpool P-256   
+   (7) Brainpool P-384
+   (8) Brainpool P-512
+   (9) secp256k1            # 比特币使用的算法
+</code></pre></div></div>
+
+<p style="box-sizing:border-box;margin:30px 0px;">其中美国国家标准与技术研究院（NIST）系列椭圆曲线、Brainpool系列椭圆曲线、secp256k1都存在不同的安全风险，不建议使用。</p>
+
+<p style="box-sizing:border-box;margin:30px 0px;">可以发现这里少了（2）, 其实这里还有一些隐藏算法没有列出，可通过如下命令查看</p>
+
+<div style="box-sizing:border-box;"><div style="box-sizing:border-box;background:rgb(42, 41, 41);color:rgb(241, 241, 2);margin-bottom:10px;border-radius:6px;"><pre style="border-radius:4px;background-color: #fbfaf8;border: 1px solid rgba(0,0,0,.14902);color: #333;font-size: 12px;padding: 8px;font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif;box-sizing: border-box;"><code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif">gpg <span style="box-sizing:border-box;color:rgb(249, 38, 114);">--list-config</span> <span style="box-sizing:border-box;color:rgb(249, 38, 114);">--with-colons</span> curve
+
+<span style="box-sizing:border-box;font-style:italic;color:rgb(245, 242, 235);"># 输出</span>
+cfg:curve:   cv25519<span style="box-sizing:border-box;color:rgb(248, 248, 242);">;</span>ed25519<span style="box-sizing:border-box;color:rgb(248, 248, 242);">;</span>nistp256<span style="box-sizing:border-box;color:rgb(248, 248, 242);">;</span>nistp384<span style="box-sizing:border-box;color:rgb(248, 248, 242);">;</span>nistp521<span style="box-sizing:border-box;color:rgb(248, 248, 242);">;</span>brainpoolP256r1<span style="box-sizing:border-box;color:rgb(248, 248, 242);">;</span>brainpoolP384r1<span style="box-sizing:border-box;color:rgb(248, 248, 242);">;</span>brainpoolP512r1<span style="box-sizing:border-box;color:rgb(248, 248, 242);">;</span>secp256k1
+</code></pre></div></div>
+
+<p style="box-sizing:border-box;margin:30px 0px;">上面缺少的(2)对应的就是ed25519 ，是一种签名算法，你选择 （1）时， 主密钥用来签发和签名 用的就是ed25519，自动生成的用来加密的子密钥 算法 是cv25519 。</p>
+
+<h5 style="box-sizing:border-box;font-family:-apple-system, BlinkMacSystemFont, &quot;Helvetica Neue&quot;, Arial, &quot;PingFang SC&quot;, &quot;Hiragino Sans GB&quot;, STHeiti, &quot;Microsoft YaHei&quot;, &quot;Microsoft JhengHei&quot;, &quot;Source Han Sans SC&quot;, &quot;Noto Sans CJK SC&quot;, &quot;Source Han Sans CN&quot;, &quot;Noto Sans SC&quot;, &quot;Source Han Sans TC&quot;, &quot;Noto Sans CJK TC&quot;, &quot;WenQuanYi Micro Hei&quot;, SimSun, sans-serif;margin:50px 0px 20px;line-height:1.4;font-weight:600;color:gray;font-size:20px;">RSA VS ECC<a href="https://ulyc.github.io/2021/01/18/2021%E5%B9%B4-%E7%94%A8%E6%9B%B4%E7%8E%B0%E4%BB%A3%E7%9A%84%E6%96%B9%E6%B3%95%E4%BD%BF%E7%94%A8PGP-%E4%B8%AD/#rsa-vs-ecc" style="opacity:1;background-color:transparent;box-sizing:border-box;-webkit-font-smoothing:antialiased;color:rgb(51, 122, 183);left:-0.75em;font-size:1.1em;margin-top:-0.1em;position:absolute;text-decoration:none;padding-left:0.375em;"><span style="color:rgb(51, 122, 183);font-size:1.1em;">#</span></a></h5>
+
+<p style="box-sizing:border-box;margin:30px 0px;margin-top:10px;">ECC算法比RSA的优势在于，在<strong style="font-weight:700;box-sizing:border-box;">同等强度</strong>下，ECC的密钥长度要小的多，性能也会好一些。 RSA算法的PGP私钥 通过paperkey精简过后一般还会有50+行HEX数据，如果使用的是ECC算法生成的话， 可以减到8行以内，手抄完全没问题。</p>
+
+<p style="box-sizing:border-box;margin:30px 0px;">RSA算法的优势在于大部分硬件设备的兼容性比较好，比如 YubiKey 5 支持 RSA 4096，但不支持 Curve 25519。而且多数设备都对RSA算法提供了硬件加速。</p>
+
+<p style="box-sizing:border-box;margin:30px 0px;"><strong style="font-weight:700;box-sizing:border-box;">PS</strong>:</p>
+
+<p style="box-sizing:border-box;margin:30px 0px;">查阅资料时发现 ，中文博客里被很多人抄来抄去的一句话：</p>
+
+<blockquote style="box-sizing:border-box;padding:10px 20px;border-left:5px solid rgb(238, 238, 238);color:gray;font-style:italic;margin:20px 0px;font-size:0.95em;">
+  <p style="box-sizing:border-box;margin:0px;margin-bottom:0px;">ed25519 加密解密很快，生成时间短而且安全性更高，rsa 则加密解密稍慢，生成时间长，安全性没有 ed25519 高，只是 rsa 基本都是默认，所以用的人更多，但是建议转换为 ed25519, 网站软件现在基本都支持了.</p>
+</blockquote>
+
+<p style="box-sizing:border-box;margin:30px 0px;">这句话是 <strong style="font-weight:700;box-sizing:border-box;">错的</strong>， ed25519是 EdDSA 算法的一种，只是一种签名算法， EdDSA 全称<strong style="font-weight:700;box-sizing:border-box;">Edwards-curve Digital Signature Algorithm</strong>，爱德华椭圆曲线实现的数字签名算法。</p>
+
+<p style="box-sizing:border-box;margin:30px 0px;">上面的话多出现在替换SSH默认的RSA算法为ed25519的文章中出现。其实SSH协议中的非对称算法 并不是用来加解密信息的，而只是用来认证，正确的说法是ed25519签名和认证的速度很快。</p>
+
+<p style="box-sizing:border-box;margin:30px 0px;">再者， 不提密钥长度说安全性都是耍流氓 ，RSA 4096 的安全强度是要 好于 ed25519 的。</p>
+
+<h3 style="box-sizing:border-box;color:inherit;font-size:24px;font-family:-apple-system, BlinkMacSystemFont, &quot;Helvetica Neue&quot;, Arial, &quot;PingFang SC&quot;, &quot;Hiragino Sans GB&quot;, STHeiti, &quot;Microsoft YaHei&quot;, &quot;Microsoft JhengHei&quot;, &quot;Source Han Sans SC&quot;, &quot;Noto Sans CJK SC&quot;, &quot;Source Han Sans CN&quot;, &quot;Noto Sans SC&quot;, &quot;Source Han Sans TC&quot;, &quot;Noto Sans CJK TC&quot;, &quot;WenQuanYi Micro Hei&quot;, SimSun, sans-serif;font-weight:700;margin:50px 0px 20px;line-height:1.4;">追加UID<a href="https://ulyc.github.io/2021/01/18/2021%E5%B9%B4-%E7%94%A8%E6%9B%B4%E7%8E%B0%E4%BB%A3%E7%9A%84%E6%96%B9%E6%B3%95%E4%BD%BF%E7%94%A8PGP-%E4%B8%AD/#%E8%BF%BD%E5%8A%A0uid" style="opacity:1;background-color:transparent;box-sizing:border-box;-webkit-font-smoothing:antialiased;color:rgb(51, 122, 183);left:-0.75em;font-size:1.1em;margin-top:-0.1em;position:absolute;text-decoration:none;padding-left:0.375em;"><span style="color:rgb(51, 122, 183);font-size:1.1em;">#</span></a></h3>
+
+<p style="box-sizing:border-box;margin:30px 0px;margin-top:20px;">uid 即 user id ， 由三个部分组成：</p>
+
+<ul style="box-sizing:border-box;margin-top:0px;margin-bottom:40px;">
+  <li style="box-sizing:border-box;">全名（现在的话网名即可）</li>
+  <li style="box-sizing:border-box;">注释（用 ( ) 包括）</li>
+  <li style="box-sizing:border-box;">邮箱地址（用 &lt; &gt; 包括）</li>
+</ul>
+
+<p style="box-sizing:border-box;margin:30px 0px;">UID的性质：</p>
+
+<ul style="box-sizing:border-box;margin-top:0px;margin-bottom:40px;">
+  <li style="box-sizing:border-box;">一个密钥可以有多个 uid，方便不同场合使用。</li>
+  <li style="box-sizing:border-box;">uid 与哪个子密钥无关，uid 是作用于整个密钥的。</li>
+  <li style="box-sizing:border-box;">uid 可以随时添加，但已有的 uid 不能修改，只能单独吊销。</li>
+  <li style="box-sizing:border-box;">uid 单独吊销后，只需要重新发布公钥即可。</li>
+</ul>
+
+<p style="box-sizing:border-box;margin:30px 0px;">一般来说，操作UID只有主密钥有权限操作， 后面会提到UID可以是伪造，然后提交到服务器的。</p>
+
+<div style="box-sizing:border-box;"><div style="box-sizing:border-box;background:rgb(42, 41, 41);color:rgb(241, 241, 2);margin-bottom:10px;border-radius:6px;"><pre style="border-radius:4px;background-color: #fbfaf8;border: 1px solid rgba(0,0,0,.14902);color: #333;font-size: 12px;padding: 8px;font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif;box-sizing: border-box;"><code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif">gpg <span style="box-sizing:border-box;color:rgb(249, 38, 114);">--edit-key</span> <span style="box-sizing:border-box;color:rgb(249, 38, 114);">{</span>keyid/uid<span style="box-sizing:border-box;color:rgb(249, 38, 114);">}</span>    
+
+
+gpg&gt; adduid     <span style="box-sizing:border-box;font-style:italic;color:rgb(245, 242, 235);"># 进入交互界面后 输入  help  可以查看支持的操作</span>
+
+<span style="box-sizing:border-box;font-style:italic;color:rgb(245, 242, 235);"># 输入你要追加的信息</span>
+
+</code></pre></div></div>
+
+<p style="box-sizing:border-box;margin:30px 0px;">使用UID的场景有哪些呢？ 如果你使用一个不常用的邮箱作为你的github/gitlab账号，你主要的邮箱生成的PGP 密钥就不能用来签名了。</p>
+
+<p style="box-sizing:border-box;margin:30px 0px;">这时候为了保护隐私 且 只要管理一个密钥，就可以 在 Github设置里把 Keep my email addresses private勾上，将为你生成的随机邮箱添加到 uid中， 这样就只需要管理一个PGP密钥，可以同时为你不同的Git账号签名。</p>
+
+<h3 style="box-sizing:border-box;color:inherit;font-size:24px;font-family:-apple-system, BlinkMacSystemFont, &quot;Helvetica Neue&quot;, Arial, &quot;PingFang SC&quot;, &quot;Hiragino Sans GB&quot;, STHeiti, &quot;Microsoft YaHei&quot;, &quot;Microsoft JhengHei&quot;, &quot;Source Han Sans SC&quot;, &quot;Noto Sans CJK SC&quot;, &quot;Source Han Sans CN&quot;, &quot;Noto Sans SC&quot;, &quot;Source Han Sans TC&quot;, &quot;Noto Sans CJK TC&quot;, &quot;WenQuanYi Micro Hei&quot;, SimSun, sans-serif;font-weight:700;margin:50px 0px 20px;line-height:1.4;">添加头像<a href="https://ulyc.github.io/2021/01/18/2021%E5%B9%B4-%E7%94%A8%E6%9B%B4%E7%8E%B0%E4%BB%A3%E7%9A%84%E6%96%B9%E6%B3%95%E4%BD%BF%E7%94%A8PGP-%E4%B8%AD/#%E6%B7%BB%E5%8A%A0%E5%A4%B4%E5%83%8F" style="opacity:1;background-color:transparent;box-sizing:border-box;-webkit-font-smoothing:antialiased;color:rgb(51, 122, 183);left:-0.75em;font-size:1.1em;margin-top:-0.1em;position:absolute;text-decoration:none;padding-left:0.375em;"><span style="color:rgb(51, 122, 183);font-size:1.1em;">#</span></a></h3>
+
+<p style="box-sizing:border-box;margin:30px 0px;margin-top:20px;">跟添加UID差不多，  在gpg交互 界面 输入 <code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif">addphoto </code>就可以， 想要查看的话 输入<code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif">showphoto</code>。</p>
+
+<h3 style="box-sizing:border-box;color:inherit;font-size:24px;font-family:-apple-system, BlinkMacSystemFont, &quot;Helvetica Neue&quot;, Arial, &quot;PingFang SC&quot;, &quot;Hiragino Sans GB&quot;, STHeiti, &quot;Microsoft YaHei&quot;, &quot;Microsoft JhengHei&quot;, &quot;Source Han Sans SC&quot;, &quot;Noto Sans CJK SC&quot;, &quot;Source Han Sans CN&quot;, &quot;Noto Sans SC&quot;, &quot;Source Han Sans TC&quot;, &quot;Noto Sans CJK TC&quot;, &quot;WenQuanYi Micro Hei&quot;, SimSun, sans-serif;font-weight:700;margin:50px 0px 20px;line-height:1.4;">使用PGP为git commit 签名<a href="https://ulyc.github.io/2021/01/18/2021%E5%B9%B4-%E7%94%A8%E6%9B%B4%E7%8E%B0%E4%BB%A3%E7%9A%84%E6%96%B9%E6%B3%95%E4%BD%BF%E7%94%A8PGP-%E4%B8%AD/#%E4%BD%BF%E7%94%A8pgp%E4%B8%BAgit-commit-%E7%AD%BE%E5%90%8D" style="opacity:1;background-color:transparent;box-sizing:border-box;-webkit-font-smoothing:antialiased;color:rgb(51, 122, 183);left:-0.75em;font-size:1.1em;margin-top:-0.1em;position:absolute;text-decoration:none;padding-left:0.375em;"><span style="color:rgb(51, 122, 183);font-size:1.1em;">#</span></a></h3>
+
+<p style="box-sizing:border-box;margin:30px 0px;margin-top:20px;">只要你PGP的uid包含 git config 中的邮箱， 使用</p>
+
+<p style="box-sizing:border-box;margin:30px 0px;"><code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif">git commit -S -m your commit message </code></p>
+
+<p style="box-sizing:border-box;margin:30px 0px;">即可签名。</p>
+
+<h3 style="box-sizing:border-box;color:inherit;font-size:24px;font-family:-apple-system, BlinkMacSystemFont, &quot;Helvetica Neue&quot;, Arial, &quot;PingFang SC&quot;, &quot;Hiragino Sans GB&quot;, STHeiti, &quot;Microsoft YaHei&quot;, &quot;Microsoft JhengHei&quot;, &quot;Source Han Sans SC&quot;, &quot;Noto Sans CJK SC&quot;, &quot;Source Han Sans CN&quot;, &quot;Noto Sans SC&quot;, &quot;Source Han Sans TC&quot;, &quot;Noto Sans CJK TC&quot;, &quot;WenQuanYi Micro Hei&quot;, SimSun, sans-serif;font-weight:700;margin:50px 0px 20px;line-height:1.4;">使用PGP 进行SSH<a href="https://ulyc.github.io/2021/01/18/2021%E5%B9%B4-%E7%94%A8%E6%9B%B4%E7%8E%B0%E4%BB%A3%E7%9A%84%E6%96%B9%E6%B3%95%E4%BD%BF%E7%94%A8PGP-%E4%B8%AD/#%E4%BD%BF%E7%94%A8pgp-%E8%BF%9B%E8%A1%8Cssh" style="opacity:1;background-color:transparent;box-sizing:border-box;-webkit-font-smoothing:antialiased;color:rgb(51, 122, 183);left:-0.75em;font-size:1.1em;margin-top:-0.1em;position:absolute;text-decoration:none;padding-left:0.375em;"><span style="color:rgb(51, 122, 183);font-size:1.1em;">#</span></a></h3>
+
+<h4 style="box-sizing:border-box;font-family:-apple-system, BlinkMacSystemFont, &quot;Helvetica Neue&quot;, Arial, &quot;PingFang SC&quot;, &quot;Hiragino Sans GB&quot;, STHeiti, &quot;Microsoft YaHei&quot;, &quot;Microsoft JhengHei&quot;, &quot;Source Han Sans SC&quot;, &quot;Noto Sans CJK SC&quot;, &quot;Source Han Sans CN&quot;, &quot;Noto Sans SC&quot;, &quot;Source Han Sans TC&quot;, &quot;Noto Sans CJK TC&quot;, &quot;WenQuanYi Micro Hei&quot;, SimSun, sans-serif;margin:50px 0px 20px;line-height:1.4;font-weight:600;color:gray;font-size:22px;">生成 认证（A）用子密钥<a href="https://ulyc.github.io/2021/01/18/2021%E5%B9%B4-%E7%94%A8%E6%9B%B4%E7%8E%B0%E4%BB%A3%E7%9A%84%E6%96%B9%E6%B3%95%E4%BD%BF%E7%94%A8PGP-%E4%B8%AD/#%E7%94%9F%E6%88%90-%E8%AE%A4%E8%AF%81a%E7%94%A8%E5%AD%90%E5%AF%86%E9%92%A5" style="opacity:1;background-color:transparent;box-sizing:border-box;-webkit-font-smoothing:antialiased;color:rgb(51, 122, 183);left:-0.75em;font-size:1.1em;margin-top:-0.1em;position:absolute;text-decoration:none;padding-left:0.375em;"><span style="color:rgb(51, 122, 183);font-size:1.1em;">#</span></a></h4>
+
+<div style="box-sizing:border-box;"><div style="box-sizing:border-box;background:rgb(42, 41, 41);color:rgb(241, 241, 2);margin-bottom:10px;border-radius:6px;"><pre style="border-radius:4px;background-color: #fbfaf8;border: 1px solid rgba(0,0,0,.14902);color: #333;font-size: 12px;padding: 8px;font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif;box-sizing: border-box;"><code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif">gpg <span style="box-sizing:border-box;color:rgb(249, 38, 114);">--expert</span> <span style="box-sizing:border-box;color:rgb(249, 38, 114);">--edit-key</span> <span style="box-sizing:border-box;color:rgb(249, 38, 114);">{</span>keyid/uid<span style="box-sizing:border-box;color:rgb(249, 38, 114);">}</span>                                   <span style="box-sizing:border-box;font-style:italic;color:rgb(245, 242, 235);">## 使用专家模式, 不然没有认证的选项</span>
+
+
+gpg&gt; addkey
+Please <span style="box-sizing:border-box;color:rgb(102, 217, 239);">select </span>what kind of key you want:
+   <span style="box-sizing:border-box;color:rgb(249, 38, 114);">(</span>3<span style="box-sizing:border-box;color:rgb(249, 38, 114);">)</span> DSA <span style="box-sizing:border-box;color:rgb(249, 38, 114);">(</span>sign only<span style="box-sizing:border-box;color:rgb(249, 38, 114);">)</span>
+   <span style="box-sizing:border-box;color:rgb(249, 38, 114);">(</span>4<span style="box-sizing:border-box;color:rgb(249, 38, 114);">)</span> RSA <span style="box-sizing:border-box;color:rgb(249, 38, 114);">(</span>sign only<span style="box-sizing:border-box;color:rgb(249, 38, 114);">)</span>
+   <span style="box-sizing:border-box;color:rgb(249, 38, 114);">(</span>5<span style="box-sizing:border-box;color:rgb(249, 38, 114);">)</span> Elgamal <span style="box-sizing:border-box;color:rgb(249, 38, 114);">(</span>encrypt only<span style="box-sizing:border-box;color:rgb(249, 38, 114);">)</span>
+   <span style="box-sizing:border-box;color:rgb(249, 38, 114);">(</span>6<span style="box-sizing:border-box;color:rgb(249, 38, 114);">)</span> RSA <span style="box-sizing:border-box;color:rgb(249, 38, 114);">(</span>encrypt only<span style="box-sizing:border-box;color:rgb(249, 38, 114);">)</span>
+   <span style="box-sizing:border-box;color:rgb(249, 38, 114);">(</span>7<span style="box-sizing:border-box;color:rgb(249, 38, 114);">)</span> DSA <span style="box-sizing:border-box;color:rgb(249, 38, 114);">(</span><span style="box-sizing:border-box;color:rgb(248, 248, 242);">set </span>your own capabilities<span style="box-sizing:border-box;color:rgb(249, 38, 114);">)</span>
+   <span style="box-sizing:border-box;color:rgb(249, 38, 114);">(</span>8<span style="box-sizing:border-box;color:rgb(249, 38, 114);">)</span> RSA <span style="box-sizing:border-box;color:rgb(249, 38, 114);">(</span><span style="box-sizing:border-box;color:rgb(248, 248, 242);">set </span>your own capabilities<span style="box-sizing:border-box;color:rgb(249, 38, 114);">)</span>
+  <span style="box-sizing:border-box;color:rgb(249, 38, 114);">(</span>10<span style="box-sizing:border-box;color:rgb(249, 38, 114);">)</span> ECC <span style="box-sizing:border-box;color:rgb(249, 38, 114);">(</span>sign only<span style="box-sizing:border-box;color:rgb(249, 38, 114);">)</span>
+  <span style="box-sizing:border-box;color:rgb(249, 38, 114);">(</span>11<span style="box-sizing:border-box;color:rgb(249, 38, 114);">)</span> ECC <span style="box-sizing:border-box;color:rgb(249, 38, 114);">(</span><span style="box-sizing:border-box;color:rgb(248, 248, 242);">set </span>your own capabilities<span style="box-sizing:border-box;color:rgb(249, 38, 114);">)</span>
+  <span style="box-sizing:border-box;color:rgb(249, 38, 114);">(</span>12<span style="box-sizing:border-box;color:rgb(249, 38, 114);">)</span> ECC <span style="box-sizing:border-box;color:rgb(249, 38, 114);">(</span>encrypt only<span style="box-sizing:border-box;color:rgb(249, 38, 114);">)</span>
+  <span style="box-sizing:border-box;color:rgb(249, 38, 114);">(</span>13<span style="box-sizing:border-box;color:rgb(249, 38, 114);">)</span> Existing key
+Your selection? 8                                                   <span style="box-sizing:border-box;font-style:italic;color:rgb(245, 242, 235);">## 选8, RSA, 自定义权限</span>
+
+Possible actions <span style="box-sizing:border-box;color:rgb(102, 217, 239);">for </span>a RSA key: Sign Encrypt Authenticate
+Current allowed actions: Sign Encrypt                               <span style="box-sizing:border-box;font-style:italic;color:rgb(245, 242, 235);">## 这里显示默认有Sign和Encrypt两种权限</span>
+
+   <span style="box-sizing:border-box;color:rgb(249, 38, 114);">(</span>S<span style="box-sizing:border-box;color:rgb(249, 38, 114);">)</span> Toggle the sign capability
+   <span style="box-sizing:border-box;color:rgb(249, 38, 114);">(</span>E<span style="box-sizing:border-box;color:rgb(249, 38, 114);">)</span> Toggle the encrypt capability
+   <span style="box-sizing:border-box;color:rgb(249, 38, 114);">(</span>A<span style="box-sizing:border-box;color:rgb(249, 38, 114);">)</span> Toggle the authenticate capability
+   <span style="box-sizing:border-box;color:rgb(249, 38, 114);">(</span>Q<span style="box-sizing:border-box;color:rgb(249, 38, 114);">)</span> Finished
+
+Your selection? S                                                   <span style="box-sizing:border-box;font-style:italic;color:rgb(245, 242, 235);">## 关闭Sign</span>
+
+Possible actions <span style="box-sizing:border-box;color:rgb(102, 217, 239);">for </span>a RSA key: Sign Encrypt Authenticate
+Current allowed actions: Encrypt
+
+   <span style="box-sizing:border-box;color:rgb(249, 38, 114);">(</span>S<span style="box-sizing:border-box;color:rgb(249, 38, 114);">)</span> Toggle the sign capability
+   <span style="box-sizing:border-box;color:rgb(249, 38, 114);">(</span>E<span style="box-sizing:border-box;color:rgb(249, 38, 114);">)</span> Toggle the encrypt capability
+   <span style="box-sizing:border-box;color:rgb(249, 38, 114);">(</span>A<span style="box-sizing:border-box;color:rgb(249, 38, 114);">)</span> Toggle the authenticate capability
+   <span style="box-sizing:border-box;color:rgb(249, 38, 114);">(</span>Q<span style="box-sizing:border-box;color:rgb(249, 38, 114);">)</span> Finished
+
+Your selection? E                                                   <span style="box-sizing:border-box;font-style:italic;color:rgb(245, 242, 235);">## 关闭Encrypt</span>
+
+Possible actions <span style="box-sizing:border-box;color:rgb(102, 217, 239);">for </span>a RSA key: Sign Encrypt Authenticate
+Current allowed actions:
+
+   <span style="box-sizing:border-box;color:rgb(249, 38, 114);">(</span>S<span style="box-sizing:border-box;color:rgb(249, 38, 114);">)</span> Toggle the sign capability
+   <span style="box-sizing:border-box;color:rgb(249, 38, 114);">(</span>E<span style="box-sizing:border-box;color:rgb(249, 38, 114);">)</span> Toggle the encrypt capability
+   <span style="box-sizing:border-box;color:rgb(249, 38, 114);">(</span>A<span style="box-sizing:border-box;color:rgb(249, 38, 114);">)</span> Toggle the authenticate capability
+   <span style="box-sizing:border-box;color:rgb(249, 38, 114);">(</span>Q<span style="box-sizing:border-box;color:rgb(249, 38, 114);">)</span> Finished
+
+Your selection? A                                                   <span style="box-sizing:border-box;font-style:italic;color:rgb(245, 242, 235);">## 开启Authenticate</span>
+
+Possible actions <span style="box-sizing:border-box;color:rgb(102, 217, 239);">for </span>a RSA key: Sign Encrypt Authenticate
+Current allowed actions: Authenticate
+
+   <span style="box-sizing:border-box;color:rgb(249, 38, 114);">(</span>S<span style="box-sizing:border-box;color:rgb(249, 38, 114);">)</span> Toggle the sign capability
+   <span style="box-sizing:border-box;color:rgb(249, 38, 114);">(</span>E<span style="box-sizing:border-box;color:rgb(249, 38, 114);">)</span> Toggle the encrypt capability
+   <span style="box-sizing:border-box;color:rgb(249, 38, 114);">(</span>A<span style="box-sizing:border-box;color:rgb(249, 38, 114);">)</span> Toggle the authenticate capability
+   <span style="box-sizing:border-box;color:rgb(249, 38, 114);">(</span>Q<span style="box-sizing:border-box;color:rgb(249, 38, 114);">)</span> Finished
+
+Your selection? Q                                                    <span style="box-sizing:border-box;font-style:italic;color:rgb(245, 242, 235);">## 退出</span>
+RSA keys may be between 1024 and 4096 bits long.
+What keysize <span style="box-sizing:border-box;color:rgb(102, 217, 239);">do </span>you want? <span style="box-sizing:border-box;color:rgb(249, 38, 114);">(</span>2048<span style="box-sizing:border-box;color:rgb(249, 38, 114);">)</span> 4096
+Requested keysize is 4096 bits
+Please specify how long the key should be valid.
+         0 <span style="box-sizing:border-box;color:rgb(249, 38, 114);">=</span> key does not expire
+      &lt;n&gt;  <span style="box-sizing:border-box;color:rgb(249, 38, 114);">=</span> key expires <span style="box-sizing:border-box;color:rgb(102, 217, 239);">in </span>n days
+      &lt;n&gt;w <span style="box-sizing:border-box;color:rgb(249, 38, 114);">=</span> key expires <span style="box-sizing:border-box;color:rgb(102, 217, 239);">in </span>n weeks
+      &lt;n&gt;m <span style="box-sizing:border-box;color:rgb(249, 38, 114);">=</span> key expires <span style="box-sizing:border-box;color:rgb(102, 217, 239);">in </span>n months
+      &lt;n&gt;y <span style="box-sizing:border-box;color:rgb(249, 38, 114);">=</span> key expires <span style="box-sizing:border-box;color:rgb(102, 217, 239);">in </span>n years
+Key is valid <span style="box-sizing:border-box;color:rgb(102, 217, 239);">for</span>? <span style="box-sizing:border-box;color:rgb(249, 38, 114);">(</span>0<span style="box-sizing:border-box;color:rgb(249, 38, 114);">)</span> 1y                                             <span style="box-sizing:border-box;font-style:italic;color:rgb(245, 242, 235);">## 有效期</span>
+Key expires at Tue Jan  7 11:33:54 2020 CST
+Is this correct? <span style="box-sizing:border-box;color:rgb(249, 38, 114);">(</span>y/N<span style="box-sizing:border-box;color:rgb(249, 38, 114);">)</span> y
+Really create? <span style="box-sizing:border-box;color:rgb(249, 38, 114);">(</span>y/N<span style="box-sizing:border-box;color:rgb(249, 38, 114);">)</span> y
+We need to generate a lot of random bytes. It is a good idea to perform
+some other action <span style="box-sizing:border-box;color:rgb(249, 38, 114);">(</span><span style="box-sizing:border-box;color:rgb(248, 248, 242);">type </span>on the keyboard, move the mouse, utilize the
+disks<span style="box-sizing:border-box;color:rgb(249, 38, 114);">)</span> during the prime generation<span style="box-sizing:border-box;color:rgb(248, 248, 242);">;</span> this gives the random number
+generator a better chance to gain enough entropy.
+
+sec  rsa2048/7DEFA5351BCE3C55
+     created: 2019-01-07  expires: 2021-01-06  usage: SC
+     trust: ultimate      validity: ultimate
+ssb  rsa2048/2FCE923F8ECB63F6
+     created: 2019-01-07  expires: 2021-01-06  usage: E
+ssb  rsa4096/19D32A8839DCAA1F
+     created: 2019-01-07  expires: 2020-01-07  usage: A
+<span style="box-sizing:border-box;color:rgb(249, 38, 114);">[</span>ultimate] <span style="box-sizing:border-box;color:rgb(249, 38, 114);">(</span>1<span style="box-sizing:border-box;color:rgb(249, 38, 114);">)</span><span style="box-sizing:border-box;color:rgb(248, 248, 242);">.</span> hhhhh &lt;h@mail.com&gt;
+
+gpg&gt; save                                                            <span style="box-sizing:border-box;font-style:italic;color:rgb(245, 242, 235);">## 保存</span>
+
+</code></pre></div></div>
+
+<h4 style="box-sizing:border-box;font-family:-apple-system, BlinkMacSystemFont, &quot;Helvetica Neue&quot;, Arial, &quot;PingFang SC&quot;, &quot;Hiragino Sans GB&quot;, STHeiti, &quot;Microsoft YaHei&quot;, &quot;Microsoft JhengHei&quot;, &quot;Source Han Sans SC&quot;, &quot;Noto Sans CJK SC&quot;, &quot;Source Han Sans CN&quot;, &quot;Noto Sans SC&quot;, &quot;Source Han Sans TC&quot;, &quot;Noto Sans CJK TC&quot;, &quot;WenQuanYi Micro Hei&quot;, SimSun, sans-serif;margin:50px 0px 20px;line-height:1.4;font-weight:600;color:gray;font-size:22px;">配置文件<a href="https://ulyc.github.io/2021/01/18/2021%E5%B9%B4-%E7%94%A8%E6%9B%B4%E7%8E%B0%E4%BB%A3%E7%9A%84%E6%96%B9%E6%B3%95%E4%BD%BF%E7%94%A8PGP-%E4%B8%AD/#%E9%85%8D%E7%BD%AE%E6%96%87%E4%BB%B6" style="opacity:1;background-color:transparent;box-sizing:border-box;-webkit-font-smoothing:antialiased;color:rgb(51, 122, 183);left:-0.75em;font-size:1.1em;margin-top:-0.1em;position:absolute;text-decoration:none;padding-left:0.375em;"><span style="color:rgb(51, 122, 183);font-size:1.1em;">#</span></a></h4>
+
+<p style="box-sizing:border-box;margin:30px 0px;margin-top:10px;">编辑<code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif">bashrc</code> 文件，  将默认ssh 的agent替换为 gpg-agnet</p>
+
+<div style="box-sizing:border-box;"><div style="box-sizing:border-box;background:rgb(42, 41, 41);color:rgb(241, 241, 2);margin-bottom:10px;border-radius:6px;"><pre style="border-radius:4px;background-color: #fbfaf8;border: 1px solid rgba(0,0,0,.14902);color: #333;font-size: 12px;padding: 8px;font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif;box-sizing: border-box;"><code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span style="box-sizing:border-box;font-style:italic;color:rgb(245, 242, 235);">#  ~/.bashrc</span>
+
+<span style="box-sizing:border-box;color:rgb(248, 248, 242);">export </span><span style="box-sizing:border-box;color:rgb(248, 248, 242);">GPG_TTY</span><span style="box-sizing:border-box;color:rgb(249, 38, 114);">=</span><span style="box-sizing:border-box;color:rgb(230, 219, 116);">$(</span><span style="box-sizing:border-box;color:rgb(248, 248, 242);">tty</span><span style="box-sizing:border-box;color:rgb(230, 219, 116);">)</span>
+<span style="box-sizing:border-box;color:rgb(248, 248, 242);">export </span><span style="box-sizing:border-box;color:rgb(248, 248, 242);">SSH_AUTH_SOCK</span><span style="box-sizing:border-box;color:rgb(249, 38, 114);">=</span><span style="box-sizing:border-box;color:rgb(230, 219, 116);">$(</span>gpgconf <span style="box-sizing:border-box;color:rgb(249, 38, 114);">--list-dirs</span> agent-ssh-socket<span style="box-sizing:border-box;color:rgb(230, 219, 116);">)</span>
+<span style="box-sizing:border-box;color:rgb(248, 248, 242);">echo </span>UPDATESTARTUPTTY | gpg-connect-agent 1&gt; /dev/null
+
+</code></pre></div></div>
+
+<p style="box-sizing:border-box;margin:30px 0px;">编辑<code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif">~/.gnupg/gpg-agent.conf</code>文件,增加：</p>
+
+<div style="box-sizing:border-box;"><div style="box-sizing:border-box;background:rgb(42, 41, 41);color:rgb(241, 241, 2);margin-bottom:10px;border-radius:6px;"><pre style="border-radius:4px;background-color: #fbfaf8;border: 1px solid rgba(0,0,0,.14902);color: #333;font-size: 12px;padding: 8px;font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif;box-sizing: border-box;"><code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span style="box-sizing:border-box;font-style:italic;color:rgb(245, 242, 235);">#  ~/.gnupg/gpg-agent.conf</span>
+
+enable-ssh-support
+</code></pre></div></div>
+
+<p style="box-sizing:border-box;margin:30px 0px;">接着：</p>
+
+<div style="box-sizing:border-box;"><div style="box-sizing:border-box;background:rgb(42, 41, 41);color:rgb(241, 241, 2);margin-bottom:10px;border-radius:6px;"><pre style="border-radius:4px;background-color: #fbfaf8;border: 1px solid rgba(0,0,0,.14902);color: #333;font-size: 12px;padding: 8px;font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif;box-sizing: border-box;"><code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif">❯ gpg <span style="box-sizing:border-box;color:rgb(249, 38, 114);">-k</span> <span style="box-sizing:border-box;color:rgb(249, 38, 114);">--with-keygrip</span>    
+/Users/root/.gnupg/pubring.kbx
+<span style="box-sizing:border-box;color:rgb(249, 38, 114);">-----------------------------</span>
+pub   rsa2048 2019-01-07 <span style="box-sizing:border-box;color:rgb(249, 38, 114);">[</span>SC] <span style="box-sizing:border-box;color:rgb(249, 38, 114);">[</span>expires: 2021-01-06]
+      8A9FC025A44AA4824C1F4AE27DEFA5351BCE3C55
+      Keygrip <span style="box-sizing:border-box;color:rgb(249, 38, 114);">=</span> BEFCCDFE36CC5442B888B8459265C68B60A4ABD2
+uid           <span style="box-sizing:border-box;color:rgb(249, 38, 114);">[</span>ultimate] hhhhh &lt;h@mail.com&gt;
+sub   rsa2048/0xF681DAEBBAB82124 2019-01-07 <span style="box-sizing:border-box;color:rgb(249, 38, 114);">[</span>E] <span style="box-sizing:border-box;color:rgb(249, 38, 114);">[</span>expires: 2021-01-06]
+      Keygrip <span style="box-sizing:border-box;color:rgb(249, 38, 114);">=</span> 422922ACFD099E79863D93B93333528F225C90FC
+sub   rsa2048/0x501DEDC36BD409C8 2019-01-07 <span style="box-sizing:border-box;color:rgb(249, 38, 114);">[</span>A] <span style="box-sizing:border-box;color:rgb(249, 38, 114);">[</span>expires: 2020-01-07]
+      Keygrip <span style="box-sizing:border-box;color:rgb(249, 38, 114);">=</span> 999A87A51CFE82DAA494BEB42F585051307F9E33
+</code></pre></div></div>
+
+<p style="box-sizing:border-box;margin:30px 0px;">选择你新加的带有[A]标志的那个新的子密钥的 keygrip , 即<code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif">999A87A51CFE82DAA494BEB42F585051307F9E33</code></p>
+
+<p style="box-sizing:border-box;margin:30px 0px;">加入到<code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif">~/.gnupg/sshcontrol</code>文件，   运行<code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif">ssh-add -l</code>, 查看是否已经加入。</p>
+
+<p style="box-sizing:border-box;margin:30px 0px;">然后</p>
+
+<div style="box-sizing:border-box;"><div style="box-sizing:border-box;background:rgb(42, 41, 41);color:rgb(241, 241, 2);margin-bottom:10px;border-radius:6px;"><pre style="border-radius:4px;background-color: #fbfaf8;border: 1px solid rgba(0,0,0,.14902);color: #333;font-size: 12px;padding: 8px;font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif;box-sizing: border-box;"><code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif">gpg <span style="box-sizing:border-box;color:rgb(249, 38, 114);">--export-ssh-key</span>   <span style="box-sizing:border-box;color:rgb(249, 38, 114);">{</span>keyid<span style="box-sizing:border-box;color:rgb(249, 38, 114);">}!</span> 
+</code></pre></div></div>
+
+<p style="box-sizing:border-box;margin:30px 0px;">注意，这里不能用 uid ,不然会提示:</p>
+
+<div style="box-sizing:border-box;"><div style="box-sizing:border-box;background:rgb(42, 41, 41);color:rgb(241, 241, 2);margin-bottom:10px;border-radius:6px;"><pre style="border-radius:4px;background-color: #fbfaf8;border: 1px solid rgba(0,0,0,.14902);color: #333;font-size: 12px;padding: 8px;font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif;box-sizing: border-box;"><code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif">gpg: key <span style="box-sizing:border-box;color:rgb(230, 219, 116);">"uid"</span> not found: Unusable public key
+gpg: <span style="box-sizing:border-box;color:rgb(248, 248, 242);">export </span>as ssh key failed: Unusable public key
+</code></pre></div></div>
+
+<p style="box-sizing:border-box;margin:30px 0px;">这里只能填子密钥的 key id,这个例子里就是 <code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif">0x501DEDC36BD409C8</code>。</p>
+
+<p style="box-sizing:border-box;margin:30px 0px;">输出的 ssh public key 放到你的服务器上的<code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif">~/.ssh/authorized_keys</code>中， 重启shell, 就可以连接了。</p>
+
+<h2 style="box-sizing:border-box;color:inherit;font-size:30px;font-family:-apple-system, BlinkMacSystemFont, &quot;Helvetica Neue&quot;, Arial, &quot;PingFang SC&quot;, &quot;Hiragino Sans GB&quot;, STHeiti, &quot;Microsoft YaHei&quot;, &quot;Microsoft JhengHei&quot;, &quot;Source Han Sans SC&quot;, &quot;Noto Sans CJK SC&quot;, &quot;Source Han Sans CN&quot;, &quot;Noto Sans SC&quot;, &quot;Source Han Sans TC&quot;, &quot;Noto Sans CJK TC&quot;, &quot;WenQuanYi Micro Hei&quot;, SimSun, sans-serif;font-weight:700;margin:50px 0px 20px;line-height:1.4;"><span style="font-family:-apple-system, BlinkMacSystemFont, Helvetica Neue, Arial, PingFang SC, Hiragino Sans GB, STHeiti, Microsoft YaHei, Microsoft JhengHei, Source Han Sans SC, Noto Sans CJK SC, Source Han Sans CN, Noto Sans SC, Source Han Sans TC, Noto Sans CJK TC, WenQuanYi Micro Hei, SimSun, sans-serif;font-weight:700;line-height:1.4;color:inherit;font-size:30px;display:block;border-bottom:1px solid rgb(236, 236, 236);margin-top:44px;margin-bottom:30px;"> </span>未完待续<a href="https://ulyc.github.io/2021/01/18/2021%E5%B9%B4-%E7%94%A8%E6%9B%B4%E7%8E%B0%E4%BB%A3%E7%9A%84%E6%96%B9%E6%B3%95%E4%BD%BF%E7%94%A8PGP-%E4%B8%AD/#%E6%9C%AA%E5%AE%8C%E5%BE%85%E7%BB%AD" style="opacity:1;background-color:transparent;box-sizing:border-box;-webkit-font-smoothing:antialiased;color:rgb(51, 122, 183);left:-0.75em;font-size:1.1em;margin-top:-0.1em;position:absolute;text-decoration:none;padding-left:0.375em;"><span style="color:rgb(51, 122, 183);font-size:1.1em;">#</span></a></h2>
+
+
+                <hr style="height:0px;box-sizing:border-box;margin-top:20px;margin-bottom:20px;border-width:1px 0px 0px;border-right-style:initial;border-bottom-style:initial;border-left-style:initial;border-right-color:initial;border-bottom-color:initial;border-left-color:initial;border-image:initial;border-top-style:solid;border-top-color:rgb(238, 238, 238);visibility:hidden;"/>
+
+                <ul style="box-sizing:border-box;text-align:center;list-style:none;padding:0px;margin:20px 0px 0px;"><span style="text-align:center;list-style:none;display:table;"> </span>
+                    
+                    <li style="box-sizing:border-box;display:inline;width:48%;float:left;">
+                        <a href="https://ulyc.github.io/2021/01/13/2021%E5%B9%B4-%E7%94%A8%E6%9B%B4%E7%8E%B0%E4%BB%A3%E7%9A%84%E6%96%B9%E6%B3%95%E4%BD%BF%E7%94%A8PGP-%E4%B8%8A/" title="2021年，用更现代的方法使用PGP（上）" style="box-sizing:border-box;text-decoration:none;display:inline-block;border:1px solid rgb(221, 221, 221);font-family:-apple-system, BlinkMacSystemFont, &quot;Helvetica Neue&quot;, Arial, &quot;PingFang SC&quot;, &quot;Hiragino Sans GB&quot;, STHeiti, &quot;Microsoft YaHei&quot;, &quot;Microsoft JhengHei&quot;, &quot;Source Han Sans SC&quot;, &quot;Noto Sans CJK SC&quot;, &quot;Source Han Sans CN&quot;, &quot;Noto Sans SC&quot;, &quot;Source Han Sans TC&quot;, &quot;Noto Sans CJK TC&quot;, &quot;WenQuanYi Micro Hei&quot;, SimSun, sans-serif;line-height:1.7;text-transform:uppercase;font-weight:800;letter-spacing:1px;background-color:rgb(255, 255, 255);border-radius:0px;padding:15px 25px;font-size:14px;color:rgb(64, 64, 64);float:left;width:100%;">
+                            Previous<br style="box-sizing:border-box;"/>
+                            <span style="box-sizing:border-box;color:rgb(163, 163, 163);font-weight:400;letter-spacing:0.5px;">2021年，用更现代的方法使用PGP（上）</span>
+                        </a>
+                    </li>
+                    
+                    
+                    <li style="box-sizing:border-box;display:inline;width:48%;float:right;">
+                        <a href="https://ulyc.github.io/2021/01/26/2021%E5%B9%B4-%E7%94%A8%E6%9B%B4%E7%8E%B0%E4%BB%A3%E7%9A%84%E6%96%B9%E6%B3%95%E4%BD%BF%E7%94%A8PGP-%E4%B8%8B/" title="2021年，用更现代的方法使用PGP（下）" style="box-sizing:border-box;text-decoration:none;display:inline-block;border:1px solid rgb(221, 221, 221);font-family:-apple-system, BlinkMacSystemFont, &quot;Helvetica Neue&quot;, Arial, &quot;PingFang SC&quot;, &quot;Hiragino Sans GB&quot;, STHeiti, &quot;Microsoft YaHei&quot;, &quot;Microsoft JhengHei&quot;, &quot;Source Han Sans SC&quot;, &quot;Noto Sans CJK SC&quot;, &quot;Source Han Sans CN&quot;, &quot;Noto Sans SC&quot;, &quot;Source Han Sans TC&quot;, &quot;Noto Sans CJK TC&quot;, &quot;WenQuanYi Micro Hei&quot;, SimSun, sans-serif;line-height:1.7;text-transform:uppercase;font-weight:800;letter-spacing:1px;background-color:rgb(255, 255, 255);border-radius:0px;padding:15px 25px;font-size:14px;color:rgb(64, 64, 64);float:right;width:100%;">
+                            Next<br style="box-sizing:border-box;"/>
+                            <span style="box-sizing:border-box;color:rgb(163, 163, 163);font-weight:400;letter-spacing:0.5px;">2021年，用更现代的方法使用PGP（下）</span>
+                        </a>
+                    </li>
+                    
+                <span style="text-align:center;list-style:none;display:table;clear:both;"> </span></ul>
+
+                
+                
+                
+
+                
+                
+                <div style="box-sizing:border-box;"><div style="box-sizing:border-box;width:100%;border:0px;height:464px;position:relative;"><div style="-evernote-clipper-iframe:timeout;"></div></div></div>
+
+                
+                
+                
+
+                
+                
+                
+
+                
+
+            </div></div></div></div></div></div></div>
+</div></div>
+<a class="back-link" href="../articles.html">← 返回笔记列表</a>
+</body></html>

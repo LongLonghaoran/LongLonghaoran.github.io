@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="zh-CN" data-theme="light">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>自签名ssl证书实操:nginx https服务配置以及rails应用的配置 — 技术笔记</title>
+<style>
+:root { --bg:#fff; --text:#1a1a1a; --muted:#666; --border:#e0e0e0; --code-bg:#f5f5f5; --link:#0066cc; }
+@media (prefers-color-scheme: dark) { :root { --bg:#1a1a1a; --text:#e0e0e0; --muted:#999; --border:#333; --code-bg:#2a2a2a; --link:#66bbff; } }
+* { box-sizing:border-box; margin:0; padding:0; }
+body { font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Arial,sans-serif; line-height:1.7; color:var(--text); background:var(--bg); max-width:860px; margin:0 auto; padding:2rem 1.5rem; }
+.note-header { border-bottom:2px solid var(--border); padding-bottom:1rem; margin-bottom:2rem; }
+.note-title { font-size:1.6rem; font-weight:700; margin-bottom:0.3rem; }
+.note-meta { color:var(--muted); font-size:0.85rem; }
+.note-content { font-size:0.95rem; }
+.note-content h1 { font-size:1.4rem; margin:1.2rem 0 0.6rem; }
+.note-content h2 { font-size:1.2rem; margin:1rem 0 0.5rem; }
+.note-content h3 { font-size:1.05rem; margin:0.8rem 0 0.4rem; }
+.note-content p { margin:0.5rem 0; }
+.note-content ul,.note-content ol { margin:0.5rem 0 0.5rem 2rem; }
+.note-content li { margin:0.2rem 0; }
+.note-content pre { background:var(--code-bg); padding:1rem; border-radius:6px; overflow-x:auto; margin:0.8rem 0; font-size:0.85rem; }
+.note-content code { background:var(--code-bg); padding:0.1rem 0.3rem; border-radius:3px; font-size:0.88em; }
+.note-content pre code { background:none; padding:0; }
+.note-content blockquote { border-left:3px solid var(--border); padding-left:1rem; color:var(--muted); margin:0.8rem 0; }
+.note-content a { color:var(--link); }
+.note-content img { max-width:100%; height:auto; border-radius:6px; margin:0.5rem 0; }
+.note-content table { border-collapse:collapse; width:100%; margin:0.8rem 0; }
+.note-content th,.note-content td { border:1px solid var(--border); padding:0.5rem; }
+.note-content th { background:var(--code-bg); }
+.media-placeholder { background:var(--code-bg); padding:1rem; text-align:center; color:var(--muted); border-radius:6px; margin:0.5rem 0; font-size:0.85rem; }
+.encrypt-placeholder { background:#fff3cd; padding:0.5rem; text-align:center; color:#856404; border-radius:6px; margin:0.5rem 0; font-size:0.85rem; }
+.back-link { display:inline-block; margin-top:2rem; color:var(--link); text-decoration:none; font-size:0.85rem; }
+</style>
+</head>
+<body>
+<div class="note-header"><div class="note-title">自签名ssl证书实操:nginx https服务配置以及rails应用的配置</div><div class="note-meta">笔记本：关于加密、解密、签名</div></div>
+<div class="note-content"><div>在本地主机即可模拟,通过在/etc/hosts中增加我们想要生成的域名的host,就可以使用这个域名来生成证书并在nginx中指定服务名了,大致步骤分两步: 1.生成证书      2.配置nginx</div><div>1.生成证书:</div><div>    1.1 生成秘钥和csr文件</div><div>        这里可以使用在线服务来生成<a href="https://www.chinassl.net/ssltools/generator-csr.html">https://www.chinassl.net/ssltools/generator-csr.html</a>,</div><div><div class="media-placeholder">[图片/附件]</div><br /></div><div>    1.2 生成证书,上一步生成的文件可以以域名.csr和域名.key来命名</div><div>        生成证书使用本机的openssl工具来生成: </div><div style="box-sizing: border-box; padding: 8px; font-family: Monaco, Menlo, Consolas, &quot;Courier New&quot;, monospace; font-size: 12px; color: rgb(51, 51, 51); border-top-left-radius: 4px; border-top-right-radius: 4px; border-bottom-right-radius: 4px; border-bottom-left-radius: 4px; background-color: rgb(251, 250, 248); border: 1px solid rgba(0, 0, 0, 0.15);-en-codeblock:true;"><div>openssl x509 -trustout  -req -days 365 -in ~/eddy.money.com.csr -signkey ~/eddy.money.com.key  -out eddy.money.com.crt</div></div><div><br /></div><div>2.配置nginx</div><div><div class="media-placeholder">[图片/附件]</div><br /></div><div><br /></div><div>3.我这里请求是转发到本地的3000端口,保证那个服务是打开的</div><div>    配置一下/etc/hosts</div><div><div class="media-placeholder">[图片/附件]</div><br /></div><div>    浏览器访问eddy.money.com即可</div><div><br /></div><div>4.有时候希望能够配置rails也强制限制只能使用https访问,rails应用有个配置config.force_ssl = true可以设置,但是如果我们使用nginx来做ssl代理的话,那么其实我们的rails应用仍然是一个普通的接收http请求的应用,就是说假设我们还保持了原有的http代理设置的情况下,原有的应用仍然可以通过http进行访问(这应该很正常,假设应用升级了https访问,那也应该保持原有的http链接也可以访问),为此需要增加两个配置代码:</div><div>    4.1 rails: production/development.rb:</div><div style="box-sizing: border-box; padding: 8px; font-family: Monaco, Menlo, Consolas, &quot;Courier New&quot;, monospace; font-size: 12px; color: rgb(51, 51, 51); border-top-left-radius: 4px; border-top-right-radius: 4px; border-bottom-right-radius: 4px; border-bottom-left-radius: 4px; background-color: rgb(251, 250, 248); border: 1px solid rgba(0, 0, 0, 0.15);-en-codeblock:true;"><div>config.ssl_options = {redirect: { host: "eddy.money.com", port: 443 }}</div></div><div>        通过ssl_options来指定重定向的地址,force_ssl的作用就是当请求不是https的时候将其重定向到https的链接上去,而默认会重定向到localhost:3000,因为rails应用并不知道外部配置的域名是什么</div><div>    4.2 nginx.conf:</div><div><div class="media-placeholder">[图片/附件]</div><br /></div><div>        在https的服务配置下加上set_header,设置X-FORWARDED-PROTO头,这样再转发给rails应用的话,rails应用就能看到这个头了,因为force_ssl实质上就是通过这个头的值来判断是否为https请求的</div><div><span>    <span>    5.增加配置:</span></span><span style="background-color:rgb(30, 30, 30);color:rgb(212, 212, 212);font-family:Menlo, Monaco, &quot;Courier New&quot;, monospace;font-size:12px;line-height:18px;"><br /></span></div><div><span style="background-color:rgb(30, 30, 30);color:rgb(212, 212, 212);font-family:Menlo, Monaco, &quot;Courier New&quot;, monospace;font-size:12px;line-height:18px;"><span style="color: #9cdcfe;">config</span><span style="color: #d4d4d4;">.</span><span style="color: #dcdcaa;">hosts</span> <span style="color: #d4d4d4;">&lt;&lt;</span> <span style="color: #ce9178;">"</span><a href="http://eddy.money.com" style="color: #ce9178;">eddy.money.com</a><span style="color: #ce9178;">"</span>
+</span><br /></div><div><span>    <span>    <span>    <span>    rails会检查来访请求的host头,如果不为localhost就会不允许通过?,所以将此配置加入一下</span></span></span></span><br /></div></div>
+<a class="back-link" href="../articles.html">← 返回笔记列表</a>
+</body></html>

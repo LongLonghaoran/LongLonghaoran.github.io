@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="zh-CN" data-theme="light">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Kubevirt VirtualMachines — 技术笔记</title>
+<style>
+:root {
+  --bg: #ffffff;
+  --text: #1a1a1a;
+  --muted: #666;
+  --border: #e0e0e0;
+  --code-bg: #f5f5f5;
+  --link: #0066cc;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #1a1a1a;
+    --text: #e0e0e0;
+    --muted: #999;
+    --border: #333;
+    --code-bg: #2a2a2a;
+    --link: #66bbff;
+  }
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  line-height: 1.7;
+  color: var(--text);
+  background: var(--bg);
+  max-width: 860px;
+  margin: 0 auto;
+  padding: 2rem 1.5rem;
+}
+.note-header {
+  border-bottom: 2px solid var(--border);
+  padding-bottom: 1rem;
+  margin-bottom: 2rem;
+}
+.note-title {
+  font-size: 1.6rem;
+  font-weight: 700;
+  margin-bottom: 0.3rem;
+}
+.note-meta {
+  color: var(--muted);
+  font-size: 0.85rem;
+}
+.note-content {
+  font-size: 0.95rem;
+}
+.note-content h1 { font-size: 1.4rem; margin: 1.2rem 0 0.6rem; }
+.note-content h2 { font-size: 1.2rem; margin: 1rem 0 0.5rem; }
+.note-content h3 { font-size: 1.05rem; margin: 0.8rem 0 0.4rem; }
+.note-content p { margin: 0.5rem 0; }
+.note-content ul, .note-content ol { margin: 0.5rem 0 0.5rem 2rem; }
+.note-content li { margin: 0.2rem 0; }
+.note-content pre {
+  background: var(--code-bg);
+  padding: 1rem;
+  border-radius: 6px;
+  overflow-x: auto;
+  margin: 0.8rem 0;
+  font-size: 0.85rem;
+}
+.note-content code {
+  background: var(--code-bg);
+  padding: 0.1rem 0.3rem;
+  border-radius: 3px;
+  font-size: 0.88em;
+}
+.note-content pre code {
+  background: none;
+  padding: 0;
+}
+.note-content blockquote {
+  border-left: 3px solid var(--border);
+  padding-left: 1rem;
+  color: var(--muted);
+  margin: 0.8rem 0;
+}
+.note-content a { color: var(--link); }
+.note-content img {
+  max-width: 100%;
+  height: auto;
+  border-radius: 6px;
+  margin: 0.5rem 0;
+}
+.note-content table {
+  border-collapse: collapse;
+  width: 100%;
+  margin: 0.8rem 0;
+}
+.note-content th, .note-content td {
+  border: 1px solid var(--border);
+  padding: 0.5rem;
+}
+.note-content th { background: var(--code-bg); }
+.media-placeholder {
+  background: var(--code-bg);
+  padding: 1rem;
+  text-align: center;
+  color: var(--muted);
+  border-radius: 6px;
+  margin: 0.5rem 0;
+  font-size: 0.85rem;
+}
+.encrypt-placeholder {
+  background: #fff3cd;
+  padding: 0.5rem;
+  text-align: center;
+  color: #856404;
+  border-radius: 6px;
+  margin: 0.5rem 0;
+  font-size: 0.85rem;
+}
+.back-link {
+  display: inline-block;
+  margin-top: 2rem;
+  color: var(--link);
+  text-decoration: none;
+  font-size: 0.85rem;
+}
+</style>
+</head>
+<body>
+<div class="note-header">
+  <div class="note-title">Kubevirt VirtualMachines</div>
+  <div class="note-meta">笔记本：Kubevirt</div>
+</div>
+<div class="note-content">
+<div><span style="font-size: 24px;">Virtual machine Instances:</span></div><div>概念上由2部分组成: 调度决定的信息;虚拟机api的信息\</div><div>每个vmi对象代表耽搁运行中的虚拟机实例,可以通过kubectl与其像操作k8s对象一样操作它</div><div><span style="font-size: 24px;">生命周期</span></div><div>可以通过vmi.yaml文件kubectl apply手动创建</div><div>通过vm以及virtctl工具启动/停止/暂停/恢复vmi</div><div><span style="font-size: 24px;">运行策略</span></div><div>与spec.running互斥，二选一</div><div>always: vmi总是会存在.如果vmi死机了,新的就会创建。与spec.running: true行为一致</div><div>RerunonFailure:vmi会重新创建，如果先前的实例在错误状态下失败的话。它如果客户机成功终止的话（比如在虚拟机内部关机）是不会重新创建的</div><div>Manual:不论是vmi存在还是不存在，都是由手动控制，kubevirt不会自动转换它的状态</div><div>Halted: 总是会删除vmi实例，与spec.running: false一致</div><div><span style="font-size: 24px;">实例类型和偏好设置</span></div><div><span style="font-size: 14px;">vm api包含了用于调整vm性能的高级选项，但这超过典型用户的认知。用户无法用广泛的术语来简单地定义存储、网路</span></div><div><span style="font-size: 14px;">instancetypes和preferences提供了定义一套资源、性能和其他运行时指标的方式，允许用户在多个vm中复用这些定义。可以定义cpu memory gpus hostdevices等，其中cpu和memory是必填的，在vm中不可覆盖</span></div><div><span style="font-size: 14px;">preference就是用于定义偏好值的，可以在vm中覆盖，当vm中不指定的时候就使用偏好值，可以定义diskBus等值</span></div><div><span style="font-size: 14px;">在vm中通过spec.instancetype和spec.preference字段指定</span></div><div><span style="font-size: 18pt;">预设Preset(v0.57.0之后已废弃，由instancetype和preference替代)</span></div><div><span style="font-size: 18pt;">虚拟硬件virtual hardware</span></div><div><a href="https://kubevirt.io/user-guide/virtual_machines/virtual_hardware/">https://kubevirt.io/user-guide/virtual_machines/virtual_hardware/</a></div><div><span style="font-size: 18pt;">专用CPU资源</span></div><div><a href="https://kubevirt.io/user-guide/virtual_machines/dedicated_cpu_resources/">https://kubevirt.io/user-guide/virtual_machines/dedicated_cpu_resources/</a></div><div><span style="font-size: 18pt;">NUMA</span></div><div><span style="font-size: 10pt;">什么是NUMA:</span><a href="https://docs.vmware.com/cn/VMware-vSphere/7.0/com.vmware.vsphere.resmgmt.doc/GUID-1DAB8F35-BA86-4063-8459-55D2979B593E.html">https://docs.vmware.com/cn/VMware-vSphere/7.0/com.vmware.vsphere.resmgmt.doc/GUID-1DAB8F35-BA86-4063-8459-55D2979B593E.html</a></div><div><a href="https://zh.wikipedia.org/wiki/%E9%9D%9E%E5%9D%87%E5%8C%80%E8%AE%BF%E5%AD%98%E6%A8%A1%E5%9E%8B">https://zh.wikipedia.org/wiki/%E9%9D%9E%E5%9D%87%E5%8C%80%E8%AE%BF%E5%AD%98%E6%A8%A1%E5%9E%8B</a></div><div>kubevirt中使用NUMA:<a href="https://kubevirt.io/user-guide/virtual_machines/numa/">https://kubevirt.io/user-guide/virtual_machines/numa/</a></div><div><span style="font-size: 18pt;">磁盘和卷Disk and Volumes</span></div><div><a href="https://kubevirt.io/user-guide/virtual_machines/disks_and_volumes/">https://kubevirt.io/user-guide/virtual_machines/disks_and_volumes/</a></div><div><span style="font-size: 18pt;">接口和网络 Interfaces and Networks</span></div><div>将vm连接到网络分为2个部分:1.通过spec.networks指定网络，然后通过指定spec.domain.devices.interfaces将这些网络支持的接口配置好.</div><div>每个接口必须由对应的同名的网络.</div><div>interface定义了vm的虚拟网络接口（也称为前端）。一个network指定了interface的后端并声明了它连接到逻辑或者物理设备（也称为后端）。</div><div>由多种方式配置interface和network。</div><div>后端backend:</div><div>在spec.networks中指定.network必须使用唯一的名称。每个网络都要指定一个类型type,可以是Pod: 默认的网络,multu使用multus提供的第二网络,也可通过在配置network时指定default: true来让multus称为唯一一个网络</div><div>前端frontend:</div><div>也即在虚拟机中可见的部分,也就是网卡,通过 spec.domain.devices.interfaces配置 。相同的网络network后端可能以多种不同的方式连接到虚拟机，每种有他们自己的连接保证和指标,</div><div>限制有以下集中可用类型: bridge, slirp, sriov, masquerade</div><div>multus文档:<a href="https://github.com/k8snetworkplumbingwg/multus-cni">https://github.com/k8snetworkplumbingwg/multus-cni</a></div><div><br /></div><div><span style="font-size: 18pt;">Istio service mesh服务网格</span></div><div>kubevirt允许作为istio的一部分运行vm</div><div>限制: 只支持masquerade方式(NAT)</div><div>istio使用特定端口，这些端口不能被vmi使用</div><div>istio只支持ipv4</div><div><br /></div><div><span style="font-size: 18pt;">网络策略Network Policy:</span></div><div><span style="font-size: 10pt;">k8s自带的资源Network Policy资源对象,为了使用network policy对象，必须先使用一个支持network policy的network解决方案.network isolation是被network policy对象控制的。默认情况下，同一命名空间下所有vmi都可以互相访问也可以被其他网络节点网络。为了独立一个或更多vmi。你可以创建网络策略对象来指示允许的进入连接。</span></div><div><span style="font-size: 10pt;">注意：在网络策略中pod和vmi是同等对待的，因为labels被传递到pod中，而pod中含有运行着的vmi。换句话说，vmis上的labels截图通过网络策略的podselector匹配到</span></div><div>以下是几个例子:</div><div><a href="https://kubevirt.io/user-guide/virtual_machines/networkpolicy/">https://kubevirt.io/user-guide/virtual_machines/networkpolicy/</a></div><div><span style="font-size: 18pt;">主机设备分配</span></div><div><span style="font-size: 18pt;">Windows virtio drivers</span></div><div><a href="https://kubevirt.io/user-guide/virtual_machines/windows_virtio_drivers/">https://kubevirt.io/user-guide/virtual_machines/windows_virtio_drivers/</a></div><div><span style="font-size: 18pt;">Guest operating system information</span></div><div><span style="font-size: 10pt;">客户机操作系统的简短名称会在vmi的label: kubevirt.io/os中给出</span></div><div><a href="https://kubevirt.io/user-guide/virtual_machines/guest_operating_system_information/" style="font-size: unset; font-family: unset;">https://kubevirt.io/user-guide/virtual_machines/guest_operating_system_information/</a></div><div><span style="font-size: 18pt;">Guest Agent information</span></div><div><span style="font-size: 10pt;">ga是一个运行在虚拟机中的可选的组件。ga提供了大量的运行时信息关于正在运行的操作系统。</span></div><div>当ga连接上vmi的时候，vmi上会有一条状态信息,也就是在status字段下会有一个type为AgentConnected的状态存在告知</div><div>当ga连接上之后，额外的os信息就会显示在status处。这个信息由以下组成:</div><div>1.客户机信息 2.接口信息，展示的是qemu接口</div><div><span style="font-size: 18pt;">Liveness and Readness probes</span></div><div><a href="https://kubevirt.io/user-guide/virtual_machines/liveness_and_readiness_probes/">https://kubevirt.io/user-guide/virtual_machines/liveness_and_readiness_probes/</a></div><div><span style="font-size: 18pt;">访问虚拟机Accessing Virtual Machine</span></div><div><a href="https://kubevirt.io/user-guide/virtual_machines/accessing_virtual_machines/" style="font-size: 10pt;">https://kubevirt.io/user-guide/virtual_machines/accessing_virtual_machines/</a></div><div>两种方式vnc,ssh</div><div>vnc:通过virtctl vnc vm-name访问或者virtctl vnc --proxy-only vm-name,仅开放vnc端口，供其它机器远程连接</div><div>ssh:通过public key注入到虚拟机后可以使用virtctl ssh免密登录到虚拟机中</div><div>有2种注入方式:静态和动态</div><div>静态:  1.创建 secret，内容是本地的id_rsa.pub文件,2.创建虚拟机时指定accessCredentials字段,利用该字段配置sshPublicKey</div><div>动态: 通过qemu-guest-agent进行,需要先确保  qemu-guest-agent 安装好了</div><div><span style="font-size: 18pt;">启动脚本Startup Scripts</span></div><div><a href="https://kubevirt.io/user-guide/virtual_machines/startup_scripts/">https://kubevirt.io/user-guide/virtual_machines/startup_scripts/</a></div><div><font style="font-size: 24px;">VirtualMachineInstanceReplicaSet</font></div><div>和replicaset一样，确保指定数量的vmi运行/存活。</div><div>使用方法:在vmir的spec.template中指定vmi的创建模板。</div><div>何时使用vmir: 需要很多可标识的vm并且不关心在vm关闭后继续维护其磁盘</div><div><font style="font-size: 24px;">Kubevirt Tekton</font></div><div>前提:Tekton,Kubevirt,CDI已安装</div><div>Tekton: 一个在云原生上构建CI/CD的解决方案。由Tekton pipeline(提供构建块),Tekton CLI,Tekton Catalog组成,让Tekton成为了一个完整的系统。Tekton是CD基金会的一部分，一个Linux基金会项目</div><div><font style="font-size: 24px;">Virtual machine templates</font></div><div>kubevirt项目提供了一整套模板用于创建vm来处理通用场景。</div>
+</div>
+<a class="back-link" href="../articles.html">← 返回笔记列表</a>
+</body>
+</html>

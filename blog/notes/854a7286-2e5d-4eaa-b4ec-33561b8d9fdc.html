@@ -1,0 +1,277 @@
+<!DOCTYPE html>
+<html lang="zh-CN" data-theme="light">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Creating your own plugins - The Kubebuilder Book — 技术笔记</title>
+<style>
+:root {
+  --bg: #ffffff;
+  --text: #1a1a1a;
+  --muted: #666;
+  --border: #e0e0e0;
+  --code-bg: #f5f5f5;
+  --link: #0066cc;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #1a1a1a;
+    --text: #e0e0e0;
+    --muted: #999;
+    --border: #333;
+    --code-bg: #2a2a2a;
+    --link: #66bbff;
+  }
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  line-height: 1.7;
+  color: var(--text);
+  background: var(--bg);
+  max-width: 860px;
+  margin: 0 auto;
+  padding: 2rem 1.5rem;
+}
+.note-header {
+  border-bottom: 2px solid var(--border);
+  padding-bottom: 1rem;
+  margin-bottom: 2rem;
+}
+.note-title {
+  font-size: 1.6rem;
+  font-weight: 700;
+  margin-bottom: 0.3rem;
+}
+.note-meta {
+  color: var(--muted);
+  font-size: 0.85rem;
+}
+.note-content {
+  font-size: 0.95rem;
+}
+.note-content h1 { font-size: 1.4rem; margin: 1.2rem 0 0.6rem; }
+.note-content h2 { font-size: 1.2rem; margin: 1rem 0 0.5rem; }
+.note-content h3 { font-size: 1.05rem; margin: 0.8rem 0 0.4rem; }
+.note-content p { margin: 0.5rem 0; }
+.note-content ul, .note-content ol { margin: 0.5rem 0 0.5rem 2rem; }
+.note-content li { margin: 0.2rem 0; }
+.note-content pre {
+  background: var(--code-bg);
+  padding: 1rem;
+  border-radius: 6px;
+  overflow-x: auto;
+  margin: 0.8rem 0;
+  font-size: 0.85rem;
+}
+.note-content code {
+  background: var(--code-bg);
+  padding: 0.1rem 0.3rem;
+  border-radius: 3px;
+  font-size: 0.88em;
+}
+.note-content pre code {
+  background: none;
+  padding: 0;
+}
+.note-content blockquote {
+  border-left: 3px solid var(--border);
+  padding-left: 1rem;
+  color: var(--muted);
+  margin: 0.8rem 0;
+}
+.note-content a { color: var(--link); }
+.note-content img {
+  max-width: 100%;
+  height: auto;
+  border-radius: 6px;
+  margin: 0.5rem 0;
+}
+.note-content table {
+  border-collapse: collapse;
+  width: 100%;
+  margin: 0.8rem 0;
+}
+.note-content th, .note-content td {
+  border: 1px solid var(--border);
+  padding: 0.5rem;
+}
+.note-content th { background: var(--code-bg); }
+.media-placeholder {
+  background: var(--code-bg);
+  padding: 1rem;
+  text-align: center;
+  color: var(--muted);
+  border-radius: 6px;
+  margin: 0.5rem 0;
+  font-size: 0.85rem;
+}
+.encrypt-placeholder {
+  background: #fff3cd;
+  padding: 0.5rem;
+  text-align: center;
+  color: #856404;
+  border-radius: 6px;
+  margin: 0.5rem 0;
+  font-size: 0.85rem;
+}
+.back-link {
+  display: inline-block;
+  margin-top: 2rem;
+  color: var(--link);
+  text-decoration: none;
+  font-size: 0.85rem;
+}
+</style>
+</head>
+<body>
+<div class="note-header">
+  <div class="note-title">Creating your own plugins - The Kubebuilder Book</div>
+  <div class="note-meta">笔记本：Kubernetes学习笔记</div>
+</div>
+<div class="note-content">
+<div style="--en-clipped-content:article">
+<div><br/></div><div style="font-size: 16px; display:block; min-width: 100%; position: relative;"> <div style="font-family:&quot;Open Sans&quot;, sans-serif;color:rgb(0, 0, 0);background-color:rgb(255, 255, 255);text-size-adjust:none;font-size:62.5%;color-scheme:light;"><div style="font-size:16px;overflow-x:hidden;"><div style="box-sizing:border-box;transform:none;transition:margin-left 0.3s ease 0s, transform 0.3s ease 0s;"><div style="outline:0px;"><div>
+                    <span style="overflow-wrap:break-word;margin-left:auto;margin-right:auto;max-width:750px;">
+                        <h1><a href="https://book.kubebuilder.io/plugins/creating-plugins#creating-your-own-plugins" style="color:rgb(0, 0, 0);text-decoration:none;">Creating your own plugins</a></h1>
+<div style="border:1px solid rgb(170, 170, 170);border-radius:3px;margin-top:1em;">
+<h1 style="border-bottom:1px solid rgb(170, 170, 170);margin:0px;padding:0.5em 1em;font-size:100%;font-weight:normal;background:rgb(252, 248, 242) none repeat scroll 0% 0% / auto padding-box border-box;"><span style="font-size:100%;font-weight:bold;color:var(--warning-note-color, #f0ad4e);margin-right:1em;vertical-align:middle;padding-left:0.6em;padding-right:0.6em;border-radius:50%;border:2px solid var(--warning-note-color, #f0ad4e);">!</span><a href="https://book.kubebuilder.io/plugins/creating-plugins#note" style="color:rgb(0, 0, 0);text-decoration:none;">Note</a></h1>
+<p style="line-height:1.45em;margin-left:1em;margin-right:1em;">Extending Kubebuilder can be accomplished in two primary ways:</p>
+<p style="line-height:1.45em;margin-left:1em;margin-right:1em;"><code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif">By re-using the existing plugins</code>: In this approach, you use Kubebuilder as a library.</p>
+<p style="line-height:1.45em;margin-left:1em;margin-right:1em;">This enables you to import existing Kubebuilder plugins and extend them, leveraging their features to build upon.</p>
+<p style="line-height:1.45em;margin-left:1em;margin-right:1em;">It is particularly useful if you want to add functionalities that are closely tied with the existing Kubebuilder features.</p>
+<p style="line-height:1.45em;margin-left:1em;margin-right:1em;"><code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif">By Creating an External Plugin</code>: This method allows you to create an independent, standalone plugin as a binary.</p>
+<p style="line-height:1.45em;margin-left:1em;margin-right:1em;">The plugin can be written in any language and should implement an execution pattern that Kubebuilder knows how to interact with.</p>
+<p style="line-height:1.45em;margin-left:1em;margin-right:1em;">You can see <a href="https://book.kubebuilder.io/plugins/external-plugins" style="text-decoration:none;color:rgb(32, 96, 159);">Creating external plugins</a> for more info.</p>
+</div>
+<h2 style="margin-top:2.5em;"><a href="https://book.kubebuilder.io/plugins/creating-plugins#overview" style="color:rgb(0, 0, 0);text-decoration:none;">Overview</a></h2>
+<p style="line-height:1.45em;">You can extend the Kubebuilder API to create your own plugins. If <a href="https://book.kubebuilder.io/plugins/extending-cli" style="text-decoration:none;color:rgb(32, 96, 159);">extending the CLI</a>, your plugin will be implemented in your project and registered to the CLI as has been done by the <a href="https://github.com/operator-framework/operator-sdk" style="text-decoration:none;color:rgb(32, 96, 159);">SDK</a> project. See its <a href="https://pkg.go.dev/github.com/operator-framework/operator-sdk/internal/cmd/operator-sdk/cli" style="text-decoration:none;color:rgb(32, 96, 159);">CLI code</a> as an example.</p>
+<h2 style="margin-top:2.5em;"><a href="https://book.kubebuilder.io/plugins/creating-plugins#when-it-is-useful" style="color:rgb(0, 0, 0);text-decoration:none;">When it is useful?</a></h2>
+<ul style="line-height:1.45em;">
+<li>If you are looking to create plugins which support and work with another language.</li>
+<li>If you would like to create helpers and integrations on top of the scaffolds done by the plugins provided by Kubebuiler.</li>
+<li>If you would like to have customized layouts according to your needs.</li>
+</ul>
+<h2 style="margin-top:2.5em;"><a href="https://book.kubebuilder.io/plugins/creating-plugins#how-the-plugins-can-be-used" style="color:rgb(0, 0, 0);text-decoration:none;">How the plugins can be used?</a></h2>
+<p style="line-height:1.45em;">Kubebuilder provides a set of plugins to scaffold the projects, to help you extend and re-use its implementation to provide additional features.
+For further information see <a href="https://book.kubebuilder.io/plugins/available-plugins" style="text-decoration:none;color:rgb(32, 96, 159);">Available Plugins</a>.</p>
+<p style="line-height:1.45em;">Therefore, if you have a need you might want to propose a solution by adding a new plugin
+which would be shipped with Kubebuilder by default.</p>
+<p style="line-height:1.45em;">However, you might also want to have your own tool to address your specific scenarios and by taking advantage of what is provided by Kubebuilder as a library.
+That way, you can focus on addressing your needs and keep your solutions easier to maintain.</p>
+<p style="line-height:1.45em;">Note that by using Kubebuilder as a library, you can import its plugins and then create your own plugins that do customizations on top.
+For instance, <code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif">Operator-SDK</code> does with the plugins <a href="https://github.com/operator-framework/operator-sdk/tree/v1.23.0/internal/plugins/manifests/v2" style="text-decoration:none;color:rgb(32, 96, 159);">manifest</a> and <a href="https://github.com/operator-framework/operator-sdk/tree/v1.23.0/internal/plugins/scorecard/v2" style="text-decoration:none;color:rgb(32, 96, 159);">scorecard</a> to add its features.
+Also see <a href="https://github.com/operator-framework/operator-sdk/blob/v1.23.0/internal/cmd/operator-sdk/cli/cli.go#L78-L160" style="text-decoration:none;color:rgb(32, 96, 159);">here</a>.</p>
+<p style="line-height:1.45em;">Another option implemented with the <a href="https://github.com/kubernetes-sigs/kubebuilder/blob/v3.7.0/designs/extensible-cli-and-scaffolding-plugins-phase-2.md#extensible-cli-and-scaffolding-plugins---phase-2" style="text-decoration:none;color:rgb(32, 96, 159);">Extensible CLI and Scaffolding Plugins - Phase 2</a> is
+to extend Kibebuilder as a LIB to create only a specific plugin that can be called and used with
+Kubebuilder as well.</p>
+<div style="border:1px solid rgb(170, 170, 170);border-radius:3px;margin-top:1em;">
+<h1 style="border-bottom:1px solid rgb(170, 170, 170);margin:0px;padding:0.5em 1em;font-size:100%;font-weight:normal;background:rgb(241, 246, 249) none repeat scroll 0% 0% / auto padding-box border-box;"> Plugins proposal docs</h1>
+<p style="line-height:1.45em;margin-left:1em;margin-right:1em;">You can check the proposal documentation for better understanding its motivations. See the <a href="https://github.com/kubernetes-sigs/kubebuilder/blob/v3.7.0/designs/extensible-cli-and-scaffolding-plugins-phase-1.md#extensible-cli-and-scaffolding-plugins" style="text-decoration:none;color:rgb(32, 96, 159);">Extensible CLI and Scaffolding Plugins: phase 1</a>,
+the <a href="https://github.com/kubernetes-sigs/kubebuilder/blob/v3.7.0/designs/extensible-cli-and-scaffolding-plugins-phase-1-5.md#extensible-cli-and-scaffolding-plugins---phase-15" style="text-decoration:none;color:rgb(32, 96, 159);">Extensible CLI and Scaffolding Plugins: phase 1.5</a> and the <a href="https://github.com/kubernetes-sigs/kubebuilder/blob/v3.7.0/designs/extensible-cli-and-scaffolding-plugins-phase-2.md#extensible-cli-and-scaffolding-plugins---phase-2" style="text-decoration:none;color:rgb(32, 96, 159);">Extensible CLI and Scaffolding Plugins - Phase 2</a>
+design docs. Also, you can check the <a href="https://book.kubebuilder.io/plugins/creating-plugins???" style="text-decoration:none;color:rgb(32, 96, 159);">Plugins section</a>.</p>
+</div>
+<h2 style="margin-top:2.5em;"><a href="https://book.kubebuilder.io/plugins/creating-plugins#language-based-plugins" style="color:rgb(0, 0, 0);text-decoration:none;">Language-based Plugins</a></h2>
+<p style="line-height:1.45em;">Kubebuilder offers the Golang-based operator plugins, which will help its CLI tool users create projects following the <a href="https://kubernetes.io/docs/concepts/extend-kubernetes/operator" style="text-decoration:none;color:rgb(32, 96, 159);">Operator Pattern</a>.</p>
+<p style="line-height:1.45em;">The <a href="https://github.com/operator-framework/operator-sdk" style="text-decoration:none;color:rgb(32, 96, 159);">SDK</a> project, for example, has language plugins for <a href="https://sdk.operatorframework.io/docs/building-operators/ansible/" style="text-decoration:none;color:rgb(32, 96, 159);">Ansible</a> and <a href="https://sdk.operatorframework.io/docs/building-operators/helm/" style="text-decoration:none;color:rgb(32, 96, 159);">Helm</a>, which are similar options but for users who would like to work with these respective languages and stacks instead of Golang.</p>
+<p style="line-height:1.45em;">Note that Kubebuilder provides the <code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif">kustomize.common.kubebuilder.io</code> to help in these efforts. This plugin will scaffold the common base without any specific language scaffold file to allow you to extend the Kubebuilder style for your plugins.</p>
+<p style="line-height:1.45em;">In this way, currently, you can <a href="https://book.kubebuilder.io/plugins/extending-cli" style="text-decoration:none;color:rgb(32, 96, 159);">Extend the CLI</a> and use the <code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif">Bundle Plugin</code> to create your language plugins such as:</p>
+<pre style="border-radius:4px;background-color: #fbfaf8;border: 1px solid rgba(0,0,0,.14902);color: #333;font-size: 12px;padding: 8px;font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif;box-sizing: border-box;"><div style="position:absolute;z-index:100;right:0px;top:2px;margin:0px;padding:2px 0px;color:rgb(0, 0, 0);cursor:pointer;visibility:hidden;opacity:0;transition:visibility 0.1s linear 0s, opacity 0.1s linear 0s;"></div><code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif">  mylanguagev1Bundle, _ := plugin.NewBundle(plugin.WithName(language.DefaultNameQualifier), 
+    plugin.WithVersion(plugin.Version{Number: <span style="color:rgb(178, 30, 0);">1</span>}),
+        plugin.WithPlugins(kustomizecommonv1.Plugin{}, mylanguagev1.Plugin{}), <span style="color:rgb(87, 87, 87);">// extend the common base from Kubebuilder</span>
+        <span style="color:rgb(87, 87, 87);">// your plugin language which will do the scaffolds for the specific language on top of the common base</span>
+    )
+</code></pre>
+<p style="line-height:1.45em;">If you do not want to develop your plugin using Golang, you can follow its standard by using the binary as follows:</p>
+<pre style="border-radius:4px;background-color: #fbfaf8;border: 1px solid rgba(0,0,0,.14902);color: #333;font-size: 12px;padding: 8px;font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif;box-sizing: border-box;"><div style="position:absolute;z-index:100;right:0px;top:2px;margin:0px;padding:2px 0px;color:rgb(0, 0, 0);cursor:pointer;visibility:hidden;opacity:0;transition:visibility 0.1s linear 0s, opacity 0.1s linear 0s;"></div><code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif">kubebuilder init --plugins=kustomize
+</code></pre>
+<p style="line-height:1.45em;">Then you can, for example, create your implementations for the sub-commands <code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif">create api</code> and <code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif">create webhook</code> using your language of preference.</p>
+<div style="border:1px solid rgb(170, 170, 170);border-radius:3px;margin-top:1em;">
+<h1 style="border-bottom:1px solid rgb(170, 170, 170);margin:0px;padding:0.5em 1em;font-size:100%;font-weight:normal;background:rgb(241, 246, 249) none repeat scroll 0% 0% / auto padding-box border-box;"><a href="https://book.kubebuilder.io/plugins/creating-plugins#why-use-the-kubebuilder-style" style="color:rgb(0, 0, 0);text-decoration:none;">Why use the Kubebuilder style?</a></h1>
+<p style="line-height:1.45em;margin-left:1em;margin-right:1em;">Kubebuilder and SDK are both broadly adopted projects which leverage the <a href="https://github.com/kubernetes-sigs/controller-runtime" style="text-decoration:none;color:rgb(32, 96, 159);">controller-runtime</a> project. They both allow users to build solutions using the <a href="https://kubernetes.io/docs/concepts/extend-kubernetes/operator" style="text-decoration:none;color:rgb(32, 96, 159);">Operator Pattern</a> and follow common standards.</p>
+<p style="line-height:1.45em;margin-left:1em;margin-right:1em;">Adopting these standards can bring significant benefits, such as joining forces on maintaining the common standards as the features provided by Kubebuilder and take advantage of the contributions made by the community. This allows you to focus on the specific needs and requirements for your plugin and use-case.</p>
+<p style="line-height:1.45em;margin-left:1em;margin-right:1em;">And then, you will also be able to use custom plugins and options currently or in the future which might to be provided by these projects as any other which decides to persuade the same standards.</p>
+</div>
+<h2 style="margin-top:2.5em;"><a href="https://book.kubebuilder.io/plugins/creating-plugins#custom-plugins" style="color:rgb(0, 0, 0);text-decoration:none;">Custom Plugins</a></h2>
+<p style="line-height:1.45em;">Note that users are also able to use plugins to customize their scaffolds and address specific needs.</p>
+<p style="line-height:1.45em;">See that Kubebuilder provides the <a href="https://github.com/kubernetes-sigs/kubebuilder/tree/v3.7.0/pkg/plugins/golang/deploy-image/v1alpha1" style="text-decoration:none;color:rgb(32, 96, 159);"><code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif">deploy-image</code></a> plugin that allows the user to create the controller &amp; CRs which will deploy and manage an image on the cluster:</p>
+<pre style="border-radius:4px;background-color: #fbfaf8;border: 1px solid rgba(0,0,0,.14902);color: #333;font-size: 12px;padding: 8px;font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif;box-sizing: border-box;"><div style="position:absolute;z-index:100;right:0px;top:2px;margin:0px;padding:2px 0px;color:rgb(0, 0, 0);cursor:pointer;visibility:hidden;opacity:0;transition:visibility 0.1s linear 0s, opacity 0.1s linear 0s;"></div><code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif">kubebuilder create api --group example.com --version v1alpha1 --kind Memcached --image=memcached:1.6.15-alpine --image-container-command=<span style="color:rgb(0, 130, 0);">"memcached,-m=64,modern,-v"</span> --image-container-port=<span style="color:rgb(0, 130, 0);">"11211"</span> --run-as-user=<span style="color:rgb(0, 130, 0);">"1001"</span> --plugins=<span style="color:rgb(0, 130, 0);">"deploy-image/v1-alpha"</span>
+</code></pre>
+<p style="line-height:1.45em;">This plugin will perform a custom scaffold following the <a href="https://kubernetes.io/docs/concepts/extend-kubernetes/operator" style="text-decoration:none;color:rgb(32, 96, 159);">Operator Pattern</a>.</p>
+<p style="line-height:1.45em;">Another example is the <a href="https://github.com/kubernetes-sigs/kubebuilder/tree/v3.7.0/pkg/plugins/optional/grafana/v1alpha" style="text-decoration:none;color:rgb(32, 96, 159);"><code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif">grafana</code></a> plugin that scaffolds a new folder container manifests to visualize operator status on Grafana Web UI:</p>
+<pre style="border-radius:4px;background-color: #fbfaf8;border: 1px solid rgba(0,0,0,.14902);color: #333;font-size: 12px;padding: 8px;font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif;box-sizing: border-box;"><div style="position:absolute;z-index:100;right:0px;top:2px;margin:0px;padding:2px 0px;color:rgb(0, 0, 0);cursor:pointer;visibility:hidden;opacity:0;transition:visibility 0.1s linear 0s, opacity 0.1s linear 0s;"></div><code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif">kubebuilder edit --plugins=<span style="color:rgb(0, 130, 0);">"grafana.kubebuilder.io/v1-alpha"</span>
+</code></pre>
+<p style="line-height:1.45em;">In this way, by <a href="https://book.kubebuilder.io/plugins/extending-cli" style="text-decoration:none;color:rgb(32, 96, 159);">Extending the Kubebuilder CLI</a>, you can also create custom plugins such this one.</p>
+<p style="line-height:1.45em;">Feel free to check the implementation under:</p>
+<ul style="line-height:1.45em;">
+<li>deploy-image: <a href="https://github.com/kubernetes-sigs/kubebuilder/tree/v3.7.0/pkg/plugins/golang/deploy-image/v1alpha1" style="text-decoration:none;color:rgb(32, 96, 159);">https://github.com/kubernetes-sigs/kubebuilder/tree/v3.7.0/pkg/plugins/golang/deploy-image/v1alpha1</a></li>
+<li>grafana: <a href="https://github.com/kubernetes-sigs/kubebuilder/tree/v3.7.0/pkg/plugins/optional/grafana/v1alpha" style="text-decoration:none;color:rgb(32, 96, 159);">https://github.com/kubernetes-sigs/kubebuilder/tree/v3.7.0/pkg/plugins/optional/grafana/v1alpha</a></li>
+</ul>
+<h2 style="margin-top:2.5em;"><a href="https://book.kubebuilder.io/plugins/creating-plugins#plugin-scaffolding" style="color:rgb(0, 0, 0);text-decoration:none;">Plugin Scaffolding</a></h2>
+<p style="line-height:1.45em;">Your plugin may add code on top of what is scaffolded by default with Kubebuilder sub-commands(<code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif">init</code>, <code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif">create</code>, …).
+This is common as you may expect your plugin to:</p>
+<ul style="line-height:1.45em;">
+<li>Create API</li>
+<li>Update controller manager logic</li>
+<li>Generate corresponding manifests</li>
+</ul>
+<h3 style="margin-top:2.5em;"><a href="https://book.kubebuilder.io/plugins/creating-plugins#boilerplates" style="color:rgb(0, 0, 0);text-decoration:none;">Boilerplates</a></h3>
+<p style="line-height:1.45em;">The Kubebuilder internal plugins use boilerplates to generate the files of code.</p>
+<p style="line-height:1.45em;">For instance, the go/v3 scaffolds the <code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif">main.go</code> file by defining an object that <a href="https://github.com/kubernetes-sigs/kubebuilder/blob/3bfc84ec8767fa760d1771ce7a0cb05a9a8f6286/pkg/plugins/golang/v3/scaffolds/internal/templates/main.go#L28" style="text-decoration:none;color:rgb(32, 96, 159);">implements the machinery interface</a>.
+In the <a href="https://github.com/kubernetes-sigs/kubebuilder/blob/3bfc84ec8767fa760d1771ce7a0cb05a9a8f6286/pkg/plugins/golang/v3/scaffolds/internal/templates/main.go#L40" style="text-decoration:none;color:rgb(32, 96, 159);">implementation</a> of <code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif">Template.SetTemplateDefaults</code>, the <a href="https://github.com/kubernetes-sigs/kubebuilder/blob/3bfc84ec8767fa760d1771ce7a0cb05a9a8f6286/pkg/plugins/golang/v3/scaffolds/internal/templates/main.go#L183" style="text-decoration:none;color:rgb(32, 96, 159);">raw template</a> is set to the body.
+Such object that implements the machinery interface will later pass to the <a href="https://github.com/kubernetes-sigs/kubebuilder/blob/3bfc84ec8767fa760d1771ce7a0cb05a9a8f6286/pkg/plugins/golang/v3/scaffolds/init.go#L120" style="text-decoration:none;color:rgb(32, 96, 159);">execution of scaffold</a>.</p>
+<p style="line-height:1.45em;">Similar, you may also design your code of plugin implementation by such reference.
+You can also view the other parts of the code file given by the links above.</p>
+<p style="line-height:1.45em;">If your plugin is expected to modify part of the existing files with its scaffold, you may use functions provided by <a href="https://pkg.go.dev/sigs.k8s.io/kubebuilder/v3/pkg/plugin/util" style="text-decoration:none;color:rgb(32, 96, 159);">sigs.k8s.io/kubebuilder/v3/pkg/plugin/util</a>.
+See <a href="https://github.com/kubernetes-sigs/kubebuilder/blob/master/pkg/plugins/golang/deploy-image/v1alpha1/scaffolds/api.go#L170-L266" style="text-decoration:none;color:rgb(32, 96, 159);">example of deploy-image</a>.
+In brief, the util package helps you customize your scaffold in a lower level.</p>
+<h3 style="margin-top:2.5em;"><a href="https://book.kubebuilder.io/plugins/creating-plugins#use-kubebuilder-machinery-lib" style="color:rgb(0, 0, 0);text-decoration:none;">Use Kubebuilder Machinery Lib</a></h3>
+<p style="line-height:1.45em;">Notice that Kubebuilder also provides <a href="https://pkg.go.dev/sigs.k8s.io/kubebuilder/v3/pkg/machinery#section-documentation" style="text-decoration:none;color:rgb(32, 96, 159);">machinery pkg</a> where you can:</p>
+<ul style="line-height:1.45em;">
+<li>Define file I/O behavior.</li>
+<li>Add markers to the scaffolded file.</li>
+<li>Define the template for scaffolding.</li>
+</ul>
+<h4 style="margin-top:2em;"><a href="https://book.kubebuilder.io/plugins/creating-plugins#overwrite-a-file" style="color:rgb(0, 0, 0);text-decoration:none;">Overwrite A File</a></h4>
+<p style="line-height:1.45em;">You might want for example to overwrite a scaffold done by using the option:</p>
+<pre style="border-radius:4px;background-color: #fbfaf8;border: 1px solid rgba(0,0,0,.14902);color: #333;font-size: 12px;padding: 8px;font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif;box-sizing: border-box;"><div style="position:absolute;z-index:100;right:0px;top:2px;margin:0px;padding:2px 0px;color:rgb(0, 0, 0);cursor:pointer;visibility:hidden;opacity:0;transition:visibility 0.1s linear 0s, opacity 0.1s linear 0s;"></div><code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif">    f.IfExistsAction = machinery.OverwriteFile
+</code></pre>
+<p style="line-height:1.45em;">Let’s imagine that you would like to have a helper plugin that would be called in a chain with <code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif">go/v4</code> to add customizations on top.
+Therefore after we generate the code calling the subcommand to <code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif">init</code> from <code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif">go/v4</code> we would like to overwrite the Makefile to change this scaffold via our plugin.
+In this way, we would implement the Bollerplate for our Makefile and then use this option to ensure that it would be overwritten.</p>
+<p style="line-height:1.45em;">See <a href="https://github.com/kubernetes-sigs/kubebuilder/blob/df1ed6ccf19df40bd929157a91eaae6a9215bfc6/pkg/plugins/golang/deploy-image/v1alpha1/scaffolds/internal/templates/api/types.go#L58" style="text-decoration:none;color:rgb(32, 96, 159);">example of deploy-image</a>.</p>
+<h3 style="margin-top:2.5em;"><a href="https://book.kubebuilder.io/plugins/creating-plugins#a-combination-of-multiple-plugins" style="color:rgb(0, 0, 0);text-decoration:none;">A Combination of Multiple Plugins</a></h3>
+<p style="line-height:1.45em;">Since your plugin may work frequently with other plugins, the executing command for scaffolding may become cumbersome, e.g:</p>
+<pre style="border-radius:4px;background-color: #fbfaf8;border: 1px solid rgba(0,0,0,.14902);color: #333;font-size: 12px;padding: 8px;font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif;box-sizing: border-box;"><div style="position:absolute;z-index:100;right:0px;top:2px;margin:0px;padding:2px 0px;color:rgb(0, 0, 0);cursor:pointer;visibility:hidden;opacity:0;transition:visibility 0.1s linear 0s, opacity 0.1s linear 0s;"></div><code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif">kubebuilder create api --plugins=go/v3,kustomize/v1,yourplugin/v1
+</code></pre>
+<p style="line-height:1.45em;">You can probably define a method to your scaffolder that calls the plugin scaffolding method in order.
+See <a href="https://github.com/kubernetes-sigs/kubebuilder/blob/master/pkg/plugins/golang/deploy-image/v1alpha1/scaffolds/api.go#L77-L98" style="text-decoration:none;color:rgb(32, 96, 159);">example of deploy-image</a>.</p>
+<h4 style="margin-top:2em;"><a href="https://book.kubebuilder.io/plugins/creating-plugins#define-plugin-bundles" style="color:rgb(0, 0, 0);text-decoration:none;">Define Plugin Bundles</a></h4>
+<p style="line-height:1.45em;">Alternatively, you can create a plugin bundle to include the target plugins. For instance:</p>
+<pre style="border-radius:4px;background-color: #fbfaf8;border: 1px solid rgba(0,0,0,.14902);color: #333;font-size: 12px;padding: 8px;font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif;box-sizing: border-box;"><div style="position:absolute;z-index:100;right:0px;top:2px;margin:0px;padding:2px 0px;color:rgb(0, 0, 0);cursor:pointer;visibility:hidden;opacity:0;transition:visibility 0.1s linear 0s, opacity 0.1s linear 0s;"></div><code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif">  mylanguagev1Bundle, _ := plugin.NewBundle(plugin.WithName(language.DefaultNameQualifier), 
+        plugin.WithVersion(plugin.Version{Number: <span style="color:rgb(178, 30, 0);">1</span>}),
+        plugin.WithPlugins(kustomizecommonv1.Plugin{}, mylanguagev1.Plugin{}), <span style="color:rgb(87, 87, 87);">// extend the common base from Kuebebuilder</span>
+        <span style="color:rgb(87, 87, 87);">// your plugin language which will do the scaffolds for the specific language on top of the common base</span>
+    )
+</code></pre>
+
+                    </span>
+
+                    <div style="margin-top:50px;display:block;">
+                        
+                            <a href="https://book.kubebuilder.io/plugins/extending-cli" rel="prev" title="Previous chapter" style="font-size:2.5em;text-align:center;width:90px;border-radius:5px;background-color:rgb(250, 250, 250);text-decoration:none;float:left;color:rgb(32, 96, 159);">
+                                <i style="display:inline-block;font-style:normal;font-variant:normal;font-kerning:auto;font-optical-sizing:auto;font-feature-settings:normal;font-variation-settings:normal;font-weight:normal;font-stretch:normal;line-height:1;font-family:FontAwesome;font-size:inherit;text-rendering:auto;-webkit-font-smoothing:antialiased;"><span style="font-style:normal;font-variant:normal;font-weight:normal;line-height:1;font-family:FontAwesome;font-size:inherit;"></span></i>
+                            </a>
+
+                            <a href="https://book.kubebuilder.io/plugins/testing-plugins" rel="next" title="Next chapter" style="font-size:2.5em;text-align:center;width:90px;border-radius:5px;background-color:rgb(250, 250, 250);text-decoration:none;float:right;right:15px;color:rgb(32, 96, 159);">
+                                <i style="display:inline-block;font-style:normal;font-variant:normal;font-kerning:auto;font-optical-sizing:auto;font-feature-settings:normal;font-variation-settings:normal;font-weight:normal;font-stretch:normal;line-height:1;font-family:FontAwesome;font-size:inherit;text-rendering:auto;-webkit-font-smoothing:antialiased;"><span style="font-style:normal;font-variant:normal;font-weight:normal;line-height:1;font-family:FontAwesome;font-size:inherit;"></span></i>
+                            </a>
+
+                        <div style="clear:both;"></div>
+                    </div>
+                </div></div></div></div></div></div>
+</div>
+</div>
+<a class="back-link" href="../articles.html">← 返回笔记列表</a>
+</body>
+</html>

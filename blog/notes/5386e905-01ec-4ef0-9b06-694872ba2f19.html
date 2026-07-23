@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="zh-CN" data-theme="light">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>docker-compose介绍 — 技术笔记</title>
+<style>
+:root {
+  --bg: #ffffff;
+  --text: #1a1a1a;
+  --muted: #666;
+  --border: #e0e0e0;
+  --code-bg: #f5f5f5;
+  --link: #0066cc;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #1a1a1a;
+    --text: #e0e0e0;
+    --muted: #999;
+    --border: #333;
+    --code-bg: #2a2a2a;
+    --link: #66bbff;
+  }
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  line-height: 1.7;
+  color: var(--text);
+  background: var(--bg);
+  max-width: 860px;
+  margin: 0 auto;
+  padding: 2rem 1.5rem;
+}
+.note-header {
+  border-bottom: 2px solid var(--border);
+  padding-bottom: 1rem;
+  margin-bottom: 2rem;
+}
+.note-title {
+  font-size: 1.6rem;
+  font-weight: 700;
+  margin-bottom: 0.3rem;
+}
+.note-meta {
+  color: var(--muted);
+  font-size: 0.85rem;
+}
+.note-content {
+  font-size: 0.95rem;
+}
+.note-content h1 { font-size: 1.4rem; margin: 1.2rem 0 0.6rem; }
+.note-content h2 { font-size: 1.2rem; margin: 1rem 0 0.5rem; }
+.note-content h3 { font-size: 1.05rem; margin: 0.8rem 0 0.4rem; }
+.note-content p { margin: 0.5rem 0; }
+.note-content ul, .note-content ol { margin: 0.5rem 0 0.5rem 2rem; }
+.note-content li { margin: 0.2rem 0; }
+.note-content pre {
+  background: var(--code-bg);
+  padding: 1rem;
+  border-radius: 6px;
+  overflow-x: auto;
+  margin: 0.8rem 0;
+  font-size: 0.85rem;
+}
+.note-content code {
+  background: var(--code-bg);
+  padding: 0.1rem 0.3rem;
+  border-radius: 3px;
+  font-size: 0.88em;
+}
+.note-content pre code {
+  background: none;
+  padding: 0;
+}
+.note-content blockquote {
+  border-left: 3px solid var(--border);
+  padding-left: 1rem;
+  color: var(--muted);
+  margin: 0.8rem 0;
+}
+.note-content a { color: var(--link); }
+.note-content img {
+  max-width: 100%;
+  height: auto;
+  border-radius: 6px;
+  margin: 0.5rem 0;
+}
+.note-content table {
+  border-collapse: collapse;
+  width: 100%;
+  margin: 0.8rem 0;
+}
+.note-content th, .note-content td {
+  border: 1px solid var(--border);
+  padding: 0.5rem;
+}
+.note-content th { background: var(--code-bg); }
+.media-placeholder {
+  background: var(--code-bg);
+  padding: 1rem;
+  text-align: center;
+  color: var(--muted);
+  border-radius: 6px;
+  margin: 0.5rem 0;
+  font-size: 0.85rem;
+}
+.encrypt-placeholder {
+  background: #fff3cd;
+  padding: 0.5rem;
+  text-align: center;
+  color: #856404;
+  border-radius: 6px;
+  margin: 0.5rem 0;
+  font-size: 0.85rem;
+}
+.back-link {
+  display: inline-block;
+  margin-top: 2rem;
+  color: var(--link);
+  text-decoration: none;
+  font-size: 0.85rem;
+}
+</style>
+</head>
+<body>
+<div class="note-header">
+  <div class="note-title">docker-compose介绍</div>
+  <div class="note-meta">笔记本：docker-compose</div>
+</div>
+<div class="note-content">
+<div>用于定义并运行多容器的docker应用。使用yaml文件来配置应用的服务。</div><div>一般使用步骤大致有3步：</div><div><span>&nbsp; &nbsp; 1.定义Dockerfile</span><br/></div><div><span><span>&nbsp; &nbsp; 2.在docker-compose.yml中定义构成整个应用的各项服务。这样就可以让各个服务在独立的环境中各自运行</span><br/></span></div><div><span><span>&nbsp; &nbsp; 3.通过docker-compose命令来启动并运行整个应用。</span><br/></span></div><div><span><br/></span></div><div>docker-compose用于管理整个应用生命周期的一些命令：</div><div><span>&nbsp; &nbsp; start,stop,rebuild&nbsp;</span><br/></div><div><span><span>&nbsp; &nbsp; 查看服务状态</span><br/></span></div><div><span><span>&nbsp; &nbsp; 运行的服务的日志输出</span><br/></span></div><div><span><span>&nbsp; &nbsp; 在服务上执行一次性的命令</span><br/></span></div><div><span><br/></span></div><div>相关的特性：</div><div><span>&nbsp; &nbsp; 单主机上的多独立环境:</span><br/></div><div><span>&nbsp;&nbsp; &nbsp;</span><span>&nbsp; &nbsp; docker-compose通过项目名称来隔离环境</span></div><div><span><span><span>&nbsp;&nbsp; &nbsp;</span><span>&nbsp;&nbsp; &nbsp;</span><span>&nbsp; &nbsp; 在开发主机上，创建单一环境多个拷贝，比如你希望运行项目的每个分支的一个稳定的拷贝</span>&nbsp; &nbsp;&nbsp;</span><span>&nbsp; &nbsp;&nbsp;</span><br/></span></div><div><span><span>&nbsp;&nbsp; &nbsp;</span><span>&nbsp;&nbsp; &nbsp;</span><span>&nbsp; &nbsp; 在ci服务器上，让构建不被其他东西干扰，你就可以设置项目名为一个唯一的构建号</span><br/></span></div><div><span><span>&nbsp;&nbsp; &nbsp;</span><span>&nbsp; &nbsp;&nbsp;<span>&nbsp; &nbsp; 在公共服务器上，防止不同项目使用相同的服务名</span></span><br/></span></div><div><span><span>&nbsp;&nbsp; &nbsp;</span><span>&nbsp;&nbsp; &nbsp;</span><span>&nbsp; &nbsp; 默认的项目名称就是项目目录的名称，可以通过-p选项来设置或者COMPOSE_PROJECT_NAME环境变量设置</span><br/></span></div><div><span><span>&nbsp;&nbsp; &nbsp;</span><span>&nbsp;&nbsp; &nbsp;</span><span>&nbsp; &nbsp; Moore你的项目目录就是docker-compose.yml文件所在的目录</span><br/></span></div><div><span><span>&nbsp; &nbsp; 当容器创建的时候保护卷数据</span><br/></span></div><div><span><span>&nbsp;&nbsp; &nbsp;</span><span>&nbsp; &nbsp; docker会保护所有服务使用到的数据卷，如果启动的时候发现一个数据卷已经被使用了的话，那么它会从老的容器用的数据卷来复制一份给新的容器使用</span><br/></span></div><div><span>&nbsp; &nbsp; 只会重建发生变更的容器</span></div><div><span><span>&nbsp; &nbsp; 通过变量来组合不同环境</span><br/></span></div><div><span><span>&nbsp;&nbsp; &nbsp;</span><span>&nbsp; &nbsp; 在compose文件中支持使用变量。你可以使用这些变量来自定义的不同环境的组合。在compose文件中还可以通过extends字段或者创建多个compose文件来扩展compose。</span><br/></span></div><div><span><br/></span></div><div>通用的用法：<br/><span>&nbsp; &nbsp; 开发环境</span><br/></div><div><span><span>&nbsp;&nbsp; &nbsp;</span><span>&nbsp; &nbsp; compose文件可以提供多个服务的隔离环境</span><br/></span></div><div><span><span>&nbsp; &nbsp; 自动测试环境：</span><br/></span></div><div><span><span>&nbsp;&nbsp; &nbsp;</span><span>&nbsp; &nbsp; 由于docker-compose创建了完全隔离的环境，所以可以很方便的提供一个测试环境</span><br/></span></div><div><span><span>&nbsp; &nbsp;&nbsp;</span><br/></span></div><div><br/></div>
+</div>
+<a class="back-link" href="../articles.html">← 返回笔记列表</a>
+</body>
+</html>

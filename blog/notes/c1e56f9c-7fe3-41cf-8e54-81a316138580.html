@@ -1,0 +1,1194 @@
+<!DOCTYPE html>
+<html lang="zh-CN" data-theme="light">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>BPF Type Format (BTF) — The Linux Kernel documentation — 技术笔记</title>
+<style>
+:root {
+  --bg: #ffffff;
+  --text: #1a1a1a;
+  --muted: #666;
+  --border: #e0e0e0;
+  --code-bg: #f5f5f5;
+  --link: #0066cc;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #1a1a1a;
+    --text: #e0e0e0;
+    --muted: #999;
+    --border: #333;
+    --code-bg: #2a2a2a;
+    --link: #66bbff;
+  }
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  line-height: 1.7;
+  color: var(--text);
+  background: var(--bg);
+  max-width: 860px;
+  margin: 0 auto;
+  padding: 2rem 1.5rem;
+}
+.note-header {
+  border-bottom: 2px solid var(--border);
+  padding-bottom: 1rem;
+  margin-bottom: 2rem;
+}
+.note-title {
+  font-size: 1.6rem;
+  font-weight: 700;
+  margin-bottom: 0.3rem;
+}
+.note-meta {
+  color: var(--muted);
+  font-size: 0.85rem;
+}
+.note-content {
+  font-size: 0.95rem;
+}
+.note-content h1 { font-size: 1.4rem; margin: 1.2rem 0 0.6rem; }
+.note-content h2 { font-size: 1.2rem; margin: 1rem 0 0.5rem; }
+.note-content h3 { font-size: 1.05rem; margin: 0.8rem 0 0.4rem; }
+.note-content p { margin: 0.5rem 0; }
+.note-content ul, .note-content ol { margin: 0.5rem 0 0.5rem 2rem; }
+.note-content li { margin: 0.2rem 0; }
+.note-content pre {
+  background: var(--code-bg);
+  padding: 1rem;
+  border-radius: 6px;
+  overflow-x: auto;
+  margin: 0.8rem 0;
+  font-size: 0.85rem;
+}
+.note-content code {
+  background: var(--code-bg);
+  padding: 0.1rem 0.3rem;
+  border-radius: 3px;
+  font-size: 0.88em;
+}
+.note-content pre code {
+  background: none;
+  padding: 0;
+}
+.note-content blockquote {
+  border-left: 3px solid var(--border);
+  padding-left: 1rem;
+  color: var(--muted);
+  margin: 0.8rem 0;
+}
+.note-content a { color: var(--link); }
+.note-content img {
+  max-width: 100%;
+  height: auto;
+  border-radius: 6px;
+  margin: 0.5rem 0;
+}
+.note-content table {
+  border-collapse: collapse;
+  width: 100%;
+  margin: 0.8rem 0;
+}
+.note-content th, .note-content td {
+  border: 1px solid var(--border);
+  padding: 0.5rem;
+}
+.note-content th { background: var(--code-bg); }
+.media-placeholder {
+  background: var(--code-bg);
+  padding: 1rem;
+  text-align: center;
+  color: var(--muted);
+  border-radius: 6px;
+  margin: 0.5rem 0;
+  font-size: 0.85rem;
+}
+.encrypt-placeholder {
+  background: #fff3cd;
+  padding: 0.5rem;
+  text-align: center;
+  color: #856404;
+  border-radius: 6px;
+  margin: 0.5rem 0;
+  font-size: 0.85rem;
+}
+.back-link {
+  display: inline-block;
+  margin-top: 2rem;
+  color: var(--link);
+  text-decoration: none;
+  font-size: 0.85rem;
+}
+</style>
+</head>
+<body>
+<div class="note-header">
+  <div class="note-title">BPF Type Format (BTF) — The Linux Kernel documentation</div>
+  <div class="note-meta">笔记本：ebpf</div>
+</div>
+<div class="note-content">
+<div style="--en-clipped-content:article">
+<div><br/></div><div style="font-size: 16px; display:block; min-width: 100%; position: relative;"> <div><div style="font-family:serif;font-size:inherit;background-color:rgb(255, 255, 255);color:rgb(0, 0, 0);"><div><div><div><div style="background-color:rgb(255, 255, 255);color:rgb(62, 67, 73);"><div>
+<h1 style="font-family:serif;font-weight:normal;margin:30px 0px 10px;padding:0px;margin-top:0px;padding-top:0px;font-size:180%;">BPF Type Format (BTF)<a href="https://docs.kernel.org/bpf/btf.html#bpf-type-format-btf" title="Permalink to this heading" style="padding:0px 4px;color:rgb(221, 221, 221);text-decoration:none;">¶</a></h1>
+<div>
+<h2 style="font-family:serif;font-weight:normal;margin:30px 0px 10px;padding:0px;font-size:150%;">1. Introduction<a href="https://docs.kernel.org/bpf/btf.html#introduction" title="Permalink to this heading" style="padding:0px 4px;color:rgb(221, 221, 221);text-decoration:none;">¶</a></h2>
+<p style="line-height:1.4em;">BTF (BPF Type Format) is the metadata format which encodes the debug info
+related to BPF program/map. The name BTF was used initially to describe data
+types. The BTF was later extended to include function info for defined
+subroutines, and line info for source/line information.</p>
+<p style="line-height:1.4em;">The debug info is used for map pretty print, function signature, etc. The
+function signature enables better bpf program/function kernel symbol. The line
+info helps generate source annotated translated byte code, jited code and
+verifier log.</p>
+<dl style="margin:0px;padding:0px;"><dt>The BTF specification contains two parts,</dt><dd style="margin-left:30px;line-height:1.4em;"><ul style="margin:10px 0px 10px 30px;padding:0px;">
+<li style="line-height:1.4em;"><p style="line-height:1.4em;">BTF kernel API</p></li>
+<li style="line-height:1.4em;"><p style="line-height:1.4em;">BTF ELF file format</p></li>
+</ul>
+</dd></dl>
+<p style="line-height:1.4em;">The kernel API is the contract between user space and kernel. The kernel
+verifies the BTF info before using it. The ELF file format is a user space
+contract between ELF file and libbpf loader.</p>
+<p style="line-height:1.4em;">The type and string sections are part of the BTF kernel API, describing the
+debug info (mostly types related) referenced by the bpf program. These two
+sections are discussed in details in <a href="https://docs.kernel.org/bpf/btf.html#btf-type-string" style="color:rgb(0, 75, 107);border-bottom:1px dotted rgb(0, 75, 107);text-decoration:none;"><span>2. BTF Type and String Encoding</span></a>.</p>
+</div>
+<div>
+<span></span><h2 style="font-family:serif;font-weight:normal;margin:30px 0px 10px;padding:0px;font-size:150%;">2. BTF Type and String Encoding<a href="https://docs.kernel.org/bpf/btf.html#btf-type-and-string-encoding" title="Permalink to this heading" style="padding:0px 4px;color:rgb(221, 221, 221);text-decoration:none;">¶</a></h2>
+<p style="line-height:1.4em;">The file <code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span>include/uapi/linux/btf.h</span></code> provides high-level definition of how
+types/strings are encoded.</p>
+<p style="line-height:1.4em;">The beginning of data blob must be:</p>
+<div><div style="background:rgb(250, 243, 232);"><pre style="font-family:Consolas, Menlo, &quot;DejaVu Sans Mono&quot;, &quot;Bitstream Vera Sans Mono&quot;, monospace;font-size:0.9em;background:rgb(238, 238, 238);padding:7px 30px;margin:15px 0px;line-height:1.3em;"><span></span>struct btf_header {
+    __u16   magic;
+    __u8    version;
+    __u8    flags;
+    __u32   hdr_len;
+
+    /* All offsets are in bytes relative to the end of this header */
+    __u32   type_off;       /* offset of type section       */
+    __u32   type_len;       /* length of type section       */
+    __u32   str_off;        /* offset of string section     */
+    __u32   str_len;        /* length of string section     */
+};
+</pre></div>
+</div>
+<p style="line-height:1.4em;">The magic is <code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span>0xeB9F</span></code>, which has different encoding for big and little
+endian systems, and can be used to test whether BTF is generated for big- or
+little-endian target. The <code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span>btf_header</span></code> is designed to be extensible with
+<code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span>hdr_len</span></code> equal to <code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span>sizeof(struct</span> <span>btf_header)</span></code> when a data blob is
+generated.</p>
+<div>
+<h3 style="font-family:serif;font-weight:normal;margin:30px 0px 10px;padding:0px;font-size:130%;">2.1 String Encoding<a href="https://docs.kernel.org/bpf/btf.html#string-encoding" title="Permalink to this heading" style="padding:0px 4px;color:rgb(221, 221, 221);text-decoration:none;">¶</a></h3>
+<p style="line-height:1.4em;">The first string in the string section must be a null string. The rest of
+string table is a concatenation of other null-terminated strings.</p>
+</div>
+<div>
+<h3 style="font-family:serif;font-weight:normal;margin:30px 0px 10px;padding:0px;font-size:130%;">2.2 Type Encoding<a href="https://docs.kernel.org/bpf/btf.html#type-encoding" title="Permalink to this heading" style="padding:0px 4px;color:rgb(221, 221, 221);text-decoration:none;">¶</a></h3>
+<p style="line-height:1.4em;">The type id <code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span>0</span></code> is reserved for <code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span>void</span></code> type. The type section is parsed
+sequentially and type id is assigned to each recognized type starting from id
+<code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span>1</span></code>. Currently, the following types are supported:</p>
+<div><div style="background:rgb(250, 243, 232);"><pre style="font-family:Consolas, Menlo, &quot;DejaVu Sans Mono&quot;, &quot;Bitstream Vera Sans Mono&quot;, monospace;font-size:0.9em;background:rgb(238, 238, 238);padding:7px 30px;margin:15px 0px;line-height:1.3em;"><span></span>#define BTF_KIND_INT            1       /* Integer      */
+#define BTF_KIND_PTR            2       /* Pointer      */
+#define BTF_KIND_ARRAY          3       /* Array        */
+#define BTF_KIND_STRUCT         4       /* Struct       */
+#define BTF_KIND_UNION          5       /* Union        */
+#define BTF_KIND_ENUM           6       /* Enumeration up to 32-bit values */
+#define BTF_KIND_FWD            7       /* Forward      */
+#define BTF_KIND_TYPEDEF        8       /* Typedef      */
+#define BTF_KIND_VOLATILE       9       /* Volatile     */
+#define BTF_KIND_CONST          10      /* Const        */
+#define BTF_KIND_RESTRICT       11      /* Restrict     */
+#define BTF_KIND_FUNC           12      /* Function     */
+#define BTF_KIND_FUNC_PROTO     13      /* Function Proto       */
+#define BTF_KIND_VAR            14      /* Variable     */
+#define BTF_KIND_DATASEC        15      /* Section      */
+#define BTF_KIND_FLOAT          16      /* Floating point       */
+#define BTF_KIND_DECL_TAG       17      /* Decl Tag     */
+#define BTF_KIND_TYPE_TAG       18      /* Type Tag     */
+#define BTF_KIND_ENUM64         19      /* Enumeration up to 64-bit values */
+</pre></div>
+</div>
+<p style="line-height:1.4em;">Note that the type section encodes debug info, not just pure types.
+<code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span>BTF_KIND_FUNC</span></code> is not a type, and it represents a defined subprogram.</p>
+<p style="line-height:1.4em;">Each type contains the following common data:</p>
+<div><div style="background:rgb(250, 243, 232);"><pre style="font-family:Consolas, Menlo, &quot;DejaVu Sans Mono&quot;, &quot;Bitstream Vera Sans Mono&quot;, monospace;font-size:0.9em;background:rgb(238, 238, 238);padding:7px 30px;margin:15px 0px;line-height:1.3em;"><span></span>struct btf_type {
+    __u32 name_off;
+    /* "info" bits arrangement
+     * bits  0-15: vlen (e.g. # of struct's members)
+     * bits 16-23: unused
+     * bits 24-28: kind (e.g. int, ptr, array...etc)
+     * bits 29-30: unused
+     * bit     31: kind_flag, currently used by
+     *             struct, union, fwd, enum and enum64.
+     */
+    __u32 info;
+    /* "size" is used by INT, ENUM, STRUCT, UNION and ENUM64.
+     * "size" tells the size of the type it is describing.
+     *
+     * "type" is used by PTR, TYPEDEF, VOLATILE, CONST, RESTRICT,
+     * FUNC, FUNC_PROTO, DECL_TAG and TYPE_TAG.
+     * "type" is a type_id referring to another type.
+     */
+    union {
+            __u32 size;
+            __u32 type;
+    };
+};
+</pre></div>
+</div>
+<p style="line-height:1.4em;">For certain kinds, the common data are followed by kind-specific data. The
+<code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span>name_off</span></code> in <code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span>struct</span> <span>btf_type</span></code> specifies the offset in the string table.
+The following sections detail encoding of each kind.</p>
+<div>
+<h4 style="font-family:serif;font-weight:normal;margin:30px 0px 10px;padding:0px;font-size:130%;">2.2.1 BTF_KIND_INT<a href="https://docs.kernel.org/bpf/btf.html#btf-kind-int" title="Permalink to this heading" style="padding:0px 4px;color:rgb(221, 221, 221);text-decoration:none;">¶</a></h4>
+<dl style="margin:0px;padding:0px;"><dt><code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span>struct</span> <span>btf_type</span></code> encoding requirement:</dt><dd style="margin-left:30px;line-height:1.4em;"><ul style="margin:10px 0px 10px 30px;padding:0px;">
+<li style="line-height:1.4em;"><p style="line-height:1.4em;"><code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span>name_off</span></code>: any valid offset</p></li>
+<li style="line-height:1.4em;"><p style="line-height:1.4em;"><code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span>info.kind_flag</span></code>: 0</p></li>
+<li style="line-height:1.4em;"><p style="line-height:1.4em;"><code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span>info.kind</span></code>: BTF_KIND_INT</p></li>
+<li style="line-height:1.4em;"><p style="line-height:1.4em;"><code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span>info.vlen</span></code>: 0</p></li>
+<li style="line-height:1.4em;"><p style="line-height:1.4em;"><code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span>size</span></code>: the size of the int type in bytes.</p></li>
+</ul>
+</dd></dl>
+<p style="line-height:1.4em;"><code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span>btf_type</span></code> is followed by a <code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span>u32</span></code> with the following bits arrangement:</p>
+<div><div style="background:rgb(250, 243, 232);"><pre style="font-family:Consolas, Menlo, &quot;DejaVu Sans Mono&quot;, &quot;Bitstream Vera Sans Mono&quot;, monospace;font-size:0.9em;background:rgb(238, 238, 238);padding:7px 30px;margin:15px 0px;line-height:1.3em;"><span></span>#define BTF_INT_ENCODING(VAL)   (((VAL) &amp; 0x0f000000) &gt;&gt; 24)
+#define BTF_INT_OFFSET(VAL)     (((VAL) &amp; 0x00ff0000) &gt;&gt; 16)
+#define BTF_INT_BITS(VAL)       ((VAL)  &amp; 0x000000ff)
+</pre></div>
+</div>
+<p style="line-height:1.4em;">The <code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span>BTF_INT_ENCODING</span></code> has the following attributes:</p>
+<div><div style="background:rgb(250, 243, 232);"><pre style="font-family:Consolas, Menlo, &quot;DejaVu Sans Mono&quot;, &quot;Bitstream Vera Sans Mono&quot;, monospace;font-size:0.9em;background:rgb(238, 238, 238);padding:7px 30px;margin:15px 0px;line-height:1.3em;"><span></span>#define BTF_INT_SIGNED  (1 &lt;&lt; 0)
+#define BTF_INT_CHAR    (1 &lt;&lt; 1)
+#define BTF_INT_BOOL    (1 &lt;&lt; 2)
+</pre></div>
+</div>
+<p style="line-height:1.4em;">The <code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span>BTF_INT_ENCODING()</span></code> provides extra information: signedness, char, or
+bool, for the int type. The char and bool encoding are mostly useful for
+pretty print. At most one encoding can be specified for the int type.</p>
+<p style="line-height:1.4em;">The <code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span>BTF_INT_BITS()</span></code> specifies the number of actual bits held by this int
+type. For example, a 4-bit bitfield encodes <code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span>BTF_INT_BITS()</span></code> equals to 4.
+The <code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span>btf_type.size</span> <span>*</span> <span>8</span></code> must be equal to or greater than <code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span>BTF_INT_BITS()</span></code>
+for the type. The maximum value of <code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span>BTF_INT_BITS()</span></code> is 128.</p>
+<p style="line-height:1.4em;">The <code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span>BTF_INT_OFFSET()</span></code> specifies the starting bit offset to calculate values
+for this int. For example, a bitfield struct member has:</p>
+<blockquote style="margin:0px 0px 0px 30px;padding:0px;">
+<div><ul style="margin:10px 0px 10px 30px;padding:0px;">
+<li style="line-height:1.4em;"><p style="line-height:1.4em;">btf member bit offset 100 from the start of the structure,</p></li>
+<li style="line-height:1.4em;"><p style="line-height:1.4em;">btf member pointing to an int type,</p></li>
+<li style="line-height:1.4em;"><p style="line-height:1.4em;">the int type has <code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span>BTF_INT_OFFSET()</span> <span>=</span> <span>2</span></code> and <code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span>BTF_INT_BITS()</span> <span>=</span> <span>4</span></code></p></li>
+</ul>
+</div></blockquote>
+<p style="line-height:1.4em;">Then in the struct memory layout, this member will occupy <code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span>4</span></code> bits starting
+from bits <code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span>100</span> <span>+</span> <span>2</span> <span>=</span> <span>102</span></code>.</p>
+<p style="line-height:1.4em;">Alternatively, the bitfield struct member can be the following to access the
+same bits as the above:</p>
+<blockquote style="margin:0px 0px 0px 30px;padding:0px;">
+<div><ul style="margin:10px 0px 10px 30px;padding:0px;">
+<li style="line-height:1.4em;"><p style="line-height:1.4em;">btf member bit offset 102,</p></li>
+<li style="line-height:1.4em;"><p style="line-height:1.4em;">btf member pointing to an int type,</p></li>
+<li style="line-height:1.4em;"><p style="line-height:1.4em;">the int type has <code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span>BTF_INT_OFFSET()</span> <span>=</span> <span>0</span></code> and <code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span>BTF_INT_BITS()</span> <span>=</span> <span>4</span></code></p></li>
+</ul>
+</div></blockquote>
+<p style="line-height:1.4em;">The original intention of <code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span>BTF_INT_OFFSET()</span></code> is to provide flexibility of
+bitfield encoding. Currently, both llvm and pahole generate
+<code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span>BTF_INT_OFFSET()</span> <span>=</span> <span>0</span></code> for all int types.</p>
+</div>
+<div>
+<h4 style="font-family:serif;font-weight:normal;margin:30px 0px 10px;padding:0px;font-size:130%;">2.2.2 BTF_KIND_PTR<a href="https://docs.kernel.org/bpf/btf.html#btf-kind-ptr" title="Permalink to this heading" style="padding:0px 4px;color:rgb(221, 221, 221);text-decoration:none;">¶</a></h4>
+<dl style="margin:0px;padding:0px;"><dt><code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span>struct</span> <span>btf_type</span></code> encoding requirement:</dt><dd style="margin-left:30px;line-height:1.4em;"><ul style="margin:10px 0px 10px 30px;padding:0px;">
+<li style="line-height:1.4em;"><p style="line-height:1.4em;"><code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span>name_off</span></code>: 0</p></li>
+<li style="line-height:1.4em;"><p style="line-height:1.4em;"><code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span>info.kind_flag</span></code>: 0</p></li>
+<li style="line-height:1.4em;"><p style="line-height:1.4em;"><code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span>info.kind</span></code>: BTF_KIND_PTR</p></li>
+<li style="line-height:1.4em;"><p style="line-height:1.4em;"><code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span>info.vlen</span></code>: 0</p></li>
+<li style="line-height:1.4em;"><p style="line-height:1.4em;"><code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span>type</span></code>: the pointee type of the pointer</p></li>
+</ul>
+</dd></dl>
+<p style="line-height:1.4em;">No additional type data follow <code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span>btf_type</span></code>.</p>
+</div>
+<div>
+<h4 style="font-family:serif;font-weight:normal;margin:30px 0px 10px;padding:0px;font-size:130%;">2.2.3 BTF_KIND_ARRAY<a href="https://docs.kernel.org/bpf/btf.html#btf-kind-array" title="Permalink to this heading" style="padding:0px 4px;color:rgb(221, 221, 221);text-decoration:none;">¶</a></h4>
+<dl style="margin:0px;padding:0px;"><dt><code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span>struct</span> <span>btf_type</span></code> encoding requirement:</dt><dd style="margin-left:30px;line-height:1.4em;"><ul style="margin:10px 0px 10px 30px;padding:0px;">
+<li style="line-height:1.4em;"><p style="line-height:1.4em;"><code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span>name_off</span></code>: 0</p></li>
+<li style="line-height:1.4em;"><p style="line-height:1.4em;"><code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span>info.kind_flag</span></code>: 0</p></li>
+<li style="line-height:1.4em;"><p style="line-height:1.4em;"><code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span>info.kind</span></code>: BTF_KIND_ARRAY</p></li>
+<li style="line-height:1.4em;"><p style="line-height:1.4em;"><code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span>info.vlen</span></code>: 0</p></li>
+<li style="line-height:1.4em;"><p style="line-height:1.4em;"><code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span>size/type</span></code>: 0, not used</p></li>
+</ul>
+</dd></dl>
+<p style="line-height:1.4em;"><code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span>btf_type</span></code> is followed by one <code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span>struct</span> <span>btf_array</span></code>:</p>
+<div><div style="background:rgb(250, 243, 232);"><pre style="font-family:Consolas, Menlo, &quot;DejaVu Sans Mono&quot;, &quot;Bitstream Vera Sans Mono&quot;, monospace;font-size:0.9em;background:rgb(238, 238, 238);padding:7px 30px;margin:15px 0px;line-height:1.3em;"><span></span>struct btf_array {
+    __u32   type;
+    __u32   index_type;
+    __u32   nelems;
+};
+</pre></div>
+</div>
+<dl style="margin:0px;padding:0px;"><dt>The <code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span>struct</span> <span>btf_array</span></code> encoding:</dt><dd style="margin-left:30px;line-height:1.4em;"><ul style="margin:10px 0px 10px 30px;padding:0px;">
+<li style="line-height:1.4em;"><p style="line-height:1.4em;"><code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span>type</span></code>: the element type</p></li>
+<li style="line-height:1.4em;"><p style="line-height:1.4em;"><code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span>index_type</span></code>: the index type</p></li>
+<li style="line-height:1.4em;"><p style="line-height:1.4em;"><code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span>nelems</span></code>: the number of elements for this array (<code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span>0</span></code> is also allowed).</p></li>
+</ul>
+</dd></dl>
+<p style="line-height:1.4em;">The <code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span>index_type</span></code> can be any regular int type (<code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span>u8</span></code>, <code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span>u16</span></code>, <code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span>u32</span></code>,
+<code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span>u64</span></code>, <code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span>unsigned</span> <span>__int128</span></code>). The original design of including
+<code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span>index_type</span></code> follows DWARF, which has an <code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span>index_type</span></code> for its array type.
+Currently in BTF, beyond type verification, the <code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span>index_type</span></code> is not used.</p>
+<p style="line-height:1.4em;">The <code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span>struct</span> <span>btf_array</span></code> allows chaining through element type to represent
+multidimensional arrays. For example, for <code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span>int</span> <span>a[5][6]</span></code>, the following type
+information illustrates the chaining:</p>
+<blockquote style="margin:0px 0px 0px 30px;padding:0px;">
+<div><ul style="margin:10px 0px 10px 30px;padding:0px;">
+<li style="line-height:1.4em;"><p style="line-height:1.4em;">[1]: int</p></li>
+<li style="line-height:1.4em;"><p style="line-height:1.4em;">[2]: array, <code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span>btf_array.type</span> <span>=</span> <span>[1]</span></code>, <code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span>btf_array.nelems</span> <span>=</span> <span>6</span></code></p></li>
+<li style="line-height:1.4em;"><p style="line-height:1.4em;">[3]: array, <code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span>btf_array.type</span> <span>=</span> <span>[2]</span></code>, <code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span>btf_array.nelems</span> <span>=</span> <span>5</span></code></p></li>
+</ul>
+</div></blockquote>
+<p style="line-height:1.4em;">Currently, both pahole and llvm collapse multidimensional array into
+one-dimensional array, e.g., for <code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span>a[5][6]</span></code>, the <code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span>btf_array.nelems</span></code> is
+equal to <code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span>30</span></code>. This is because the original use case is map pretty print
+where the whole array is dumped out so one-dimensional array is enough. As
+more BTF usage is explored, pahole and llvm can be changed to generate proper
+chained representation for multidimensional arrays.</p>
+</div>
+<div>
+<h4 style="font-family:serif;font-weight:normal;margin:30px 0px 10px;padding:0px;font-size:130%;">2.2.4 BTF_KIND_STRUCT<a href="https://docs.kernel.org/bpf/btf.html#btf-kind-struct" title="Permalink to this heading" style="padding:0px 4px;color:rgb(221, 221, 221);text-decoration:none;">¶</a></h4>
+</div>
+<div>
+<h4 style="font-family:serif;font-weight:normal;margin:30px 0px 10px;padding:0px;font-size:130%;">2.2.5 BTF_KIND_UNION<a href="https://docs.kernel.org/bpf/btf.html#btf-kind-union" title="Permalink to this heading" style="padding:0px 4px;color:rgb(221, 221, 221);text-decoration:none;">¶</a></h4>
+<dl style="margin:0px;padding:0px;"><dt><code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span>struct</span> <span>btf_type</span></code> encoding requirement:</dt><dd style="margin-left:30px;line-height:1.4em;"><ul style="margin:10px 0px 10px 30px;padding:0px;">
+<li style="line-height:1.4em;"><p style="line-height:1.4em;"><code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span>name_off</span></code>: 0 or offset to a valid C identifier</p></li>
+<li style="line-height:1.4em;"><p style="line-height:1.4em;"><code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span>info.kind_flag</span></code>: 0 or 1</p></li>
+<li style="line-height:1.4em;"><p style="line-height:1.4em;"><code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span>info.kind</span></code>: BTF_KIND_STRUCT or BTF_KIND_UNION</p></li>
+<li style="line-height:1.4em;"><p style="line-height:1.4em;"><code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span>info.vlen</span></code>: the number of struct/union members</p></li>
+<li style="line-height:1.4em;"><p style="line-height:1.4em;"><code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span>info.size</span></code>: the size of the struct/union in bytes</p></li>
+</ul>
+</dd></dl>
+<p style="line-height:1.4em;"><code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span>btf_type</span></code> is followed by <code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span>info.vlen</span></code> number of <code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span>struct</span> <span>btf_member</span></code>.:</p>
+<div><div style="background:rgb(250, 243, 232);"><pre style="font-family:Consolas, Menlo, &quot;DejaVu Sans Mono&quot;, &quot;Bitstream Vera Sans Mono&quot;, monospace;font-size:0.9em;background:rgb(238, 238, 238);padding:7px 30px;margin:15px 0px;line-height:1.3em;"><span></span>struct btf_member {
+    __u32   name_off;
+    __u32   type;
+    __u32   offset;
+};
+</pre></div>
+</div>
+<dl style="margin:0px;padding:0px;"><dt><code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span>struct</span> <span>btf_member</span></code> encoding:</dt><dd style="margin-left:30px;line-height:1.4em;"><ul style="margin:10px 0px 10px 30px;padding:0px;">
+<li style="line-height:1.4em;"><p style="line-height:1.4em;"><code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span>name_off</span></code>: offset to a valid C identifier</p></li>
+<li style="line-height:1.4em;"><p style="line-height:1.4em;"><code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span>type</span></code>: the member type</p></li>
+<li style="line-height:1.4em;"><p style="line-height:1.4em;"><code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span>offset</span></code>: &lt;see below&gt;</p></li>
+</ul>
+</dd></dl>
+<p style="line-height:1.4em;">If the type info <code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span>kind_flag</span></code> is not set, the offset contains only bit offset
+of the member. Note that the base type of the bitfield can only be int or enum
+type. If the bitfield size is 32, the base type can be either int or enum
+type. If the bitfield size is not 32, the base type must be int, and int type
+<code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span>BTF_INT_BITS()</span></code> encodes the bitfield size.</p>
+<p style="line-height:1.4em;">If the <code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span>kind_flag</span></code> is set, the <code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span>btf_member.offset</span></code> contains both member
+bitfield size and bit offset. The bitfield size and bit offset are calculated
+as below.:</p>
+<div><div style="background:rgb(250, 243, 232);"><pre style="font-family:Consolas, Menlo, &quot;DejaVu Sans Mono&quot;, &quot;Bitstream Vera Sans Mono&quot;, monospace;font-size:0.9em;background:rgb(238, 238, 238);padding:7px 30px;margin:15px 0px;line-height:1.3em;"><span></span>#define BTF_MEMBER_BITFIELD_SIZE(val)   ((val) &gt;&gt; 24)
+#define BTF_MEMBER_BIT_OFFSET(val)      ((val) &amp; 0xffffff)
+</pre></div>
+</div>
+<p style="line-height:1.4em;">In this case, if the base type is an int type, it must be a regular int type:</p>
+<blockquote style="margin:0px 0px 0px 30px;padding:0px;">
+<div><ul style="margin:10px 0px 10px 30px;padding:0px;">
+<li style="line-height:1.4em;"><p style="line-height:1.4em;"><code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span>BTF_INT_OFFSET()</span></code> must be 0.</p></li>
+<li style="line-height:1.4em;"><p style="line-height:1.4em;"><code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span>BTF_INT_BITS()</span></code> must be equal to <code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span>{1,2,4,8,16}</span> <span>*</span> <span>8</span></code>.</p></li>
+</ul>
+</div></blockquote>
+<p style="line-height:1.4em;">The following kernel patch introduced <code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span>kind_flag</span></code> and explained why both
+modes exist:</p>
+<blockquote style="margin:0px 0px 0px 30px;padding:0px;">
+<div><p style="line-height:1.4em;"><a href="https://github.com/torvalds/linux/commit/9d5f9f701b1891466fb3dbb1806ad97716f95cc3#diff-fa650a64fdd3968396883d2fe8215ff3" style="color:rgb(0, 75, 107);border-bottom:1px dotted rgb(0, 75, 107);text-decoration:none;">https://github.com/torvalds/linux/commit/9d5f9f701b1891466fb3dbb1806ad97716f95cc3#diff-fa650a64fdd3968396883d2fe8215ff3</a></p>
+</div></blockquote>
+</div>
+<div>
+<h4 style="font-family:serif;font-weight:normal;margin:30px 0px 10px;padding:0px;font-size:130%;">2.2.6 BTF_KIND_ENUM<a href="https://docs.kernel.org/bpf/btf.html#btf-kind-enum" title="Permalink to this heading" style="padding:0px 4px;color:rgb(221, 221, 221);text-decoration:none;">¶</a></h4>
+<dl style="margin:0px;padding:0px;"><dt><code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span>struct</span> <span>btf_type</span></code> encoding requirement:</dt><dd style="margin-left:30px;line-height:1.4em;"><ul style="margin:10px 0px 10px 30px;padding:0px;">
+<li style="line-height:1.4em;"><p style="line-height:1.4em;"><code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span>name_off</span></code>: 0 or offset to a valid C identifier</p></li>
+<li style="line-height:1.4em;"><p style="line-height:1.4em;"><code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span>info.kind_flag</span></code>: 0 for unsigned, 1 for signed</p></li>
+<li style="line-height:1.4em;"><p style="line-height:1.4em;"><code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span>info.kind</span></code>: BTF_KIND_ENUM</p></li>
+<li style="line-height:1.4em;"><p style="line-height:1.4em;"><code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span>info.vlen</span></code>: number of enum values</p></li>
+<li style="line-height:1.4em;"><p style="line-height:1.4em;"><code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span>size</span></code>: 1/2/4/8</p></li>
+</ul>
+</dd></dl>
+<p style="line-height:1.4em;"><code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span>btf_type</span></code> is followed by <code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span>info.vlen</span></code> number of <code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span>struct</span> <span>btf_enum</span></code>.:</p>
+<div><div style="background:rgb(250, 243, 232);"><pre style="font-family:Consolas, Menlo, &quot;DejaVu Sans Mono&quot;, &quot;Bitstream Vera Sans Mono&quot;, monospace;font-size:0.9em;background:rgb(238, 238, 238);padding:7px 30px;margin:15px 0px;line-height:1.3em;"><span></span>struct btf_enum {
+    __u32   name_off;
+    __s32   val;
+};
+</pre></div>
+</div>
+<dl style="margin:0px;padding:0px;"><dt>The <code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span>btf_enum</span></code> encoding:</dt><dd style="margin-left:30px;line-height:1.4em;"><ul style="margin:10px 0px 10px 30px;padding:0px;">
+<li style="line-height:1.4em;"><p style="line-height:1.4em;"><code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span>name_off</span></code>: offset to a valid C identifier</p></li>
+<li style="line-height:1.4em;"><p style="line-height:1.4em;"><code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span>val</span></code>: any value</p></li>
+</ul>
+</dd></dl>
+<p style="line-height:1.4em;">If the original enum value is signed and the size is less than 4,
+that value will be sign extended into 4 bytes. If the size is 8,
+the value will be truncated into 4 bytes.</p>
+</div>
+<div>
+<h4 style="font-family:serif;font-weight:normal;margin:30px 0px 10px;padding:0px;font-size:130%;">2.2.7 BTF_KIND_FWD<a href="https://docs.kernel.org/bpf/btf.html#btf-kind-fwd" title="Permalink to this heading" style="padding:0px 4px;color:rgb(221, 221, 221);text-decoration:none;">¶</a></h4>
+<dl style="margin:0px;padding:0px;"><dt><code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span>struct</span> <span>btf_type</span></code> encoding requirement:</dt><dd style="margin-left:30px;line-height:1.4em;"><ul style="margin:10px 0px 10px 30px;padding:0px;">
+<li style="line-height:1.4em;"><p style="line-height:1.4em;"><code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span>name_off</span></code>: offset to a valid C identifier</p></li>
+<li style="line-height:1.4em;"><p style="line-height:1.4em;"><code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span>info.kind_flag</span></code>: 0 for struct, 1 for union</p></li>
+<li style="line-height:1.4em;"><p style="line-height:1.4em;"><code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span>info.kind</span></code>: BTF_KIND_FWD</p></li>
+<li style="line-height:1.4em;"><p style="line-height:1.4em;"><code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span>info.vlen</span></code>: 0</p></li>
+<li style="line-height:1.4em;"><p style="line-height:1.4em;"><code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span>type</span></code>: 0</p></li>
+</ul>
+</dd></dl>
+<p style="line-height:1.4em;">No additional type data follow <code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span>btf_type</span></code>.</p>
+</div>
+<div>
+<h4 style="font-family:serif;font-weight:normal;margin:30px 0px 10px;padding:0px;font-size:130%;">2.2.8 BTF_KIND_TYPEDEF<a href="https://docs.kernel.org/bpf/btf.html#btf-kind-typedef" title="Permalink to this heading" style="padding:0px 4px;color:rgb(221, 221, 221);text-decoration:none;">¶</a></h4>
+<dl style="margin:0px;padding:0px;"><dt><code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span>struct</span> <span>btf_type</span></code> encoding requirement:</dt><dd style="margin-left:30px;line-height:1.4em;"><ul style="margin:10px 0px 10px 30px;padding:0px;">
+<li style="line-height:1.4em;"><p style="line-height:1.4em;"><code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span>name_off</span></code>: offset to a valid C identifier</p></li>
+<li style="line-height:1.4em;"><p style="line-height:1.4em;"><code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span>info.kind_flag</span></code>: 0</p></li>
+<li style="line-height:1.4em;"><p style="line-height:1.4em;"><code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span>info.kind</span></code>: BTF_KIND_TYPEDEF</p></li>
+<li style="line-height:1.4em;"><p style="line-height:1.4em;"><code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span>info.vlen</span></code>: 0</p></li>
+<li style="line-height:1.4em;"><p style="line-height:1.4em;"><code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span>type</span></code>: the type which can be referred by name at <code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span>name_off</span></code></p></li>
+</ul>
+</dd></dl>
+<p style="line-height:1.4em;">No additional type data follow <code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span>btf_type</span></code>.</p>
+</div>
+<div>
+<h4 style="font-family:serif;font-weight:normal;margin:30px 0px 10px;padding:0px;font-size:130%;">2.2.9 BTF_KIND_VOLATILE<a href="https://docs.kernel.org/bpf/btf.html#btf-kind-volatile" title="Permalink to this heading" style="padding:0px 4px;color:rgb(221, 221, 221);text-decoration:none;">¶</a></h4>
+<dl style="margin:0px;padding:0px;"><dt><code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span>struct</span> <span>btf_type</span></code> encoding requirement:</dt><dd style="margin-left:30px;line-height:1.4em;"><ul style="margin:10px 0px 10px 30px;padding:0px;">
+<li style="line-height:1.4em;"><p style="line-height:1.4em;"><code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span>name_off</span></code>: 0</p></li>
+<li style="line-height:1.4em;"><p style="line-height:1.4em;"><code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span>info.kind_flag</span></code>: 0</p></li>
+<li style="line-height:1.4em;"><p style="line-height:1.4em;"><code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span>info.kind</span></code>: BTF_KIND_VOLATILE</p></li>
+<li style="line-height:1.4em;"><p style="line-height:1.4em;"><code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span>info.vlen</span></code>: 0</p></li>
+<li style="line-height:1.4em;"><p style="line-height:1.4em;"><code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span>type</span></code>: the type with <code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span>volatile</span></code> qualifier</p></li>
+</ul>
+</dd></dl>
+<p style="line-height:1.4em;">No additional type data follow <code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span>btf_type</span></code>.</p>
+</div>
+<div>
+<h4 style="font-family:serif;font-weight:normal;margin:30px 0px 10px;padding:0px;font-size:130%;">2.2.10 BTF_KIND_CONST<a href="https://docs.kernel.org/bpf/btf.html#btf-kind-const" title="Permalink to this heading" style="padding:0px 4px;color:rgb(221, 221, 221);text-decoration:none;">¶</a></h4>
+<dl style="margin:0px;padding:0px;"><dt><code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span>struct</span> <span>btf_type</span></code> encoding requirement:</dt><dd style="margin-left:30px;line-height:1.4em;"><ul style="margin:10px 0px 10px 30px;padding:0px;">
+<li style="line-height:1.4em;"><p style="line-height:1.4em;"><code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span>name_off</span></code>: 0</p></li>
+<li style="line-height:1.4em;"><p style="line-height:1.4em;"><code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span>info.kind_flag</span></code>: 0</p></li>
+<li style="line-height:1.4em;"><p style="line-height:1.4em;"><code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span>info.kind</span></code>: BTF_KIND_CONST</p></li>
+<li style="line-height:1.4em;"><p style="line-height:1.4em;"><code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span>info.vlen</span></code>: 0</p></li>
+<li style="line-height:1.4em;"><p style="line-height:1.4em;"><code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span>type</span></code>: the type with <code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span>const</span></code> qualifier</p></li>
+</ul>
+</dd></dl>
+<p style="line-height:1.4em;">No additional type data follow <code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span>btf_type</span></code>.</p>
+</div>
+<div>
+<h4 style="font-family:serif;font-weight:normal;margin:30px 0px 10px;padding:0px;font-size:130%;">2.2.11 BTF_KIND_RESTRICT<a href="https://docs.kernel.org/bpf/btf.html#btf-kind-restrict" title="Permalink to this heading" style="padding:0px 4px;color:rgb(221, 221, 221);text-decoration:none;">¶</a></h4>
+<dl style="margin:0px;padding:0px;"><dt><code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span>struct</span> <span>btf_type</span></code> encoding requirement:</dt><dd style="margin-left:30px;line-height:1.4em;"><ul style="margin:10px 0px 10px 30px;padding:0px;">
+<li style="line-height:1.4em;"><p style="line-height:1.4em;"><code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span>name_off</span></code>: 0</p></li>
+<li style="line-height:1.4em;"><p style="line-height:1.4em;"><code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span>info.kind_flag</span></code>: 0</p></li>
+<li style="line-height:1.4em;"><p style="line-height:1.4em;"><code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span>info.kind</span></code>: BTF_KIND_RESTRICT</p></li>
+<li style="line-height:1.4em;"><p style="line-height:1.4em;"><code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span>info.vlen</span></code>: 0</p></li>
+<li style="line-height:1.4em;"><p style="line-height:1.4em;"><code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span>type</span></code>: the type with <code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span>restrict</span></code> qualifier</p></li>
+</ul>
+</dd></dl>
+<p style="line-height:1.4em;">No additional type data follow <code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span>btf_type</span></code>.</p>
+</div>
+<div>
+<h4 style="font-family:serif;font-weight:normal;margin:30px 0px 10px;padding:0px;font-size:130%;">2.2.12 BTF_KIND_FUNC<a href="https://docs.kernel.org/bpf/btf.html#btf-kind-func" title="Permalink to this heading" style="padding:0px 4px;color:rgb(221, 221, 221);text-decoration:none;">¶</a></h4>
+<dl style="margin:0px;padding:0px;"><dt><code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span>struct</span> <span>btf_type</span></code> encoding requirement:</dt><dd style="margin-left:30px;line-height:1.4em;"><ul style="margin:10px 0px 10px 30px;padding:0px;">
+<li style="line-height:1.4em;"><p style="line-height:1.4em;"><code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span>name_off</span></code>: offset to a valid C identifier</p></li>
+<li style="line-height:1.4em;"><p style="line-height:1.4em;"><code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span>info.kind_flag</span></code>: 0</p></li>
+<li style="line-height:1.4em;"><p style="line-height:1.4em;"><code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span>info.kind</span></code>: BTF_KIND_FUNC</p></li>
+<li style="line-height:1.4em;"><dl style="margin:0px;padding:0px;"><dt><code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span>info.vlen</span></code>: linkage information (BTF_FUNC_STATIC, BTF_FUNC_GLOBAL</dt><dd style="margin-left:30px;line-height:1.4em;"><p style="line-height:1.4em;">or BTF_FUNC_EXTERN)</p>
+</dd></dl>
+</li>
+<li style="line-height:1.4em;"><p style="line-height:1.4em;"><code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span>type</span></code>: a BTF_KIND_FUNC_PROTO type</p></li>
+</ul>
+</dd></dl>
+<p style="line-height:1.4em;">No additional type data follow <code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span>btf_type</span></code>.</p>
+<p style="line-height:1.4em;">A BTF_KIND_FUNC defines not a type, but a subprogram (function) whose
+signature is defined by <code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span>type</span></code>. The subprogram is thus an instance of that
+type. The BTF_KIND_FUNC may in turn be referenced by a func_info in the
+<a href="https://docs.kernel.org/bpf/btf.html#btf-ext-section" style="color:rgb(0, 75, 107);border-bottom:1px dotted rgb(0, 75, 107);text-decoration:none;"><span>4.2 .BTF.ext section</span></a> (ELF) or in the arguments to <a href="https://docs.kernel.org/bpf/btf.html#bpf-prog-load" style="color:rgb(0, 75, 107);border-bottom:1px dotted rgb(0, 75, 107);text-decoration:none;"><span>3.3 BPF_PROG_LOAD</span></a>
+(ABI).</p>
+<p style="line-height:1.4em;">Currently, only linkage values of BTF_FUNC_STATIC and BTF_FUNC_GLOBAL are
+supported in the kernel.</p>
+</div>
+<div>
+<h4 style="font-family:serif;font-weight:normal;margin:30px 0px 10px;padding:0px;font-size:130%;">2.2.13 BTF_KIND_FUNC_PROTO<a href="https://docs.kernel.org/bpf/btf.html#btf-kind-func-proto" title="Permalink to this heading" style="padding:0px 4px;color:rgb(221, 221, 221);text-decoration:none;">¶</a></h4>
+<dl style="margin:0px;padding:0px;"><dt><code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span>struct</span> <span>btf_type</span></code> encoding requirement:</dt><dd style="margin-left:30px;line-height:1.4em;"><ul style="margin:10px 0px 10px 30px;padding:0px;">
+<li style="line-height:1.4em;"><p style="line-height:1.4em;"><code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span>name_off</span></code>: 0</p></li>
+<li style="line-height:1.4em;"><p style="line-height:1.4em;"><code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span>info.kind_flag</span></code>: 0</p></li>
+<li style="line-height:1.4em;"><p style="line-height:1.4em;"><code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span>info.kind</span></code>: BTF_KIND_FUNC_PROTO</p></li>
+<li style="line-height:1.4em;"><p style="line-height:1.4em;"><code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span>info.vlen</span></code>: # of parameters</p></li>
+<li style="line-height:1.4em;"><p style="line-height:1.4em;"><code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span>type</span></code>: the return type</p></li>
+</ul>
+</dd></dl>
+<p style="line-height:1.4em;"><code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span>btf_type</span></code> is followed by <code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span>info.vlen</span></code> number of <code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span>struct</span> <span>btf_param</span></code>.:</p>
+<div><div style="background:rgb(250, 243, 232);"><pre style="font-family:Consolas, Menlo, &quot;DejaVu Sans Mono&quot;, &quot;Bitstream Vera Sans Mono&quot;, monospace;font-size:0.9em;background:rgb(238, 238, 238);padding:7px 30px;margin:15px 0px;line-height:1.3em;"><span></span>struct btf_param {
+    __u32   name_off;
+    __u32   type;
+};
+</pre></div>
+</div>
+<p style="line-height:1.4em;">If a BTF_KIND_FUNC_PROTO type is referred by a BTF_KIND_FUNC type, then
+<code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span>btf_param.name_off</span></code> must point to a valid C identifier except for the
+possible last argument representing the variable argument. The btf_param.type
+refers to parameter type.</p>
+<p style="line-height:1.4em;">If the function has variable arguments, the last parameter is encoded with
+<code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span>name_off</span> <span>=</span> <span>0</span></code> and <code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span>type</span> <span>=</span> <span>0</span></code>.</p>
+</div>
+<div>
+<h4 style="font-family:serif;font-weight:normal;margin:30px 0px 10px;padding:0px;font-size:130%;">2.2.14 BTF_KIND_VAR<a href="https://docs.kernel.org/bpf/btf.html#btf-kind-var" title="Permalink to this heading" style="padding:0px 4px;color:rgb(221, 221, 221);text-decoration:none;">¶</a></h4>
+<dl style="margin:0px;padding:0px;"><dt><code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span>struct</span> <span>btf_type</span></code> encoding requirement:</dt><dd style="margin-left:30px;line-height:1.4em;"><ul style="margin:10px 0px 10px 30px;padding:0px;">
+<li style="line-height:1.4em;"><p style="line-height:1.4em;"><code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span>name_off</span></code>: offset to a valid C identifier</p></li>
+<li style="line-height:1.4em;"><p style="line-height:1.4em;"><code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span>info.kind_flag</span></code>: 0</p></li>
+<li style="line-height:1.4em;"><p style="line-height:1.4em;"><code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span>info.kind</span></code>: BTF_KIND_VAR</p></li>
+<li style="line-height:1.4em;"><p style="line-height:1.4em;"><code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span>info.vlen</span></code>: 0</p></li>
+<li style="line-height:1.4em;"><p style="line-height:1.4em;"><code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span>type</span></code>: the type of the variable</p></li>
+</ul>
+</dd></dl>
+<p style="line-height:1.4em;"><code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span>btf_type</span></code> is followed by a single <code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span>struct</span> <span>btf_variable</span></code> with the
+following data:</p>
+<div><div style="background:rgb(250, 243, 232);"><pre style="font-family:Consolas, Menlo, &quot;DejaVu Sans Mono&quot;, &quot;Bitstream Vera Sans Mono&quot;, monospace;font-size:0.9em;background:rgb(238, 238, 238);padding:7px 30px;margin:15px 0px;line-height:1.3em;"><span></span>struct btf_var {
+    __u32   linkage;
+};
+</pre></div>
+</div>
+<dl style="margin:0px;padding:0px;"><dt><code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span>struct</span> <span>btf_var</span></code> encoding:</dt><dd style="margin-left:30px;line-height:1.4em;"><ul style="margin:10px 0px 10px 30px;padding:0px;">
+<li style="line-height:1.4em;"><dl style="margin:0px;padding:0px;"><dt><code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span>linkage</span></code>: currently only static variable 0, or globally allocated</dt><dd style="margin-left:30px;line-height:1.4em;"><p style="line-height:1.4em;">variable in ELF sections 1</p>
+</dd></dl>
+</li>
+</ul>
+</dd></dl>
+<p style="line-height:1.4em;">Not all type of global variables are supported by LLVM at this point.
+The following is currently available:</p>
+<blockquote style="margin:0px 0px 0px 30px;padding:0px;">
+<div><ul style="margin:10px 0px 10px 30px;padding:0px;">
+<li style="line-height:1.4em;"><p style="line-height:1.4em;">static variables with or without section attributes</p></li>
+<li style="line-height:1.4em;"><p style="line-height:1.4em;">global variables with section attributes</p></li>
+</ul>
+</div></blockquote>
+<p style="line-height:1.4em;">The latter is for future extraction of map key/value type id's from a
+map definition.</p>
+</div>
+<div>
+<h4 style="font-family:serif;font-weight:normal;margin:30px 0px 10px;padding:0px;font-size:130%;">2.2.15 BTF_KIND_DATASEC<a href="https://docs.kernel.org/bpf/btf.html#btf-kind-datasec" title="Permalink to this heading" style="padding:0px 4px;color:rgb(221, 221, 221);text-decoration:none;">¶</a></h4>
+<dl style="margin:0px;padding:0px;"><dt><code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span>struct</span> <span>btf_type</span></code> encoding requirement:</dt><dd style="margin-left:30px;line-height:1.4em;"><ul style="margin:10px 0px 10px 30px;padding:0px;">
+<li style="line-height:1.4em;"><dl style="margin:0px;padding:0px;"><dt><code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span>name_off</span></code>: offset to a valid name associated with a variable or</dt><dd style="margin-left:30px;line-height:1.4em;"><p style="line-height:1.4em;">one of .data/.bss/.rodata</p>
+</dd></dl>
+</li>
+<li style="line-height:1.4em;"><p style="line-height:1.4em;"><code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span>info.kind_flag</span></code>: 0</p></li>
+<li style="line-height:1.4em;"><p style="line-height:1.4em;"><code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span>info.kind</span></code>: BTF_KIND_DATASEC</p></li>
+<li style="line-height:1.4em;"><p style="line-height:1.4em;"><code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span>info.vlen</span></code>: # of variables</p></li>
+<li style="line-height:1.4em;"><dl style="margin:0px;padding:0px;"><dt><code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span>size</span></code>: total section size in bytes (0 at compilation time, patched</dt><dd style="margin-left:30px;line-height:1.4em;"><p style="line-height:1.4em;">to actual size by BPF loaders such as libbpf)</p>
+</dd></dl>
+</li>
+</ul>
+</dd></dl>
+<p style="line-height:1.4em;"><code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span>btf_type</span></code> is followed by <code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span>info.vlen</span></code> number of <code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span>struct</span> <span>btf_var_secinfo</span></code>.:</p>
+<div><div style="background:rgb(250, 243, 232);"><pre style="font-family:Consolas, Menlo, &quot;DejaVu Sans Mono&quot;, &quot;Bitstream Vera Sans Mono&quot;, monospace;font-size:0.9em;background:rgb(238, 238, 238);padding:7px 30px;margin:15px 0px;line-height:1.3em;"><span></span>struct btf_var_secinfo {
+    __u32   type;
+    __u32   offset;
+    __u32   size;
+};
+</pre></div>
+</div>
+<dl style="margin:0px;padding:0px;"><dt><code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span>struct</span> <span>btf_var_secinfo</span></code> encoding:</dt><dd style="margin-left:30px;line-height:1.4em;"><ul style="margin:10px 0px 10px 30px;padding:0px;">
+<li style="line-height:1.4em;"><p style="line-height:1.4em;"><code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span>type</span></code>: the type of the BTF_KIND_VAR variable</p></li>
+<li style="line-height:1.4em;"><p style="line-height:1.4em;"><code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span>offset</span></code>: the in-section offset of the variable</p></li>
+<li style="line-height:1.4em;"><p style="line-height:1.4em;"><code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span>size</span></code>: the size of the variable in bytes</p></li>
+</ul>
+</dd></dl>
+</div>
+<div>
+<h4 style="font-family:serif;font-weight:normal;margin:30px 0px 10px;padding:0px;font-size:130%;">2.2.16 BTF_KIND_FLOAT<a href="https://docs.kernel.org/bpf/btf.html#btf-kind-float" title="Permalink to this heading" style="padding:0px 4px;color:rgb(221, 221, 221);text-decoration:none;">¶</a></h4>
+<dl style="margin:0px;padding:0px;"><dt><code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span>struct</span> <span>btf_type</span></code> encoding requirement:</dt><dd style="margin-left:30px;line-height:1.4em;"><ul style="margin:10px 0px 10px 30px;padding:0px;">
+<li style="line-height:1.4em;"><p style="line-height:1.4em;"><code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span>name_off</span></code>: any valid offset</p></li>
+<li style="line-height:1.4em;"><p style="line-height:1.4em;"><code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span>info.kind_flag</span></code>: 0</p></li>
+<li style="line-height:1.4em;"><p style="line-height:1.4em;"><code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span>info.kind</span></code>: BTF_KIND_FLOAT</p></li>
+<li style="line-height:1.4em;"><p style="line-height:1.4em;"><code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span>info.vlen</span></code>: 0</p></li>
+<li style="line-height:1.4em;"><p style="line-height:1.4em;"><code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span>size</span></code>: the size of the float type in bytes: 2, 4, 8, 12 or 16.</p></li>
+</ul>
+</dd></dl>
+<p style="line-height:1.4em;">No additional type data follow <code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span>btf_type</span></code>.</p>
+</div>
+<div>
+<h4 style="font-family:serif;font-weight:normal;margin:30px 0px 10px;padding:0px;font-size:130%;">2.2.17 BTF_KIND_DECL_TAG<a href="https://docs.kernel.org/bpf/btf.html#btf-kind-decl-tag" title="Permalink to this heading" style="padding:0px 4px;color:rgb(221, 221, 221);text-decoration:none;">¶</a></h4>
+<dl style="margin:0px;padding:0px;"><dt><code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span>struct</span> <span>btf_type</span></code> encoding requirement:</dt><dd style="margin-left:30px;line-height:1.4em;"><ul style="margin:10px 0px 10px 30px;padding:0px;">
+<li style="line-height:1.4em;"><p style="line-height:1.4em;"><code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span>name_off</span></code>: offset to a non-empty string</p></li>
+<li style="line-height:1.4em;"><p style="line-height:1.4em;"><code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span>info.kind_flag</span></code>: 0</p></li>
+<li style="line-height:1.4em;"><p style="line-height:1.4em;"><code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span>info.kind</span></code>: BTF_KIND_DECL_TAG</p></li>
+<li style="line-height:1.4em;"><p style="line-height:1.4em;"><code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span>info.vlen</span></code>: 0</p></li>
+<li style="line-height:1.4em;"><p style="line-height:1.4em;"><code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span>type</span></code>: <code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span>struct</span></code>, <code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span>union</span></code>, <code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span>func</span></code>, <code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span>var</span></code> or <code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span>typedef</span></code></p></li>
+</ul>
+</dd></dl>
+<p style="line-height:1.4em;"><code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span>btf_type</span></code> is followed by <code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span>struct</span> <span>btf_decl_tag</span></code>.:</p>
+<div><div style="background:rgb(250, 243, 232);"><pre style="font-family:Consolas, Menlo, &quot;DejaVu Sans Mono&quot;, &quot;Bitstream Vera Sans Mono&quot;, monospace;font-size:0.9em;background:rgb(238, 238, 238);padding:7px 30px;margin:15px 0px;line-height:1.3em;"><span></span>struct btf_decl_tag {
+    __u32   component_idx;
+};
+</pre></div>
+</div>
+<p style="line-height:1.4em;">The <code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span>name_off</span></code> encodes btf_decl_tag attribute string.
+The <code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span>type</span></code> should be <code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span>struct</span></code>, <code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span>union</span></code>, <code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span>func</span></code>, <code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span>var</span></code> or <code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span>typedef</span></code>.
+For <code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span>var</span></code> or <code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span>typedef</span></code> type, <code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span>btf_decl_tag.component_idx</span></code> must be <code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span>-1</span></code>.
+For the other three types, if the btf_decl_tag attribute is
+applied to the <code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span>struct</span></code>, <code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span>union</span></code> or <code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span>func</span></code> itself,
+<code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span>btf_decl_tag.component_idx</span></code> must be <code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span>-1</span></code>. Otherwise,
+the attribute is applied to a <code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span>struct</span></code>/<code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span>union</span></code> member or
+a <code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span>func</span></code> argument, and <code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span>btf_decl_tag.component_idx</span></code> should be a
+valid index (starting from 0) pointing to a member or an argument.</p>
+</div>
+<div>
+<h4 style="font-family:serif;font-weight:normal;margin:30px 0px 10px;padding:0px;font-size:130%;">2.2.18 BTF_KIND_TYPE_TAG<a href="https://docs.kernel.org/bpf/btf.html#btf-kind-type-tag" title="Permalink to this heading" style="padding:0px 4px;color:rgb(221, 221, 221);text-decoration:none;">¶</a></h4>
+<dl style="margin:0px;padding:0px;"><dt><code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span>struct</span> <span>btf_type</span></code> encoding requirement:</dt><dd style="margin-left:30px;line-height:1.4em;"><ul style="margin:10px 0px 10px 30px;padding:0px;">
+<li style="line-height:1.4em;"><p style="line-height:1.4em;"><code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span>name_off</span></code>: offset to a non-empty string</p></li>
+<li style="line-height:1.4em;"><p style="line-height:1.4em;"><code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span>info.kind_flag</span></code>: 0</p></li>
+<li style="line-height:1.4em;"><p style="line-height:1.4em;"><code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span>info.kind</span></code>: BTF_KIND_TYPE_TAG</p></li>
+<li style="line-height:1.4em;"><p style="line-height:1.4em;"><code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span>info.vlen</span></code>: 0</p></li>
+<li style="line-height:1.4em;"><p style="line-height:1.4em;"><code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span>type</span></code>: the type with <code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span>btf_type_tag</span></code> attribute</p></li>
+</ul>
+</dd></dl>
+<p style="line-height:1.4em;">Currently, <code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span>BTF_KIND_TYPE_TAG</span></code> is only emitted for pointer types.
+It has the following btf type chain:</p>
+<div><div style="background:rgb(250, 243, 232);"><pre style="font-family:Consolas, Menlo, &quot;DejaVu Sans Mono&quot;, &quot;Bitstream Vera Sans Mono&quot;, monospace;font-size:0.9em;background:rgb(238, 238, 238);padding:7px 30px;margin:15px 0px;line-height:1.3em;"><span></span>ptr -&gt; [type_tag]*
+    -&gt; [const | volatile | restrict | typedef]*
+    -&gt; base_type
+</pre></div>
+</div>
+<p style="line-height:1.4em;">Basically, a pointer type points to zero or more
+type_tag, then zero or more const/volatile/restrict/typedef
+and finally the base type. The base type is one of
+int, ptr, array, struct, union, enum, func_proto and float types.</p>
+</div>
+<div>
+<h4 style="font-family:serif;font-weight:normal;margin:30px 0px 10px;padding:0px;font-size:130%;">2.2.19 BTF_KIND_ENUM64<a href="https://docs.kernel.org/bpf/btf.html#btf-kind-enum64" title="Permalink to this heading" style="padding:0px 4px;color:rgb(221, 221, 221);text-decoration:none;">¶</a></h4>
+<dl style="margin:0px;padding:0px;"><dt><code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span>struct</span> <span>btf_type</span></code> encoding requirement:</dt><dd style="margin-left:30px;line-height:1.4em;"><ul style="margin:10px 0px 10px 30px;padding:0px;">
+<li style="line-height:1.4em;"><p style="line-height:1.4em;"><code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span>name_off</span></code>: 0 or offset to a valid C identifier</p></li>
+<li style="line-height:1.4em;"><p style="line-height:1.4em;"><code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span>info.kind_flag</span></code>: 0 for unsigned, 1 for signed</p></li>
+<li style="line-height:1.4em;"><p style="line-height:1.4em;"><code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span>info.kind</span></code>: BTF_KIND_ENUM64</p></li>
+<li style="line-height:1.4em;"><p style="line-height:1.4em;"><code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span>info.vlen</span></code>: number of enum values</p></li>
+<li style="line-height:1.4em;"><p style="line-height:1.4em;"><code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span>size</span></code>: 1/2/4/8</p></li>
+</ul>
+</dd></dl>
+<p style="line-height:1.4em;"><code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span>btf_type</span></code> is followed by <code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span>info.vlen</span></code> number of <code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span>struct</span> <span>btf_enum64</span></code>.:</p>
+<div><div style="background:rgb(250, 243, 232);"><pre style="font-family:Consolas, Menlo, &quot;DejaVu Sans Mono&quot;, &quot;Bitstream Vera Sans Mono&quot;, monospace;font-size:0.9em;background:rgb(238, 238, 238);padding:7px 30px;margin:15px 0px;line-height:1.3em;"><span></span>struct btf_enum64 {
+    __u32   name_off;
+    __u32   val_lo32;
+    __u32   val_hi32;
+};
+</pre></div>
+</div>
+<dl style="margin:0px;padding:0px;"><dt>The <code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span>btf_enum64</span></code> encoding:</dt><dd style="margin-left:30px;line-height:1.4em;"><ul style="margin:10px 0px 10px 30px;padding:0px;">
+<li style="line-height:1.4em;"><p style="line-height:1.4em;"><code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span>name_off</span></code>: offset to a valid C identifier</p></li>
+<li style="line-height:1.4em;"><p style="line-height:1.4em;"><code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span>val_lo32</span></code>: lower 32-bit value for a 64-bit value</p></li>
+<li style="line-height:1.4em;"><p style="line-height:1.4em;"><code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span>val_hi32</span></code>: high 32-bit value for a 64-bit value</p></li>
+</ul>
+</dd></dl>
+<p style="line-height:1.4em;">If the original enum value is signed and the size is less than 8,
+that value will be sign extended into 8 bytes.</p>
+</div>
+</div>
+</div>
+<div>
+<h2 style="font-family:serif;font-weight:normal;margin:30px 0px 10px;padding:0px;font-size:150%;">3. BTF Kernel API<a href="https://docs.kernel.org/bpf/btf.html#btf-kernel-api" title="Permalink to this heading" style="padding:0px 4px;color:rgb(221, 221, 221);text-decoration:none;">¶</a></h2>
+<dl style="margin:0px;padding:0px;"><dt>The following bpf syscall command involves BTF:</dt><dd style="margin-left:30px;line-height:1.4em;"><ul style="margin:10px 0px 10px 30px;padding:0px;">
+<li style="line-height:1.4em;"><p style="line-height:1.4em;">BPF_BTF_LOAD: load a blob of BTF data into kernel</p></li>
+<li style="line-height:1.4em;"><p style="line-height:1.4em;">BPF_MAP_CREATE: map creation with btf key and value type info.</p></li>
+<li style="line-height:1.4em;"><p style="line-height:1.4em;">BPF_PROG_LOAD: prog load with btf function and line info.</p></li>
+<li style="line-height:1.4em;"><p style="line-height:1.4em;">BPF_BTF_GET_FD_BY_ID: get a btf fd</p></li>
+<li style="line-height:1.4em;"><p style="line-height:1.4em;">BPF_OBJ_GET_INFO_BY_FD: btf, func_info, line_info
+and other btf related info are returned.</p></li>
+</ul>
+</dd></dl>
+<p style="line-height:1.4em;">The workflow typically looks like:</p>
+<div><div style="background:rgb(250, 243, 232);"><pre style="font-family:Consolas, Menlo, &quot;DejaVu Sans Mono&quot;, &quot;Bitstream Vera Sans Mono&quot;, monospace;font-size:0.9em;background:rgb(238, 238, 238);padding:7px 30px;margin:15px 0px;line-height:1.3em;"><span></span>Application:
+    BPF_BTF_LOAD
+        |
+        v
+    BPF_MAP_CREATE and BPF_PROG_LOAD
+        |
+        V
+    ......
+
+Introspection tool:
+    ......
+    BPF_{PROG,MAP}_GET_NEXT_ID (get prog/map id's)
+        |
+        V
+    BPF_{PROG,MAP}_GET_FD_BY_ID (get a prog/map fd)
+        |
+        V
+    BPF_OBJ_GET_INFO_BY_FD (get bpf_prog_info/bpf_map_info with btf_id)
+        |                                     |
+        V                                     |
+    BPF_BTF_GET_FD_BY_ID (get btf_fd)         |
+        |                                     |
+        V                                     |
+    BPF_OBJ_GET_INFO_BY_FD (get btf)          |
+        |                                     |
+        V                                     V
+    pretty print types, dump func signatures and line info, etc.
+</pre></div>
+</div>
+<div>
+<h3 style="font-family:serif;font-weight:normal;margin:30px 0px 10px;padding:0px;font-size:130%;">3.1 BPF_BTF_LOAD<a href="https://docs.kernel.org/bpf/btf.html#bpf-btf-load" title="Permalink to this heading" style="padding:0px 4px;color:rgb(221, 221, 221);text-decoration:none;">¶</a></h3>
+<p style="line-height:1.4em;">Load a blob of BTF data into kernel. A blob of data, described in
+<a href="https://docs.kernel.org/bpf/btf.html#btf-type-string" style="color:rgb(0, 75, 107);border-bottom:1px dotted rgb(0, 75, 107);text-decoration:none;"><span>2. BTF Type and String Encoding</span></a>, can be directly loaded into the kernel. A <code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span>btf_fd</span></code>
+is returned to a userspace.</p>
+</div>
+<div>
+<h3 style="font-family:serif;font-weight:normal;margin:30px 0px 10px;padding:0px;font-size:130%;">3.2 BPF_MAP_CREATE<a href="https://docs.kernel.org/bpf/btf.html#bpf-map-create" title="Permalink to this heading" style="padding:0px 4px;color:rgb(221, 221, 221);text-decoration:none;">¶</a></h3>
+<p style="line-height:1.4em;">A map can be created with <code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span>btf_fd</span></code> and specified key/value type id.:</p>
+<div><div style="background:rgb(250, 243, 232);"><pre style="font-family:Consolas, Menlo, &quot;DejaVu Sans Mono&quot;, &quot;Bitstream Vera Sans Mono&quot;, monospace;font-size:0.9em;background:rgb(238, 238, 238);padding:7px 30px;margin:15px 0px;line-height:1.3em;"><span></span>__u32   btf_fd;         /* fd pointing to a BTF type data */
+__u32   btf_key_type_id;        /* BTF type_id of the key */
+__u32   btf_value_type_id;      /* BTF type_id of the value */
+</pre></div>
+</div>
+<p style="line-height:1.4em;">In libbpf, the map can be defined with extra annotation like below:</p>
+<div><div style="background:rgb(250, 243, 232);"><pre style="font-family:Consolas, Menlo, &quot;DejaVu Sans Mono&quot;, &quot;Bitstream Vera Sans Mono&quot;, monospace;font-size:0.9em;background:rgb(238, 238, 238);padding:7px 30px;margin:15px 0px;line-height:1.3em;"><span></span>struct {
+    __uint(type, BPF_MAP_TYPE_ARRAY);
+    __type(key, int);
+    __type(value, struct ipv_counts);
+    __uint(max_entries, 4);
+} btf_map SEC(".maps");
+</pre></div>
+</div>
+<p style="line-height:1.4em;">During ELF parsing, libbpf is able to extract key/value type_id's and assign
+them to BPF_MAP_CREATE attributes automatically.</p>
+</div>
+<div>
+<span></span><h3 style="font-family:serif;font-weight:normal;margin:30px 0px 10px;padding:0px;font-size:130%;">3.3 BPF_PROG_LOAD<a href="https://docs.kernel.org/bpf/btf.html#bpf-prog-load" title="Permalink to this heading" style="padding:0px 4px;color:rgb(221, 221, 221);text-decoration:none;">¶</a></h3>
+<p style="line-height:1.4em;">During prog_load, func_info and line_info can be passed to kernel with proper
+values for the following attributes:</p>
+<div><div style="background:rgb(250, 243, 232);"><pre style="font-family:Consolas, Menlo, &quot;DejaVu Sans Mono&quot;, &quot;Bitstream Vera Sans Mono&quot;, monospace;font-size:0.9em;background:rgb(238, 238, 238);padding:7px 30px;margin:15px 0px;line-height:1.3em;"><span></span>__u32           insn_cnt;
+__aligned_u64   insns;
+......
+__u32           prog_btf_fd;    /* fd pointing to BTF type data */
+__u32           func_info_rec_size;     /* userspace bpf_func_info size */
+__aligned_u64   func_info;      /* func info */
+__u32           func_info_cnt;  /* number of bpf_func_info records */
+__u32           line_info_rec_size;     /* userspace bpf_line_info size */
+__aligned_u64   line_info;      /* line info */
+__u32           line_info_cnt;  /* number of bpf_line_info records */
+</pre></div>
+</div>
+<p style="line-height:1.4em;">The func_info and line_info are an array of below, respectively.:</p>
+<div><div style="background:rgb(250, 243, 232);"><pre style="font-family:Consolas, Menlo, &quot;DejaVu Sans Mono&quot;, &quot;Bitstream Vera Sans Mono&quot;, monospace;font-size:0.9em;background:rgb(238, 238, 238);padding:7px 30px;margin:15px 0px;line-height:1.3em;"><span></span>struct bpf_func_info {
+    __u32   insn_off; /* [0, insn_cnt - 1] */
+    __u32   type_id;  /* pointing to a BTF_KIND_FUNC type */
+};
+struct bpf_line_info {
+    __u32   insn_off; /* [0, insn_cnt - 1] */
+    __u32   file_name_off; /* offset to string table for the filename */
+    __u32   line_off; /* offset to string table for the source line */
+    __u32   line_col; /* line number and column number */
+};
+</pre></div>
+</div>
+<p style="line-height:1.4em;">func_info_rec_size is the size of each func_info record, and
+line_info_rec_size is the size of each line_info record. Passing the record
+size to kernel make it possible to extend the record itself in the future.</p>
+<dl style="margin:0px;padding:0px;"><dt>Below are requirements for func_info:</dt><dd style="margin-left:30px;line-height:1.4em;"><ul style="margin:10px 0px 10px 30px;padding:0px;">
+<li style="line-height:1.4em;"><p style="line-height:1.4em;">func_info[0].insn_off must be 0.</p></li>
+<li style="line-height:1.4em;"><p style="line-height:1.4em;">the func_info insn_off is in strictly increasing order and matches
+bpf func boundaries.</p></li>
+</ul>
+</dd><dt>Below are requirements for line_info:</dt><dd style="margin-left:30px;line-height:1.4em;"><ul style="margin:10px 0px 10px 30px;padding:0px;">
+<li style="line-height:1.4em;"><p style="line-height:1.4em;">the first insn in each func must have a line_info record pointing to it.</p></li>
+<li style="line-height:1.4em;"><p style="line-height:1.4em;">the line_info insn_off is in strictly increasing order.</p></li>
+</ul>
+</dd></dl>
+<p style="line-height:1.4em;">For line_info, the line number and column number are defined as below:</p>
+<div><div style="background:rgb(250, 243, 232);"><pre style="font-family:Consolas, Menlo, &quot;DejaVu Sans Mono&quot;, &quot;Bitstream Vera Sans Mono&quot;, monospace;font-size:0.9em;background:rgb(238, 238, 238);padding:7px 30px;margin:15px 0px;line-height:1.3em;"><span></span>#define BPF_LINE_INFO_LINE_NUM(line_col)        ((line_col) &gt;&gt; 10)
+#define BPF_LINE_INFO_LINE_COL(line_col)        ((line_col) &amp; 0x3ff)
+</pre></div>
+</div>
+</div>
+<div>
+<h3 style="font-family:serif;font-weight:normal;margin:30px 0px 10px;padding:0px;font-size:130%;">3.4 BPF_{PROG,MAP}_GET_NEXT_ID<a href="https://docs.kernel.org/bpf/btf.html#bpf-prog-map-get-next-id" title="Permalink to this heading" style="padding:0px 4px;color:rgb(221, 221, 221);text-decoration:none;">¶</a></h3>
+<p style="line-height:1.4em;">In kernel, every loaded program, map or btf has a unique id. The id won't
+change during the lifetime of a program, map, or btf.</p>
+<p style="line-height:1.4em;">The bpf syscall command BPF_{PROG,MAP}_GET_NEXT_ID returns all id's, one for
+each command, to user space, for bpf program or maps, respectively, so an
+inspection tool can inspect all programs and maps.</p>
+</div>
+<div>
+<h3 style="font-family:serif;font-weight:normal;margin:30px 0px 10px;padding:0px;font-size:130%;">3.5 BPF_{PROG,MAP}_GET_FD_BY_ID<a href="https://docs.kernel.org/bpf/btf.html#bpf-prog-map-get-fd-by-id" title="Permalink to this heading" style="padding:0px 4px;color:rgb(221, 221, 221);text-decoration:none;">¶</a></h3>
+<p style="line-height:1.4em;">An introspection tool cannot use id to get details about program or maps.
+A file descriptor needs to be obtained first for reference-counting purpose.</p>
+</div>
+<div>
+<h3 style="font-family:serif;font-weight:normal;margin:30px 0px 10px;padding:0px;font-size:130%;">3.6 BPF_OBJ_GET_INFO_BY_FD<a href="https://docs.kernel.org/bpf/btf.html#bpf-obj-get-info-by-fd" title="Permalink to this heading" style="padding:0px 4px;color:rgb(221, 221, 221);text-decoration:none;">¶</a></h3>
+<p style="line-height:1.4em;">Once a program/map fd is acquired, an introspection tool can get the detailed
+information from kernel about this fd, some of which are BTF-related. For
+example, <code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span>bpf_map_info</span></code> returns <code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span>btf_id</span></code> and key/value type ids.
+<code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span>bpf_prog_info</span></code> returns <code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span>btf_id</span></code>, func_info, and line info for translated
+bpf byte codes, and jited_line_info.</p>
+</div>
+<div>
+<h3 style="font-family:serif;font-weight:normal;margin:30px 0px 10px;padding:0px;font-size:130%;">3.7 BPF_BTF_GET_FD_BY_ID<a href="https://docs.kernel.org/bpf/btf.html#bpf-btf-get-fd-by-id" title="Permalink to this heading" style="padding:0px 4px;color:rgb(221, 221, 221);text-decoration:none;">¶</a></h3>
+<p style="line-height:1.4em;">With <code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span>btf_id</span></code> obtained in <code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span>bpf_map_info</span></code> and <code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span>bpf_prog_info</span></code>, bpf
+syscall command BPF_BTF_GET_FD_BY_ID can retrieve a btf fd. Then, with
+command BPF_OBJ_GET_INFO_BY_FD, the btf blob, originally loaded into the
+kernel with BPF_BTF_LOAD, can be retrieved.</p>
+<p style="line-height:1.4em;">With the btf blob, <code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span>bpf_map_info</span></code>, and <code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span>bpf_prog_info</span></code>, an introspection
+tool has full btf knowledge and is able to pretty print map key/values, dump
+func signatures and line info, along with byte/jit codes.</p>
+</div>
+</div>
+<div>
+<h2 style="font-family:serif;font-weight:normal;margin:30px 0px 10px;padding:0px;font-size:150%;">4. ELF File Format Interface<a href="https://docs.kernel.org/bpf/btf.html#elf-file-format-interface" title="Permalink to this heading" style="padding:0px 4px;color:rgb(221, 221, 221);text-decoration:none;">¶</a></h2>
+<div>
+<h3 style="font-family:serif;font-weight:normal;margin:30px 0px 10px;padding:0px;font-size:130%;">4.1 .BTF section<a href="https://docs.kernel.org/bpf/btf.html#btf-section" title="Permalink to this heading" style="padding:0px 4px;color:rgb(221, 221, 221);text-decoration:none;">¶</a></h3>
+<p style="line-height:1.4em;">The .BTF section contains type and string data. The format of this section is
+same as the one describe in <a href="https://docs.kernel.org/bpf/btf.html#btf-type-string" style="color:rgb(0, 75, 107);border-bottom:1px dotted rgb(0, 75, 107);text-decoration:none;"><span>2. BTF Type and String Encoding</span></a>.</p>
+</div>
+<div>
+<span></span><h3 style="font-family:serif;font-weight:normal;margin:30px 0px 10px;padding:0px;font-size:130%;">4.2 .BTF.ext section<a href="https://docs.kernel.org/bpf/btf.html#btf-ext-section" title="Permalink to this heading" style="padding:0px 4px;color:rgb(221, 221, 221);text-decoration:none;">¶</a></h3>
+<p style="line-height:1.4em;">The .BTF.ext section encodes func_info, line_info and CO-RE relocations
+which needs loader manipulation before loading into the kernel.</p>
+<p style="line-height:1.4em;">The specification for .BTF.ext section is defined at <code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span>tools/lib/bpf/btf.h</span></code>
+and <code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span>tools/lib/bpf/btf.c</span></code>.</p>
+<p style="line-height:1.4em;">The current header of .BTF.ext section:</p>
+<div><div style="background:rgb(250, 243, 232);"><pre style="font-family:Consolas, Menlo, &quot;DejaVu Sans Mono&quot;, &quot;Bitstream Vera Sans Mono&quot;, monospace;font-size:0.9em;background:rgb(238, 238, 238);padding:7px 30px;margin:15px 0px;line-height:1.3em;"><span></span>struct btf_ext_header {
+    __u16   magic;
+    __u8    version;
+    __u8    flags;
+    __u32   hdr_len;
+
+    /* All offsets are in bytes relative to the end of this header */
+    __u32   func_info_off;
+    __u32   func_info_len;
+    __u32   line_info_off;
+    __u32   line_info_len;
+
+    /* optional part of .BTF.ext header */
+    __u32   core_relo_off;
+    __u32   core_relo_len;
+};
+</pre></div>
+</div>
+<p style="line-height:1.4em;">It is very similar to .BTF section. Instead of type/string section, it
+contains func_info, line_info and core_relo sub-sections.
+See <a href="https://docs.kernel.org/bpf/btf.html#bpf-prog-load" style="color:rgb(0, 75, 107);border-bottom:1px dotted rgb(0, 75, 107);text-decoration:none;"><span>3.3 BPF_PROG_LOAD</span></a> for details about func_info and line_info
+record format.</p>
+<p style="line-height:1.4em;">The func_info is organized as below.:</p>
+<div><div style="background:rgb(250, 243, 232);"><pre style="font-family:Consolas, Menlo, &quot;DejaVu Sans Mono&quot;, &quot;Bitstream Vera Sans Mono&quot;, monospace;font-size:0.9em;background:rgb(238, 238, 238);padding:7px 30px;margin:15px 0px;line-height:1.3em;"><span></span>func_info_rec_size              /* __u32 value */
+btf_ext_info_sec for section #1 /* func_info for section #1 */
+btf_ext_info_sec for section #2 /* func_info for section #2 */
+...
+</pre></div>
+</div>
+<p style="line-height:1.4em;"><code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span>func_info_rec_size</span></code> specifies the size of <code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span>bpf_func_info</span></code> structure when
+.BTF.ext is generated. <code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span>btf_ext_info_sec</span></code>, defined below, is a collection of
+func_info for each specific ELF section.:</p>
+<div><div style="background:rgb(250, 243, 232);"><pre style="font-family:Consolas, Menlo, &quot;DejaVu Sans Mono&quot;, &quot;Bitstream Vera Sans Mono&quot;, monospace;font-size:0.9em;background:rgb(238, 238, 238);padding:7px 30px;margin:15px 0px;line-height:1.3em;"><span></span>struct btf_ext_info_sec {
+   __u32   sec_name_off; /* offset to section name */
+   __u32   num_info;
+   /* Followed by num_info * record_size number of bytes */
+   __u8    data[0];
+};
+</pre></div>
+</div>
+<p style="line-height:1.4em;">Here, num_info must be greater than 0.</p>
+<p style="line-height:1.4em;">The line_info is organized as below.:</p>
+<div><div style="background:rgb(250, 243, 232);"><pre style="font-family:Consolas, Menlo, &quot;DejaVu Sans Mono&quot;, &quot;Bitstream Vera Sans Mono&quot;, monospace;font-size:0.9em;background:rgb(238, 238, 238);padding:7px 30px;margin:15px 0px;line-height:1.3em;"><span></span>line_info_rec_size              /* __u32 value */
+btf_ext_info_sec for section #1 /* line_info for section #1 */
+btf_ext_info_sec for section #2 /* line_info for section #2 */
+...
+</pre></div>
+</div>
+<p style="line-height:1.4em;"><code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span>line_info_rec_size</span></code> specifies the size of <code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span>bpf_line_info</span></code> structure when
+.BTF.ext is generated.</p>
+<p style="line-height:1.4em;">The interpretation of <code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span>bpf_func_info-&gt;insn_off</span></code> and
+<code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span>bpf_line_info-&gt;insn_off</span></code> is different between kernel API and ELF API. For
+kernel API, the <code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span>insn_off</span></code> is the instruction offset in the unit of <code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span>struct</span>
+<span>bpf_insn</span></code>. For ELF API, the <code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span>insn_off</span></code> is the byte offset from the
+beginning of section (<code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span>btf_ext_info_sec-&gt;sec_name_off</span></code>).</p>
+<p style="line-height:1.4em;">The core_relo is organized as below.:</p>
+<div><div style="background:rgb(250, 243, 232);"><pre style="font-family:Consolas, Menlo, &quot;DejaVu Sans Mono&quot;, &quot;Bitstream Vera Sans Mono&quot;, monospace;font-size:0.9em;background:rgb(238, 238, 238);padding:7px 30px;margin:15px 0px;line-height:1.3em;"><span></span>core_relo_rec_size              /* __u32 value */
+btf_ext_info_sec for section #1 /* core_relo for section #1 */
+btf_ext_info_sec for section #2 /* core_relo for section #2 */
+</pre></div>
+</div>
+<p style="line-height:1.4em;"><code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span>core_relo_rec_size</span></code> specifies the size of <code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span>bpf_core_relo</span></code>
+structure when .BTF.ext is generated. All <code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span>bpf_core_relo</span></code> structures
+within a single <code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span>btf_ext_info_sec</span></code> describe relocations applied to
+section named by <code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span>btf_ext_info_sec-&gt;sec_name_off</span></code>.</p>
+<p style="line-height:1.4em;">See <a href="https://docs.kernel.org/bpf/llvm_reloc.html#btf-co-re-relocations" style="color:rgb(0, 75, 107);border-bottom:1px dotted rgb(0, 75, 107);text-decoration:none;"><span>Documentation/bpf/llvm_reloc.rst</span></a>
+for more information on CO-RE relocations.</p>
+</div>
+<div>
+<h3 style="font-family:serif;font-weight:normal;margin:30px 0px 10px;padding:0px;font-size:130%;">4.2 .BTF_ids section<a href="https://docs.kernel.org/bpf/btf.html#btf-ids-section" title="Permalink to this heading" style="padding:0px 4px;color:rgb(221, 221, 221);text-decoration:none;">¶</a></h3>
+<p style="line-height:1.4em;">The .BTF_ids section encodes BTF ID values that are used within the kernel.</p>
+<p style="line-height:1.4em;">This section is created during the kernel compilation with the help of
+macros defined in <code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span>include/linux/btf_ids.h</span></code> header file. Kernel code can
+use them to create lists and sets (sorted lists) of BTF ID values.</p>
+<p style="line-height:1.4em;">The <code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span>BTF_ID_LIST</span></code> and <code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span>BTF_ID</span></code> macros define unsorted list of BTF ID values,
+with following syntax:</p>
+<div><div style="background:rgb(250, 243, 232);"><pre style="font-family:Consolas, Menlo, &quot;DejaVu Sans Mono&quot;, &quot;Bitstream Vera Sans Mono&quot;, monospace;font-size:0.9em;background:rgb(238, 238, 238);padding:7px 30px;margin:15px 0px;line-height:1.3em;"><span></span>BTF_ID_LIST(list)
+BTF_ID(type1, name1)
+BTF_ID(type2, name2)
+</pre></div>
+</div>
+<p style="line-height:1.4em;">resulting in following layout in .BTF_ids section:</p>
+<div><div style="background:rgb(250, 243, 232);"><pre style="font-family:Consolas, Menlo, &quot;DejaVu Sans Mono&quot;, &quot;Bitstream Vera Sans Mono&quot;, monospace;font-size:0.9em;background:rgb(238, 238, 238);padding:7px 30px;margin:15px 0px;line-height:1.3em;"><span></span>__BTF_ID__type1__name1__1:
+.zero 4
+__BTF_ID__type2__name2__2:
+.zero 4
+</pre></div>
+</div>
+<p style="line-height:1.4em;">The <code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span>u32</span> <span>list[];</span></code> variable is defined to access the list.</p>
+<p style="line-height:1.4em;">The <code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span>BTF_ID_UNUSED</span></code> macro defines 4 zero bytes. It's used when we
+want to define unused entry in BTF_ID_LIST, like:</p>
+<div><div style="background:rgb(250, 243, 232);"><pre style="font-family:Consolas, Menlo, &quot;DejaVu Sans Mono&quot;, &quot;Bitstream Vera Sans Mono&quot;, monospace;font-size:0.9em;background:rgb(238, 238, 238);padding:7px 30px;margin:15px 0px;line-height:1.3em;"><span></span>BTF_ID_LIST(bpf_skb_output_btf_ids)
+BTF_ID(struct, sk_buff)
+BTF_ID_UNUSED
+BTF_ID(struct, task_struct)
+</pre></div>
+</div>
+<p style="line-height:1.4em;">The <code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span>BTF_SET_START/END</span></code> macros pair defines sorted list of BTF ID values
+and their count, with following syntax:</p>
+<div><div style="background:rgb(250, 243, 232);"><pre style="font-family:Consolas, Menlo, &quot;DejaVu Sans Mono&quot;, &quot;Bitstream Vera Sans Mono&quot;, monospace;font-size:0.9em;background:rgb(238, 238, 238);padding:7px 30px;margin:15px 0px;line-height:1.3em;"><span></span>BTF_SET_START(set)
+BTF_ID(type1, name1)
+BTF_ID(type2, name2)
+BTF_SET_END(set)
+</pre></div>
+</div>
+<p style="line-height:1.4em;">resulting in following layout in .BTF_ids section:</p>
+<div><div style="background:rgb(250, 243, 232);"><pre style="font-family:Consolas, Menlo, &quot;DejaVu Sans Mono&quot;, &quot;Bitstream Vera Sans Mono&quot;, monospace;font-size:0.9em;background:rgb(238, 238, 238);padding:7px 30px;margin:15px 0px;line-height:1.3em;"><span></span>__BTF_ID__set__set:
+.zero 4
+__BTF_ID__type1__name1__3:
+.zero 4
+__BTF_ID__type2__name2__4:
+.zero 4
+</pre></div>
+</div>
+<p style="line-height:1.4em;">The <code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span>struct</span> <span>btf_id_set</span> <span>set;</span></code> variable is defined to access the list.</p>
+<p style="line-height:1.4em;">The <code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span>typeX</span></code> name can be one of following:</p>
+<div><div style="background:rgb(250, 243, 232);"><pre style="font-family:Consolas, Menlo, &quot;DejaVu Sans Mono&quot;, &quot;Bitstream Vera Sans Mono&quot;, monospace;font-size:0.9em;background:rgb(238, 238, 238);padding:7px 30px;margin:15px 0px;line-height:1.3em;"><span></span>struct, union, typedef, func
+</pre></div>
+</div>
+<p style="line-height:1.4em;">and is used as a filter when resolving the BTF ID value.</p>
+<p style="line-height:1.4em;">All the BTF ID lists and sets are compiled in the .BTF_ids section and
+resolved during the linking phase of kernel build by <code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span>resolve_btfids</span></code> tool.</p>
+</div>
+</div>
+<div>
+<h2 style="font-family:serif;font-weight:normal;margin:30px 0px 10px;padding:0px;font-size:150%;">5. Using BTF<a href="https://docs.kernel.org/bpf/btf.html#using-btf" title="Permalink to this heading" style="padding:0px 4px;color:rgb(221, 221, 221);text-decoration:none;">¶</a></h2>
+<div>
+<h3 style="font-family:serif;font-weight:normal;margin:30px 0px 10px;padding:0px;font-size:130%;">5.1 bpftool map pretty print<a href="https://docs.kernel.org/bpf/btf.html#bpftool-map-pretty-print" title="Permalink to this heading" style="padding:0px 4px;color:rgb(221, 221, 221);text-decoration:none;">¶</a></h3>
+<p style="line-height:1.4em;">With BTF, the map key/value can be printed based on fields rather than simply
+raw bytes. This is especially valuable for large structure or if your data
+structure has bitfields. For example, for the following map,:</p>
+<div><div style="background:rgb(250, 243, 232);"><pre style="font-family:Consolas, Menlo, &quot;DejaVu Sans Mono&quot;, &quot;Bitstream Vera Sans Mono&quot;, monospace;font-size:0.9em;background:rgb(238, 238, 238);padding:7px 30px;margin:15px 0px;line-height:1.3em;"><span></span>enum A { A1, A2, A3, A4, A5 };
+typedef enum A ___A;
+struct tmp_t {
+     char a1:4;
+     int  a2:4;
+     int  :4;
+     __u32 a3:4;
+     int b;
+     ___A b1:4;
+     enum A b2:4;
+};
+struct {
+     __uint(type, BPF_MAP_TYPE_ARRAY);
+     __type(key, int);
+     __type(value, struct tmp_t);
+     __uint(max_entries, 1);
+} tmpmap SEC(".maps");
+</pre></div>
+</div>
+<p style="line-height:1.4em;">bpftool is able to pretty print like below:</p>
+<div><div style="background:rgb(250, 243, 232);"><pre style="font-family:Consolas, Menlo, &quot;DejaVu Sans Mono&quot;, &quot;Bitstream Vera Sans Mono&quot;, monospace;font-size:0.9em;background:rgb(238, 238, 238);padding:7px 30px;margin:15px 0px;line-height:1.3em;"><span></span>[{
+      "key": 0,
+      "value": {
+          "a1": 0x2,
+          "a2": 0x4,
+          "a3": 0x6,
+          "b": 7,
+          "b1": 0x8,
+          "b2": 0xa
+      }
+  }
+]
+</pre></div>
+</div>
+</div>
+<div>
+<h3 style="font-family:serif;font-weight:normal;margin:30px 0px 10px;padding:0px;font-size:130%;">5.2 bpftool prog dump<a href="https://docs.kernel.org/bpf/btf.html#bpftool-prog-dump" title="Permalink to this heading" style="padding:0px 4px;color:rgb(221, 221, 221);text-decoration:none;">¶</a></h3>
+<p style="line-height:1.4em;">The following is an example showing how func_info and line_info can help prog
+dump with better kernel symbol names, function prototypes and line
+information.:</p>
+<div><div style="background:rgb(250, 243, 232);"><pre style="font-family:Consolas, Menlo, &quot;DejaVu Sans Mono&quot;, &quot;Bitstream Vera Sans Mono&quot;, monospace;font-size:0.9em;background:rgb(238, 238, 238);padding:7px 30px;margin:15px 0px;line-height:1.3em;"><span></span>$ bpftool prog dump jited pinned /sys/fs/bpf/test_btf_haskv
+[...]
+int test_long_fname_2(struct dummy_tracepoint_args * arg):
+bpf_prog_44a040bf25481309_test_long_fname_2:
+; static int test_long_fname_2(struct dummy_tracepoint_args *arg)
+   0:   push   %rbp
+   1:   mov    %rsp,%rbp
+   4:   sub    $0x30,%rsp
+   b:   sub    $0x28,%rbp
+   f:   mov    %rbx,0x0(%rbp)
+  13:   mov    %r13,0x8(%rbp)
+  17:   mov    %r14,0x10(%rbp)
+  1b:   mov    %r15,0x18(%rbp)
+  1f:   xor    %eax,%eax
+  21:   mov    %rax,0x20(%rbp)
+  25:   xor    %esi,%esi
+; int key = 0;
+  27:   mov    %esi,-0x4(%rbp)
+; if (!arg-&gt;sock)
+  2a:   mov    0x8(%rdi),%rdi
+; if (!arg-&gt;sock)
+  2e:   cmp    $0x0,%rdi
+  32:   je     0x0000000000000070
+  34:   mov    %rbp,%rsi
+; counts = bpf_map_lookup_elem(&amp;btf_map, &amp;key);
+[...]
+</pre></div>
+</div>
+</div>
+<div>
+<h3 style="font-family:serif;font-weight:normal;margin:30px 0px 10px;padding:0px;font-size:130%;">5.3 Verifier Log<a href="https://docs.kernel.org/bpf/btf.html#verifier-log" title="Permalink to this heading" style="padding:0px 4px;color:rgb(221, 221, 221);text-decoration:none;">¶</a></h3>
+<p style="line-height:1.4em;">The following is an example of how line_info can help debugging verification
+failure.:</p>
+<div><div style="background:rgb(250, 243, 232);"><pre style="font-family:Consolas, Menlo, &quot;DejaVu Sans Mono&quot;, &quot;Bitstream Vera Sans Mono&quot;, monospace;font-size:0.9em;background:rgb(238, 238, 238);padding:7px 30px;margin:15px 0px;line-height:1.3em;"><span></span>   /* The code at tools/testing/selftests/bpf/test_xdp_noinline.c
+    * is modified as below.
+    */
+   data = (void *)(long)xdp-&gt;data;
+   data_end = (void *)(long)xdp-&gt;data_end;
+   /*
+   if (data + 4 &gt; data_end)
+           return XDP_DROP;
+   */
+   *(u32 *)data = dst-&gt;dst;
+
+$ bpftool prog load ./test_xdp_noinline.o /sys/fs/bpf/test_xdp_noinline type xdp
+    ; data = (void *)(long)xdp-&gt;data;
+    224: (79) r2 = *(u64 *)(r10 -112)
+    225: (61) r2 = *(u32 *)(r2 +0)
+    ; *(u32 *)data = dst-&gt;dst;
+    226: (63) *(u32 *)(r2 +0) = r1
+    invalid access to packet, off=0 size=4, R2(id=0,off=0,r=0)
+    R2 offset is outside of the packet
+</pre></div>
+</div>
+</div>
+</div>
+<div>
+<h2 style="font-family:serif;font-weight:normal;margin:30px 0px 10px;padding:0px;font-size:150%;">6. BTF Generation<a href="https://docs.kernel.org/bpf/btf.html#btf-generation" title="Permalink to this heading" style="padding:0px 4px;color:rgb(221, 221, 221);text-decoration:none;">¶</a></h2>
+<p style="line-height:1.4em;">You need latest pahole</p>
+<blockquote style="margin:0px 0px 0px 30px;padding:0px;">
+<div><p style="line-height:1.4em;"><a href="https://git.kernel.org/pub/scm/devel/pahole/pahole.git/" style="color:rgb(0, 75, 107);border-bottom:1px dotted rgb(0, 75, 107);text-decoration:none;">https://git.kernel.org/pub/scm/devel/pahole/pahole.git/</a></p>
+</div></blockquote>
+<p style="line-height:1.4em;">or llvm (8.0 or later). The pahole acts as a dwarf2btf converter. It doesn't
+support .BTF.ext and btf BTF_KIND_FUNC type yet. For example,:</p>
+<div><div style="background:rgb(250, 243, 232);"><pre style="font-family:Consolas, Menlo, &quot;DejaVu Sans Mono&quot;, &quot;Bitstream Vera Sans Mono&quot;, monospace;font-size:0.9em;background:rgb(238, 238, 238);padding:7px 30px;margin:15px 0px;line-height:1.3em;"><span></span>-bash-4.4$ cat t.c
+struct t {
+  int a:2;
+  int b:3;
+  int c:2;
+} g;
+-bash-4.4$ gcc -c -O2 -g t.c
+-bash-4.4$ pahole -JV t.o
+File t.o:
+[1] STRUCT t kind_flag=1 size=4 vlen=3
+        a type_id=2 bitfield_size=2 bits_offset=0
+        b type_id=2 bitfield_size=3 bits_offset=2
+        c type_id=2 bitfield_size=2 bits_offset=5
+[2] INT int size=4 bit_offset=0 nr_bits=32 encoding=SIGNED
+</pre></div>
+</div>
+<p style="line-height:1.4em;">The llvm is able to generate .BTF and .BTF.ext directly with -g for bpf target
+only. The assembly code (-S) is able to show the BTF encoding in assembly
+format.:</p>
+<div><div style="background:rgb(250, 243, 232);"><pre style="font-family:Consolas, Menlo, &quot;DejaVu Sans Mono&quot;, &quot;Bitstream Vera Sans Mono&quot;, monospace;font-size:0.9em;background:rgb(238, 238, 238);padding:7px 30px;margin:15px 0px;line-height:1.3em;"><span></span>-bash-4.4$ cat t2.c
+typedef int __int32;
+struct t2 {
+  int a2;
+  int (*f2)(char q1, __int32 q2, ...);
+  int (*f3)();
+} g2;
+int main() { return 0; }
+int test() { return 0; }
+-bash-4.4$ clang -c -g -O2 --target=bpf t2.c
+-bash-4.4$ readelf -S t2.o
+  ......
+  [ 8] .BTF              PROGBITS         0000000000000000  00000247
+       000000000000016e  0000000000000000           0     0     1
+  [ 9] .BTF.ext          PROGBITS         0000000000000000  000003b5
+       0000000000000060  0000000000000000           0     0     1
+  [10] .rel.BTF.ext      REL              0000000000000000  000007e0
+       0000000000000040  0000000000000010          16     9     8
+  ......
+-bash-4.4$ clang -S -g -O2 --target=bpf t2.c
+-bash-4.4$ cat t2.s
+  ......
+        .section        .BTF,"",@progbits
+        .short  60319                   # 0xeb9f
+        .byte   1
+        .byte   0
+        .long   24
+        .long   0
+        .long   220
+        .long   220
+        .long   122
+        .long   0                       # BTF_KIND_FUNC_PROTO(id = 1)
+        .long   218103808               # 0xd000000
+        .long   2
+        .long   83                      # BTF_KIND_INT(id = 2)
+        .long   16777216                # 0x1000000
+        .long   4
+        .long   16777248                # 0x1000020
+  ......
+        .byte   0                       # string offset=0
+        .ascii  ".text"                 # string offset=1
+        .byte   0
+        .ascii  "/home/yhs/tmp-pahole/t2.c" # string offset=7
+        .byte   0
+        .ascii  "int main() { return 0; }" # string offset=33
+        .byte   0
+        .ascii  "int test() { return 0; }" # string offset=58
+        .byte   0
+        .ascii  "int"                   # string offset=83
+  ......
+        .section        .BTF.ext,"",@progbits
+        .short  60319                   # 0xeb9f
+        .byte   1
+        .byte   0
+        .long   24
+        .long   0
+        .long   28
+        .long   28
+        .long   44
+        .long   8                       # FuncInfo
+        .long   1                       # FuncInfo section string offset=1
+        .long   2
+        .long   .Lfunc_begin0
+        .long   3
+        .long   .Lfunc_begin1
+        .long   5
+        .long   16                      # LineInfo
+        .long   1                       # LineInfo section string offset=1
+        .long   2
+        .long   .Ltmp0
+        .long   7
+        .long   33
+        .long   7182                    # Line 7 Col 14
+        .long   .Ltmp3
+        .long   7
+        .long   58
+        .long   8206                    # Line 8 Col 14
+</pre></div>
+</div>
+</div>
+<div>
+<h2 style="font-family:serif;font-weight:normal;margin:30px 0px 10px;padding:0px;font-size:150%;">7. Testing<a href="https://docs.kernel.org/bpf/btf.html#testing" title="Permalink to this heading" style="padding:0px 4px;color:rgb(221, 221, 221);text-decoration:none;">¶</a></h2>
+<p style="line-height:1.4em;">The kernel BPF selftest <a href="https://git.kernel.org/pub/scm/linux/kernel/git/stable/linux.git/tree/tools/testing/selftests/bpf/prog_tests/btf.c" style="color:rgb(0, 75, 107);border-bottom:1px dotted rgb(0, 75, 107);text-decoration:none;">tools/testing/selftests/bpf/prog_tests/btf.c</a>
+provides an extensive set of BTF-related tests.</p>
+</div>
+</div></div></div></div></div></div></div></div>
+</div>
+</div>
+<a class="back-link" href="../articles.html">← 返回笔记列表</a>
+</body>
+</html>

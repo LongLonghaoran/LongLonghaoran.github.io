@@ -1,0 +1,309 @@
+<!DOCTYPE html>
+<html lang="zh-CN" data-theme="light">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>multus-cni快速开始 — 技术笔记</title>
+<style>
+:root {
+  --bg: #ffffff;
+  --text: #1a1a1a;
+  --muted: #666;
+  --border: #e0e0e0;
+  --code-bg: #f5f5f5;
+  --link: #0066cc;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #1a1a1a;
+    --text: #e0e0e0;
+    --muted: #999;
+    --border: #333;
+    --code-bg: #2a2a2a;
+    --link: #66bbff;
+  }
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  line-height: 1.7;
+  color: var(--text);
+  background: var(--bg);
+  max-width: 860px;
+  margin: 0 auto;
+  padding: 2rem 1.5rem;
+}
+.note-header {
+  border-bottom: 2px solid var(--border);
+  padding-bottom: 1rem;
+  margin-bottom: 2rem;
+}
+.note-title {
+  font-size: 1.6rem;
+  font-weight: 700;
+  margin-bottom: 0.3rem;
+}
+.note-meta {
+  color: var(--muted);
+  font-size: 0.85rem;
+}
+.note-content {
+  font-size: 0.95rem;
+}
+.note-content h1 { font-size: 1.4rem; margin: 1.2rem 0 0.6rem; }
+.note-content h2 { font-size: 1.2rem; margin: 1rem 0 0.5rem; }
+.note-content h3 { font-size: 1.05rem; margin: 0.8rem 0 0.4rem; }
+.note-content p { margin: 0.5rem 0; }
+.note-content ul, .note-content ol { margin: 0.5rem 0 0.5rem 2rem; }
+.note-content li { margin: 0.2rem 0; }
+.note-content pre {
+  background: var(--code-bg);
+  padding: 1rem;
+  border-radius: 6px;
+  overflow-x: auto;
+  margin: 0.8rem 0;
+  font-size: 0.85rem;
+}
+.note-content code {
+  background: var(--code-bg);
+  padding: 0.1rem 0.3rem;
+  border-radius: 3px;
+  font-size: 0.88em;
+}
+.note-content pre code {
+  background: none;
+  padding: 0;
+}
+.note-content blockquote {
+  border-left: 3px solid var(--border);
+  padding-left: 1rem;
+  color: var(--muted);
+  margin: 0.8rem 0;
+}
+.note-content a { color: var(--link); }
+.note-content img {
+  max-width: 100%;
+  height: auto;
+  border-radius: 6px;
+  margin: 0.5rem 0;
+}
+.note-content table {
+  border-collapse: collapse;
+  width: 100%;
+  margin: 0.8rem 0;
+}
+.note-content th, .note-content td {
+  border: 1px solid var(--border);
+  padding: 0.5rem;
+}
+.note-content th { background: var(--code-bg); }
+.media-placeholder {
+  background: var(--code-bg);
+  padding: 1rem;
+  text-align: center;
+  color: var(--muted);
+  border-radius: 6px;
+  margin: 0.5rem 0;
+  font-size: 0.85rem;
+}
+.encrypt-placeholder {
+  background: #fff3cd;
+  padding: 0.5rem;
+  text-align: center;
+  color: #856404;
+  border-radius: 6px;
+  margin: 0.5rem 0;
+  font-size: 0.85rem;
+}
+.back-link {
+  display: inline-block;
+  margin-top: 2rem;
+  color: var(--link);
+  text-decoration: none;
+  font-size: 0.85rem;
+}
+</style>
+</head>
+<body>
+<div class="note-header">
+  <div class="note-title">multus-cni快速开始</div>
+  <div class="note-meta">笔记本：Kubevirt</div>
+</div>
+<div class="note-content">
+<div style="--en-clipped-content:simplified; --en-clipped-source-url:https://github.com/k8snetworkplumbingwg/multus-cni/blob/master/docs/quickstart.md; --en-clipped-source-title:multus-cni快速开始;">
+<div><br/></div><div style="min-height: 7946px; font-size: 16px; display: block; min-width: 100%; position: relative;"> <div style="background-color:transparent;font:inherit;vertical-align:baseline;"><div style="background-color:transparent;font:inherit;vertical-align:baseline;font-family:&quot;PT Serif&quot;;font-size:16px;line-height:1.5em;color:rgb(31, 9, 9);text-align:left;"><div style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;"><div style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;width:36em;z-index:200;padding-left:2em;padding-right:2em;margin-left:auto;margin-right:auto;position:relative;"><div style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;position:relative;margin-left:-25px;margin-right:25px;"><div style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;padding-top:0px;padding-bottom:9em;position:relative;"><div style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;margin-bottom:1.5em;"><div style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;position:relative;margin-bottom:0px;"><div style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;margin-bottom:0px;"><div style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;margin-bottom:0px;"><h1 style="font-family:&quot;PT Serif&quot;;text-align:left;border:0px;font:inherit;vertical-align:baseline;font-size:35px;font-weight:normal;line-height:35px;margin-bottom:20px;padding:0px;margin:0px;">Quickstart Guide</h1><div style="padding:0px;border:0px;font:inherit;vertical-align:baseline;position:relative;height:1em;line-height:1;text-align:center;margin:0px;padding-top:1.5em;padding-bottom:1.5em;margin-bottom:0px;"><div style="padding:0px;border:0px;font:inherit;vertical-align:baseline;background:-webkit-linear-gradient(0deg, rgb(243, 242, 238) 1%, rgb(31, 9, 9) 50%, rgb(243, 242, 238) 99%);position:absolute;left:-4em;top:50%;z-index:10;width:100%;padding-left:4em;padding-right:4em;height:0.1em;opacity:0.5;margin:0px;margin-bottom:0px;"></div></div></div>
+<p style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;margin-bottom:1.5em;">This guide is intended as a way to get you off the ground, using Multus CNI to create Kubernetes pods with multiple interfaces. If you're already using Multus and need more detail, see the <a href="https://github.com/k8snetworkplumbingwg/multus-cni/blob/master/docs/how-to-use.md" style="color:rgb(6, 85, 136);margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;text-decoration:none;">comprehensive usage guide</a>. This document is a quickstart and a getting started guide in one, intended for your first run-through of Multus CNI.</p>
+<p style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;margin-bottom:1.5em;">We'll first install Multus CNI, and then we'll setup some configurations so that you can see how multiple interfaces are created for pods.</p>
+<h2 style="font-family:&quot;PT Serif&quot;;text-align:left;margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;font-weight:bold;font-size:30px;line-height:35px;margin-top:35px;margin-bottom:15px;">Key Concepts</h2>
+<p style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;margin-bottom:1.5em;">Two things we'll refer to a number of times through this document are:</p>
+<ul style="padding:0px;border:0px;font:inherit;vertical-align:baseline;margin:0px 0px 1.5em 1.5em;list-style:none;margin-top:-1em;list-style-type:disc;">
+<li style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;list-style-type:inherit;list-style-position:outside;">"Default network" -- This is your pod-to-pod network. This is how pods communicate among one another in your cluster, how they have connectivity. Generally speaking, this is presented as the interface named <code style="font-family:Inconsolata;margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;font-size:0.875em;line-height:1.71429em;">eth0</code>. This interface is always attached to your pods, so that they can have connectivity among themselves. We'll add interfaces in addition to this.</li>
+<li style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;list-style-type:inherit;list-style-position:outside;">"CRDs" -- Custom Resource Definitions. Custom Resources are a way that the Kubernetes API is extended. We use these here to store some information that Multus can read. Primarily, we use these to store the configurations for each of the additional interfaces that are attached to your pods.</li>
+</ul>
+<h2 style="font-family:&quot;PT Serif&quot;;text-align:left;margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;font-weight:bold;font-size:30px;line-height:35px;margin-top:35px;margin-bottom:15px;">Prerequisites</h2>
+<p style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;margin-bottom:1.5em;">Our installation method requires that you first have installed Kubernetes and have configured a default network -- that is, a CNI plugin that's used for your pod-to-pod connectivity.</p>
+<p style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;margin-bottom:1.5em;">We support Kubernetes versions that Kubernetes community supports. Please see <a href="https://kubernetes.io/releases/version-skew-policy/#supported-versions" style="color:rgb(6, 85, 136);margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;text-decoration:none;">Supported versions</a> in Kubernetes document.</p>
+<p style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;margin-bottom:1.5em;">To install Kubernetes, you may decide to use <a href="https://kubernetes.io/docs/setup/independent/create-cluster-kubeadm/" style="color:rgb(6, 85, 136);margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;text-decoration:none;">kubeadm</a>, or potentially <a href="https://github.com/kubernetes-sigs/kubespray" style="color:rgb(6, 85, 136);margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;text-decoration:none;">kubespray</a>.</p>
+<p style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;margin-bottom:1.5em;">After installing Kubernetes, you must install a default network CNI plugin. If you're using kubeadm, refer to the "<a href="https://kubernetes.io/docs/setup/independent/create-cluster-kubeadm/#pod-network" style="color:rgb(6, 85, 136);margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;text-decoration:none;">Installing a pod network add-on</a>" section in the kubeadm documentation. If it's your first time, we generally recommend using Flannel for the sake of simplicity.</p>
+<p style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;margin-bottom:1.5em;">Alternatively, for advanced use cases, for installing Multus and a default network plugin at the same time, you may refer to the <a href="https://github.com/k8snetworkplumbingwg/reference-deployment" style="color:rgb(6, 85, 136);margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;text-decoration:none;">Kubernetes Network Plumbing Group's Reference Deployments</a>.</p>
+<p style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;margin-bottom:1.5em;">To verify that you default network is ready, you may list your Kubernetes nodes with:</p>
+<div style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;margin-bottom:1.5em;"><pre style="background-color:rgb(243, 242, 238);font-family:Inconsolata;margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;width:auto;font-size:0.875em;line-height:1.71429em;"><code style="font-family:Inconsolata;margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;line-height:1.71429em;font-size:1.15em;">kubectl get nodes
+</code></pre></div>
+<p style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;margin-bottom:1.5em;">In the case that your default network is ready you will see the <code style="font-family:Inconsolata;margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;font-size:0.875em;line-height:1.71429em;">STATUS</code> column also switch to <code style="font-family:Inconsolata;margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;font-size:0.875em;line-height:1.71429em;">Ready</code> for each node.</p>
+<div style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;margin-bottom:1.5em;"><pre style="background-color:rgb(243, 242, 238);font-family:Inconsolata;margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;width:auto;font-size:0.875em;line-height:1.71429em;"><code style="font-family:Inconsolata;margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;line-height:1.71429em;font-size:1.15em;">NAME                  STATUS   ROLES           AGE    VERSION
+master-0              Ready    master          1h     v1.17.1
+master-1              Ready    master          1h     v1.17.1
+master-2              Ready    master          1h     v1.17.1
+</code></pre></div>
+<h2 style="font-family:&quot;PT Serif&quot;;text-align:left;margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;font-weight:bold;font-size:30px;line-height:35px;margin-top:35px;margin-bottom:15px;">Installation</h2>
+<p style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;margin-bottom:1.5em;">Our recommended quickstart method to deploy Multus is to deploy using a Daemonset (a method of running pods on each nodes in your cluster), this spins up pods which install a Multus binary and configure Multus for usage.</p>
+<p style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;margin-bottom:1.5em;">Firstly, clone this GitHub repository.</p>
+<div style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;margin-bottom:1.5em;"><pre style="background-color:rgb(243, 242, 238);font-family:Inconsolata;margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;width:auto;font-size:0.875em;line-height:1.71429em;"><code style="font-family:Inconsolata;margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;line-height:1.71429em;font-size:1.15em;">git clone https://github.com/k8snetworkplumbingwg/multus-cni.git &amp;&amp; cd multus-cni
+</code></pre></div>
+<p style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;margin-bottom:1.5em;">We'll apply a YAML file with <code style="font-family:Inconsolata;margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;font-size:0.875em;line-height:1.71429em;">kubectl</code> from this repo, which installs the Multus components.</p>
+<p style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;margin-bottom:1.5em;">Recommended installation:</p>
+<div style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;margin-bottom:1.5em;"><pre style="background-color:rgb(243, 242, 238);font-family:Inconsolata;margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;width:auto;font-size:0.875em;line-height:1.71429em;"><code style="font-family:Inconsolata;margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;line-height:1.71429em;font-size:1.15em;">cat ./deployments/multus-daemonset-thick.yml | kubectl apply -f -
+</code></pre></div>
+<p style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;margin-bottom:1.5em;">See the <a href="https://github.com/k8snetworkplumbingwg/multus-cni/blob/master/docs/thick-plugin.md" style="color:rgb(6, 85, 136);margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;text-decoration:none;">thick plugin docs</a> for more information about this architecture.</p>
+<p style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;margin-bottom:1.5em;">Alternatively, you may install the thin-plugin with:</p>
+<div style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;margin-bottom:1.5em;"><pre style="background-color:rgb(243, 242, 238);font-family:Inconsolata;margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;width:auto;font-size:0.875em;line-height:1.71429em;"><code style="font-family:Inconsolata;margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;line-height:1.71429em;font-size:1.15em;">cat ./deployments/multus-daemonset.yml | kubectl apply -f -
+</code></pre></div>
+<h3 style="font-family:&quot;PT Serif&quot;;text-align:left;margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;font-size:30px;line-height:35px;margin-top:35px;font-weight:normal;margin-bottom:15px;">What the Multus daemonset does</h3>
+<ul style="padding:0px;border:0px;font:inherit;vertical-align:baseline;margin:0px 0px 1.5em 1.5em;list-style:none;margin-top:10px;list-style-type:disc;">
+<li style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;list-style-type:inherit;list-style-position:outside;">Starts a Multus daemonset, this runs a pod on each node which places a Multus binary on each node in <code style="font-family:Inconsolata;margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;font-size:0.875em;line-height:1.71429em;">/opt/cni/bin</code></li>
+<li style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;list-style-type:inherit;list-style-position:outside;">Reads the lexicographically (alphabetically) first configuration file in <code style="font-family:Inconsolata;margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;font-size:0.875em;line-height:1.71429em;">/etc/cni/net.d</code>, and creates a new configuration file for Multus on each node as <code style="font-family:Inconsolata;margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;font-size:0.875em;line-height:1.71429em;">/etc/cni/net.d/00-multus.conf</code>, this configuration is auto-generated and is based on the default network configuration (which is assumed to be the alphabetically first configuration)</li>
+<li style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;list-style-type:inherit;list-style-position:outside;">Creates a <code style="font-family:Inconsolata;margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;font-size:0.875em;line-height:1.71429em;">/etc/cni/net.d/multus.d</code> directory on each node with authentication information for Multus to access the Kubernetes API.</li>
+</ul>
+<h3 style="font-family:&quot;PT Serif&quot;;text-align:left;margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;font-size:30px;line-height:35px;margin-top:35px;font-weight:normal;margin-bottom:15px;">Validating your installation</h3>
+<p style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;margin-bottom:1.5em;">Generally, the first step in validating your installation is to ensure that the Multus pods have run without error, you may see an overview of those by looking at:</p>
+<div style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;margin-bottom:1.5em;"><pre style="background-color:rgb(243, 242, 238);font-family:Inconsolata;margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;width:auto;font-size:0.875em;line-height:1.71429em;"><code style="font-family:Inconsolata;margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;line-height:1.71429em;font-size:1.15em;">kubectl get pods --all-namespaces | grep -i multus
+</code></pre></div>
+<p style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;margin-bottom:1.5em;">You may further validate that it has ran by looking at the <code style="font-family:Inconsolata;margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;font-size:0.875em;line-height:1.71429em;">/etc/cni/net.d/</code> directory and ensure that the auto-generated <code style="font-family:Inconsolata;margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;font-size:0.875em;line-height:1.71429em;">/etc/cni/net.d/00-multus.conf</code> exists corresponding to the alphabetically first configuration file.</p>
+<h2 style="font-family:&quot;PT Serif&quot;;text-align:left;margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;font-weight:bold;font-size:30px;line-height:35px;margin-top:35px;margin-bottom:15px;">Creating additional interfaces</h2>
+<p style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;margin-bottom:1.5em;">The first thing we'll do is create configurations for each of the additional interfaces that we attach to pods. We'll do this by creating Custom Resources. Part of the quickstart installation creates a "CRD" -- a custom resource definition that is the home where we keep these custom resources -- we'll store our configurations for each interface in these.</p>
+<h3 style="font-family:&quot;PT Serif&quot;;text-align:left;margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;font-size:30px;line-height:35px;margin-top:35px;font-weight:normal;margin-bottom:15px;">CNI Configurations</h3>
+<p style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;margin-bottom:1.5em;">Each configuration we'll add is a CNI configuration. If you're not familiar with them, let's break them down quickly. Here's an example CNI configuration:</p>
+<div style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;margin-bottom:1.5em;"><pre style="background-color:rgb(243, 242, 238);font-family:Inconsolata;margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;width:auto;font-size:0.875em;line-height:1.71429em;"><code style="font-family:Inconsolata;margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;line-height:1.71429em;font-size:1.15em;">{
+  "cniVersion": "0.3.0",
+  "type": "loopback",
+  "additional": "information"
+}
+</code></pre></div>
+<p style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;margin-bottom:1.5em;">CNI configurations are JSON, and we have a structure here that has a few things we're interested in:</p>
+<ol style="padding:0px;border:0px;font:inherit;vertical-align:baseline;margin:0px 0px 1.5em 1.5em;list-style:none;margin-top:-1em;list-style-type:decimal;">
+<li style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;list-style-type:inherit;list-style-position:outside;"><code style="font-family:Inconsolata;margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;font-size:0.875em;line-height:1.71429em;">cniVersion</code>: Tells each CNI plugin which version is being used and can give the plugin information if it's using a too late (or too early) version.</li>
+<li style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;list-style-type:inherit;list-style-position:outside;"><code style="font-family:Inconsolata;margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;font-size:0.875em;line-height:1.71429em;">type</code>: This tells CNI which binary to call on disk. Each CNI plugin is a binary that's called. Typically, these binaries are stored in <code style="font-family:Inconsolata;margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;font-size:0.875em;line-height:1.71429em;">/opt/cni/bin</code> on each node, and CNI executes this binary. In this case we've specified the <code style="font-family:Inconsolata;margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;font-size:0.875em;line-height:1.71429em;">loopback</code> binary (which create a loopback-type network interface). If this is your first time installing Multus, you might want to verify that the plugins that are in the "type" field are actually on disk in the <code style="font-family:Inconsolata;margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;font-size:0.875em;line-height:1.71429em;">/opt/cni/bin</code> directory.</li>
+<li style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;list-style-type:inherit;list-style-position:outside;"><code style="font-family:Inconsolata;margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;font-size:0.875em;line-height:1.71429em;">additional</code>: This field is put here as an example, each CNI plugin can specify whatever configuration parameters they'd like in JSON. These are specific to the binary you're calling in the <code style="font-family:Inconsolata;margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;font-size:0.875em;line-height:1.71429em;">type</code> field.</li>
+</ol>
+<p style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;margin-bottom:1.5em;">For an even further example -- take a look at the <a href="https://github.com/containernetworking/plugins/tree/master/plugins/main/bridge" style="color:rgb(6, 85, 136);margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;text-decoration:none;">bridge CNI plugin README</a> which shows additional details.</p>
+<p style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;margin-bottom:1.5em;">If you'd like more information about CNI configuration, you can read <a href="https://github.com/containernetworking/cni/blob/master/SPEC.md" style="color:rgb(6, 85, 136);margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;text-decoration:none;">the entire CNI specification</a>. It might also be useful to look at the <a href="https://github.com/containernetworking/plugins" style="color:rgb(6, 85, 136);margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;text-decoration:none;">CNI reference plugins</a> and see how they're configured.</p>
+<p style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;margin-bottom:1.5em;">You do not need to reload or refresh the Kubelets when CNI configurations change. These are read on each creation &amp; deletion of pods. So if you change a configuration, it'll apply the next time a pod is created. Existing pods may need to be restarted if they need the new configuration.</p>
+<h3 style="font-family:&quot;PT Serif&quot;;text-align:left;margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;font-size:30px;line-height:35px;margin-top:35px;font-weight:normal;margin-bottom:15px;">Storing a configuration as a Custom Resource</h3>
+<p style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;margin-bottom:1.5em;">So, we want to create an additional interface. Let's create a macvlan interface for pods to use. We'll create a custom resource that defines the CNI configuration for interfaces.</p>
+<p style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;margin-bottom:1.5em;">Note in the following command that there's a <code style="font-family:Inconsolata;margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;font-size:0.875em;line-height:1.71429em;">kind: NetworkAttachmentDefinition</code>. This is our fancy name for our configuration -- it's a custom extension of Kubernetes that defines how we attach networks to our pods.</p>
+<p style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;margin-bottom:1.5em;">Secondarily, note the <code style="font-family:Inconsolata;margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;font-size:0.875em;line-height:1.71429em;">config</code> field. You'll see that this is a CNI configuration just like we explained earlier.</p>
+<p style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;margin-bottom:1.5em;">Lastly but <em style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;font-style:italic;">very</em> importantly, note under <code style="font-family:Inconsolata;margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;font-size:0.875em;line-height:1.71429em;">metadata</code> the <code style="font-family:Inconsolata;margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;font-size:0.875em;line-height:1.71429em;">name</code> field -- here's where we give this configuration a name, and it's how we tell pods to use this configuration. The name here is <code style="font-family:Inconsolata;margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;font-size:0.875em;line-height:1.71429em;">macvlan-conf</code> -- as we're creating a configuration for macvlan.</p>
+<p style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;margin-bottom:1.5em;">Here's the command to create this example configuration:</p>
+<div style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;margin-bottom:1.5em;"><pre style="background-color:rgb(243, 242, 238);font-family:Inconsolata;margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;width:auto;font-size:0.875em;line-height:1.71429em;"><code style="font-family:Inconsolata;margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;line-height:1.71429em;font-size:1.15em;">cat &lt;&lt;EOF | kubectl create -f -
+apiVersion: "k8s.cni.cncf.io/v1"
+kind: NetworkAttachmentDefinition
+metadata:
+  name: macvlan-conf
+spec:
+  config: '{
+      "cniVersion": "0.3.0",
+      "type": "macvlan",
+      "master": "eth0",
+      "mode": "bridge",
+      "ipam": {
+        "type": "host-local",
+        "subnet": "192.168.1.0/24",
+        "rangeStart": "192.168.1.200",
+        "rangeEnd": "192.168.1.216",
+        "routes": [
+          { "dst": "0.0.0.0/0" }
+        ],
+        "gateway": "192.168.1.1"
+      }
+    }'
+EOF
+</code></pre></div>
+<p style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;margin-bottom:1.5em;"><em style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;font-style:italic;">NOTE</em>: This example uses <code style="font-family:Inconsolata;margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;font-size:0.875em;line-height:1.71429em;">eth0</code> as the <code style="font-family:Inconsolata;margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;font-size:0.875em;line-height:1.71429em;">master</code> parameter, this master parameter should match the interface name on the hosts in your cluster.</p>
+<p style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;margin-bottom:1.5em;">You can see which configurations you've created using <code style="font-family:Inconsolata;margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;font-size:0.875em;line-height:1.71429em;">kubectl</code> here's how you can do that:</p>
+<div style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;margin-bottom:1.5em;"><pre style="background-color:rgb(243, 242, 238);font-family:Inconsolata;margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;width:auto;font-size:0.875em;line-height:1.71429em;"><code style="font-family:Inconsolata;margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;line-height:1.71429em;font-size:1.15em;">kubectl get network-attachment-definitions
+</code></pre></div>
+<p style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;margin-bottom:1.5em;">You can get more detail by describing them:</p>
+<div style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;margin-bottom:1.5em;"><pre style="background-color:rgb(243, 242, 238);font-family:Inconsolata;margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;width:auto;font-size:0.875em;line-height:1.71429em;"><code style="font-family:Inconsolata;margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;line-height:1.71429em;font-size:1.15em;">kubectl describe network-attachment-definitions macvlan-conf
+</code></pre></div>
+<h3 style="font-family:&quot;PT Serif&quot;;text-align:left;margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;font-size:30px;line-height:35px;margin-top:35px;font-weight:normal;margin-bottom:15px;">Creating a pod that attaches an additional interface</h3>
+<p style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;margin-bottom:1.5em;">We're going to create a pod. This will look familiar as any pod you might have created before, but, we'll have a special <code style="font-family:Inconsolata;margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;font-size:0.875em;line-height:1.71429em;">annotations</code> field -- in this case we'll have an annotation called <code style="font-family:Inconsolata;margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;font-size:0.875em;line-height:1.71429em;">k8s.v1.cni.cncf.io/networks</code>. This field takes a comma delimited list of the names of your <code style="font-family:Inconsolata;margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;font-size:0.875em;line-height:1.71429em;">NetworkAttachmentDefinition</code>s as we created above. Note in the command below that we have the annotation of <code style="font-family:Inconsolata;margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;font-size:0.875em;line-height:1.71429em;">k8s.v1.cni.cncf.io/networks: macvlan-conf</code> where <code style="font-family:Inconsolata;margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;font-size:0.875em;line-height:1.71429em;">macvlan-conf</code> is the name we used above when we created our configuration.</p>
+<p style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;margin-bottom:1.5em;">Let's go ahead and create a pod (that just sleeps for a really long time) with this command:</p>
+<div style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;margin-bottom:1.5em;"><pre style="background-color:rgb(243, 242, 238);font-family:Inconsolata;margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;width:auto;font-size:0.875em;line-height:1.71429em;"><code style="font-family:Inconsolata;margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;line-height:1.71429em;font-size:1.15em;">cat &lt;&lt;EOF | kubectl create -f -
+apiVersion: v1
+kind: Pod
+metadata:
+  name: samplepod
+  annotations:
+    k8s.v1.cni.cncf.io/networks: macvlan-conf
+spec:
+  containers:
+  - name: samplepod
+    command: ["/bin/ash", "-c", "trap : TERM INT; sleep infinity &amp; wait"]
+    image: alpine
+EOF
+</code></pre></div>
+<p style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;margin-bottom:1.5em;">You may now inspect the pod and see what interfaces are attached, like so:</p>
+<div style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;margin-bottom:1.5em;"><pre style="background-color:rgb(243, 242, 238);font-family:Inconsolata;margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;width:auto;font-size:0.875em;line-height:1.71429em;"><code style="font-family:Inconsolata;margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;line-height:1.71429em;font-size:1.15em;">kubectl exec -it samplepod -- ip a
+</code></pre></div>
+<p style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;margin-bottom:1.5em;">You should note that there are 3 interfaces:</p>
+<ul style="padding:0px;border:0px;font:inherit;vertical-align:baseline;margin:0px 0px 1.5em 1.5em;list-style:none;margin-top:-1em;list-style-type:disc;">
+<li style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;list-style-type:inherit;list-style-position:outside;"><code style="font-family:Inconsolata;margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;font-size:0.875em;line-height:1.71429em;">lo</code> a loopback interface</li>
+<li style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;list-style-type:inherit;list-style-position:outside;"><code style="font-family:Inconsolata;margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;font-size:0.875em;line-height:1.71429em;">eth0</code> our default network</li>
+<li style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;list-style-type:inherit;list-style-position:outside;"><code style="font-family:Inconsolata;margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;font-size:0.875em;line-height:1.71429em;">net1</code> the new interface we created with the macvlan configuration.</li>
+</ul>
+<h3 style="font-family:&quot;PT Serif&quot;;text-align:left;margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;font-size:30px;line-height:35px;margin-top:35px;font-weight:normal;margin-bottom:15px;">Network Status Annotations</h3>
+<p style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;margin-bottom:1.5em;">For additional confirmation, use <code style="font-family:Inconsolata;margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;font-size:0.875em;line-height:1.71429em;">kubectl describe pod samplepod</code> and there will be an annotations section, similar to the following:</p>
+<div style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;margin-bottom:1.5em;"><pre style="background-color:rgb(243, 242, 238);font-family:Inconsolata;margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;width:auto;font-size:0.875em;line-height:1.71429em;"><code style="font-family:Inconsolata;margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;line-height:1.71429em;font-size:1.15em;">Annotations:        k8s.v1.cni.cncf.io/networks: macvlan-conf
+                    k8s.v1.cni.cncf.io/network-status:
+                      [{
+                          "name": "cbr0",
+                          "ips": [
+                              "10.244.1.73"
+                          ],
+                          "default": true,
+                          "dns": {}
+                      },{
+                          "name": "macvlan-conf",
+                          "interface": "net1",
+                          "ips": [
+                              "192.168.1.205"
+                          ],
+                          "mac": "86:1d:96:ff:55:0d",
+                          "dns": {}
+                      }]
+</code></pre></div>
+<p style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;margin-bottom:1.5em;">This metadata tells us that we have two CNI plugins running successfully.</p>
+<h3 style="font-family:&quot;PT Serif&quot;;text-align:left;margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;font-size:30px;line-height:35px;margin-top:35px;font-weight:normal;margin-bottom:15px;">What if I want more interfaces?</h3>
+<p style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;margin-bottom:1.5em;">You can add more interfaces to a pod by creating more custom resources and then referring to them in pod's annotation. You can also reuse configurations, so for example, to attach two macvlan interfaces to a pod, you could create a pod like so:</p>
+<div style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;margin-bottom:1.5em;"><pre style="background-color:rgb(243, 242, 238);font-family:Inconsolata;margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;width:auto;font-size:0.875em;line-height:1.71429em;"><code style="font-family:Inconsolata;margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;line-height:1.71429em;font-size:1.15em;">cat &lt;&lt;EOF | kubectl create -f -
+apiVersion: v1
+kind: Pod
+metadata:
+  name: samplepod
+  annotations:
+    k8s.v1.cni.cncf.io/networks: macvlan-conf,macvlan-conf
+spec:
+  containers:
+  - name: samplepod
+    command: ["/bin/ash", "-c", "trap : TERM INT; sleep infinity &amp; wait"]
+    image: alpine
+EOF
+</code></pre></div>
+<p style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;margin-bottom:1.5em;">Note that the annotation now reads <code style="font-family:Inconsolata;margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;font-size:0.875em;line-height:1.71429em;">k8s.v1.cni.cncf.io/networks: macvlan-conf,macvlan-conf</code>. Where we have the same configuration used twice, separated by a comma.</p>
+<p style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;margin-bottom:0px;">If you were to create another custom resource with the name <code style="font-family:Inconsolata;margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;font-size:0.875em;line-height:1.71429em;">foo</code> you could use that such as: <code style="font-family:Inconsolata;margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;font-size:0.875em;line-height:1.71429em;">k8s.v1.cni.cncf.io/networks: foo,macvlan-conf</code>, and use any number of attachments.</p>
+</div></div></div></div></div></div></div></div></div></div>
+</div>
+</div>
+<a class="back-link" href="../articles.html">← 返回笔记列表</a>
+</body>
+</html>

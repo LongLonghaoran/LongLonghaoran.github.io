@@ -1,0 +1,452 @@
+<!DOCTYPE html>
+<html lang="zh-CN" data-theme="light">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>解析邮件碰到的那些坑 · Ruby China — 技术笔记</title>
+<style>
+:root {
+  --bg: #ffffff;
+  --text: #1a1a1a;
+  --muted: #666;
+  --border: #e0e0e0;
+  --code-bg: #f5f5f5;
+  --link: #0066cc;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #1a1a1a;
+    --text: #e0e0e0;
+    --muted: #999;
+    --border: #333;
+    --code-bg: #2a2a2a;
+    --link: #66bbff;
+  }
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  line-height: 1.7;
+  color: var(--text);
+  background: var(--bg);
+  max-width: 860px;
+  margin: 0 auto;
+  padding: 2rem 1.5rem;
+}
+.note-header {
+  border-bottom: 2px solid var(--border);
+  padding-bottom: 1rem;
+  margin-bottom: 2rem;
+}
+.note-title {
+  font-size: 1.6rem;
+  font-weight: 700;
+  margin-bottom: 0.3rem;
+}
+.note-meta {
+  color: var(--muted);
+  font-size: 0.85rem;
+}
+.note-content {
+  font-size: 0.95rem;
+}
+.note-content h1 { font-size: 1.4rem; margin: 1.2rem 0 0.6rem; }
+.note-content h2 { font-size: 1.2rem; margin: 1rem 0 0.5rem; }
+.note-content h3 { font-size: 1.05rem; margin: 0.8rem 0 0.4rem; }
+.note-content p { margin: 0.5rem 0; }
+.note-content ul, .note-content ol { margin: 0.5rem 0 0.5rem 2rem; }
+.note-content li { margin: 0.2rem 0; }
+.note-content pre {
+  background: var(--code-bg);
+  padding: 1rem;
+  border-radius: 6px;
+  overflow-x: auto;
+  margin: 0.8rem 0;
+  font-size: 0.85rem;
+}
+.note-content code {
+  background: var(--code-bg);
+  padding: 0.1rem 0.3rem;
+  border-radius: 3px;
+  font-size: 0.88em;
+}
+.note-content pre code {
+  background: none;
+  padding: 0;
+}
+.note-content blockquote {
+  border-left: 3px solid var(--border);
+  padding-left: 1rem;
+  color: var(--muted);
+  margin: 0.8rem 0;
+}
+.note-content a { color: var(--link); }
+.note-content img {
+  max-width: 100%;
+  height: auto;
+  border-radius: 6px;
+  margin: 0.5rem 0;
+}
+.note-content table {
+  border-collapse: collapse;
+  width: 100%;
+  margin: 0.8rem 0;
+}
+.note-content th, .note-content td {
+  border: 1px solid var(--border);
+  padding: 0.5rem;
+}
+.note-content th { background: var(--code-bg); }
+.media-placeholder {
+  background: var(--code-bg);
+  padding: 1rem;
+  text-align: center;
+  color: var(--muted);
+  border-radius: 6px;
+  margin: 0.5rem 0;
+  font-size: 0.85rem;
+}
+.encrypt-placeholder {
+  background: #fff3cd;
+  padding: 0.5rem;
+  text-align: center;
+  color: #856404;
+  border-radius: 6px;
+  margin: 0.5rem 0;
+  font-size: 0.85rem;
+}
+.back-link {
+  display: inline-block;
+  margin-top: 2rem;
+  color: var(--link);
+  text-decoration: none;
+  font-size: 0.85rem;
+}
+</style>
+</head>
+<body>
+<div class="note-header">
+  <div class="note-title">解析邮件碰到的那些坑 · Ruby China</div>
+  <div class="note-meta">笔记本：Ruby</div>
+</div>
+<div class="note-content">
+<div style="--en-clipped-content:article; --en-clipped-source-url:https://ruby-china.org/topics/33882; --en-clipped-source-title:解析邮件碰到的那些坑 · Ruby China;">
+<div><br/></div><div style="font-size: 16px; display:block; min-width: 100%; position: relative;"> <div style="box-sizing:border-box;font-family:sans-serif;line-height:1.15;text-size-adjust:100%;-webkit-tap-highlight-color:rgba(0, 0, 0, 0);outline-style:none;"><div style="box-sizing:border-box;font-family:Helvetica, Arial, &quot;PingFang SC&quot;, &quot;Noto Sans&quot;, Roboto, &quot;Microsoft Yahei&quot;, sans-serif;font-weight:400;line-height:1.5;text-align:left;outline-style:none;background:rgba(229, 229, 229, 0.4) none repeat scroll 0% 0% / auto padding-box border-box;letter-spacing:0.03em;font-size:14px;color:rgb(64, 64, 64);"><div style="box-sizing:border-box;outline-style:none;"><div style="box-sizing:border-box;outline-style:none;"><div style="box-sizing:border-box;outline-style:none;"><div style="box-sizing:border-box;outline-style:none;display:flex;flex-direction:column;min-width:0px;overflow-wrap:break-word;border-radius:4px;box-shadow:0px 0px 0px;background:rgb(255, 255, 255) none repeat scroll 0% 0% / auto padding-box border-box;">
+      <div style="box-sizing:border-box;outline-style:none;margin-bottom:0px;border-bottom:1px solid rgba(0, 0, 0, 0.125);display:flex;align-items:flex-start;border-radius:calc(0.25rem - 1px) calc(0.25rem - 1px) 0px 0px;font-size:18px;border:0px;transition:all 0.3s ease 0s;padding:25px 25px 0px;background:transparent;">
+  <div style="box-sizing:border-box;outline-style:none;flex:1 1 0%;">
+    <h1 style="box-sizing:border-box;font-weight:500;outline-style:none;color:rgb(64, 64, 64);text-align:left;margin-top:0px;margin-bottom:8px;line-height:150%;font-size:22px;">
+      <a href="https://ruby-china.org/topics/node26" style="box-sizing:border-box;text-decoration:none;background-color:transparent;outline-style:none;margin-right:3px;color:rgb(102, 102, 102);">分享</a>
+      <span style="box-sizing:border-box;outline-style:none;">
+        解析邮件碰到的那些坑
+      </span>
+      
+    </h1>
+    <div style="box-sizing:border-box;outline-style:none;color:rgb(173, 170, 168);font-size:13px;">
+      <a href="https://ruby-china.org/cxh116" style="box-sizing:border-box;text-decoration:none;background-color:transparent;outline-style:none;font-size:14px;color:rgb(64, 64, 64);">cxh116</a>
+      <span style="box-sizing:border-box;outline-style:none;">
+      </span>
+       ·
+      <abbr title="2017年08月19日" style="box-sizing:border-box;outline-style:none;text-decoration-skip-ink:none;border-bottom:0px;text-decoration:none;cursor:text;border:0px;">2017年08月19日</abbr>
+      <span style="box-sizing:border-box;outline-style:none;">
+         ·
+        最后由 <a href="https://ruby-china.org/kafei" style="box-sizing:border-box;text-decoration:none;background-color:transparent;outline-style:none;font-size:14px;color:rgb(64, 64, 64);">kafei</a> 回复于 <abbr title="2017年12月21日" style="box-sizing:border-box;outline-style:none;text-decoration-skip-ink:none;border-bottom:0px;text-decoration:none;cursor:text;border:0px;">2017年12月21日</abbr>
+      </span>
+       ·
+      7495 次阅读
+    </div>
+  </div>
+  <div style="box-sizing:border-box;outline-style:none;margin-left:35px;text-align:right;">
+    <a title="cxh116 (曹小华)" href="https://ruby-china.org/cxh116" style="box-sizing:border-box;color:rgb(34, 117, 218);text-decoration:none;background-color:transparent;outline-style:none;"><div class="media-placeholder">[图片/附件]</div></en-media></a>
+  </div>
+<span style="font-size:18px;display:block;clear:both;"></span></div>
+
+        <div style="box-sizing:border-box;outline-style:none;font-size:16px;margin-top:25px;background:rgba(255, 204, 139, 0.14) none repeat scroll 0% 0% / auto padding-box border-box;border:0px;padding:15px 25px;color:rgb(235, 84, 36);">
+          <i style="box-sizing:border-box;outline-style:none;-webkit-font-smoothing:antialiased;display:inline-block;font-style:normal;font-feature-settings:normal;font-variant:normal;text-rendering:auto;line-height:1;font-family:&quot;Font Awesome 5 Free&quot;;font-weight:900;color:rgb(235, 84, 36);font-size:16px;"><span style="font-style:normal;font-variant:normal;line-height:1;font-family:Font Awesome 5 Free;font-weight:900;font-size:16px;color:rgb(235, 84, 36);"></span></i> 本帖已被设为精华帖！
+        </div>
+      <div style="box-sizing:border-box;outline-style:none;flex:1 1 auto;min-height:1px;position:relative;letter-spacing:0.03em;text-overflow:ellipsis;overflow-wrap:break-word;font-size:16px;padding:25px;padding-top:20px;padding-bottom:20px;"><div style="box-sizing:border-box;outline-style:none;position:relative;float:right;display:block;z-index:999;padding-left:10px;padding-bottom:10px;">
+  
+  
+</div>
+        
+        <p style="box-sizing:border-box;margin-top:0px;outline-style:none;margin-bottom:1.2em;font-size:1em;line-height:1.8em;">本文主要讲解使用 <a href="https://github.com/mikel/mail" rel="nofollow" target="_blank" title="" style="box-sizing:border-box;background-color:transparent;outline-style:none;color:rgb(34, 117, 218);text-decoration:none;">mail</a> 库解析邮件所碰到的坑.</p>
+
+<p style="box-sizing:border-box;margin-top:0px;outline-style:none;margin-bottom:1.2em;font-size:1em;line-height:1.8em;">邮件格式本身的解析由 mail 库.由于邮件格式标准<a href="https://github.com/mikel/mail/tree/2-6-stable/reference" rel="nofollow" target="_blank" title="" style="box-sizing:border-box;background-color:transparent;outline-style:none;color:rgb(34, 117, 218);text-decoration:none;">过多且过于复杂</a>,鉴于个人能力有限,所以就不讲解邮件相关的标准的.需要自己先阅读相关资料.比如 RFC 822, multipart 等方面的资料.</p>
+
+<p style="box-sizing:border-box;margin-top:0px;outline-style:none;margin-bottom:1.2em;font-size:1em;line-height:1.8em;">坑主要分两大类:</p>
+
+<ol style="box-sizing:border-box;outline-style:none;margin:0px 0px 20px;padding:0px 20px;list-style-type:decimal;">
+<li style="box-sizing:border-box;outline-style:none;line-height:1.6em;padding:2px 0px;">编码 (修炼的必经之路)</li>
+<li style="box-sizing:border-box;outline-style:none;line-height:1.6em;padding:2px 0px;">邮件非常见格式解析 (主要是苹果设备发出来的邮件)
+
+<ul style="box-sizing:border-box;outline-style:none;margin:0px 0px 20px;padding:0px 20px;list-style-type:circle;margin-bottom:0px;">
+<li style="box-sizing:border-box;outline-style:none;line-height:1.6em;padding:2px 0px;">正文只有图片 (只包含附件 part, 无 text part 或 html part)</li>
+<li style="box-sizing:border-box;outline-style:none;line-height:1.6em;padding:2px 0px;">正文有多个文本段 (multi text part)</li>
+<li style="box-sizing:border-box;outline-style:none;line-height:1.6em;padding:2px 0px;">multipart 再包含 multipart</li>
+</ul>
+</li>
+</ol>
+<h3 style="box-sizing:border-box;outline-style:none;color:rgb(102, 102, 102);margin:0px 0px 20px;font-weight:700;line-height:100%;text-align:left;font-size:18px;">mail 基础技巧</h3>
+<ol style="box-sizing:border-box;outline-style:none;margin:0px 0px 20px;padding:0px 20px;list-style-type:decimal;">
+<li style="box-sizing:border-box;outline-style:none;line-height:1.6em;padding:2px 0px;">查看 <a href="https://github.com/mikel/mail" rel="nofollow" target="_blank" title="" style="box-sizing:border-box;background-color:transparent;outline-style:none;color:rgb(34, 117, 218);text-decoration:none;">mail 官方文档</a>
+</li>
+<li style="box-sizing:border-box;outline-style:none;line-height:1.6em;padding:2px 0px;">
+<code style="box-sizing:border-box;font-family:SFMono-Regular, Menlo, Monaco, Consolas, &quot;Liberation Mono&quot;, &quot;Courier New&quot;, monospace;overflow-wrap:break-word;outline-style:none;display:inline-block;border:0px;margin:0px 2px;border-radius:3px;word-break:break-all;font-size:0.9em;background-color:rgb(242, 242, 242);padding:0px 8px;color:rgb(102, 102, 102);">Mail.new(str)</code> 的 str 变量,需要为 RFC 822 标准格式</li>
+<li style="box-sizing:border-box;outline-style:none;line-height:1.6em;padding:2px 0px;">gmail 邮件详情页的 "显示原始邮件" ,下载下来的 <a href="https://productforums.google.com/d/msg/gmail/NLxxg-5jk_o/7Mg88jSz7vQJ" rel="nofollow" target="_blank" title="" style="box-sizing:border-box;background-color:transparent;outline-style:none;color:rgb(34, 117, 218);text-decoration:none;">original_msg.txt</a> 文件,是 RFC 822 标准,调试时可以直接下载此文件来调试. </li>
+<li style="box-sizing:border-box;outline-style:none;line-height:1.6em;padding:2px 0px;">iamp 抓取时, <code style="box-sizing:border-box;font-family:SFMono-Regular, Menlo, Monaco, Consolas, &quot;Liberation Mono&quot;, &quot;Courier New&quot;, monospace;overflow-wrap:break-word;outline-style:none;display:inline-block;border:0px;margin:0px 2px;border-radius:3px;word-break:break-all;font-size:0.9em;background-color:rgb(242, 242, 242);padding:0px 8px;color:rgb(102, 102, 102);">imap.uid_fetch(uid, ['RFC822'])[0]</code> 这样可以拿到 RFC 822 格式的内容. <a href="https://github.com/mikel/mail/blob/2-6-stable/lib/mail/network/retriever_methods/imap.rb#L86" rel="nofollow" target="_blank" title="" style="box-sizing:border-box;background-color:transparent;outline-style:none;color:rgb(34, 117, 218);text-decoration:none;">参考来源</a>
+</li>
+</ol>
+<h3 style="box-sizing:border-box;outline-style:none;color:rgb(102, 102, 102);margin:0px 0px 20px;font-weight:700;line-height:100%;text-align:left;font-size:18px;">编码</h3>
+<p style="box-sizing:border-box;margin-top:0px;outline-style:none;margin-bottom:1.2em;font-size:1em;line-height:1.8em;">编码这个坑与编程语言无关,它是我们修炼必经的路.</p>
+
+<ul style="box-sizing:border-box;outline-style:none;list-style-type:square;margin:0px 0px 20px;padding:0px 20px;">
+<li style="box-sizing:border-box;outline-style:none;line-height:1.6em;padding:2px 0px;">世界上有多种字符,比如英文,简体中文,繁体中文.</li>
+<li style="box-sizing:border-box;outline-style:none;line-height:1.6em;padding:2px 0px;">一种字符有可能有多种编码,比如简体中文有 GB2312, GBK, GB18030 . <a href="http://www.qqxiuzi.cn/bianma/zifuji.php" rel="nofollow" target="_blank" title="" style="box-sizing:border-box;background-color:transparent;outline-style:none;color:rgb(34, 117, 218);text-decoration:none;">参考来源</a>
+</li>
+<li style="box-sizing:border-box;outline-style:none;line-height:1.6em;padding:2px 0px;">一种编码有可能有多种实现,比如 Unicode 编码有 UTF-8, UTF-16, UTF-32 多种实现. <a href="https://zh.wikipedia.org/wiki/Unicode" rel="nofollow" target="_blank" title="" style="box-sizing:border-box;background-color:transparent;outline-style:none;color:rgb(34, 117, 218);text-decoration:none;">参考来源</a>
+</li>
+</ul>
+
+<p style="box-sizing:border-box;margin-top:0px;outline-style:none;margin-bottom:1.2em;font-size:1em;line-height:1.8em;">代码示例:</p>
+ <pre style="box-sizing:border-box;display:block;outline-style:none;margin-bottom:1.2em;background-color:rgb(246, 248, 250);border:0px;margin-left:0px;margin-right:0px;padding:15px 25px;border-radius:0px;font-family:Menlo, Monaco, Consolas, &quot;Courier New&quot;, monospace;font-size:0.8em;margin-top:0px;overflow:auto;color:rgb(68, 68, 68);"><code style="box-sizing:border-box;font-family:SFMono-Regular, Menlo, Monaco, Consolas, &quot;Liberation Mono&quot;, &quot;Courier New&quot;, monospace;overflow-wrap:break-word;outline-style:none;line-height:150%;margin:0px 2px;border-radius:3px;word-break:break-all;display:inline-block;color:rgb(102, 102, 102);padding:0px 8px;background-color:rgba(0, 0, 0, 0);border:none;font-size:1em;"><span style="box-sizing:border-box;outline-style:none;color:rgb(176, 178, 176);font-style:italic;"># "中" 字不同编码的十六进制值. http://blog.bigbinary.com/2011/07/20/ruby-pack-unpack.html</span>
+<span style="box-sizing:border-box;outline-style:none;color:rgb(170, 34, 255);">puts</span> <span style="box-sizing:border-box;outline-style:none;color:rgb(187, 68, 68);">"中"</span><span style="box-sizing:border-box;outline-style:none;">.</span><span style="box-sizing:border-box;outline-style:none;color:rgb(0, 160, 0);">encode</span><span style="box-sizing:border-box;outline-style:none;">(</span><span style="box-sizing:border-box;outline-style:none;color:rgb(187, 68, 68);">'UTF-8'</span><span style="box-sizing:border-box;outline-style:none;">).</span><span style="box-sizing:border-box;outline-style:none;color:rgb(0, 160, 0);">unpack</span><span style="box-sizing:border-box;outline-style:none;">(</span><span style="box-sizing:border-box;outline-style:none;color:rgb(187, 68, 68);">'H*'</span><span style="box-sizing:border-box;outline-style:none;">)</span> <span style="box-sizing:border-box;outline-style:none;color:rgb(176, 178, 176);font-style:italic;"># e4b8ad</span>
+<span style="box-sizing:border-box;outline-style:none;color:rgb(170, 34, 255);">puts</span> <span style="box-sizing:border-box;outline-style:none;color:rgb(187, 68, 68);">"中"</span><span style="box-sizing:border-box;outline-style:none;">.</span><span style="box-sizing:border-box;outline-style:none;color:rgb(0, 160, 0);">encode</span><span style="box-sizing:border-box;outline-style:none;">(</span><span style="box-sizing:border-box;outline-style:none;color:rgb(187, 68, 68);">'UTF-32'</span><span style="box-sizing:border-box;outline-style:none;">).</span><span style="box-sizing:border-box;outline-style:none;color:rgb(0, 160, 0);">unpack</span><span style="box-sizing:border-box;outline-style:none;">(</span><span style="box-sizing:border-box;outline-style:none;color:rgb(187, 68, 68);">'H*'</span><span style="box-sizing:border-box;outline-style:none;">)</span> <span style="box-sizing:border-box;outline-style:none;color:rgb(176, 178, 176);font-style:italic;"># 0000feff00004e2d </span>
+<span style="box-sizing:border-box;outline-style:none;color:rgb(170, 34, 255);">puts</span> <span style="box-sizing:border-box;outline-style:none;color:rgb(187, 68, 68);">"中"</span><span style="box-sizing:border-box;outline-style:none;">.</span><span style="box-sizing:border-box;outline-style:none;color:rgb(0, 160, 0);">encode</span><span style="box-sizing:border-box;outline-style:none;">(</span><span style="box-sizing:border-box;outline-style:none;color:rgb(187, 68, 68);">'GBK'</span><span style="box-sizing:border-box;outline-style:none;">).</span><span style="box-sizing:border-box;outline-style:none;color:rgb(0, 160, 0);">unpack</span><span style="box-sizing:border-box;outline-style:none;">(</span><span style="box-sizing:border-box;outline-style:none;color:rgb(187, 68, 68);">'H*'</span><span style="box-sizing:border-box;outline-style:none;">)</span> <span style="box-sizing:border-box;outline-style:none;color:rgb(176, 178, 176);font-style:italic;"># d6d0</span>
+
+<span style="box-sizing:border-box;outline-style:none;color:rgb(176, 178, 176);font-style:italic;"># 字节数组</span>
+<span style="box-sizing:border-box;outline-style:none;color:rgb(170, 34, 255);">puts</span> <span style="box-sizing:border-box;outline-style:none;color:rgb(187, 68, 68);">"中"</span><span style="box-sizing:border-box;outline-style:none;">.</span><span style="box-sizing:border-box;outline-style:none;color:rgb(0, 160, 0);">encode</span><span style="box-sizing:border-box;outline-style:none;">(</span><span style="box-sizing:border-box;outline-style:none;color:rgb(187, 68, 68);">'UTF-8'</span><span style="box-sizing:border-box;outline-style:none;">).</span><span style="box-sizing:border-box;outline-style:none;color:rgb(0, 160, 0);">bytes</span><span style="box-sizing:border-box;outline-style:none;">.</span><span style="box-sizing:border-box;outline-style:none;color:rgb(0, 160, 0);">inspect</span> <span style="box-sizing:border-box;outline-style:none;color:rgb(176, 178, 176);font-style:italic;"># [228, 184, 173]</span>
+<span style="box-sizing:border-box;outline-style:none;color:rgb(170, 34, 255);">puts</span> <span style="box-sizing:border-box;outline-style:none;color:rgb(187, 68, 68);">"中"</span><span style="box-sizing:border-box;outline-style:none;">.</span><span style="box-sizing:border-box;outline-style:none;color:rgb(0, 160, 0);">encode</span><span style="box-sizing:border-box;outline-style:none;">(</span><span style="box-sizing:border-box;outline-style:none;color:rgb(187, 68, 68);">'UTF-32'</span><span style="box-sizing:border-box;outline-style:none;">).</span><span style="box-sizing:border-box;outline-style:none;color:rgb(0, 160, 0);">bytes</span><span style="box-sizing:border-box;outline-style:none;">.</span><span style="box-sizing:border-box;outline-style:none;color:rgb(0, 160, 0);">inspect</span> <span style="box-sizing:border-box;outline-style:none;color:rgb(176, 178, 176);font-style:italic;"># [0, 0, 254, 255, 0, 0, 78, 45]</span>
+<span style="box-sizing:border-box;outline-style:none;color:rgb(170, 34, 255);">puts</span> <span style="box-sizing:border-box;outline-style:none;color:rgb(187, 68, 68);">"中"</span><span style="box-sizing:border-box;outline-style:none;">.</span><span style="box-sizing:border-box;outline-style:none;color:rgb(0, 160, 0);">encode</span><span style="box-sizing:border-box;outline-style:none;">(</span><span style="box-sizing:border-box;outline-style:none;color:rgb(187, 68, 68);">'GBK'</span><span style="box-sizing:border-box;outline-style:none;">).</span><span style="box-sizing:border-box;outline-style:none;color:rgb(0, 160, 0);">bytes</span><span style="box-sizing:border-box;outline-style:none;">.</span><span style="box-sizing:border-box;outline-style:none;color:rgb(0, 160, 0);">inspect</span> <span style="box-sizing:border-box;outline-style:none;color:rgb(176, 178, 176);font-style:italic;"># [214, 208]</span>
+
+<span style="box-sizing:border-box;outline-style:none;color:rgb(176, 178, 176);font-style:italic;"># Base64</span>
+<span style="box-sizing:border-box;outline-style:none;color:rgb(170, 34, 255);">require</span> <span style="box-sizing:border-box;outline-style:none;color:rgb(187, 68, 68);">"base64"</span>
+<span style="box-sizing:border-box;outline-style:none;color:rgb(170, 34, 255);">puts</span> <span style="box-sizing:border-box;outline-style:none;color:rgb(136, 0, 0);">Base64</span><span style="box-sizing:border-box;outline-style:none;">.</span><span style="box-sizing:border-box;outline-style:none;color:rgb(0, 160, 0);">encode64</span><span style="box-sizing:border-box;outline-style:none;">(</span><span style="box-sizing:border-box;outline-style:none;color:rgb(187, 68, 68);">'中'</span><span style="box-sizing:border-box;outline-style:none;">.</span><span style="box-sizing:border-box;outline-style:none;color:rgb(0, 160, 0);">encode</span><span style="box-sizing:border-box;outline-style:none;">(</span><span style="box-sizing:border-box;outline-style:none;color:rgb(187, 68, 68);">'GBK'</span><span style="box-sizing:border-box;outline-style:none;">))</span> <span style="box-sizing:border-box;outline-style:none;color:rgb(176, 178, 176);font-style:italic;"># 1tA=</span>
+<span style="box-sizing:border-box;outline-style:none;color:rgb(170, 34, 255);">puts</span> <span style="box-sizing:border-box;outline-style:none;color:rgb(136, 0, 0);">Base64</span><span style="box-sizing:border-box;outline-style:none;">.</span><span style="box-sizing:border-box;outline-style:none;color:rgb(0, 160, 0);">encode64</span><span style="box-sizing:border-box;outline-style:none;">(</span><span style="box-sizing:border-box;outline-style:none;color:rgb(187, 68, 68);">'中'</span><span style="box-sizing:border-box;outline-style:none;">.</span><span style="box-sizing:border-box;outline-style:none;color:rgb(0, 160, 0);">encode</span><span style="box-sizing:border-box;outline-style:none;">(</span><span style="box-sizing:border-box;outline-style:none;color:rgb(187, 68, 68);">'UTF-8'</span><span style="box-sizing:border-box;outline-style:none;">))</span> <span style="box-sizing:border-box;outline-style:none;color:rgb(176, 178, 176);font-style:italic;"># 5Lit</span>
+</code></pre> 
+<p style="box-sizing:border-box;margin-top:0px;outline-style:none;margin-bottom:1.2em;font-size:1em;line-height:1.8em;">从上示例可以看出,同一个字符,用不同编码时,其二进制数据值有可能不一样.</p>
+
+<p style="box-sizing:border-box;margin-top:0px;outline-style:none;margin-bottom:1.2em;font-size:1em;line-height:1.8em;">那么编码的主要问题是什么? 请看代码示例:</p>
+ <pre style="box-sizing:border-box;display:block;outline-style:none;margin-bottom:1.2em;background-color:rgb(246, 248, 250);border:0px;margin-left:0px;margin-right:0px;padding:15px 25px;border-radius:0px;font-family:Menlo, Monaco, Consolas, &quot;Courier New&quot;, monospace;font-size:0.8em;margin-top:0px;overflow:auto;color:rgb(68, 68, 68);"><code style="box-sizing:border-box;font-family:SFMono-Regular, Menlo, Monaco, Consolas, &quot;Liberation Mono&quot;, &quot;Courier New&quot;, monospace;overflow-wrap:break-word;outline-style:none;line-height:150%;margin:0px 2px;border-radius:3px;word-break:break-all;display:inline-block;color:rgb(102, 102, 102);padding:0px 8px;background-color:rgba(0, 0, 0, 0);border:none;font-size:1em;"><span style="box-sizing:border-box;outline-style:none;color:rgb(170, 34, 255);">require</span> <span style="box-sizing:border-box;outline-style:none;color:rgb(187, 68, 68);">"base64"</span>
+<span style="box-sizing:border-box;outline-style:none;">str</span> <span style="box-sizing:border-box;outline-style:none;color:rgb(102, 102, 102);">=</span> <span style="box-sizing:border-box;outline-style:none;color:rgb(136, 0, 0);">Base64</span><span style="box-sizing:border-box;outline-style:none;">.</span><span style="box-sizing:border-box;outline-style:none;color:rgb(0, 160, 0);">decode64</span><span style="box-sizing:border-box;outline-style:none;">(</span><span style="box-sizing:border-box;outline-style:none;color:rgb(187, 68, 68);">'1tA='</span><span style="box-sizing:border-box;outline-style:none;">)</span> <span style="box-sizing:border-box;outline-style:none;color:rgb(176, 178, 176);font-style:italic;"># 解码 "中" 的 GBK 编码的 base64 值.</span>
+<span style="box-sizing:border-box;outline-style:none;color:rgb(170, 34, 255);">puts</span> <span style="box-sizing:border-box;outline-style:none;">str</span><span style="box-sizing:border-box;outline-style:none;">.</span><span style="box-sizing:border-box;outline-style:none;color:rgb(0, 160, 0);">encoding</span> <span style="box-sizing:border-box;outline-style:none;color:rgb(176, 178, 176);font-style:italic;"># ASCII-8BIT, 相当于是一个字节数组(byte array, 1byte = 8bit)</span>
+<span style="box-sizing:border-box;outline-style:none;color:rgb(170, 34, 255);">puts</span> <span style="box-sizing:border-box;outline-style:none;">str</span><span style="box-sizing:border-box;outline-style:none;">.</span><span style="box-sizing:border-box;outline-style:none;color:rgb(0, 160, 0);">bytes</span><span style="box-sizing:border-box;outline-style:none;">.</span><span style="box-sizing:border-box;outline-style:none;color:rgb(0, 160, 0);">inspect</span> <span style="box-sizing:border-box;outline-style:none;color:rgb(176, 178, 176);font-style:italic;"># [214, 208] , 等于上示例的 "中".encode('GBK').bytes.inspect .也就是说变量的在内存里的二进制值还是 GBK 编码.</span>
+<span style="box-sizing:border-box;outline-style:none;color:rgb(170, 34, 255);">puts</span> <span style="box-sizing:border-box;outline-style:none;">str</span> <span style="box-sizing:border-box;outline-style:none;color:rgb(176, 178, 176);font-style:italic;"># 打印出乱码. 因为终端一般设置的编码为 UTF-8 ,如果想要此语句不显示成乱码,把终端编码改成 GBK 即可.记得改回 UTF-8.</span>
+
+<span style="box-sizing:border-box;outline-style:none;color:rgb(170, 34, 255);">puts</span> <span style="box-sizing:border-box;outline-style:none;">str</span><span style="box-sizing:border-box;outline-style:none;">.</span><span style="box-sizing:border-box;outline-style:none;color:rgb(0, 160, 0);">force_encoding</span><span style="box-sizing:border-box;outline-style:none;">(</span><span style="box-sizing:border-box;outline-style:none;color:rgb(187, 68, 68);">'GBK'</span><span style="box-sizing:border-box;outline-style:none;">).</span><span style="box-sizing:border-box;outline-style:none;color:rgb(0, 160, 0);">bytes</span><span style="box-sizing:border-box;outline-style:none;">.</span><span style="box-sizing:border-box;outline-style:none;color:rgb(0, 160, 0);">inspect</span> <span style="box-sizing:border-box;outline-style:none;color:rgb(176, 178, 176);font-style:italic;"># [214, 208], 字节还是 GBK 未变</span>
+<span style="box-sizing:border-box;outline-style:none;color:rgb(170, 34, 255);">puts</span> <span style="box-sizing:border-box;outline-style:none;">str</span><span style="box-sizing:border-box;outline-style:none;">.</span><span style="box-sizing:border-box;outline-style:none;color:rgb(0, 160, 0);">force_encoding</span><span style="box-sizing:border-box;outline-style:none;">(</span><span style="box-sizing:border-box;outline-style:none;color:rgb(187, 68, 68);">'GBK'</span><span style="box-sizing:border-box;outline-style:none;">).</span><span style="box-sizing:border-box;outline-style:none;color:rgb(0, 160, 0);">encode</span><span style="box-sizing:border-box;outline-style:none;">(</span><span style="box-sizing:border-box;outline-style:none;color:rgb(187, 68, 68);">'UTF-8'</span><span style="box-sizing:border-box;outline-style:none;">)</span> <span style="box-sizing:border-box;outline-style:none;color:rgb(176, 178, 176);font-style:italic;"># 中 force_encoding 只是改变变量的编码元信息. encode 把变量的字节从 GBK 变成 UTF-8 . 这样打印就不乱码了.</span>
+
+<span style="box-sizing:border-box;outline-style:none;color:rgb(170, 34, 255);">puts</span> <span style="box-sizing:border-box;outline-style:none;">str</span><span style="box-sizing:border-box;outline-style:none;">.</span><span style="box-sizing:border-box;outline-style:none;color:rgb(0, 160, 0);">force_encoding</span><span style="box-sizing:border-box;outline-style:none;">(</span><span style="box-sizing:border-box;outline-style:none;color:rgb(187, 68, 68);">'BIG5'</span><span style="box-sizing:border-box;outline-style:none;">).</span><span style="box-sizing:border-box;outline-style:none;color:rgb(0, 160, 0);">bytes</span><span style="box-sizing:border-box;outline-style:none;">.</span><span style="box-sizing:border-box;outline-style:none;color:rgb(0, 160, 0);">inspect</span> <span style="box-sizing:border-box;outline-style:none;color:rgb(176, 178, 176);font-style:italic;"># [214, 208], 字节还是 GBK 未变</span>
+<span style="box-sizing:border-box;outline-style:none;color:rgb(170, 34, 255);">puts</span> <span style="box-sizing:border-box;outline-style:none;">str</span><span style="box-sizing:border-box;outline-style:none;">.</span><span style="box-sizing:border-box;outline-style:none;color:rgb(0, 160, 0);">force_encoding</span><span style="box-sizing:border-box;outline-style:none;">(</span><span style="box-sizing:border-box;outline-style:none;color:rgb(187, 68, 68);">'BIG5'</span><span style="box-sizing:border-box;outline-style:none;">).</span><span style="box-sizing:border-box;outline-style:none;color:rgb(0, 160, 0);">encode</span><span style="box-sizing:border-box;outline-style:none;">(</span><span style="box-sizing:border-box;outline-style:none;color:rgb(187, 68, 68);">'UTF-8'</span><span style="box-sizing:border-box;outline-style:none;">)</span> <span style="box-sizing:border-box;outline-style:none;color:rgb(176, 178, 176);font-style:italic;"># 笢 同样的字节数据,在繁体 BIG5 编码里有效且是另外一个字符.</span>
+
+<span style="box-sizing:border-box;outline-style:none;">str</span><span style="box-sizing:border-box;outline-style:none;">.</span><span style="box-sizing:border-box;outline-style:none;color:rgb(0, 160, 0);">encode</span><span style="box-sizing:border-box;outline-style:none;">(</span><span style="box-sizing:border-box;outline-style:none;color:rgb(187, 68, 68);">'UTF-8'</span><span style="box-sizing:border-box;outline-style:none;">)</span> <span style="box-sizing:border-box;outline-style:none;color:rgb(176, 178, 176);font-style:italic;"># 报错.因为不知道字节的编码信息,有可能默认编码转换映射是从 ASCII to UTF-8(待考证)</span>
+</code></pre> 
+<p style="box-sizing:border-box;margin-top:0px;outline-style:none;margin-bottom:1.2em;font-size:1em;line-height:1.8em;">把一个字符转成对应编码的字节不难,把一个已知编码信息的字节转成对应字符也不难.</p>
+
+<p style="box-sizing:border-box;margin-top:0px;outline-style:none;margin-bottom:1.2em;font-size:1em;line-height:1.8em;">难在把一个不知道编码信息的二进制数据,转成对应的字符. <code style="box-sizing:border-box;font-family:SFMono-Regular, Menlo, Monaco, Consolas, &quot;Liberation Mono&quot;, &quot;Courier New&quot;, monospace;overflow-wrap:break-word;outline-style:none;display:inline-block;border:0px;margin:0px 2px;border-radius:3px;word-break:break-all;font-size:0.9em;background-color:rgb(242, 242, 242);padding:0px 8px;color:rgb(102, 102, 102);">[214, 208]</code> 是 GBK 编码里的 "中" 字,同时也是 BIG5 编码里面的 "笢" 字.</p>
+
+<p style="box-sizing:border-box;margin-top:0px;outline-style:none;margin-bottom:1.2em;font-size:1em;line-height:1.8em;">上示例就是演示了邮件里碰到的编码问题,当正文经过 base64 编码后.收到邮件后, base64 解码出来的二进制数据,到底是 GBK, 还是 BIG5 ,还是其它编码?</p>
+
+<p style="box-sizing:border-box;margin-top:0px;outline-style:none;margin-bottom:1.2em;font-size:1em;line-height:1.8em;">所幸的是,大部分情况我们都不需要靠猜, 一般邮件正文 part 都有这样一段 header 信息. 其 Content-Type 的 charset 就告诉了我们这段 base64 解码后的二进制是什么编码.</p>
+ <pre style="box-sizing:border-box;display:block;outline-style:none;margin-bottom:1.2em;background-color:rgb(246, 248, 250);border:0px;margin-left:0px;margin-right:0px;padding:15px 25px;border-radius:0px;font-family:Menlo, Monaco, Consolas, &quot;Courier New&quot;, monospace;font-size:0.8em;margin-top:0px;overflow:auto;color:rgb(68, 68, 68);"><code style="box-sizing:border-box;font-family:SFMono-Regular, Menlo, Monaco, Consolas, &quot;Liberation Mono&quot;, &quot;Courier New&quot;, monospace;overflow-wrap:break-word;outline-style:none;line-height:150%;margin:0px 2px;border-radius:3px;word-break:break-all;display:inline-block;color:rgb(102, 102, 102);padding:0px 8px;background-color:rgba(0, 0, 0, 0);border:none;font-size:1em;">MIME-Version: 1.0
+Content-Type: text/html; charset="utf-8"
+Content-Transfer-Encoding: base64
+</code></pre> 
+<p style="box-sizing:border-box;margin-top:0px;outline-style:none;margin-bottom:1.2em;font-size:1em;line-height:1.8em;">代码示例:</p>
+ <pre style="box-sizing:border-box;display:block;outline-style:none;margin-bottom:1.2em;background-color:rgb(246, 248, 250);border:0px;margin-left:0px;margin-right:0px;padding:15px 25px;border-radius:0px;font-family:Menlo, Monaco, Consolas, &quot;Courier New&quot;, monospace;font-size:0.8em;margin-top:0px;overflow:auto;color:rgb(68, 68, 68);"><code style="box-sizing:border-box;font-family:SFMono-Regular, Menlo, Monaco, Consolas, &quot;Liberation Mono&quot;, &quot;Courier New&quot;, monospace;overflow-wrap:break-word;outline-style:none;line-height:150%;margin:0px 2px;border-radius:3px;word-break:break-all;display:inline-block;color:rgb(102, 102, 102);padding:0px 8px;background-color:rgba(0, 0, 0, 0);border:none;font-size:1em;"><span style="box-sizing:border-box;outline-style:none;color:rgb(170, 34, 255);">require</span> <span style="box-sizing:border-box;outline-style:none;color:rgb(187, 68, 68);">'mail'</span> <span style="box-sizing:border-box;outline-style:none;color:rgb(176, 178, 176);font-style:italic;"># 需要先安装 mail gem</span>
+<span style="box-sizing:border-box;outline-style:none;color:rgb(176, 178, 176);font-style:italic;"># 构建 RFC822 标准的邮件字符串</span>
+<span style="box-sizing:border-box;outline-style:none;">mail</span> <span style="box-sizing:border-box;outline-style:none;color:rgb(102, 102, 102);">=</span> <span style="box-sizing:border-box;outline-style:none;color:rgb(136, 0, 0);">Mail</span><span style="box-sizing:border-box;outline-style:none;">.</span><span style="box-sizing:border-box;outline-style:none;color:rgb(0, 160, 0);">new</span> <span style="box-sizing:border-box;outline-style:none;color:rgb(170, 34, 255);">do</span>
+  <span style="box-sizing:border-box;outline-style:none;">from</span>    <span style="box-sizing:border-box;outline-style:none;color:rgb(187, 68, 68);">'mikel@test.lindsaar.net'</span>
+  <span style="box-sizing:border-box;outline-style:none;">to</span>      <span style="box-sizing:border-box;outline-style:none;color:rgb(187, 68, 68);">'you@test.lindsaar.net'</span>
+  <span style="box-sizing:border-box;outline-style:none;">subject</span> <span style="box-sizing:border-box;outline-style:none;color:rgb(187, 68, 68);">'This is a test email'</span>
+  <span style="box-sizing:border-box;outline-style:none;">content_type</span> <span style="box-sizing:border-box;outline-style:none;color:rgb(187, 68, 68);">'text/plain; charset=GBK'</span>
+  <span style="box-sizing:border-box;outline-style:none;">body</span>    <span style="box-sizing:border-box;outline-style:none;color:rgb(187, 68, 68);">"中"</span><span style="box-sizing:border-box;outline-style:none;">.</span><span style="box-sizing:border-box;outline-style:none;color:rgb(0, 160, 0);">encode</span><span style="box-sizing:border-box;outline-style:none;">(</span><span style="box-sizing:border-box;outline-style:none;color:rgb(187, 68, 68);">'GBK'</span><span style="box-sizing:border-box;outline-style:none;">)</span>
+<span style="box-sizing:border-box;outline-style:none;color:rgb(170, 34, 255);">end</span>
+
+<span style="box-sizing:border-box;outline-style:none;">original_msg</span> <span style="box-sizing:border-box;outline-style:none;color:rgb(102, 102, 102);">=</span> <span style="box-sizing:border-box;outline-style:none;">mail</span><span style="box-sizing:border-box;outline-style:none;">.</span><span style="box-sizing:border-box;outline-style:none;color:rgb(0, 160, 0);">to_s</span>
+<span style="box-sizing:border-box;outline-style:none;color:rgb(176, 178, 176);font-style:italic;">=begin
+Date: Sat, 19 Aug 2017 13:39:10 +0800
+From: mikel@test.lindsaar.net
+To: you@test.lindsaar.net
+Message-ID: &lt;5997cefe17bb6_5ded1e74693bc8972ac@hparch.mail&gt;
+Subject: This is a test email
+Mime-Version: 1.0
+Content-Type: text/plain;
+ charset=GBK
+Content-Transfer-Encoding: base64
+
+1tA=
+=end</span>
+<span style="box-sizing:border-box;outline-style:none;color:rgb(170, 34, 255);">puts</span> <span style="box-sizing:border-box;outline-style:none;">original_msg</span>
+
+<span style="box-sizing:border-box;outline-style:none;color:rgb(176, 178, 176);font-style:italic;"># 开始解析</span>
+<span style="box-sizing:border-box;outline-style:none;color:rgb(170, 34, 255);">puts</span> <span style="box-sizing:border-box;outline-style:none;color:rgb(187, 68, 68);">"*"</span> <span style="box-sizing:border-box;outline-style:none;color:rgb(102, 102, 102);">*</span> <span style="box-sizing:border-box;outline-style:none;color:rgb(102, 102, 102);">42</span>
+<span style="box-sizing:border-box;outline-style:none;">mail</span> <span style="box-sizing:border-box;outline-style:none;color:rgb(102, 102, 102);">=</span> <span style="box-sizing:border-box;outline-style:none;color:rgb(136, 0, 0);">Mail</span><span style="box-sizing:border-box;outline-style:none;">.</span><span style="box-sizing:border-box;outline-style:none;color:rgb(0, 160, 0);">new</span><span style="box-sizing:border-box;outline-style:none;">(</span><span style="box-sizing:border-box;outline-style:none;">original_msg</span><span style="box-sizing:border-box;outline-style:none;">)</span>
+<span style="box-sizing:border-box;outline-style:none;">body</span> <span style="box-sizing:border-box;outline-style:none;color:rgb(102, 102, 102);">=</span> <span style="box-sizing:border-box;outline-style:none;">mail</span><span style="box-sizing:border-box;outline-style:none;">.</span><span style="box-sizing:border-box;outline-style:none;color:rgb(0, 160, 0);">body</span><span style="box-sizing:border-box;outline-style:none;">.</span><span style="box-sizing:border-box;outline-style:none;color:rgb(0, 160, 0);">decoded</span>
+<span style="box-sizing:border-box;outline-style:none;color:rgb(170, 34, 255);">puts</span> <span style="box-sizing:border-box;outline-style:none;">body</span> <span style="box-sizing:border-box;outline-style:none;color:rgb(176, 178, 176);font-style:italic;"># 乱码</span>
+<span style="box-sizing:border-box;outline-style:none;color:rgb(170, 34, 255);">puts</span> <span style="box-sizing:border-box;outline-style:none;">body</span><span style="box-sizing:border-box;outline-style:none;">.</span><span style="box-sizing:border-box;outline-style:none;color:rgb(0, 160, 0);">encoding</span> <span style="box-sizing:border-box;outline-style:none;color:rgb(176, 178, 176);font-style:italic;"># ASCII-8BIT</span>
+<span style="box-sizing:border-box;outline-style:none;color:rgb(170, 34, 255);">puts</span> <span style="box-sizing:border-box;outline-style:none;">body</span><span style="box-sizing:border-box;outline-style:none;">.</span><span style="box-sizing:border-box;outline-style:none;color:rgb(0, 160, 0);">force_encoding</span><span style="box-sizing:border-box;outline-style:none;">(</span><span style="box-sizing:border-box;outline-style:none;">mail</span><span style="box-sizing:border-box;outline-style:none;">.</span><span style="box-sizing:border-box;outline-style:none;color:rgb(0, 160, 0);">charset</span><span style="box-sizing:border-box;outline-style:none;">).</span><span style="box-sizing:border-box;outline-style:none;color:rgb(0, 160, 0);">encode</span><span style="box-sizing:border-box;outline-style:none;">(</span><span style="box-sizing:border-box;outline-style:none;color:rgb(187, 68, 68);">'UTF-8'</span><span style="box-sizing:border-box;outline-style:none;">)</span> <span style="box-sizing:border-box;outline-style:none;color:rgb(176, 178, 176);font-style:italic;"># 中</span>
+<span style="box-sizing:border-box;outline-style:none;color:rgb(176, 178, 176);font-style:italic;"># 需要检查 charset 是否存在,通过 Encoding.find 方法</span>
+</code></pre> 
+<p style="box-sizing:border-box;margin-top:0px;outline-style:none;margin-bottom:1.2em;font-size:1em;line-height:1.8em;">理想的世界, content_type 是带了 charset .但现实与理想总是存在差距.有些没有带 charset ,有些甚至连 content_type 整行都没有.</p>
+
+<p style="box-sizing:border-box;margin-top:0px;outline-style:none;margin-bottom:1.2em;font-size:1em;line-height:1.8em;">这个时候编码就要靠猜了, <a href="https://github.com/brianmario/charlock_holmes" rel="nofollow" target="_blank" title="" style="box-sizing:border-box;background-color:transparent;outline-style:none;color:rgb(34, 117, 218);text-decoration:none;">charlock_holmes</a> 就是干这事的.</p>
+
+<p style="box-sizing:border-box;margin-top:0px;outline-style:none;margin-bottom:1.2em;font-size:1em;line-height:1.8em;">但这个只有在正文很多的时候才会有可能猜的准.</p>
+ <pre style="box-sizing:border-box;display:block;outline-style:none;margin-bottom:1.2em;background-color:rgb(246, 248, 250);border:0px;margin-left:0px;margin-right:0px;padding:15px 25px;border-radius:0px;font-family:Menlo, Monaco, Consolas, &quot;Courier New&quot;, monospace;font-size:0.8em;margin-top:0px;overflow:auto;color:rgb(68, 68, 68);"><code style="box-sizing:border-box;font-family:SFMono-Regular, Menlo, Monaco, Consolas, &quot;Liberation Mono&quot;, &quot;Courier New&quot;, monospace;overflow-wrap:break-word;outline-style:none;line-height:150%;margin:0px 2px;border-radius:3px;word-break:break-all;display:inline-block;color:rgb(102, 102, 102);padding:0px 8px;background-color:rgba(0, 0, 0, 0);border:none;font-size:1em;"><span style="box-sizing:border-box;outline-style:none;color:rgb(170, 34, 255);">puts</span> <span style="box-sizing:border-box;outline-style:none;color:rgb(136, 0, 0);">CharlockHolmes</span><span style="box-sizing:border-box;outline-style:none;color:rgb(102, 102, 102);">::</span><span style="box-sizing:border-box;outline-style:none;color:rgb(136, 0, 0);">EncodingDetector</span><span style="box-sizing:border-box;outline-style:none;">.</span><span style="box-sizing:border-box;outline-style:none;color:rgb(0, 160, 0);">detect</span><span style="box-sizing:border-box;outline-style:none;">(</span><span style="box-sizing:border-box;outline-style:none;color:rgb(187, 68, 68);">'中文测试很长的文字'</span><span style="box-sizing:border-box;outline-style:none;">.</span><span style="box-sizing:border-box;outline-style:none;color:rgb(0, 160, 0);">encode</span><span style="box-sizing:border-box;outline-style:none;">(</span><span style="box-sizing:border-box;outline-style:none;color:rgb(187, 68, 68);">'GBK'</span><span style="box-sizing:border-box;outline-style:none;">).</span><span style="box-sizing:border-box;outline-style:none;color:rgb(0, 160, 0);">force_encoding</span><span style="box-sizing:border-box;outline-style:none;">(</span><span style="box-sizing:border-box;outline-style:none;color:rgb(187, 68, 68);">'ASCII-8BIT'</span><span style="box-sizing:border-box;outline-style:none;">))</span>
+<span style="box-sizing:border-box;outline-style:none;color:rgb(176, 178, 176);font-style:italic;"># {:type=&gt;:text, :encoding=&gt;"UTF-16BE", :ruby_encoding=&gt;"UTF-16BE", :confidence=&gt;10}</span>
+
+<span style="box-sizing:border-box;outline-style:none;color:rgb(170, 34, 255);">puts</span> <span style="box-sizing:border-box;outline-style:none;color:rgb(136, 0, 0);">CharlockHolmes</span><span style="box-sizing:border-box;outline-style:none;color:rgb(102, 102, 102);">::</span><span style="box-sizing:border-box;outline-style:none;color:rgb(136, 0, 0);">EncodingDetector</span><span style="box-sizing:border-box;outline-style:none;">.</span><span style="box-sizing:border-box;outline-style:none;color:rgb(0, 160, 0);">detect</span><span style="box-sizing:border-box;outline-style:none;">(</span><span style="box-sizing:border-box;outline-style:none;color:rgb(187, 68, 68);">'遍身罗绮者 不是养蚕人'</span><span style="box-sizing:border-box;outline-style:none;">.</span><span style="box-sizing:border-box;outline-style:none;color:rgb(0, 160, 0);">encode</span><span style="box-sizing:border-box;outline-style:none;">(</span><span style="box-sizing:border-box;outline-style:none;color:rgb(187, 68, 68);">'GBK'</span><span style="box-sizing:border-box;outline-style:none;">).</span><span style="box-sizing:border-box;outline-style:none;color:rgb(0, 160, 0);">force_encoding</span><span style="box-sizing:border-box;outline-style:none;">(</span><span style="box-sizing:border-box;outline-style:none;color:rgb(187, 68, 68);">'ASCII-8BIT'</span><span style="box-sizing:border-box;outline-style:none;">))</span>
+<span style="box-sizing:border-box;outline-style:none;color:rgb(176, 178, 176);font-style:italic;"># {:type=&gt;:text, :encoding=&gt;"ISO-8859-6", :ruby_encoding=&gt;"ISO-8859-6", :confidence=&gt;16, :language=&gt;"ar"}</span>
+
+<span style="box-sizing:border-box;outline-style:none;color:rgb(170, 34, 255);">puts</span> <span style="box-sizing:border-box;outline-style:none;color:rgb(136, 0, 0);">CharlockHolmes</span><span style="box-sizing:border-box;outline-style:none;color:rgb(102, 102, 102);">::</span><span style="box-sizing:border-box;outline-style:none;color:rgb(136, 0, 0);">EncodingDetector</span><span style="box-sizing:border-box;outline-style:none;">.</span><span style="box-sizing:border-box;outline-style:none;color:rgb(0, 160, 0);">detect</span><span style="box-sizing:border-box;outline-style:none;">(</span><span style="box-sizing:border-box;outline-style:none;color:rgb(187, 68, 68);">'中文测试,工要在地一上是中国；'</span><span style="box-sizing:border-box;outline-style:none;">.</span><span style="box-sizing:border-box;outline-style:none;color:rgb(0, 160, 0);">encode</span><span style="box-sizing:border-box;outline-style:none;">(</span><span style="box-sizing:border-box;outline-style:none;color:rgb(187, 68, 68);">'GBK'</span><span style="box-sizing:border-box;outline-style:none;">).</span><span style="box-sizing:border-box;outline-style:none;color:rgb(0, 160, 0);">force_encoding</span><span style="box-sizing:border-box;outline-style:none;">(</span><span style="box-sizing:border-box;outline-style:none;color:rgb(187, 68, 68);">'ASCII-8BIT'</span><span style="box-sizing:border-box;outline-style:none;">))</span>
+<span style="box-sizing:border-box;outline-style:none;color:rgb(176, 178, 176);font-style:italic;"># {:type=&gt;:text, :encoding=&gt;"GB18030", :ruby_encoding=&gt;"GB18030", :confidence=&gt;100, :language=&gt;"zh"}</span>
+</code></pre> 
+<p style="box-sizing:border-box;margin-top:0px;outline-style:none;margin-bottom:1.2em;font-size:1em;line-height:1.8em;"><strong style="box-sizing:border-box;font-weight:bolder;outline-style:none;">所以,优先以 content_type 的 charset 去解码, charlock_holmes 只是最后方案.</strong></p>
+
+<p style="box-sizing:border-box;margin-top:0px;outline-style:none;margin-bottom:1.2em;font-size:1em;line-height:1.8em;">事实上 encode 方法有个坑,就是有可能 encode 碰到无效字节,会导致报错. 推荐加上 invalid 和 undef 参数. replace 默认是替换成问号.还可以直接删除无效字节,推荐使用替换.</p>
+ <pre style="box-sizing:border-box;display:block;outline-style:none;margin-bottom:1.2em;background-color:rgb(246, 248, 250);border:0px;margin-left:0px;margin-right:0px;padding:15px 25px;border-radius:0px;font-family:Menlo, Monaco, Consolas, &quot;Courier New&quot;, monospace;font-size:0.8em;margin-top:0px;overflow:auto;color:rgb(68, 68, 68);"><code style="box-sizing:border-box;font-family:SFMono-Regular, Menlo, Monaco, Consolas, &quot;Liberation Mono&quot;, &quot;Courier New&quot;, monospace;overflow-wrap:break-word;outline-style:none;line-height:150%;margin:0px 2px;border-radius:3px;word-break:break-all;display:inline-block;color:rgb(102, 102, 102);padding:0px 8px;background-color:rgba(0, 0, 0, 0);border:none;font-size:1em;"><span style="box-sizing:border-box;outline-style:none;color:rgb(187, 68, 68);">"abc"</span><span style="box-sizing:border-box;outline-style:none;">.</span><span style="box-sizing:border-box;outline-style:none;color:rgb(0, 160, 0);">encode</span><span style="box-sizing:border-box;outline-style:none;">(</span><span style="box-sizing:border-box;outline-style:none;color:rgb(187, 68, 68);">'UTF-8'</span><span style="box-sizing:border-box;outline-style:none;">,</span> <span style="box-sizing:border-box;outline-style:none;color:rgb(184, 134, 11);">invalid: :replace</span><span style="box-sizing:border-box;outline-style:none;">,</span> <span style="box-sizing:border-box;outline-style:none;color:rgb(184, 134, 11);">undef: :replace</span><span style="box-sizing:border-box;outline-style:none;">)</span>
+</code></pre> <h3 style="box-sizing:border-box;outline-style:none;color:rgb(102, 102, 102);margin:0px 0px 20px;font-weight:700;line-height:100%;text-align:left;font-size:18px;">邮件非常见格式解析</h3><h4 style="box-sizing:border-box;outline-style:none;color:rgb(102, 102, 102);margin:0px 0px 20px;font-weight:700;line-height:100%;text-align:left;font-size:16px;">1. 正文只有图片</h4> <pre style="box-sizing:border-box;display:block;outline-style:none;margin-bottom:1.2em;background-color:rgb(246, 248, 250);border:0px;margin-left:0px;margin-right:0px;padding:15px 25px;border-radius:0px;font-family:Menlo, Monaco, Consolas, &quot;Courier New&quot;, monospace;font-size:0.8em;margin-top:0px;overflow:auto;color:rgb(68, 68, 68);"><code style="box-sizing:border-box;font-family:SFMono-Regular, Menlo, Monaco, Consolas, &quot;Liberation Mono&quot;, &quot;Courier New&quot;, monospace;overflow-wrap:break-word;outline-style:none;line-height:150%;margin:0px 2px;border-radius:3px;word-break:break-all;display:inline-block;color:rgb(102, 102, 102);padding:0px 8px;background-color:rgba(0, 0, 0, 0);border:none;font-size:1em;"><span style="box-sizing:border-box;outline-style:none;color:rgb(170, 34, 255);">require</span> <span style="box-sizing:border-box;outline-style:none;color:rgb(187, 68, 68);">'mail'</span> <span style="box-sizing:border-box;outline-style:none;color:rgb(176, 178, 176);font-style:italic;"># 需要先安装 mail gem</span>
+<span style="box-sizing:border-box;outline-style:none;color:rgb(170, 34, 255);">require</span> <span style="box-sizing:border-box;outline-style:none;color:rgb(187, 68, 68);">'open-uri'</span>
+<span style="box-sizing:border-box;outline-style:none;color:rgb(176, 178, 176);font-style:italic;"># 构建 RFC822 标准的邮件字符串</span>
+<span style="box-sizing:border-box;outline-style:none;">mail</span> <span style="box-sizing:border-box;outline-style:none;color:rgb(102, 102, 102);">=</span> <span style="box-sizing:border-box;outline-style:none;color:rgb(136, 0, 0);">Mail</span><span style="box-sizing:border-box;outline-style:none;">.</span><span style="box-sizing:border-box;outline-style:none;color:rgb(0, 160, 0);">new</span> <span style="box-sizing:border-box;outline-style:none;color:rgb(170, 34, 255);">do</span>
+  <span style="box-sizing:border-box;outline-style:none;">from</span>    <span style="box-sizing:border-box;outline-style:none;color:rgb(187, 68, 68);">'mikel@test.lindsaar.net'</span>
+  <span style="box-sizing:border-box;outline-style:none;">to</span>      <span style="box-sizing:border-box;outline-style:none;color:rgb(187, 68, 68);">'you@test.lindsaar.net'</span>
+  <span style="box-sizing:border-box;outline-style:none;">subject</span> <span style="box-sizing:border-box;outline-style:none;color:rgb(187, 68, 68);">'This is a test email'</span>
+  <span style="box-sizing:border-box;outline-style:none;">content_type</span> <span style="box-sizing:border-box;outline-style:none;color:rgb(187, 68, 68);">'image/png; filename=One_black_Pixel.png'</span>
+  <span style="box-sizing:border-box;outline-style:none;">body</span>    <span style="box-sizing:border-box;outline-style:none;color:rgb(170, 34, 255);">open</span><span style="box-sizing:border-box;outline-style:none;">(</span><span style="box-sizing:border-box;outline-style:none;color:rgb(187, 68, 68);">'https://upload.wikimedia.org/wikipedia/en/4/45/One_black_Pixel.png'</span><span style="box-sizing:border-box;outline-style:none;">).</span><span style="box-sizing:border-box;outline-style:none;color:rgb(0, 160, 0);">read</span>
+<span style="box-sizing:border-box;outline-style:none;color:rgb(170, 34, 255);">end</span>
+
+<span style="box-sizing:border-box;outline-style:none;">original_msg</span> <span style="box-sizing:border-box;outline-style:none;color:rgb(102, 102, 102);">=</span> <span style="box-sizing:border-box;outline-style:none;">mail</span><span style="box-sizing:border-box;outline-style:none;">.</span><span style="box-sizing:border-box;outline-style:none;color:rgb(0, 160, 0);">to_s</span>
+<span style="box-sizing:border-box;outline-style:none;color:rgb(176, 178, 176);font-style:italic;">=begin
+Date: Sat, 19 Aug 2017 14:25:48 +0800
+From: mikel@test.lindsaar.net
+To: you@test.lindsaar.net
+Message-ID: &lt;5997d9ec98315_695f2a4c229bd097632@hparch.mail&gt;
+Subject: This is a test email
+Mime-Version: 1.0
+Content-Type: image/png;
+ filename=One_black_Pixel.png
+Content-Transfer-Encoding: base64
+
+iVBORwoaCgAAAApJSERSAAAAAQAAAAEIAgAAAJB3U94AAAABc1JHQgCuzhzp
+AAAABGdBTUEAALGPC/xhBQAAAAlwSFlzAAAOwwAADsMBx2+oZAAAAAxJREFU
+GFdjYGBgAAAABAABXM3/aQAAAABJRU5ErkJggg==
+=end</span>
+<span style="box-sizing:border-box;outline-style:none;color:rgb(170, 34, 255);">puts</span> <span style="box-sizing:border-box;outline-style:none;">original_msg</span>
+
+<span style="box-sizing:border-box;outline-style:none;color:rgb(176, 178, 176);font-style:italic;"># 开始解析</span>
+<span style="box-sizing:border-box;outline-style:none;color:rgb(170, 34, 255);">puts</span> <span style="box-sizing:border-box;outline-style:none;color:rgb(187, 68, 68);">"*"</span> <span style="box-sizing:border-box;outline-style:none;color:rgb(102, 102, 102);">*</span> <span style="box-sizing:border-box;outline-style:none;color:rgb(102, 102, 102);">42</span>
+<span style="box-sizing:border-box;outline-style:none;">mail</span> <span style="box-sizing:border-box;outline-style:none;color:rgb(102, 102, 102);">=</span> <span style="box-sizing:border-box;outline-style:none;color:rgb(136, 0, 0);">Mail</span><span style="box-sizing:border-box;outline-style:none;">.</span><span style="box-sizing:border-box;outline-style:none;color:rgb(0, 160, 0);">new</span><span style="box-sizing:border-box;outline-style:none;">(</span><span style="box-sizing:border-box;outline-style:none;">original_msg</span><span style="box-sizing:border-box;outline-style:none;">)</span>
+<span style="box-sizing:border-box;outline-style:none;color:rgb(170, 34, 255);">puts</span> <span style="box-sizing:border-box;outline-style:none;">mail</span><span style="box-sizing:border-box;outline-style:none;">.</span><span style="box-sizing:border-box;outline-style:none;color:rgb(0, 160, 0);">body</span> <span style="box-sizing:border-box;outline-style:none;color:rgb(176, 178, 176);font-style:italic;"># 正文是乱码</span>
+<span style="box-sizing:border-box;outline-style:none;color:rgb(170, 34, 255);">puts</span> <span style="box-sizing:border-box;outline-style:none;">mail</span><span style="box-sizing:border-box;outline-style:none;">.</span><span style="box-sizing:border-box;outline-style:none;color:rgb(0, 160, 0);">attachment?</span> <span style="box-sizing:border-box;outline-style:none;color:rgb(176, 178, 176);font-style:italic;"># true</span>
+</code></pre> 
+<p style="box-sizing:border-box;margin-top:0px;outline-style:none;margin-bottom:1.2em;font-size:1em;line-height:1.8em;">对于这种只有图片的邮件,我们先用 attachment? 方法判断是不是附件,是附件的话,按附件的逻辑处理,比如保存到本地.</p>
+<h4 style="box-sizing:border-box;outline-style:none;color:rgb(102, 102, 102);margin:0px 0px 20px;font-weight:700;line-height:100%;text-align:left;font-size:16px;">2. 正文有多个文本段</h4>
+<p style="box-sizing:border-box;margin-top:0px;outline-style:none;margin-bottom:1.2em;font-size:1em;line-height:1.8em;">此非常见格式的邮件一般是苹果设备自带的邮件客户端发出来的.</p>
+
+<p style="box-sizing:border-box;margin-top:0px;outline-style:none;margin-bottom:1.2em;font-size:1em;line-height:1.8em;">苹果邮件客户端这么做是为了实现在纯文本格式邮件插入图片的上下环绕效果.</p>
+
+<p style="box-sizing:border-box;margin-top:0px;outline-style:none;margin-bottom:1.2em;font-size:1em;line-height:1.8em;">主流的做法纯文本不插入图片,图片只作为普通附件存在.要插入图片,使用 html 格式,通过 html img 标签来实现,img src 填图片附件的 cid .</p>
+
+<p style="box-sizing:border-box;margin-top:0px;outline-style:none;margin-bottom:1.2em;font-size:1em;line-height:1.8em;">这样的格式,在 gmail 显示不出环绕效果,只作为普通附件显示. 在苹果的客户端可以显示.</p>
+
+<p style="box-sizing:border-box;margin-top:0px;outline-style:none;margin-bottom:1.2em;font-size:1em;line-height:1.8em;">像 <a href="https://mailcatcher.me/" rel="nofollow" target="_blank" title="" style="box-sizing:border-box;background-color:transparent;outline-style:none;color:rgb(34, 117, 218);text-decoration:none;">MailCatcher</a> 这个接收测试工具,和我开始一样,以为一个邮件只有一个 text part,所以导致这种邮件只会显示部分文本.</p>
+ <pre style="box-sizing:border-box;display:block;outline-style:none;margin-bottom:1.2em;background-color:rgb(246, 248, 250);border:0px;margin-left:0px;margin-right:0px;padding:15px 25px;border-radius:0px;font-family:Menlo, Monaco, Consolas, &quot;Courier New&quot;, monospace;font-size:0.8em;margin-top:0px;overflow:auto;color:rgb(68, 68, 68);"><code style="box-sizing:border-box;font-family:SFMono-Regular, Menlo, Monaco, Consolas, &quot;Liberation Mono&quot;, &quot;Courier New&quot;, monospace;overflow-wrap:break-word;outline-style:none;line-height:150%;margin:0px 2px;border-radius:3px;word-break:break-all;display:inline-block;color:rgb(102, 102, 102);padding:0px 8px;background-color:rgba(0, 0, 0, 0);border:none;font-size:1em;"><span style="box-sizing:border-box;outline-style:none;color:rgb(170, 34, 255);">require</span> <span style="box-sizing:border-box;outline-style:none;color:rgb(187, 68, 68);">'mail'</span> <span style="box-sizing:border-box;outline-style:none;color:rgb(176, 178, 176);font-style:italic;"># 需要先安装 mail gem</span>
+<span style="box-sizing:border-box;outline-style:none;color:rgb(170, 34, 255);">require</span> <span style="box-sizing:border-box;outline-style:none;color:rgb(187, 68, 68);">'open-uri'</span>
+<span style="box-sizing:border-box;outline-style:none;color:rgb(176, 178, 176);font-style:italic;"># 构建 RFC822 标准的邮件字符串</span>
+<span style="box-sizing:border-box;outline-style:none;">mail</span> <span style="box-sizing:border-box;outline-style:none;color:rgb(102, 102, 102);">=</span> <span style="box-sizing:border-box;outline-style:none;color:rgb(136, 0, 0);">Mail</span><span style="box-sizing:border-box;outline-style:none;">.</span><span style="box-sizing:border-box;outline-style:none;color:rgb(0, 160, 0);">new</span> <span style="box-sizing:border-box;outline-style:none;color:rgb(170, 34, 255);">do</span>
+  <span style="box-sizing:border-box;outline-style:none;">from</span>    <span style="box-sizing:border-box;outline-style:none;color:rgb(187, 68, 68);">'mikel@test.lindsaar.net'</span>
+  <span style="box-sizing:border-box;outline-style:none;">to</span>      <span style="box-sizing:border-box;outline-style:none;color:rgb(187, 68, 68);">'you@test.lindsaar.net'</span>
+  <span style="box-sizing:border-box;outline-style:none;">subject</span> <span style="box-sizing:border-box;outline-style:none;color:rgb(187, 68, 68);">'This is a test email'</span>
+  <span style="box-sizing:border-box;outline-style:none;">part</span> <span style="box-sizing:border-box;outline-style:none;color:rgb(184, 134, 11);">:content_type</span> <span style="box-sizing:border-box;outline-style:none;color:rgb(102, 102, 102);">=&gt;</span> <span style="box-sizing:border-box;outline-style:none;color:rgb(187, 68, 68);">"multipart/alternative"</span><span style="box-sizing:border-box;outline-style:none;">,</span> <span style="box-sizing:border-box;outline-style:none;color:rgb(184, 134, 11);">:content_disposition</span> <span style="box-sizing:border-box;outline-style:none;color:rgb(102, 102, 102);">=&gt;</span> <span style="box-sizing:border-box;outline-style:none;color:rgb(187, 68, 68);">"inline"</span> <span style="box-sizing:border-box;outline-style:none;color:rgb(170, 34, 255);">do</span> <span style="box-sizing:border-box;outline-style:none;color:rgb(102, 102, 102);">|</span><span style="box-sizing:border-box;outline-style:none;color:rgb(170, 34, 255);">p</span><span style="box-sizing:border-box;outline-style:none;color:rgb(102, 102, 102);">|</span>
+    <span style="box-sizing:border-box;outline-style:none;color:rgb(170, 34, 255);">p</span><span style="box-sizing:border-box;outline-style:none;">.</span><span style="box-sizing:border-box;outline-style:none;color:rgb(0, 160, 0);">part</span> <span style="box-sizing:border-box;outline-style:none;color:rgb(184, 134, 11);">body: </span><span style="box-sizing:border-box;outline-style:none;color:rgb(187, 68, 68);">"abc"</span>
+    <span style="box-sizing:border-box;outline-style:none;color:rgb(170, 34, 255);">p</span><span style="box-sizing:border-box;outline-style:none;">.</span><span style="box-sizing:border-box;outline-style:none;color:rgb(0, 160, 0);">part</span> <span style="box-sizing:border-box;outline-style:none;color:rgb(184, 134, 11);">content_type: </span><span style="box-sizing:border-box;outline-style:none;color:rgb(187, 68, 68);">'image/png; filename=One_black_Pixel.png'</span><span style="box-sizing:border-box;outline-style:none;">,</span> <span style="box-sizing:border-box;outline-style:none;color:rgb(184, 134, 11);">body: </span><span style="box-sizing:border-box;outline-style:none;color:rgb(170, 34, 255);">open</span><span style="box-sizing:border-box;outline-style:none;">(</span><span style="box-sizing:border-box;outline-style:none;color:rgb(187, 68, 68);">'https://upload.wikimedia.org/wikipedia/en/4/45/One_black_Pixel.png'</span><span style="box-sizing:border-box;outline-style:none;">).</span><span style="box-sizing:border-box;outline-style:none;color:rgb(0, 160, 0);">read</span>
+    <span style="box-sizing:border-box;outline-style:none;color:rgb(170, 34, 255);">p</span><span style="box-sizing:border-box;outline-style:none;">.</span><span style="box-sizing:border-box;outline-style:none;color:rgb(0, 160, 0);">part</span> <span style="box-sizing:border-box;outline-style:none;color:rgb(184, 134, 11);">body: </span><span style="box-sizing:border-box;outline-style:none;color:rgb(187, 68, 68);">"def"</span>
+  <span style="box-sizing:border-box;outline-style:none;color:rgb(170, 34, 255);">end</span>
+<span style="box-sizing:border-box;outline-style:none;color:rgb(170, 34, 255);">end</span>
+
+<span style="box-sizing:border-box;outline-style:none;">original_msg</span> <span style="box-sizing:border-box;outline-style:none;color:rgb(102, 102, 102);">=</span> <span style="box-sizing:border-box;outline-style:none;">mail</span><span style="box-sizing:border-box;outline-style:none;">.</span><span style="box-sizing:border-box;outline-style:none;color:rgb(0, 160, 0);">to_s</span>
+<span style="box-sizing:border-box;outline-style:none;color:rgb(176, 178, 176);font-style:italic;">=begin
+Date: Sat, 19 Aug 2017 14:58:30 +0800
+From: mikel@test.lindsaar.net
+To: you@test.lindsaar.net
+Message-ID: &lt;5997e19678f0f_70774d198d1bc8306db@hparch.mail&gt;
+Subject: This is a test email
+Mime-Version: 1.0
+Content-Type: multipart/mixed;
+ boundary="--==_mimepart_5997e19675b41_70774d198d1bc8305cd";
+ charset=UTF-8
+Content-Transfer-Encoding: 7bit
+
+
+----==_mimepart_5997e19675b41_70774d198d1bc8305cd
+Content-Type: multipart/alternative;
+ boundary="--==_mimepart_5997e1959f3c7_70774d198d1bc830458";
+ charset=UTF-8
+Content-Transfer-Encoding: 7bit
+Content-Disposition: inline
+Content-ID: &lt;5997e1967a6a3_70774d198d1bc830787@hparch.mail&gt;
+
+
+----==_mimepart_5997e1959f3c7_70774d198d1bc830458
+Content-Type: text/plain;
+ charset=UTF-8
+Content-Transfer-Encoding: 7bit
+
+abc
+----==_mimepart_5997e1959f3c7_70774d198d1bc830458
+Content-Type: text/plain;
+ charset=UTF-8
+Content-Transfer-Encoding: 7bit
+
+def
+----==_mimepart_5997e1959f3c7_70774d198d1bc830458
+Content-Type: image/png;
+ filename=One_black_Pixel.png
+Content-Transfer-Encoding: base64
+
+iVBORwoaCgAAAApJSERSAAAAAQAAAAEIAgAAAJB3U94AAAABc1JHQgCuzhzp
+AAAABGdBTUEAALGPC/xhBQAAAAlwSFlzAAAOwwAADsMBx2+oZAAAAAxJREFU
+GFdjYGBgAAAABAABXM3/aQAAAABJRU5ErkJggg==
+
+----==_mimepart_5997e1959f3c7_70774d198d1bc830458--
+
+----==_mimepart_5997e19675b41_70774d198d1bc8305cd--
+=end</span>
+<span style="box-sizing:border-box;outline-style:none;color:rgb(170, 34, 255);">puts</span> <span style="box-sizing:border-box;outline-style:none;">original_msg</span>
+
+<span style="box-sizing:border-box;outline-style:none;color:rgb(176, 178, 176);font-style:italic;"># 开始解析</span>
+<span style="box-sizing:border-box;outline-style:none;color:rgb(170, 34, 255);">puts</span> <span style="box-sizing:border-box;outline-style:none;color:rgb(187, 68, 68);">"*"</span> <span style="box-sizing:border-box;outline-style:none;color:rgb(102, 102, 102);">*</span> <span style="box-sizing:border-box;outline-style:none;color:rgb(102, 102, 102);">42</span>
+<span style="box-sizing:border-box;outline-style:none;">mail</span> <span style="box-sizing:border-box;outline-style:none;color:rgb(102, 102, 102);">=</span> <span style="box-sizing:border-box;outline-style:none;color:rgb(136, 0, 0);">Mail</span><span style="box-sizing:border-box;outline-style:none;">.</span><span style="box-sizing:border-box;outline-style:none;color:rgb(0, 160, 0);">new</span><span style="box-sizing:border-box;outline-style:none;">(</span><span style="box-sizing:border-box;outline-style:none;">original_msg</span><span style="box-sizing:border-box;outline-style:none;">)</span>
+<span style="box-sizing:border-box;outline-style:none;color:rgb(170, 34, 255);">puts</span> <span style="box-sizing:border-box;outline-style:none;">mail</span><span style="box-sizing:border-box;outline-style:none;">.</span><span style="box-sizing:border-box;outline-style:none;color:rgb(0, 160, 0);">multipart?</span>
+<span style="box-sizing:border-box;outline-style:none;color:rgb(170, 34, 255);">puts</span> <span style="box-sizing:border-box;outline-style:none;">mail</span><span style="box-sizing:border-box;outline-style:none;">.</span><span style="box-sizing:border-box;outline-style:none;color:rgb(0, 160, 0);">text_part</span><span style="box-sizing:border-box;outline-style:none;">.</span><span style="box-sizing:border-box;outline-style:none;color:rgb(0, 160, 0);">body</span> <span style="box-sizing:border-box;outline-style:none;color:rgb(176, 178, 176);font-style:italic;"># 默认只取了第一个 text part</span>
+
+<span style="box-sizing:border-box;outline-style:none;color:rgb(170, 34, 255);">puts</span> <span style="box-sizing:border-box;outline-style:none;color:rgb(187, 68, 68);">"*"</span> <span style="box-sizing:border-box;outline-style:none;color:rgb(102, 102, 102);">*</span> <span style="box-sizing:border-box;outline-style:none;color:rgb(102, 102, 102);">42</span>
+<span style="box-sizing:border-box;outline-style:none;color:rgb(176, 178, 176);font-style:italic;"># 通过 all_parts 拿到所有 part, 包含本身.</span>
+<span style="box-sizing:border-box;outline-style:none;">mail</span><span style="box-sizing:border-box;outline-style:none;">.</span><span style="box-sizing:border-box;outline-style:none;color:rgb(0, 160, 0);">all_parts</span><span style="box-sizing:border-box;outline-style:none;">.</span><span style="box-sizing:border-box;outline-style:none;color:rgb(0, 160, 0);">each</span> <span style="box-sizing:border-box;outline-style:none;color:rgb(170, 34, 255);">do</span> <span style="box-sizing:border-box;outline-style:none;color:rgb(102, 102, 102);">|</span><span style="box-sizing:border-box;outline-style:none;">part</span><span style="box-sizing:border-box;outline-style:none;color:rgb(102, 102, 102);">|</span>
+  <span style="box-sizing:border-box;outline-style:none;color:rgb(176, 178, 176);font-style:italic;"># 需要排除 multipart , attachment, 生产代码还需要区分 text 还是 html. text 和 text 加在一起, html 和 html 加在一起.</span>
+  <span style="box-sizing:border-box;outline-style:none;color:rgb(176, 178, 176);font-style:italic;"># 这里还有一个大坑,就是多 text part 字符拼接时,一定要先把编码转成 utf-8 .因为苹果设备如果刚好那部分只有英文,那么编码为 ASCII, 如果有中文,编码为 GBK .</span>
+  <span style="box-sizing:border-box;outline-style:none;color:rgb(176, 178, 176);font-style:italic;"># 有兴趣的朋友可以用苹果邮件客户端自己测试一下</span>
+  <span style="box-sizing:border-box;outline-style:none;color:rgb(170, 34, 255);">puts</span> <span style="box-sizing:border-box;outline-style:none;">part</span><span style="box-sizing:border-box;outline-style:none;">.</span><span style="box-sizing:border-box;outline-style:none;color:rgb(0, 160, 0);">body</span> <span style="box-sizing:border-box;outline-style:none;color:rgb(170, 34, 255);">if</span> <span style="box-sizing:border-box;outline-style:none;color:rgb(102, 102, 102);">!</span><span style="box-sizing:border-box;outline-style:none;">part</span><span style="box-sizing:border-box;outline-style:none;">.</span><span style="box-sizing:border-box;outline-style:none;color:rgb(0, 160, 0);">multipart?</span> <span style="box-sizing:border-box;outline-style:none;color:rgb(102, 102, 102);">&amp;&amp;</span> <span style="box-sizing:border-box;outline-style:none;color:rgb(102, 102, 102);">!</span><span style="box-sizing:border-box;outline-style:none;">part</span><span style="box-sizing:border-box;outline-style:none;">.</span><span style="box-sizing:border-box;outline-style:none;color:rgb(0, 160, 0);">attachment?</span>
+<span style="box-sizing:border-box;outline-style:none;color:rgb(170, 34, 255);">end</span>
+</code></pre> <h4 style="box-sizing:border-box;outline-style:none;color:rgb(102, 102, 102);margin:0px 0px 20px;font-weight:700;line-height:100%;text-align:left;font-size:16px;">multipart 再包含 multipart</h4>
+<p style="box-sizing:border-box;margin-top:0px;outline-style:none;margin-bottom:1.2em;font-size:1em;line-height:1.8em;">这种情景主要出现在苹果邮件客户端同时发送 text 和 html 格式的. html 是一个 sub multipart.</p>
+
+<p style="box-sizing:border-box;margin-top:0px;outline-style:none;font-size:1em;line-height:1.8em;margin-bottom:0px;">处理方法同上, all_parts 会自动遍历 sub multipart . 我们只要排除 multipart? 和 attachment? 即可.</p>
+        
+      </div>
+      <div style="box-sizing:border-box;outline-style:none;border-top:1px solid rgba(0, 0, 0, 0.125);border-radius:0px 0px calc(0.25rem - 1px) calc(0.25rem - 1px);border:0px;padding:0px 25px 25px;font-size:16px;padding-left:25px;padding-right:25px;background:transparent;">
+        <div style="box-sizing:border-box;outline-style:none;color:rgb(102, 102, 102);">
+    <a href="https://ruby-china.org/topics/33882#" style="box-sizing:border-box;background-color:transparent;outline-style:none;display:inline-block;border-radius:5px;line-height:100%;padding:5px 8px;color:rgb(64, 64, 64);text-decoration:none;"><i style="box-sizing:border-box;outline-style:none;-webkit-font-smoothing:antialiased;display:inline-block;font-style:normal;font-feature-settings:normal;font-variant:normal;text-rendering:auto;line-height:1;font-family:&quot;Font Awesome 5 Free&quot;;font-weight:900;"><span style="font-style:normal;font-variant:normal;line-height:1;font-family:Font Awesome 5 Free;font-weight:900;"></span></i> <span style="box-sizing:border-box;outline-style:none;">25 个赞</span></a>
+    <a href="https://ruby-china.org/topics/33882#" style="box-sizing:border-box;background-color:transparent;outline-style:none;display:inline-block;border-radius:5px;line-height:100%;padding:5px 8px;color:rgb(64, 64, 64);text-decoration:none;"><i style="box-sizing:border-box;outline-style:none;-webkit-font-smoothing:antialiased;display:inline-block;font-style:normal;font-feature-settings:normal;font-variant:normal;text-rendering:auto;line-height:1;font-family:&quot;Font Awesome 5 Free&quot;;font-weight:900;"><span style="font-style:normal;font-variant:normal;line-height:1;font-family:Font Awesome 5 Free;font-weight:900;"></span></i> 关注</a>
+    <a title="收藏" href="https://ruby-china.org/topics/33882#" style="box-sizing:border-box;background-color:transparent;outline-style:none;display:inline-block;border-radius:5px;line-height:100%;padding:5px 8px;color:rgb(64, 64, 64);text-decoration:none;"><i style="box-sizing:border-box;outline-style:none;-webkit-font-smoothing:antialiased;display:inline-block;font-style:normal;font-feature-settings:normal;font-variant:normal;text-rendering:auto;line-height:1;font-family:&quot;Font Awesome 5 Free&quot;;font-weight:900;"><span style="font-style:normal;font-variant:normal;line-height:1;font-family:Font Awesome 5 Free;font-weight:900;"></span></i> 收藏</a>
+  <span style="box-sizing:border-box;outline-style:none;float:right;color:rgb(102, 102, 102);">
+  </span>
+</div>
+
+      <span style="font-size:16px;display:block;clear:both;"></span></div>
+    </div></div></div></div></div></div></div>
+</div>
+</div>
+<a class="back-link" href="../articles.html">← 返回笔记列表</a>
+</body>
+</html>

@@ -1,0 +1,323 @@
+<!DOCTYPE html>
+<html lang="zh-CN" data-theme="light">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Extending the CLI - The Kubebuilder Book — 技术笔记</title>
+<style>
+:root {
+  --bg: #ffffff;
+  --text: #1a1a1a;
+  --muted: #666;
+  --border: #e0e0e0;
+  --code-bg: #f5f5f5;
+  --link: #0066cc;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #1a1a1a;
+    --text: #e0e0e0;
+    --muted: #999;
+    --border: #333;
+    --code-bg: #2a2a2a;
+    --link: #66bbff;
+  }
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  line-height: 1.7;
+  color: var(--text);
+  background: var(--bg);
+  max-width: 860px;
+  margin: 0 auto;
+  padding: 2rem 1.5rem;
+}
+.note-header {
+  border-bottom: 2px solid var(--border);
+  padding-bottom: 1rem;
+  margin-bottom: 2rem;
+}
+.note-title {
+  font-size: 1.6rem;
+  font-weight: 700;
+  margin-bottom: 0.3rem;
+}
+.note-meta {
+  color: var(--muted);
+  font-size: 0.85rem;
+}
+.note-content {
+  font-size: 0.95rem;
+}
+.note-content h1 { font-size: 1.4rem; margin: 1.2rem 0 0.6rem; }
+.note-content h2 { font-size: 1.2rem; margin: 1rem 0 0.5rem; }
+.note-content h3 { font-size: 1.05rem; margin: 0.8rem 0 0.4rem; }
+.note-content p { margin: 0.5rem 0; }
+.note-content ul, .note-content ol { margin: 0.5rem 0 0.5rem 2rem; }
+.note-content li { margin: 0.2rem 0; }
+.note-content pre {
+  background: var(--code-bg);
+  padding: 1rem;
+  border-radius: 6px;
+  overflow-x: auto;
+  margin: 0.8rem 0;
+  font-size: 0.85rem;
+}
+.note-content code {
+  background: var(--code-bg);
+  padding: 0.1rem 0.3rem;
+  border-radius: 3px;
+  font-size: 0.88em;
+}
+.note-content pre code {
+  background: none;
+  padding: 0;
+}
+.note-content blockquote {
+  border-left: 3px solid var(--border);
+  padding-left: 1rem;
+  color: var(--muted);
+  margin: 0.8rem 0;
+}
+.note-content a { color: var(--link); }
+.note-content img {
+  max-width: 100%;
+  height: auto;
+  border-radius: 6px;
+  margin: 0.5rem 0;
+}
+.note-content table {
+  border-collapse: collapse;
+  width: 100%;
+  margin: 0.8rem 0;
+}
+.note-content th, .note-content td {
+  border: 1px solid var(--border);
+  padding: 0.5rem;
+}
+.note-content th { background: var(--code-bg); }
+.media-placeholder {
+  background: var(--code-bg);
+  padding: 1rem;
+  text-align: center;
+  color: var(--muted);
+  border-radius: 6px;
+  margin: 0.5rem 0;
+  font-size: 0.85rem;
+}
+.encrypt-placeholder {
+  background: #fff3cd;
+  padding: 0.5rem;
+  text-align: center;
+  color: #856404;
+  border-radius: 6px;
+  margin: 0.5rem 0;
+  font-size: 0.85rem;
+}
+.back-link {
+  display: inline-block;
+  margin-top: 2rem;
+  color: var(--link);
+  text-decoration: none;
+  font-size: 0.85rem;
+}
+</style>
+</head>
+<body>
+<div class="note-header">
+  <div class="note-title">Extending the CLI - The Kubebuilder Book</div>
+  <div class="note-meta">笔记本：Kubernetes学习笔记</div>
+</div>
+<div class="note-content">
+<div style="--en-clipped-content:article">
+<div><br/></div><div style="font-size: 16px; display:block; min-width: 100%; position: relative;"> <div style="font-family:&quot;Open Sans&quot;, sans-serif;color:rgb(0, 0, 0);background-color:rgb(255, 255, 255);text-size-adjust:none;font-size:62.5%;color-scheme:light;"><div style="font-size:16px;overflow-x:hidden;"><div style="box-sizing:border-box;transform:none;transition:margin-left 0.3s ease 0s, transform 0.3s ease 0s;"><div style="outline:0px;"><div>
+                    <span style="overflow-wrap:break-word;margin-left:auto;margin-right:auto;max-width:750px;">
+                        <h1><a href="https://book.kubebuilder.io/plugins/extending-cli#extending-the-cli-and-scaffolds" style="color:rgb(0, 0, 0);text-decoration:none;">Extending the CLI and Scaffolds</a></h1>
+<h2 style="margin-top:2.5em;"><a href="https://book.kubebuilder.io/plugins/extending-cli#overview" style="color:rgb(0, 0, 0);text-decoration:none;">Overview</a></h2>
+<p style="line-height:1.45em;">You can extend Kubebuilder to allow your project to have the same CLI features and provide the plugins scaffolds.</p>
+<h2 style="margin-top:2.5em;"><a href="https://book.kubebuilder.io/plugins/extending-cli#cli-system" style="color:rgb(0, 0, 0);text-decoration:none;">CLI system</a></h2>
+<p style="line-height:1.45em;">Plugins are run using a <a href="https://pkg.go.dev/sigs.k8s.io/kubebuilder/v3/pkg/cli" style="text-decoration:none;color:rgb(32, 96, 159);"><code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif">CLI</code></a> object, which maps a plugin type to a subcommand and calls that plugin’s methods.
+For example, writing a program that injects an <code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif">Init</code> plugin into a <code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif">CLI</code> then calling <code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif">CLI.Run()</code> will call the
+plugin’s <a href="https://pkg.go.dev/sigs.k8s.io/kubebuilder/v3/pkg/plugin#Subcommand" style="text-decoration:none;color:rgb(32, 96, 159);">SubcommandMetadata</a>, <a href="https://pkg.go.dev/sigs.k8s.io/kubebuilder/v3/pkg/plugin#UpdatesMetadata" style="text-decoration:none;color:rgb(32, 96, 159);">UpdatesMetadata</a> and <code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif">Run</code> methods with information a user has passed to the
+program in <code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif">kubebuilder init</code>. Following an example:</p>
+<pre style="border-radius:4px;background-color: #fbfaf8;border: 1px solid rgba(0,0,0,.14902);color: #333;font-size: 12px;padding: 8px;font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif;box-sizing: border-box;"><div style="position:absolute;z-index:100;right:0px;top:2px;margin:0px;padding:2px 0px;color:rgb(0, 0, 0);cursor:pointer;visibility:hidden;opacity:0;transition:visibility 0.1s linear 0s, opacity 0.1s linear 0s;"></div><code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span style="color:rgb(157, 0, 236);">package</span> cli
+
+<span style="color:rgb(157, 0, 236);">import</span> (
+    log <span style="color:rgb(0, 130, 0);">"github.com/sirupsen/logrus"</span>
+    <span style="color:rgb(0, 130, 0);">"github.com/spf13/cobra"</span>
+
+    <span style="color:rgb(0, 130, 0);">"sigs.k8s.io/kubebuilder/v3/pkg/cli"</span>
+    cfgv3 <span style="color:rgb(0, 130, 0);">"sigs.k8s.io/kubebuilder/v3/pkg/config/v3"</span>
+    <span style="color:rgb(0, 130, 0);">"sigs.k8s.io/kubebuilder/v3/pkg/plugin"</span>
+    kustomizecommonv1 <span style="color:rgb(0, 130, 0);">"sigs.k8s.io/kubebuilder/v3/pkg/plugins/common/kustomize/v1"</span>
+    <span style="color:rgb(0, 130, 0);">"sigs.k8s.io/kubebuilder/v3/pkg/plugins/golang"</span>
+    declarativev1 <span style="color:rgb(0, 130, 0);">"sigs.k8s.io/kubebuilder/v3/pkg/plugins/golang/declarative/v1"</span>
+    golangv3 <span style="color:rgb(0, 130, 0);">"sigs.k8s.io/kubebuilder/v3/pkg/plugins/golang/v3"</span>
+
+)
+
+<span style="color:rgb(157, 0, 236);">var</span> (
+    <span style="color:rgb(87, 87, 87);">// The following is an example of the commands</span>
+    <span style="color:rgb(87, 87, 87);">// that you might have in your own binary</span>
+    commands = []*cobra.Command{
+        myExampleCommand.NewCmd(),
+    }
+    alphaCommands = []*cobra.Command{
+        myExampleAlphaCommand.NewCmd(),
+    }
+)
+
+<span style="color:rgb(87, 87, 87);">// GetPluginsCLI returns the plugins based CLI configured to be used in your CLI binary</span>
+<span><span style="color:rgb(157, 0, 236);">func</span> <span style="color:rgb(0, 48, 242);">GetPluginsCLI</span><span style="color:rgb(178, 30, 0);">()</span> <span style="color:rgb(178, 30, 0);">(*cli.CLI)</span></span> {
+    <span style="color:rgb(87, 87, 87);">// Bundle plugin which built the golang projects scaffold by Kubebuilder go/v3</span>
+    gov3Bundle, _ := plugin.NewBundleWithOptions(plugin.WithName(golang.DefaultNameQualifier), 
+        plugin.WithVersion(plugin.Version{Number: <span style="color:rgb(178, 30, 0);">3</span>}),
+        plugin.WithPlugins(kustomizecommonv1.Plugin{}, golangv3.Plugin{}),
+    )
+
+
+    c, err := cli.New(
+        <span style="color:rgb(87, 87, 87);">// Add the name of your CLI binary</span>
+        cli.WithCommandName(<span style="color:rgb(0, 130, 0);">"example-cli"</span>),
+        
+        <span style="color:rgb(87, 87, 87);">// Add the version of your CLI binary</span>
+        cli.WithVersion(versionString()),
+        
+        <span style="color:rgb(87, 87, 87);">// Register the plugins options which can be used to do the scaffolds via your CLI tool. See that we are using as example here the plugins which are implemented and provided by Kubebuilder</span>
+        cli.WithPlugins(
+            gov3Bundle,
+            &amp;declarativev1.Plugin{},
+        ),
+        
+        <span style="color:rgb(87, 87, 87);">// Defines what will be the default plugin used by your binary. It means that will be the plugin used if no info be provided such as when the user runs `kubebuilder init`</span>
+        cli.WithDefaultPlugins(cfgv3.Version, gov3Bundle),
+        
+        <span style="color:rgb(87, 87, 87);">// Define the default project configuration version which will be used by the CLI when none is informed by --project-version flag.</span>
+        cli.WithDefaultProjectVersion(cfgv3.Version),
+        
+        <span style="color:rgb(87, 87, 87);">// Adds your own commands to the CLI</span>
+        cli.WithExtraCommands(commands...),
+        
+        <span style="color:rgb(87, 87, 87);">// Add your own alpha commands to the CLI</span>
+        cli.WithExtraAlphaCommands(alphaCommands...),
+        
+        <span style="color:rgb(87, 87, 87);">// Adds the completion option for your CLI</span>
+        cli.WithCompletion(),
+    )
+    <span style="color:rgb(157, 0, 236);">if</span> err != <span style="color:rgb(178, 30, 0);">nil</span> {
+        log.Fatal(err)
+    }
+
+    <span style="color:rgb(157, 0, 236);">return</span> c
+}
+
+<span style="color:rgb(87, 87, 87);">// versionString returns the CLI version</span>
+<span><span style="color:rgb(157, 0, 236);">func</span> <span style="color:rgb(0, 48, 242);">versionString</span><span style="color:rgb(178, 30, 0);">()</span> <span style="color:rgb(0, 48, 242);">string</span></span> {
+    <span style="color:rgb(87, 87, 87);">// return your binary project version</span>
+}
+</code></pre>
+<p style="line-height:1.45em;">This program can then be built and run in the following ways:</p>
+<p style="line-height:1.45em;">Default behavior:</p>
+<pre style="border-radius:4px;background-color: #fbfaf8;border: 1px solid rgba(0,0,0,.14902);color: #333;font-size: 12px;padding: 8px;font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif;box-sizing: border-box;"><div style="position:absolute;z-index:100;right:0px;top:2px;margin:0px;padding:2px 0px;color:rgb(0, 0, 0);cursor:pointer;visibility:hidden;opacity:0;transition:visibility 0.1s linear 0s, opacity 0.1s linear 0s;"></div><code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span style="color:rgb(87, 87, 87);"># Initialize a project with the default Init plugin, "go.example.com/v1".</span>
+<span style="color:rgb(87, 87, 87);"># This key is automatically written to a PROJECT config file.</span>
+$ my-bin-builder init
+<span style="color:rgb(87, 87, 87);"># Create an API and webhook with "go.example.com/v1" CreateAPI and</span>
+<span style="color:rgb(87, 87, 87);"># CreateWebhook plugin methods. This key was read from the config file.</span>
+$ my-bin-builder create api [flags]
+$ my-bin-builder create webhook [flags]
+</code></pre>
+<p style="line-height:1.45em;">Selecting a plugin using <code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif">--plugins</code>:</p>
+<pre style="border-radius:4px;background-color: #fbfaf8;border: 1px solid rgba(0,0,0,.14902);color: #333;font-size: 12px;padding: 8px;font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif;box-sizing: border-box;"><div style="position:absolute;z-index:100;right:0px;top:2px;margin:0px;padding:2px 0px;color:rgb(0, 0, 0);cursor:pointer;visibility:hidden;opacity:0;transition:visibility 0.1s linear 0s, opacity 0.1s linear 0s;"></div><code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span style="color:rgb(87, 87, 87);"># Initialize a project with the "ansible.example.com/v1" Init plugin.</span>
+<span style="color:rgb(87, 87, 87);"># Like above, this key is written to a config file.</span>
+$ my-bin-builder init --plugins ansible
+<span style="color:rgb(87, 87, 87);"># Create an API and webhook with "ansible.example.com/v1" CreateAPI</span>
+<span style="color:rgb(87, 87, 87);"># and CreateWebhook plugin methods. This key was read from the config file.</span>
+$ my-bin-builder create api [flags]
+$ my-bin-builder create webhook [flags]
+</code></pre>
+<h3 style="margin-top:2.5em;"><a href="https://book.kubebuilder.io/plugins/extending-cli#cli-manages-the-project-file" style="color:rgb(0, 0, 0);text-decoration:none;">CLI manages the PROJECT file</a></h3>
+<p style="line-height:1.45em;">The CLI is responsible for managing the <a href="https://book.kubebuilder.io/reference/project-config" style="text-decoration:none;color:rgb(32, 96, 159);">PROJECT file config</a>, representing the configuration of the projects that are scaffold by the CLI tool.</p>
+<h2 style="margin-top:2.5em;"><a href="https://book.kubebuilder.io/plugins/extending-cli#plugins" style="color:rgb(0, 0, 0);text-decoration:none;">Plugins</a></h2>
+<p style="line-height:1.45em;">Kubebuilder provides scaffolding options via plugins. Plugins are responsible for implementing the code that will be executed when the sub-commands are called. You can create a new plugin by implementing the <a href="https://pkg.go.dev/sigs.k8s.io/kubebuilder/v3/pkg/plugin#Plugin" style="text-decoration:none;color:rgb(32, 96, 159);">Plugin interface</a>. </p>
+<p style="line-height:1.45em;">On top of being a <code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif">Base</code>, a plugin should also implement the <a href="https://pkg.go.dev/sigs.k8s.io/kubebuilder/v3/pkg/plugin#Subcommand" style="text-decoration:none;color:rgb(32, 96, 159);"><code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif">SubcommandMetadata</code></a> interface so it can be run with a CLI. It optionally to set custom help text for the target  command; this method can be a no-op, which will preserve the default help text set by the <a href="https://pkg.go.dev/github.com/spf13/cobra" style="text-decoration:none;color:rgb(32, 96, 159);">cobra</a> command constructors.</p>
+<p style="line-height:1.45em;">Kubebuilder CLI plugins wrap scaffolding and CLI features in conveniently packaged Go types that are executed by the
+<code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif">kubebuilder</code> binary, or any binary which imports them. More specifically, a plugin configures the execution of one
+of the following CLI commands:</p>
+<ul style="line-height:1.45em;">
+<li><code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif">init</code>: project initialization.</li>
+<li><code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif">create api</code>: scaffold Kubernetes API definitions.</li>
+<li><code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif">create webhook</code>: scaffold Kubernetes webhooks.</li>
+</ul>
+<p style="line-height:1.45em;">Plugins are identified by a key of the form <code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif">&lt;name&gt;/&lt;version&gt;</code>. There are two ways to specify a plugin to run:</p>
+<ul style="line-height:1.45em;">
+<li>
+<p style="line-height:1.45em;">Setting <code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif">kubebuilder init --plugins=&lt;plugin key&gt;</code>, which will initialize a project configured for plugin with key
+<code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif">&lt;plugin key&gt;</code>.</p>
+</li>
+<li>
+<p style="line-height:1.45em;">A <code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif">layout: &lt;plugin key&gt;</code> in the scaffolded <a href="https://book.kubebuilder.io/reference/project-config" style="text-decoration:none;color:rgb(32, 96, 159);">PROJECT configuration file</a>. Commands (except for <code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif">init</code>, which scaffolds this file) will look at this value before running to choose which plugin to run. </p>
+</li>
+</ul>
+<p style="line-height:1.45em;">By default, <code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif">&lt;plugin key&gt;</code> will be <code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif">go.kubebuilder.io/vX</code>, where <code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif">X</code> is some integer.</p>
+<p style="line-height:1.45em;">For a full implementation example, check out Kubebuilder’s native <a href="https://pkg.go.dev/sigs.k8s.io/kubebuilder/v3/pkg/plugins/golang/v3" style="text-decoration:none;color:rgb(32, 96, 159);"><code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif">go.kubebuilder.io</code></a> plugin.</p>
+<h3 style="margin-top:2.5em;"><a href="https://book.kubebuilder.io/plugins/extending-cli#plugin-naming" style="color:rgb(0, 0, 0);text-decoration:none;">Plugin naming</a></h3>
+<p style="line-height:1.45em;">Plugin names must be DNS1123 labels and should be fully qualified, i.e. they have a suffix like
+<code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif">.example.com</code>. For example, the base Go scaffold used with <code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif">kubebuilder</code> commands has name <code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif">go.kubebuilder.io</code>.
+Qualified names prevent conflicts between plugin names; both <code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif">go.kubebuilder.io</code> and <code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif">go.example.com</code> can both scaffold
+Go code and can be specified by a user.</p>
+<h3 style="margin-top:2.5em;"><a href="https://book.kubebuilder.io/plugins/extending-cli#plugin-versioning" style="color:rgb(0, 0, 0);text-decoration:none;">Plugin versioning</a></h3>
+<p style="line-height:1.45em;">A plugin’s <code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif">Version()</code> method returns a <a href="https://pkg.go.dev/sigs.k8s.io/kubebuilder/v3/pkg/plugin#Version" style="text-decoration:none;color:rgb(32, 96, 159);"><code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif">plugin.Version</code></a> object containing an integer value
+and optionally a stage string of either “alpha” or “beta”. The integer denotes the current version of a plugin.
+Two different integer values between versions of plugins indicate that the two plugins are incompatible. The stage
+string denotes plugin stability:</p>
+<ul style="line-height:1.45em;">
+<li><code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif">alpha</code>: should be used for plugins that are frequently changed and may break between uses.</li>
+<li><code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif">beta</code>: should be used for plugins that are only changed in minor ways, ex. bug fixes.</li>
+</ul>
+<h3 style="margin-top:2.5em;"><a href="https://book.kubebuilder.io/plugins/extending-cli#breaking-changes" style="color:rgb(0, 0, 0);text-decoration:none;">Breaking changes</a></h3>
+<p style="line-height:1.45em;">Any change that will break a project scaffolded by the previous plugin version is a breaking change.</p>
+<h3 style="margin-top:2.5em;"><a href="https://book.kubebuilder.io/plugins/extending-cli#plugins-deprecation" style="color:rgb(0, 0, 0);text-decoration:none;">Plugins Deprecation</a></h3>
+<p style="line-height:1.45em;">Once a plugin is deprecated, have it implement a <a href="https://pkg.go.dev/sigs.k8s.io/kubebuilder/v3/pkg/plugin#Deprecated" style="text-decoration:none;color:rgb(32, 96, 159);">Deprecated</a> interface so a deprecation warning will be printed when it is used.</p>
+<h2 style="margin-top:2.5em;"><a href="https://book.kubebuilder.io/plugins/extending-cli#bundle-plugins" style="color:rgb(0, 0, 0);text-decoration:none;">Bundle Plugins</a></h2>
+<p style="line-height:1.45em;"><a href="https://pkg.go.dev/sigs.k8s.io/kubebuilder/v3/pkg/plugin#Bundle" style="text-decoration:none;color:rgb(32, 96, 159);">Bundle Plugins</a> allow you to create a plugin that is a composition of many plugins:</p>
+<pre style="border-radius:4px;background-color: #fbfaf8;border: 1px solid rgba(0,0,0,.14902);color: #333;font-size: 12px;padding: 8px;font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif;box-sizing: border-box;"><div style="position:absolute;z-index:100;right:0px;top:2px;margin:0px;padding:2px 0px;color:rgb(0, 0, 0);cursor:pointer;visibility:hidden;opacity:0;transition:visibility 0.1s linear 0s, opacity 0.1s linear 0s;"></div><code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif">   <span style="color:rgb(87, 87, 87);">// see that will be like myplugin.example/v1`  </span>
+  myPluginBundle, _ := plugin.NewBundle(plugin.WithName(<span style="color:rgb(0, 130, 0);">`&lt;plugin-name&gt;`</span>),
+  		plugin.WithVersion(<span style="color:rgb(0, 130, 0);">`&lt;plugin-version&gt;`</span>),
+        plugin.WithPlugins(pluginA.Plugin{}, pluginB.Plugin{}, pluginC.Plugin{}),
+    )
+
+</code></pre>
+<p style="line-height:1.45em;">Note that it means that when a user of your CLI calls this plugin, the execution of the sub-commands will be sorted by the order to which they were added in a chain:</p>
+<blockquote style="margin:20px 0px;padding:0px 20px;color:rgb(0, 0, 0);background-color:rgb(241, 246, 249);border-top:1.5px solid rgb(224, 236, 241);border-bottom:1.5px solid rgb(224, 236, 241);">
+<p style="line-height:1.45em;"><code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif">sub-command</code> of plugin A ➔ <code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif">sub-command</code> of plugin B ➔ <code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif">sub-command</code> of plugin C</p>
+</blockquote>
+<p style="line-height:1.45em;">Then, to initialize using this “Plugin Bundle” which will run the chain of plugins:</p>
+<pre style="border-radius:4px;background-color: #fbfaf8;border: 1px solid rgba(0,0,0,.14902);color: #333;font-size: 12px;padding: 8px;font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif;box-sizing: border-box;"><div style="position:absolute;z-index:100;right:0px;top:2px;margin:0px;padding:2px 0px;color:rgb(0, 0, 0);cursor:pointer;visibility:hidden;opacity:0;transition:visibility 0.1s linear 0s, opacity 0.1s linear 0s;"></div><code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif">kubebuider init --plugins=myplugin.example/v1 
+</code></pre>
+<ul style="line-height:1.45em;">
+<li>Runs init <code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif">sub-command</code> of the plugin A</li>
+<li>And then, runs init <code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif">sub-command</code> of the plugin B</li>
+<li>And then, runs init <code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif">sub-command</code> of the plugin C </li>
+</ul>
+
+                    </span>
+
+                    <div style="margin-top:50px;display:block;">
+                        
+                            <a href="https://book.kubebuilder.io/plugins/kustomize-v2" rel="prev" title="Previous chapter" style="font-size:2.5em;text-align:center;width:90px;border-radius:5px;background-color:rgb(250, 250, 250);text-decoration:none;float:left;color:rgb(32, 96, 159);">
+                                <i style="display:inline-block;font-style:normal;font-variant:normal;font-kerning:auto;font-optical-sizing:auto;font-feature-settings:normal;font-variation-settings:normal;font-weight:normal;font-stretch:normal;line-height:1;font-family:FontAwesome;font-size:inherit;text-rendering:auto;-webkit-font-smoothing:antialiased;"><span style="font-style:normal;font-variant:normal;font-weight:normal;line-height:1;font-family:FontAwesome;font-size:inherit;"></span></i>
+                            </a>
+
+                            <a href="https://book.kubebuilder.io/plugins/creating-plugins" rel="next" title="Next chapter" style="font-size:2.5em;text-align:center;width:90px;border-radius:5px;background-color:rgb(250, 250, 250);text-decoration:none;float:right;right:15px;color:rgb(32, 96, 159);">
+                                <i style="display:inline-block;font-style:normal;font-variant:normal;font-kerning:auto;font-optical-sizing:auto;font-feature-settings:normal;font-variation-settings:normal;font-weight:normal;font-stretch:normal;line-height:1;font-family:FontAwesome;font-size:inherit;text-rendering:auto;-webkit-font-smoothing:antialiased;"><span style="font-style:normal;font-variant:normal;font-weight:normal;line-height:1;font-family:FontAwesome;font-size:inherit;"></span></i>
+                            </a>
+
+                        <div style="clear:both;"></div>
+                    </div>
+                </div></div></div></div></div></div>
+</div>
+</div>
+<a class="back-link" href="../articles.html">← 返回笔记列表</a>
+</body>
+</html>

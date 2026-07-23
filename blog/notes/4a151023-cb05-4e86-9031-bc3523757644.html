@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="zh-CN" data-theme="light">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>puppet平台生命周期 — 技术笔记</title>
+<style>
+:root {
+  --bg: #ffffff;
+  --text: #1a1a1a;
+  --muted: #666;
+  --border: #e0e0e0;
+  --code-bg: #f5f5f5;
+  --link: #0066cc;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #1a1a1a;
+    --text: #e0e0e0;
+    --muted: #999;
+    --border: #333;
+    --code-bg: #2a2a2a;
+    --link: #66bbff;
+  }
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  line-height: 1.7;
+  color: var(--text);
+  background: var(--bg);
+  max-width: 860px;
+  margin: 0 auto;
+  padding: 2rem 1.5rem;
+}
+.note-header {
+  border-bottom: 2px solid var(--border);
+  padding-bottom: 1rem;
+  margin-bottom: 2rem;
+}
+.note-title {
+  font-size: 1.6rem;
+  font-weight: 700;
+  margin-bottom: 0.3rem;
+}
+.note-meta {
+  color: var(--muted);
+  font-size: 0.85rem;
+}
+.note-content {
+  font-size: 0.95rem;
+}
+.note-content h1 { font-size: 1.4rem; margin: 1.2rem 0 0.6rem; }
+.note-content h2 { font-size: 1.2rem; margin: 1rem 0 0.5rem; }
+.note-content h3 { font-size: 1.05rem; margin: 0.8rem 0 0.4rem; }
+.note-content p { margin: 0.5rem 0; }
+.note-content ul, .note-content ol { margin: 0.5rem 0 0.5rem 2rem; }
+.note-content li { margin: 0.2rem 0; }
+.note-content pre {
+  background: var(--code-bg);
+  padding: 1rem;
+  border-radius: 6px;
+  overflow-x: auto;
+  margin: 0.8rem 0;
+  font-size: 0.85rem;
+}
+.note-content code {
+  background: var(--code-bg);
+  padding: 0.1rem 0.3rem;
+  border-radius: 3px;
+  font-size: 0.88em;
+}
+.note-content pre code {
+  background: none;
+  padding: 0;
+}
+.note-content blockquote {
+  border-left: 3px solid var(--border);
+  padding-left: 1rem;
+  color: var(--muted);
+  margin: 0.8rem 0;
+}
+.note-content a { color: var(--link); }
+.note-content img {
+  max-width: 100%;
+  height: auto;
+  border-radius: 6px;
+  margin: 0.5rem 0;
+}
+.note-content table {
+  border-collapse: collapse;
+  width: 100%;
+  margin: 0.8rem 0;
+}
+.note-content th, .note-content td {
+  border: 1px solid var(--border);
+  padding: 0.5rem;
+}
+.note-content th { background: var(--code-bg); }
+.media-placeholder {
+  background: var(--code-bg);
+  padding: 1rem;
+  text-align: center;
+  color: var(--muted);
+  border-radius: 6px;
+  margin: 0.5rem 0;
+  font-size: 0.85rem;
+}
+.encrypt-placeholder {
+  background: #fff3cd;
+  padding: 0.5rem;
+  text-align: center;
+  color: #856404;
+  border-radius: 6px;
+  margin: 0.5rem 0;
+  font-size: 0.85rem;
+}
+.back-link {
+  display: inline-block;
+  margin-top: 2rem;
+  color: var(--link);
+  text-decoration: none;
+  font-size: 0.85rem;
+}
+</style>
+</head>
+<body>
+<div class="note-header">
+  <div class="note-title">puppet平台生命周期</div>
+  <div class="note-meta">笔记本：Puppet</div>
+</div>
+<div class="note-content">
+<div>1.puppet版本和生命周期</div><div><span>    开源puppet由几个包组成: puppet代理/客户端, puppet服务端,以及可选的puppetdb.在更新和遇到问题的时候理解什么版本还在维护以及哪些版本是一起的很重要</span><br /></div><div><span><br /></span></div><div><span><span>    开源puppet有两种版本轨迹：</span><br /></span></div><div><span><span><span>    <span>    更新轨迹：与任何pe版本无关的puppet版本大约一个月发布一次最小版本。这个轨迹中的版本包含了修复以及新特性，但是一般不会获得补丁。这个轨迹每次更新都会取代之前的最小版本。（因为这种版本的发布频率高，所以也不需要使用到补丁，如果真的碰到问题，只要等到下个最新版本发布然后直接重新安装就好了）</span></span><br /></span></span></div><div><span><span><span><span><span>    <span>    长期版本:与puppet企业版关联的puppet版本大约每个季度会获得一次补丁。每个版本包含bug和安全问题的修复，但是并不会获取新特性。（长期版本需要的是稳定，所以不会新功能的增加）</span></span><br /></span></span></span></span></div><div><span><span><span><span><span><span><br /></span></span></span></span></span></span></div><div><span><span><span><span><span><span><span>    如下的表格列出了正在维护的puppet，puppet服务端以及puppet db版本以及它们各自的文档。开发中的版本大约一个月一次就会被新版本取代。开源版本会有一个维护结束时间EOL(end of life)</span></span></span></span></span></span></span></div><div><div class="media-placeholder">[图片/附件]</div></div><div></div><div><span><span><span><span><span><span><span><span>    </span><br /></span></span></span></span></span></span></span></div><div><span><span><span><span><span><span><span><span>2.Puppet平台软件包</span></span></span></span></span></span></span></span></div><div><span><span><span><span><span><span><span><span><span>    puppet平台为一个成功部署绑定了一些组件。我们按照如下的包分发/发布了开源的puppet:</span><br /></span></span></span></span></span></span></span></span></div><div><span><span><span><span><span><span><span><span><span><span>    2.1 package-agent: 这个包包含了puppet的主代码以及运行它所需的所有依赖，包括facter,hiera,pxp代理,根证书，以及绑定了版本了的ruby和openssl。在它安装之后，你就已经有了一切你需要运行puppet agent service的东西以及puppet apply命令所需的东西。（注意：puppet版本3.8以及之后的版本，企业版linux 5 软件包只包含agent组件)</span><br /></span></span></span></span></span></span></span></span></span></div><div><span><span><span><span><span><span><span><span><span><span><span>    2.2 puppetserver: puppet server是一个基于jvm的应用，除了其他东西以外，运行主puppet服务端的实例并给节点伺服清单文件运行代理/客户端服务。它有它自己的版本号并且可能会兼容多种puppet版本。这个包依赖于puppet-agent。安装好之后puppet服务端可以为正在运行服务的节点伺服清单文件catalog。</span><br /></span></span></span></span></span></span></span></span></span></span></div><div><span><span><span><span><span><span><span><span><span><span><span><span>    2.3 puppetdb（可选）收集由puppet生成的数据。它会开启额外的特性比如exported resources，高级查询以及关于你的设施的报告。</span><br /></span></span></span></span></span></span></span></span></span></span></span></div><div><span><span><span><span><span><span><span><span><span><span><span><span><span>    2.4 puppetdb-termini 用于连接puppet主服务于puppetdb的插件</span><br /></span></span></span></span></span></span></span></span></span></span></span></span></div><div><span><span><span><span><span><span><span><span><span><span><span><span><span><br /></span></span></span></span></span></span></span></span></span></span></span></span></span></div><div><span><span><span><span><span><span><span><span><span><span><span><span><span><span>    puppet平台中的puppetserver组件只能用于linux。puppet-agent可用于超过30种平台和架构，包括windows和macos。</span><br /></span></span></span></span></span></span></span></span></span></span></span></span></span></div><div><span><span><span><span><span><span><span><span><span><span><span><span><span><span><span>    注意： puppet agent 5.5.4，mcollective已经废弃。在6.0就被移除了。如果你使用puppet企业版，就考虑使用puppet orchestrator。如果使用开源puppet，使用比如bolt和puppetdb的puppet 查询语言来从mcollective迁移过来。</span><br /></span></span></span></span></span></span></span></span></span></span></span></span></span></span></div><div><span><span><span><span><span><span><span><span><span><span><span><span><span><span><span><br /></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></div><div><span><span><span><span><span><span><span><span><span><span><span><span><span><span><span><span>    puppet-agent组件版本号：</span><br /></span></span></span></span></span></span></span></span></span></span></span></span></span></span></span></div><div><div class="media-placeholder">[图片/附件]</div></div><div><br /></div><div><span>    主服务于客户端兼容性：</span><br /></div><div><span><span>    <span>    使用这张表来检验你正在使用兼容的客户端的版本用于你的puppet企业版或者puppet服务端</span></span><br /></span></div><div><div class="media-placeholder">[图片/附件]</div></div><div>注意：</div><div><span>    puppet 5.x以及停止维护了而且已经没有在开发和测试了。我们保留了5.x版本的代理对应的更新版本的服务端只是为了让它可以更新。</span><br /></div>
+</div>
+<a class="back-link" href="../articles.html">← 返回笔记列表</a>
+</body>
+</html>

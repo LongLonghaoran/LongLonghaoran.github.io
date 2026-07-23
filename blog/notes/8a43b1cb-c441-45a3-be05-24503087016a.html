@@ -1,0 +1,241 @@
+<!DOCTYPE html>
+<html lang="zh-CN" data-theme="light">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Grpc: Core concepts, architecture and lifecycle | gRPC — 技术笔记</title>
+<style>
+:root {
+  --bg: #ffffff;
+  --text: #1a1a1a;
+  --muted: #666;
+  --border: #e0e0e0;
+  --code-bg: #f5f5f5;
+  --link: #0066cc;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #1a1a1a;
+    --text: #e0e0e0;
+    --muted: #999;
+    --border: #333;
+    --code-bg: #2a2a2a;
+    --link: #66bbff;
+  }
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  line-height: 1.7;
+  color: var(--text);
+  background: var(--bg);
+  max-width: 860px;
+  margin: 0 auto;
+  padding: 2rem 1.5rem;
+}
+.note-header {
+  border-bottom: 2px solid var(--border);
+  padding-bottom: 1rem;
+  margin-bottom: 2rem;
+}
+.note-title {
+  font-size: 1.6rem;
+  font-weight: 700;
+  margin-bottom: 0.3rem;
+}
+.note-meta {
+  color: var(--muted);
+  font-size: 0.85rem;
+}
+.note-content {
+  font-size: 0.95rem;
+}
+.note-content h1 { font-size: 1.4rem; margin: 1.2rem 0 0.6rem; }
+.note-content h2 { font-size: 1.2rem; margin: 1rem 0 0.5rem; }
+.note-content h3 { font-size: 1.05rem; margin: 0.8rem 0 0.4rem; }
+.note-content p { margin: 0.5rem 0; }
+.note-content ul, .note-content ol { margin: 0.5rem 0 0.5rem 2rem; }
+.note-content li { margin: 0.2rem 0; }
+.note-content pre {
+  background: var(--code-bg);
+  padding: 1rem;
+  border-radius: 6px;
+  overflow-x: auto;
+  margin: 0.8rem 0;
+  font-size: 0.85rem;
+}
+.note-content code {
+  background: var(--code-bg);
+  padding: 0.1rem 0.3rem;
+  border-radius: 3px;
+  font-size: 0.88em;
+}
+.note-content pre code {
+  background: none;
+  padding: 0;
+}
+.note-content blockquote {
+  border-left: 3px solid var(--border);
+  padding-left: 1rem;
+  color: var(--muted);
+  margin: 0.8rem 0;
+}
+.note-content a { color: var(--link); }
+.note-content img {
+  max-width: 100%;
+  height: auto;
+  border-radius: 6px;
+  margin: 0.5rem 0;
+}
+.note-content table {
+  border-collapse: collapse;
+  width: 100%;
+  margin: 0.8rem 0;
+}
+.note-content th, .note-content td {
+  border: 1px solid var(--border);
+  padding: 0.5rem;
+}
+.note-content th { background: var(--code-bg); }
+.media-placeholder {
+  background: var(--code-bg);
+  padding: 1rem;
+  text-align: center;
+  color: var(--muted);
+  border-radius: 6px;
+  margin: 0.5rem 0;
+  font-size: 0.85rem;
+}
+.encrypt-placeholder {
+  background: #fff3cd;
+  padding: 0.5rem;
+  text-align: center;
+  color: #856404;
+  border-radius: 6px;
+  margin: 0.5rem 0;
+  font-size: 0.85rem;
+}
+.back-link {
+  display: inline-block;
+  margin-top: 2rem;
+  color: var(--link);
+  text-decoration: none;
+  font-size: 0.85rem;
+}
+</style>
+</head>
+<body>
+<div class="note-header">
+  <div class="note-title">Grpc: Core concepts, architecture and lifecycle | gRPC</div>
+  <div class="note-meta">笔记本：Grpc</div>
+</div>
+<div class="note-content">
+<div style="--en-clipped-content:article; --en-clipped-source-url:https://grpc.io/docs/what-is-grpc/core-concepts/; --en-clipped-source-title:Grpc: Core concepts, architecture and lifecycle | gRPC;">
+<div><br/></div><div style="min-height: 5099px; font-size: 16px; display: flex; min-width: 100%; position: relative;"> <div style="box-sizing:border-box;font-family:sans-serif;line-height:1.15;text-size-adjust:100%;-webkit-tap-highlight-color:transparent;"><div style="box-sizing:border-box;font-family:&quot;open sans&quot;, -apple-system, BlinkMacSystemFont, &quot;segoe ui&quot;, Roboto, &quot;helvetica neue&quot;, Arial, sans-serif, &quot;apple color emoji&quot;, &quot;segoe ui emoji&quot;, &quot;segoe ui symbol&quot;;font-size:16px;font-weight:400;line-height:1.5;color:rgb(34, 34, 34);text-align:left;background-color:rgb(255, 255, 255);"><div style="box-sizing:border-box;"><div style="box-sizing:border-box;"><div style="box-sizing:border-box;"><span style="box-sizing:border-box;"><div style="box-sizing:border-box;display:block;"><ol style="box-sizing:border-box;margin-top:0px;display:flex;flex-wrap:wrap;padding:0.75rem 1rem;list-style:none;margin-bottom:16px;background:inherit;padding-left:0px;padding-top:0px;"><li style="box-sizing:border-box;"><a href="https://grpc.io/docs/" style="box-sizing:border-box;color:rgb(55, 156, 156);text-decoration:none;background-color:transparent;">Docs</a></li><li style="box-sizing:border-box;padding-left:8px;"><span style="float:left;padding-right:0.5rem;color:rgb(121, 118, 118);">/</span><a href="https://grpc.io/docs/what-is-grpc/" style="box-sizing:border-box;color:rgb(55, 156, 156);text-decoration:none;background-color:transparent;">What is gRPC?</a></li><li style="box-sizing:border-box;padding-left:8px;color:rgb(121, 118, 118);"><span style="color:rgb(121, 118, 118);float:left;padding-right:0.5rem;">/</span><a href="https://grpc.io/docs/what-is-grpc/core-concepts/" style="box-sizing:border-box;background-color:transparent;font-weight:400;text-decoration:none;pointer-events:none;color:rgb(121, 118, 118);">Core concepts</a></li></ol></div><h1 style="box-sizing:border-box;margin-top:0px;line-height:1.2;font-size:36px;margin-bottom:24px;font-weight:700;">Core concepts, architecture and lifecycle</h1><p style="box-sizing:border-box;margin-top:0px;margin-bottom:16px;font-size:20px;font-weight:300;padding-bottom:8px;">An introduction to key gRPC concepts, with an overview of gRPC architecture and RPC life cycle.</p><div style="box-sizing:border-box;order:1;word-break:break-word;max-width:1140px;margin-top:24px;"><div style="box-sizing:border-box;display:block;margin-bottom:24px;"></div><p style="box-sizing:border-box;margin-top:0px;margin-bottom:16px;max-width:80%;font-weight:400;">Not familiar with gRPC? First read <a href="https://grpc.io/docs/what-is-grpc/introduction/" style="box-sizing:border-box;color:rgb(55, 156, 156);text-decoration:none;background-color:transparent;">Introduction to gRPC</a>. For
+language-specific details, see the quick start, tutorial, and reference
+documentation for your language of choice.</p><h3 style="box-sizing:border-box;font-weight:500;line-height:1.2;font-size:24px;margin-top:32px;margin-bottom:16px;"><span style="font-weight:500;line-height:1.2;font-size:24px;display:block;margin-top:-5rem;height:5rem;visibility:hidden;"> </span>Overview<a href="https://grpc.io/docs/what-is-grpc/core-concepts/#overview" style="box-sizing:border-box;color:rgb(55, 156, 156);text-decoration:none;background-color:transparent;visibility:hidden;"> <div class="media-placeholder">[图片/附件]</div></en-media></a></h3><h4 style="box-sizing:border-box;font-weight:500;line-height:1.2;font-size:21.6px;margin-top:32px;margin-bottom:16px;"><span style="font-weight:500;line-height:1.2;font-size:21.6px;display:block;margin-top:-5rem;height:5rem;visibility:hidden;"> </span>Service definition<a href="https://grpc.io/docs/what-is-grpc/core-concepts/#service-definition" style="box-sizing:border-box;color:rgb(55, 156, 156);text-decoration:none;background-color:transparent;visibility:hidden;"> <div class="media-placeholder">[图片/附件]</div></en-media></a></h4><p style="box-sizing:border-box;margin-top:0px;margin-bottom:16px;max-width:80%;font-weight:400;">Like many RPC systems, gRPC is based around the idea of defining a service,
+specifying the methods that can be called remotely with their parameters and
+return types. By default, gRPC uses <a href="https://developers.google.com/protocol-buffers" target="_blank" rel="noopener" style="box-sizing:border-box;color:rgb(55, 156, 156);text-decoration:none;background-color:transparent;">protocol
+buffers<i style="box-sizing:border-box;-webkit-font-smoothing:antialiased;display:inline-block;font-style:normal;font-variant:normal;text-rendering:auto;line-height:1;font-family:&quot;font awesome 5 free&quot;;font-weight:900;"><span style="font-style:normal;font-variant:normal;line-height:1;font-family:font awesome 5 free;font-weight:900;font-size:50%;margin-left:3px;opacity:0.8;vertical-align:top;"></span></i></a> as the Interface
+Definition Language (IDL) for describing both the service interface and the
+structure of the payload messages. It is possible to use other alternatives if
+desired.</p><div style="box-sizing:border-box;position:relative;display:flex;flex-direction:column;min-width:0px;overflow-wrap:break-word;background-color:rgb(255, 255, 255);background-clip:border-box;border:1px solid rgba(0, 0, 0, 0.125);max-width:80%;margin:2rem 0px;padding:0px;"><pre style="box-sizing:border-box;font-family:SFMono-Regular, Menlo, Monaco, Consolas, &quot;liberation mono&quot;, &quot;courier new&quot;, monospace;overflow:auto;display:block;color:rgb(34, 34, 34);font-size:87.5%;overflow-wrap:normal;margin:0px;padding:16px;background-color:#f0f3f3;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code style="box-sizing:border-box;font-family:SFMono-Regular, Menlo, Monaco, Consolas, &quot;liberation mono&quot;, &quot;courier new&quot;, monospace;overflow-wrap:break-word;color:inherit;padding:0px;margin:0px;white-space:pre;border:0px;font-size:100%;word-break:normal;background-color:inherit;"><span style="box-sizing:border-box;display:flex;"><span style="box-sizing:border-box;"><span style="box-sizing:border-box;color:#069;font-weight:700;">service</span> HelloService {<span style="box-sizing:border-box;color:#a00;background-color:#faa;">
+</span></span></span><span style="box-sizing:border-box;display:flex;"><span style="box-sizing:border-box;"><span style="box-sizing:border-box;color:#a00;background-color:#faa;"></span>  <span style="box-sizing:border-box;color:#069;font-weight:700;">rpc</span> SayHello (HelloRequest) <span style="box-sizing:border-box;color:#069;font-weight:700;">returns</span> (HelloResponse);<span style="box-sizing:border-box;color:#a00;background-color:#faa;">
+</span></span></span><span style="box-sizing:border-box;display:flex;"><span style="box-sizing:border-box;"><span style="box-sizing:border-box;color:#a00;background-color:#faa;"></span>}<span style="box-sizing:border-box;color:#a00;background-color:#faa;">
+</span></span></span><span style="box-sizing:border-box;display:flex;"><span style="box-sizing:border-box;"><span style="box-sizing:border-box;color:#a00;background-color:#faa;">
+</span></span></span><span style="box-sizing:border-box;display:flex;"><span style="box-sizing:border-box;"><span style="box-sizing:border-box;color:#a00;background-color:#faa;"></span><span style="box-sizing:border-box;color:#069;font-weight:700;">message</span> <span style="box-sizing:border-box;color:#0a8;font-weight:700;">HelloRequest</span> {<span style="box-sizing:border-box;color:#a00;background-color:#faa;">
+</span></span></span><span style="box-sizing:border-box;display:flex;"><span style="box-sizing:border-box;"><span style="box-sizing:border-box;color:#a00;background-color:#faa;"></span>  <span style="box-sizing:border-box;color:#078;font-weight:700;">string</span> greeting <span style="box-sizing:border-box;color:#555;">=</span> <span style="box-sizing:border-box;color:#f60;">1</span>;<span style="box-sizing:border-box;color:#a00;background-color:#faa;">
+</span></span></span><span style="box-sizing:border-box;display:flex;"><span style="box-sizing:border-box;"><span style="box-sizing:border-box;color:#a00;background-color:#faa;"></span>}<span style="box-sizing:border-box;color:#a00;background-color:#faa;">
+</span></span></span><span style="box-sizing:border-box;display:flex;"><span style="box-sizing:border-box;"><span style="box-sizing:border-box;color:#a00;background-color:#faa;">
+</span></span></span><span style="box-sizing:border-box;display:flex;"><span style="box-sizing:border-box;"><span style="box-sizing:border-box;color:#a00;background-color:#faa;"></span><span style="box-sizing:border-box;color:#069;font-weight:700;">message</span> <span style="box-sizing:border-box;color:#0a8;font-weight:700;">HelloResponse</span> {<span style="box-sizing:border-box;color:#a00;background-color:#faa;">
+</span></span></span><span style="box-sizing:border-box;display:flex;"><span style="box-sizing:border-box;"><span style="box-sizing:border-box;color:#a00;background-color:#faa;"></span>  <span style="box-sizing:border-box;color:#078;font-weight:700;">string</span> reply <span style="box-sizing:border-box;color:#555;">=</span> <span style="box-sizing:border-box;color:#f60;">1</span>;<span style="box-sizing:border-box;color:#a00;background-color:#faa;">
+</span></span></span><span style="box-sizing:border-box;display:flex;"><span style="box-sizing:border-box;"><span style="box-sizing:border-box;color:#a00;background-color:#faa;"></span>}<span style="box-sizing:border-box;color:#a00;background-color:#faa;">
+</span></span></span></code></pre></div><p style="box-sizing:border-box;margin-top:0px;margin-bottom:16px;max-width:80%;font-weight:400;">gRPC lets you define four kinds of service method:</p><ul style="box-sizing:border-box;margin-top:0px;margin-bottom:16px;max-width:80%;"><li style="box-sizing:border-box;font-weight:400;margin-bottom:4px;"><p style="box-sizing:border-box;margin-top:0px;margin-bottom:16px;font-weight:400;">Unary RPCs where the client sends a single request to the server and gets a
+single response back, just like a normal function call.</p><div style="box-sizing:border-box;position:relative;display:flex;flex-direction:column;min-width:0px;overflow-wrap:break-word;background-color:rgb(255, 255, 255);background-clip:border-box;border:1px solid rgba(0, 0, 0, 0.125);margin:2rem 0px;padding:0px;"><pre style="box-sizing:border-box;font-family:SFMono-Regular, Menlo, Monaco, Consolas, &quot;liberation mono&quot;, &quot;courier new&quot;, monospace;overflow:auto;display:block;color:rgb(34, 34, 34);font-size:87.5%;overflow-wrap:normal;margin:0px;padding:16px;background-color:#f0f3f3;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code style="box-sizing:border-box;font-family:SFMono-Regular, Menlo, Monaco, Consolas, &quot;liberation mono&quot;, &quot;courier new&quot;, monospace;overflow-wrap:break-word;color:inherit;padding:0px;margin:0px;white-space:pre;border:0px;font-size:100%;word-break:normal;background-color:inherit;"><span style="box-sizing:border-box;display:flex;"><span style="box-sizing:border-box;"><span style="box-sizing:border-box;color:#069;font-weight:700;">rpc</span> SayHello(HelloRequest) <span style="box-sizing:border-box;color:#069;font-weight:700;">returns</span> (HelloResponse);<span style="box-sizing:border-box;color:#a00;background-color:#faa;">
+</span></span></span></code></pre></div></li><li style="box-sizing:border-box;font-weight:400;margin-bottom:4px;"><p style="box-sizing:border-box;margin-top:0px;margin-bottom:16px;font-weight:400;">Server streaming RPCs where the client sends a request to the server and gets
+a stream to read a sequence of messages back. The client reads from the
+returned stream until there are no more messages. gRPC guarantees message
+ordering within an individual RPC call.</p><div style="box-sizing:border-box;position:relative;display:flex;flex-direction:column;min-width:0px;overflow-wrap:break-word;background-color:rgb(255, 255, 255);background-clip:border-box;border:1px solid rgba(0, 0, 0, 0.125);margin:2rem 0px;padding:0px;"><pre style="box-sizing:border-box;font-family:SFMono-Regular, Menlo, Monaco, Consolas, &quot;liberation mono&quot;, &quot;courier new&quot;, monospace;overflow:auto;display:block;color:rgb(34, 34, 34);font-size:87.5%;overflow-wrap:normal;margin:0px;padding:16px;background-color:#f0f3f3;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code style="box-sizing:border-box;font-family:SFMono-Regular, Menlo, Monaco, Consolas, &quot;liberation mono&quot;, &quot;courier new&quot;, monospace;overflow-wrap:break-word;color:inherit;padding:0px;margin:0px;white-space:pre;border:0px;font-size:100%;word-break:normal;background-color:inherit;"><span style="box-sizing:border-box;display:flex;"><span style="box-sizing:border-box;"><span style="box-sizing:border-box;color:#069;font-weight:700;">rpc</span> LotsOfReplies(HelloRequest) <span style="box-sizing:border-box;color:#069;font-weight:700;">returns</span> (stream HelloResponse);<span style="box-sizing:border-box;color:#a00;background-color:#faa;">
+</span></span></span></code></pre></div></li><li style="box-sizing:border-box;font-weight:400;margin-bottom:4px;"><p style="box-sizing:border-box;margin-top:0px;margin-bottom:16px;font-weight:400;">Client streaming RPCs where the client writes a sequence of messages and sends
+them to the server, again using a provided stream. Once the client has
+finished writing the messages, it waits for the server to read them and return
+its response. Again gRPC guarantees message ordering within an individual RPC
+call.</p><div style="box-sizing:border-box;position:relative;display:flex;flex-direction:column;min-width:0px;overflow-wrap:break-word;background-color:rgb(255, 255, 255);background-clip:border-box;border:1px solid rgba(0, 0, 0, 0.125);margin:2rem 0px;padding:0px;"><pre style="box-sizing:border-box;font-family:SFMono-Regular, Menlo, Monaco, Consolas, &quot;liberation mono&quot;, &quot;courier new&quot;, monospace;overflow:auto;display:block;color:rgb(34, 34, 34);font-size:87.5%;overflow-wrap:normal;margin:0px;padding:16px;background-color:#f0f3f3;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code style="box-sizing:border-box;font-family:SFMono-Regular, Menlo, Monaco, Consolas, &quot;liberation mono&quot;, &quot;courier new&quot;, monospace;overflow-wrap:break-word;color:inherit;padding:0px;margin:0px;white-space:pre;border:0px;font-size:100%;word-break:normal;background-color:inherit;"><span style="box-sizing:border-box;display:flex;"><span style="box-sizing:border-box;"><span style="box-sizing:border-box;color:#069;font-weight:700;">rpc</span> LotsOfGreetings(stream HelloRequest) <span style="box-sizing:border-box;color:#069;font-weight:700;">returns</span> (HelloResponse);<span style="box-sizing:border-box;color:#a00;background-color:#faa;">
+</span></span></span></code></pre></div></li><li style="box-sizing:border-box;font-weight:400;margin-bottom:4px;"><p style="box-sizing:border-box;margin-top:0px;margin-bottom:16px;font-weight:400;">Bidirectional streaming RPCs where both sides send a sequence of messages
+using a read-write stream. The two streams operate independently, so clients
+and servers can read and write in whatever order they like: for example, the
+server could wait to receive all the client messages before writing its
+responses, or it could alternately read a message then write a message, or
+some other combination of reads and writes. The order of messages in each
+stream is preserved.</p><div style="box-sizing:border-box;position:relative;display:flex;flex-direction:column;min-width:0px;overflow-wrap:break-word;background-color:rgb(255, 255, 255);background-clip:border-box;border:1px solid rgba(0, 0, 0, 0.125);margin:2rem 0px;padding:0px;"><pre style="box-sizing:border-box;font-family:SFMono-Regular, Menlo, Monaco, Consolas, &quot;liberation mono&quot;, &quot;courier new&quot;, monospace;overflow:auto;display:block;color:rgb(34, 34, 34);font-size:87.5%;overflow-wrap:normal;margin:0px;padding:16px;background-color:#f0f3f3;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code style="box-sizing:border-box;font-family:SFMono-Regular, Menlo, Monaco, Consolas, &quot;liberation mono&quot;, &quot;courier new&quot;, monospace;overflow-wrap:break-word;color:inherit;padding:0px;margin:0px;white-space:pre;border:0px;font-size:100%;word-break:normal;background-color:inherit;"><span style="box-sizing:border-box;display:flex;"><span style="box-sizing:border-box;"><span style="box-sizing:border-box;color:#069;font-weight:700;">rpc</span> BidiHello(stream HelloRequest) <span style="box-sizing:border-box;color:#069;font-weight:700;">returns</span> (stream HelloResponse);<span style="box-sizing:border-box;color:#a00;background-color:#faa;">
+</span></span></span></code></pre></div></li></ul><p style="box-sizing:border-box;margin-top:0px;margin-bottom:16px;max-width:80%;font-weight:400;">You’ll learn more about the different types of RPC in the
+<a href="https://grpc.io/docs/what-is-grpc/core-concepts/#rpc-life-cycle" style="box-sizing:border-box;color:rgb(55, 156, 156);text-decoration:none;background-color:transparent;">RPC life cycle</a> section below.</p><h4 style="box-sizing:border-box;font-weight:500;line-height:1.2;font-size:21.6px;margin-top:32px;margin-bottom:16px;"><span style="font-weight:500;line-height:1.2;font-size:21.6px;display:block;margin-top:-5rem;height:5rem;visibility:hidden;"> </span>Using the API<a href="https://grpc.io/docs/what-is-grpc/core-concepts/#using-the-api" style="box-sizing:border-box;color:rgb(55, 156, 156);text-decoration:none;background-color:transparent;visibility:hidden;"> <div class="media-placeholder">[图片/附件]</div></en-media></a></h4><p style="box-sizing:border-box;margin-top:0px;margin-bottom:16px;max-width:80%;font-weight:400;">Starting from a service definition in a <code style="box-sizing:border-box;font-family:SFMono-Regular, Menlo, Monaco, Consolas, &quot;liberation mono&quot;, &quot;courier new&quot;, monospace;overflow-wrap:break-word;padding:0.2em 0.4em;margin:0px;word-break:normal;background-color:rgba(0, 0, 0, 0.05);border-radius:4px;font-size:85%;color:inherit;">.proto</code> file, gRPC provides protocol
+buffer compiler plugins that generate client- and server-side code. gRPC users
+typically call these APIs on the client side and implement the corresponding API
+on the server side.</p><ul style="box-sizing:border-box;margin-top:0px;margin-bottom:16px;max-width:80%;"><li style="box-sizing:border-box;font-weight:400;margin-bottom:4px;">On the server side, the server implements the methods declared by the service
+and runs a gRPC server to handle client calls. The gRPC infrastructure decodes
+incoming requests, executes service methods, and encodes service responses.</li><li style="box-sizing:border-box;font-weight:400;margin-bottom:4px;">On the client side, the client has a local object known as <em style="box-sizing:border-box;">stub</em> (for some
+languages, the preferred term is <em style="box-sizing:border-box;">client</em>) that implements the same methods as
+the service. The client can then just call those methods on the local object,
+and the methods wrap the parameters for the call in the appropriate protocol buffer
+message type, send the requests to the server, and return the server’s
+protocol buffer responses.</li></ul><h4 style="box-sizing:border-box;font-weight:500;line-height:1.2;font-size:21.6px;margin-top:32px;margin-bottom:16px;"><span style="font-weight:500;line-height:1.2;font-size:21.6px;display:block;margin-top:-5rem;height:5rem;visibility:hidden;"> </span>Synchronous vs. asynchronous<a href="https://grpc.io/docs/what-is-grpc/core-concepts/#synchronous-vs-asynchronous" style="box-sizing:border-box;color:rgb(55, 156, 156);text-decoration:none;background-color:transparent;visibility:hidden;"> <div class="media-placeholder">[图片/附件]</div></en-media></a></h4><p style="box-sizing:border-box;margin-top:0px;margin-bottom:16px;max-width:80%;font-weight:400;">Synchronous RPC calls that block until a response arrives from the server are
+the closest approximation to the abstraction of a procedure call that RPC
+aspires to. On the other hand, networks are inherently asynchronous and in many
+scenarios it’s useful to be able to start RPCs without blocking the current
+thread.</p><p style="box-sizing:border-box;margin-top:0px;margin-bottom:16px;max-width:80%;font-weight:400;">The gRPC programming API in most languages comes in both synchronous and
+asynchronous flavors. You can find out more in each language’s tutorial and
+reference documentation (complete reference docs are coming soon).</p><h3 style="box-sizing:border-box;font-weight:500;line-height:1.2;font-size:24px;margin-top:32px;margin-bottom:16px;"><span style="font-weight:500;line-height:1.2;font-size:24px;display:block;margin-top:-5rem;height:5rem;visibility:hidden;"> </span>RPC life cycle<a href="https://grpc.io/docs/what-is-grpc/core-concepts/#rpc-life-cycle" style="box-sizing:border-box;color:rgb(55, 156, 156);text-decoration:none;background-color:transparent;visibility:hidden;"> <div class="media-placeholder">[图片/附件]</div></en-media></a></h3><p style="box-sizing:border-box;margin-top:0px;margin-bottom:16px;max-width:80%;font-weight:400;">In this section, you’ll take a closer look at what happens when a gRPC client
+calls a gRPC server method. For complete implementation details, see the
+language-specific pages.</p><h4 style="box-sizing:border-box;font-weight:500;line-height:1.2;font-size:21.6px;margin-top:32px;margin-bottom:16px;"><span style="font-weight:500;line-height:1.2;font-size:21.6px;display:block;margin-top:-5rem;height:5rem;visibility:hidden;"> </span>Unary RPC<a href="https://grpc.io/docs/what-is-grpc/core-concepts/#unary-rpc" style="box-sizing:border-box;color:rgb(55, 156, 156);text-decoration:none;background-color:transparent;visibility:hidden;"> <div class="media-placeholder">[图片/附件]</div></en-media></a></h4><p style="box-sizing:border-box;margin-top:0px;margin-bottom:16px;max-width:80%;font-weight:400;">First consider the simplest type of RPC where the client sends a single request
+and gets back a single response.</p><ol style="box-sizing:border-box;margin-top:0px;margin-bottom:16px;max-width:80%;"><li style="box-sizing:border-box;font-weight:400;margin-bottom:4px;">Once the client calls a stub method, the server is
+notified that the RPC has been invoked with the client’s <a href="https://grpc.io/docs/what-is-grpc/core-concepts/#metadata" style="box-sizing:border-box;color:rgb(55, 156, 156);text-decoration:none;background-color:transparent;">metadata</a>
+for this call, the method name, and the specified <a href="https://grpc.io/docs/what-is-grpc/core-concepts/#deadlines" style="box-sizing:border-box;color:rgb(55, 156, 156);text-decoration:none;background-color:transparent;">deadline</a> if
+applicable.</li><li style="box-sizing:border-box;font-weight:400;margin-bottom:4px;">The server can then either send back its own initial metadata (which must be
+sent before any response) straight away, or wait for the client’s request
+message. Which happens first, is application-specific.</li><li style="box-sizing:border-box;font-weight:400;margin-bottom:4px;">Once the server has the client’s request message, it does whatever work is
+necessary to create and populate a response. The response is then returned
+(if successful) to the client together with status details (status code and
+optional status message) and optional trailing metadata.</li><li style="box-sizing:border-box;font-weight:400;margin-bottom:4px;">If the response status is OK, then the client gets the response, which
+completes the call on the client side.</li></ol><h4 style="box-sizing:border-box;font-weight:500;line-height:1.2;font-size:21.6px;margin-top:32px;margin-bottom:16px;"><span style="font-weight:500;line-height:1.2;font-size:21.6px;display:block;margin-top:-5rem;height:5rem;visibility:hidden;"> </span>Server streaming RPC<a href="https://grpc.io/docs/what-is-grpc/core-concepts/#server-streaming-rpc" style="box-sizing:border-box;color:rgb(55, 156, 156);text-decoration:none;background-color:transparent;visibility:hidden;"> <div class="media-placeholder">[图片/附件]</div></en-media></a></h4><p style="box-sizing:border-box;margin-top:0px;margin-bottom:16px;max-width:80%;font-weight:400;">A server-streaming RPC is similar to a unary RPC, except that the server returns
+a stream of messages in response to a client’s request. After sending all its
+messages, the server’s status details (status code and optional status message)
+and optional trailing metadata are sent to the client. This completes processing
+on the server side. The client completes once it has all the server’s messages.</p><h4 style="box-sizing:border-box;font-weight:500;line-height:1.2;font-size:21.6px;margin-top:32px;margin-bottom:16px;"><span style="font-weight:500;line-height:1.2;font-size:21.6px;display:block;margin-top:-5rem;height:5rem;visibility:hidden;"> </span>Client streaming RPC<a href="https://grpc.io/docs/what-is-grpc/core-concepts/#client-streaming-rpc" style="box-sizing:border-box;color:rgb(55, 156, 156);text-decoration:none;background-color:transparent;visibility:hidden;"> <div class="media-placeholder">[图片/附件]</div></en-media></a></h4><p style="box-sizing:border-box;margin-top:0px;margin-bottom:16px;max-width:80%;font-weight:400;">A client-streaming RPC is similar to a unary RPC, except that the client sends a
+stream of messages to the server instead of a single message. The server
+responds with a single message (along with its status details and optional
+trailing metadata), typically but not necessarily after it has received all the
+client’s messages.</p><h4 style="box-sizing:border-box;font-weight:500;line-height:1.2;font-size:21.6px;margin-top:32px;margin-bottom:16px;"><span style="font-weight:500;line-height:1.2;font-size:21.6px;display:block;margin-top:-5rem;height:5rem;visibility:hidden;"> </span>Bidirectional streaming RPC<a href="https://grpc.io/docs/what-is-grpc/core-concepts/#bidirectional-streaming-rpc" style="box-sizing:border-box;color:rgb(55, 156, 156);text-decoration:none;background-color:transparent;visibility:hidden;"> <div class="media-placeholder">[图片/附件]</div></en-media></a></h4><p style="box-sizing:border-box;margin-top:0px;margin-bottom:16px;max-width:80%;font-weight:400;">In a bidirectional streaming RPC, the call is initiated by the client
+invoking the method and the server receiving the client metadata, method name,
+and deadline. The server can choose to send back its initial metadata or
+wait for the client to start streaming messages.</p><p style="box-sizing:border-box;margin-top:0px;margin-bottom:16px;max-width:80%;font-weight:400;">Client- and server-side stream processing is application specific. Since the two
+streams are independent, the client and server can read and write messages in
+any order. For example, a server can wait until it has received all of a
+client’s messages before writing its messages, or the server and client can play
+“ping-pong” – the server gets a request, then sends back a response, then the
+client sends another request based on the response, and so on.</p><h4 style="box-sizing:border-box;font-weight:500;line-height:1.2;font-size:21.6px;margin-top:32px;margin-bottom:16px;"><span style="font-weight:500;line-height:1.2;font-size:21.6px;display:block;margin-top:-5rem;height:5rem;visibility:hidden;"> </span>Deadlines/Timeouts<a href="https://grpc.io/docs/what-is-grpc/core-concepts/#deadlines" style="box-sizing:border-box;color:rgb(55, 156, 156);text-decoration:none;background-color:transparent;visibility:hidden;"> <div class="media-placeholder">[图片/附件]</div></en-media></a></h4><p style="box-sizing:border-box;margin-top:0px;margin-bottom:16px;max-width:80%;font-weight:400;">gRPC allows clients to specify how long they are willing to wait for an RPC to
+complete before the RPC is terminated with a <code style="box-sizing:border-box;font-family:SFMono-Regular, Menlo, Monaco, Consolas, &quot;liberation mono&quot;, &quot;courier new&quot;, monospace;overflow-wrap:break-word;padding:0.2em 0.4em;margin:0px;word-break:normal;background-color:rgba(0, 0, 0, 0.05);border-radius:4px;font-size:85%;color:inherit;">DEADLINE_EXCEEDED</code> error. On
+the server side, the server can query to see if a particular RPC has timed out,
+or how much time is left to complete the RPC.</p><p style="box-sizing:border-box;margin-top:0px;margin-bottom:16px;max-width:80%;font-weight:400;">Specifying a deadline or timeout is language specific: some language APIs work
+in terms of timeouts (durations of time), and some language APIs work in terms
+of a deadline (a fixed point in time) and may or may not have a default deadline.</p><h4 style="box-sizing:border-box;font-weight:500;line-height:1.2;font-size:21.6px;margin-top:32px;margin-bottom:16px;"><span style="font-weight:500;line-height:1.2;font-size:21.6px;display:block;margin-top:-5rem;height:5rem;visibility:hidden;"> </span>RPC termination<a href="https://grpc.io/docs/what-is-grpc/core-concepts/#rpc-termination" style="box-sizing:border-box;color:rgb(55, 156, 156);text-decoration:none;background-color:transparent;visibility:hidden;"> <div class="media-placeholder">[图片/附件]</div></en-media></a></h4><p style="box-sizing:border-box;margin-top:0px;margin-bottom:16px;max-width:80%;font-weight:400;">In gRPC, both the client and server make independent and local determinations of
+the success of the call, and their conclusions may not match. This means that,
+for example, you could have an RPC that finishes successfully on the server side
+(“I have sent all my responses!”) but fails on the client side (“The responses
+arrived after my deadline!”). It’s also possible for a server to decide to
+complete before a client has sent all its requests.</p><h4 style="box-sizing:border-box;font-weight:500;line-height:1.2;font-size:21.6px;margin-top:32px;margin-bottom:16px;"><span style="font-weight:500;line-height:1.2;font-size:21.6px;display:block;margin-top:-5rem;height:5rem;visibility:hidden;"> </span>Cancelling an RPC<a href="https://grpc.io/docs/what-is-grpc/core-concepts/#cancelling-an-rpc" style="box-sizing:border-box;color:rgb(55, 156, 156);text-decoration:none;background-color:transparent;visibility:hidden;"> <div class="media-placeholder">[图片/附件]</div></en-media></a></h4><p style="box-sizing:border-box;margin-top:0px;margin-bottom:16px;max-width:80%;font-weight:400;">Either the client or the server can cancel an RPC at any time. A cancellation
+terminates the RPC immediately so that no further work is done.</p><div style="box-sizing:border-box;position:relative;padding:0.75rem 1.25rem;border:1px solid transparent;font-weight:500;border-radius:0px;color:inherit;background:rgb(255, 255, 255);border-style:solid;border-width:0px 0px 0px 4px;border-color:rgb(237, 106, 90);max-width:80%;margin-top:32px;margin-bottom:32px;"><h4 style="box-sizing:border-box;margin-top:0px;font-weight:500;line-height:1.2;margin-bottom:8px;font-size:21.6px;color:rgb(237, 106, 90);">Warning</h4>Changes made before a cancellation are not rolled back.</div><h4 style="box-sizing:border-box;font-weight:500;line-height:1.2;font-size:21.6px;margin-top:32px;margin-bottom:16px;"><span style="font-weight:500;line-height:1.2;font-size:21.6px;display:block;margin-top:-5rem;height:5rem;visibility:hidden;"> </span>Metadata<a href="https://grpc.io/docs/what-is-grpc/core-concepts/#metadata" style="box-sizing:border-box;color:rgb(55, 156, 156);text-decoration:none;background-color:transparent;visibility:hidden;"> <div class="media-placeholder">[图片/附件]</div></en-media></a></h4><p style="box-sizing:border-box;margin-top:0px;margin-bottom:16px;max-width:80%;font-weight:400;">Metadata is information about a particular RPC call (such as <a href="https://grpc.io/docs/guides/auth/" style="box-sizing:border-box;color:rgb(55, 156, 156);text-decoration:none;background-color:transparent;">authentication
+details</a>) in the form of a list of key-value pairs, where the
+keys are strings and the values are typically strings, but can be binary data.</p><p style="box-sizing:border-box;margin-top:0px;margin-bottom:16px;max-width:80%;font-weight:400;">Keys are case insensitive and consist of ASCII letters, digits, and special characters <code style="box-sizing:border-box;font-family:SFMono-Regular, Menlo, Monaco, Consolas, &quot;liberation mono&quot;, &quot;courier new&quot;, monospace;overflow-wrap:break-word;padding:0.2em 0.4em;margin:0px;word-break:normal;background-color:rgba(0, 0, 0, 0.05);border-radius:4px;font-size:85%;color:inherit;">-</code>, <code style="box-sizing:border-box;font-family:SFMono-Regular, Menlo, Monaco, Consolas, &quot;liberation mono&quot;, &quot;courier new&quot;, monospace;overflow-wrap:break-word;padding:0.2em 0.4em;margin:0px;word-break:normal;background-color:rgba(0, 0, 0, 0.05);border-radius:4px;font-size:85%;color:inherit;">_</code>,
+<code style="box-sizing:border-box;font-family:SFMono-Regular, Menlo, Monaco, Consolas, &quot;liberation mono&quot;, &quot;courier new&quot;, monospace;overflow-wrap:break-word;padding:0.2em 0.4em;margin:0px;word-break:normal;background-color:rgba(0, 0, 0, 0.05);border-radius:4px;font-size:85%;color:inherit;">.</code> and must not start with <code style="box-sizing:border-box;font-family:SFMono-Regular, Menlo, Monaco, Consolas, &quot;liberation mono&quot;, &quot;courier new&quot;, monospace;overflow-wrap:break-word;padding:0.2em 0.4em;margin:0px;word-break:normal;background-color:rgba(0, 0, 0, 0.05);border-radius:4px;font-size:85%;color:inherit;">grpc-</code> (which is reserved for gRPC itself).
+Binary-valued keys end in <code style="box-sizing:border-box;font-family:SFMono-Regular, Menlo, Monaco, Consolas, &quot;liberation mono&quot;, &quot;courier new&quot;, monospace;overflow-wrap:break-word;padding:0.2em 0.4em;margin:0px;word-break:normal;background-color:rgba(0, 0, 0, 0.05);border-radius:4px;font-size:85%;color:inherit;">-bin</code> while ASCII-valued keys do not.</p><p style="box-sizing:border-box;margin-top:0px;margin-bottom:16px;max-width:80%;font-weight:400;">User-defined metadata is not used by gRPC, which allows the client to provide information
+associated with the call to the server and vice versa.</p><p style="box-sizing:border-box;margin-top:0px;margin-bottom:16px;max-width:80%;font-weight:400;">Access to metadata is language dependent.</p><h4 style="box-sizing:border-box;font-weight:500;line-height:1.2;font-size:21.6px;margin-top:32px;margin-bottom:16px;"><span style="font-weight:500;line-height:1.2;font-size:21.6px;display:block;margin-top:-5rem;height:5rem;visibility:hidden;"> </span>Channels<a href="https://grpc.io/docs/what-is-grpc/core-concepts/#channels" style="box-sizing:border-box;color:rgb(55, 156, 156);text-decoration:none;background-color:transparent;visibility:hidden;"> <div class="media-placeholder">[图片/附件]</div></en-media></a></h4><p style="box-sizing:border-box;margin-top:0px;margin-bottom:16px;max-width:80%;font-weight:400;">A gRPC channel provides a connection to a gRPC server on a specified host and
+port. It is used when creating a client stub. Clients can specify channel
+arguments to modify gRPC’s default behavior, such as switching message
+compression on or off. A channel has state, including <code style="box-sizing:border-box;font-family:SFMono-Regular, Menlo, Monaco, Consolas, &quot;liberation mono&quot;, &quot;courier new&quot;, monospace;overflow-wrap:break-word;padding:0.2em 0.4em;margin:0px;word-break:normal;background-color:rgba(0, 0, 0, 0.05);border-radius:4px;font-size:85%;color:inherit;">connected</code> and <code style="box-sizing:border-box;font-family:SFMono-Regular, Menlo, Monaco, Consolas, &quot;liberation mono&quot;, &quot;courier new&quot;, monospace;overflow-wrap:break-word;padding:0.2em 0.4em;margin:0px;word-break:normal;background-color:rgba(0, 0, 0, 0.05);border-radius:4px;font-size:85%;color:inherit;">idle</code>.</p><p style="box-sizing:border-box;margin-top:0px;margin-bottom:16px;max-width:80%;font-weight:400;">How gRPC deals with closing a channel is language dependent. Some languages also
+permit querying channel state.</p><div style="box-sizing:border-box;border-top:1px solid rgb(222, 226, 230);margin-top:48px;padding-top:16px;color:rgb(121, 118, 118);">Last modified December 21, 2022: <a href="https://github.com/grpc/grpc.io/commit/9bff5b5e8ea37a1edee545b877995635e195b6ea" style="box-sizing:border-box;color:rgb(55, 156, 156);text-decoration:none;background-color:transparent;">Rework statement about &quot;opacity&quot; of metadata (#1079) (9bff5b5)</a></div></div></span></div></div></div></div></div></div>
+</div>
+</div>
+<a class="back-link" href="../articles.html">← 返回笔记列表</a>
+</body>
+</html>

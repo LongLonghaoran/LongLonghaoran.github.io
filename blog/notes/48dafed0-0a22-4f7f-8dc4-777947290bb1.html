@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="zh-CN" data-theme="light">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>容器镜像格式 — 技术笔记</title>
+<style>
+:root { --bg:#fff; --text:#1a1a1a; --muted:#666; --border:#e0e0e0; --code-bg:#f5f5f5; --link:#0066cc; }
+@media (prefers-color-scheme: dark) { :root { --bg:#1a1a1a; --text:#e0e0e0; --muted:#999; --border:#333; --code-bg:#2a2a2a; --link:#66bbff; } }
+* { box-sizing:border-box; margin:0; padding:0; }
+body { font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Arial,sans-serif; line-height:1.7; color:var(--text); background:var(--bg); max-width:860px; margin:0 auto; padding:2rem 1.5rem; }
+.note-header { border-bottom:2px solid var(--border); padding-bottom:1rem; margin-bottom:2rem; }
+.note-title { font-size:1.6rem; font-weight:700; margin-bottom:0.3rem; }
+.note-meta { color:var(--muted); font-size:0.85rem; }
+.note-content { font-size:0.95rem; }
+.note-content h1 { font-size:1.4rem; margin:1.2rem 0 0.6rem; }
+.note-content h2 { font-size:1.2rem; margin:1rem 0 0.5rem; }
+.note-content h3 { font-size:1.05rem; margin:0.8rem 0 0.4rem; }
+.note-content p { margin:0.5rem 0; }
+.note-content ul,.note-content ol { margin:0.5rem 0 0.5rem 2rem; }
+.note-content li { margin:0.2rem 0; }
+.note-content pre { background:var(--code-bg); padding:1rem; border-radius:6px; overflow-x:auto; margin:0.8rem 0; font-size:0.85rem; }
+.note-content code { background:var(--code-bg); padding:0.1rem 0.3rem; border-radius:3px; font-size:0.88em; }
+.note-content pre code { background:none; padding:0; }
+.note-content blockquote { border-left:3px solid var(--border); padding-left:1rem; color:var(--muted); margin:0.8rem 0; }
+.note-content a { color:var(--link); }
+.note-content img { max-width:100%; height:auto; border-radius:6px; margin:0.5rem 0; }
+.note-content table { border-collapse:collapse; width:100%; margin:0.8rem 0; }
+.note-content th,.note-content td { border:1px solid var(--border); padding:0.5rem; }
+.note-content th { background:var(--code-bg); }
+.media-placeholder { background:var(--code-bg); padding:1rem; text-align:center; color:var(--muted); border-radius:6px; margin:0.5rem 0; font-size:0.85rem; }
+.encrypt-placeholder { background:#fff3cd; padding:0.5rem; text-align:center; color:#856404; border-radius:6px; margin:0.5rem 0; font-size:0.85rem; }
+.back-link { display:inline-block; margin-top:2rem; color:var(--link); text-decoration:none; font-size:0.85rem; }
+</style>
+</head>
+<body>
+<div class="note-header"><div class="note-title">容器镜像格式</div><div class="note-meta">笔记本：容器镜像</div></div>
+<div class="note-content"><div style="overflow: auto; border: 1px solid rgb(233, 233, 233); border-radius: 6px; padding: 20px; box-sizing: border-box; color: rgb(0, 0, 0); font-family: system-ui, &quot;PingFang SC&quot;, STHeiti, sans-serif; font-size: 12px; font-variant-ligatures: normal; font-variant-caps: normal; letter-spacing: normal; orphans: 2; text-align: start; text-indent: 0px; text-transform: none; widows: 2; word-spacing: 0px; -webkit-text-stroke-width: 0px; white-space: normal;"><div style="font-family: PingFangSC-Regular; font-size: 14px; color: rgb(0, 0, 0); letter-spacing: 0px; text-align: justify;"><div>从高层级来看，镜像清单包含关于镜像内容及其依赖项的元数据，其中包括一个或多个文件系统层变更集归档的内容可寻址标识，这些归档文件解压后将构成最终可运行的文件系统。镜像配置则包含诸如应用程序参数、环境变量等信息。镜像索引是更高层级的清单，它指向一组清单和描述符。通常这些清单可能提供镜像的不同实现方式，可能因平台或其他属性而异。
+</div></div></div><div><div class="media-placeholder">[图片/附件]</div></div><div>OCI Image Media Types:</div><div style="box-sizing: border-box; padding: 8px; font-family: Monaco, Menlo, Consolas, &quot;Courier New&quot;, monospace; font-size: 12px; color: rgb(51, 51, 51); border-radius: 4px; background-color: rgb(251, 250, 248); border: 1px solid rgba(0, 0, 0, 0.15);-en-codeblock:true;"><div>OCI 镜像媒体类型 (mediaType) 是 OCI 镜像规范中的核心组成部分，其主要作用体现在以下几个方面：</div><div><div>‌标识内容格式与语义‌：</div><div>mediaType 明确标注了某个文件或数据流的具体格式类型（如 JSON 配置文件、压缩的 tar 包层）以及遵循的规范版本（如 v1）。例如：</div><div>application/vnd.oci.image.manifest.v1+json 表明文件是一个符合 OCI 镜像规范 v1 版本的清单 (Manifest) 文件，格式为 JSON。</div><div>application/vnd.oci.image.config.v1+json 表明文件是一个符合 OCI 镜像规范 v1 版本的配置 (Config) 文件，格式为 JSON。</div><div>application/vnd.oci.image.layer.v1.tar+gzip 表明数据是一个符合 OCI 镜像规范 v1 版本的层 (Layer)，其格式是经过 gzip 压缩的 tar 包。35</div><div>这确保了接收方能准确理解如何处理和解析该内容。</div></div><div><div>‌确保兼容性与互操作性‌：</div><div>通过标准化的 mediaType，不同的容器运行时（如 containerd, cri-o, Docker Engine）、镜像构建工具（如 Buildah, Kaniko）和镜像仓库（如 Docker Hub, Harbor, Amazon ECR）能够基于一致的标识符理解镜像组件的结构和含义。14</div><div>这是实现容器技术“一次构建，随处运行”愿景的关键技术基础之一。无论底层使用何种具体的容器软件，只要它们遵循 OCI 规范并识别这些 mediaType，就能正确无误地处理同一个镜像。14</div></div></div><div>OCI Image manifest specification:</div><div style="box-sizing: border-box; padding: 8px; font-family: Monaco, Menlo, Consolas, &quot;Courier New&quot;, monospace; font-size: 12px; color: rgb(51, 51, 51); border-radius: 4px; background-color: rgb(251, 250, 248); border: 1px solid rgba(0, 0, 0, 0.15);-en-codeblock:true;"><div>镜像清单规范主要有三大目标。其一是实现内容可寻址镜像，通过支持一种镜像模型，将镜像配置进行哈希处理，从而为镜像及其组件生成唯一标识符。其二是支持多架构镜像，借助引用各平台特定版本镜像清单的"聚合清单"（OCI中体现为镜像索引）实现。其三是确保规范可转换为OCI运行时规范。</div></div><div><br /></div></div>
+<a class="back-link" href="../articles.html">← 返回笔记列表</a>
+</body></html>

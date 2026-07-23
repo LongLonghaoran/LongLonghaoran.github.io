@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="zh-CN" data-theme="light">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>20191024 — 技术笔记</title>
+<style>
+:root { --bg:#fff; --text:#1a1a1a; --muted:#666; --border:#e0e0e0; --code-bg:#f5f5f5; --link:#0066cc; }
+@media (prefers-color-scheme: dark) { :root { --bg:#1a1a1a; --text:#e0e0e0; --muted:#999; --border:#333; --code-bg:#2a2a2a; --link:#66bbff; } }
+* { box-sizing:border-box; margin:0; padding:0; }
+body { font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Arial,sans-serif; line-height:1.7; color:var(--text); background:var(--bg); max-width:860px; margin:0 auto; padding:2rem 1.5rem; }
+.note-header { border-bottom:2px solid var(--border); padding-bottom:1rem; margin-bottom:2rem; }
+.note-title { font-size:1.6rem; font-weight:700; margin-bottom:0.3rem; }
+.note-meta { color:var(--muted); font-size:0.85rem; }
+.note-content { font-size:0.95rem; }
+.note-content h1 { font-size:1.4rem; margin:1.2rem 0 0.6rem; }
+.note-content h2 { font-size:1.2rem; margin:1rem 0 0.5rem; }
+.note-content h3 { font-size:1.05rem; margin:0.8rem 0 0.4rem; }
+.note-content p { margin:0.5rem 0; }
+.note-content ul,.note-content ol { margin:0.5rem 0 0.5rem 2rem; }
+.note-content li { margin:0.2rem 0; }
+.note-content pre { background:var(--code-bg); padding:1rem; border-radius:6px; overflow-x:auto; margin:0.8rem 0; font-size:0.85rem; }
+.note-content code { background:var(--code-bg); padding:0.1rem 0.3rem; border-radius:3px; font-size:0.88em; }
+.note-content pre code { background:none; padding:0; }
+.note-content blockquote { border-left:3px solid var(--border); padding-left:1rem; color:var(--muted); margin:0.8rem 0; }
+.note-content a { color:var(--link); }
+.note-content img { max-width:100%; height:auto; border-radius:6px; margin:0.5rem 0; }
+.note-content table { border-collapse:collapse; width:100%; margin:0.8rem 0; }
+.note-content th,.note-content td { border:1px solid var(--border); padding:0.5rem; }
+.note-content th { background:var(--code-bg); }
+.media-placeholder { background:var(--code-bg); padding:1rem; text-align:center; color:var(--muted); border-radius:6px; margin:0.5rem 0; font-size:0.85rem; }
+.encrypt-placeholder { background:#fff3cd; padding:0.5rem; text-align:center; color:#856404; border-radius:6px; margin:0.5rem 0; font-size:0.85rem; }
+.back-link { display:inline-block; margin-top:2rem; color:var(--link); text-decoration:none; font-size:0.85rem; }
+</style>
+</head>
+<body>
+<div class="note-header"><div class="note-title">20191024</div><div class="note-meta">笔记本：前端学习</div></div>
+<div class="note-content"><div>1.创建服务并监听请求事件的代码还可以简写:</div><div style="box-sizing: border-box; padding: 8px; font-family: Monaco, Menlo, Consolas, &quot;Courier New&quot;, monospace; font-size: 12px; color: rgb(51, 51, 51); border-radius: 4px; background-color: rgb(251, 250, 248); border: 1px solid rgba(0, 0, 0, 0.15);-en-codeblock:true;"><div>http.createServer(function(req, res){</div><div>    </div><div>}).listen(3000)</div></div><div>直接给createServer方法传递回调函数，默认就是监听请求事件</div><div><br /></div><div><br /></div><div>2.自己这样手写判断 url === xxx的方式，非常容易出错，我体验下来，写一套前后端代码得反复修改多次，老师也是如此，之后会使用框架来完成这个任务</div><div><br /></div><div>3.表单提交</div><div>    为了简单上手，表单先采用 get 方式提交，这样获取参数时简单点，直接获取查询字符串即可</div><div>    </div><div style="box-sizing: border-box; padding: 8px; font-family: Monaco, Menlo, Consolas, &quot;Courier New&quot;, monospace; font-size: 12px; color: rgb(51, 51, 51); border-radius: 4px; background-color: rgb(251, 250, 248); border: 1px solid rgba(0, 0, 0, 0.15);-en-codeblock:true;"><div><span style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco;">var url.parse(req.url, true);</span></div><div><span style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco;">var query = url.query;</span></div><div><span style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco;"><br /></span></div></div><div><br /></div><div>    </div><div><br /></div><div>4.url模块</div><div>    <div class="media-placeholder">[图片/附件]</div><br /></div><div>将url作为参数传递给parse方法，它可以返回一些实用的方法来解析该url</div><div>    1.protocol 协议</div><div>    2.slashes 判断 // 如何处理，从第一个//开始之后的部分为路径</div><div>    3.query 查询参数，如果parse方法第二个参数与为true,那么该属性将是一个 由 查询参数组成的 js 对象,如果不是true,那么这里将是一个 查询字符串,比如 'a=1&amp;b=2'</div><div><br /></div><div>即便，parse方法的参数，不带前面的host 主机名 http:// 协议，仅仅只是从 path 路径开始(比如 '/a/b?c=1'</div><div>它也可以正确解析，就是说它总是解析url中正确的那一部分</div><div><br /></div><div>5.重定向</div><div>    1.状态码设置为302 通过 statusCode</div><div>        res.statusCode = 302</div><div>    2.响应头设置 Location告诉客户端往哪儿重定向 setHeader('Location', 'http://需要重定向的地址')</div><div>        res.setHeader('Location', '/路径') 从根路径开始写即可，无需包含协议和主机名，当然写了也是可以的</div><div>    </div><div style="box-sizing: border-box; padding: 8px; font-family: Monaco, Menlo, Consolas, &quot;Courier New&quot;, monospace; font-size: 12px; color: rgb(51, 51, 51); border-radius: 4px; background-color: rgb(251, 250, 248); border: 1px solid rgba(0, 0, 0, 0.15);-en-codeblock:true;"><div>var parseObj = url.parse(req.url, true)</div><div>var comment = parseObj.query</div><div>comment.dateTime = '2017-11-2 17:11:22'</div><div>comments.unshift(comment)</div><div>res.statusCode = 302</div><div>res.setHeader('Location', '/')</div><div>res.end()</div><div>//这里有一点需要注意的是,我们如果直接comments数组写在createServer回调函数之外的话，那么这个数组</div><div>//就相当于是个静态的变量！，在整个服务运行期间，它始终存在并且始终只有一个，也就是所有请求我们服务的人//也都是共享的这一个数组，这不同于以往我们请求结束了，数据就不存在的概念</div><div>//这大概也解释我之前很多在rails中也碰到的疑问，比如“是不是每次请求过来项目都重置整个项目的环境？”现在</div><div>看来，项目之所以有那么配置变量以及初始化配置，原来这些都是出于请求之外的数据，而真正请求过程中的只有一部分，所以速度很快</div></div><div><br /></div><div>6.node中的console，用以测试 核心模块的环境</div><div>    在任意目录下，输入 node ，就会进入到node的console环境，我们可以在这里测试各类核心模块,而且使用核心模块的话，无需 require,可以直接使用</div><div><br /></div><div>7.每日复习一点js</div><div>Array部分</div><div><a href="https://developer.mozilla.org/zh-CN/docs/Web/JavaScript/Reference/Global_Objects/Array">https://developer.mozilla.org/zh-CN/docs/Web/JavaScript/Reference/Global_Objects/Array</a></div><div>    </div></div>
+<a class="back-link" href="../articles.html">← 返回笔记列表</a>
+</body></html>

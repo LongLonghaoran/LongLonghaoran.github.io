@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="zh-CN" data-theme="light">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Kubevirt Operation — 技术笔记</title>
+<style>
+:root {
+  --bg: #ffffff;
+  --text: #1a1a1a;
+  --muted: #666;
+  --border: #e0e0e0;
+  --code-bg: #f5f5f5;
+  --link: #0066cc;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #1a1a1a;
+    --text: #e0e0e0;
+    --muted: #999;
+    --border: #333;
+    --code-bg: #2a2a2a;
+    --link: #66bbff;
+  }
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  line-height: 1.7;
+  color: var(--text);
+  background: var(--bg);
+  max-width: 860px;
+  margin: 0 auto;
+  padding: 2rem 1.5rem;
+}
+.note-header {
+  border-bottom: 2px solid var(--border);
+  padding-bottom: 1rem;
+  margin-bottom: 2rem;
+}
+.note-title {
+  font-size: 1.6rem;
+  font-weight: 700;
+  margin-bottom: 0.3rem;
+}
+.note-meta {
+  color: var(--muted);
+  font-size: 0.85rem;
+}
+.note-content {
+  font-size: 0.95rem;
+}
+.note-content h1 { font-size: 1.4rem; margin: 1.2rem 0 0.6rem; }
+.note-content h2 { font-size: 1.2rem; margin: 1rem 0 0.5rem; }
+.note-content h3 { font-size: 1.05rem; margin: 0.8rem 0 0.4rem; }
+.note-content p { margin: 0.5rem 0; }
+.note-content ul, .note-content ol { margin: 0.5rem 0 0.5rem 2rem; }
+.note-content li { margin: 0.2rem 0; }
+.note-content pre {
+  background: var(--code-bg);
+  padding: 1rem;
+  border-radius: 6px;
+  overflow-x: auto;
+  margin: 0.8rem 0;
+  font-size: 0.85rem;
+}
+.note-content code {
+  background: var(--code-bg);
+  padding: 0.1rem 0.3rem;
+  border-radius: 3px;
+  font-size: 0.88em;
+}
+.note-content pre code {
+  background: none;
+  padding: 0;
+}
+.note-content blockquote {
+  border-left: 3px solid var(--border);
+  padding-left: 1rem;
+  color: var(--muted);
+  margin: 0.8rem 0;
+}
+.note-content a { color: var(--link); }
+.note-content img {
+  max-width: 100%;
+  height: auto;
+  border-radius: 6px;
+  margin: 0.5rem 0;
+}
+.note-content table {
+  border-collapse: collapse;
+  width: 100%;
+  margin: 0.8rem 0;
+}
+.note-content th, .note-content td {
+  border: 1px solid var(--border);
+  padding: 0.5rem;
+}
+.note-content th { background: var(--code-bg); }
+.media-placeholder {
+  background: var(--code-bg);
+  padding: 1rem;
+  text-align: center;
+  color: var(--muted);
+  border-radius: 6px;
+  margin: 0.5rem 0;
+  font-size: 0.85rem;
+}
+.encrypt-placeholder {
+  background: #fff3cd;
+  padding: 0.5rem;
+  text-align: center;
+  color: #856404;
+  border-radius: 6px;
+  margin: 0.5rem 0;
+  font-size: 0.85rem;
+}
+.back-link {
+  display: inline-block;
+  margin-top: 2rem;
+  color: var(--link);
+  text-decoration: none;
+  font-size: 0.85rem;
+}
+</style>
+</head>
+<body>
+<div class="note-header">
+  <div class="note-title">Kubevirt Operation</div>
+  <div class="note-meta">笔记本：Kubevirt</div>
+</div>
+<div class="note-content">
+<div><div><span style="font-size: 24pt;">Basic Use</span></div><div>$ kubectl create -f vmi.yaml</div><div>$ kubectl wait --for=condition=Ready vmis/my-vmi</div><div>$ kubectl get vmis</div><div>$ kubectl delete vmis testvmi</div><div>Custom Components自定义组件</div><div>使用patch来自定义组件,自己看吧<a href="https://kubevirt.io/user-guide/operations/customize_components/">https://kubevirt.io/user-guide/operations/customize_components/</a>,先掌握基本用法</div><div><br/></div><div><span style="font-size: 24pt;">API校验</span></div><div>kubevirt vmi api使用k8s crd实现.所以kubevirt可以利用k8s的特性在对象创建和更新的时候执行api检查</div><div>校验是如何工作的:</div><div>crd openapiv3 schema: kubevirt api在安装的时候就通过crd注册到了k8s中了.kubevirt包含了openapiv3 schema,以至于k8s可以帮我们校验一些非常基础的信息(比如调用api时的字段类型是否正确等,因为我们调用api的时候又常会通过client-go库来调用，所以这个校验基本上也不会出错),openapi schema在安装的时候就已经自动安装好了，并且无需用户来启用</div><div>准入控制webhooks: openapiv3 schema校验很有限.它只校验最基本的kubevirt对象的结构是否正确.而不会取校验它的内容是否真的有意义。</div><div>如果只有openapiv3校验的话，用户会很容易地就犯错（比如volume的名字没有和disk关联）并且集群仍然会创建这个对象。</div><div>所以就需要高级校验，kubevirt实现了它自身的准入控制，其作为准入控制器webhook注册在了k8s中。这个webhook在安装的时候就已经注册好了。在kubevirt对象上传到集群中</div><div>时，k8s api server就会转发创建请求到到我们的webhook中用于校验，在其存储之前。</div><div>注意，这个特性是需要手动开启的。</div><div>开启kubevirt准入控制器:</div><div>在配置k8s集群的时候需要传递以下选项来开启</div><div>--admission-control=&apos;Initializers,NamespaceLifecycle,LimitRanger,ServiceAccount,DefaultStorageClass,DefaultTolerationSeconds,NodeRestriction,MutatingAdmissionWebhook,ValidatingAdmissionWebhook,ResourceQuota&apos;</div><div><span style="font-size: 24pt;">调试</span></div><div>通过配置kubevirt各个组件的日志输出等级来查看日志<a href="https://kubevirt.io/user-guide/operations/debug/">https://kubevirt.io/user-guide/operations/debug/</a></div><div>virtctl Client Tool</div><div>基础的vmi操作可以通过kubectl工具来执行。但是高级操作就需要virtctl来执行了，比如给虚拟机发送序列以及打开图形化控制台，当然也可以用于执行live migration以及取消live migration,上传虚拟机磁盘镜像</div><div><span style="font-size: 24pt;">Live Migration热迁移</span></div><div>热迁移就是vmi在运行状态下将其迁移到另一个节点，而客户机仍然保持运行且可用</div><div>1.启用热迁移支持：</div><div><div class="media-placeholder">[图片/附件]</div></div><div>2.限制:</div><ul><li><div>使用pvc的虚拟机必须又共享的readwritemany访问模式</div></li><li><div>热迁移不允许用bridge 网卡类型下的pod network模式</div></li><li><div>热迁移要使用49152,49153端口，要保证virt-launcher pod这两个端口可用。如果这些端口明确指定为masquarade接口，热迁移将不会起作用</div></li></ul><div>3.启动热迁移</div></div><div>热迁移通过上传vmim对象来初始化。</div><div>或者通过virtctl命令: virtctl migrate vmi-fedora</div><div>3.迁移状态查看</div><div>4.集群中并行迁移数量可配置</div><div>5.在迁移时使用不同的网络</div><div>6.迁移超时</div><div>7.禁用安全迁移</div><div>文档: <a href="https://kubevirt.io/user-guide/operations/live_migration/">https://kubevirt.io/user-guide/operations/live_migration/</a></div><div><span style="font-size: 24pt;">Hotplug volume热插拔卷</span></div><div>kubevirt支持热插拔卷到正在运行的实例中(vmi)。卷必须是block卷或者包含一个磁盘镜像。当虚拟机有热插拔卷被重新启动了，热插拔卷将会被附加到重启的虚拟机中。如果卷是持久化的那他们将会称为虚拟机的一部分，并且不会被认为是可热插拔的。如果他们没有持久化，卷将会作为热插拔的卷重新附加。</div><div>热插拔也是需要启用才可以使用的： 通过kubevirt的feature gates的hotplugvolumes来启用</div><div>Virtctl支持:为了使用热插拔卷，你必须先准备一个卷。可以通过使用datavolume数据卷达成。比如使用一个空的数据卷数据卷来给运行的vmi添加额外的存储</div><div><div class="media-placeholder">[图片/附件]</div></div><div>注意：卷的热插拔支持block卷模式+Readwritemany/readwriteonce/readonlymany访问模式的组合，如果你的存储支持的话。</div><div>使用virtctl添加卷: virtctl addvolume vmi-fedora --volume-name=example-volume-hotplug</div><div>为什么要使用virtio-scsi</div><div>热插拔磁盘的总线bus被指定为scsi磁盘。为什么不是virtio？因为virtio磁盘的限制，它会占用一个虚拟机的插槽，并且最多有32个。数量太少了。另一个问题就是这些插槽需要提前保留。所以如果热插拔磁盘的数量不能提前知道的知道的话，就不可能很好的保留要求的数量的插槽出来。为了解决这个问题，虚拟机mei&apos;ge有一个virtio-scsi控制器，其允许为热插拔磁盘使用scsi总线。这个控制器允许超过四百万磁盘的热插拔。virtio-scsi的性能和virtio接近。</div><div>磁盘序列号，在addvolume的时候可以指定磁盘序列号，只要是唯一且符合libvirt对磁盘序列号的要求即可: virtctl addvolume vmi-fedora --volume-name=example-volume-hotplug --serial=1234567890</div><div>重启之后保留热插拔磁盘：</div><div>创建卷的时候指定--persist选项则这个卷会在重启之后保留，默认情况下就是保留的</div><div>移除卷： <span style="font-size: 12px; letter-spacing: normal; orphans: 2; text-indent: 0px; text-transform: none; white-space: pre; widows: 2; word-spacing: 0px; -webkit-text-stroke-width: 0px; background-color: rgb(248, 248, 248); color: rgb(0, 0, 0); font-family: SFMono-Regular, Menlo, Monaco, Consolas, &quot;Liberation Mono&quot;, &quot;Courier New&quot;, Courier, monospace; font-variant-caps: normal; font-variant-ligatures: normal;">virtctl removevolume vmi-fedora --volume-name=example-volume-hotplug</span></div><div>热迁移：目前热迁移对任意有热插拔卷的vmi都支持热插拔。但是注意：当目标节点使用cpu manager有static policy和低于v1.0.0的runc的时候，会有问题</div><div><span style="font-size: 24pt;">快照备份API:</span></div><div>&nbsp;<a href="https://kubevirt.io/user-guide/operations/snapshot_restore_api/">https://kubevirt.io/user-guide/operations/snapshot_restore_api/</a></div><div><span style="font-size: 24pt;">巨页支持</span></div><div><a href="https://kubevirt.io/user-guide/operations/hugepages/">https://kubevirt.io/user-guide/operations/hugepages/</a></div><div><span style="font-size: 24pt;">组件监控</span></div><div><a href="https://kubevirt.io/user-guide/operations/component_monitoring/">https://kubevirt.io/user-guide/operations/component_monitoring/</a></div><div><span style="font-size: 24pt;">鉴权 Authorization</span></div><div><a href="https://kubevirt.io/user-guide/operations/authorization/">https://kubevirt.io/user-guide/operations/authorization/</a></div><div><span style="font-size: 24pt;">注解annotations和标签labels</span></div><div><a href="https://kubevirt.io/user-guide/operations/authorization/">https://kubevirt.io/user-guide/operations/authorization/</a></div><div><span style="font-size: 24pt;">节点分配&nbsp;</span></div><div><a href="https://kubevirt.io/user-guide/operations/node_assignment/">https://kubevirt.io/user-guide/operations/node_assignment/</a></div><div><span style="font-size: 24pt;">节点维护node maintaince</span></div><div><a href="https://kubevirt.io/user-guide/operations/node_maintenance/">https://kubevirt.io/user-guide/operations/node_maintenance/</a></div><div><span style="font-size: 24pt;">Node overcommit</span></div><div><a href="https://kubevirt.io/user-guide/operations/node_overcommit/">https://kubevirt.io/user-guide/operations/node_overcommit/</a></div><div><span style="font-size: 24pt;">Containerized Data Importer容器化数据导入</span></div><div><a href="https://kubevirt.io/user-guide/operations/containerized_data_importer/">https://kubevirt.io/user-guide/operations/containerized_data_importer/</a></div><div><span style="font-size: 24pt;"><br/></span></div><div><font style="font-size: 24pt;"><br/></font></div>
+</div>
+<a class="back-link" href="../articles.html">← 返回笔记列表</a>
+</body>
+</html>

@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="zh-CN" data-theme="light">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>k8snetworkplumbingwg/multus-cni: A CNI meta-plugin for multi-homed pods in Kubernetes — 技术笔记</title>
+<style>
+:root {
+  --bg: #ffffff;
+  --text: #1a1a1a;
+  --muted: #666;
+  --border: #e0e0e0;
+  --code-bg: #f5f5f5;
+  --link: #0066cc;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #1a1a1a;
+    --text: #e0e0e0;
+    --muted: #999;
+    --border: #333;
+    --code-bg: #2a2a2a;
+    --link: #66bbff;
+  }
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  line-height: 1.7;
+  color: var(--text);
+  background: var(--bg);
+  max-width: 860px;
+  margin: 0 auto;
+  padding: 2rem 1.5rem;
+}
+.note-header {
+  border-bottom: 2px solid var(--border);
+  padding-bottom: 1rem;
+  margin-bottom: 2rem;
+}
+.note-title {
+  font-size: 1.6rem;
+  font-weight: 700;
+  margin-bottom: 0.3rem;
+}
+.note-meta {
+  color: var(--muted);
+  font-size: 0.85rem;
+}
+.note-content {
+  font-size: 0.95rem;
+}
+.note-content h1 { font-size: 1.4rem; margin: 1.2rem 0 0.6rem; }
+.note-content h2 { font-size: 1.2rem; margin: 1rem 0 0.5rem; }
+.note-content h3 { font-size: 1.05rem; margin: 0.8rem 0 0.4rem; }
+.note-content p { margin: 0.5rem 0; }
+.note-content ul, .note-content ol { margin: 0.5rem 0 0.5rem 2rem; }
+.note-content li { margin: 0.2rem 0; }
+.note-content pre {
+  background: var(--code-bg);
+  padding: 1rem;
+  border-radius: 6px;
+  overflow-x: auto;
+  margin: 0.8rem 0;
+  font-size: 0.85rem;
+}
+.note-content code {
+  background: var(--code-bg);
+  padding: 0.1rem 0.3rem;
+  border-radius: 3px;
+  font-size: 0.88em;
+}
+.note-content pre code {
+  background: none;
+  padding: 0;
+}
+.note-content blockquote {
+  border-left: 3px solid var(--border);
+  padding-left: 1rem;
+  color: var(--muted);
+  margin: 0.8rem 0;
+}
+.note-content a { color: var(--link); }
+.note-content img {
+  max-width: 100%;
+  height: auto;
+  border-radius: 6px;
+  margin: 0.5rem 0;
+}
+.note-content table {
+  border-collapse: collapse;
+  width: 100%;
+  margin: 0.8rem 0;
+}
+.note-content th, .note-content td {
+  border: 1px solid var(--border);
+  padding: 0.5rem;
+}
+.note-content th { background: var(--code-bg); }
+.media-placeholder {
+  background: var(--code-bg);
+  padding: 1rem;
+  text-align: center;
+  color: var(--muted);
+  border-radius: 6px;
+  margin: 0.5rem 0;
+  font-size: 0.85rem;
+}
+.encrypt-placeholder {
+  background: #fff3cd;
+  padding: 0.5rem;
+  text-align: center;
+  color: #856404;
+  border-radius: 6px;
+  margin: 0.5rem 0;
+  font-size: 0.85rem;
+}
+.back-link {
+  display: inline-block;
+  margin-top: 2rem;
+  color: var(--link);
+  text-decoration: none;
+  font-size: 0.85rem;
+}
+</style>
+</head>
+<body>
+<div class="note-header">
+  <div class="note-title">k8snetworkplumbingwg/multus-cni: A CNI meta-plugin for multi-homed pods in Kubernetes</div>
+  <div class="note-meta">笔记本：Kubevirt</div>
+</div>
+<div class="note-content">
+<div style="--en-clipped-content:simplified; --en-clipped-source-url:https://github.com/k8snetworkplumbingwg/multus-cni; --en-clipped-source-title:k8snetworkplumbingwg/multus-cni: A CNI meta-plugin for multi-homed pods in Kubernetes;">
+<div><br/></div><div style="min-height: 2377px; font-size: 16px; display: block; min-width: 100%; position: relative;"> <div style="background-color:transparent;font:inherit;vertical-align:baseline;"><div style="background-color:transparent;font:inherit;vertical-align:baseline;font-family:&quot;PT Serif&quot;;font-size:16px;line-height:1.5em;color:rgb(31, 9, 9);text-align:left;"><div style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;"><div style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;width:36em;z-index:200;padding-left:2em;padding-right:2em;margin-left:auto;margin-right:auto;position:relative;"><div style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;position:relative;margin-left:-25px;margin-right:25px;"><div style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;padding-top:0px;padding-bottom:9em;position:relative;"><div style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;margin-bottom:1.5em;"><div style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;position:relative;margin-bottom:0px;"><div style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;margin-bottom:0px;"><div style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;margin-bottom:0px;"><h1 style="font-family:&quot;PT Serif&quot;;text-align:left;border:0px;font:inherit;vertical-align:baseline;font-size:35px;font-weight:normal;line-height:35px;margin-bottom:20px;padding:0px;margin:0px;">Multus-CNI</h1><div style="padding:0px;border:0px;font:inherit;vertical-align:baseline;position:relative;height:1em;line-height:1;text-align:center;margin:0px;padding-top:1.5em;padding-bottom:1.5em;margin-bottom:0px;"><div style="padding:0px;border:0px;font:inherit;vertical-align:baseline;background:-webkit-linear-gradient(0deg, rgb(243, 242, 238) 1%, rgb(31, 9, 9) 50%, rgb(243, 242, 238) 99%);position:absolute;left:-4em;top:50%;z-index:10;width:100%;padding-left:4em;padding-right:4em;height:0.1em;opacity:0.5;margin:0px;margin-bottom:0px;"></div></div></div>
+<p style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;margin-bottom:1.5em;">Multus CNI enables attaching multiple network interfaces to pods in Kubernetes.</p>
+<h2 style="font-family:&quot;PT Serif&quot;;text-align:left;margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;font-weight:bold;font-size:30px;line-height:35px;margin-top:35px;margin-bottom:15px;">How it works</h2>
+<p style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;margin-bottom:1.5em;">Multus CNI is a container network interface (CNI) plugin for Kubernetes that enables attaching multiple network interfaces to pods. Typically, in Kubernetes each pod only has one network interface (apart from a loopback) -- with Multus you can create a multi-homed pod that has multiple interfaces. This is accomplished by Multus acting as a "meta-plugin", a CNI plugin that can call multiple other CNI plugins.</p>
+<p style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;margin-bottom:1.5em;">Multus CNI follows the <a href="https://docs.google.com/document/d/1Ny03h6IDVy_e_vmElOqR7UdTPAG_RNydhVE1Kx54kFQ/edit" style="color:rgb(6, 85, 136);margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;text-decoration:none;">Kubernetes Network Custom Resource Definition De-facto Standard</a> to provide a standardized method by which to specify the configurations for additional network interfaces. This standard is put forward by the Kubernetes <a href="https://docs.google.com/document/d/1oE93V3SgOGWJ4O1zeD1UmpeToa0ZiiO6LqRAmZBPFWM/edit" style="color:rgb(6, 85, 136);margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;text-decoration:none;">Network Plumbing Working Group</a>.</p>
+<p style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;margin-bottom:1.5em;">Multus is one of the projects in the <a href="https://networkbuilders.intel.com/network-technologies/container-experience-kits" style="color:rgb(6, 85, 136);margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;text-decoration:none;">Baremetal Container Experience kit</a></p>
+<h3 style="font-family:&quot;PT Serif&quot;;text-align:left;margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;font-size:30px;line-height:35px;margin-top:35px;font-weight:normal;margin-bottom:15px;">Multi-Homed pod</h3>
+<p style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;margin-bottom:1.5em;">Here's an illustration of the network interfaces attached to a pod, as provisioned by Multus CNI. The diagram shows the pod with three interfaces: <code style="font-family:Inconsolata;margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;font-size:0.875em;line-height:1.71429em;">eth0</code>, <code style="font-family:Inconsolata;margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;font-size:0.875em;line-height:1.71429em;">net0</code> and <code style="font-family:Inconsolata;margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;font-size:0.875em;line-height:1.71429em;">net1</code>. <code style="font-family:Inconsolata;margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;font-size:0.875em;line-height:1.71429em;">eth0</code> connects kubernetes cluster network to connect with kubernetes server/services (e.g. kubernetes api-server, kubelet and so on). <code style="font-family:Inconsolata;margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;font-size:0.875em;line-height:1.71429em;">net0</code> and <code style="font-family:Inconsolata;margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;font-size:0.875em;line-height:1.71429em;">net1</code> are additional network attachments and connect to other networks by using <a href="https://kubernetes.io/docs/concepts/extend-kubernetes/compute-storage-net/network-plugins/" style="color:rgb(6, 85, 136);margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;text-decoration:none;">other CNI plugins</a> (e.g. vlan/vxlan/ptp).</p>
+<h2 style="font-family:&quot;PT Serif&quot;;text-align:left;margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;font-weight:bold;font-size:30px;line-height:35px;margin-top:35px;margin-bottom:15px;">Quickstart Installation Guide</h2>
+<p style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;margin-bottom:1.5em;">The quickstart installation method for Multus requires that you have first installed a Kubernetes CNI plugin to serve as your pod-to-pod network, which we refer to as your "default network" (a network interface that every pod will be created with). Each network attachment created by Multus will be in addition to this default network interface. For more detail on installing a default network CNI plugins, refer to our <a href="https://github.com/k8snetworkplumbingwg/multus-cni/blob/master/docs/quickstart.md" style="color:rgb(6, 85, 136);margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;text-decoration:none;">quick-start guide</a>.</p>
+<p style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;margin-bottom:1.5em;">Clone this GitHub repository, we'll apply a daemonset which installs Multus using to <code style="font-family:Inconsolata;margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;font-size:0.875em;line-height:1.71429em;">kubectl</code> from this repo. From the root directory of the clone, apply the daemonset YAML file:</p>
+<p style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;margin-bottom:1.5em;">For thin-plugin (i.e. standalone implementation) case:</p>
+<div style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;margin-bottom:1.5em;"><pre style="background-color:rgb(243, 242, 238);font-family:Inconsolata;margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;width:auto;font-size:0.875em;line-height:1.71429em;"><code style="font-family:Inconsolata;margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;line-height:1.71429em;font-size:1.15em;">cat ./deployments/multus-daemonset.yml | kubectl apply -f -
+</code></pre></div>
+<p style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;margin-bottom:1.5em;">For <a href="https://github.com/k8snetworkplumbingwg/multus-cni/blob/master/docs/thick-plugin.md" style="color:rgb(6, 85, 136);margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;text-decoration:none;">thick-plugin</a> (i.e. client/server implementation) case:</p>
+<div style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;margin-bottom:1.5em;"><pre style="background-color:rgb(243, 242, 238);font-family:Inconsolata;margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;width:auto;font-size:0.875em;line-height:1.71429em;"><code style="font-family:Inconsolata;margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;line-height:1.71429em;font-size:1.15em;">cat ./deployments/multus-daemonset-thick.yml | kubectl apply -f -
+</code></pre></div>
+<p style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;margin-bottom:1.5em;">This will configure your systems to be ready to use Multus CNI, but, to get started with adding additional interfaces to your pods, refer to our complete <a href="https://github.com/k8snetworkplumbingwg/multus-cni/blob/master/docs/quickstart.md" style="color:rgb(6, 85, 136);margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;text-decoration:none;">quick-start guide</a></p>
+<h2 style="font-family:&quot;PT Serif&quot;;text-align:left;margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;font-weight:bold;font-size:30px;line-height:35px;margin-top:35px;margin-bottom:15px;">Thin Plugin v.s Thick Plugin</h2>
+<p style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;margin-bottom:1.5em;">With the multus 4.0 release, we introduce a new client/server style plugin deployment. This new deployment is called <a href="https://github.com/k8snetworkplumbingwg/multus-cni/blob/master/docs/thick-plugin.md" style="color:rgb(6, 85, 136);margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;text-decoration:none;">'thick plugin'</a>, in contrast to the previous deployment, which is now called 'thin plugin'. The new thick plugin consists of two binaries, multus-daemon and multus-shim CNI plugin. The 'multus-daemon' will be deployed to all nodes as local agent and supports additional features, such as metrics, which were not available with the 'thin plugin' deployment before. Due to those additional features, the 'thick plugin' comes with the trade-off of consuming more resources than the 'thin plugin'.</p>
+<h2 style="font-family:&quot;PT Serif&quot;;text-align:left;margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;font-weight:bold;font-size:30px;line-height:35px;margin-top:35px;margin-bottom:15px;">Additional Installation Options</h2>
+<ul style="padding:0px;border:0px;font:inherit;vertical-align:baseline;margin:0px 0px 1.5em 1.5em;list-style:none;margin-top:-1em;list-style-type:disc;">
+<li style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;list-style-type:inherit;list-style-position:outside;">Install via daemonset using the quick-start guide, above.</li>
+<li style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;list-style-type:inherit;list-style-position:outside;">Download binaries from <a href="https://github.com/k8snetworkplumbingwg/multus-cni/releases" style="color:rgb(6, 85, 136);margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;text-decoration:none;">release page</a></li>
+<li style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;list-style-type:inherit;list-style-position:outside;">By Docker image from <a href="https://hub.docker.com/r/nfvpe/multus/tags/" style="color:rgb(6, 85, 136);margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;text-decoration:none;">Docker Hub</a></li>
+<li style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;list-style-type:inherit;list-style-position:outside;">Or, roll-your-own and build from source
+
+</li>
+</ul>
+<h2 style="font-family:&quot;PT Serif&quot;;text-align:left;margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;font-weight:bold;font-size:30px;line-height:35px;margin-top:35px;margin-bottom:15px;">Comprehensive Documentation</h2>
+<ul style="padding:0px;border:0px;font:inherit;vertical-align:baseline;margin:0px 0px 1.5em 1.5em;list-style:none;margin-top:-1em;list-style-type:disc;">
+<li style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;list-style-type:inherit;list-style-position:outside;"><a href="https://github.com/k8snetworkplumbingwg/multus-cni/blob/master/docs/how-to-use.md" style="color:rgb(6, 85, 136);margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;text-decoration:none;">How to use</a></li>
+<li style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;list-style-type:inherit;list-style-position:outside;"><a href="https://github.com/k8snetworkplumbingwg/multus-cni/blob/master/docs/quickstart.md" style="color:rgb(6, 85, 136);margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;text-decoration:none;">Quick Start Guide</a></li>
+<li style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;list-style-type:inherit;list-style-position:outside;"><a href="https://github.com/k8snetworkplumbingwg/multus-cni/blob/master/docs/configuration.md" style="color:rgb(6, 85, 136);margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;text-decoration:none;">Configuration</a></li>
+<li style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;list-style-type:inherit;list-style-position:outside;"><a href="https://github.com/k8snetworkplumbingwg/multus-cni/blob/master/docs/development.md" style="color:rgb(6, 85, 136);margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;text-decoration:none;">Development and Support Information</a></li>
+<li style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;list-style-type:inherit;list-style-position:outside;"><a href="https://github.com/k8snetworkplumbingwg/multus-cni/blob/master/docs/thick-plugin.md" style="color:rgb(6, 85, 136);margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;text-decoration:none;">Thick Plugin</a></li>
+</ul>
+<h2 style="font-family:&quot;PT Serif&quot;;text-align:left;margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;font-weight:bold;font-size:30px;line-height:35px;margin-top:35px;margin-bottom:15px;">Contact Us</h2>
+<p style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;margin-bottom:0px;">For any questions about Multus CNI, feel free to ask a question in #general in the <a href="https://npwg-team.slack.com/" style="color:rgb(6, 85, 136);margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;text-decoration:none;">NPWG Slack</a>, or open up a GitHub issue. Request an invite to NPWG slack <a href="https://intel-corp.herokuapp.com/" style="color:rgb(6, 85, 136);margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;text-decoration:none;">here</a>.</p>
+</div></div></div></div></div></div></div></div></div></div>
+</div>
+</div>
+<a class="back-link" href="../articles.html">← 返回笔记列表</a>
+</body>
+</html>

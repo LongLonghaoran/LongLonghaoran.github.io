@@ -1,0 +1,363 @@
+<!DOCTYPE html>
+<html lang="zh-CN" data-theme="light">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Koordinator 最佳实践系列：精细化 CPU 编排 - 掘金 — 技术笔记</title>
+<style>
+:root {
+  --bg: #ffffff;
+  --text: #1a1a1a;
+  --muted: #666;
+  --border: #e0e0e0;
+  --code-bg: #f5f5f5;
+  --link: #0066cc;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #1a1a1a;
+    --text: #e0e0e0;
+    --muted: #999;
+    --border: #333;
+    --code-bg: #2a2a2a;
+    --link: #66bbff;
+  }
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  line-height: 1.7;
+  color: var(--text);
+  background: var(--bg);
+  max-width: 860px;
+  margin: 0 auto;
+  padding: 2rem 1.5rem;
+}
+.note-header {
+  border-bottom: 2px solid var(--border);
+  padding-bottom: 1rem;
+  margin-bottom: 2rem;
+}
+.note-title {
+  font-size: 1.6rem;
+  font-weight: 700;
+  margin-bottom: 0.3rem;
+}
+.note-meta {
+  color: var(--muted);
+  font-size: 0.85rem;
+}
+.note-content {
+  font-size: 0.95rem;
+}
+.note-content h1 { font-size: 1.4rem; margin: 1.2rem 0 0.6rem; }
+.note-content h2 { font-size: 1.2rem; margin: 1rem 0 0.5rem; }
+.note-content h3 { font-size: 1.05rem; margin: 0.8rem 0 0.4rem; }
+.note-content p { margin: 0.5rem 0; }
+.note-content ul, .note-content ol { margin: 0.5rem 0 0.5rem 2rem; }
+.note-content li { margin: 0.2rem 0; }
+.note-content pre {
+  background: var(--code-bg);
+  padding: 1rem;
+  border-radius: 6px;
+  overflow-x: auto;
+  margin: 0.8rem 0;
+  font-size: 0.85rem;
+}
+.note-content code {
+  background: var(--code-bg);
+  padding: 0.1rem 0.3rem;
+  border-radius: 3px;
+  font-size: 0.88em;
+}
+.note-content pre code {
+  background: none;
+  padding: 0;
+}
+.note-content blockquote {
+  border-left: 3px solid var(--border);
+  padding-left: 1rem;
+  color: var(--muted);
+  margin: 0.8rem 0;
+}
+.note-content a { color: var(--link); }
+.note-content img {
+  max-width: 100%;
+  height: auto;
+  border-radius: 6px;
+  margin: 0.5rem 0;
+}
+.note-content table {
+  border-collapse: collapse;
+  width: 100%;
+  margin: 0.8rem 0;
+}
+.note-content th, .note-content td {
+  border: 1px solid var(--border);
+  padding: 0.5rem;
+}
+.note-content th { background: var(--code-bg); }
+.media-placeholder {
+  background: var(--code-bg);
+  padding: 1rem;
+  text-align: center;
+  color: var(--muted);
+  border-radius: 6px;
+  margin: 0.5rem 0;
+  font-size: 0.85rem;
+}
+.encrypt-placeholder {
+  background: #fff3cd;
+  padding: 0.5rem;
+  text-align: center;
+  color: #856404;
+  border-radius: 6px;
+  margin: 0.5rem 0;
+  font-size: 0.85rem;
+}
+.back-link {
+  display: inline-block;
+  margin-top: 2rem;
+  color: var(--link);
+  text-decoration: none;
+  font-size: 0.85rem;
+}
+</style>
+</head>
+<body>
+<div class="note-header">
+  <div class="note-title">Koordinator 最佳实践系列：精细化 CPU 编排 - 掘金</div>
+  <div class="note-meta">笔记本：Kubernetes学习笔记</div>
+</div>
+<div class="note-content">
+<div style="--en-clipped-content:article">
+<div><br/></div><div style="font-size: 16px; display:block; min-width: 100%; position: relative;"> <div style="text-size-adjust:100%;font-size:12px;word-break:break-word;text-rendering:optimizelegibility;color:rgb(51, 51, 51);font-family:-apple-system, system-ui, &quot;Segoe UI&quot;, Roboto, Ubuntu, Cantarell, &quot;Noto Sans&quot;, sans-serif, BlinkMacSystemFont, &quot;Helvetica Neue&quot;, &quot;PingFang SC&quot;, &quot;Hiragino Sans GB&quot;, &quot;Microsoft YaHei&quot;, Arial;-webkit-font-smoothing:unset;"><div style="font-size:12px;line-height:normal;word-break:break-word;background-color:rgb(242, 243, 245);-webkit-font-smoothing:unset;font-family:-apple-system, system-ui, &quot;Segoe UI&quot;, Roboto, Ubuntu, Cantarell, &quot;Noto Sans&quot;, sans-serif, BlinkMacSystemFont, &quot;Helvetica Neue&quot;, &quot;PingFang SC&quot;, &quot;Hiragino Sans GB&quot;, &quot;Microsoft YaHei&quot;, Arial;"><div><div><div style="overflow-x:initial;"><div><span><div><div style="box-sizing:border-box;"><div style="background-color:rgb(255, 255, 255);box-sizing:border-box;overflow:hidden;border-radius:4px 4px 0px 0px;">     <div> </div> <div> <div>  </div></div> <h1 style="font-weight:600;line-height:1.31;color:rgb(37, 41, 51);font-size:32.004px;margin:0px 0px 1.667rem;">
+            Koordinator 最佳实践系列：精细化 CPU 编排
+             </h1> <div style="display:flex;align-items:center;margin-bottom:20.004px;"><div style="display:flex;min-width:0px;flex-grow:1;"><div style="height:24px;display:flex;align-items:center;"><a href="https://juejin.cn/user/3808363977648493/posts" target="_blank" rel="" style="background-color:transparent;margin:initial;text-decoration:none;cursor:pointer;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;display:flex;align-items:center;line-height:24px;color:rgb(81, 87, 103);font-size:14px;font-weight:500;"><span style="display:inline-block;vertical-align:top;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:256px;">
+    阿里云云原生
+  </span>    </a> </div> <div style="font-size:14px;color:rgb(138, 145, 159);line-height:22px;display:flex;align-items:center;"><span title="Tue Jun 13 2023 16:23:40 GMT+0800 (China Standard Time)" style="letter-spacing:1px;margin-left:16px;">
+                    2023-06-13 16:23
+                  </span> <img style="overflow:hidden;margin-left:16px;margin-right:5px;" src="data:image/svg+xml,%3csvg width='16' height='16' viewBox='0 0 16 16' fill='none' xmlns='http://www.w3.org/2000/svg' class='read-icon js-evernote-checked' data-v-3510f88e='' data-evernote-id='456'%3e%3cpath d='M7.90078 2.80078C4.49278 2.80078 1.74745 6.11672 0.800781 7.77469C1.74745 9.58339 4.49278 13.2008 7.90078 13.2008C11.3088 13.2008 14.0541 9.58339 15.0008 7.77469C14.0541 6.11672 11.3088 2.80078 7.90078 2.80078Z' stroke='currentColor' data-v-3510f88e=''%3e%3c/path%3e%3ccircle cx='7.89922' cy='8.00078' r='2.2' stroke='currentColor' data-v-3510f88e=''%3e%3c/circle%3e%3c/svg%3e"/> <span>
+                    672
+                  </span> </div></div> </div>    <div><div style="word-break:break-word;line-height:1.75;font-weight:400;font-size:16px;color:rgb(37, 41, 51);overflow-x:hidden;"><p style="line-height:inherit;margin-top:22px;margin-bottom:22px;"><em>作者：乔普、申信</em></p>
+<h2 style="margin-top:35px;margin-bottom:10px;font-size:22px;border-bottom:1px solid rgb(236, 236, 236);line-height:34px;padding-bottom:12px;">介绍</h2>
+<p style="line-height:inherit;margin-top:22px;margin-bottom:22px;">在云原生环境中，集群提供者常常将不同类型的工作负载部署在同一个集群中，利用不同业务的不同峰值效果，实现资源分时复用，避免资源浪费。然而，不同类型负载之间混合部署常常会导致资源竞争和相互干扰。最为典型的场景便是在线和离线负载的混合部署。当离线较多的占用计算资源时，在线负载的响应时间就会受到影响；当在线长时间较多的占用计算资源时，离线负载的任务完成时间不能得到保证。这种现象属于 Noisy Neighbor 问题。</p>
+<p style="line-height:inherit;margin-top:22px;margin-bottom:22px;">根据混合部署的程度、资源类型的不同，解决该问题有许多不同的思路。Quota 管理可从整个集群维度限制负载的资源使用量，Koordinator 在这方面提供了多层次弹性 Quota 管理功能 <strong style="font-weight:700;">[</strong> <strong style="font-weight:700;">1]</strong> 。单机维度上看，CPU、内存、磁盘 IO，网络资源都有可能被不同负载共享。Koordinator 在 CPU、内存上已经提供了一些资源隔离和保障的能力，磁盘 IO 和网络资源方面的相关能力正在建设中。</p>
+<p style="line-height:inherit;margin-top:22px;margin-bottom:22px;">本文主要介绍当不同类型工作负载混合部署在同一个节点上时，Koordinator 如何帮助负载之间（在线和在线、在线和离线）协同地共享 CPU 资源。</p>
+<h2 style="margin-top:35px;margin-bottom:10px;font-size:22px;border-bottom:1px solid rgb(236, 236, 236);line-height:34px;padding-bottom:12px;">问题描述</h2>
+<p style="line-height:inherit;margin-top:22px;margin-bottom:22px;">CPU 资源 Noisy Neighbor 的本质是不同的负载之间无协同地共享 CPU 资源。</p>
+<ol style="padding-left:28px;">
+<li style="margin-bottom:0px;list-style:inherit;padding-left:6px;">Kubernetes 默认的资源模型利用 cgroup（cfs quota） 从 CPU 时间使用量上来限制不同负载对于 CPU 资源的访问。这种情况下，一些负载就可能会被操作系统调度器切换所在的 CPU 核。由于不同 CPU 核对不同物理位置的内存访问时间不同，切换大概率会导致更长的内存访问时间，从而影响负载性能。</li>
+<li style="margin-bottom:0px;list-style:inherit;padding-left:6px;">在 NUMA 架构中，SMT 线程（逻辑核）共享物理核的执行单元和 L2 缓存。当同一个物理核中有多种工作负载时，不同工作负载间就会产生资源争抢，导致负载性能下降。</li>
+</ol>
+<p style="line-height:inherit;margin-top:22px;margin-bottom:22px;">Kubernetes 在单机侧提供了拓扑管理器和 CPU 管理器来尝试解决上述问题。然而，该功能只有在 Pod 已经调度到机器上之后才会尝试生效。这样就有可能导致 Pod 会被调度到 CPU 资源满足但是 CPU 拓扑不满足负载要求的情况。</p>
+<h2 style="margin-top:35px;margin-bottom:10px;font-size:22px;border-bottom:1px solid rgb(236, 236, 236);line-height:34px;padding-bottom:12px;">解决方案</h2>
+<h3 style="margin-top:35px;margin-bottom:10px;padding-bottom:5px;font-size:20px;line-height:28px;">面向应用的 CPU 编排 QoS 语义</h3>
+<p style="line-height:inherit;margin-top:22px;margin-bottom:22px;">针对上述问题和不足，Koordinator 设计了面向应用的 QoS 语义和 CPU 编排协议，如下图所示。</p>
+<p style="line-height:inherit;margin-top:22px;margin-bottom:22px;"><div class="media-placeholder">[图片/附件]</div></en-media></p>
+<p style="line-height:inherit;margin-top:22px;margin-bottom:22px;">LS（Latency Sensitive）应用于典型的微服务负载，Koordinator 将其与其它的延迟敏感型负载隔离保障其性能。LSR（Latency Sensitive Reserved）类似于 Kubernetes 的 Guaranteed，在 LS 的基础上增加了应用要求预留绑核的语义。LSE（Latency Sensitive Exclusive）则常见于中间件等对 CPU 特别敏感的应用，Koordinator 除了满足其类似于 LSR 要求绑核的语义外，还确保其所被分配的 CPU 不与任何其它负载共享。</p>
+<p style="line-height:inherit;margin-top:22px;margin-bottom:22px;">另外，为提高资源利用率，BE 负载可与 LSR 和 LS 共享CPU。为了确保与 BE 共享的延迟敏感型应用不受其干扰，Koordinator 提供了如干扰检测、BE 压制等策略。本文重点不在此，读者可关注后续文章。</p>
+<h3 style="margin-top:35px;margin-bottom:10px;padding-bottom:5px;font-size:20px;line-height:28px;">丰富的 CPU 编排策略</h3>
+<p style="line-height:inherit;margin-top:22px;margin-bottom:22px;">对于 LSE 类型的应用，当机器是超线程架构时，只能保证负载独占逻辑核。这样当同一个物理核中有其它负载时，应用性能仍会受干扰。为此，Koordinator 支持用户在 Pod Annotation 上配置丰富的 CPU 编排策略来提高性能。</p>
+<p style="line-height:inherit;margin-top:22px;margin-bottom:22px;">CPU 编排策略分为 CPU 绑定策略和 CPU 独占策略。CPU 绑定策略决定应用所被分配逻辑核在物理核间的分布，可采用物理核间打散或者堆叠。堆叠（FullPCPU）的方式指为应用分配完整的物理内核，可以有效地缓解 Noisy Neighbor 问题。打散（SpreadByPCPU）则主要应用于一些具有多种不同峰谷特性的延迟敏感型应用，可以让应用程序在特定时间充分使用 CPU。CPU 独占策略决定应用所被分配逻辑核的独占级别，可尽量避开已经同独占策略申请的物理核或 NUMANode。</p>
+<h3 style="margin-top:35px;margin-bottom:10px;padding-bottom:5px;font-size:20px;line-height:28px;">增强的 CPU 调度能力</h3>
+<p style="line-height:inherit;margin-top:22px;margin-bottom:22px;">Koordinator 支持配置 NUMA 的分配策略，决定在调度时如何选择满意的 NUMA 节点。MostAllocated 表示从可用资源最少的 NUMA 节点分配，可以尽可能减少碎片，为后续的负载留下更大的分配空间。但是，这种方式可能会导致依赖 Barrier 的并行代码性能收到影响。DistributeEvenly 表示在 NUMA 节点上平均分配 CPU，可以提高上述并行代码的性能。LeastAllocated 表示从可用资源最多的 NUMA 节点分配。</p>
+<p style="line-height:inherit;margin-top:22px;margin-bottom:22px;">另外，Koordinator 对 CPU 的分配逻辑是在中心调度器完成的。这样就会有一个全局的视角，避免了 Kubernetes 单机方案可能导致的 CPU 资源量满足但是拓扑不满足的窘境。</p>
+<h2 style="margin-top:35px;margin-bottom:10px;font-size:22px;border-bottom:1px solid rgb(236, 236, 236);line-height:34px;padding-bottom:12px;">最佳实践</h2>
+<p style="line-height:inherit;margin-top:22px;margin-bottom:22px;">由上文可知，Koordinator 精细化 CPU 编排能力能够显著提高多应用混合部署场景下 CPU 敏感型工作负载的性能。为了让读者能够更清楚地使用和直观感受 Koordinator 的精细化 CPU 编排能力，本文将在线应用采用不同方式部署到集群中，观察压测中服务的延迟，来判断 CPU 编排能力的效果。</p>
+<p style="line-height:inherit;margin-top:22px;margin-bottom:22px;">本文会在同一个机器上部署多个在线应用，压测 10 分钟，以充分模拟生产实践中可能出现的 CPU 核切换场景。对于在线应用和离线应用混合部署的情况，Koordinator 提供了如干扰检测、BE 压制等策略。本文重点不在此，读者可关注后续文章中的实践。</p>
+<p style="line-height:inherit;margin-top:22px;margin-bottom:22px;"><div class="media-placeholder">[图片/附件]</div></en-media></p>
+<p style="line-height:inherit;margin-top:22px;margin-bottom:22px;">本次实验采用以下指标，评估应用不同部署方式下 Nginx 应用的性能表现：</p>
+<ul style="padding:0px;margin:0px;padding-left:28px;">
+<li style="margin-bottom:0px;list-style:inherit;">响应时间 RT（Response Time）分位值RT 是在线应用通常关注的性能指标，RT 越低代表在线服务性能越好。RT 指标通过收集 wrk 压测结束后打印的信息获得，在实验中反映了 Nginx 应用响应 wrk 请求所花费的时间。例如 RT-p50 表示 Nginx 响应前 50% wrk 请求最大所花费的时间（中位数），RT-p90 表示 Nginx 响应前 90% wrk 请求最大所花费的时间。</li>
+<li style="margin-bottom:0px;list-style:inherit;">每秒请求数 RPS（Request Per Second）RPS 是在线应用每秒服务的请求数量，服务承受的 RPS 越多代表在线服务的性能越好。</li>
+</ul>
+<p style="line-height:inherit;margin-top:22px;margin-bottom:22px;">实验结果如下：</p>
+<p style="line-height:inherit;margin-top:22px;margin-bottom:22px;"><div class="media-placeholder">[图片/附件]</div></en-media></p>
+<ul style="padding:0px;margin:0px;padding-left:28px;">
+<li style="margin-bottom:0px;list-style:inherit;">对比 B 和 A，可以发现采用 LSE QoS 绑核之后，服务响应时间 P99 明显减小，很好地减轻了长尾现象</li>
+<li style="margin-bottom:0px;list-style:inherit;">对比 C 和 B，可以发现采用 LSR QoS 绑核且允许逻辑核占用更多物理核资源之后，在服务响应时间更好的情况下可以承受更多的请求</li>
+</ul>
+<p style="line-height:inherit;margin-top:22px;margin-bottom:22px;">综上，在线服务部署在同一机器的场景下，采用 koordinator 精细化 CPU 编排能够有效抑制 Noisy Neighbor 问题，减少 CPU 核切换带来的性能下降。</p>
+<h3 style="margin-top:35px;margin-bottom:10px;padding-bottom:5px;font-size:20px;line-height:28px;">环境</h3>
+<p style="line-height:inherit;margin-top:22px;margin-bottom:22px;">首先，要先准备一个 Kubernetes 集群并安装 Koordinator <strong style="font-weight:700;">[</strong> <strong style="font-weight:700;">2]</strong> 。本文选择一个 Kubernetes 集群的两个节点来做实验，其中一个节点作为测试机，将运行 Nginx 在线服务器；另一节点作为压测机，将运行客户端的 wrk，向 Nginx 请求 Web 服务，制造压测请求。</p>
+<h3 style="margin-top:35px;margin-bottom:10px;padding-bottom:5px;font-size:20px;line-height:28px;">在线应用</h3>
+<ol style="padding-left:28px;">
+<li style="margin-bottom:0px;list-style:inherit;padding-left:6px;">使用 ColocationProfile <strong style="font-weight:700;">[</strong> <strong style="font-weight:700;">3]</strong> 为应用注入精细化 CPU 编排协议</li>
+</ol>
+<p style="line-height:inherit;margin-top:22px;margin-bottom:22px;">B 组精细化 CPU 编排协议：</p>
+<pre style="border-radius:4px;background-color: #fbfaf8;border: 1px solid rgba(0,0,0,.14902);color: #333;font-size: 12px;padding: 8px;font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif;box-sizing: border-box;"><div style="display:flex;user-select:none;height:28px;align-items:center;justify-content:space-between;box-shadow:rgb(136, 136, 136) 0px 4px 5px -6px;margin-bottom:3px;background-color:rgb(248, 248, 248);"><div style="display:flex;align-items:center;margin-left:10px;"><div style="display:flex;align-items:center;justify-content:center;width:18px;height:18px;filter:invert(0.8);"><img style="height:100%;overflow:hidden;" src="data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' data-evernote-id='36' class='js-evernote-checked'%3e%3cpath d='M16.924 9.617A1 1 0 0 0 16 9H8a1 1 0 0 0-.707 1.707l4 4a1 1 0 0 0 1.414 0l4-4a1 1 0 0 0 .217-1.09z' data-name='Down'%3e%3c/path%3e%3c/svg%3e"/></div></div><div style="display:flex;align-items:center;margin-right:10px;"><span style="margin-left:20px;font-size:12px;filter:invert(0.5);opacity:0.6;">yaml</span><div style="font-size:12px;filter:invert(0.5);margin:0px 10px;opacity:0.6;">复制代码</div></div></div><code lang="yaml" style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span style="font-family:Menlo, Monaco, Consolas, Courier New, monospace;font-size:12px;color:rgb(51, 51, 51);display:none !important;"></span><span style="background-color:inherit;"><span style="color:gray;user-select:none;background-color:inherit;text-align:center;display:inline-block;width:18px;padding:0px 10px;box-sizing:content-box;position:sticky;left:0px;">1</span><span>apiVersion:</span> <span style="color:rgb(221, 17, 68);">config.koordinator.sh/v1alpha1</span></span>
+<span style="background-color:inherit;"><span style="color:gray;user-select:none;background-color:inherit;text-align:center;display:inline-block;width:18px;padding:0px 10px;box-sizing:content-box;position:sticky;left:0px;">2</span><span>kind:</span> <span style="color:rgb(221, 17, 68);">ClusterColocationProfile</span></span>
+<span style="background-color:inherit;"><span style="color:gray;user-select:none;background-color:inherit;text-align:center;display:inline-block;width:18px;padding:0px 10px;box-sizing:content-box;position:sticky;left:0px;">3</span><span>metadata:</span></span>
+<span style="background-color:inherit;"><span style="color:gray;user-select:none;background-color:inherit;text-align:center;display:inline-block;width:18px;padding:0px 10px;box-sizing:content-box;position:sticky;left:0px;">4</span>  <span>name:</span> <span style="color:rgb(221, 17, 68);">colocation-profile-example</span></span>
+<span style="background-color:inherit;"><span style="color:gray;user-select:none;background-color:inherit;text-align:center;display:inline-block;width:18px;padding:0px 10px;box-sizing:content-box;position:sticky;left:0px;">5</span><span>spec:</span></span>
+<span style="background-color:inherit;"><span style="color:gray;user-select:none;background-color:inherit;text-align:center;display:inline-block;width:18px;padding:0px 10px;box-sizing:content-box;position:sticky;left:0px;">6</span>  <span>selector:</span></span>
+<span style="background-color:inherit;"><span style="color:gray;user-select:none;background-color:inherit;text-align:center;display:inline-block;width:18px;padding:0px 10px;box-sizing:content-box;position:sticky;left:0px;">7</span>    <span>matchLabels:</span></span>
+<span style="background-color:inherit;"><span style="color:gray;user-select:none;background-color:inherit;text-align:center;display:inline-block;width:18px;padding:0px 10px;box-sizing:content-box;position:sticky;left:0px;">8</span>      <span>app:</span> <span style="color:rgb(221, 17, 68);">nginx</span></span>
+<span style="background-color:inherit;"><span style="color:gray;user-select:none;background-color:inherit;text-align:center;display:inline-block;width:18px;padding:0px 10px;box-sizing:content-box;position:sticky;left:0px;">9</span>  <span style="color:rgb(153, 153, 136);font-style:italic;"># 采用 LSE QoS</span></span>
+<span style="background-color:inherit;"><span style="color:gray;user-select:none;background-color:inherit;text-align:center;display:inline-block;width:18px;padding:0px 10px;box-sizing:content-box;position:sticky;left:0px;">10</span>  <span>qosClass:</span> <span style="color:rgb(221, 17, 68);">LSE</span></span>
+<span style="background-color:inherit;"><span style="color:gray;user-select:none;background-color:inherit;text-align:center;display:inline-block;width:18px;padding:0px 10px;box-sizing:content-box;position:sticky;left:0px;">11</span>  <span>annotations:</span></span>
+<span style="background-color:inherit;"><span style="color:gray;user-select:none;background-color:inherit;text-align:center;display:inline-block;width:18px;padding:0px 10px;box-sizing:content-box;position:sticky;left:0px;">12</span>  <span style="color:rgb(153, 153, 136);font-style:italic;"># 采用物理核间堆叠</span></span>
+<span style="background-color:inherit;"><span style="color:gray;user-select:none;background-color:inherit;text-align:center;display:inline-block;width:18px;padding:0px 10px;box-sizing:content-box;position:sticky;left:0px;">13</span>    <span>scheduling.koordinator.sh/resource-spec:</span> <span style="color:rgb(221, 17, 68);">'{"preferredCPUBindPolicy":"FullPCPUs"}'</span></span>
+<span style="background-color:inherit;"><span style="color:gray;user-select:none;background-color:inherit;text-align:center;display:inline-block;width:18px;padding:0px 10px;box-sizing:content-box;position:sticky;left:0px;">14</span>  <span>priorityClassName:</span> <span style="color:rgb(221, 17, 68);">koord-prod</span></span>
+</code></pre>
+<p style="line-height:inherit;margin-top:22px;margin-bottom:22px;">C 组 CPU 精细化编排协议：</p>
+<pre style="border-radius:4px;background-color: #fbfaf8;border: 1px solid rgba(0,0,0,.14902);color: #333;font-size: 12px;padding: 8px;font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif;box-sizing: border-box;"><div style="display:flex;user-select:none;height:28px;align-items:center;justify-content:space-between;box-shadow:rgb(136, 136, 136) 0px 4px 5px -6px;margin-bottom:3px;background-color:rgb(248, 248, 248);"><div style="display:flex;align-items:center;margin-left:10px;"><div style="display:flex;align-items:center;justify-content:center;width:18px;height:18px;filter:invert(0.8);"><img style="height:100%;overflow:hidden;" src="data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' data-evernote-id='37' class='js-evernote-checked'%3e%3cpath d='M16.924 9.617A1 1 0 0 0 16 9H8a1 1 0 0 0-.707 1.707l4 4a1 1 0 0 0 1.414 0l4-4a1 1 0 0 0 .217-1.09z' data-name='Down'%3e%3c/path%3e%3c/svg%3e"/></div></div><div style="display:flex;align-items:center;margin-right:10px;"><span style="margin-left:20px;font-size:12px;filter:invert(0.5);opacity:0.6;">yaml</span><div style="font-size:12px;filter:invert(0.5);margin:0px 10px;opacity:0.6;">复制代码</div></div></div><code lang="yaml" style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span style="font-family:Menlo, Monaco, Consolas, Courier New, monospace;font-size:12px;color:rgb(51, 51, 51);display:none !important;"></span><span style="background-color:inherit;"><span style="color:gray;user-select:none;background-color:inherit;text-align:center;display:inline-block;width:18px;padding:0px 10px;box-sizing:content-box;position:sticky;left:0px;">1</span><span>apiVersion:</span> <span style="color:rgb(221, 17, 68);">config.koordinator.sh/v1alpha1</span></span>
+<span style="background-color:inherit;"><span style="color:gray;user-select:none;background-color:inherit;text-align:center;display:inline-block;width:18px;padding:0px 10px;box-sizing:content-box;position:sticky;left:0px;">2</span><span>kind:</span> <span style="color:rgb(221, 17, 68);">ClusterColocationProfile</span></span>
+<span style="background-color:inherit;"><span style="color:gray;user-select:none;background-color:inherit;text-align:center;display:inline-block;width:18px;padding:0px 10px;box-sizing:content-box;position:sticky;left:0px;">3</span><span>metadata:</span></span>
+<span style="background-color:inherit;"><span style="color:gray;user-select:none;background-color:inherit;text-align:center;display:inline-block;width:18px;padding:0px 10px;box-sizing:content-box;position:sticky;left:0px;">4</span>  <span>name:</span> <span style="color:rgb(221, 17, 68);">colocation-profile-example</span></span>
+<span style="background-color:inherit;"><span style="color:gray;user-select:none;background-color:inherit;text-align:center;display:inline-block;width:18px;padding:0px 10px;box-sizing:content-box;position:sticky;left:0px;">5</span><span>spec:</span></span>
+<span style="background-color:inherit;"><span style="color:gray;user-select:none;background-color:inherit;text-align:center;display:inline-block;width:18px;padding:0px 10px;box-sizing:content-box;position:sticky;left:0px;">6</span>  <span>selector:</span></span>
+<span style="background-color:inherit;"><span style="color:gray;user-select:none;background-color:inherit;text-align:center;display:inline-block;width:18px;padding:0px 10px;box-sizing:content-box;position:sticky;left:0px;">7</span>    <span>matchLabels:</span></span>
+<span style="background-color:inherit;"><span style="color:gray;user-select:none;background-color:inherit;text-align:center;display:inline-block;width:18px;padding:0px 10px;box-sizing:content-box;position:sticky;left:0px;">8</span>      <span>app:</span> <span style="color:rgb(221, 17, 68);">nginx</span></span>
+<span style="background-color:inherit;"><span style="color:gray;user-select:none;background-color:inherit;text-align:center;display:inline-block;width:18px;padding:0px 10px;box-sizing:content-box;position:sticky;left:0px;">9</span>  <span style="color:rgb(153, 153, 136);font-style:italic;"># 采用 LSR QoS</span></span>
+<span style="background-color:inherit;"><span style="color:gray;user-select:none;background-color:inherit;text-align:center;display:inline-block;width:18px;padding:0px 10px;box-sizing:content-box;position:sticky;left:0px;">10</span>  <span>qosClass:</span> <span style="color:rgb(221, 17, 68);">LSR</span></span>
+<span style="background-color:inherit;"><span style="color:gray;user-select:none;background-color:inherit;text-align:center;display:inline-block;width:18px;padding:0px 10px;box-sizing:content-box;position:sticky;left:0px;">11</span>  <span>annotations:</span></span>
+<span style="background-color:inherit;"><span style="color:gray;user-select:none;background-color:inherit;text-align:center;display:inline-block;width:18px;padding:0px 10px;box-sizing:content-box;position:sticky;left:0px;">12</span>  <span style="color:rgb(153, 153, 136);font-style:italic;"># 采用物理核间打散且独占物理核</span></span>
+<span style="background-color:inherit;"><span style="color:gray;user-select:none;background-color:inherit;text-align:center;display:inline-block;width:18px;padding:0px 10px;box-sizing:content-box;position:sticky;left:0px;">13</span>    <span>scheduling.koordinator.sh/resource-spec:</span> <span style="color:rgb(221, 17, 68);">'{"preferredCPUBindPolicy":"SpreadByPCPUs", "preferredCPUExclusivePolicy":"PCPULevel"}'</span></span>
+<span style="background-color:inherit;"><span style="color:gray;user-select:none;background-color:inherit;text-align:center;display:inline-block;width:18px;padding:0px 10px;box-sizing:content-box;position:sticky;left:0px;">14</span>  <span>priorityClassName:</span> <span style="color:rgb(221, 17, 68);">koord-prod</span></span>
+</code></pre>
+<ol start="2" style="padding-left:28px;">
+<li style="margin-bottom:0px;list-style:inherit;padding-left:6px;">在线服务本文选用 Nginx 在线服务器，Pod YAML 如下：</li>
+</ol>
+<pre style="border-radius:4px;background-color: #fbfaf8;border: 1px solid rgba(0,0,0,.14902);color: #333;font-size: 12px;padding: 8px;font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif;box-sizing: border-box;"><div style="display:flex;user-select:none;height:28px;align-items:center;justify-content:space-between;box-shadow:rgb(136, 136, 136) 0px 4px 5px -6px;margin-bottom:3px;background-color:rgb(248, 248, 248);"><div style="display:flex;align-items:center;margin-left:10px;"><div style="display:flex;align-items:center;justify-content:center;width:18px;height:18px;filter:invert(0.8);"><img style="height:100%;overflow:hidden;" src="data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' data-evernote-id='38' class='js-evernote-checked'%3e%3cpath d='M16.924 9.617A1 1 0 0 0 16 9H8a1 1 0 0 0-.707 1.707l4 4a1 1 0 0 0 1.414 0l4-4a1 1 0 0 0 .217-1.09z' data-name='Down'%3e%3c/path%3e%3c/svg%3e"/></div></div><div style="display:flex;align-items:center;margin-right:10px;"><span style="margin-left:20px;font-size:12px;filter:invert(0.5);opacity:0.6;">yaml</span><div style="font-size:12px;filter:invert(0.5);margin:0px 10px;opacity:0.6;">复制代码</div></div></div><code lang="yaml" style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span style="font-family:Menlo, Monaco, Consolas, Courier New, monospace;font-size:12px;color:rgb(51, 51, 51);display:none !important;"></span><span style="background-color:inherit;"><span style="color:gray;user-select:none;background-color:inherit;text-align:center;display:inline-block;width:18px;padding:0px 10px;box-sizing:content-box;position:sticky;left:0px;">1</span><span style="color:rgb(153, 153, 153);font-weight:700;">---</span></span>
+<span style="background-color:inherit;"><span style="color:gray;user-select:none;background-color:inherit;text-align:center;display:inline-block;width:18px;padding:0px 10px;box-sizing:content-box;position:sticky;left:0px;">2</span><span style="color:rgb(153, 153, 136);font-style:italic;"># nginx应用配置</span></span>
+<span style="background-color:inherit;"><span style="color:gray;user-select:none;background-color:inherit;text-align:center;display:inline-block;width:18px;padding:0px 10px;box-sizing:content-box;position:sticky;left:0px;">3</span><span>apiVersion:</span> <span style="color:rgb(221, 17, 68);">v1</span></span>
+<span style="background-color:inherit;"><span style="color:gray;user-select:none;background-color:inherit;text-align:center;display:inline-block;width:18px;padding:0px 10px;box-sizing:content-box;position:sticky;left:0px;">4</span><span>data:</span></span>
+<span style="background-color:inherit;"><span style="color:gray;user-select:none;background-color:inherit;text-align:center;display:inline-block;width:18px;padding:0px 10px;box-sizing:content-box;position:sticky;left:0px;">5</span>  <span>config:</span> <span style="color:rgb(221, 17, 68);">|-</span></span>
+<span style="background-color:inherit;"><span style="color:gray;user-select:none;background-color:inherit;text-align:center;display:inline-block;width:18px;padding:0px 10px;box-sizing:content-box;position:sticky;left:0px;">6</span>    user  nginx;</span>
+<span style="background-color:inherit;"><span style="color:gray;user-select:none;background-color:inherit;text-align:center;display:inline-block;width:18px;padding:0px 10px;box-sizing:content-box;position:sticky;left:0px;">7</span>    worker_processes  4; # Nginx的Worker个数，影响Nginx Server的并发。</span>
+<span style="background-color:inherit;"><span style="color:gray;user-select:none;background-color:inherit;text-align:center;display:inline-block;width:18px;padding:0px 10px;box-sizing:content-box;position:sticky;left:0px;">8</span></span>
+<span style="background-color:inherit;"><span style="color:gray;user-select:none;background-color:inherit;text-align:center;display:inline-block;width:18px;padding:0px 10px;box-sizing:content-box;position:sticky;left:0px;">9</span>    <span style="color:rgb(221, 17, 68);">events</span> {</span>
+<span style="background-color:inherit;"><span style="color:gray;user-select:none;background-color:inherit;text-align:center;display:inline-block;width:18px;padding:0px 10px;box-sizing:content-box;position:sticky;left:0px;">10</span>        <span style="color:rgb(221, 17, 68);">worker_connections</span>  <span style="color:teal;">1024</span><span style="color:rgb(221, 17, 68);">;</span>  <span style="color:rgb(153, 153, 136);font-style:italic;"># 默认值为1024。</span></span>
+<span style="background-color:inherit;"><span style="color:gray;user-select:none;background-color:inherit;text-align:center;display:inline-block;width:18px;padding:0px 10px;box-sizing:content-box;position:sticky;left:0px;">11</span>    }</span>
+<span style="background-color:inherit;"><span style="color:gray;user-select:none;background-color:inherit;text-align:center;display:inline-block;width:18px;padding:0px 10px;box-sizing:content-box;position:sticky;left:0px;">12</span></span>
+<span style="background-color:inherit;"><span style="color:gray;user-select:none;background-color:inherit;text-align:center;display:inline-block;width:18px;padding:0px 10px;box-sizing:content-box;position:sticky;left:0px;">13</span>    <span style="color:rgb(221, 17, 68);">http</span> {</span>
+<span style="background-color:inherit;"><span style="color:gray;user-select:none;background-color:inherit;text-align:center;display:inline-block;width:18px;padding:0px 10px;box-sizing:content-box;position:sticky;left:0px;">14</span>        <span style="color:rgb(221, 17, 68);">server</span> {</span>
+<span style="background-color:inherit;"><span style="color:gray;user-select:none;background-color:inherit;text-align:center;display:inline-block;width:18px;padding:0px 10px;box-sizing:content-box;position:sticky;left:0px;">15</span>            <span style="color:rgb(221, 17, 68);">listen</span>  <span style="color:teal;">8000</span><span style="color:rgb(221, 17, 68);">;</span></span>
+<span style="background-color:inherit;"><span style="color:gray;user-select:none;background-color:inherit;text-align:center;display:inline-block;width:18px;padding:0px 10px;box-sizing:content-box;position:sticky;left:0px;">16</span></span>
+<span style="background-color:inherit;"><span style="color:gray;user-select:none;background-color:inherit;text-align:center;display:inline-block;width:18px;padding:0px 10px;box-sizing:content-box;position:sticky;left:0px;">17</span>            <span style="color:rgb(221, 17, 68);">gzip</span> <span style="color:rgb(221, 17, 68);">off;</span></span>
+<span style="background-color:inherit;"><span style="color:gray;user-select:none;background-color:inherit;text-align:center;display:inline-block;width:18px;padding:0px 10px;box-sizing:content-box;position:sticky;left:0px;">18</span>            <span style="color:rgb(221, 17, 68);">gzip_min_length</span> <span style="color:teal;">32</span><span style="color:rgb(221, 17, 68);">;</span></span>
+<span style="background-color:inherit;"><span style="color:gray;user-select:none;background-color:inherit;text-align:center;display:inline-block;width:18px;padding:0px 10px;box-sizing:content-box;position:sticky;left:0px;">19</span>            <span style="color:rgb(221, 17, 68);">gzip_http_version</span> <span style="color:teal;">1.0</span><span style="color:rgb(221, 17, 68);">;</span></span>
+<span style="background-color:inherit;"><span style="color:gray;user-select:none;background-color:inherit;text-align:center;display:inline-block;width:18px;padding:0px 10px;box-sizing:content-box;position:sticky;left:0px;">20</span>            <span style="color:rgb(221, 17, 68);">gzip_comp_level</span> <span style="color:teal;">3</span><span style="color:rgb(221, 17, 68);">;</span></span>
+<span style="background-color:inherit;"><span style="color:gray;user-select:none;background-color:inherit;text-align:center;display:inline-block;width:18px;padding:0px 10px;box-sizing:content-box;position:sticky;left:0px;">21</span>            <span style="color:rgb(221, 17, 68);">gzip_types</span> <span style="color:rgb(221, 17, 68);">*;</span></span>
+<span style="background-color:inherit;"><span style="color:gray;user-select:none;background-color:inherit;text-align:center;display:inline-block;width:18px;padding:0px 10px;box-sizing:content-box;position:sticky;left:0px;">22</span>        }</span>
+<span style="background-color:inherit;"><span style="color:gray;user-select:none;background-color:inherit;text-align:center;display:inline-block;width:18px;padding:0px 10px;box-sizing:content-box;position:sticky;left:0px;">23</span>    }</span>
+<span style="background-color:inherit;"><span style="color:gray;user-select:none;background-color:inherit;text-align:center;display:inline-block;width:18px;padding:0px 10px;box-sizing:content-box;position:sticky;left:0px;">24</span></span>
+<span style="background-color:inherit;"><span style="color:gray;user-select:none;background-color:inherit;text-align:center;display:inline-block;width:18px;padding:0px 10px;box-sizing:content-box;position:sticky;left:0px;">25</span>    <span style="color:rgb(153, 153, 136);font-style:italic;">#daemon off;</span></span>
+<span style="background-color:inherit;"><span style="color:gray;user-select:none;background-color:inherit;text-align:center;display:inline-block;width:18px;padding:0px 10px;box-sizing:content-box;position:sticky;left:0px;">26</span><span>kind:</span> <span style="color:rgb(221, 17, 68);">ConfigMap</span></span>
+<span style="background-color:inherit;"><span style="color:gray;user-select:none;background-color:inherit;text-align:center;display:inline-block;width:18px;padding:0px 10px;box-sizing:content-box;position:sticky;left:0px;">27</span><span>metadata:</span></span>
+<span style="background-color:inherit;"><span style="color:gray;user-select:none;background-color:inherit;text-align:center;display:inline-block;width:18px;padding:0px 10px;box-sizing:content-box;position:sticky;left:0px;">28</span>  <span>name:</span> <span style="color:rgb(221, 17, 68);">nginx-conf-0</span></span>
+<span style="background-color:inherit;"><span style="color:gray;user-select:none;background-color:inherit;text-align:center;display:inline-block;width:18px;padding:0px 10px;box-sizing:content-box;position:sticky;left:0px;">29</span><span style="color:rgb(153, 153, 153);font-weight:700;">---</span></span>
+<span style="background-color:inherit;"><span style="color:gray;user-select:none;background-color:inherit;text-align:center;display:inline-block;width:18px;padding:0px 10px;box-sizing:content-box;position:sticky;left:0px;">30</span><span style="color:rgb(153, 153, 136);font-style:italic;"># Nginx实例，作为在线类型服务应用。</span></span>
+<span style="background-color:inherit;"><span style="color:gray;user-select:none;background-color:inherit;text-align:center;display:inline-block;width:18px;padding:0px 10px;box-sizing:content-box;position:sticky;left:0px;">31</span><span>apiVersion:</span> <span style="color:rgb(221, 17, 68);">v1</span></span>
+<span style="background-color:inherit;"><span style="color:gray;user-select:none;background-color:inherit;text-align:center;display:inline-block;width:18px;padding:0px 10px;box-sizing:content-box;position:sticky;left:0px;">32</span><span>kind:</span> <span style="color:rgb(221, 17, 68);">Pod</span></span>
+<span style="background-color:inherit;"><span style="color:gray;user-select:none;background-color:inherit;text-align:center;display:inline-block;width:18px;padding:0px 10px;box-sizing:content-box;position:sticky;left:0px;">33</span><span>metadata:</span></span>
+<span style="background-color:inherit;"><span style="color:gray;user-select:none;background-color:inherit;text-align:center;display:inline-block;width:18px;padding:0px 10px;box-sizing:content-box;position:sticky;left:0px;">34</span>  <span>labels:</span></span>
+<span style="background-color:inherit;"><span style="color:gray;user-select:none;background-color:inherit;text-align:center;display:inline-block;width:18px;padding:0px 10px;box-sizing:content-box;position:sticky;left:0px;">35</span>    <span>app:</span> <span style="color:rgb(221, 17, 68);">nginx</span></span>
+<span style="background-color:inherit;"><span style="color:gray;user-select:none;background-color:inherit;text-align:center;display:inline-block;width:18px;padding:0px 10px;box-sizing:content-box;position:sticky;left:0px;">36</span>  <span>name:</span> <span style="color:rgb(221, 17, 68);">nginx-0</span></span>
+<span style="background-color:inherit;"><span style="color:gray;user-select:none;background-color:inherit;text-align:center;display:inline-block;width:18px;padding:0px 10px;box-sizing:content-box;position:sticky;left:0px;">37</span>  <span>namespace:</span> <span style="color:rgb(221, 17, 68);">default</span></span>
+<span style="background-color:inherit;"><span style="color:gray;user-select:none;background-color:inherit;text-align:center;display:inline-block;width:18px;padding:0px 10px;box-sizing:content-box;position:sticky;left:0px;">38</span><span>spec:</span></span>
+<span style="background-color:inherit;"><span style="color:gray;user-select:none;background-color:inherit;text-align:center;display:inline-block;width:18px;padding:0px 10px;box-sizing:content-box;position:sticky;left:0px;">39</span>  <span>affinity:</span></span>
+<span style="background-color:inherit;"><span style="color:gray;user-select:none;background-color:inherit;text-align:center;display:inline-block;width:18px;padding:0px 10px;box-sizing:content-box;position:sticky;left:0px;">40</span>    <span>nodeAffinity:</span></span>
+<span style="background-color:inherit;"><span style="color:gray;user-select:none;background-color:inherit;text-align:center;display:inline-block;width:18px;padding:0px 10px;box-sizing:content-box;position:sticky;left:0px;">41</span>      <span>requiredDuringSchedulingIgnoredDuringExecution:</span></span>
+<span style="background-color:inherit;"><span style="color:gray;user-select:none;background-color:inherit;text-align:center;display:inline-block;width:18px;padding:0px 10px;box-sizing:content-box;position:sticky;left:0px;">42</span>        <span>nodeSelectorTerms:</span></span>
+<span style="background-color:inherit;"><span style="color:gray;user-select:none;background-color:inherit;text-align:center;display:inline-block;width:18px;padding:0px 10px;box-sizing:content-box;position:sticky;left:0px;">43</span>        <span style="color:rgb(153, 0, 115);">-</span> <span>matchExpressions:</span></span>
+<span style="background-color:inherit;"><span style="color:gray;user-select:none;background-color:inherit;text-align:center;display:inline-block;width:18px;padding:0px 10px;box-sizing:content-box;position:sticky;left:0px;">44</span>          <span style="color:rgb(153, 0, 115);">-</span> <span>key:</span> <span style="color:rgb(221, 17, 68);">kubernetes.io/hostname</span></span>
+<span style="background-color:inherit;"><span style="color:gray;user-select:none;background-color:inherit;text-align:center;display:inline-block;width:18px;padding:0px 10px;box-sizing:content-box;position:sticky;left:0px;">45</span>            <span>operator:</span> <span style="color:rgb(221, 17, 68);">In</span></span>
+<span style="background-color:inherit;"><span style="color:gray;user-select:none;background-color:inherit;text-align:center;display:inline-block;width:18px;padding:0px 10px;box-sizing:content-box;position:sticky;left:0px;">46</span>            <span>values:</span></span>
+<span style="background-color:inherit;"><span style="color:gray;user-select:none;background-color:inherit;text-align:center;display:inline-block;width:18px;padding:0px 10px;box-sizing:content-box;position:sticky;left:0px;">47</span>            <span style="color:rgb(153, 0, 115);">-</span> <span style="color:rgb(221, 17, 68);">"${node_name}"</span>    </span>
+<span style="background-color:inherit;"><span style="color:gray;user-select:none;background-color:inherit;text-align:center;display:inline-block;width:18px;padding:0px 10px;box-sizing:content-box;position:sticky;left:0px;">48</span>  <span>schedulerName:</span> <span style="color:rgb(221, 17, 68);">koord-scheduler</span></span>
+<span style="background-color:inherit;"><span style="color:gray;user-select:none;background-color:inherit;text-align:center;display:inline-block;width:18px;padding:0px 10px;box-sizing:content-box;position:sticky;left:0px;">49</span>  <span>priorityClassName:</span> <span style="color:rgb(221, 17, 68);">koord-prod</span></span>
+<span style="background-color:inherit;"><span style="color:gray;user-select:none;background-color:inherit;text-align:center;display:inline-block;width:18px;padding:0px 10px;box-sizing:content-box;position:sticky;left:0px;">50</span>  <span>containers:</span></span>
+<span style="background-color:inherit;"><span style="color:gray;user-select:none;background-color:inherit;text-align:center;display:inline-block;width:18px;padding:0px 10px;box-sizing:content-box;position:sticky;left:0px;">51</span>    <span style="color:rgb(153, 0, 115);">-</span> <span>image:</span> <span style="color:rgb(221, 17, 68);">'koordinatorsh/nginx:v1.18-koord-exmaple'</span></span>
+<span style="background-color:inherit;"><span style="color:gray;user-select:none;background-color:inherit;text-align:center;display:inline-block;width:18px;padding:0px 10px;box-sizing:content-box;position:sticky;left:0px;">52</span>      <span>imagePullPolicy:</span> <span style="color:rgb(221, 17, 68);">IfNotPresent</span></span>
+<span style="background-color:inherit;"><span style="color:gray;user-select:none;background-color:inherit;text-align:center;display:inline-block;width:18px;padding:0px 10px;box-sizing:content-box;position:sticky;left:0px;">53</span>      <span>name:</span> <span style="color:rgb(221, 17, 68);">nginx</span></span>
+<span style="background-color:inherit;"><span style="color:gray;user-select:none;background-color:inherit;text-align:center;display:inline-block;width:18px;padding:0px 10px;box-sizing:content-box;position:sticky;left:0px;">54</span>      <span>ports:</span></span>
+<span style="background-color:inherit;"><span style="color:gray;user-select:none;background-color:inherit;text-align:center;display:inline-block;width:18px;padding:0px 10px;box-sizing:content-box;position:sticky;left:0px;">55</span>        <span style="color:rgb(153, 0, 115);">-</span> <span>containerPort:</span> <span style="color:teal;">8000</span></span>
+<span style="background-color:inherit;"><span style="color:gray;user-select:none;background-color:inherit;text-align:center;display:inline-block;width:18px;padding:0px 10px;box-sizing:content-box;position:sticky;left:0px;">56</span>          <span>hostPort:</span> <span style="color:teal;">8000</span> <span style="color:rgb(153, 153, 136);font-style:italic;"># 压测请求访问的端口。</span></span>
+<span style="background-color:inherit;"><span style="color:gray;user-select:none;background-color:inherit;text-align:center;display:inline-block;width:18px;padding:0px 10px;box-sizing:content-box;position:sticky;left:0px;">57</span>          <span>protocol:</span> <span style="color:rgb(221, 17, 68);">TCP</span></span>
+<span style="background-color:inherit;"><span style="color:gray;user-select:none;background-color:inherit;text-align:center;display:inline-block;width:18px;padding:0px 10px;box-sizing:content-box;position:sticky;left:0px;">58</span>      <span>resources:</span></span>
+<span style="background-color:inherit;"><span style="color:gray;user-select:none;background-color:inherit;text-align:center;display:inline-block;width:18px;padding:0px 10px;box-sizing:content-box;position:sticky;left:0px;">59</span>        <span>limits:</span></span>
+<span style="background-color:inherit;"><span style="color:gray;user-select:none;background-color:inherit;text-align:center;display:inline-block;width:18px;padding:0px 10px;box-sizing:content-box;position:sticky;left:0px;">60</span>          <span>cpu:</span> <span style="color:rgb(221, 17, 68);">'4'</span></span>
+<span style="background-color:inherit;"><span style="color:gray;user-select:none;background-color:inherit;text-align:center;display:inline-block;width:18px;padding:0px 10px;box-sizing:content-box;position:sticky;left:0px;">61</span>          <span>memory:</span> <span style="color:rgb(221, 17, 68);">8Gi</span></span>
+<span style="background-color:inherit;"><span style="color:gray;user-select:none;background-color:inherit;text-align:center;display:inline-block;width:18px;padding:0px 10px;box-sizing:content-box;position:sticky;left:0px;">62</span>        <span>requests:</span></span>
+<span style="background-color:inherit;"><span style="color:gray;user-select:none;background-color:inherit;text-align:center;display:inline-block;width:18px;padding:0px 10px;box-sizing:content-box;position:sticky;left:0px;">63</span>          <span>cpu:</span> <span style="color:rgb(221, 17, 68);">'4'</span></span>
+<span style="background-color:inherit;"><span style="color:gray;user-select:none;background-color:inherit;text-align:center;display:inline-block;width:18px;padding:0px 10px;box-sizing:content-box;position:sticky;left:0px;">64</span>          <span>memory:</span> <span style="color:rgb(221, 17, 68);">8Gi</span></span>
+<span style="background-color:inherit;"><span style="color:gray;user-select:none;background-color:inherit;text-align:center;display:inline-block;width:18px;padding:0px 10px;box-sizing:content-box;position:sticky;left:0px;">65</span>      <span>volumeMounts:</span></span>
+<span style="background-color:inherit;"><span style="color:gray;user-select:none;background-color:inherit;text-align:center;display:inline-block;width:18px;padding:0px 10px;box-sizing:content-box;position:sticky;left:0px;">66</span>        <span style="color:rgb(153, 0, 115);">-</span> <span>mountPath:</span> <span style="color:rgb(221, 17, 68);">/apps/nginx/conf</span></span>
+<span style="background-color:inherit;"><span style="color:gray;user-select:none;background-color:inherit;text-align:center;display:inline-block;width:18px;padding:0px 10px;box-sizing:content-box;position:sticky;left:0px;">67</span>          <span>name:</span> <span style="color:rgb(221, 17, 68);">config</span></span>
+<span style="background-color:inherit;"><span style="color:gray;user-select:none;background-color:inherit;text-align:center;display:inline-block;width:18px;padding:0px 10px;box-sizing:content-box;position:sticky;left:0px;">68</span>  <span>hostNetwork:</span> <span style="color:teal;">true</span></span>
+<span style="background-color:inherit;"><span style="color:gray;user-select:none;background-color:inherit;text-align:center;display:inline-block;width:18px;padding:0px 10px;box-sizing:content-box;position:sticky;left:0px;">69</span>  <span>restartPolicy:</span> <span style="color:rgb(221, 17, 68);">Never</span></span>
+<span style="background-color:inherit;"><span style="color:gray;user-select:none;background-color:inherit;text-align:center;display:inline-block;width:18px;padding:0px 10px;box-sizing:content-box;position:sticky;left:0px;">70</span>  <span>volumes:</span></span>
+<span style="background-color:inherit;"><span style="color:gray;user-select:none;background-color:inherit;text-align:center;display:inline-block;width:18px;padding:0px 10px;box-sizing:content-box;position:sticky;left:0px;">71</span>    <span style="color:rgb(153, 0, 115);">-</span> <span>configMap:</span></span>
+<span style="background-color:inherit;"><span style="color:gray;user-select:none;background-color:inherit;text-align:center;display:inline-block;width:18px;padding:0px 10px;box-sizing:content-box;position:sticky;left:0px;">72</span>        <span>items:</span></span>
+<span style="background-color:inherit;"><span style="color:gray;user-select:none;background-color:inherit;text-align:center;display:inline-block;width:18px;padding:0px 10px;box-sizing:content-box;position:sticky;left:0px;">73</span>          <span style="color:rgb(153, 0, 115);">-</span> <span>key:</span> <span style="color:rgb(221, 17, 68);">config</span></span>
+<span style="background-color:inherit;"><span style="color:gray;user-select:none;background-color:inherit;text-align:center;display:inline-block;width:18px;padding:0px 10px;box-sizing:content-box;position:sticky;left:0px;">74</span>            <span>path:</span> <span style="color:rgb(221, 17, 68);">nginx.conf</span></span>
+<span style="background-color:inherit;"><span style="color:gray;user-select:none;background-color:inherit;text-align:center;display:inline-block;width:18px;padding:0px 10px;box-sizing:content-box;position:sticky;left:0px;">75</span>        <span>name:</span> <span style="color:rgb(221, 17, 68);">nginx-conf-0</span></span>
+<span style="background-color:inherit;"><span style="color:gray;user-select:none;background-color:inherit;text-align:center;display:inline-block;width:18px;padding:0px 10px;box-sizing:content-box;position:sticky;left:0px;">76</span>      <span>name:</span> <span style="color:rgb(221, 17, 68);">config</span></span>
+</code></pre>
+<ol start="3" style="padding-left:28px;">
+<li style="margin-bottom:0px;list-style:inherit;padding-left:6px;">执行以下命令，部署 Nginx 应用</li>
+</ol>
+<pre style="border-radius:4px;background-color: #fbfaf8;border: 1px solid rgba(0,0,0,.14902);color: #333;font-size: 12px;padding: 8px;font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif;box-sizing: border-box;"><div style="display:flex;user-select:none;height:28px;align-items:center;justify-content:space-between;box-shadow:rgb(136, 136, 136) 0px 4px 5px -6px;margin-bottom:3px;background-color:rgb(248, 248, 248);"><div style="display:flex;align-items:center;margin-left:10px;"><div style="display:flex;align-items:center;justify-content:center;width:18px;height:18px;filter:invert(0.8);"><img style="height:100%;overflow:hidden;" src="data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' data-evernote-id='39' class='js-evernote-checked'%3e%3cpath d='M16.924 9.617A1 1 0 0 0 16 9H8a1 1 0 0 0-.707 1.707l4 4a1 1 0 0 0 1.414 0l4-4a1 1 0 0 0 .217-1.09z' data-name='Down'%3e%3c/path%3e%3c/svg%3e"/></div></div><div style="display:flex;align-items:center;margin-right:10px;"><span style="margin-left:20px;font-size:12px;filter:invert(0.5);opacity:0.6;"></span><div style="font-size:12px;filter:invert(0.5);margin:0px 10px;opacity:0.6;">复制代码</div></div></div><code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span style="background-color:inherit;"><span style="color:gray;user-select:none;background-color:inherit;text-align:center;display:inline-block;width:18px;padding:0px 10px;box-sizing:content-box;position:sticky;left:0px;">1</span>kubectl apply -f nginx-0.yaml</span>
+</code></pre>
+<ol start="4" style="padding-left:28px;">
+<li style="margin-bottom:0px;list-style:inherit;padding-left:6px;">执行以下命令，查看 Nginx 应用的 Pod 状态</li>
+</ol>
+<pre style="border-radius:4px;background-color: #fbfaf8;border: 1px solid rgba(0,0,0,.14902);color: #333;font-size: 12px;padding: 8px;font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif;box-sizing: border-box;"><div style="display:flex;user-select:none;height:28px;align-items:center;justify-content:space-between;box-shadow:rgb(136, 136, 136) 0px 4px 5px -6px;margin-bottom:3px;background-color:rgb(248, 248, 248);"><div style="display:flex;align-items:center;margin-left:10px;"><div style="display:flex;align-items:center;justify-content:center;width:18px;height:18px;filter:invert(0.8);"><img style="height:100%;overflow:hidden;" src="data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' data-evernote-id='40' class='js-evernote-checked'%3e%3cpath d='M16.924 9.617A1 1 0 0 0 16 9H8a1 1 0 0 0-.707 1.707l4 4a1 1 0 0 0 1.414 0l4-4a1 1 0 0 0 .217-1.09z' data-name='Down'%3e%3c/path%3e%3c/svg%3e"/></div></div><div style="display:flex;align-items:center;margin-right:10px;"><span style="margin-left:20px;font-size:12px;filter:invert(0.5);opacity:0.6;">ini</span><div style="font-size:12px;filter:invert(0.5);margin:0px 10px;opacity:0.6;">复制代码</div></div></div><code lang="ini" style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span style="font-family:Menlo, Monaco, Consolas, Courier New, monospace;font-size:12px;color:rgb(51, 51, 51);display:none !important;"></span><span style="background-color:inherit;"><span style="color:gray;user-select:none;background-color:inherit;text-align:center;display:inline-block;width:18px;padding:0px 10px;box-sizing:content-box;position:sticky;left:0px;">1</span>kubectl get pod -l <span>app</span>=nginx -o wide</span>
+</code></pre>
+<p style="line-height:inherit;margin-top:22px;margin-bottom:22px;">可以看到输出如下，表示 Nginx 应用已经在测试机上正常运行</p>
+<pre style="border-radius:4px;background-color: #fbfaf8;border: 1px solid rgba(0,0,0,.14902);color: #333;font-size: 12px;padding: 8px;font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif;box-sizing: border-box;"><div style="display:flex;user-select:none;height:28px;align-items:center;justify-content:space-between;box-shadow:rgb(136, 136, 136) 0px 4px 5px -6px;margin-bottom:3px;background-color:rgb(248, 248, 248);"><div style="display:flex;align-items:center;margin-left:10px;"><div style="display:flex;align-items:center;justify-content:center;width:18px;height:18px;filter:invert(0.8);"><img style="height:100%;overflow:hidden;" src="data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' data-evernote-id='41' class='js-evernote-checked'%3e%3cpath d='M16.924 9.617A1 1 0 0 0 16 9H8a1 1 0 0 0-.707 1.707l4 4a1 1 0 0 0 1.414 0l4-4a1 1 0 0 0 .217-1.09z' data-name='Down'%3e%3c/path%3e%3c/svg%3e"/></div></div><div style="display:flex;align-items:center;margin-right:10px;"><span style="margin-left:20px;font-size:12px;filter:invert(0.5);opacity:0.6;">sql</span><div style="font-size:12px;filter:invert(0.5);margin:0px 10px;opacity:0.6;">复制代码</div></div></div><code lang="sql" style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span style="font-family:Menlo, Monaco, Consolas, Courier New, monospace;font-size:12px;color:rgb(51, 51, 51);display:none !important;"></span><span style="background-color:inherit;"><span style="color:gray;user-select:none;background-color:inherit;text-align:center;display:inline-block;width:18px;padding:0px 10px;box-sizing:content-box;position:sticky;left:0px;">1</span>NAME      READY   STATUS    RESTARTS   AGE     IP           NODE                    NOMINATED NODE   READINESS GATES</span>
+<span style="background-color:inherit;"><span style="color:gray;user-select:none;background-color:inherit;text-align:center;display:inline-block;width:18px;padding:0px 10px;box-sizing:content-box;position:sticky;left:0px;">2</span>nginx<span style="color:teal;">-0</span>   <span style="color:teal;">1</span><span>/</span><span style="color:teal;">1</span>     <span style="color:rgb(51, 51, 51);font-weight:700;">Running</span>   <span style="color:teal;">0</span>          <span style="color:teal;">2</span>m46s   <span style="color:teal;">10.0</span><span style="color:teal;">.0</span><span style="color:teal;">.246</span>   cn<span>-</span>beijing<span style="color:teal;">.10</span><span style="color:teal;">.0</span><span style="color:teal;">.0</span><span style="color:teal;">.246</span>   <span>&lt;</span><span style="color:rgb(51, 51, 51);font-weight:700;">none</span><span>&gt;</span>           <span>&lt;</span><span style="color:rgb(51, 51, 51);font-weight:700;">none</span><span>&gt;</span></span>
+</code></pre>
+<ol start="5" style="padding-left:28px;">
+<li style="margin-bottom:0px;list-style:inherit;padding-left:6px;">在压测机上，执行以下命令，部署压测工具 wrk</li>
+</ol>
+<pre style="border-radius:4px;background-color: #fbfaf8;border: 1px solid rgba(0,0,0,.14902);color: #333;font-size: 12px;padding: 8px;font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif;box-sizing: border-box;"><div style="display:flex;user-select:none;height:28px;align-items:center;justify-content:space-between;box-shadow:rgb(136, 136, 136) 0px 4px 5px -6px;margin-bottom:3px;background-color:rgb(248, 248, 248);"><div style="display:flex;align-items:center;margin-left:10px;"><div style="display:flex;align-items:center;justify-content:center;width:18px;height:18px;filter:invert(0.8);"><img style="height:100%;overflow:hidden;" src="data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' data-evernote-id='42' class='js-evernote-checked'%3e%3cpath d='M16.924 9.617A1 1 0 0 0 16 9H8a1 1 0 0 0-.707 1.707l4 4a1 1 0 0 0 1.414 0l4-4a1 1 0 0 0 .217-1.09z' data-name='Down'%3e%3c/path%3e%3c/svg%3e"/></div></div><div style="display:flex;align-items:center;margin-right:10px;"><span style="margin-left:20px;font-size:12px;filter:invert(0.5);opacity:0.6;">bash</span><div style="font-size:12px;filter:invert(0.5);margin:0px 10px;opacity:0.6;">复制代码</div></div></div><code lang="bash" style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span style="font-family:Menlo, Monaco, Consolas, Courier New, monospace;font-size:12px;color:rgb(51, 51, 51);display:none !important;"></span><span style="background-color:inherit;"><span style="color:gray;user-select:none;background-color:inherit;text-align:center;display:inline-block;width:18px;padding:0px 10px;box-sizing:content-box;position:sticky;left:0px;">1</span>wget -O wrk-4.2.0.tar.gz https://github.com/wg/wrk/archive/refs/tags/4.2.0.tar.gz &amp;&amp; tar -xvf wrk-4.2.0.tar.gz</span>
+<span style="background-color:inherit;"><span style="color:gray;user-select:none;background-color:inherit;text-align:center;display:inline-block;width:18px;padding:0px 10px;box-sizing:content-box;position:sticky;left:0px;">2</span><span style="color:rgb(0, 134, 179);">cd</span> wrk-4.2.0 &amp;&amp; make &amp;&amp; <span style="color:rgb(0, 134, 179);">chmod</span> +x ./wrk</span>
+</code></pre>
+<h3 style="margin-top:35px;margin-bottom:10px;padding-bottom:5px;font-size:20px;line-height:28px;">压测</h3>
+<ol style="padding-left:28px;">
+<li style="margin-bottom:0px;list-style:inherit;padding-left:6px;">使用压测工具 wrk，向 Nginx 应用发起压测请求。</li>
+</ol>
+<pre style="border-radius:4px;background-color: #fbfaf8;border: 1px solid rgba(0,0,0,.14902);color: #333;font-size: 12px;padding: 8px;font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif;box-sizing: border-box;"><div style="display:flex;user-select:none;height:28px;align-items:center;justify-content:space-between;box-shadow:rgb(136, 136, 136) 0px 4px 5px -6px;margin-bottom:3px;background-color:rgb(248, 248, 248);"><div style="display:flex;align-items:center;margin-left:10px;"><div style="display:flex;align-items:center;justify-content:center;width:18px;height:18px;filter:invert(0.8);"><img style="height:100%;overflow:hidden;" src="data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' data-evernote-id='43' class='js-evernote-checked'%3e%3cpath d='M16.924 9.617A1 1 0 0 0 16 9H8a1 1 0 0 0-.707 1.707l4 4a1 1 0 0 0 1.414 0l4-4a1 1 0 0 0 .217-1.09z' data-name='Down'%3e%3c/path%3e%3c/svg%3e"/></div></div><div style="display:flex;align-items:center;margin-right:10px;"><span style="margin-left:20px;font-size:12px;filter:invert(0.5);opacity:0.6;">bash</span><div style="font-size:12px;filter:invert(0.5);margin:0px 10px;opacity:0.6;">复制代码</div></div></div><code lang="bash" style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span style="font-family:Menlo, Monaco, Consolas, Courier New, monospace;font-size:12px;color:rgb(51, 51, 51);display:none !important;"></span><span style="background-color:inherit;"><span style="color:gray;user-select:none;background-color:inherit;text-align:center;display:inline-block;width:18px;padding:0px 10px;box-sizing:content-box;position:sticky;left:0px;">1</span><span style="color:rgb(153, 153, 136);font-style:italic;"># node_ip填写测试机的IP地址，用于wrk向测试机发起压测；8000是Nginx暴露到测试机的端口。</span></span>
+<span style="background-color:inherit;"><span style="color:gray;user-select:none;background-color:inherit;text-align:center;display:inline-block;width:18px;padding:0px 10px;box-sizing:content-box;position:sticky;left:0px;">2</span>taskset -c 32-45 ./wrk -t120 -c400 -d600s --latency http://<span style="color:teal;">${node_ip}</span>:8000/</span>
+</code></pre>
+<ol start="2" style="padding-left:28px;">
+<li style="margin-bottom:0px;list-style:inherit;padding-left:6px;">等待 wrk 运行结束后，获取 wrk 的压测结果，wrk 输出格式如下所示。重复多次测试，以获得相对稳定的结果。</li>
+</ol>
+<pre style="border-radius:4px;background-color: #fbfaf8;border: 1px solid rgba(0,0,0,.14902);color: #333;font-size: 12px;padding: 8px;font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif;box-sizing: border-box;"><div style="display:flex;user-select:none;height:28px;align-items:center;justify-content:space-between;box-shadow:rgb(136, 136, 136) 0px 4px 5px -6px;margin-bottom:3px;background-color:rgb(248, 248, 248);"><div style="display:flex;align-items:center;margin-left:10px;"><div style="display:flex;align-items:center;justify-content:center;width:18px;height:18px;filter:invert(0.8);"><img style="height:100%;overflow:hidden;" src="data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' data-evernote-id='44' class='js-evernote-checked'%3e%3cpath d='M16.924 9.617A1 1 0 0 0 16 9H8a1 1 0 0 0-.707 1.707l4 4a1 1 0 0 0 1.414 0l4-4a1 1 0 0 0 .217-1.09z' data-name='Down'%3e%3c/path%3e%3c/svg%3e"/></div></div><div style="display:flex;align-items:center;margin-right:10px;"><span style="margin-left:20px;font-size:12px;filter:invert(0.5);opacity:0.6;">matlab</span><div style="font-size:12px;filter:invert(0.5);margin:0px 10px;opacity:0.6;">复制代码</div></div></div><code lang="matlab" style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span style="font-family:Menlo, Monaco, Consolas, Courier New, monospace;font-size:12px;color:rgb(51, 51, 51);display:none !important;"></span><span style="background-color:inherit;"><span style="color:gray;user-select:none;background-color:inherit;text-align:center;display:inline-block;width:18px;padding:0px 10px;box-sizing:content-box;position:sticky;left:0px;">1</span>Running <span style="color:teal;">10</span>m test @ http://<span style="color:teal;">192.168</span><span style="color:teal;">.0</span><span style="color:teal;">.186</span>:<span style="color:teal;">8000</span>/</span>
+<span style="background-color:inherit;"><span style="color:gray;user-select:none;background-color:inherit;text-align:center;display:inline-block;width:18px;padding:0px 10px;box-sizing:content-box;position:sticky;left:0px;">2</span>  <span style="color:teal;">120</span> threads and <span style="color:teal;">400</span> connections</span>
+<span style="background-color:inherit;"><span style="color:gray;user-select:none;background-color:inherit;text-align:center;display:inline-block;width:18px;padding:0px 10px;box-sizing:content-box;position:sticky;left:0px;">3</span>  Thread Stats   Avg      Stdev     Max   +/- Stdev</span>
+<span style="background-color:inherit;"><span style="color:gray;user-select:none;background-color:inherit;text-align:center;display:inline-block;width:18px;padding:0px 10px;box-sizing:content-box;position:sticky;left:0px;">4</span>    Latency     <span style="color:teal;">3.29</span>ms    <span style="color:teal;">2.49</span>ms <span style="color:teal;">352.52</span>ms   <span style="color:teal;">91.07</span><span style="color:rgb(153, 153, 136);font-style:italic;">%</span></span>
+<span style="background-color:inherit;"><span style="color:gray;user-select:none;background-color:inherit;text-align:center;display:inline-block;width:18px;padding:0px 10px;box-sizing:content-box;position:sticky;left:0px;">5</span>    Req/Sec     <span style="color:teal;">0.96</span>k   <span style="color:teal;">321.04</span>     <span style="color:teal;">3.28</span>k    <span style="color:teal;">62.00</span><span style="color:rgb(153, 153, 136);font-style:italic;">%</span></span>
+<span style="background-color:inherit;"><span style="color:gray;user-select:none;background-color:inherit;text-align:center;display:inline-block;width:18px;padding:0px 10px;box-sizing:content-box;position:sticky;left:0px;">6</span>  Latency Distribution</span>
+<span style="background-color:inherit;"><span style="color:gray;user-select:none;background-color:inherit;text-align:center;display:inline-block;width:18px;padding:0px 10px;box-sizing:content-box;position:sticky;left:0px;">7</span>     <span style="color:teal;">50</span><span style="color:rgb(153, 153, 136);font-style:italic;">%    2.60ms</span></span>
+<span style="background-color:inherit;"><span style="color:gray;user-select:none;background-color:inherit;text-align:center;display:inline-block;width:18px;padding:0px 10px;box-sizing:content-box;position:sticky;left:0px;">8</span>     <span style="color:teal;">75</span><span style="color:rgb(153, 153, 136);font-style:italic;">%    3.94ms</span></span>
+<span style="background-color:inherit;"><span style="color:gray;user-select:none;background-color:inherit;text-align:center;display:inline-block;width:18px;padding:0px 10px;box-sizing:content-box;position:sticky;left:0px;">9</span>     <span style="color:teal;">90</span><span style="color:rgb(153, 153, 136);font-style:italic;">%    5.55ms</span></span>
+<span style="background-color:inherit;"><span style="color:gray;user-select:none;background-color:inherit;text-align:center;display:inline-block;width:18px;padding:0px 10px;box-sizing:content-box;position:sticky;left:0px;">10</span>     <span style="color:teal;">99</span><span style="color:rgb(153, 153, 136);font-style:italic;">%   12.40ms</span></span>
+<span style="background-color:inherit;"><span style="color:gray;user-select:none;background-color:inherit;text-align:center;display:inline-block;width:18px;padding:0px 10px;box-sizing:content-box;position:sticky;left:0px;">11</span>  <span style="color:teal;">68800242</span> requests in <span style="color:teal;">10.00</span>m, <span style="color:teal;">54.46</span>GB read</span>
+<span style="background-color:inherit;"><span style="color:gray;user-select:none;background-color:inherit;text-align:center;display:inline-block;width:18px;padding:0px 10px;box-sizing:content-box;position:sticky;left:0px;">12</span>Requests/<span style="color:rgb(0, 134, 179);">sec</span>: <span style="color:teal;">114648.19</span></span>
+<span style="background-color:inherit;"><span style="color:gray;user-select:none;background-color:inherit;text-align:center;display:inline-block;width:18px;padding:0px 10px;box-sizing:content-box;position:sticky;left:0px;">13</span>Transfer/<span style="color:rgb(0, 134, 179);">sec</span>:     <span style="color:teal;">92.93</span>MB</span>
+</code></pre>
+<h2 style="margin-top:35px;margin-bottom:10px;font-size:22px;border-bottom:1px solid rgb(236, 236, 236);line-height:34px;padding-bottom:12px;">总结</h2>
+<p style="line-height:inherit;margin-top:22px;margin-bottom:22px;">在 Kubernetes 集群中，不同业务负载之间可能存在 CPU、内存等资源的争抢，影响业务的性能和稳定性。面对 Noisy Neighbor 现象，用户可以使用 Koordinator 为应用配置更精细的 CPU 编排策略，使得不同应用可以协同的共享 CPU 资源。我们通过实验说明，Koordinator 的精细化 CPU 编排能力能有效抑制 CPU 资源的争抢，改善应用性能。</p>
+<p style="line-height:inherit;margin-top:22px;margin-bottom:22px;">非常欢迎你通过 Github/Slack/钉钉/微信 等方式加入我们来参与 Koordinator 开源社区。你是否已经有一些希望与我们社区交流的内容呢？可以通过以下渠道参与讨论：</p>
+<ul style="padding:0px;margin:0px;padding-left:28px;">
+<li style="margin-bottom:0px;list-style:inherit;">加入社区 Slack channel (English)</li>
+<li style="margin-bottom:0px;list-style:inherit;">加入社区钉钉群：搜索群号 33383887 (Chinese)</li>
+</ul>
+<p style="line-height:inherit;margin-top:22px;margin-bottom:22px;"><strong style="font-weight:700;">相关链接：</strong></p>
+<p style="line-height:inherit;margin-top:22px;margin-bottom:22px;">[1] 多层次弹性 Quota 管理功能</p>
+<p style="line-height:inherit;margin-top:22px;margin-bottom:22px;"><em><a href="https://link.juejin.cn/?target=https%3A%2F%2Fkoordinator.sh%2Fdocs%2Fuser-manuals%2Fmulti-hierarchy-elastic-quota-management%2F" target="_blank" title="https://koordinator.sh/docs/user-manuals/multi-hierarchy-elastic-quota-management/" style="background-color:transparent;margin:initial;cursor:pointer;border-bottom:1px solid rgb(209, 233, 255);text-decoration:none;color:rgb(2, 105, 200);">koordinator.sh/docs/user-m…</a></em></p>
+<p style="line-height:inherit;margin-top:22px;margin-bottom:22px;">[2] 安装 Koordinator</p>
+<p style="line-height:inherit;margin-top:22px;margin-bottom:22px;"><em><a href="https://link.juejin.cn/?target=https%3A%2F%2Fkoordinator.sh%2Fdocs%2Finstallation%2F" target="_blank" title="https://koordinator.sh/docs/installation/" style="background-color:transparent;margin:initial;cursor:pointer;border-bottom:1px solid rgb(209, 233, 255);text-decoration:none;color:rgb(2, 105, 200);">koordinator.sh/docs/instal…</a></em></p>
+<p style="line-height:inherit;margin-top:22px;margin-bottom:22px;">[3] ColocationProfile</p>
+<p style="line-height:inherit;margin-top:22px;margin-bottom:22px;"><em><a href="https://link.juejin.cn/?target=https%3A%2F%2Fkoordinator.sh%2Fdocs%2Fuser-manuals%2Fcolocation-profile%2F" target="_blank" title="https://koordinator.sh/docs/user-manuals/colocation-profile/" style="background-color:transparent;margin:initial;cursor:pointer;border-bottom:1px solid rgb(209, 233, 255);text-decoration:none;color:rgb(2, 105, 200);">koordinator.sh/docs/user-m…</a></em></p>
+<p style="line-height:inherit;margin-top:22px;margin-bottom:22px;">点击<a href="https://link.juejin.cn/?target=https%3A%2F%2Fgithub.com%2Fkoordinator-sh%2Fkoordinator" target="_blank" title="https://github.com/koordinator-sh/koordinator" style="background-color:transparent;margin:initial;cursor:pointer;border-bottom:1px solid rgb(209, 233, 255);text-decoration:none;color:rgb(2, 105, 200);">此处</a>，立即了解 Koordinator 项目！</p></div></div></div></div></div></span></div></div></div></div></div></div></div>
+</div>
+</div>
+<a class="back-link" href="../articles.html">← 返回笔记列表</a>
+</body>
+</html>

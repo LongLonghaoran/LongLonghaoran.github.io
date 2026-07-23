@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html lang="zh-CN" data-theme="light">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Data in: 文档和索引(documents and indices | Elasticsearch Reference [7.x] | Elastic) — 技术笔记</title>
+<style>
+:root {
+  --bg: #ffffff;
+  --text: #1a1a1a;
+  --muted: #666;
+  --border: #e0e0e0;
+  --code-bg: #f5f5f5;
+  --link: #0066cc;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #1a1a1a;
+    --text: #e0e0e0;
+    --muted: #999;
+    --border: #333;
+    --code-bg: #2a2a2a;
+    --link: #66bbff;
+  }
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  line-height: 1.7;
+  color: var(--text);
+  background: var(--bg);
+  max-width: 860px;
+  margin: 0 auto;
+  padding: 2rem 1.5rem;
+}
+.note-header {
+  border-bottom: 2px solid var(--border);
+  padding-bottom: 1rem;
+  margin-bottom: 2rem;
+}
+.note-title {
+  font-size: 1.6rem;
+  font-weight: 700;
+  margin-bottom: 0.3rem;
+}
+.note-meta {
+  color: var(--muted);
+  font-size: 0.85rem;
+}
+.note-content {
+  font-size: 0.95rem;
+}
+.note-content h1 { font-size: 1.4rem; margin: 1.2rem 0 0.6rem; }
+.note-content h2 { font-size: 1.2rem; margin: 1rem 0 0.5rem; }
+.note-content h3 { font-size: 1.05rem; margin: 0.8rem 0 0.4rem; }
+.note-content p { margin: 0.5rem 0; }
+.note-content ul, .note-content ol { margin: 0.5rem 0 0.5rem 2rem; }
+.note-content li { margin: 0.2rem 0; }
+.note-content pre {
+  background: var(--code-bg);
+  padding: 1rem;
+  border-radius: 6px;
+  overflow-x: auto;
+  margin: 0.8rem 0;
+  font-size: 0.85rem;
+}
+.note-content code {
+  background: var(--code-bg);
+  padding: 0.1rem 0.3rem;
+  border-radius: 3px;
+  font-size: 0.88em;
+}
+.note-content pre code {
+  background: none;
+  padding: 0;
+}
+.note-content blockquote {
+  border-left: 3px solid var(--border);
+  padding-left: 1rem;
+  color: var(--muted);
+  margin: 0.8rem 0;
+}
+.note-content a { color: var(--link); }
+.note-content img {
+  max-width: 100%;
+  height: auto;
+  border-radius: 6px;
+  margin: 0.5rem 0;
+}
+.note-content table {
+  border-collapse: collapse;
+  width: 100%;
+  margin: 0.8rem 0;
+}
+.note-content th, .note-content td {
+  border: 1px solid var(--border);
+  padding: 0.5rem;
+}
+.note-content th { background: var(--code-bg); }
+.media-placeholder {
+  background: var(--code-bg);
+  padding: 1rem;
+  text-align: center;
+  color: var(--muted);
+  border-radius: 6px;
+  margin: 0.5rem 0;
+  font-size: 0.85rem;
+}
+.encrypt-placeholder {
+  background: #fff3cd;
+  padding: 0.5rem;
+  text-align: center;
+  color: #856404;
+  border-radius: 6px;
+  margin: 0.5rem 0;
+  font-size: 0.85rem;
+}
+.back-link {
+  display: inline-block;
+  margin-top: 2rem;
+  color: var(--link);
+  text-decoration: none;
+  font-size: 0.85rem;
+}
+</style>
+</head>
+<body>
+<div class="note-header">
+  <div class="note-title">Data in: 文档和索引(documents and indices | Elasticsearch Reference [7.x] | Elastic)</div>
+  <div class="note-meta">笔记本：ElasticSearch</div>
+</div>
+<div class="note-content">
+<div><br /></div><div style="min-height: 1772px; font-size: 16px; display:flex; min-width: 100%; position: relative;"><div style="box-sizing: border-box;"><div style="box-sizing: border-box; font-size: 16px; text-align: left; background-color: rgb(255, 255, 255);"><div style="box-sizing:border-box;"><div style="box-sizing:border-box;"><div style="box-sizing:border-box;"><div style="box-sizing:border-box;"><div style="box-sizing: border-box;"><div style="box-sizing: border-box;"><div style="box-sizing: border-box;"><div style="box-sizing: border-box; padding: 1em; margin-bottom: 1em; border: 1px solid rgb(204, 204, 204); background-color: rgb(255, 255, 210); background-position: initial initial; background-repeat: initial initial;"><span style="font-size: 16px; font-family: Inter, sans-serif; line-height: 1.5; color: rgb(0, 0, 0); font-weight: 400;">
+You are looking at preliminary documentation for a future release.
+Not what you want? See the
+</span><a href="https://www.elastic.co/guide/en/elasticsearch/reference/current/index.html" style="box-sizing: border-box; background-color: transparent; outline: none; outline-offset: 0px; font-size: 16px; font-family: Inter, sans-serif; line-height: 1.5; font-weight: 400; color: rgb(0, 169, 229); text-decoration: none;">current release documentation</a><span style="font-size: 16px; font-family: Inter, sans-serif; line-height: 1.5; color: rgb(0, 0, 0); font-weight: 400;">.
+</span></div><div style="box-sizing: border-box;"><div style="box-sizing: border-box;"><span style="font-size: 16px; font-family: Inter, sans-serif; line-height: 1.5; color: rgb(33, 37, 41); font-weight: 400;">
+</span><span style="box-sizing: border-box;"><a href="https://www.elastic.co/guide/en/elasticsearch/reference/7.x/index.html" style="box-sizing: border-box; background-color: transparent; outline: none; outline-offset: 0px; font-size: 16px; font-family: Inter, sans-serif; line-height: 1.5; font-weight: 400; color: rgb(0, 169, 229); text-decoration: none;">Elasticsearch Reference [7.x]</a></span><span style="font-size: 16px; font-family: Inter, sans-serif; line-height: 1.5; color: rgb(33, 37, 41); font-weight: 400;">
+»
+</span><span style="box-sizing: border-box;"><a href="https://www.elastic.co/guide/en/elasticsearch/reference/7.x/elasticsearch-intro.html" style="box-sizing: border-box; background-color: transparent; outline: none; outline-offset: 0px; font-size: 16px; font-family: Inter, sans-serif; line-height: 1.5; font-weight: 400; color: rgb(0, 169, 229); text-decoration: none;">What is Elasticsearch?</a></span><span style="font-size: 16px; font-family: Inter, sans-serif; line-height: 1.5; color: rgb(33, 37, 41); font-weight: 400;">
+»
+</span><span style="box-sizing: border-box; font-size: 16px; font-family: Inter, sans-serif; line-height: 1.5; color: rgb(33, 37, 41); font-weight: 600;">Data in: documents and indices</span><span style="font-size: 16px; font-family: Inter, sans-serif; line-height: 1.5; color: rgb(33, 37, 41); font-weight: 400;">
+</span></div><div><span style="font-size: 16px; font-family: Inter, sans-serif; line-height: 1.5; color: rgb(33, 37, 41); font-weight: 400;">
+</span><span style="font-size: 16px; font-family: Inter, sans-serif; line-height: 1.5; color: rgb(33, 37, 41); font-weight: 400; box-sizing: border-box; border-bottom-width: 1px; border-bottom-style: solid; border-bottom-color: rgb(204, 204, 204); padding-bottom: 5px; margin: 30px 0px 20px; display: inline-block; width: 100%;">
+</span><span style="font-size: 14px; font-family: Inter, sans-serif; line-height: 1.5; color: rgb(33, 37, 41); font-weight: 400; box-sizing: border-box; float: left; width: 50%;">
+</span><a href="https://www.elastic.co/guide/en/elasticsearch/reference/7.x/elasticsearch-intro.html" style="box-sizing: border-box; background-color: transparent; outline: none; outline-offset: 0px; font-size: 14px; font-family: Inter, sans-serif; line-height: 1.5; font-weight: 400; color: rgb(0, 169, 229); text-decoration: none;">« What is Elasticsearch?</a><span style="font-size: 14px; font-family: Inter, sans-serif; line-height: 1.5; color: rgb(33, 37, 41); font-weight: 400; box-sizing: border-box; float: left; width: 50%;">
+</span><span style="font-size: 16px; font-family: Inter, sans-serif; line-height: 1.5; color: rgb(33, 37, 41); font-weight: 400; box-sizing: border-box; border-bottom-width: 1px; border-bottom-style: solid; border-bottom-color: rgb(204, 204, 204); padding-bottom: 5px; margin: 30px 0px 20px; display: inline-block; width: 100%;">
+</span><span style="font-size: 14px; font-family: Inter, sans-serif; line-height: 1.5; color: rgb(33, 37, 41); font-weight: 400; box-sizing: border-box; text-align: right; width: 50%; display: inline-block; float: right;">
+</span><a href="https://www.elastic.co/guide/en/elasticsearch/reference/7.x/search-analyze.html" style="box-sizing: border-box; background-color: transparent; outline: none; outline-offset: 0px; font-size: 14px; font-family: Inter, sans-serif; line-height: 1.5; font-weight: 400; color: rgb(0, 169, 229); text-decoration: none;">Information out: search and analyze »</a><span style="font-size: 14px; font-family: Inter, sans-serif; line-height: 1.5; color: rgb(33, 37, 41); font-weight: 400; box-sizing: border-box; text-align: right; width: 50%; display: inline-block; float: right;">
+</span><span style="font-size: 16px; font-family: Inter, sans-serif; line-height: 1.5; color: rgb(33, 37, 41); font-weight: 400; box-sizing: border-box; border-bottom-width: 1px; border-bottom-style: solid; border-bottom-color: rgb(204, 204, 204); padding-bottom: 5px; margin: 30px 0px 20px; display: inline-block; width: 100%;">
+</span><span style="font-size: 16px; font-family: Inter, sans-serif; line-height: 1.5; color: rgb(33, 37, 41); font-weight: 400;">
+</span></div><div style="box-sizing: border-box; margin-bottom: 2em;"><div style="box-sizing: border-box;"><div style="box-sizing: border-box;"><div style="box-sizing: border-box;"><h2 style="box-sizing: border-box; position: relative; margin: 20px 0px; font-size: 29px;"><span style="font-size: 29px; font-family: Inter; line-height: normal; color: rgb(33, 37, 41); font-weight: 500;">Data in: documents and indices</span><a rel="nofollow" title="Edit this page on GitHub" href="https://github.com/elastic/elasticsearch/edit/7.x/docs/reference/intro.asciidoc" style="box-sizing: border-box; background-color: transparent; outline: none; outline-offset: 0px; right: 0px; position: absolute; font-size: 14px; top: 0px; z-index: 1000; padding-top: 26px; opacity: 0.3; background-image: url(&quot;data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABgAAAAYCAYAAADgdz34AAAABHNCSVQICAgIfAhkiAAAAAlwSFlzAAAArgAAAK4B+ff3XQAAABl0RVh0U29mdHdhcmUAd3d3Lmlua3NjYXBlLm9yZ5vuPBoAAAKySURBVEiJrZVLbExRGMd/3713qkJZaBeIhIUIC2FBhOpjxHRaNkhTERZeC5EQ2pmSsBikMaYVj4h0Q4pERNKNMlMVnZZ4lIUuxYqFaLqRNNXHzJzPYm6FPmc6zuqenPP//c53v5tzRVXJZQSiZUcFqsUy58IV3T3j161c4HVt5YWIfFFhjVHrfSBW1vBfBeIxbYgGPR7HCzwBzgZjZc2hkPzhzloQjHq32NiHMSxLJJJdanETOKmwY2Tj1kU5CYLPy3eqmNcpNRfzLOMDWsUQU2VpamB0ZUNld/+sBfUdxUvU6F13WpxQu0KRh4i1Gxi8Wv1m6O/9WQlCIbFMyrkPFAKKUK/odUHjaKqwsTJ+YXwmK8HAptIzgDc9kyaUY8ACYEhsuifLZCyojZZvEiUEIPBOUBvY4MqOXdne9WWynJMJ/MyL7QtF9CHgIPxEpVnROy68JeLvfDBVNiNBMpVsFlgOgGqdwpV0IXzGyjs+XXZGQTBaekhEatKH5TYq+4AiYNiIVdPkax+cLj9tD+pj3lUqcsOd9qLah9tkhdqmipe9Mx1QprrsTkSr5syxfr1DWQcMChxVuA/YQGvEH98zE3zaCvIZCrtwRAmoctmFf3VSqSOZwKesINDu3YGatvQO7qEUALuAJFAS8cffZiqYUMGp9pLFqBm7Cj6L8smFI8j5bOCTChy19gMFwLCB8woNAKJ0RPzxcDZwGPeZ1j8tXW2J1Zmw1ScmmbDEuQXki9I3muccULL//f1TgbHVE67q/Hi1Iv5KxOOo8ghQY3Pg2rYXfdnCJwrEkbHnbwNFbxXpVvRgoy/eMRv4BIGo7g3EStYCrJjXv95Whhv9XS2zhbvM9Gs9/XjzXLsg7xvwXZHjozr3w43KZyO5wOGvJjvz8zcaUo8sM3QpUtXzI1fw2PgNtmkFbbGhF10AAAAASUVORK5CYII=&quot;); font-family: Inter, sans-serif; line-height: 1; font-weight: 400; color: rgb(0, 169, 229); text-decoration: none; background-repeat: no-repeat no-repeat;">edit</a></h2></div></div></div><div style="box-sizing: border-box; margin-top: 0px; margin-bottom: 1.15em;"><span style="font-size: 16px; font-family: Inter, sans-serif; line-height: 1.5; color: rgb(33, 37, 41); font-weight: 400;">Elasticsearch is a distributed document store. Instead of storing information as rows of
+columnar data, Elasticsearch stores complex data structures that have been serialized
+as JSON documents. When you have multiple Elasticsearch nodes in a cluster, stored
+documents are distributed across the cluster and can be accessed immediately
+from any node.</span></div><div style="box-sizing: border-box; margin-top: 0px; margin-bottom: 1.15em;"><span style="font-size: 16px; font-family: Inter, sans-serif; line-height: 1.5; color: rgb(33, 37, 41); font-weight: 400;">Elasticsearch是一个分布式文档存储器。它并非将将数据按以列排列的行存储，Elasticsearch存储已经序列化为JSON的复杂数据结构。当你在集群中有多个es节点，存储的文档是分布在集群中的并且可以被立即从任何一个节点搜索到。</span></div><div style="box-sizing: border-box; margin-top: 0px; margin-bottom: 1.15em;"><span style="font-size: 16px; font-family: Inter, sans-serif; line-height: 1.5; color: rgb(33, 37, 41); font-weight: 400;">When a document is stored, it is indexed and fully searchable in </span><a href="https://www.elastic.co/guide/en/elasticsearch/reference/7.x/near-real-time.html" title="Near real-time search" style="box-sizing: border-box; background-color: transparent; outline: none; outline-offset: 0px; font-size: 16px; font-family: Inter, sans-serif; line-height: 1.5; font-weight: 400; color: rgb(0, 169, 229); text-decoration: none;">near real-time</a><span style="font-size: 16px; font-family: Inter, sans-serif; line-height: 1.5; color: rgb(33, 37, 41); font-weight: 400;">--within 1 second. Elasticsearch uses a data structure called an
+inverted index that supports very fast full-text searches. An inverted index
+lists every unique word that appears in any document and identifies all of the
+documents each word occurs in.</span></div><div style="box-sizing: border-box; margin-top: 0px; margin-bottom: 1.15em;"><span style="font-size: 16px; font-family: Inter, sans-serif; line-height: 1.5; color: rgb(33, 37, 41); font-weight: 400;">当一个文档被存储时，它就被索引了并且几乎可以在1秒内被完全搜索。es使用一种叫做倒排索引的数据结构。一个倒排索引列举出在文档中每个唯一的单词并且标识出了每个单词出现的所有文档</span></div><div style="box-sizing: border-box; margin-top: 0px; margin-bottom: 1.15em;"><span style="font-size: 16px; font-family: Inter, sans-serif; line-height: 1.5; color: rgb(33, 37, 41); font-weight: 400;">An index can be thought of as an optimized collection of documents and each
+document is a collection of fields, which are the key-value pairs that contain
+your data. By default, Elasticsearch indexes all data in every field and each indexed
+field has a dedicated, optimized data structure. For example, text fields are
+stored in inverted indices, and numeric and geo fields are stored in BKD trees.
+The ability to use the per-field data structures to assemble and return search
+results is what makes Elasticsearch so fast.</span></div><div style="box-sizing: border-box; margin-top: 0px; margin-bottom: 1.15em;">一条索引可以被看作是一个文档的优化过的集合并且每个文档又是一些字段的集合，这些字段是包含你的数据的键值对。默认情况下，es会索引每个字段的所有数据并且每个被索引过的字段都有一个专门的优化过的数据结构。例如，文本字段被倒排索引，数值字段和地理字段BKD索引。使用以字段为单位的数据结构去收集并返回数据正是es如此之快的原因。</div><div style="box-sizing: border-box; margin-top: 0px; margin-bottom: 1.15em;"><span style="font-size: 16px; font-family: Inter, sans-serif; line-height: 1.5; color: rgb(33, 37, 41); font-weight: 400;">Elasticsearch also has the ability to be schema-less, which means that documents can be
+indexed without explicitly specifying how to handle each of the different fields
+that might occur in a document. When dynamic mapping is enabled, Elasticsearch
+automatically detects and adds new fields to the index. This default
+behavior makes it easy to index and explore your data—just start
+indexing documents and Elasticsearch will detect and map booleans, floating point and
+integer values, dates, and strings to the appropriate Elasticsearch data types.</span></div><div style="box-sizing: border-box; margin-top: 0px; margin-bottom: 1.15em;"><span style="font-size: 16px; font-family: Inter, sans-serif; line-height: 1.5; color: rgb(33, 37, 41); font-weight: 400;">es还有无模式的能力（模式对应关系数据库表的表结构），这意味着文档可以被索引在无需明确指定如何处理可能出现的不同字段的情况下。当动态映射开启后，es自动检测并且给索引添加新的字段。这种默认行为让索引和搜索变得更加容易--只需要开始索引文档，那么es就会检测并且映射 boolean 小数点 以及 整数 日期 字符串到合适的es数据类型</span></div><div style="box-sizing: border-box; margin-top: 0px; margin-bottom: 1.15em;"><span style="font-size: 16px; font-family: Inter, sans-serif; line-height: 1.5; color: rgb(33, 37, 41); font-weight: 400;">Ultimately, however, you know more about your data and how you want to use it
+than Elasticsearch can. You can define rules to control dynamic mapping and explicitly
+define mappings to take full control of how fields are stored and indexed.</span></div><div style="box-sizing: border-box; margin-top: 0px; margin-bottom: 1.15em;"><font color="#212529" face="Inter, sans-serif"><span style="caret-color: rgb(33, 37, 41);">最后，然而，你更多的是对你自己数据的了解并且你希望如何使用es。你可以定义规则来控制动态映射并且明确指定映射来取得关于如何让字段进行存储和索引的控制</span></font></div><div style="box-sizing: border-box; margin-top: 0px; margin-bottom: 1.15em;"><span style="font-size: 16px; font-family: Inter, sans-serif; line-height: 1.5; color: rgb(33, 37, 41); font-weight: 400;">Defining your own mappings enables you to:</span></div><div style="box-sizing: border-box;"><ul style="box-sizing: border-box; margin-top: 0px; list-style: disc; padding-left: 2em; margin-bottom: 24px;"><li style="box-sizing: border-box; list-style: inherit; padding: 0.15em 1em 0.15em 0px;"><div><span style="font-size: 16px; font-family: Inter, sans-serif; line-height: 1.5; color: rgb(33, 37, 41); font-weight: 400;">
+Distinguish between full-text string fields and exact value string fields
+</span></div></li><li style="box-sizing: border-box; list-style: inherit; padding: 0.15em 1em 0.15em 0px;"><div><span style="font-size: 16px; font-family: Inter, sans-serif; line-height: 1.5; color: rgb(33, 37, 41); font-weight: 400;">
+Perform language-specific text analysis
+</span></div></li><li style="box-sizing: border-box; list-style: inherit; padding: 0.15em 1em 0.15em 0px;"><div><span style="font-size: 16px; font-family: Inter, sans-serif; line-height: 1.5; color: rgb(33, 37, 41); font-weight: 400;">
+Optimize fields for partial matching
+</span></div></li><li style="box-sizing: border-box; list-style: inherit; padding: 0.15em 1em 0.15em 0px;"><div><span style="font-size: 16px; font-family: Inter, sans-serif; line-height: 1.5; color: rgb(33, 37, 41); font-weight: 400;">
+Use custom date formats
+</span></div></li><li style="box-sizing: border-box; list-style: inherit; padding: 0.15em 1em 0.15em 0px;"><div><span style="font-size: 16px; font-family: Inter, sans-serif; line-height: 1.5; color: rgb(33, 37, 41); font-weight: 400;">
+Use data types such as </span><span style="font-size: 0.9em; font-family: Consolas, Menlo, &quot;DejaVu Sans Mono&quot;, &quot;Bitstream Vera Sans Mono&quot;, &quot;Lucida Console&quot;, monospace; line-height: 1.5; color: rgb(85, 85, 85); font-weight: 400; background-color: rgb(248, 248, 248); box-sizing: border-box; word-break: break-word; padding: 0px 3px; white-space: pre-wrap; background-position: initial initial; background-repeat: initial initial;">geo_point</span><span style="font-size: 16px; font-family: Inter, sans-serif; line-height: 1.5; color: rgb(33, 37, 41); font-weight: 400;"> and </span><span style="font-size: 0.9em; font-family: Consolas, Menlo, &quot;DejaVu Sans Mono&quot;, &quot;Bitstream Vera Sans Mono&quot;, &quot;Lucida Console&quot;, monospace; line-height: 1.5; color: rgb(85, 85, 85); font-weight: 400; background-color: rgb(248, 248, 248); box-sizing: border-box; word-break: break-word; padding: 0px 3px; white-space: pre-wrap; background-position: initial initial; background-repeat: initial initial;">geo_shape</span><span style="font-size: 16px; font-family: Inter, sans-serif; line-height: 1.5; color: rgb(33, 37, 41); font-weight: 400;"> that cannot be automatically
+detected
+</span></div></li></ul></div><div style="box-sizing: border-box; margin-top: 0px; margin-bottom: 1.15em;"><span style="font-size: 16px; font-family: Inter, sans-serif; line-height: 1.5; color: rgb(33, 37, 41); font-weight: 400;">It’s often useful to index the same field in different ways for different
+purposes. For example, you might want to index a string field as both a text
+field for full-text search and as a keyword field for sorting or aggregating
+your data. Or, you might choose to use more than one language analyzer to
+process the contents of a string field that contains user input.</span></div><div style="box-sizing: border-box; margin-top: 0px; margin-bottom: 1.15em;"><font color="#212529" face="Inter, sans-serif"><span style="caret-color: rgb(33, 37, 41);"><span>用不同的方法来索引相同的字段来应对不同的目的往往很有用。比如，你或许想索引字符串字段同时作为文本字段和全文字段搜索并且作为关键字字段以排序或者聚合你的数据。或者，你可能会选择使用不只一种语言分析器来处理包含用户输入的字符串内容</span></span></font></div><div style="box-sizing: border-box; margin-top: 0px; margin-bottom: 1.15em;"><span style="font-size: 16px; font-family: Inter, sans-serif; line-height: 1.5; color: rgb(33, 37, 41); font-weight: 400;">The analysis chain that is applied to a full-text field during indexing is also
+used at search time. When you query a full-text field, the query text undergoes
+the same analysis before the terms are looked up in the index.</span></div><div style="box-sizing: border-box; margin-top: 0px; margin-bottom: 1.15em;">在索引过程中应用到全文字段的分析链也被在搜索时使用。当你查询全文字段，查询的文本在索引中查询之前会经历相同的分析</div></div><div style="box-sizing: border-box; border-top-width: 1px; border-top-style: solid; border-top-color: rgb(204, 204, 204); padding-top: 10px; margin: 60px 0px 15px;"><span style="font-size: 16px; font-family: Inter, sans-serif; line-height: 1.5; color: rgb(33, 37, 41); font-weight: 400;">
+</span><span style="font-size: 14px; font-family: Inter, sans-serif; line-height: 1.5; color: rgb(33, 37, 41); font-weight: 400; box-sizing: border-box; float: left; width: 50%;">
+</span><a href="https://www.elastic.co/guide/en/elasticsearch/reference/7.x/elasticsearch-intro.html" style="box-sizing: border-box; background-color: transparent; outline: none; outline-offset: 0px; font-size: 14px; font-family: Inter, sans-serif; line-height: 1.5; font-weight: 400; color: rgb(0, 169, 229); text-decoration: none;">« What is Elasticsearch?</a><span style="font-size: 14px; font-family: Inter, sans-serif; line-height: 1.5; color: rgb(33, 37, 41); font-weight: 400; box-sizing: border-box; float: left; width: 50%;">
+</span><span style="font-size: 16px; font-family: Inter, sans-serif; line-height: 1.5; color: rgb(33, 37, 41); font-weight: 400;">
+</span><span style="font-size: 14px; font-family: Inter, sans-serif; line-height: 1.5; color: rgb(33, 37, 41); font-weight: 400; box-sizing: border-box; text-align: right; width: 50%; display: inline-block; float: right;">
+</span><a href="https://www.elastic.co/guide/en/elasticsearch/reference/7.x/search-analyze.html" style="box-sizing: border-box; background-color: transparent; outline: none; outline-offset: 0px; font-size: 14px; font-family: Inter, sans-serif; line-height: 1.5; font-weight: 400; color: rgb(0, 169, 229); text-decoration: none;">Information out: search and analyze »</a><span style="font-size: 14px; font-family: Inter, sans-serif; line-height: 1.5; color: rgb(33, 37, 41); font-weight: 400; box-sizing: border-box; text-align: right; width: 50%; display: inline-block; float: right;">
+</span><span style="font-size: 16px; font-family: Inter, sans-serif; line-height: 1.5; color: rgb(33, 37, 41); font-weight: 400;">
+</span></div></div></div></div></div></div></div></div></div></div></div></div><div><br /></div>
+</div>
+<a class="back-link" href="../articles.html">← 返回笔记列表</a>
+</body>
+</html>

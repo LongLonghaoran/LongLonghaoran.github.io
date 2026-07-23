@@ -1,0 +1,266 @@
+<!DOCTYPE html>
+<html lang="zh-CN" data-theme="light">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>分布式文件系统架构对比 — 技术笔记</title>
+<style>
+:root {
+  --bg: #ffffff;
+  --text: #1a1a1a;
+  --muted: #666;
+  --border: #e0e0e0;
+  --code-bg: #f5f5f5;
+  --link: #0066cc;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #1a1a1a;
+    --text: #e0e0e0;
+    --muted: #999;
+    --border: #333;
+    --code-bg: #2a2a2a;
+    --link: #66bbff;
+  }
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  line-height: 1.7;
+  color: var(--text);
+  background: var(--bg);
+  max-width: 860px;
+  margin: 0 auto;
+  padding: 2rem 1.5rem;
+}
+.note-header {
+  border-bottom: 2px solid var(--border);
+  padding-bottom: 1rem;
+  margin-bottom: 2rem;
+}
+.note-title {
+  font-size: 1.6rem;
+  font-weight: 700;
+  margin-bottom: 0.3rem;
+}
+.note-meta {
+  color: var(--muted);
+  font-size: 0.85rem;
+}
+.note-content {
+  font-size: 0.95rem;
+}
+.note-content h1 { font-size: 1.4rem; margin: 1.2rem 0 0.6rem; }
+.note-content h2 { font-size: 1.2rem; margin: 1rem 0 0.5rem; }
+.note-content h3 { font-size: 1.05rem; margin: 0.8rem 0 0.4rem; }
+.note-content p { margin: 0.5rem 0; }
+.note-content ul, .note-content ol { margin: 0.5rem 0 0.5rem 2rem; }
+.note-content li { margin: 0.2rem 0; }
+.note-content pre {
+  background: var(--code-bg);
+  padding: 1rem;
+  border-radius: 6px;
+  overflow-x: auto;
+  margin: 0.8rem 0;
+  font-size: 0.85rem;
+}
+.note-content code {
+  background: var(--code-bg);
+  padding: 0.1rem 0.3rem;
+  border-radius: 3px;
+  font-size: 0.88em;
+}
+.note-content pre code {
+  background: none;
+  padding: 0;
+}
+.note-content blockquote {
+  border-left: 3px solid var(--border);
+  padding-left: 1rem;
+  color: var(--muted);
+  margin: 0.8rem 0;
+}
+.note-content a { color: var(--link); }
+.note-content img {
+  max-width: 100%;
+  height: auto;
+  border-radius: 6px;
+  margin: 0.5rem 0;
+}
+.note-content table {
+  border-collapse: collapse;
+  width: 100%;
+  margin: 0.8rem 0;
+}
+.note-content th, .note-content td {
+  border: 1px solid var(--border);
+  padding: 0.5rem;
+}
+.note-content th { background: var(--code-bg); }
+.media-placeholder {
+  background: var(--code-bg);
+  padding: 1rem;
+  text-align: center;
+  color: var(--muted);
+  border-radius: 6px;
+  margin: 0.5rem 0;
+  font-size: 0.85rem;
+}
+.encrypt-placeholder {
+  background: #fff3cd;
+  padding: 0.5rem;
+  text-align: center;
+  color: #856404;
+  border-radius: 6px;
+  margin: 0.5rem 0;
+  font-size: 0.85rem;
+}
+.back-link {
+  display: inline-block;
+  margin-top: 2rem;
+  color: var(--link);
+  text-decoration: none;
+  font-size: 0.85rem;
+}
+</style>
+</head>
+<body>
+<div class="note-header">
+  <div class="note-title">分布式文件系统架构对比</div>
+  <div class="note-meta">笔记本：Kubernetes学习笔记</div>
+</div>
+<div class="note-content">
+<div style="--en-clipped-content:article">
+<div><br/></div><div style="font-size: 16px; display:block; min-width: 100%; position: relative;"> <div style="box-sizing:border-box;text-size-adjust:100%;tab-size:4;font-feature-settings:normal;font-variation-settings:normal;-webkit-tap-highlight-color:transparent;line-height:1.5;font-family:MiSans, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, &quot;Segoe UI&quot;, Roboto, &quot;Helvetica Neue&quot;, Arial, &quot;Noto Sans&quot;, sans-serif, &quot;Apple Color Emoji&quot;, &quot;Segoe UI Emoji&quot;, &quot;Segoe UI Symbol&quot;, &quot;Noto Color Emoji&quot;;"><div style="box-sizing:border-box;line-height:inherit;font-family:sohne, &quot;Helvetica Neue&quot;, Helvetica, Arial, sans-serif;"><div style="box-sizing:border-box;background-color:rgb(252, 252, 252);"><div style="box-sizing:border-box;"><div style="box-sizing:border-box;justify-content:center;"><div style="box-sizing:border-box;"><div style="box-sizing:border-box;">
+                    <div style="box-sizing:border-box;border:0px solid rgb(229, 231, 235);margin-bottom:20px;display:inline-block;border-bottom-width:1px;border-style:dashed;font-weight:300;"><a href="https://juicefs.com/zh-cn/blog" style="box-sizing:border-box;border:0px solid rgb(229, 231, 235);text-decoration:inherit;padding-top:4px;padding-bottom:4px;color:rgb(113, 113, 122);"><img style="box-sizing:border-box;border:0px solid rgb(229, 231, 235);vertical-align:middle;margin-bottom:4px;display:inline-block;height:16px;width:16px;" src="data:image/svg+xml,%3csvg class='w-4 h-4 mb-1 inline-block js-evernote-checked' viewBox='0 0 16 16' xmlns='http://www.w3.org/2000/svg' data-evernote-id='325'%3e %3cpath fill-rule='evenodd' d='m2.87 7.75l1.97 1.97a.75.75 0 1 1-1.06 1.06L.53 7.53L0 7l.53-.53l3.25-3.25a.75.75 0 0 1 1.06 1.06L2.87 6.25h9.88a3.25 3.25 0 0 1 0 6.5h-2a.75.75 0 0 1 0-1.5h2a1.75 1.75 0 1 0 0-3.5H2.87Z' clip-rule='evenodd' data-evernote-id='326' class='js-evernote-checked'%3e%3c/path%3e %3c/svg%3e"/> 返回博客</a></div>
+                    <div style="box-sizing:border-box;border:0px solid rgb(229, 231, 235);">
+                        <h1 style="box-sizing:border-box;border:0px solid rgb(229, 231, 235);margin:0px;font-weight:500;line-height:1.625;font-size:32px;">分布式文件系统架构对比</h1>
+                        <div style="box-sizing:border-box;border:0px solid rgb(229, 231, 235);margin-top:16px;margin-bottom:0px;color:rgb(107, 114, 128);align-self:flex-end;font-size:14px;line-height:20px;">
+                            <div style="box-sizing:border-box;border:0px solid rgb(229, 231, 235);gap:4px;display:inline-flex;">
+                                <div style="box-sizing:border-box;border:0px solid rgb(229, 231, 235);"><img style="box-sizing:border-box;border:0px solid rgb(229, 231, 235);vertical-align:middle;display:block;height:20px;width:20px;" src="data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' class='h-5 w-5 js-evernote-checked' viewBox='0 0 20 20' fill='currentColor' data-evernote-id='332'%3e %3cpath fill-rule='evenodd' d='M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 101.415-1.415L11 9.586V6z' clip-rule='evenodd' data-evernote-id='333' class='js-evernote-checked'%3e%3c/path%3e %3c/svg%3e"/></div>
+                                <div style="box-sizing:border-box;border:0px solid rgb(229, 231, 235);">2018-07-02</div>
+                            </div>
+                            <div style="box-sizing:border-box;border:0px solid rgb(229, 231, 235);gap:4px;display:inline-flex;margin-right:0px;margin-left:20px;">
+                                <div style="box-sizing:border-box;border:0px solid rgb(229, 231, 235);"><img style="box-sizing:border-box;border:0px solid rgb(229, 231, 235);vertical-align:middle;display:block;height:20px;width:20px;" src="data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' class='h-5 w-5 js-evernote-checked' viewBox='0 0 20 20' fill='currentColor' data-evernote-id='337'%3e %3cpath fill-rule='evenodd' d='M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-6-3a2 2 0 11-4 0 2 2 0 014 0zm-2 4a5 5 0 00-4.546 2.916A5.986 5.986 0 0010 16a5.986 5.986 0 004.546-2.084A5 5 0 0010 11z' clip-rule='evenodd' data-evernote-id='338' class='js-evernote-checked'%3e%3c/path%3e %3c/svg%3e"/></div>
+                                <div style="box-sizing:border-box;border:0px solid rgb(229, 231, 235);">Davies, CEO &amp; Founder</div>
+                            </div>
+                        </div>
+                    </div>
+                    <div style="box-sizing:border-box;border:0px solid rgb(229, 231, 235);color:rgb(55, 55, 55);margin-top:24px;margin-bottom:32px;line-height:28.8px;">
+                    
+                        
+                            <p style="box-sizing:border-box;border:0px solid rgb(229, 231, 235);margin:0px;margin-block:1em;margin-inline:0px;margin-bottom:20px;display:block;">本文源自 Juicedata 创始人 &amp; CEO Davies 在上海 Linux 用户组（SHLUG）的月度分享（2018/6/23）。</p><h2 style="box-sizing:border-box;border:0px solid rgb(229, 231, 235);margin:0px;color:rgb(21, 23, 26);letter-spacing:-0.02em;margin-bottom:8px;padding-top:8px;line-height:1.15;font-weight:800;font-size:25.6px;">什么是文件系统？</h2><p style="box-sizing:border-box;border:0px solid rgb(229, 231, 235);margin:0px;margin-block:1em;margin-inline:0px;margin-bottom:20px;display:block;">文件系统是计算机中一个非常重要的组件，为存储设备提供一致的访问和管理方式。在不同的操作系统中，文件系统会有一些差别，但也有一些共性几十年都没怎么变化：</p><ol style="box-sizing:border-box;border:0px solid rgb(229, 231, 235);margin:0px;padding:0px;list-style:none;margin-top:-10px;padding-top:0px;padding-bottom:0px;margin-bottom:32px;padding-left:16px;margin-left:16px;list-style-type:decimal;list-style-position:outside;"><li style="box-sizing:border-box;border:0px solid rgb(229, 231, 235);margin-bottom:8px;padding-top:0px;padding-bottom:0px;">数据是以文件的形式存在，提供 Open、Read、Write、Seek、Close 等API 进行访问；</li><li style="box-sizing:border-box;border:0px solid rgb(229, 231, 235);padding-top:0px;padding-bottom:0px;margin-bottom:4px;">文件以树形目录进行组织，提供原子的重命名（Rename）操作改变文件或者目录的位置。</li></ol><p style="box-sizing:border-box;border:0px solid rgb(229, 231, 235);margin:0px;margin-block:1em;margin-inline:0px;margin-bottom:20px;display:block;">文件系统提供的访问和管理方法支撑了绝大部分的计算机应用，Unix 的“万物皆文件”的理念更是凸显了它的重要地位。文件系统的复杂性使得它的可扩展性未能跟得上互联网的高速发展，极大简化了的对象存储及时填补了空缺得以快速发展起来。因为对象存储缺乏树状结构也不支持原子重命名操作，跟文件系统有很大的差别，本文暂不讨论。</p><h2 style="box-sizing:border-box;border:0px solid rgb(229, 231, 235);margin:0px;color:rgb(21, 23, 26);letter-spacing:-0.02em;margin-bottom:8px;padding-top:8px;line-height:1.15;font-weight:800;font-size:25.6px;">单机文件系统的挑战</h2><p style="box-sizing:border-box;border:0px solid rgb(229, 231, 235);margin:0px;margin-block:1em;margin-inline:0px;margin-bottom:20px;display:block;">绝大多数文件系统都是单机的，在单机操作系统内为一个或者多个存储设备提供访问和管理。随着互联网的高速发展，单机文件系统面临很多的挑战：</p><ol style="box-sizing:border-box;border:0px solid rgb(229, 231, 235);margin:0px;padding:0px;list-style:none;margin-top:-10px;padding-top:0px;padding-bottom:0px;margin-bottom:32px;padding-left:16px;margin-left:16px;list-style-type:decimal;list-style-position:outside;"><li style="box-sizing:border-box;border:0px solid rgb(229, 231, 235);margin-bottom:8px;padding-top:0px;padding-bottom:0px;">共享：无法同时为分布在多个机器中的应用提供访问，于是有了 NFS 协议，可以将单机文件系统通过网络的方式同时提供给多个机器访问。</li><li style="box-sizing:border-box;border:0px solid rgb(229, 231, 235);margin-bottom:8px;padding-top:0px;padding-bottom:0px;">容量：无法提供足够空间来存储数据，数据只好分散在多个隔离的单机文件系统里。</li><li style="box-sizing:border-box;border:0px solid rgb(229, 231, 235);margin-bottom:8px;padding-top:0px;padding-bottom:0px;">性能：无法满足某些应用需要非常高的读写性能要求，应用只好做逻辑拆分同时读写多个文件系统。</li><li style="box-sizing:border-box;border:0px solid rgb(229, 231, 235);margin-bottom:8px;padding-top:0px;padding-bottom:0px;">可靠性：受限于单个机器的可靠性，机器故障可能导致数据丢失。</li><li style="box-sizing:border-box;border:0px solid rgb(229, 231, 235);margin-bottom:8px;padding-top:0px;padding-bottom:0px;">可用性：受限于单个操作系统的可用性，故障或者重启等运维操作会导致不可用。</li><li style="box-sizing:border-box;border:0px solid rgb(229, 231, 235);padding-top:0px;padding-bottom:0px;margin-bottom:4px;">随着互联网的高速发展，这些问题变得日益突出，涌现出了一些分布式文件系统来应对这些挑战。</li></ol><p style="box-sizing:border-box;border:0px solid rgb(229, 231, 235);margin:0px;margin-block:1em;margin-inline:0px;margin-bottom:20px;display:block;">下面介绍几个我了解过的分布式文件系统的基本架构，并比较不同架构的优点和局限。</p><h2 style="box-sizing:border-box;border:0px solid rgb(229, 231, 235);margin:0px;color:rgb(21, 23, 26);letter-spacing:-0.02em;margin-bottom:8px;padding-top:8px;line-height:1.15;font-weight:800;font-size:25.6px;">GlusterFS</h2><p style="box-sizing:border-box;border:0px solid rgb(229, 231, 235);margin:0px;margin-block:1em;margin-inline:0px;margin-bottom:20px;display:block;">GlusterFS 是由美国的 Gluster 公司开发的 POSIX 分布式文件系统（以 GPL 开源），2007年发布第一个公开版本，2011年被 Redhat 收购。</p><p style="box-sizing:border-box;border:0px solid rgb(229, 231, 235);margin:0px;margin-block:1em;margin-inline:0px;margin-bottom:20px;display:block;">它的基本思路就是通过一个无状态的中间件把多个单机文件系统融合成统一的名字空间（namespace）提供给用户。这个中间件是由一系列可叠加的转换器（Translator）实现，每个转换器解决一个问题，比如数据分布、复制、拆分、缓存、锁等等，用户可以根据具体的应用场景需要灵活配置。比如一个典型的分布式卷如下图所示：</p>
+                        
+                    
+                        
+                        
+                        <div style="box-sizing:border-box;border:0px solid rgb(229, 231, 235);margin:0px;">
+                            <div class="media-placeholder">[图片/附件]</div></en-media>
+                            <div style="box-sizing:border-box;border:0px solid rgb(229, 231, 235);text-align:center;font-size:14px;line-height:20px;color:rgb(113, 113, 122);"></div>
+                        </div>
+                        
+                    
+                        
+                            <p style="box-sizing:border-box;border:0px solid rgb(229, 231, 235);margin:0px;margin-block:1em;margin-inline:0px;margin-bottom:20px;display:block;">图片来源：<a href="https://docs.gluster.org/en/latest/Quick-Start-Guide/Architecture/" style="box-sizing:border-box;border:0px solid rgb(229, 231, 235);text-decoration:inherit;border-style:dashed;border-bottom-color:rgb(34, 197, 94);text-decoration-line:none;transition-duration:0.15s;transition-timing-function:cubic-bezier(0.4, 0, 0.2, 1);color:rgb(32, 173, 93);">https://docs.gluster.org/en/latest/Quick-Start-Guide/Architecture/</a></p><p style="box-sizing:border-box;border:0px solid rgb(229, 231, 235);margin:0px;margin-block:1em;margin-inline:0px;margin-bottom:20px;display:block;">Server1 和 Server2 构成有 2 副本的 Volume0，Server3 和 Server4 构成 Volume1，它们再融合成有更大空间的分布式卷。</p><p style="box-sizing:border-box;border:0px solid rgb(229, 231, 235);margin:0px;margin-block:1em;margin-inline:0px;margin-bottom:20px;display:block;">优点：</p><ol style="box-sizing:border-box;border:0px solid rgb(229, 231, 235);margin:0px;padding:0px;list-style:none;margin-top:-10px;padding-top:0px;padding-bottom:0px;margin-bottom:32px;padding-left:16px;margin-left:16px;list-style-type:decimal;list-style-position:outside;"><li style="box-sizing:border-box;border:0px solid rgb(229, 231, 235);margin-bottom:8px;padding-top:0px;padding-bottom:0px;">数据文件最终以相同的目录结构保存在单机文件系统上，不用担心 GlusterFS 的不可用导致数据丢失。</li><li style="box-sizing:border-box;border:0px solid rgb(229, 231, 235);margin-bottom:8px;padding-top:0px;padding-bottom:0px;">没有明显的单点问题，可线性扩展。</li><li style="box-sizing:border-box;border:0px solid rgb(229, 231, 235);padding-top:0px;padding-bottom:0px;margin-bottom:4px;">对大量小文件的支持估计还不错。</li></ol><p style="box-sizing:border-box;border:0px solid rgb(229, 231, 235);margin:0px;margin-block:1em;margin-inline:0px;margin-bottom:20px;display:block;">挑战：</p><ol style="box-sizing:border-box;border:0px solid rgb(229, 231, 235);margin:0px;padding:0px;list-style:none;margin-top:-10px;padding-top:0px;padding-bottom:0px;margin-bottom:32px;padding-left:16px;margin-left:16px;list-style-type:decimal;list-style-position:outside;"><li style="box-sizing:border-box;border:0px solid rgb(229, 231, 235);margin-bottom:8px;padding-top:0px;padding-bottom:0px;">这种结构是相对静态的，不容易调整，也要求各个存储节点有相同的配置，当数据或者访问不均衡时没法进行空间或者负载调整。故障恢复能力也比较弱，比如 Server1 故障时，Server2 上的文件就没办法在健康的 3 或者 4上增加拷贝保障数据可靠。</li><li style="box-sizing:border-box;border:0px solid rgb(229, 231, 235);padding-top:0px;padding-bottom:0px;margin-bottom:4px;">因为缺乏独立的元数据服务，要求所有存储节点都会有完整的数据目录结构，遍历目录或者做目录结构调整时需要访问所有节点才能得到正确结果，导致整个系统的可扩展能力有限，扩展到几十个节点时还行，很难有效地管理上百个节点。</li></ol><h2 style="box-sizing:border-box;border:0px solid rgb(229, 231, 235);margin:0px;color:rgb(21, 23, 26);letter-spacing:-0.02em;margin-bottom:8px;padding-top:8px;line-height:1.15;font-weight:800;font-size:25.6px;margin-top:0px;">CephFS</h2><p style="box-sizing:border-box;border:0px solid rgb(229, 231, 235);margin:0px;margin-block:1em;margin-inline:0px;margin-bottom:20px;display:block;">CephFS 始于 Sage Weil 的博士论文研究，目标是实现分布式的元数据管理以支持 EB 级别数据规模。2012年，Sage Weil 成立了 InkTank 继续支持 CephFS 的开发，于 2014年被 Redhat 收购。直到 2016 年，CephFS 才发布可用于生产环境的稳定版（CephFS 的元数据部分仍然是单机的）。现在，CephFS 的分布式元数据仍然不成熟。</p><p style="box-sizing:border-box;border:0px solid rgb(229, 231, 235);margin:0px;margin-block:1em;margin-inline:0px;margin-bottom:20px;display:block;">Ceph 是一个分层的架构，底层是一个基于 CRUSH（哈希）的分布式对象存储，上层提供对象存储（RADOSGW）、块存储（RDB）和文件系统（CephFS）三个API，如下图所示：</p>
+                        
+                    
+                        
+                        
+                        <div style="box-sizing:border-box;border:0px solid rgb(229, 231, 235);margin:0px;">
+                            <div class="media-placeholder">[图片/附件]</div></en-media>
+                            <div style="box-sizing:border-box;border:0px solid rgb(229, 231, 235);text-align:center;font-size:14px;line-height:20px;color:rgb(113, 113, 122);"></div>
+                        </div>
+                        
+                    
+                        
+                            <p style="box-sizing:border-box;border:0px solid rgb(229, 231, 235);margin:0px;margin-block:1em;margin-inline:0px;margin-bottom:20px;display:block;">图片来源：<a href="https://en.wikipedia.org/wiki/Ceph_(software)" style="box-sizing:border-box;border:0px solid rgb(229, 231, 235);text-decoration:inherit;border-style:dashed;border-bottom-color:rgb(34, 197, 94);text-decoration-line:none;transition-duration:0.15s;transition-timing-function:cubic-bezier(0.4, 0, 0.2, 1);color:rgb(32, 173, 93);">https://en.wikipedia.org/wiki/Ceph_(software)</a></p><p style="box-sizing:border-box;border:0px solid rgb(229, 231, 235);margin:0px;margin-block:1em;margin-inline:0px;margin-bottom:20px;display:block;">用一套存储系统来满足多个不同场景的存储需求（虚拟机镜像、海量小文件和通用文件存储）还是非常吸引人的，但因为系统的复杂性需要很强的运维能力才能支撑，实际上目前只有块存储还是比较成熟应用得比较多，对象存储和文件系统都不太理想，听到一些使用案例用过一段时间后就放弃了。</p><p style="box-sizing:border-box;border:0px solid rgb(229, 231, 235);margin:0px;margin-block:1em;margin-inline:0px;margin-bottom:20px;display:block;">CephFS 的架构如下图所示：</p>
+                        
+                    
+                        
+                        
+                        <div style="box-sizing:border-box;border:0px solid rgb(229, 231, 235);margin:0px;">
+                            <div class="media-placeholder">[图片/附件]</div></en-media>
+                            <div style="box-sizing:border-box;border:0px solid rgb(229, 231, 235);text-align:center;font-size:14px;line-height:20px;color:rgb(113, 113, 122);"></div>
+                        </div>
+                        
+                    
+                        
+                            <p style="box-sizing:border-box;border:0px solid rgb(229, 231, 235);margin:0px;margin-block:1em;margin-inline:0px;margin-bottom:20px;display:block;">图片来源：<a href="https://en.wikipedia.org/wiki/Ceph_(software)" style="box-sizing:border-box;border:0px solid rgb(229, 231, 235);text-decoration:inherit;border-style:dashed;border-bottom-color:rgb(34, 197, 94);text-decoration-line:none;transition-duration:0.15s;transition-timing-function:cubic-bezier(0.4, 0, 0.2, 1);color:rgb(32, 173, 93);">https://en.wikipedia.org/wiki/Ceph_(software)</a></p><p style="box-sizing:border-box;border:0px solid rgb(229, 231, 235);margin:0px;margin-block:1em;margin-inline:0px;margin-bottom:20px;display:block;">CephFS 是由 MDS（Metadata Daemon) 实现的，它是一个或者多个无状态的元数据服务，从底层的 OSD 加载文件系统的元信息，并缓存到内存中以提高访问速度。因为 MDS 是无状态的，可以配置多个备用节点来实现 HA，相对比较容易。不过备份节点没有缓存，需要重新预热，有可能故障恢复时间会比较长。</p><p style="box-sizing:border-box;border:0px solid rgb(229, 231, 235);margin:0px;margin-block:1em;margin-inline:0px;margin-bottom:20px;display:block;">因为从存储层加载或者写入数据会比较慢，MDS 必须使用多线程来提高吞吐量，各种并发的文件系统操作导致复杂度大大上升，容易发生死锁，或者因为 IO 比较慢导致的性能大幅下降。为了获得比较好的性能，MDS 往往需要有足够多的内存来缓存大部分元数据，这也限制了它实际的支撑能力。</p><p style="box-sizing:border-box;border:0px solid rgb(229, 231, 235);margin:0px;margin-block:1em;margin-inline:0px;margin-bottom:20px;display:block;">当有多个活跃的 MDS 时，目录结构中的一部分（子树）可以动态的分配到某个MDS并完全由它来处理相关请求，以达到水平扩展的目的。多个活跃之前，不可避免地需要各自锁机制来协商对子树的所有权，以及通过分布式事务来实现跨子树的原子重命名，这些实现起来都是非常复杂的。目前最新的官方文档仍然不推荐使用多个 MDS（作为备份是可以的）。</p><h2 style="box-sizing:border-box;border:0px solid rgb(229, 231, 235);margin:0px;color:rgb(21, 23, 26);letter-spacing:-0.02em;margin-bottom:8px;padding-top:8px;line-height:1.15;font-weight:800;font-size:25.6px;">GFS</h2><p style="box-sizing:border-box;border:0px solid rgb(229, 231, 235);margin:0px;margin-block:1em;margin-inline:0px;margin-bottom:20px;display:block;">Google 的 GFS 是分布式文件系统中的先驱和典型代表，由早期的 BigFiles 发展而来。在 2003 年发表的论文中详细阐述了它的设计理念和细节，对业界影响非常大，后来很多分布式文件系统都是参照它的设计。</p><p style="box-sizing:border-box;border:0px solid rgb(229, 231, 235);margin:0px;margin-block:1em;margin-inline:0px;margin-bottom:20px;display:block;">顾名思义，BigFiles/GFS 是为大文件优化设计的，并不适合平均文件大小在 1MB 以内的场景。GFS的架构入下图所示。</p>
+                        
+                    
+                        
+                        
+                        <div style="box-sizing:border-box;border:0px solid rgb(229, 231, 235);margin:0px;">
+                            <div class="media-placeholder">[图片/附件]</div></en-media>
+                            <div style="box-sizing:border-box;border:0px solid rgb(229, 231, 235);text-align:center;font-size:14px;line-height:20px;color:rgb(113, 113, 122);"></div>
+                        </div>
+                        
+                    
+                        
+                            <p style="box-sizing:border-box;border:0px solid rgb(229, 231, 235);margin:0px;margin-block:1em;margin-inline:0px;margin-bottom:20px;display:block;">图片来源：<a href="https://en.wikipedia.org/wiki/Google_File_System" style="box-sizing:border-box;border:0px solid rgb(229, 231, 235);text-decoration:inherit;border-style:dashed;border-bottom-color:rgb(34, 197, 94);text-decoration-line:none;transition-duration:0.15s;transition-timing-function:cubic-bezier(0.4, 0, 0.2, 1);color:rgb(32, 173, 93);">https://en.wikipedia.org/wiki/Google_File_System</a></p><p style="box-sizing:border-box;border:0px solid rgb(229, 231, 235);margin:0px;margin-block:1em;margin-inline:0px;margin-bottom:20px;display:block;">GFS 有一个 Master 节点来管理元数据（全部加载到内存，快照和更新日志写到磁盘），文件划分成 64MB 的 Chunk 存储到几个 ChunkServer 上（直接使用单机文件系统）。文件只能追加写，不用担心 Chunk 的版本和一致性问题（可以用长度当做版本）。这个使用完全不同的技术来解决元数据和数据的设计使得系统的复杂度大大简化，也有足够的扩展能力（如果平均文件大小大于 256MB，Master 节点每 GB 内存可以支撑约 1PB 的数据量）。放弃支持 POSIX 文件系统的部分功能（比如随机写、扩展属性、硬链接等）也进一步简化了系统复杂度，以换取更好的系统性能、鲁棒性和可扩展性。</p><p style="box-sizing:border-box;border:0px solid rgb(229, 231, 235);margin:0px;margin-block:1em;margin-inline:0px;margin-bottom:20px;display:block;">因为 GFS 的成熟稳定，使得 Google 可以更容易地构建上层应用（MapReduce、BigTable等）。后来，Google 开发了拥有更强可扩展能力的下一代存储系统 Colossus，把元数据和数据存储彻底分离，实现了元数据的分布式（自动 Sharding），以及使用Reed Solomon编码来降低存储空间占用从而降低成本。</p><h2 style="box-sizing:border-box;border:0px solid rgb(229, 231, 235);margin:0px;color:rgb(21, 23, 26);letter-spacing:-0.02em;margin-bottom:8px;padding-top:8px;line-height:1.15;font-weight:800;font-size:25.6px;">HDFS</h2><p style="box-sizing:border-box;border:0px solid rgb(229, 231, 235);margin:0px;margin-block:1em;margin-inline:0px;margin-bottom:20px;display:block;">出自 Yahoo 的 Hadoop 算是 Google 的 GFS、MapReduce 等的开源Java实现版，HDFS 也是基本照搬 GFS 的设计，这里就不再重复了，下图是HDFS的架构图：</p>
+                        
+                    
+                        
+                        
+                        <div style="box-sizing:border-box;border:0px solid rgb(229, 231, 235);margin:0px;">
+                            <div class="media-placeholder">[图片/附件]</div></en-media>
+                            <div style="box-sizing:border-box;border:0px solid rgb(229, 231, 235);text-align:center;font-size:14px;line-height:20px;color:rgb(113, 113, 122);"></div>
+                        </div>
+                        
+                    
+                        
+                            <p style="box-sizing:border-box;border:0px solid rgb(229, 231, 235);margin:0px;margin-block:1em;margin-inline:0px;margin-bottom:20px;display:block;">HDFS的可靠性和可扩展能力还是非常不错的，有不少几千节点和 100PB 级别的部署，支撑大数据应用表现还是很不错的，少有听说丢数据的案例（因为没有配置回收站导致数据被误删的除外）。</p><p style="box-sizing:border-box;border:0px solid rgb(229, 231, 235);margin:0px;margin-block:1em;margin-inline:0px;margin-bottom:20px;display:block;">HDFS 的 HA 方案是后来补上的，做得比较复杂，以至于最早做这个 HA 方案的 Facebook 在很长一段时间（至少3年）内都是手动做故障切换（不信任自动故障切换）。</p><p style="box-sizing:border-box;border:0px solid rgb(229, 231, 235);margin:0px;margin-block:1em;margin-inline:0px;margin-bottom:20px;display:block;">因为 NameNode 是 Java 实现的，依赖于预先分配的堆内存大小，分配不足容易触发 Full GC 而影响整个系统的性能。有一些团队尝试把它用 C++ 重写了，但还没看到有成熟的开源方案。</p><p style="box-sizing:border-box;border:0px solid rgb(229, 231, 235);margin:0px;margin-block:1em;margin-inline:0px;margin-bottom:20px;display:block;">HDFS 也缺乏成熟的非 Java 客户端，使得大数据（Hadoop等工具）以外的场景（比如深度学习等）使用起来不太方便。</p><h2 style="box-sizing:border-box;border:0px solid rgb(229, 231, 235);margin:0px;color:rgb(21, 23, 26);letter-spacing:-0.02em;margin-bottom:8px;padding-top:8px;line-height:1.15;font-weight:800;font-size:25.6px;">MooseFS</h2><p style="box-sizing:border-box;border:0px solid rgb(229, 231, 235);margin:0px;margin-block:1em;margin-inline:0px;margin-bottom:20px;display:block;">MooseFS 是来自波兰的开源分布式 POSIX 文件系统，也是参照了 GFS 的架构，实现了绝大部分 POSIX 语义和 API，通过一个非常成熟的 FUSE 客户端挂载后可以像本地文件系统一样访问。MooseFS 的架构如下图所示：</p>
+                        
+                    
+                        
+                        
+                        <div style="box-sizing:border-box;border:0px solid rgb(229, 231, 235);margin:0px;">
+                            <div class="media-placeholder">[图片/附件]</div></en-media>
+                            <div style="box-sizing:border-box;border:0px solid rgb(229, 231, 235);text-align:center;font-size:14px;line-height:20px;color:rgb(113, 113, 122);"></div>
+                        </div>
+                        
+                    
+                        
+                            <p style="box-sizing:border-box;border:0px solid rgb(229, 231, 235);margin:0px;margin-block:1em;margin-inline:0px;margin-bottom:20px;display:block;">MooseFS 支持快照，用它来做数据备份或者备份恢复等还是恢复方便的。</p><p style="box-sizing:border-box;border:0px solid rgb(229, 231, 235);margin:0px;margin-block:1em;margin-inline:0px;margin-bottom:20px;display:block;">MooseFS 是由 C 实现的，Master 是个异步事件驱动的单线程，类似于 Redis。不过网络部分使用的是 poll 而不是更高效的 epoll，导致并发到 1000 左右时 CPU 消耗非常厉害。</p><p style="box-sizing:border-box;border:0px solid rgb(229, 231, 235);margin:0px;margin-block:1em;margin-inline:0px;margin-bottom:20px;display:block;">开源的社区版没有HA，是通过 metalogger 来实现异步冷备，闭源的收费版有 HA。</p><p style="box-sizing:border-box;border:0px solid rgb(229, 231, 235);margin:0px;margin-block:1em;margin-inline:0px;margin-bottom:20px;display:block;">为了支持随机写操作，MooseFS 中的 chunk 是可以修改的，通过一套版本管理机制来保证数据一致性，这个机制比较复杂容易出现诡异问题（比如集群重启后可能会有少数 chunk 实际副本数低于预期）。</p><h2 style="box-sizing:border-box;border:0px solid rgb(229, 231, 235);margin:0px;color:rgb(21, 23, 26);letter-spacing:-0.02em;margin-bottom:8px;padding-top:8px;line-height:1.15;font-weight:800;font-size:25.6px;">JuiceFS</h2><p style="box-sizing:border-box;border:0px solid rgb(229, 231, 235);margin:0px;margin-block:1em;margin-inline:0px;margin-bottom:20px;display:block;">上面说的 GFS、HDFS 和 MooseFS 都是针对自建机房这种软硬件环境设计的，将数据的可靠性和节点可用性合在一起用多机多副本的方式解决。但是在公有云或者私有云的虚拟机里，块设备已经是具有三副本可靠性设计的虚拟块设备，如果再通过多机多副本的方式来做，会导致数据的成本居高不下（实际上是 9 个拷贝）。</p><p style="box-sizing:border-box;border:0px solid rgb(229, 231, 235);margin:0px;margin-block:1em;margin-inline:0px;margin-bottom:20px;display:block;">于是我们针对公有云，改进 HDFS 和 MooseFS 的架构，设计了 JuiceFS，架构如下图所示：</p>
+                        
+                    
+                        
+                        
+                        <div style="box-sizing:border-box;border:0px solid rgb(229, 231, 235);margin:0px;">
+                            <div class="media-placeholder">[图片/附件]</div></en-media>
+                            <div style="box-sizing:border-box;border:0px solid rgb(229, 231, 235);text-align:center;font-size:14px;line-height:20px;color:rgb(113, 113, 122);"></div>
+                        </div>
+                        
+                    
+                        
+                            <p style="box-sizing:border-box;border:0px solid rgb(229, 231, 235);margin:0px;margin-block:1em;margin-inline:0px;margin-bottom:20px;display:block;">JuiceFS 使用公有云中已有的对象存储来替换 DataNode 和 ChunkServer，实现一个完全弹性的 Serverless 的存储系统。公有云的对象存储已经很好地解决了大规模数据的安全高效存储，JuiceFS 只需要专注元数据的管理，也大大降低了元数据服务的复杂度（GFS 和 MooseFS 的 master 要同时解决元数据的存储和数据块的健康管理）。我们也对元数据部分做了很多改进，从一开始就实现了基于 Raft 的高可用。要真正提供一个高可用高性能的服务，元数据的管理和运维仍然是很有挑战的，元数据是以服务的形式提供给用户。因为 POSIX 文件系统 API 是应用最最广泛的 API，我们基于 FUSE 实现了高度 POSIX 兼容的客户端，用户可以通过一个命令行工具把 JuiceFS 挂载到 Linux 或者 macOS 中，像本地文件系统一样快速访问。</p><p style="box-sizing:border-box;border:0px solid rgb(229, 231, 235);margin:0px;margin-block:1em;margin-inline:0px;margin-bottom:20px;display:block;">上图中右边虚线部分是负责数据存储和访问的部分，涉及用户的数据隐私，它们是完全在客户自己的账号和网络环境中，不会跟元数据服务接触。我们（Juicedata）没有任何方法接触到客户的内容（元数据除外，请不要把敏感内容放到文件名里）。</p><h2 style="box-sizing:border-box;border:0px solid rgb(229, 231, 235);margin:0px;color:rgb(21, 23, 26);letter-spacing:-0.02em;margin-bottom:8px;padding-top:8px;line-height:1.15;font-weight:800;font-size:25.6px;">小结</h2><p style="box-sizing:border-box;border:0px solid rgb(229, 231, 235);margin:0px;margin-block:1em;margin-inline:0px;margin-bottom:20px;display:block;">以上简要介绍了下我所了解的几个分布式文件系统的架构，把他们按照出现的时间顺序放在下面的图里（箭头表示后参考了前者或者是新一代版本）：</p>
+                        
+                    
+                        
+                        
+                        <div style="box-sizing:border-box;border:0px solid rgb(229, 231, 235);margin:0px;">
+                            <div class="media-placeholder">[图片/附件]</div></en-media>
+                            <div style="box-sizing:border-box;border:0px solid rgb(229, 231, 235);text-align:center;font-size:14px;line-height:20px;color:rgb(113, 113, 122);"></div>
+                        </div>
+                        
+                    
+                        
+                            <p style="box-sizing:border-box;border:0px solid rgb(229, 231, 235);margin:0px;margin-block:1em;margin-inline:0px;margin-bottom:20px;display:block;">上图中上部分蓝色的几个文件下主要是给大数据场景使用的，实现的是 POSIX 的子集，而下面绿色的几个是 POSIX 兼容的文件系统。</p><p style="box-sizing:border-box;border:0px solid rgb(229, 231, 235);margin:0px;margin-block:1em;margin-inline:0px;margin-bottom:20px;display:block;">他们中以 GFS 为代表的元数据和数据分离的系统设计能够有效平衡系统的复杂度，有效解决大规模数据的存储问题（通常也都是大文件），有更好的可扩展性。这个架构下支持元数据的分布式存储的 Colossus 和 WarmStorage 更是具有无限的可扩展能力。</p><p style="box-sizing:border-box;border:0px solid rgb(229, 231, 235);margin:0px;margin-block:1em;margin-inline:0px;margin-bottom:20px;display:block;">JuiceFS 作为后来者，学习了 MooseFS 实现分布式 POSIX 文件系统的方式，也学习了 Facebook 的 WarmStorage 等元数据和数据彻底分开的思路，希望为公有云或者私有云等场景下提供最好的分布式存储体验。JuiceFS 通过将数据存储到对象存储的方式，有效避免了使用以上分布式文件系统时的双层冗余（块存储的冗余和分布式系统的多机冗余）导致的成本过高问题。JuiceFS 还支持所有的公有云，不用担心某个云服务锁定，还能平滑地在公有云或者区之间迁移数据。</p><p style="box-sizing:border-box;border:0px solid rgb(229, 231, 235);margin:0px;margin-block:1em;margin-inline:0px;margin-bottom:20px;display:block;">最后，如果你手上有公有云账号，<a href="https://juicefs.com/accounts/register" style="box-sizing:border-box;border:0px solid rgb(229, 231, 235);text-decoration:inherit;border-style:dashed;border-bottom-color:rgb(34, 197, 94);text-decoration-line:none;transition-duration:0.15s;transition-timing-function:cubic-bezier(0.4, 0, 0.2, 1);color:rgb(32, 173, 93);">来 JuiceFS 注册一下</a>，5 分钟就可以给你的虚拟机（甚至自己的 macOS）挂载上一个 PB 级容量的文件系统了。</p>
+                        
+                    
+                        
+                    </div>
+                    <div style="box-sizing:border-box;border:0px solid rgb(229, 231, 235);">
+                        <div style="box-sizing:border-box;border:0px solid rgb(229, 231, 235);font-size:14px;line-height:20px;">
+                            <div style="box-sizing:border-box;border:0px solid rgb(229, 231, 235);">分类：<a href="https://juicefs.com/zh-cn/blog/engineering" style="box-sizing:border-box;border:0px solid rgb(229, 231, 235);text-decoration:inherit;color:rgb(32, 173, 93);background-color:rgb(244, 244, 245);border-width:1px;border-radius:6px;margin-top:4px;margin-bottom:4px;padding:0.25rem 0.5rem;display:inline-block;">工程技术</a></div>
+                        
+                            <div style="box-sizing:border-box;border:0px solid rgb(229, 231, 235);margin-top:8px;margin-bottom:0px;">标签：<a href="https://juicefs.com/zh-cn/blog?tag=JuiceFS%20vs.%20CephFS" style="box-sizing:border-box;border:0px solid rgb(229, 231, 235);text-decoration:inherit;color:rgb(32, 173, 93);background-color:rgb(244, 244, 245);border-width:1px;border-radius:6px;margin-top:4px;margin-bottom:4px;padding:0.25rem 0.5rem;display:inline-block;">JuiceFS vs. CephFS</a> <a href="https://juicefs.com/zh-cn/blog?tag=JuiceFS%20vs.%20HDFS" style="box-sizing:border-box;border:0px solid rgb(229, 231, 235);text-decoration:inherit;color:rgb(32, 173, 93);background-color:rgb(244, 244, 245);border-width:1px;border-radius:6px;margin-top:4px;margin-bottom:4px;padding:0.25rem 0.5rem;display:inline-block;">JuiceFS vs. HDFS</a> <a href="https://juicefs.com/zh-cn/blog?tag=JuiceFS%20vs.%20GFS" style="box-sizing:border-box;border:0px solid rgb(229, 231, 235);text-decoration:inherit;color:rgb(32, 173, 93);background-color:rgb(244, 244, 245);border-width:1px;border-radius:6px;margin-top:4px;margin-bottom:4px;padding:0.25rem 0.5rem;display:inline-block;">JuiceFS vs. GFS</a> <a href="https://juicefs.com/zh-cn/blog?tag=JuiceFS%20vs.%20GlusterFS" style="box-sizing:border-box;border:0px solid rgb(229, 231, 235);text-decoration:inherit;color:rgb(32, 173, 93);background-color:rgb(244, 244, 245);border-width:1px;border-radius:6px;margin-top:4px;margin-bottom:4px;padding:0.25rem 0.5rem;display:inline-block;">JuiceFS vs. GlusterFS</a> <a href="https://juicefs.com/zh-cn/blog?tag=JuiceFS%20vs.%20MooseFS" style="box-sizing:border-box;border:0px solid rgb(229, 231, 235);text-decoration:inherit;color:rgb(32, 173, 93);background-color:rgb(244, 244, 245);border-width:1px;border-radius:6px;margin-top:4px;margin-bottom:4px;padding:0.25rem 0.5rem;display:inline-block;">JuiceFS vs. MooseFS</a> </div>
+                        
+                        </div>
+                    </div>
+                </div></div></div></div></div></div></div></div>
+</div>
+</div>
+<a class="back-link" href="../articles.html">← 返回笔记列表</a>
+</body>
+</html>

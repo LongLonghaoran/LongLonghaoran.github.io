@@ -1,0 +1,231 @@
+<!DOCTYPE html>
+<html lang="zh-CN" data-theme="light">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>网络插件 | Kubernetes — 技术笔记</title>
+<style>
+:root {
+  --bg: #ffffff;
+  --text: #1a1a1a;
+  --muted: #666;
+  --border: #e0e0e0;
+  --code-bg: #f5f5f5;
+  --link: #0066cc;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #1a1a1a;
+    --text: #e0e0e0;
+    --muted: #999;
+    --border: #333;
+    --code-bg: #2a2a2a;
+    --link: #66bbff;
+  }
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  line-height: 1.7;
+  color: var(--text);
+  background: var(--bg);
+  max-width: 860px;
+  margin: 0 auto;
+  padding: 2rem 1.5rem;
+}
+.note-header {
+  border-bottom: 2px solid var(--border);
+  padding-bottom: 1rem;
+  margin-bottom: 2rem;
+}
+.note-title {
+  font-size: 1.6rem;
+  font-weight: 700;
+  margin-bottom: 0.3rem;
+}
+.note-meta {
+  color: var(--muted);
+  font-size: 0.85rem;
+}
+.note-content {
+  font-size: 0.95rem;
+}
+.note-content h1 { font-size: 1.4rem; margin: 1.2rem 0 0.6rem; }
+.note-content h2 { font-size: 1.2rem; margin: 1rem 0 0.5rem; }
+.note-content h3 { font-size: 1.05rem; margin: 0.8rem 0 0.4rem; }
+.note-content p { margin: 0.5rem 0; }
+.note-content ul, .note-content ol { margin: 0.5rem 0 0.5rem 2rem; }
+.note-content li { margin: 0.2rem 0; }
+.note-content pre {
+  background: var(--code-bg);
+  padding: 1rem;
+  border-radius: 6px;
+  overflow-x: auto;
+  margin: 0.8rem 0;
+  font-size: 0.85rem;
+}
+.note-content code {
+  background: var(--code-bg);
+  padding: 0.1rem 0.3rem;
+  border-radius: 3px;
+  font-size: 0.88em;
+}
+.note-content pre code {
+  background: none;
+  padding: 0;
+}
+.note-content blockquote {
+  border-left: 3px solid var(--border);
+  padding-left: 1rem;
+  color: var(--muted);
+  margin: 0.8rem 0;
+}
+.note-content a { color: var(--link); }
+.note-content img {
+  max-width: 100%;
+  height: auto;
+  border-radius: 6px;
+  margin: 0.5rem 0;
+}
+.note-content table {
+  border-collapse: collapse;
+  width: 100%;
+  margin: 0.8rem 0;
+}
+.note-content th, .note-content td {
+  border: 1px solid var(--border);
+  padding: 0.5rem;
+}
+.note-content th { background: var(--code-bg); }
+.media-placeholder {
+  background: var(--code-bg);
+  padding: 1rem;
+  text-align: center;
+  color: var(--muted);
+  border-radius: 6px;
+  margin: 0.5rem 0;
+  font-size: 0.85rem;
+}
+.encrypt-placeholder {
+  background: #fff3cd;
+  padding: 0.5rem;
+  text-align: center;
+  color: #856404;
+  border-radius: 6px;
+  margin: 0.5rem 0;
+  font-size: 0.85rem;
+}
+.back-link {
+  display: inline-block;
+  margin-top: 2rem;
+  color: var(--link);
+  text-decoration: none;
+  font-size: 0.85rem;
+}
+</style>
+</head>
+<body>
+<div class="note-header">
+  <div class="note-title">网络插件 | Kubernetes</div>
+  <div class="note-meta">笔记本：Kubernetes学习笔记</div>
+</div>
+<div class="note-content">
+<div style="--en-clipped-content:article; --en-clipped-source-url:https://kubernetes.io/zh-cn/docs/concepts/extend-kubernetes/compute-storage-net/network-plugins/; --en-clipped-source-title:网络插件 | Kubernetes;">
+<div><br/></div><div style="min-height: 3119px; font-size: 16px; display: block; min-width: 100%; position: relative;"> <div style="box-sizing:border-box;font-family:sans-serif;line-height:1.15;text-size-adjust:100%;-webkit-tap-highlight-color:transparent;"><div style="box-sizing:border-box;font-family:&quot;open sans&quot;, -apple-system, BlinkMacSystemFont, &quot;segoe ui&quot;, Roboto, &quot;helvetica neue&quot;, Arial, sans-serif, &quot;apple color emoji&quot;, &quot;segoe ui emoji&quot;, &quot;segoe ui symbol&quot;;font-size:16px;font-weight:400;line-height:1.5;color:rgb(34, 34, 34);text-align:left;background-color:rgb(255, 255, 255);"><div style="box-sizing:border-box;"><div style="box-sizing:border-box;"><div style="box-sizing:border-box;"><span style="box-sizing:border-box;"><div style="box-sizing:border-box;"><h1 style="box-sizing:border-box;margin-top:0px;line-height:1.2;font-size:36px;max-width:80%;margin-bottom:16px;font-weight:700;">网络插件</h1><p style="box-sizing:border-box;margin-top:0px;margin-bottom:16px;max-width:80%;font-weight:400;">Kubernetes 1.25 支持用于集群联网的<a href="https://github.com/containernetworking/cni" style="box-sizing:border-box;text-decoration:none;background-color:transparent;color:rgb(24, 78, 177);">容器网络接口</a> (CNI) 插件。
+你必须使用和你的集群相兼容并且满足你的需求的 CNI 插件。
+在更广泛的 Kubernetes 生态系统中你可以使用不同的插件（开源和闭源）。</p><p style="box-sizing:border-box;margin-top:0px;margin-bottom:16px;max-width:80%;font-weight:400;">要实现 <a href="https://kubernetes.io/zh-cn/docs/concepts/services-networking/#the-kubernetes-network-model" style="box-sizing:border-box;text-decoration:none;background-color:transparent;color:rgb(24, 78, 177);">Kubernetes 网络模型</a>，你需要一个 CNI 插件。</p><p style="box-sizing:border-box;margin-top:0px;margin-bottom:16px;max-width:80%;font-weight:400;">你必须使用与 <a href="https://github.com/containernetworking/cni/blob/spec-v0.4.0/SPEC.md" style="box-sizing:border-box;text-decoration:none;background-color:transparent;color:rgb(24, 78, 177);">v0.4.0</a>
+或更高版本的 CNI 规范相符合的 CNI 插件。
+Kubernetes 推荐使用一个兼容 <a href="https://github.com/containernetworking/cni/blob/spec-v1.0.0/SPEC.md" style="box-sizing:border-box;text-decoration:none;background-color:transparent;color:rgb(24, 78, 177);">v1.0.0</a>
+CNI 规范的插件（插件可以兼容多个规范版本）。</p><h2 style="box-sizing:border-box;font-weight:500;line-height:1.2;font-size:32px;max-width:80%;margin-bottom:16px;margin-top:48px;">安装<a href="https://kubernetes.io/zh-cn/docs/concepts/extend-kubernetes/compute-storage-net/network-plugins/#installation" style="box-sizing:border-box;text-decoration:none;background-color:transparent;color:rgb(24, 78, 177);visibility:hidden;"> <div class="media-placeholder">[图片/附件]</div></en-media></a></h2><p style="box-sizing:border-box;margin-top:0px;margin-bottom:16px;max-width:80%;font-weight:400;">在网络语境中，容器运行时（Container Runtime）是在节点上的守护进程，
+被配置用来为 kubelet 提供 CRI 服务。具体而言，容器运行时必须配置为加载所需的
+CNI 插件，从而实现 Kubernetes 网络模型。</p><div style="box-sizing:border-box;border-top-style:solid;border-top-color:rgb(238, 238, 238);border-bottom-style:solid;border-bottom-color:rgb(238, 238, 238);border-right-style:solid;border-right-color:rgb(238, 238, 238);border-left-width:max(0.5em, 4px);border-top-left-radius:max(0.5em, 4px);border-bottom-left-radius:max(0.5em, 4px);position:relative;border:1px solid transparent;padding:0.75rem 1.25rem;font-weight:500;border-radius:0px;background:rgb(255, 255, 255);color:inherit;border-style:solid;border-color:rgb(192, 224, 222);border-width:0px 0px 0px 4px;max-width:80%;border-left-color:rgb(66, 139, 202);margin-top:32px;margin-bottom:32px;"><strong style="box-sizing:border-box;font-weight:700;">说明：</strong><p style="box-sizing:border-box;margin-top:0px;margin-bottom:16px;font-weight:400;">在 Kubernetes 1.24 之前，CNI 插件也可以由 kubelet 使用命令行参数 <code style="box-sizing:border-box;font-family:SFMono-Regular, Menlo, Monaco, Consolas, &quot;liberation mono&quot;, &quot;courier new&quot;, monospace;overflow-wrap:break-word;padding:0.2em 0.4em;margin:0px;word-break:normal;background-color:rgba(0, 0, 0, 0.05);border-radius:4px;font-size:85%;color:inherit;">cni-bin-dir</code>
+和 <code style="box-sizing:border-box;font-family:SFMono-Regular, Menlo, Monaco, Consolas, &quot;liberation mono&quot;, &quot;courier new&quot;, monospace;overflow-wrap:break-word;padding:0.2em 0.4em;margin:0px;word-break:normal;background-color:rgba(0, 0, 0, 0.05);border-radius:4px;font-size:85%;color:inherit;">network-plugin</code> 管理。Kubernetes 1.24 移除了这些命令行参数，
+CNI 的管理不再是 kubelet 的工作。</p><p style="box-sizing:border-box;margin-top:0px;margin-bottom:16px;font-weight:400;">如果你在移除 dockershim 之后遇到问题，请参阅<a href="https://kubernetes.io/zh-cn/docs/tasks/administer-cluster/migrating-from-dockershim/troubleshooting-cni-plugin-related-errors/" style="box-sizing:border-box;text-decoration:none;background-color:transparent;color:rgb(24, 78, 177);">排查 CNI 插件相关的错误</a>。</p></div><p style="box-sizing:border-box;margin-top:0px;margin-bottom:16px;max-width:80%;font-weight:400;">要了解容器运行时如何管理 CNI 插件的具体信息，可参见对应容器运行时的文档，例如：</p><ul style="box-sizing:border-box;margin-top:0px;margin-bottom:16px;max-width:80%;"><li style="box-sizing:border-box;font-weight:400;margin-bottom:4px;"><a href="https://github.com/containerd/containerd/blob/main/script/setup/install-cni" style="box-sizing:border-box;text-decoration:none;background-color:transparent;color:rgb(24, 78, 177);">containerd</a></li><li style="box-sizing:border-box;font-weight:400;margin-bottom:4px;"><a href="https://github.com/cri-o/cri-o/blob/main/contrib/cni/README.md" style="box-sizing:border-box;text-decoration:none;background-color:transparent;color:rgb(24, 78, 177);">CRI-O</a></li></ul><p style="box-sizing:border-box;margin-top:0px;margin-bottom:16px;max-width:80%;font-weight:400;">要了解如何安装和管理 CNI 插件的具体信息，可参阅对应的插件或
+<a href="https://kubernetes.io/zh-cn/docs/concepts/cluster-administration/networking/#how-to-implement-the-kubernetes-networking-model" style="box-sizing:border-box;text-decoration:none;background-color:transparent;color:rgb(24, 78, 177);">网络驱动（Networking Provider）</a>
+的文档。</p><h2 style="box-sizing:border-box;font-weight:500;line-height:1.2;font-size:32px;max-width:80%;margin-bottom:16px;margin-top:48px;">网络插件要求<a href="https://kubernetes.io/zh-cn/docs/concepts/extend-kubernetes/compute-storage-net/network-plugins/#network-plugin-requirements" style="box-sizing:border-box;text-decoration:none;background-color:transparent;color:rgb(24, 78, 177);visibility:hidden;"> <div class="media-placeholder">[图片/附件]</div></en-media></a></h2><p style="box-sizing:border-box;margin-top:0px;margin-bottom:16px;max-width:80%;font-weight:400;">对于插件开发人员以及时常会构建并部署 Kubernetes 的用户而言，
+插件可能也需要特定的配置来支持 kube-proxy。
+iptables 代理依赖于 iptables，插件可能需要确保 iptables 能够监控容器的网络通信。
+例如，如果插件将容器连接到 Linux 网桥，插件必须将 <code style="box-sizing:border-box;font-family:SFMono-Regular, Menlo, Monaco, Consolas, &quot;liberation mono&quot;, &quot;courier new&quot;, monospace;overflow-wrap:break-word;padding:0.2em 0.4em;margin:0px;word-break:normal;background-color:rgba(0, 0, 0, 0.05);border-radius:4px;font-size:85%;color:inherit;">net/bridge/bridge-nf-call-iptables</code>
+sysctl 参数设置为 <code style="box-sizing:border-box;font-family:SFMono-Regular, Menlo, Monaco, Consolas, &quot;liberation mono&quot;, &quot;courier new&quot;, monospace;overflow-wrap:break-word;padding:0.2em 0.4em;margin:0px;word-break:normal;background-color:rgba(0, 0, 0, 0.05);border-radius:4px;font-size:85%;color:inherit;">1</code>，以确保 iptables 代理正常工作。
+如果插件不使用 Linux 网桥，而是使用类似于 Open vSwitch 或者其它一些机制，
+它应该确保为代理对容器通信执行正确的路由。</p><p style="box-sizing:border-box;margin-top:0px;margin-bottom:16px;max-width:80%;font-weight:400;">默认情况下，如果未指定 kubelet 网络插件，则使用 <code style="box-sizing:border-box;font-family:SFMono-Regular, Menlo, Monaco, Consolas, &quot;liberation mono&quot;, &quot;courier new&quot;, monospace;overflow-wrap:break-word;padding:0.2em 0.4em;margin:0px;word-break:normal;background-color:rgba(0, 0, 0, 0.05);border-radius:4px;font-size:85%;color:inherit;">noop</code> 插件，
+该插件设置 <code style="box-sizing:border-box;font-family:SFMono-Regular, Menlo, Monaco, Consolas, &quot;liberation mono&quot;, &quot;courier new&quot;, monospace;overflow-wrap:break-word;padding:0.2em 0.4em;margin:0px;word-break:normal;background-color:rgba(0, 0, 0, 0.05);border-radius:4px;font-size:85%;color:inherit;">net/bridge/bridge-nf-call-iptables=1</code>，以确保简单的配置
+（如带网桥的 Docker ）与 iptables 代理正常工作。</p><h3 style="box-sizing:border-box;font-weight:500;line-height:1.2;font-size:24px;margin-top:32px;margin-bottom:16px;">本地回路 CNI<a href="https://kubernetes.io/zh-cn/docs/concepts/extend-kubernetes/compute-storage-net/network-plugins/#loopback-cni" style="box-sizing:border-box;text-decoration:none;background-color:transparent;color:rgb(24, 78, 177);visibility:hidden;"> <div class="media-placeholder">[图片/附件]</div></en-media></a></h3><p style="box-sizing:border-box;margin-top:0px;margin-bottom:16px;max-width:80%;font-weight:400;">除了安装到节点上用于实现 Kubernetes 网络模型的 CNI 插件外，Kubernetes
+还需要容器运行时提供一个本地回路接口 <code style="box-sizing:border-box;font-family:SFMono-Regular, Menlo, Monaco, Consolas, &quot;liberation mono&quot;, &quot;courier new&quot;, monospace;overflow-wrap:break-word;padding:0.2em 0.4em;margin:0px;word-break:normal;background-color:rgba(0, 0, 0, 0.05);border-radius:4px;font-size:85%;color:inherit;">lo</code>，用于各个沙箱（Pod 沙箱、虚机沙箱……）。
+实现本地回路接口的工作可以通过复用
+<a href="https://github.com/containernetworking/plugins/blob/master/plugins/main/loopback/loopback.go" style="box-sizing:border-box;text-decoration:none;background-color:transparent;color:rgb(24, 78, 177);">CNI 本地回路插件</a>来实现，
+也可以通过开发自己的代码来实现
+（参阅 <a href="https://github.com/cri-o/ocicni/blob/release-1.24/pkg/ocicni/util_linux.go#L91" style="box-sizing:border-box;text-decoration:none;background-color:transparent;color:rgb(24, 78, 177);">CRI-O 中的示例</a>）。</p><h3 style="box-sizing:border-box;font-weight:500;line-height:1.2;font-size:24px;margin-top:32px;margin-bottom:16px;">支持 hostPort<a href="https://kubernetes.io/zh-cn/docs/concepts/extend-kubernetes/compute-storage-net/network-plugins/#support-hostport" style="box-sizing:border-box;text-decoration:none;background-color:transparent;color:rgb(24, 78, 177);visibility:hidden;"> <div class="media-placeholder">[图片/附件]</div></en-media></a></h3><p style="box-sizing:border-box;margin-top:0px;margin-bottom:16px;max-width:80%;font-weight:400;">CNI 网络插件支持 <code style="box-sizing:border-box;font-family:SFMono-Regular, Menlo, Monaco, Consolas, &quot;liberation mono&quot;, &quot;courier new&quot;, monospace;overflow-wrap:break-word;padding:0.2em 0.4em;margin:0px;word-break:normal;background-color:rgba(0, 0, 0, 0.05);border-radius:4px;font-size:85%;color:inherit;">hostPort</code>。 你可以使用官方
+<a href="https://github.com/containernetworking/plugins/tree/master/plugins/meta/portmap" style="box-sizing:border-box;text-decoration:none;background-color:transparent;color:rgb(24, 78, 177);">portmap</a>
+插件，它由 CNI 插件团队提供，或者使用你自己的带有 portMapping 功能的插件。</p><p style="box-sizing:border-box;margin-top:0px;margin-bottom:16px;max-width:80%;font-weight:400;">如果你想要启动 <code style="box-sizing:border-box;font-family:SFMono-Regular, Menlo, Monaco, Consolas, &quot;liberation mono&quot;, &quot;courier new&quot;, monospace;overflow-wrap:break-word;padding:0.2em 0.4em;margin:0px;word-break:normal;background-color:rgba(0, 0, 0, 0.05);border-radius:4px;font-size:85%;color:inherit;">hostPort</code> 支持，则必须在 <code style="box-sizing:border-box;font-family:SFMono-Regular, Menlo, Monaco, Consolas, &quot;liberation mono&quot;, &quot;courier new&quot;, monospace;overflow-wrap:break-word;padding:0.2em 0.4em;margin:0px;word-break:normal;background-color:rgba(0, 0, 0, 0.05);border-radius:4px;font-size:85%;color:inherit;">cni-conf-dir</code> 指定 <code style="box-sizing:border-box;font-family:SFMono-Regular, Menlo, Monaco, Consolas, &quot;liberation mono&quot;, &quot;courier new&quot;, monospace;overflow-wrap:break-word;padding:0.2em 0.4em;margin:0px;word-break:normal;background-color:rgba(0, 0, 0, 0.05);border-radius:4px;font-size:85%;color:inherit;">portMappings capability</code>。
+例如：</p><div style="box-sizing:border-box;position:relative;display:flex;flex-direction:column;min-width:0px;overflow-wrap:break-word;background-color:rgb(255, 255, 255);background-clip:border-box;border:1px solid rgba(0, 0, 0, 0.125);border-radius:4px;margin:2rem 0px;padding:0px;width:100%;max-width:initial;"><pre style="box-sizing:border-box;font-family:SFMono-Regular, Menlo, Monaco, Consolas, &quot;liberation mono&quot;, &quot;courier new&quot;, monospace;overflow:auto;display:block;color:rgb(34, 34, 34);font-size:87.5%;overflow-wrap:normal;margin:0px;padding:16px;background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code style="box-sizing:border-box;font-family:SFMono-Regular, Menlo, Monaco, Consolas, &quot;liberation mono&quot;, &quot;courier new&quot;, monospace;overflow-wrap:break-word;color:inherit;padding:0px;margin:0px;white-space:pre;border:0px;font-size:100%;word-break:normal;background-color:inherit;"><span style="box-sizing:border-box;display:flex;"><span style="box-sizing:border-box;">{
+</span></span><span style="box-sizing:border-box;display:flex;"><span style="box-sizing:border-box;">  <span style="box-sizing:border-box;color:green;font-weight:700;">"name"</span>: <span style="box-sizing:border-box;color:#b44;">"k8s-pod-network"</span>,
+</span></span><span style="box-sizing:border-box;display:flex;"><span style="box-sizing:border-box;">  <span style="box-sizing:border-box;color:green;font-weight:700;">"cniVersion"</span>: <span style="box-sizing:border-box;color:#b44;">"0.4.0"</span>,
+</span></span><span style="box-sizing:border-box;display:flex;"><span style="box-sizing:border-box;">  <span style="box-sizing:border-box;color:green;font-weight:700;">"plugins"</span>: [
+</span></span><span style="box-sizing:border-box;display:flex;"><span style="box-sizing:border-box;">    {
+</span></span><span style="box-sizing:border-box;display:flex;"><span style="box-sizing:border-box;">      <span style="box-sizing:border-box;color:green;font-weight:700;">"type"</span>: <span style="box-sizing:border-box;color:#b44;">"calico"</span>,
+</span></span><span style="box-sizing:border-box;display:flex;"><span style="box-sizing:border-box;">      <span style="box-sizing:border-box;color:green;font-weight:700;">"log_level"</span>: <span style="box-sizing:border-box;color:#b44;">"info"</span>,
+</span></span><span style="box-sizing:border-box;display:flex;"><span style="box-sizing:border-box;">      <span style="box-sizing:border-box;color:green;font-weight:700;">"datastore_type"</span>: <span style="box-sizing:border-box;color:#b44;">"kubernetes"</span>,
+</span></span><span style="box-sizing:border-box;display:flex;"><span style="box-sizing:border-box;">      <span style="box-sizing:border-box;color:green;font-weight:700;">"nodename"</span>: <span style="box-sizing:border-box;color:#b44;">"127.0.0.1"</span>,
+</span></span><span style="box-sizing:border-box;display:flex;"><span style="box-sizing:border-box;">      <span style="box-sizing:border-box;color:green;font-weight:700;">"ipam"</span>: {
+</span></span><span style="box-sizing:border-box;display:flex;"><span style="box-sizing:border-box;">        <span style="box-sizing:border-box;color:green;font-weight:700;">"type"</span>: <span style="box-sizing:border-box;color:#b44;">"host-local"</span>,
+</span></span><span style="box-sizing:border-box;display:flex;"><span style="box-sizing:border-box;">        <span style="box-sizing:border-box;color:green;font-weight:700;">"subnet"</span>: <span style="box-sizing:border-box;color:#b44;">"usePodCidr"</span>
+</span></span><span style="box-sizing:border-box;display:flex;"><span style="box-sizing:border-box;">      },
+</span></span><span style="box-sizing:border-box;display:flex;"><span style="box-sizing:border-box;">      <span style="box-sizing:border-box;color:green;font-weight:700;">"policy"</span>: {
+</span></span><span style="box-sizing:border-box;display:flex;"><span style="box-sizing:border-box;">        <span style="box-sizing:border-box;color:green;font-weight:700;">"type"</span>: <span style="box-sizing:border-box;color:#b44;">"k8s"</span>
+</span></span><span style="box-sizing:border-box;display:flex;"><span style="box-sizing:border-box;">      },
+</span></span><span style="box-sizing:border-box;display:flex;"><span style="box-sizing:border-box;">      <span style="box-sizing:border-box;color:green;font-weight:700;">"kubernetes"</span>: {
+</span></span><span style="box-sizing:border-box;display:flex;"><span style="box-sizing:border-box;">        <span style="box-sizing:border-box;color:green;font-weight:700;">"kubeconfig"</span>: <span style="box-sizing:border-box;color:#b44;">"/etc/cni/net.d/calico-kubeconfig"</span>
+</span></span><span style="box-sizing:border-box;display:flex;"><span style="box-sizing:border-box;">      }
+</span></span><span style="box-sizing:border-box;display:flex;"><span style="box-sizing:border-box;">    },
+</span></span><span style="box-sizing:border-box;display:flex;"><span style="box-sizing:border-box;">    {
+</span></span><span style="box-sizing:border-box;display:flex;"><span style="box-sizing:border-box;">      <span style="box-sizing:border-box;color:green;font-weight:700;">"type"</span>: <span style="box-sizing:border-box;color:#b44;">"portmap"</span>,
+</span></span><span style="box-sizing:border-box;display:flex;"><span style="box-sizing:border-box;">      <span style="box-sizing:border-box;color:green;font-weight:700;">"capabilities"</span>: {<span style="box-sizing:border-box;color:green;font-weight:700;">"portMappings"</span>: <span style="box-sizing:border-box;color:#a2f;font-weight:700;">true</span>}
+</span></span><span style="box-sizing:border-box;display:flex;"><span style="box-sizing:border-box;">    }
+</span></span><span style="box-sizing:border-box;display:flex;"><span style="box-sizing:border-box;">  ]
+</span></span><span style="box-sizing:border-box;display:flex;"><span style="box-sizing:border-box;">}
+</span></span></code></pre></div><h3 style="box-sizing:border-box;font-weight:500;line-height:1.2;font-size:24px;margin-top:32px;margin-bottom:16px;">支持流量整形<a href="https://kubernetes.io/zh-cn/docs/concepts/extend-kubernetes/compute-storage-net/network-plugins/#support-traffic-shaping" style="box-sizing:border-box;text-decoration:none;background-color:transparent;color:rgb(24, 78, 177);visibility:hidden;"> <div class="media-placeholder">[图片/附件]</div></en-media></a></h3><p style="box-sizing:border-box;margin-top:0px;margin-bottom:16px;max-width:80%;font-weight:400;"><strong style="box-sizing:border-box;font-weight:700;">实验功能</strong></p><p style="box-sizing:border-box;margin-top:0px;margin-bottom:16px;max-width:80%;font-weight:400;">CNI 网络插件还支持 pod 入口和出口流量整形。
+你可以使用 CNI 插件团队提供的
+<a href="https://github.com/containernetworking/plugins/tree/master/plugins/meta/bandwidth" style="box-sizing:border-box;text-decoration:none;background-color:transparent;color:rgb(24, 78, 177);">bandwidth</a>
+插件，也可以使用你自己的具有带宽控制功能的插件。</p><p style="box-sizing:border-box;margin-top:0px;margin-bottom:16px;max-width:80%;font-weight:400;">如果你想要启用流量整形支持，你必须将 <code style="box-sizing:border-box;font-family:SFMono-Regular, Menlo, Monaco, Consolas, &quot;liberation mono&quot;, &quot;courier new&quot;, monospace;overflow-wrap:break-word;padding:0.2em 0.4em;margin:0px;word-break:normal;background-color:rgba(0, 0, 0, 0.05);border-radius:4px;font-size:85%;color:inherit;">bandwidth</code> 插件添加到 CNI 配置文件
+（默认是 <code style="box-sizing:border-box;font-family:SFMono-Regular, Menlo, Monaco, Consolas, &quot;liberation mono&quot;, &quot;courier new&quot;, monospace;overflow-wrap:break-word;padding:0.2em 0.4em;margin:0px;word-break:normal;background-color:rgba(0, 0, 0, 0.05);border-radius:4px;font-size:85%;color:inherit;">/etc/cni/net.d</code>）并保证该可执行文件包含在你的 CNI 的 bin
+文件夹内 (默认为 <code style="box-sizing:border-box;font-family:SFMono-Regular, Menlo, Monaco, Consolas, &quot;liberation mono&quot;, &quot;courier new&quot;, monospace;overflow-wrap:break-word;padding:0.2em 0.4em;margin:0px;word-break:normal;background-color:rgba(0, 0, 0, 0.05);border-radius:4px;font-size:85%;color:inherit;">/opt/cni/bin</code>)。</p><div style="box-sizing:border-box;position:relative;display:flex;flex-direction:column;min-width:0px;overflow-wrap:break-word;background-color:rgb(255, 255, 255);background-clip:border-box;border:1px solid rgba(0, 0, 0, 0.125);border-radius:4px;margin:2rem 0px;padding:0px;width:100%;max-width:initial;"><pre style="box-sizing:border-box;font-family:SFMono-Regular, Menlo, Monaco, Consolas, &quot;liberation mono&quot;, &quot;courier new&quot;, monospace;overflow:auto;display:block;color:rgb(34, 34, 34);font-size:87.5%;overflow-wrap:normal;margin:0px;padding:16px;background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code style="box-sizing:border-box;font-family:SFMono-Regular, Menlo, Monaco, Consolas, &quot;liberation mono&quot;, &quot;courier new&quot;, monospace;overflow-wrap:break-word;color:inherit;padding:0px;margin:0px;white-space:pre;border:0px;font-size:100%;word-break:normal;background-color:inherit;"><span style="box-sizing:border-box;display:flex;"><span style="box-sizing:border-box;">{
+</span></span><span style="box-sizing:border-box;display:flex;"><span style="box-sizing:border-box;">  <span style="box-sizing:border-box;color:green;font-weight:700;">"name"</span>: <span style="box-sizing:border-box;color:#b44;">"k8s-pod-network"</span>,
+</span></span><span style="box-sizing:border-box;display:flex;"><span style="box-sizing:border-box;">  <span style="box-sizing:border-box;color:green;font-weight:700;">"cniVersion"</span>: <span style="box-sizing:border-box;color:#b44;">"0.4.0"</span>,
+</span></span><span style="box-sizing:border-box;display:flex;"><span style="box-sizing:border-box;">  <span style="box-sizing:border-box;color:green;font-weight:700;">"plugins"</span>: [
+</span></span><span style="box-sizing:border-box;display:flex;"><span style="box-sizing:border-box;">    {
+</span></span><span style="box-sizing:border-box;display:flex;"><span style="box-sizing:border-box;">      <span style="box-sizing:border-box;color:green;font-weight:700;">"type"</span>: <span style="box-sizing:border-box;color:#b44;">"calico"</span>,
+</span></span><span style="box-sizing:border-box;display:flex;"><span style="box-sizing:border-box;">      <span style="box-sizing:border-box;color:green;font-weight:700;">"log_level"</span>: <span style="box-sizing:border-box;color:#b44;">"info"</span>,
+</span></span><span style="box-sizing:border-box;display:flex;"><span style="box-sizing:border-box;">      <span style="box-sizing:border-box;color:green;font-weight:700;">"datastore_type"</span>: <span style="box-sizing:border-box;color:#b44;">"kubernetes"</span>,
+</span></span><span style="box-sizing:border-box;display:flex;"><span style="box-sizing:border-box;">      <span style="box-sizing:border-box;color:green;font-weight:700;">"nodename"</span>: <span style="box-sizing:border-box;color:#b44;">"127.0.0.1"</span>,
+</span></span><span style="box-sizing:border-box;display:flex;"><span style="box-sizing:border-box;">      <span style="box-sizing:border-box;color:green;font-weight:700;">"ipam"</span>: {
+</span></span><span style="box-sizing:border-box;display:flex;"><span style="box-sizing:border-box;">        <span style="box-sizing:border-box;color:green;font-weight:700;">"type"</span>: <span style="box-sizing:border-box;color:#b44;">"host-local"</span>,
+</span></span><span style="box-sizing:border-box;display:flex;"><span style="box-sizing:border-box;">        <span style="box-sizing:border-box;color:green;font-weight:700;">"subnet"</span>: <span style="box-sizing:border-box;color:#b44;">"usePodCidr"</span>
+</span></span><span style="box-sizing:border-box;display:flex;"><span style="box-sizing:border-box;">      },
+</span></span><span style="box-sizing:border-box;display:flex;"><span style="box-sizing:border-box;">      <span style="box-sizing:border-box;color:green;font-weight:700;">"policy"</span>: {
+</span></span><span style="box-sizing:border-box;display:flex;"><span style="box-sizing:border-box;">        <span style="box-sizing:border-box;color:green;font-weight:700;">"type"</span>: <span style="box-sizing:border-box;color:#b44;">"k8s"</span>
+</span></span><span style="box-sizing:border-box;display:flex;"><span style="box-sizing:border-box;">      },
+</span></span><span style="box-sizing:border-box;display:flex;"><span style="box-sizing:border-box;">      <span style="box-sizing:border-box;color:green;font-weight:700;">"kubernetes"</span>: {
+</span></span><span style="box-sizing:border-box;display:flex;"><span style="box-sizing:border-box;">        <span style="box-sizing:border-box;color:green;font-weight:700;">"kubeconfig"</span>: <span style="box-sizing:border-box;color:#b44;">"/etc/cni/net.d/calico-kubeconfig"</span>
+</span></span><span style="box-sizing:border-box;display:flex;"><span style="box-sizing:border-box;">      }
+</span></span><span style="box-sizing:border-box;display:flex;"><span style="box-sizing:border-box;">    },
+</span></span><span style="box-sizing:border-box;display:flex;"><span style="box-sizing:border-box;">    {
+</span></span><span style="box-sizing:border-box;display:flex;"><span style="box-sizing:border-box;">      <span style="box-sizing:border-box;color:green;font-weight:700;">"type"</span>: <span style="box-sizing:border-box;color:#b44;">"bandwidth"</span>,
+</span></span><span style="box-sizing:border-box;display:flex;"><span style="box-sizing:border-box;">      <span style="box-sizing:border-box;color:green;font-weight:700;">"capabilities"</span>: {<span style="box-sizing:border-box;color:green;font-weight:700;">"bandwidth"</span>: <span style="box-sizing:border-box;color:#a2f;font-weight:700;">true</span>}
+</span></span><span style="box-sizing:border-box;display:flex;"><span style="box-sizing:border-box;">    }
+</span></span><span style="box-sizing:border-box;display:flex;"><span style="box-sizing:border-box;">  ]
+</span></span><span style="box-sizing:border-box;display:flex;"><span style="box-sizing:border-box;">}
+</span></span></code></pre></div><p style="box-sizing:border-box;margin-top:0px;margin-bottom:16px;max-width:80%;font-weight:400;">现在，你可以将 <code style="box-sizing:border-box;font-family:SFMono-Regular, Menlo, Monaco, Consolas, &quot;liberation mono&quot;, &quot;courier new&quot;, monospace;overflow-wrap:break-word;padding:0.2em 0.4em;margin:0px;word-break:normal;background-color:rgba(0, 0, 0, 0.05);border-radius:4px;font-size:85%;color:inherit;">kubernetes.io/ingress-bandwidth</code> 和 <code style="box-sizing:border-box;font-family:SFMono-Regular, Menlo, Monaco, Consolas, &quot;liberation mono&quot;, &quot;courier new&quot;, monospace;overflow-wrap:break-word;padding:0.2em 0.4em;margin:0px;word-break:normal;background-color:rgba(0, 0, 0, 0.05);border-radius:4px;font-size:85%;color:inherit;">kubernetes.io/egress-bandwidth</code>
+注解添加到 pod 中。例如：</p><div style="box-sizing:border-box;position:relative;display:flex;flex-direction:column;min-width:0px;overflow-wrap:break-word;background-color:rgb(255, 255, 255);background-clip:border-box;border:1px solid rgba(0, 0, 0, 0.125);border-radius:4px;margin:2rem 0px;padding:0px;width:100%;max-width:initial;"><pre style="box-sizing:border-box;font-family:SFMono-Regular, Menlo, Monaco, Consolas, &quot;liberation mono&quot;, &quot;courier new&quot;, monospace;overflow:auto;display:block;color:rgb(34, 34, 34);font-size:87.5%;overflow-wrap:normal;margin:0px;padding:16px;background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code style="box-sizing:border-box;font-family:SFMono-Regular, Menlo, Monaco, Consolas, &quot;liberation mono&quot;, &quot;courier new&quot;, monospace;overflow-wrap:break-word;color:inherit;padding:0px;margin:0px;white-space:pre;border:0px;font-size:100%;word-break:normal;background-color:inherit;"><span style="box-sizing:border-box;height:1.6em;display:flex;"><span style="box-sizing:border-box;"><span style="box-sizing:border-box;color:green;font-weight:700;">apiVersion</span>:<span style="box-sizing:border-box;color:#bbb;"> </span>v1<span style="box-sizing:border-box;color:#bbb;">
+</span></span></span><span style="box-sizing:border-box;height:1.6em;display:flex;"><span style="box-sizing:border-box;"><span style="box-sizing:border-box;color:#bbb;"></span><span style="box-sizing:border-box;color:green;font-weight:700;">kind</span>:<span style="box-sizing:border-box;color:#bbb;"> </span>Pod<span style="box-sizing:border-box;color:#bbb;">
+</span></span></span><span style="box-sizing:border-box;height:1.6em;display:flex;"><span style="box-sizing:border-box;"><span style="box-sizing:border-box;color:#bbb;"></span><span style="box-sizing:border-box;color:green;font-weight:700;">metadata</span>:<span style="box-sizing:border-box;color:#bbb;">
+</span></span></span><span style="box-sizing:border-box;height:1.6em;display:flex;"><span style="box-sizing:border-box;"><span style="box-sizing:border-box;color:#bbb;">  </span><span style="box-sizing:border-box;color:green;font-weight:700;">annotations</span>:<span style="box-sizing:border-box;color:#bbb;">
+</span></span></span><span style="box-sizing:border-box;height:1.6em;display:flex;"><span style="box-sizing:border-box;"><span style="box-sizing:border-box;color:#bbb;">    </span><span style="box-sizing:border-box;color:green;font-weight:700;">kubernetes.io/ingress-bandwidth</span>:<span style="box-sizing:border-box;color:#bbb;"> </span>1M<span style="box-sizing:border-box;color:#bbb;">
+</span></span></span><span style="box-sizing:border-box;height:1.6em;display:flex;"><span style="box-sizing:border-box;"><span style="box-sizing:border-box;color:#bbb;">    </span><span style="box-sizing:border-box;color:green;font-weight:700;">kubernetes.io/egress-bandwidth</span>:<span style="box-sizing:border-box;color:#bbb;"> </span>1M<span style="box-sizing:border-box;color:#bbb;">
+</span></span></span><span style="box-sizing:border-box;height:1.6em;display:flex;"><span style="box-sizing:border-box;"><span style="box-sizing:border-box;color:#bbb;"></span><span style="box-sizing:border-box;color:#00f;font-weight:700;">...</span><span style="box-sizing:border-box;color:#bbb;">
+</span></span></span></code></pre></div><h2 style="box-sizing:border-box;font-weight:500;line-height:1.2;font-size:32px;max-width:80%;margin-bottom:16px;margin-top:48px;">接下来<a href="https://kubernetes.io/zh-cn/docs/concepts/extend-kubernetes/compute-storage-net/network-plugins/#%E6%8E%A5%E4%B8%8B%E6%9D%A5" style="box-sizing:border-box;text-decoration:none;background-color:transparent;color:rgb(24, 78, 177);visibility:hidden;"> <div class="media-placeholder">[图片/附件]</div></en-media></a></h2></div></span></div></div></div></div></div></div>
+</div>
+</div>
+<a class="back-link" href="../articles.html">← 返回笔记列表</a>
+</body>
+</html>

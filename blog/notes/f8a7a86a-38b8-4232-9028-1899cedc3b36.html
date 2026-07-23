@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="zh-CN" data-theme="light">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>k8snetworkplumbingwg/ovs-cni: Open vSwitch CNI plugin — 技术笔记</title>
+<style>
+:root {
+  --bg: #ffffff;
+  --text: #1a1a1a;
+  --muted: #666;
+  --border: #e0e0e0;
+  --code-bg: #f5f5f5;
+  --link: #0066cc;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #1a1a1a;
+    --text: #e0e0e0;
+    --muted: #999;
+    --border: #333;
+    --code-bg: #2a2a2a;
+    --link: #66bbff;
+  }
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  line-height: 1.7;
+  color: var(--text);
+  background: var(--bg);
+  max-width: 860px;
+  margin: 0 auto;
+  padding: 2rem 1.5rem;
+}
+.note-header {
+  border-bottom: 2px solid var(--border);
+  padding-bottom: 1rem;
+  margin-bottom: 2rem;
+}
+.note-title {
+  font-size: 1.6rem;
+  font-weight: 700;
+  margin-bottom: 0.3rem;
+}
+.note-meta {
+  color: var(--muted);
+  font-size: 0.85rem;
+}
+.note-content {
+  font-size: 0.95rem;
+}
+.note-content h1 { font-size: 1.4rem; margin: 1.2rem 0 0.6rem; }
+.note-content h2 { font-size: 1.2rem; margin: 1rem 0 0.5rem; }
+.note-content h3 { font-size: 1.05rem; margin: 0.8rem 0 0.4rem; }
+.note-content p { margin: 0.5rem 0; }
+.note-content ul, .note-content ol { margin: 0.5rem 0 0.5rem 2rem; }
+.note-content li { margin: 0.2rem 0; }
+.note-content pre {
+  background: var(--code-bg);
+  padding: 1rem;
+  border-radius: 6px;
+  overflow-x: auto;
+  margin: 0.8rem 0;
+  font-size: 0.85rem;
+}
+.note-content code {
+  background: var(--code-bg);
+  padding: 0.1rem 0.3rem;
+  border-radius: 3px;
+  font-size: 0.88em;
+}
+.note-content pre code {
+  background: none;
+  padding: 0;
+}
+.note-content blockquote {
+  border-left: 3px solid var(--border);
+  padding-left: 1rem;
+  color: var(--muted);
+  margin: 0.8rem 0;
+}
+.note-content a { color: var(--link); }
+.note-content img {
+  max-width: 100%;
+  height: auto;
+  border-radius: 6px;
+  margin: 0.5rem 0;
+}
+.note-content table {
+  border-collapse: collapse;
+  width: 100%;
+  margin: 0.8rem 0;
+}
+.note-content th, .note-content td {
+  border: 1px solid var(--border);
+  padding: 0.5rem;
+}
+.note-content th { background: var(--code-bg); }
+.media-placeholder {
+  background: var(--code-bg);
+  padding: 1rem;
+  text-align: center;
+  color: var(--muted);
+  border-radius: 6px;
+  margin: 0.5rem 0;
+  font-size: 0.85rem;
+}
+.encrypt-placeholder {
+  background: #fff3cd;
+  padding: 0.5rem;
+  text-align: center;
+  color: #856404;
+  border-radius: 6px;
+  margin: 0.5rem 0;
+  font-size: 0.85rem;
+}
+.back-link {
+  display: inline-block;
+  margin-top: 2rem;
+  color: var(--link);
+  text-decoration: none;
+  font-size: 0.85rem;
+}
+</style>
+</head>
+<body>
+<div class="note-header">
+  <div class="note-title">k8snetworkplumbingwg/ovs-cni: Open vSwitch CNI plugin</div>
+  <div class="note-meta">笔记本：Kubevirt</div>
+</div>
+<div class="note-content">
+<div><br/></div><div style="min-height: 2418px; font-size: 16px; min-width: 100%; position: relative;"><div style="background-color: transparent; font-size: inherit; vertical-align: baseline;"><div style="background-color: transparent; vertical-align: baseline; font-size: 16px; text-align: left;"><div style="margin: 0px; padding: 0px; border: 0px; font-size: inherit; vertical-align: baseline;"><div style="margin: 0px auto; padding: 0px 2em; border: 0px; font-size: inherit; vertical-align: baseline; width: 36em; z-index: 200; position: relative;"><div style="margin: 0px 25px 0px -25px; padding: 0px; border: 0px; font-size: inherit; vertical-align: baseline; position: relative;"><div style="margin: 0px; padding: 0px 0px 9em; border: 0px; font-size: inherit; vertical-align: baseline; position: relative;"><div style="margin: 0px 0px 1.5em; padding: 0px; border: 0px; font-size: inherit; vertical-align: baseline;"><div style="margin: 0px; padding: 0px; border: 0px; font-size: inherit; vertical-align: baseline; position: relative;"><div style="margin: 0px; padding: 0px; border: 0px; font-size: inherit; vertical-align: baseline;"><div style="margin: 0px; padding: 0px; border: 0px; font-size: inherit; vertical-align: baseline;"><h1 style="text-align: left; border: 0px; vertical-align: baseline; font-size: 35px; padding: 0px; margin: 0px;"><span style="font-size: 35px; color: rgb(31, 9, 9); font-family: &quot;PT Serif&quot;; line-height: 35px; font-weight: normal;">Open vSwitch CNI plugin</span></h1><div style="padding: 1.5em 0px; border: 0px; font-size: inherit; vertical-align: baseline; position: relative; height: 1em; text-align: center; margin: 0px;"><div style="padding:0px;border:0px;font:inherit;vertical-align:baseline;background:-webkit-linear-gradient(0deg, rgb(243, 242, 238) 1%, rgb(31, 9, 9) 50%, rgb(243, 242, 238) 99%);position:absolute;left:-4em;top:50%;z-index:10;width:100%;padding-left:4em;padding-right:4em;height:0.1em;opacity:0.5;margin:0px;margin-bottom:0px;"/></div></div><div style="margin: 0px 0px 1.5em; padding: 0px; border: 0px; font-size: inherit; vertical-align: baseline;"><span style="font-size: 16px; color: rgb(31, 9, 9); font-family: &quot;PT Serif&quot;; line-height: 1.5em;">This plugin allows user to define Kubernetes networks on top of Open vSwitch bridges available on nodes. Note that ovs-cni does not configure bridges, it&apos;s up to a user to create them and connect them to L2, L3 or an overlay network. This project also delivers OVS marker, which exposes available bridges as Node resources, that can be used to schedule pods on the right node via</span> <a href="https://github.com/intel/network-resources-injector/" style="margin: 0px; padding: 0px; border: 0px; font-size: inherit; vertical-align: baseline; font-family: &quot;PT Serif&quot;; line-height: 1.5em; color: rgb(6, 85, 136); text-decoration: none;">intel/network-resources-injector</a><span style="font-size: 16px; color: rgb(31, 9, 9); font-family: &quot;PT Serif&quot;; line-height: 1.5em;">. Finally please note that Open vSwitch must be installed and running on the host.</span></div><div style="margin: 0px 0px 1.5em; padding: 0px; border: 0px; font-size: inherit; vertical-align: baseline;"><span style="font-size: 16px; color: rgb(31, 9, 9); font-family: &quot;PT Serif&quot;; line-height: 1.5em;">In order to use this plugin, Multus must be installed on all hosts and</span> <span style="font-size: 0.875em; color: rgb(31, 9, 9); font-family: &quot;PT Serif&quot;; line-height: 1.71429em; margin: 0px; padding: 0px; border: 0px; vertical-align: baseline;">NetworkAttachmentDefinition</span> <span style="font-size: 16px; color: rgb(31, 9, 9); font-family: &quot;PT Serif&quot;; line-height: 1.5em;">CRD created.</span></div><h2 style="text-align: left; margin: 35px 0px 15px; padding: 0px; border: 0px; vertical-align: baseline; font-size: 30px;"><span style="font-size: 30px; color: rgb(31, 9, 9); font-family: &quot;PT Serif&quot;; line-height: 35px; font-weight: bold;">Overview</span></h2><div style="margin: 0px 0px 1.5em; padding: 0px; border: 0px; font-size: inherit; vertical-align: baseline;"><span style="font-size: 16px; color: rgb(31, 9, 9); font-family: &quot;PT Serif&quot;; line-height: 1.5em;">First create network attachment definition. This object specifies to which Open vSwitch bridge should the pod be attached and what VLAN ID should be set on the port. For more information, check</span> <a href="https://github.com/k8snetworkplumbingwg/ovs-cni/blob/main/docs/cni-plugin.md" style="margin: 0px; padding: 0px; border: 0px; font-size: inherit; vertical-align: baseline; font-family: &quot;PT Serif&quot;; line-height: 1.5em; color: rgb(6, 85, 136); text-decoration: none;">plugin documentation</a><span style="font-size: 16px; color: rgb(31, 9, 9); font-family: &quot;PT Serif&quot;; line-height: 1.5em;">.</span></div><div style="margin: 0px 0px 1.5em; padding: 0px; border: 0px; font-size: inherit; vertical-align: baseline;"><div style="background-color: rgb(243, 242, 238); margin: 0px; padding: 0px; border: 0px; vertical-align: baseline; width: auto; font-size: 0.875em;"><div><span style="color: rgb(31, 9, 9); font-family: &quot;PT Serif&quot;; line-height: 1.71429em;">cat &lt;&lt;EOF | kubectl create -f -</span></div><div><span style="color: rgb(31, 9, 9); font-family: &quot;PT Serif&quot;; line-height: 1.71429em;">apiVersion: &quot;k8s.cni.cncf.io/v1&quot;</span></div><div><span style="color: rgb(31, 9, 9); font-family: &quot;PT Serif&quot;; line-height: 1.71429em;">kind: NetworkAttachmentDefinition</span></div><div><span style="color: rgb(31, 9, 9); font-family: &quot;PT Serif&quot;; line-height: 1.71429em;">metadata:</span></div><div><span style="color: rgb(31, 9, 9); font-family: &quot;PT Serif&quot;; line-height: 1.71429em;">name: ovs-conf</span></div><div><span style="color: rgb(31, 9, 9); font-family: &quot;PT Serif&quot;; line-height: 1.71429em;">annotations:</span></div><div><span style="color: rgb(31, 9, 9); font-family: &quot;PT Serif&quot;; line-height: 1.71429em;">k8s.v1.cni.cncf.io/resourceName: ovs-cni.network.kubevirt.io/br1</span></div><div><span style="color: rgb(31, 9, 9); font-family: &quot;PT Serif&quot;; line-height: 1.71429em;">spec:</span></div><div><span style="color: rgb(31, 9, 9); font-family: &quot;PT Serif&quot;; line-height: 1.71429em;">config: &apos;{</span></div><div><span style="color: rgb(31, 9, 9); font-family: &quot;PT Serif&quot;; line-height: 1.71429em;">&quot;cniVersion&quot;: &quot;0.4.0&quot;,</span></div><div><span style="color: rgb(31, 9, 9); font-family: &quot;PT Serif&quot;; line-height: 1.71429em;">&quot;type&quot;: &quot;ovs&quot;,</span></div><div><span style="color: rgb(31, 9, 9); font-family: &quot;PT Serif&quot;; line-height: 1.71429em;">&quot;bridge&quot;: &quot;br1&quot;,</span></div><div><span style="color: rgb(31, 9, 9); font-family: &quot;PT Serif&quot;; line-height: 1.71429em;">&quot;vlan&quot;: 100</span></div><div><span style="color: rgb(31, 9, 9); font-family: &quot;PT Serif&quot;; line-height: 1.71429em;">}&apos;</span></div><div><span style="color: rgb(31, 9, 9); font-family: &quot;PT Serif&quot;; line-height: 1.71429em;">EOF</span></div></div></div><div style="margin: 0px 0px 1.5em; padding: 0px; border: 0px; font-size: inherit; vertical-align: baseline;"><span style="font-size: 16px; color: rgb(31, 9, 9); font-family: &quot;PT Serif&quot;; line-height: 1.5em;">Once the network definition is created and desired Open vSwitch bridges are available on nodes, a pod requesting the network can be created.</span></div><div style="margin: 0px 0px 1.5em; padding: 0px; border: 0px; font-size: inherit; vertical-align: baseline;"><div style="background-color: rgb(243, 242, 238); margin: 0px; padding: 0px; border: 0px; vertical-align: baseline; width: auto; font-size: 0.875em;"><div><span style="color: rgb(31, 9, 9); font-family: &quot;PT Serif&quot;; line-height: 1.71429em;">cat &lt;&lt;EOF | kubectl create -f -</span></div><div><span style="color: rgb(31, 9, 9); font-family: &quot;PT Serif&quot;; line-height: 1.71429em;">apiVersion: v1</span></div><div><span style="color: rgb(31, 9, 9); font-family: &quot;PT Serif&quot;; line-height: 1.71429em;">kind: Pod</span></div><div><span style="color: rgb(31, 9, 9); font-family: &quot;PT Serif&quot;; line-height: 1.71429em;">metadata:</span></div><div><span style="color: rgb(31, 9, 9); font-family: &quot;PT Serif&quot;; line-height: 1.71429em;">name: samplepod</span></div><div><span style="color: rgb(31, 9, 9); font-family: &quot;PT Serif&quot;; line-height: 1.71429em;">annotations:</span></div><div><span style="color: rgb(31, 9, 9); font-family: &quot;PT Serif&quot;; line-height: 1.71429em;">k8s.v1.cni.cncf.io/networks: ovs-conf</span></div><div><span style="color: rgb(31, 9, 9); font-family: &quot;PT Serif&quot;; line-height: 1.71429em;">spec:</span></div><div><span style="color: rgb(31, 9, 9); font-family: &quot;PT Serif&quot;; line-height: 1.71429em;">containers:</span></div><div><span style="color: rgb(31, 9, 9); font-family: &quot;PT Serif&quot;; line-height: 1.71429em;">- name: samplepod</span></div><div><span style="color: rgb(31, 9, 9); font-family: &quot;PT Serif&quot;; line-height: 1.71429em;">command: [&quot;/bin/sh&quot;, &quot;-c&quot;, &quot;sleep 99999&quot;]</span></div><div><span style="color: rgb(31, 9, 9); font-family: &quot;PT Serif&quot;; line-height: 1.71429em;">image: alpine</span></div><div><span style="color: rgb(31, 9, 9); font-family: &quot;PT Serif&quot;; line-height: 1.71429em;">resources: # this may be omitted if intel/network-resources-injector is present on the cluster</span></div><div><span style="color: rgb(31, 9, 9); font-family: &quot;PT Serif&quot;; line-height: 1.71429em;">limits:</span></div><div><span style="color: rgb(31, 9, 9); font-family: &quot;PT Serif&quot;; line-height: 1.71429em;">ovs-cni.network.kubevirt.io/br1: 1</span></div><span style="color: rgb(31, 9, 9); font-family: &quot;PT Serif&quot;; line-height: 1.71429em;">EOF</span></div></div><div style="margin: 0px 0px 1.5em; padding: 0px; border: 0px; font-size: inherit; vertical-align: baseline;"><span style="font-size: 16px; color: rgb(31, 9, 9); font-family: &quot;PT Serif&quot;; line-height: 1.5em;">Such pod should contain default</span> <span style="font-size: 0.875em; color: rgb(31, 9, 9); font-family: &quot;PT Serif&quot;; line-height: 1.71429em; margin: 0px; padding: 0px; border: 0px; vertical-align: baseline;">eth0</span> <span style="font-size: 16px; color: rgb(31, 9, 9); font-family: &quot;PT Serif&quot;; line-height: 1.5em;">interface connected to default Kubernetes network and also</span> <span style="font-size: 0.875em; color: rgb(31, 9, 9); font-family: &quot;PT Serif&quot;; line-height: 1.71429em; margin: 0px; padding: 0px; border: 0px; vertical-align: baseline;">net1</span> <span style="font-size: 16px; color: rgb(31, 9, 9); font-family: &quot;PT Serif&quot;; line-height: 1.5em;">connected to the bridge.</span></div><div style="margin: 0px 0px 1.5em; padding: 0px; border: 0px; font-size: inherit; vertical-align: baseline;"><div style="background-color: rgb(243, 242, 238); margin: 0px; padding: 0px; border: 0px; vertical-align: baseline; width: auto; font-size: 0.875em;"><div><span style="color: rgb(31, 9, 9); font-family: &quot;PT Serif&quot;; line-height: 1.71429em;">$ kubectl exec samplepod ip link</span></div><div><span style="color: rgb(31, 9, 9); font-family: &quot;PT Serif&quot;; line-height: 1.71429em;">1: lo: &lt;LOOPBACK,UP,LOWER_UP&gt; mtu 65536 qdisc noqueue state UNKNOWN qlen 1000</span></div><div><span style="color: rgb(31, 9, 9); font-family: &quot;PT Serif&quot;; line-height: 1.71429em;">link/loopback 00:00:00:00:00:00 brd 00:00:00:00:00:00</span></div><div><span style="color: rgb(31, 9, 9); font-family: &quot;PT Serif&quot;; line-height: 1.71429em;">3: eth0@if11: &lt;BROADCAST,MULTICAST,UP,LOWER_UP,M-DOWN&gt; mtu 1450 qdisc noqueue state UP</span></div><div><span style="color: rgb(31, 9, 9); font-family: &quot;PT Serif&quot;; line-height: 1.71429em;">link/ether 0a:58:0a:f4:00:07 brd ff:ff:ff:ff:ff:ff</span></div><div><span style="color: rgb(31, 9, 9); font-family: &quot;PT Serif&quot;; line-height: 1.71429em;">5: net1@if12: &lt;BROADCAST,MULTICAST,UP,LOWER_UP,M-DOWN&gt; mtu 1500 qdisc noqueue state UP</span></div><div><span style="color: rgb(31, 9, 9); font-family: &quot;PT Serif&quot;; line-height: 1.71429em;">link/ether e6:f4:2e:b4:4b:6e brd ff:ff:ff:ff:ff:ff</span></div></div></div><h2 style="text-align: left; margin: 35px 0px 15px; padding: 0px; border: 0px; vertical-align: baseline; font-size: 30px;"><span style="font-size: 30px; color: rgb(31, 9, 9); font-family: &quot;PT Serif&quot;; line-height: 35px; font-weight: bold;">Deployment and Usage</span></h2><div style="margin: 0px 0px 1.5em; padding: 0px; border: 0px; font-size: inherit; vertical-align: baseline;"><span style="font-size: 16px; color: rgb(31, 9, 9); font-family: &quot;PT Serif&quot;; line-height: 1.5em;">You can choose to deploy this plugin on</span> <a href="https://github.com/k8snetworkplumbingwg/ovs-cni/blob/main/docs/deployment-on-local-cluster.md" style="margin: 0px; padding: 0px; border: 0px; font-size: inherit; vertical-align: baseline; font-family: &quot;PT Serif&quot;; line-height: 1.5em; color: rgb(6, 85, 136); text-decoration: none;">local virtualized cluster</a> <span style="font-size: 16px; color: rgb(31, 9, 9); font-family: &quot;PT Serif&quot;; line-height: 1.5em;">or on your</span> <a href="https://github.com/k8snetworkplumbingwg/ovs-cni/blob/main/docs/deployment-on-arbitrary-cluster.md" style="margin: 0px; padding: 0px; border: 0px; font-size: inherit; vertical-align: baseline; font-family: &quot;PT Serif&quot;; line-height: 1.5em; color: rgb(6, 85, 136); text-decoration: none;">arbitrary cluster</a><span style="font-size: 16px; color: rgb(31, 9, 9); font-family: &quot;PT Serif&quot;; line-height: 1.5em;">. After that you can follow</span> <a href="https://github.com/k8snetworkplumbingwg/ovs-cni/blob/main/docs/demo.md" style="margin: 0px; padding: 0px; border: 0px; font-size: inherit; vertical-align: baseline; font-family: &quot;PT Serif&quot;; line-height: 1.5em; color: rgb(6, 85, 136); text-decoration: none;">demo</a> <span style="font-size: 16px; color: rgb(31, 9, 9); font-family: &quot;PT Serif&quot;; line-height: 1.5em;">that will guide you through preparation of Open vSwitch bridges, defining networks on Kubernetes and attaching pods to them.</span></div><h2 style="text-align: left; margin: 35px 0px 15px; padding: 0px; border: 0px; vertical-align: baseline; font-size: 30px;"><span style="font-size: 30px; color: rgb(31, 9, 9); font-family: &quot;PT Serif&quot;; line-height: 35px; font-weight: bold;">Components</span></h2><ul style="padding: 0px; border: 0px; font-size: inherit; vertical-align: baseline; margin: -1em 0px 1.5em 1.5em; list-style: disc;"><li style="margin: 0px; padding: 0px; border: 0px; font-size: inherit; vertical-align: baseline; list-style-type: inherit; list-style-position: outside;"><div><a href="https://github.com/k8snetworkplumbingwg/ovs-cni/blob/main/docs/cni-plugin.md" style="margin: 0px; padding: 0px; border: 0px; font-size: inherit; vertical-align: baseline; font-family: &quot;PT Serif&quot;; line-height: 1.5em; color: rgb(6, 85, 136); text-decoration: none;">CNI Plugin</a> <span style="font-size: 16px; color: rgb(31, 9, 9); font-family: &quot;PT Serif&quot;; line-height: 1.5em;">- Documentation and of standalone Open vSwitch CNI plugin.</span></div></li><li style="margin: 0px; padding: 0px; border: 0px; font-size: inherit; vertical-align: baseline; list-style-type: inherit; list-style-position: outside;"><div><a href="https://github.com/k8snetworkplumbingwg/ovs-cni/blob/main/docs/traffic-mirroring.md" style="margin: 0px; padding: 0px; border: 0px; font-size: inherit; vertical-align: baseline; font-family: &quot;PT Serif&quot;; line-height: 1.5em; color: rgb(6, 85, 136); text-decoration: none;">Port Mirroring</a> <span style="font-size: 16px; color: rgb(31, 9, 9); font-family: &quot;PT Serif&quot;; line-height: 1.5em;">- Documentation of a OVS CNI extension, allowing for port mirroring.</span></div></li><li style="margin: 0px; padding: 0px; border: 0px; font-size: inherit; vertical-align: baseline; list-style-type: inherit; list-style-position: outside;"><div><a href="https://github.com/k8snetworkplumbingwg/ovs-cni/blob/main/docs/ovs-offload.md" style="margin: 0px; padding: 0px; border: 0px; font-size: inherit; vertical-align: baseline; font-family: &quot;PT Serif&quot;; line-height: 1.5em; color: rgb(6, 85, 136); text-decoration: none;">Hardware Offload</a> <span style="font-size: 16px; color: rgb(31, 9, 9); font-family: &quot;PT Serif&quot;; line-height: 1.5em;">- Documentation of hardware offload functionality, using SR-IOV.</span></div></li><li style="margin: 0px; padding: 0px; border: 0px; font-size: inherit; vertical-align: baseline; list-style-type: inherit; list-style-position: outside;"><div><a href="https://github.com/k8snetworkplumbingwg/ovs-cni/blob/main/docs/marker.md" style="margin: 0px; padding: 0px; border: 0px; font-size: inherit; vertical-align: baseline; font-family: &quot;PT Serif&quot;; line-height: 1.5em; color: rgb(6, 85, 136); text-decoration: none;">Marker</a> <span style="font-size: 16px; color: rgb(31, 9, 9); font-family: &quot;PT Serif&quot;; line-height: 1.5em;">- Documentation and of daemon set exposing bridges as node resources.</span></div></li></ul><h2 style="text-align: left; margin: 35px 0px 15px; padding: 0px; border: 0px; vertical-align: baseline; font-size: 30px;"><span style="font-size: 30px; color: rgb(31, 9, 9); font-family: &quot;PT Serif&quot;; line-height: 35px; font-weight: bold;">Development</span></h2><div style="margin: 0px; padding: 0px; border: 0px; font-size: inherit; vertical-align: baseline;"><a href="https://github.com/k8snetworkplumbingwg/ovs-cni/blob/main/docs/devel-guide.md" style="margin: 0px; padding: 0px; border: 0px; font-size: inherit; vertical-align: baseline; font-family: &quot;PT Serif&quot;; line-height: 1.5em; color: rgb(6, 85, 136); text-decoration: none;">Development guide</a> <span style="font-size: 16px; color: rgb(31, 9, 9); font-family: &quot;PT Serif&quot;; line-height: 1.5em;">is a go-to reference point for development helper commands, building, testing, container images and local cluster.</span></div></div></div></div></div></div></div></div></div></div></div>
+</div>
+<a class="back-link" href="../articles.html">← 返回笔记列表</a>
+</body>
+</html>

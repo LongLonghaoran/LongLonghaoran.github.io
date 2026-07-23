@@ -1,0 +1,562 @@
+<!DOCTYPE html>
+<html lang="zh-CN" data-theme="light">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ray推理场景调研 - 容器云开发 - Confluence — 技术笔记</title>
+<style>
+:root {
+  --bg: #ffffff;
+  --text: #1a1a1a;
+  --muted: #666;
+  --border: #e0e0e0;
+  --code-bg: #f5f5f5;
+  --link: #0066cc;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #1a1a1a;
+    --text: #e0e0e0;
+    --muted: #999;
+    --border: #333;
+    --code-bg: #2a2a2a;
+    --link: #66bbff;
+  }
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  line-height: 1.7;
+  color: var(--text);
+  background: var(--bg);
+  max-width: 860px;
+  margin: 0 auto;
+  padding: 2rem 1.5rem;
+}
+.note-header {
+  border-bottom: 2px solid var(--border);
+  padding-bottom: 1rem;
+  margin-bottom: 2rem;
+}
+.note-title {
+  font-size: 1.6rem;
+  font-weight: 700;
+  margin-bottom: 0.3rem;
+}
+.note-meta {
+  color: var(--muted);
+  font-size: 0.85rem;
+}
+.note-content {
+  font-size: 0.95rem;
+}
+.note-content h1 { font-size: 1.4rem; margin: 1.2rem 0 0.6rem; }
+.note-content h2 { font-size: 1.2rem; margin: 1rem 0 0.5rem; }
+.note-content h3 { font-size: 1.05rem; margin: 0.8rem 0 0.4rem; }
+.note-content p { margin: 0.5rem 0; }
+.note-content ul, .note-content ol { margin: 0.5rem 0 0.5rem 2rem; }
+.note-content li { margin: 0.2rem 0; }
+.note-content pre {
+  background: var(--code-bg);
+  padding: 1rem;
+  border-radius: 6px;
+  overflow-x: auto;
+  margin: 0.8rem 0;
+  font-size: 0.85rem;
+}
+.note-content code {
+  background: var(--code-bg);
+  padding: 0.1rem 0.3rem;
+  border-radius: 3px;
+  font-size: 0.88em;
+}
+.note-content pre code {
+  background: none;
+  padding: 0;
+}
+.note-content blockquote {
+  border-left: 3px solid var(--border);
+  padding-left: 1rem;
+  color: var(--muted);
+  margin: 0.8rem 0;
+}
+.note-content a { color: var(--link); }
+.note-content img {
+  max-width: 100%;
+  height: auto;
+  border-radius: 6px;
+  margin: 0.5rem 0;
+}
+.note-content table {
+  border-collapse: collapse;
+  width: 100%;
+  margin: 0.8rem 0;
+}
+.note-content th, .note-content td {
+  border: 1px solid var(--border);
+  padding: 0.5rem;
+}
+.note-content th { background: var(--code-bg); }
+.media-placeholder {
+  background: var(--code-bg);
+  padding: 1rem;
+  text-align: center;
+  color: var(--muted);
+  border-radius: 6px;
+  margin: 0.5rem 0;
+  font-size: 0.85rem;
+}
+.encrypt-placeholder {
+  background: #fff3cd;
+  padding: 0.5rem;
+  text-align: center;
+  color: #856404;
+  border-radius: 6px;
+  margin: 0.5rem 0;
+  font-size: 0.85rem;
+}
+.back-link {
+  display: inline-block;
+  margin-top: 2rem;
+  color: var(--link);
+  text-decoration: none;
+  font-size: 0.85rem;
+}
+</style>
+</head>
+<body>
+<div class="note-header">
+  <div class="note-title">ray推理场景调研 - 容器云开发 - Confluence</div>
+  <div class="note-meta">笔记本：AI</div>
+</div>
+<div class="note-content">
+<div style="--en-clipped-content:fullPage"><div style="font-size: 16px; display:block; min-width: 100%; position: relative;"> <div><div style="font-size:14px;font-weight:400;line-height:1.42857;letter-spacing:0px;font-family:-apple-system, BlinkMacSystemFont, &quot;Segoe UI&quot;, Roboto, Oxygen, Ubuntu, &quot;Fira Sans&quot;, &quot;Droid Sans&quot;, &quot;Helvetica Neue&quot;, sans-serif;background:rgb(244, 245, 247);color:rgb(23, 43, 77);">
+
+        
+            <div style="margin:0px;padding:0px;"></div>
+                
+
+
+    
+
+    <ul style="border:0px;clip:rect(0px, 0px, 0px, 0px);height:1px;overflow:hidden;padding:0px;position:absolute;width:1px;margin:-1px;">
+    <li><a href="https://docs.kylincloud.org/pages/viewpage.action?pageId=128944157#title-heading" style="text-decoration:none;color:rgb(0, 68, 204);">转至内容</a></li>
+    <li><a href="https://docs.kylincloud.org/pages/viewpage.action?pageId=128944157#breadcrumbs" style="text-decoration:none;color:rgb(0, 68, 204);">转至导航栏</a></li>
+    <li><a href="https://docs.kylincloud.org/pages/viewpage.action?pageId=128944157#header-menu-bar" style="text-decoration:none;color:rgb(0, 68, 204);">转至主菜单</a></li>
+    <li><a href="https://docs.kylincloud.org/pages/viewpage.action?pageId=128944157#navigation" style="text-decoration:none;color:rgb(0, 68, 204);">转至动作菜单</a></li>
+    <li><a href="https://docs.kylincloud.org/pages/viewpage.action?pageId=128944157#quick-search-query" style="text-decoration:none;color:rgb(0, 68, 204);">转至快速搜索</a></li>
+</ul>
+<div style="width:100%;height:100%;margin:0px;padding:0px;">
+<div style="margin:0px;padding:0px;height:100%;width:100%;position:relative;background-color:rgb(245, 245, 245);"><ul style="margin:0px;list-style-type:none;padding:0px;"></ul>
+    <div style="margin:0px;padding:0px;">
+        <div style="margin:0px;padding:0px;">
+            
+                            </div>
+    </div>
+        
+
+
+
+
+
+
+    
+
+    
+    	<div style="margin:0px;padding:0px;box-sizing:border-box;">
+    		<div style="margin:0px;padding:0px;width:285px;box-sizing:border-box;float:left;">
+    			
+    		</div>
+        
+
+            
+    
+        <div style="margin-left:279px;background:rgb(255, 255, 255);border-width:1px 0px;border-style:solid;border-color:rgb(223, 225, 230);border-image:initial;box-sizing:border-box;display:block;position:relative;width:auto;margin:0px;padding:20px;clear:both;min-height:600px;padding-left:40px;padding-right:40px;border-top:0px;margin-top:79px;">
+                        <div style="margin:69px 0px 20px;padding:0px;height:75px;"><h1 style="margin:30px 0px 0px;padding:40px 0px 0px;text-transform:none;line-height:1.25;color:rgb(0, 51, 102);margin-top:0px;font-size:28px;letter-spacing:-0.28px;font-weight:500;display:block;font-family:-apple-system, &quot;system-ui&quot;, &quot;Segoe UI&quot;, Roboto, Oxygen, Ubuntu, &quot;Fira Sans&quot;, &quot;Droid Sans&quot;, &quot;Helvetica Neue&quot;, sans-serif;font-style:normal;text-decoration:none solid rgb(0, 51, 102);text-align:start;margin-right:0px;margin-bottom:0px;margin-left:0px;">
+                                                <a href="https://docs.kylincloud.org/pages/viewpage.action?pageId=128944157" style="color:rgb(23, 43, 77);text-decoration:none solid rgb(23, 43, 77);border-bottom-color:rgb(0, 51, 102);font-family:-apple-system, &quot;system-ui&quot;, &quot;Segoe UI&quot;, Roboto, Oxygen, Ubuntu, &quot;Fira Sans&quot;, &quot;Droid Sans&quot;, &quot;Helvetica Neue&quot;, sans-serif;font-size:28px;font-style:normal;font-weight:500;margin:0px;padding:0px;letter-spacing:-0.28px;text-align:start;">ray推理场景调研</a>
+                                    </h1></div>
+        
+        
+
+        <div style="margin:0px;padding:0px;">
+                                                </div>
+
+        
+    
+
+        
+
+
+
+
+            
+    
+
+                                
+    
+
+    
+    
+        
+    
+    
+                    
+    
+
+    
+
+    
+            
+        
+
+    
+    
+
+    
+            
+        
+
+
+
+    
+<div style="box-sizing:border-box;margin:0px;padding:0px;clear:none;position:static;padding-right:222px;"><span style="clear:both;display:none !important;"></span>
+    
+
+
+<div style="margin:0px;padding:0px;">
+                        </div>
+
+
+
+            
+
+
+        
+    
+            
+
+        
+                            
+    
+
+                    
+
+        
+        <a href="https://docs.kylincloud.org/pages/viewpage.action?pageId=128944157#page-metadata-end" style="text-decoration:none;border:0px;clip:rect(0px, 0px, 0px, 0px);height:1px;margin:-1px;overflow:hidden;padding:0px;position:absolute;width:1px;color:rgb(0, 68, 204);">转至元数据结尾</a>
+<div style="border:0px;clip:rect(0px, 0px, 0px, 0px);height:1px;overflow:hidden;position:absolute;width:1px;margin:-1px;padding:0px;"></div>
+
+    <div style="padding:0px;margin:-15px 0px 20px;font-size:12px;color:rgb(94, 108, 132);line-height:1.5;font-weight:300;">
+        <ul style="margin:0px;overflow:hidden;list-style-type:none;line-height:16px;padding:0px;">
+            <li style="list-style:none;float:left;padding:0px 5px 0px 0px;margin:0px;line-height:1.5;">
+                
+        
+    
+        
+    
+        
+            
+            由<span>     <a href="https://docs.kylincloud.org/display/~lizhun" title="" style="text-decoration:none;font-size:12px;line-height:1.5;font-weight:300;color:rgb(0, 68, 204);">李准</a></span>创建, 最后修改于<a title="查看变更" href="https://docs.kylincloud.org/pages/diffpagesbyversion.action?pageId=128944157&amp;selectedPageVersions=41&amp;selectedPageVersions=42" style="text-decoration:none;font-size:12px;line-height:1.5;font-weight:300;color:rgb(0, 68, 204);">三月 20, 2025</a>
+                </li>
+        </ul>
+    </div>
+
+
+<a href="https://docs.kylincloud.org/pages/viewpage.action?pageId=128944157#page-metadata-start" style="text-decoration:none;border:0px;clip:rect(0px, 0px, 0px, 0px);height:1px;margin:-1px;overflow:hidden;padding:0px;position:absolute;width:1px;color:rgb(0, 68, 204);">转至元数据起始</a>
+<div style="border:0px;clip:rect(0px, 0px, 0px, 0px);height:1px;overflow:hidden;position:absolute;width:1px;margin:-1px;padding:0px;"></div>
+
+        
+                                            
+        <div style="margin:0px;padding:0px;position:relative;">
+                           
+        <div style="margin:0px;padding:0px;padding-top:5px;padding-bottom:5px;display:flex;align-items:center;"><i style="width:16px;text-align:center;color:rgb(221, 221, 221);font-family:&quot;Font Awesome 5 Free&quot;;font-weight:900;-webkit-font-smoothing:antialiased;display:inline-block;font-style:normal;font-variant:normal;text-rendering:auto;line-height:1;"><span style="font-family:Font Awesome 5 Free;font-weight:900;font-style:normal;font-variant:normal;line-height:1;text-align:center;color:rgb(221, 221, 221);"></span></i><h1 style="padding:0px;letter-spacing:-0.01em;text-transform:none;margin:30px 0px 0px;font-size:24px;line-height:1.25;font-weight:normal;color:rgb(0, 51, 102);border-bottom-color:rgb(85, 85, 85);display:block;vertical-align:middle;flex:1 1 0%;margin-top:0px;"><span>1. </span>ray serve架构</h1></div><div style="margin:0px;padding:0px;padding-top:5px;padding-bottom:5px;padding-left:20px;display:block;"><p style="padding:0px;margin:10px 0px 0px;margin-top:0px;"><span style="position:relative;display:inline-block;max-width:none;"><div class="media-placeholder">[图片/附件]</div></en-media></span></p><div style="margin:0px;padding:0px;padding-top:5px;padding-bottom:5px;display:flex;align-items:center;margin-top:20px;"><i style="width:16px;text-align:center;color:rgb(221, 221, 221);font-family:&quot;Font Awesome 5 Free&quot;;font-weight:900;-webkit-font-smoothing:antialiased;display:inline-block;font-style:normal;font-variant:normal;text-rendering:auto;line-height:1;"><span style="font-family:Font Awesome 5 Free;font-weight:900;font-style:normal;font-variant:normal;line-height:1;text-align:center;color:rgb(221, 221, 221);"></span></i><h2 style="padding:0px;text-transform:none;letter-spacing:-0.008em;margin:30px 0px 0px;font-weight:normal;font-size:20px;line-height:1.5;color:rgb(0, 51, 102);border-bottom-color:rgb(85, 85, 85);display:block;vertical-align:middle;flex:1 1 0%;margin-top:0px;"><span>1.1. </span>核心组件</h2></div><div style="margin:0px;padding:0px;padding-top:5px;padding-bottom:5px;padding-left:20px;display:block;"><p style="padding:0px;margin:10px 0px 0px;margin-top:0px;">ray serve运行在ray cluster集群中，主要由Controller, HTTP Proxy, gRPC Proxy, Replica组成，其以<a href="https://docs.ray.io/en/latest/ray-core/actors.html#actor-guide" rel="nofollow" style="text-decoration:none;color:rgb(0, 68, 204);">ray actor</a>的形式运行：</p><ul style="margin:10px 0px 0px;list-style-type:disc;"><li><strong>Controller</strong>：ray serve的全局控制器运行在ray cluster中的head node中，其负责HTTP Proxy/gRPC Proxy/Replica的创建、更新、删除，<span style="color:rgb(42,43,46);">诸如创建或获取部署之类的Serve API调用会向控制器发出远程调用。</span></li><li><strong>HTTP Proxy</strong>：用于接收传入请求，将其转发到Replica，并在请求完成后作出响应，每一个节点可以有一个HTTP Proxy。</li><li><strong>gRPC Proxy</strong>：作用于HTTP Proxy类似，提供gRPC服务。</li><li><strong>Replica</strong>：实际执行响应请求的组件，如大模型响应推理请求。</li></ul><p style="padding:0px;margin:10px 0px 0px;">一个请求的生命周期：</p><ol style="margin:10px 0px 0px;list-style-type:decimal;"><li>某用户向ray serve发送一个查询请求，如果是http请求，则被HTTP Proxy解析</li><li>HTTP Proxy根据http请求的URL path（如/model1，/model2）将请求转发到不同的模型实例（这些模型实例可能分布在不同的机器）的Request Queue</li><li>接着Replica处理执行Rquest Queue中的请求，响应这个请求</li></ol></div><div style="margin:0px;padding:0px;padding-top:5px;padding-bottom:5px;display:flex;align-items:center;margin-top:20px;"><i style="width:16px;text-align:center;color:rgb(221, 221, 221);font-family:&quot;Font Awesome 5 Free&quot;;font-weight:900;-webkit-font-smoothing:antialiased;display:inline-block;font-style:normal;font-variant:normal;text-rendering:auto;line-height:1;"><span style="font-family:Font Awesome 5 Free;font-weight:900;font-style:normal;font-variant:normal;line-height:1;text-align:center;color:rgb(221, 221, 221);"></span></i><h2 style="padding:0px;text-transform:none;letter-spacing:-0.008em;margin:30px 0px 0px;font-weight:normal;font-size:20px;line-height:1.5;color:rgb(0, 51, 102);border-bottom-color:rgb(85, 85, 85);display:block;vertical-align:middle;flex:1 1 0%;margin-top:0px;"><span>1.2. </span>Ray Serve AutoScaler</h2></div><div style="margin:0px;padding:0px;padding-top:5px;padding-bottom:5px;padding-left:20px;display:block;"><p style="padding:0px;margin:10px 0px 0px;margin-top:0px;">Ray Serve AutoScaler是Controller组件的一部分，能根据请求量自动扩缩容模型实例的副本数。</p><p style="padding:0px;margin:10px 0px 0px;"><span style="position:relative;display:inline-block;max-width:none;"><div class="media-placeholder">[图片/附件]</div></en-media></span></p><p style="padding:0px;margin:10px 0px 0px;">deployment's ServeHandle：向模型实例发送请求的应用程序</p><ul style="margin:10px 0px 0px;list-style-type:disc;"><li>deployment's ServeHandle与worker replica向autoscaler发送metrics(待处理队列中的请求排队数、查询数等)</li><li>autoscaler根据metrics决定是否要扩缩容worker replica</li></ul></div><div style="margin:0px;padding:0px;padding-top:5px;padding-bottom:5px;display:flex;align-items:center;margin-top:20px;"><i style="width:16px;text-align:center;color:rgb(221, 221, 221);font-family:&quot;Font Awesome 5 Free&quot;;font-weight:900;-webkit-font-smoothing:antialiased;display:inline-block;font-style:normal;font-variant:normal;text-rendering:auto;line-height:1;"><span style="font-family:Font Awesome 5 Free;font-weight:900;font-style:normal;font-variant:normal;line-height:1;text-align:center;color:rgb(221, 221, 221);"></span></i><h2 style="padding:0px;text-transform:none;letter-spacing:-0.008em;margin:30px 0px 0px;font-weight:normal;font-size:20px;line-height:1.5;color:rgb(0, 51, 102);border-bottom-color:rgb(85, 85, 85);display:block;vertical-align:middle;flex:1 1 0%;margin-top:0px;"><span>1.3. </span>Serve Rest API Server</h2></div><div style="margin:0px;padding:0px;padding-top:5px;padding-bottom:5px;padding-left:20px;display:block;"><p style="padding:0px;margin:10px 0px 0px;margin-top:0px;">可以通过命令行界面（CLI）调用Serve Rest API Server接口来管理Ray Serve实例。</p></div></div><div style="margin:0px;padding:0px;padding-top:5px;padding-bottom:5px;display:flex;align-items:center;margin-top:20px;"><i style="width:16px;text-align:center;color:rgb(221, 221, 221);font-family:&quot;Font Awesome 5 Free&quot;;font-weight:900;-webkit-font-smoothing:antialiased;display:inline-block;font-style:normal;font-variant:normal;text-rendering:auto;line-height:1;"><span style="font-family:Font Awesome 5 Free;font-weight:900;font-style:normal;font-variant:normal;line-height:1;text-align:center;color:rgb(221, 221, 221);"></span></i><h1 style="padding:0px;letter-spacing:-0.01em;text-transform:none;margin:30px 0px 0px;font-size:24px;line-height:1.25;font-weight:normal;color:rgb(0, 51, 102);border-bottom-color:rgb(85, 85, 85);display:block;vertical-align:middle;flex:1 1 0%;margin-top:0px;"><span>2. </span>ray 部署多个推理服务实例</h1></div><div style="margin:0px;padding:0px;padding-top:5px;padding-bottom:5px;padding-left:20px;display:block;"><ul style="margin:10px 0px 0px;margin-top:0px;list-style-type:disc;"><li><strong>图像识别模型</strong></li></ul><p style="padding:0px;margin:10px 0px 0px;margin-left:40.0px;">将下述代码命名为：image_classifier.py</p><div style="color:rgb(51, 51, 51);margin:10px 0px;padding:0px;background-color:rgb(255, 255, 255);overflow:auto;border:1px solid rgb(204, 204, 204);border-radius:3px;border-color:rgb(223, 225, 229);border-width:1px;">
+ <div style="margin:0px;border-bottom-color:rgb(85, 85, 85);text-align:left;overflow:hidden;position:relative;padding:5px 15px;background:rgb(245, 245, 245);border-bottom:none;border-bottom-width:1px;">
+  <b style="color:rgb(51, 51, 51);display:inline-block;padding-right:130px;">图像识别</b>
+  <span style="text-decoration:none;margin-bottom:10px;right:15px;position:absolute;top:5px;float:right;cursor:pointer;"><span style="display:inline-block;height:16px;min-width:16px;text-align:left;text-indent:-9999em;background-repeat:no-repeat;background-position:left center;font-size:0px;vertical-align:text-bottom;background-image:url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAQAAAC1+jfqAAAALElEQVQoz2NgGGSg4EzBTPwKOgr+F6ThVzKTsJK7Bf/JN4GgG4C+6GAYigAASNYUTGaVYwsAAAAASUVORK5CYII=);"> </span><span style="vertical-align:top;color:rgb(59, 115, 175);">展开源码</span></span>
+  
+ </div>
+ 
+</div><ul style="margin:10px 0px 0px;list-style-type:disc;"><li><strong>翻译模型</strong></li></ul><p style="padding:0px;margin:10px 0px 0px;margin-left:40.0px;">将下述代码命名为：text_translator.py</p><div style="color:rgb(51, 51, 51);margin:10px 0px;padding:0px;background-color:rgb(255, 255, 255);overflow:auto;border:1px solid rgb(204, 204, 204);border-radius:3px;border-color:rgb(223, 225, 229);border-width:1px;">
+ <div style="margin:0px;border-bottom-color:rgb(85, 85, 85);text-align:left;overflow:hidden;position:relative;padding:5px 15px;background:rgb(245, 245, 245);border-bottom:none;border-bottom-width:1px;">
+  <b style="color:rgb(51, 51, 51);display:inline-block;padding-right:130px;">翻译</b>
+  <span style="text-decoration:none;margin-bottom:10px;right:15px;position:absolute;top:5px;float:right;cursor:pointer;"><span style="display:inline-block;height:16px;min-width:16px;text-align:left;text-indent:-9999em;background-repeat:no-repeat;background-position:left center;font-size:0px;vertical-align:text-bottom;background-image:url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAQAAAC1+jfqAAAALElEQVQoz2NgGGSg4EzBTPwKOgr+F6ThVzKTsJK7Bf/JN4GgG4C+6GAYigAASNYUTGaVYwsAAAAASUVORK5CYII=);"> </span><span style="vertical-align:top;color:rgb(59, 115, 175);">展开源码</span></span>
+  
+ </div>
+ 
+</div><ul style="margin:10px 0px 0px;list-style-type:disc;"><li><strong>组合图像识别与翻译模型生成配置config.yaml文件</strong>：</li></ul><p style="padding:0px;margin:10px 0px 0px;margin-left:40.0px;">serve build image_classifier:app text_translator:app -o config.yaml</p><p style="padding:0px;margin:10px 0px 0px;margin-left:40.0px;">config.yaml文件内容如下：</p><div style="color:rgb(51, 51, 51);margin:10px 0px;padding:0px;background-color:rgb(255, 255, 255);overflow:auto;border:1px solid rgb(204, 204, 204);border-radius:3px;border-color:rgb(223, 225, 229);border-width:1px;">
+ <div style="margin:0px;border-bottom-color:rgb(85, 85, 85);text-align:left;overflow:hidden;position:relative;padding:5px 15px;background:rgb(245, 245, 245);border-bottom:none;border-bottom-width:1px;">
+  <b style="color:rgb(51, 51, 51);display:inline-block;padding-right:130px;">config</b>
+  <span style="text-decoration:none;margin-bottom:10px;right:15px;position:absolute;top:5px;float:right;cursor:pointer;"><span style="display:inline-block;height:16px;min-width:16px;text-align:left;text-indent:-9999em;background-repeat:no-repeat;background-position:left center;font-size:0px;vertical-align:text-bottom;background-image:url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAQAAAC1+jfqAAAALElEQVQoz2NgGGSg4EzBTPwKOgr+F6ThVzKTsJK7Bf/JN4GgG4C+6GAYigAASNYUTGaVYwsAAAAASUVORK5CYII=);"> </span><span style="vertical-align:top;color:rgb(59, 115, 175);">展开源码</span></span>
+  
+ </div>
+ 
+</div><ul style="margin:10px 0px 0px;list-style-type:disc;"><li><strong>部署到ray集群</strong>：</li></ul><p style="padding:0px;margin:10px 0px 0px;margin-left:40.0px;">ray start --head</p><p style="padding:0px;margin:10px 0px 0px;margin-left:40.0px;">serve deploy config.yaml</p><p style="padding:0px;margin:10px 0px 0px;margin-left:40.0px;">此时可通过调用http://localhost:8000/classify与http://localhost:8000/translate接口将请求发送到不同的模型进行处理。</p><ul style="margin:10px 0px 0px;list-style-type:disc;"><li><strong>备注</strong></li></ul><p style="padding:0px;margin:10px 0px 0px;margin-left:40.0px;">部署模型时可在@serve.deployment中加入参数如：</p><p style="padding:0px;margin:10px 0px 0px;margin-left:40.0px;">@serve.deployment(<br/>    name="Translator",<br/>    num_replicas=2,<br/>    ray_actor_options={"num_cpus": 0.2, "num_gpus": 0, "resouces": {"custom_resources": 2}},<br/>)</p><p style="padding:0px;margin:10px 0px 0px;margin-left:40.0px;"><a href="https://docs.ray.io/en/latest/ray-core/scheduling/resources.html#custom-resources" rel="nofollow" style="text-decoration:none;color:rgb(0, 68, 204);">“custom_resources”</a>可指定特定资源，可将模型部署到特定节点。对于ray cluster集群部署来说，可以为各个节点指定"custom_resources"，如：</p><ul style="margin:10px 0px 0px;list-style-type:disc;"><li style="list-style-type:none;"><ol style="margin:10px 0px 0px;list-style-type:decimal;margin-top:0px;"><li>head node：ray start --head --num-cpus=3 --num-gpus=4 --resources='{"custom_label": 1, "custom_resources": 2}'</li><li>worker node：ray start --address=&lt;head-node-address:port&gt; --resources='{"special_hardware": 1, "another_custom_resources": 2}'</li></ol></li></ul></div><div style="margin:0px;padding:0px;padding-top:5px;padding-bottom:5px;display:flex;align-items:center;margin-top:20px;"><i style="width:16px;text-align:center;color:rgb(221, 221, 221);font-family:&quot;Font Awesome 5 Free&quot;;font-weight:900;-webkit-font-smoothing:antialiased;display:inline-block;font-style:normal;font-variant:normal;text-rendering:auto;line-height:1;"><span style="font-family:Font Awesome 5 Free;font-weight:900;font-style:normal;font-variant:normal;line-height:1;text-align:center;color:rgb(221, 221, 221);"></span></i><h1 style="padding:0px;letter-spacing:-0.01em;text-transform:none;margin:30px 0px 0px;font-size:24px;line-height:1.25;font-weight:normal;color:rgb(0, 51, 102);border-bottom-color:rgb(85, 85, 85);display:block;vertical-align:middle;flex:1 1 0%;margin-top:0px;"><span>3. </span>关键核心技术</h1></div><div style="margin:0px;padding:0px;padding-top:5px;padding-bottom:5px;padding-left:20px;display:block;"><div style="margin:0px;padding:0px;padding-top:5px;padding-bottom:5px;display:flex;align-items:center;"><i style="width:16px;text-align:center;color:rgb(221, 221, 221);font-family:&quot;Font Awesome 5 Free&quot;;font-weight:900;-webkit-font-smoothing:antialiased;display:inline-block;font-style:normal;font-variant:normal;text-rendering:auto;line-height:1;"><span style="font-family:Font Awesome 5 Free;font-weight:900;font-style:normal;font-variant:normal;line-height:1;text-align:center;color:rgb(221, 221, 221);"></span></i><h2 style="padding:0px;text-transform:none;letter-spacing:-0.008em;margin:30px 0px 0px;font-weight:normal;font-size:20px;line-height:1.5;color:rgb(0, 51, 102);border-bottom-color:rgb(85, 85, 85);display:block;vertical-align:middle;flex:1 1 0%;margin-top:0px;"><span>3.1. </span>异构AI推理任务调度（推理一体机集群）</h2></div><div style="margin:0px;padding:0px;padding-top:5px;padding-bottom:5px;padding-left:20px;display:block;"><p style="padding:0px;margin:10px 0px 0px;margin-top:0px;">解决推理一体机（每个一体机上部署不同的模型）集群AI推理任务的调度问题，以及多个模型组合问题。</p><ol style="margin:10px 0px 0px;list-style-type:decimal;"><li>ray cluster集群可将多个推理一体机进行统一纳管，将不同一体机纳入ray cluster时，可根据ray start --resouces='{"custom_resouces": 2}'为该推理机指定特定资源</li><li>参考<a href="https://docs.kylincloud.org/pages/viewpage.action?pageId=128944157#heading-ray%E9%83%A8%E7%BD%B2%E5%A4%9A%E4%B8%AA%E6%8E%A8%E7%90%86%E6%9C%8D%E5%8A%A1%E5%AE%9E%E4%BE%8B" rel="nofollow" style="text-decoration:none;color:rgb(0, 68, 204);">ray 部署多个推理服务实例</a>，根据ray_actor_options={"resouces": {"custom_resources": 2}}参数，可以将不同大模型部署调度到不同一体机，通过不同http URL path将请求流量转发到不同推理一体机</li></ol></div><div style="margin:0px;padding:0px;padding-top:5px;padding-bottom:5px;display:flex;align-items:center;margin-top:20px;"><i style="width:16px;text-align:center;color:rgb(221, 221, 221);font-family:&quot;Font Awesome 5 Free&quot;;font-weight:900;-webkit-font-smoothing:antialiased;display:inline-block;font-style:normal;font-variant:normal;text-rendering:auto;line-height:1;"><span style="font-family:Font Awesome 5 Free;font-weight:900;font-style:normal;font-variant:normal;line-height:1;text-align:center;color:rgb(221, 221, 221);"></span></i><h2 style="padding:0px;text-transform:none;letter-spacing:-0.008em;margin:30px 0px 0px;font-weight:normal;font-size:20px;line-height:1.5;color:rgb(0, 51, 102);border-bottom-color:rgb(85, 85, 85);display:block;vertical-align:middle;flex:1 1 0%;margin-top:0px;"><span>3.2. </span>动态扩缩容</h2></div><div style="margin:0px;padding:0px;padding-top:5px;padding-bottom:5px;padding-left:20px;display:block;"><p style="padding:0px;margin:10px 0px 0px;margin-top:0px;">解决用户流量激增问题，<a href="https://docs.kylincloud.org/pages/viewpage.action?pageId=128944157#heading-RayServeAutoScaler" rel="nofollow" style="text-decoration:none;color:rgb(0, 68, 204);">Ray Serve Autoscaler</a>支持模型实例副本的自动扩缩容。</p><ol style="margin:10px 0px 0px;list-style-type:decimal;"><li>当请求流量增加时，ray serve autoscaler准备扩容模型实例的副本，判断当前集群是否有足够资源（cpu，gpu）来扩容副本，若没有，则扩容节点（对于kuberay来说则是加pod，对于一体机来说得增加一体机），将模型实例副本调度到这些节点上</li><li>当请求流量减少时，ray serve autoscaler缩减节点，同时减少模型实例副本，释放资源</li></ol></div><div style="margin:0px;padding:0px;padding-top:5px;padding-bottom:5px;display:flex;align-items:center;margin-top:20px;"><i style="width:16px;text-align:center;color:rgb(221, 221, 221);font-family:&quot;Font Awesome 5 Free&quot;;font-weight:900;-webkit-font-smoothing:antialiased;display:inline-block;font-style:normal;font-variant:normal;text-rendering:auto;line-height:1;"><span style="font-family:Font Awesome 5 Free;font-weight:900;font-style:normal;font-variant:normal;line-height:1;text-align:center;color:rgb(221, 221, 221);"></span></i><h2 style="padding:0px;text-transform:none;letter-spacing:-0.008em;margin:30px 0px 0px;font-weight:normal;font-size:20px;line-height:1.5;color:rgb(0, 51, 102);border-bottom-color:rgb(85, 85, 85);display:block;vertical-align:middle;flex:1 1 0%;margin-top:0px;"><span>3.3. </span>负载均衡</h2></div><div style="margin:0px;padding:0px;padding-top:5px;padding-bottom:5px;padding-left:20px;display:block;"><p style="padding:0px;margin:10px 0px 0px;margin-top:0px;">解决用户流量激增问题，提升用户体验。</p><ol style="margin:10px 0px 0px;list-style-type:decimal;"><li>每个ray cluster节点都有一个HTTP Proxy，可以将当前节点的流量负载均衡到当前节点的不同副本，若请求的大模型不在当前节点，HTTP Proxy会将请求转发到其他节点进行处理</li><li>对于将外部流量负载均衡到ray cluster，需依赖nginx等进行处理</li></ol></div><div style="margin:0px;padding:0px;padding-top:5px;padding-bottom:5px;display:flex;align-items:center;margin-top:20px;"><i style="width:16px;text-align:center;color:rgb(221, 221, 221);font-family:&quot;Font Awesome 5 Free&quot;;font-weight:900;-webkit-font-smoothing:antialiased;display:inline-block;font-style:normal;font-variant:normal;text-rendering:auto;line-height:1;"><span style="font-family:Font Awesome 5 Free;font-weight:900;font-style:normal;font-variant:normal;line-height:1;text-align:center;color:rgb(221, 221, 221);"></span></i><h2 style="padding:0px;text-transform:none;letter-spacing:-0.008em;margin:30px 0px 0px;font-weight:normal;font-size:20px;line-height:1.5;color:rgb(0, 51, 102);border-bottom-color:rgb(85, 85, 85);display:block;vertical-align:middle;flex:1 1 0%;margin-top:0px;"><span>3.4. </span>自动容错</h2></div><div style="margin:0px;padding:0px;padding-top:5px;padding-bottom:5px;padding-left:20px;display:block;"><p style="padding:0px;margin:10px 0px 0px;margin-top:0px;">解决节点故障问题，增强服务高可用性。</p><ol style="margin:10px 0px 0px;list-style-type:decimal;"><li>通过模型实例副本来实现故障容错</li></ol></div></div><div style="margin:0px;padding:0px;padding-top:5px;padding-bottom:5px;display:flex;align-items:center;margin-top:20px;"><i style="width:16px;text-align:center;color:rgb(221, 221, 221);font-family:&quot;Font Awesome 5 Free&quot;;font-weight:900;-webkit-font-smoothing:antialiased;display:inline-block;font-style:normal;font-variant:normal;text-rendering:auto;line-height:1;"><span style="font-family:Font Awesome 5 Free;font-weight:900;font-style:normal;font-variant:normal;line-height:1;text-align:center;color:rgb(221, 221, 221);"></span></i><h1 style="padding:0px;letter-spacing:-0.01em;text-transform:none;margin:30px 0px 0px;font-size:24px;line-height:1.25;font-weight:normal;color:rgb(0, 51, 102);border-bottom-color:rgb(85, 85, 85);display:block;vertical-align:middle;flex:1 1 0%;margin-top:0px;"><span>4. </span>ray serve功能实践</h1></div><div style="margin:0px;padding:0px;padding-top:5px;padding-bottom:5px;padding-left:20px;display:block;"><div style="margin:0px;padding:0px;padding-top:5px;padding-bottom:5px;display:flex;align-items:center;"><i style="width:16px;text-align:center;color:rgb(221, 221, 221);font-family:&quot;Font Awesome 5 Free&quot;;font-weight:900;-webkit-font-smoothing:antialiased;display:inline-block;font-style:normal;font-variant:normal;text-rendering:auto;line-height:1;"><span style="font-family:Font Awesome 5 Free;font-weight:900;font-style:normal;font-variant:normal;line-height:1;text-align:center;color:rgb(221, 221, 221);"></span></i><h2 style="padding:0px;text-transform:none;letter-spacing:-0.008em;margin:30px 0px 0px;font-weight:normal;font-size:20px;line-height:1.5;color:rgb(0, 51, 102);border-bottom-color:rgb(85, 85, 85);display:block;vertical-align:middle;flex:1 1 0%;margin-top:0px;"><span>4.1. </span>ray cluster集群部署</h2></div><div style="margin:0px;padding:0px;padding-top:5px;padding-bottom:5px;padding-left:20px;display:block;"><ul style="margin:10px 0px 0px;margin-top:0px;list-style-type:disc;"><li>有2个节点，node11（ip: 10.44.11.11，8张nvidia卡），worker-nvidia（ip：10.42.42.198，2张nvidia卡）</li></ul><div style="color:rgb(51, 51, 51);margin:10px 0px;padding:0px;background-color:rgb(255, 255, 255);overflow:auto;border:1px solid rgb(204, 204, 204);border-radius:3px;border-color:rgb(223, 225, 229);border-width:1px;">
+ <div style="margin:0px;border-bottom-color:rgb(85, 85, 85);text-align:left;overflow:hidden;position:relative;padding:5px 15px;background:rgb(245, 245, 245);border-bottom:none;">
+  <b style="color:rgb(51, 51, 51);display:inline-block;padding-right:130px;"> </b>
+  <span style="text-decoration:none;margin-bottom:10px;right:15px;position:absolute;top:5px;float:right;cursor:pointer;"><span style="display:inline-block;height:16px;min-width:16px;text-align:left;text-indent:-9999em;background-repeat:no-repeat;background-position:left center;font-size:0px;vertical-align:text-bottom;background-image:url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAQAAAC1+jfqAAAALElEQVQoz2NgGGSg4EzBTPwKOgr+F6ThVzKTsJK7Bf/JN4GgG4C+6GAYigAASNYUTGaVYwsAAAAASUVORK5CYII=);"> </span><span style="vertical-align:top;color:rgb(59, 115, 175);">展开源码</span></span>
+  
+ </div>
+ 
+</div><ul style="margin:10px 0px 0px;list-style-type:disc;"><li>ray cluster部署</li></ul><div style="color:rgb(51, 51, 51);margin:10px 0px;padding:0px;background-color:rgb(255, 255, 255);overflow:auto;border:1px solid rgb(204, 204, 204);border-radius:3px;border-color:rgb(223, 225, 229);border-width:1px;">
+ <div style="margin:0px;border-bottom-color:rgb(85, 85, 85);text-align:left;overflow:hidden;position:relative;padding:5px 15px;background:rgb(245, 245, 245);border-bottom:none;">
+  <b style="color:rgb(51, 51, 51);display:inline-block;padding-right:130px;"> </b>
+  <span style="text-decoration:none;margin-bottom:10px;right:15px;position:absolute;top:5px;float:right;cursor:pointer;"><span style="display:inline-block;height:16px;min-width:16px;text-align:left;text-indent:-9999em;background-repeat:no-repeat;background-position:left center;font-size:0px;vertical-align:text-bottom;background-image:url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAQAAAC1+jfqAAAALElEQVQoz2NgGGSg4EzBTPwKOgr+F6ThVzKTsJK7Bf/JN4GgG4C+6GAYigAASNYUTGaVYwsAAAAASUVORK5CYII=);"> </span><span style="vertical-align:top;color:rgb(59, 115, 175);">展开源码</span></span>
+  
+ </div>
+ 
+</div><ul style="margin:10px 0px 0px;list-style-type:disc;"><li>此时登录http://10.44.11.11:8265可以看到，ray cluster已经就绪</li></ul><p style="padding:0px;margin:10px 0px 0px;margin-left:40.0px;"><span style="position:relative;display:inline-block;max-width:none;"><div class="media-placeholder">[图片/附件]</div></en-media></span></p><ul style="margin:10px 0px 0px;list-style-type:disc;"><li>node11或者worker-nvidia执行ray list nodes，观察到我们自定义的my_resources已经在worker-nvidia（ip：10.42.42.198）上显示：</li></ul><p style="padding:0px;margin:10px 0px 0px;margin-left:40.0px;"><span style="position:relative;display:inline-block;max-width:none;"><div class="media-placeholder">[图片/附件]</div></en-media></span></p></div><div style="margin:0px;padding:0px;padding-top:5px;padding-bottom:5px;display:flex;align-items:center;margin-top:20px;"><i style="width:16px;text-align:center;color:rgb(221, 221, 221);font-family:&quot;Font Awesome 5 Free&quot;;font-weight:900;-webkit-font-smoothing:antialiased;display:inline-block;font-style:normal;font-variant:normal;text-rendering:auto;line-height:1;"><span style="font-family:Font Awesome 5 Free;font-weight:900;font-style:normal;font-variant:normal;line-height:1;text-align:center;color:rgb(221, 221, 221);"></span></i><h2 style="padding:0px;text-transform:none;letter-spacing:-0.008em;margin:30px 0px 0px;font-weight:normal;font-size:20px;line-height:1.5;color:rgb(0, 51, 102);border-bottom-color:rgb(85, 85, 85);display:block;vertical-align:middle;flex:1 1 0%;margin-top:0px;"><span>4.2. </span>图像识别与翻译推理应用部署到ray cluster实践</h2></div><div style="margin:0px;padding:0px;padding-top:5px;padding-bottom:5px;padding-left:20px;display:block;"><ul style="margin:10px 0px 0px;margin-top:0px;list-style-type:disc;"><li>图像识别代码：image_classifier.py</li></ul><div style="color:rgb(51, 51, 51);margin:10px 0px;padding:0px;background-color:rgb(255, 255, 255);overflow:auto;border:1px solid rgb(204, 204, 204);border-radius:3px;border-color:rgb(223, 225, 229);border-width:1px;">
+ <div style="margin:0px;border-bottom-color:rgb(85, 85, 85);text-align:left;overflow:hidden;position:relative;padding:5px 15px;background:rgb(245, 245, 245);border-bottom:none;">
+  <b style="color:rgb(51, 51, 51);display:inline-block;padding-right:130px;"> </b>
+  <span style="text-decoration:none;margin-bottom:10px;right:15px;position:absolute;top:5px;float:right;cursor:pointer;"><span style="display:inline-block;height:16px;min-width:16px;text-align:left;text-indent:-9999em;background-repeat:no-repeat;background-position:left center;font-size:0px;vertical-align:text-bottom;background-image:url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAQAAAC1+jfqAAAALElEQVQoz2NgGGSg4EzBTPwKOgr+F6ThVzKTsJK7Bf/JN4GgG4C+6GAYigAASNYUTGaVYwsAAAAASUVORK5CYII=);"> </span><span style="vertical-align:top;color:rgb(59, 115, 175);">展开源码</span></span>
+  
+ </div>
+ 
+</div><p style="padding:0px;margin:10px 0px 0px;"><br/></p><ul style="margin:10px 0px 0px;list-style-type:disc;"><li>翻译代码：text_translator.py</li></ul><div style="color:rgb(51, 51, 51);margin:10px 0px;padding:0px;background-color:rgb(255, 255, 255);overflow:auto;border:1px solid rgb(204, 204, 204);border-radius:3px;border-color:rgb(223, 225, 229);border-width:1px;">
+ <div style="margin:0px;border-bottom-color:rgb(85, 85, 85);text-align:left;overflow:hidden;position:relative;padding:5px 15px;background:rgb(245, 245, 245);border-bottom:none;">
+  <b style="color:rgb(51, 51, 51);display:inline-block;padding-right:130px;"> </b>
+  <span style="text-decoration:none;margin-bottom:10px;right:15px;position:absolute;top:5px;float:right;cursor:pointer;"><span style="display:inline-block;height:16px;min-width:16px;text-align:left;text-indent:-9999em;background-repeat:no-repeat;background-position:left center;font-size:0px;vertical-align:text-bottom;background-image:url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAQAAAC1+jfqAAAALElEQVQoz2NgGGSg4EzBTPwKOgr+F6ThVzKTsJK7Bf/JN4GgG4C+6GAYigAASNYUTGaVYwsAAAAASUVORK5CYII=);"> </span><span style="vertical-align:top;color:rgb(59, 115, 175);">展开源码</span></span>
+  
+ </div>
+ 
+</div><p style="padding:0px;margin:10px 0px 0px;"><br/></p><ul style="margin:10px 0px 0px;list-style-type:disc;"><li>所有节点安装transformers==4.49.0 pillow==11.1.0 torch==2.6.0 requests==2.32.3包</li></ul><div style="color:rgb(51, 51, 51);margin:10px 0px;padding:0px;background-color:rgb(255, 255, 255);overflow:auto;border:1px solid rgb(204, 204, 204);border-radius:3px;border-color:rgb(223, 225, 229);border-width:1px;">
+ <div style="margin:0px;border-bottom-color:rgb(85, 85, 85);text-align:left;overflow:hidden;position:relative;padding:5px 15px;background:rgb(245, 245, 245);border-bottom:none;">
+  <b style="color:rgb(51, 51, 51);display:inline-block;padding-right:130px;"> </b>
+  <span style="text-decoration:none;margin-bottom:10px;right:15px;position:absolute;top:5px;float:right;cursor:pointer;"><span style="display:inline-block;height:16px;min-width:16px;text-align:left;text-indent:-9999em;background-repeat:no-repeat;background-position:left center;font-size:0px;vertical-align:text-bottom;background-image:url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAQAAAC1+jfqAAAALElEQVQoz2NgGGSg4EzBTPwKOgr+F6ThVzKTsJK7Bf/JN4GgG4C+6GAYigAASNYUTGaVYwsAAAAASUVORK5CYII=);"> </span><span style="vertical-align:top;color:rgb(59, 115, 175);">展开源码</span></span>
+  
+ </div>
+ 
+</div><p style="padding:0px;margin:10px 0px 0px;"><br/></p><ul style="margin:10px 0px 0px;list-style-type:disc;"><li>生成config.yaml部署文件，<span style="color:rgb(128,0,0);"><strong>确保所有节点均有image_classifier.py与text_translator.py文件，且必须是.zip的格式</strong></span></li></ul><div style="color:rgb(51, 51, 51);margin:10px 0px;padding:0px;background-color:rgb(255, 255, 255);overflow:auto;border:1px solid rgb(204, 204, 204);border-radius:3px;border-color:rgb(223, 225, 229);border-width:1px;">
+ <div style="margin:0px;border-bottom-color:rgb(85, 85, 85);text-align:left;overflow:hidden;position:relative;padding:5px 15px;background:rgb(245, 245, 245);border-bottom:none;">
+  <b style="color:rgb(51, 51, 51);display:inline-block;padding-right:130px;"> </b>
+  <span style="text-decoration:none;margin-bottom:10px;right:15px;position:absolute;top:5px;float:right;cursor:pointer;"><span style="display:inline-block;height:16px;min-width:16px;text-align:left;text-indent:-9999em;background-repeat:no-repeat;background-position:left center;font-size:0px;vertical-align:text-bottom;background-image:url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAQAAAC1+jfqAAAALElEQVQoz2NgGGSg4EzBTPwKOgr+F6ThVzKTsJK7Bf/JN4GgG4C+6GAYigAASNYUTGaVYwsAAAAASUVORK5CYII=);"> </span><span style="vertical-align:top;color:rgb(59, 115, 175);">展开源码</span></span>
+  
+ </div>
+ 
+</div><p style="padding:0px;margin:10px 0px 0px;"><br/></p><ul style="margin:10px 0px 0px;list-style-type:disc;"><li>模型的预先下载，所有节点需下载模型，否则可能会因为网络问题而报错</li></ul><div style="color:rgb(51, 51, 51);margin:10px 0px;padding:0px;background-color:rgb(255, 255, 255);overflow:auto;border:1px solid rgb(204, 204, 204);border-radius:3px;border-color:rgb(223, 225, 229);border-width:1px;">
+ <div style="margin:0px;border-bottom-color:rgb(85, 85, 85);text-align:left;overflow:hidden;position:relative;padding:5px 15px;background:rgb(245, 245, 245);border-bottom:none;">
+  <b style="color:rgb(51, 51, 51);display:inline-block;padding-right:130px;"> </b>
+  <span style="text-decoration:none;margin-bottom:10px;right:15px;position:absolute;top:5px;float:right;cursor:pointer;"><span style="display:inline-block;height:16px;min-width:16px;text-align:left;text-indent:-9999em;background-repeat:no-repeat;background-position:left center;font-size:0px;vertical-align:text-bottom;background-image:url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAQAAAC1+jfqAAAALElEQVQoz2NgGGSg4EzBTPwKOgr+F6ThVzKTsJK7Bf/JN4GgG4C+6GAYigAASNYUTGaVYwsAAAAASUVORK5CYII=);"> </span><span style="vertical-align:top;color:rgb(59, 115, 175);">展开源码</span></span>
+  
+ </div>
+ 
+</div><div style="margin:0px;padding:0px;padding-top:5px;padding-bottom:5px;display:flex;align-items:center;margin-top:20px;"><i style="width:16px;text-align:center;color:rgb(221, 221, 221);font-family:&quot;Font Awesome 5 Free&quot;;font-weight:900;-webkit-font-smoothing:antialiased;display:inline-block;font-style:normal;font-variant:normal;text-rendering:auto;line-height:1;"><span style="font-family:Font Awesome 5 Free;font-weight:900;font-style:normal;font-variant:normal;line-height:1;text-align:center;color:rgb(221, 221, 221);"></span></i><h3 style="padding:0px;letter-spacing:-0.006em;text-transform:none;margin:30px 0px 0px;font-size:16px;line-height:1.5;font-weight:bold;color:rgb(0, 51, 102);display:block;vertical-align:middle;flex:1 1 0%;margin-top:0px;"><span>4.2.1. </span>将模型发布到ray cluster</h3></div><div style="margin:0px;padding:0px;padding-top:5px;padding-bottom:5px;padding-left:20px;display:block;"><p style="padding:0px;margin:10px 0px 0px;margin-top:0px;">将模型发布到ray cluster操作，可在本地windows机器（已经安装ray[serve]包，与ray cluster的ray[serve]包版本一致，不然会报错）执行，也可以在node11节点上执行，执行的位置目录需有config.yaml文件</p><ul style="margin:10px 0px 0px;list-style-type:disc;"><li>本地windows机器：<ul style="margin:10px 0px 0px;list-style-type:disc;margin-top:0px;"><li><strong>serve run config.yaml </strong>-a ray://10.44.11.11:10001（默认client端口是10001，类似于ray.init(address="ray://10.44.11.11:10001")），serve run命令是会一直在终端输出日志，方便调试，或者</li><li><strong>serve deploy config.yaml</strong> -a http://10.44.11.11:8265（默认的dashboard端口8265）</li></ul></li><li>node11机器：<ul style="margin:10px 0px 0px;list-style-type:disc;margin-top:0px;"><li>serve run config.yaml 或者</li><li>serve deploy config.yaml</li></ul></li></ul></div><div style="margin:0px;padding:0px;padding-top:5px;padding-bottom:5px;display:flex;align-items:center;margin-top:20px;"><i style="width:16px;text-align:center;color:rgb(221, 221, 221);font-family:&quot;Font Awesome 5 Free&quot;;font-weight:900;-webkit-font-smoothing:antialiased;display:inline-block;font-style:normal;font-variant:normal;text-rendering:auto;line-height:1;"><span style="font-family:Font Awesome 5 Free;font-weight:900;font-style:normal;font-variant:normal;line-height:1;text-align:center;color:rgb(221, 221, 221);"></span></i><h3 style="padding:0px;letter-spacing:-0.006em;text-transform:none;margin:30px 0px 0px;font-size:16px;line-height:1.5;font-weight:bold;color:rgb(0, 51, 102);display:block;vertical-align:middle;flex:1 1 0%;margin-top:0px;"><span>4.2.2. </span>dashboard界面查看模型实例（serve application）</h3></div><div style="margin:0px;padding:0px;padding-top:5px;padding-bottom:5px;padding-left:20px;display:block;"><ul style="margin:10px 0px 0px;margin-top:0px;list-style-type:disc;"><li>如下图，app1（图像识别）与app2（翻译）均已经就绪：</li></ul><p style="padding:0px;margin:10px 0px 0px;margin-left:40.0px;"><span style="position:relative;display:inline-block;max-width:none;"><div class="media-placeholder">[图片/附件]</div></en-media></span></p><ul style="margin:10px 0px 0px;list-style-type:disc;"><li>app2（翻译）标注请求特定的"my_resources"资源，观察其调度情况，均被调度到了worker-nvidia（ip：10.42.42.198）节点，每个replica均用了2个"my_resources"资源，此时worker-nvidia节点"my_resources"资源只剩下1个：</li></ul><p style="padding:0px;margin:10px 0px 0px;"><span style="position:relative;display:inline-block;max-width:none;"><div class="media-placeholder">[图片/附件]</div></en-media></span></p><p style="padding:0px;margin:10px 0px 0px;"><span style="position:relative;display:inline-block;max-width:none;"><div class="media-placeholder">[图片/附件]</div></en-media></span></p><p style="padding:0px;margin:10px 0px 0px;"><span style="position:relative;display:inline-block;max-width:none;"><div class="media-placeholder">[图片/附件]</div></en-media></span></p></div><div style="margin:0px;padding:0px;padding-top:5px;padding-bottom:5px;display:flex;align-items:center;margin-top:20px;"><i style="width:16px;text-align:center;color:rgb(221, 221, 221);font-family:&quot;Font Awesome 5 Free&quot;;font-weight:900;-webkit-font-smoothing:antialiased;display:inline-block;font-style:normal;font-variant:normal;text-rendering:auto;line-height:1;"><span style="font-family:Font Awesome 5 Free;font-weight:900;font-style:normal;font-variant:normal;line-height:1;text-align:center;color:rgb(221, 221, 221);"></span></i><h3 style="padding:0px;letter-spacing:-0.006em;text-transform:none;margin:30px 0px 0px;font-size:16px;line-height:1.5;font-weight:bold;color:rgb(0, 51, 102);display:block;vertical-align:middle;flex:1 1 0%;margin-top:0px;"><span>4.2.3. </span>请求图像识别与翻译模型的推理处理</h3></div><div style="margin:0px;padding:0px;padding-top:5px;padding-bottom:5px;padding-left:20px;display:block;"><p style="padding:0px;margin:10px 0px 0px;margin-top:0px;">测试代码：req_image_text.py</p><div style="color:rgb(51, 51, 51);margin:10px 0px;padding:0px;background-color:rgb(255, 255, 255);overflow:auto;border:1px solid rgb(204, 204, 204);border-radius:3px;border-color:rgb(223, 225, 229);border-width:1px;">
+ <div style="margin:0px;border-bottom-color:rgb(85, 85, 85);text-align:left;overflow:hidden;position:relative;padding:5px 15px;background:rgb(245, 245, 245);border-bottom:none;">
+  <b style="color:rgb(51, 51, 51);display:inline-block;padding-right:130px;"> </b>
+  <span style="text-decoration:none;margin-bottom:10px;right:15px;position:absolute;top:5px;float:right;cursor:pointer;"><span style="display:inline-block;height:16px;min-width:16px;text-align:left;text-indent:-9999em;background-repeat:no-repeat;background-position:left center;font-size:0px;vertical-align:text-bottom;background-image:url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAQAAAC1+jfqAAAALElEQVQoz2NgGGSg4EzBTPwKOgr+F6ThVzKTsJK7Bf/JN4GgG4C+6GAYigAASNYUTGaVYwsAAAAASUVORK5CYII=);"> </span><span style="vertical-align:top;color:rgb(59, 115, 175);">展开源码</span></span>
+  
+ </div>
+ 
+</div><ul style="margin:10px 0px 0px;list-style-type:disc;"><li>若在node11执行，请求地址可以是<span>http://localhost:8000</span></li><li>若在windows本地执行，请求地址可以是任意的node11，worker-nvidia节点的ip地址，即http://10.44.11.11:8000或者<span>http://10.42.42.198:8000</span></li><li>因为根据ray serve的架构设计，每个节点都会运行HTTP Proxy 这个actor，对于请求本机的模型实例replica，则本机处理，不是本机的模型实例replica，则转发到对应的节点上的模型实例replica去处理</li></ul></div></div><div style="margin:0px;padding:0px;padding-top:5px;padding-bottom:5px;display:flex;align-items:center;margin-top:20px;"><i style="width:16px;text-align:center;color:rgb(221, 221, 221);font-family:&quot;Font Awesome 5 Free&quot;;font-weight:900;-webkit-font-smoothing:antialiased;display:inline-block;font-style:normal;font-variant:normal;text-rendering:auto;line-height:1;"><span style="font-family:Font Awesome 5 Free;font-weight:900;font-style:normal;font-variant:normal;line-height:1;text-align:center;color:rgb(221, 221, 221);"></span></i><h2 style="padding:0px;text-transform:none;letter-spacing:-0.008em;margin:30px 0px 0px;font-weight:normal;font-size:20px;line-height:1.5;color:rgb(0, 51, 102);border-bottom-color:rgb(85, 85, 85);display:block;vertical-align:middle;flex:1 1 0%;margin-top:0px;"><span>4.3. </span>ray管理多个大模型实践</h2></div><div style="margin:0px;padding:0px;padding-top:5px;padding-bottom:5px;padding-left:20px;display:block;"><div style="margin:0px;padding:0px;padding-top:5px;padding-bottom:5px;display:flex;align-items:center;"><i style="width:16px;text-align:center;color:rgb(221, 221, 221);font-family:&quot;Font Awesome 5 Free&quot;;font-weight:900;-webkit-font-smoothing:antialiased;display:inline-block;font-style:normal;font-variant:normal;text-rendering:auto;line-height:1;"><span style="font-family:Font Awesome 5 Free;font-weight:900;font-style:normal;font-variant:normal;line-height:1;text-align:center;color:rgb(221, 221, 221);"></span></i><h3 style="padding:0px;letter-spacing:-0.006em;text-transform:none;margin:30px 0px 0px;font-size:16px;line-height:1.5;font-weight:bold;color:rgb(0, 51, 102);display:block;vertical-align:middle;flex:1 1 0%;margin-top:0px;"><span>4.3.1. </span>ray cluser集群搭建</h3></div><div style="margin:0px;padding:0px;padding-top:5px;padding-bottom:5px;padding-left:20px;display:block;"><div style="color:rgb(51, 51, 51);margin:10px 0px;padding:0px;background-color:rgb(255, 255, 255);overflow:auto;border:1px solid rgb(204, 204, 204);border-radius:3px;border-color:rgb(223, 225, 229);border-width:1px;">
+ <div style="margin:0px;border-bottom-color:rgb(85, 85, 85);text-align:left;overflow:hidden;position:relative;padding:5px 15px;background:rgb(245, 245, 245);border-bottom:none;">
+  <b style="color:rgb(51, 51, 51);display:inline-block;padding-right:130px;"> </b>
+  <span style="text-decoration:none;margin-bottom:10px;right:15px;position:absolute;top:5px;float:right;cursor:pointer;"><span style="display:inline-block;height:16px;min-width:16px;text-align:left;text-indent:-9999em;background-repeat:no-repeat;background-position:left center;font-size:0px;vertical-align:text-bottom;background-image:url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAQAAAC1+jfqAAAALElEQVQoz2NgGGSg4EzBTPwKOgr+F6ThVzKTsJK7Bf/JN4GgG4C+6GAYigAASNYUTGaVYwsAAAAASUVORK5CYII=);"> </span><span style="vertical-align:top;color:rgb(59, 115, 175);">展开源码</span></span>
+  
+ </div>
+ 
+</div></div><div style="margin:0px;padding:0px;padding-top:5px;padding-bottom:5px;display:flex;align-items:center;margin-top:20px;"><i style="width:16px;text-align:center;color:rgb(221, 221, 221);font-family:&quot;Font Awesome 5 Free&quot;;font-weight:900;-webkit-font-smoothing:antialiased;display:inline-block;font-style:normal;font-variant:normal;text-rendering:auto;line-height:1;"><span style="font-family:Font Awesome 5 Free;font-weight:900;font-style:normal;font-variant:normal;line-height:1;text-align:center;color:rgb(221, 221, 221);"></span></i><h3 style="padding:0px;letter-spacing:-0.006em;text-transform:none;margin:30px 0px 0px;font-size:16px;line-height:1.5;font-weight:bold;color:rgb(0, 51, 102);display:block;vertical-align:middle;flex:1 1 0%;margin-top:0px;"><span>4.3.2. </span>编写测试代码</h3></div><div style="margin:0px;padding:0px;padding-top:5px;padding-bottom:5px;padding-left:20px;display:block;"><p style="padding:0px;margin:10px 0px 0px;margin-top:0px;">编写测试代码：vllm_openai.py</p><p style="padding:0px;margin:10px 0px 0px;">通过python vllm_openai.py来做调试，方便debug，生产环境可采用serve deploy llm_config.yaml的方式提交</p><div style="color:rgb(51, 51, 51);margin:10px 0px;padding:0px;background-color:rgb(255, 255, 255);overflow:auto;border:1px solid rgb(204, 204, 204);border-radius:3px;border-color:rgb(223, 225, 229);border-width:1px;">
+ <div style="margin:0px;border-bottom-color:rgb(85, 85, 85);text-align:left;overflow:hidden;position:relative;padding:5px 15px;background:rgb(245, 245, 245);border-bottom:none;">
+  <b style="color:rgb(51, 51, 51);display:inline-block;padding-right:130px;"> </b>
+  <span style="text-decoration:none;margin-bottom:10px;right:15px;position:absolute;top:5px;float:right;cursor:pointer;"><span style="display:inline-block;height:16px;min-width:16px;text-align:left;text-indent:-9999em;background-repeat:no-repeat;background-position:left center;font-size:0px;vertical-align:text-bottom;background-image:url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAQAAAC1+jfqAAAALElEQVQoz2NgGGSg4EzBTPwKOgr+F6ThVzKTsJK7Bf/JN4GgG4C+6GAYigAASNYUTGaVYwsAAAAASUVORK5CYII=);"> </span><span style="vertical-align:top;color:rgb(59, 115, 175);">展开源码</span></span>
+  
+ </div>
+ 
+</div></div><div style="margin:0px;padding:0px;padding-top:5px;padding-bottom:5px;display:flex;align-items:center;margin-top:20px;"><i style="width:16px;text-align:center;color:rgb(221, 221, 221);font-family:&quot;Font Awesome 5 Free&quot;;font-weight:900;-webkit-font-smoothing:antialiased;display:inline-block;font-style:normal;font-variant:normal;text-rendering:auto;line-height:1;"><span style="font-family:Font Awesome 5 Free;font-weight:900;font-style:normal;font-variant:normal;line-height:1;text-align:center;color:rgb(221, 221, 221);"></span></i><h3 style="padding:0px;letter-spacing:-0.006em;text-transform:none;margin:30px 0px 0px;font-size:16px;line-height:1.5;font-weight:bold;color:rgb(0, 51, 102);display:block;vertical-align:middle;flex:1 1 0%;margin-top:0px;"><span>4.3.3. </span>编写部署llm_config.yaml文件</h3></div><div style="margin:0px;padding:0px;padding-top:5px;padding-bottom:5px;padding-left:20px;display:block;"><p style="padding:0px;margin:10px 0px 0px;margin-top:0px;">serve deploy llm_config.yaml提交到ray cluster集群</p><div style="color:rgb(51, 51, 51);margin:10px 0px;padding:0px;background-color:rgb(255, 255, 255);overflow:auto;border:1px solid rgb(204, 204, 204);border-radius:3px;border-color:rgb(223, 225, 229);border-width:1px;">
+ <div style="margin:0px;border-bottom-color:rgb(85, 85, 85);text-align:left;overflow:hidden;position:relative;padding:5px 15px;background:rgb(245, 245, 245);border-bottom:none;">
+  <b style="color:rgb(51, 51, 51);display:inline-block;padding-right:130px;"> </b>
+  <span style="text-decoration:none;margin-bottom:10px;right:15px;position:absolute;top:5px;float:right;cursor:pointer;"><span style="display:inline-block;height:16px;min-width:16px;text-align:left;text-indent:-9999em;background-repeat:no-repeat;background-position:left center;font-size:0px;vertical-align:text-bottom;background-image:url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAQAAAC1+jfqAAAALElEQVQoz2NgGGSg4EzBTPwKOgr+F6ThVzKTsJK7Bf/JN4GgG4C+6GAYigAASNYUTGaVYwsAAAAASUVORK5CYII=);"> </span><span style="vertical-align:top;color:rgb(59, 115, 175);">展开源码</span></span>
+  
+ </div>
+ 
+</div></div><div style="margin:0px;padding:0px;padding-top:5px;padding-bottom:5px;display:flex;align-items:center;margin-top:20px;"><i style="width:16px;text-align:center;color:rgb(221, 221, 221);font-family:&quot;Font Awesome 5 Free&quot;;font-weight:900;-webkit-font-smoothing:antialiased;display:inline-block;font-style:normal;font-variant:normal;text-rendering:auto;line-height:1;"><span style="font-family:Font Awesome 5 Free;font-weight:900;font-style:normal;font-variant:normal;line-height:1;text-align:center;color:rgb(221, 221, 221);"></span></i><h3 style="padding:0px;letter-spacing:-0.006em;text-transform:none;margin:30px 0px 0px;font-size:16px;line-height:1.5;font-weight:bold;color:rgb(0, 51, 102);display:block;vertical-align:middle;flex:1 1 0%;margin-top:0px;"><span>4.3.4. </span>测试</h3></div><div style="margin:0px;padding:0px;padding-top:5px;padding-bottom:5px;padding-left:20px;display:block;"><div style="color:rgb(51, 51, 51);margin:10px 0px;padding:0px;background-color:rgb(255, 255, 255);overflow:auto;border:1px solid rgb(204, 204, 204);border-radius:3px;border-color:rgb(223, 225, 229);border-width:1px;">
+ <div style="margin:0px;border-bottom-color:rgb(85, 85, 85);text-align:left;overflow:hidden;position:relative;padding:5px 15px;background:rgb(245, 245, 245);border-bottom:none;">
+  <b style="color:rgb(51, 51, 51);display:inline-block;padding-right:130px;"> </b>
+  <span style="text-decoration:none;margin-bottom:10px;right:15px;position:absolute;top:5px;float:right;cursor:pointer;"><span style="display:inline-block;height:16px;min-width:16px;text-align:left;text-indent:-9999em;background-repeat:no-repeat;background-position:left center;font-size:0px;vertical-align:text-bottom;background-image:url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAQAAAC1+jfqAAAALElEQVQoz2NgGGSg4EzBTPwKOgr+F6ThVzKTsJK7Bf/JN4GgG4C+6GAYigAASNYUTGaVYwsAAAAASUVORK5CYII=);"> </span><span style="vertical-align:top;color:rgb(59, 115, 175);">展开源码</span></span>
+  
+ </div>
+ 
+</div></div><div style="margin:0px;padding:0px;padding-top:5px;padding-bottom:5px;display:flex;align-items:center;margin-top:20px;"><i style="width:16px;text-align:center;color:rgb(221, 221, 221);font-family:&quot;Font Awesome 5 Free&quot;;font-weight:900;-webkit-font-smoothing:antialiased;display:inline-block;font-style:normal;font-variant:normal;text-rendering:auto;line-height:1;"><span style="font-family:Font Awesome 5 Free;font-weight:900;font-style:normal;font-variant:normal;line-height:1;text-align:center;color:rgb(221, 221, 221);"></span></i><h3 style="padding:0px;letter-spacing:-0.006em;text-transform:none;margin:30px 0px 0px;font-size:16px;line-height:1.5;font-weight:bold;color:rgb(0, 51, 102);display:block;vertical-align:middle;flex:1 1 0%;margin-top:0px;"><span>4.3.5. </span>部署open-webui接入ray cluster中的大模型</h3></div><div style="margin:0px;padding:0px;padding-top:5px;padding-bottom:5px;padding-left:20px;display:block;"><div style="color:rgb(51, 51, 51);margin:10px 0px;padding:0px;background-color:rgb(255, 255, 255);overflow:auto;border:1px solid rgb(204, 204, 204);border-radius:3px;border-color:rgb(223, 225, 229);border-width:1px;">
+ <div style="margin:0px;border-bottom-color:rgb(85, 85, 85);text-align:left;overflow:hidden;position:relative;padding:5px 15px;background:rgb(245, 245, 245);border-bottom:none;">
+  <b style="color:rgb(51, 51, 51);display:inline-block;padding-right:130px;"> </b>
+  <span style="text-decoration:none;margin-bottom:10px;right:15px;position:absolute;top:5px;float:right;cursor:pointer;"><span style="display:inline-block;height:16px;min-width:16px;text-align:left;text-indent:-9999em;background-repeat:no-repeat;background-position:left center;font-size:0px;vertical-align:text-bottom;background-image:url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAQAAAC1+jfqAAAALElEQVQoz2NgGGSg4EzBTPwKOgr+F6ThVzKTsJK7Bf/JN4GgG4C+6GAYigAASNYUTGaVYwsAAAAASUVORK5CYII=);"> </span><span style="vertical-align:top;color:rgb(59, 115, 175);">展开源码</span></span>
+  
+ </div>
+ 
+</div><p style="padding:0px;margin:10px 0px 0px;">访问<a href="http://10.44.11.12:3000/" rel="nofollow" style="text-decoration:none;color:rgb(0, 68, 204);">http://10.44.11.12:3000</a> 即可以web界面的形式使用大模型：</p><p style="padding:0px;margin:10px 0px 0px;"><span style="position:relative;display:inline-block;max-width:none;"><div class="media-placeholder">[图片/附件]</div></en-media></span></p></div></div><div style="margin:0px;padding:0px;padding-top:5px;padding-bottom:5px;display:flex;align-items:center;margin-top:20px;"><i style="width:16px;text-align:center;color:rgb(221, 221, 221);font-family:&quot;Font Awesome 5 Free&quot;;font-weight:900;-webkit-font-smoothing:antialiased;display:inline-block;font-style:normal;font-variant:normal;text-rendering:auto;line-height:1;"><span style="font-family:Font Awesome 5 Free;font-weight:900;font-style:normal;font-variant:normal;line-height:1;text-align:center;color:rgb(221, 221, 221);"></span></i><h2 style="padding:0px;text-transform:none;letter-spacing:-0.008em;margin:30px 0px 0px;font-weight:normal;font-size:20px;line-height:1.5;color:rgb(0, 51, 102);border-bottom-color:rgb(85, 85, 85);display:block;vertical-align:middle;flex:1 1 0%;margin-top:0px;"><span>4.4. </span>ray serve autoscaling</h2></div><div style="margin:0px;padding:0px;padding-top:5px;padding-bottom:5px;padding-left:20px;display:block;"><p style="padding:0px;margin:10px 0px 0px;margin-top:0px;">利用locust加压来测试ray serve autoscaling功能</p><div style="margin:0px;padding:0px;padding-top:5px;padding-bottom:5px;display:flex;align-items:center;margin-top:20px;"><i style="width:16px;text-align:center;color:rgb(221, 221, 221);font-family:&quot;Font Awesome 5 Free&quot;;font-weight:900;-webkit-font-smoothing:antialiased;display:inline-block;font-style:normal;font-variant:normal;text-rendering:auto;line-height:1;"><span style="font-family:Font Awesome 5 Free;font-weight:900;font-style:normal;font-variant:normal;line-height:1;text-align:center;color:rgb(221, 221, 221);"></span></i><h3 style="padding:0px;letter-spacing:-0.006em;text-transform:none;margin:30px 0px 0px;font-size:16px;line-height:1.5;font-weight:bold;color:rgb(0, 51, 102);display:block;vertical-align:middle;flex:1 1 0%;margin-top:0px;"><span>4.4.1. </span>配置autoscaling参数</h3></div><div style="margin:0px;padding:0px;padding-top:5px;padding-bottom:5px;padding-left:20px;display:block;"><p style="padding:0px;margin:10px 0px 0px;margin-top:0px;">say_hello.py内容如下：</p><div style="color:rgb(51, 51, 51);margin:10px 0px;padding:0px;background-color:rgb(255, 255, 255);overflow:auto;border:1px solid rgb(204, 204, 204);border-radius:3px;border-color:rgb(223, 225, 229);border-width:1px;">
+ <div style="margin:0px;border-bottom-color:rgb(85, 85, 85);text-align:left;overflow:hidden;position:relative;padding:5px 15px;background:rgb(245, 245, 245);border-bottom:none;">
+  <b style="color:rgb(51, 51, 51);display:inline-block;padding-right:130px;"> </b>
+  <span style="text-decoration:none;margin-bottom:10px;right:15px;position:absolute;top:5px;float:right;cursor:pointer;"><span style="display:inline-block;height:16px;min-width:16px;text-align:left;text-indent:-9999em;background-repeat:no-repeat;background-position:left center;font-size:0px;vertical-align:text-bottom;background-image:url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAQAAAC1+jfqAAAALElEQVQoz2NgGGSg4EzBTPwKOgr+F6ThVzKTsJK7Bf/JN4GgG4C+6GAYigAASNYUTGaVYwsAAAAASUVORK5CYII=);"> </span><span style="vertical-align:top;color:rgb(59, 115, 175);">展开源码</span></span>
+  
+ </div>
+ 
+</div><p style="padding:0px;margin:10px 0px 0px;">编辑config.yaml文件：</p><div style="color:rgb(51, 51, 51);margin:10px 0px;padding:0px;background-color:rgb(255, 255, 255);overflow:auto;border:1px solid rgb(204, 204, 204);border-radius:3px;border-color:rgb(223, 225, 229);border-width:1px;">
+ <div style="margin:0px;border-bottom-color:rgb(85, 85, 85);text-align:left;overflow:hidden;position:relative;padding:5px 15px;background:rgb(245, 245, 245);border-bottom:none;">
+  <b style="color:rgb(51, 51, 51);display:inline-block;padding-right:130px;"> </b>
+  <span style="text-decoration:none;margin-bottom:10px;right:15px;position:absolute;top:5px;float:right;cursor:pointer;"><span style="display:inline-block;height:16px;min-width:16px;text-align:left;text-indent:-9999em;background-repeat:no-repeat;background-position:left center;font-size:0px;vertical-align:text-bottom;background-image:url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAQAAAC1+jfqAAAALElEQVQoz2NgGGSg4EzBTPwKOgr+F6ThVzKTsJK7Bf/JN4GgG4C+6GAYigAASNYUTGaVYwsAAAAASUVORK5CYII=);"> </span><span style="vertical-align:top;color:rgb(59, 115, 175);">展开源码</span></span>
+  
+ </div>
+ 
+</div></div><div style="margin:0px;padding:0px;padding-top:5px;padding-bottom:5px;display:flex;align-items:center;margin-top:20px;"><i style="width:16px;text-align:center;color:rgb(221, 221, 221);font-family:&quot;Font Awesome 5 Free&quot;;font-weight:900;-webkit-font-smoothing:antialiased;display:inline-block;font-style:normal;font-variant:normal;text-rendering:auto;line-height:1;"><span style="font-family:Font Awesome 5 Free;font-weight:900;font-style:normal;font-variant:normal;line-height:1;text-align:center;color:rgb(221, 221, 221);"></span></i><h3 style="padding:0px;letter-spacing:-0.006em;text-transform:none;margin:30px 0px 0px;font-size:16px;line-height:1.5;font-weight:bold;color:rgb(0, 51, 102);display:block;vertical-align:middle;flex:1 1 0%;margin-top:0px;"><span>4.4.2. </span>locust</h3></div><div style="margin:0px;padding:0px;padding-top:5px;padding-bottom:5px;padding-left:20px;display:block;"><p style="padding:0px;margin:10px 0px 0px;margin-top:0px;">安装pip install locust，编写locust压测文件，locustfile.py：</p><div style="color:rgb(51, 51, 51);margin:10px 0px;padding:0px;background-color:rgb(255, 255, 255);overflow:auto;border:1px solid rgb(204, 204, 204);border-radius:3px;border-color:rgb(223, 225, 229);border-width:1px;">
+ <div style="margin:0px;border-bottom-color:rgb(85, 85, 85);text-align:left;overflow:hidden;position:relative;padding:5px 15px;background:rgb(245, 245, 245);border-bottom:none;">
+  <b style="color:rgb(51, 51, 51);display:inline-block;padding-right:130px;"> </b>
+  <span style="text-decoration:none;margin-bottom:10px;right:15px;position:absolute;top:5px;float:right;cursor:pointer;"><span style="display:inline-block;height:16px;min-width:16px;text-align:left;text-indent:-9999em;background-repeat:no-repeat;background-position:left center;font-size:0px;vertical-align:text-bottom;background-image:url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAQAAAC1+jfqAAAALElEQVQoz2NgGGSg4EzBTPwKOgr+F6ThVzKTsJK7Bf/JN4GgG4C+6GAYigAASNYUTGaVYwsAAAAASUVORK5CYII=);"> </span><span style="vertical-align:top;color:rgb(59, 115, 175);">展开源码</span></span>
+  
+ </div>
+ 
+</div><p style="padding:0px;margin:10px 0px 0px;">启动locust：locust -f locustfile.py --host=<a href="http://10.44.11.11:8000/" rel="nofollow" style="text-decoration:none;color:rgb(0, 68, 204);">http://10.44.11.11:8000</a> --spawn-rate 10，--spawn-rate每秒生成10个用户，--host参数为ray serve启动地址，访问http://10.44.11.11:8089进入locust管理界面：</p><p style="padding:0px;margin:10px 0px 0px;"><span style="position:relative;display:inline-block;max-width:none;"><div class="media-placeholder">[图片/附件]</div></en-media></span></p><p style="padding:0px;margin:10px 0px 0px;">观察HelloDeployment副本数是否增加：</p><p style="padding:0px;margin:10px 0px 0px;"><span style="position:relative;display:inline-block;max-width:none;"><div class="media-placeholder">[图片/附件]</div></en-media></span></p></div><div style="margin:0px;padding:0px;padding-top:5px;padding-bottom:5px;display:flex;align-items:center;margin-top:20px;"><i style="width:16px;text-align:center;color:rgb(221, 221, 221);font-family:&quot;Font Awesome 5 Free&quot;;font-weight:900;-webkit-font-smoothing:antialiased;display:inline-block;font-style:normal;font-variant:normal;text-rendering:auto;line-height:1;"><span style="font-family:Font Awesome 5 Free;font-weight:900;font-style:normal;font-variant:normal;line-height:1;text-align:center;color:rgb(221, 221, 221);"></span></i><h3 style="padding:0px;letter-spacing:-0.006em;text-transform:none;margin:30px 0px 0px;font-size:16px;line-height:1.5;font-weight:bold;color:rgb(0, 51, 102);display:block;vertical-align:middle;flex:1 1 0%;margin-top:0px;"><span>4.4.3. </span>qwen locust配置文件</h3></div><div style="margin:0px;padding:0px;padding-top:5px;padding-bottom:5px;padding-left:20px;display:block;"><p style="padding:0px;margin:10px 0px 0px;margin-top:0px;">autoscaling_llm_config.yaml：</p><div style="color:rgb(51, 51, 51);margin:10px 0px;padding:0px;background-color:rgb(255, 255, 255);overflow:auto;border:1px solid rgb(204, 204, 204);border-radius:3px;border-color:rgb(223, 225, 229);border-width:1px;">
+ <div style="margin:0px;border-bottom-color:rgb(85, 85, 85);text-align:left;overflow:hidden;position:relative;padding:5px 15px;background:rgb(245, 245, 245);border-bottom:none;">
+  <b style="color:rgb(51, 51, 51);display:inline-block;padding-right:130px;"> </b>
+  <span style="text-decoration:none;margin-bottom:10px;right:15px;position:absolute;top:5px;float:right;cursor:pointer;"><span style="display:inline-block;height:16px;min-width:16px;text-align:left;text-indent:-9999em;background-repeat:no-repeat;background-position:left center;font-size:0px;vertical-align:text-bottom;background-image:url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAQAAAC1+jfqAAAALElEQVQoz2NgGGSg4EzBTPwKOgr+F6ThVzKTsJK7Bf/JN4GgG4C+6GAYigAASNYUTGaVYwsAAAAASUVORK5CYII=);"> </span><span style="vertical-align:top;color:rgb(59, 115, 175);">展开源码</span></span>
+  
+ </div>
+ 
+</div><p style="padding:0px;margin:10px 0px 0px;">locustfile.py：</p><div style="color:rgb(51, 51, 51);margin:10px 0px;padding:0px;background-color:rgb(255, 255, 255);overflow:auto;border:1px solid rgb(204, 204, 204);border-radius:3px;border-color:rgb(223, 225, 229);border-width:1px;">
+ <div style="margin:0px;border-bottom-color:rgb(85, 85, 85);text-align:left;overflow:hidden;position:relative;padding:5px 15px;background:rgb(245, 245, 245);border-bottom:none;">
+  <b style="color:rgb(51, 51, 51);display:inline-block;padding-right:130px;"> </b>
+  <span style="text-decoration:none;margin-bottom:10px;right:15px;position:absolute;top:5px;float:right;cursor:pointer;"><span style="display:inline-block;height:16px;min-width:16px;text-align:left;text-indent:-9999em;background-repeat:no-repeat;background-position:left center;font-size:0px;vertical-align:text-bottom;background-image:url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAQAAAC1+jfqAAAALElEQVQoz2NgGGSg4EzBTPwKOgr+F6ThVzKTsJK7Bf/JN4GgG4C+6GAYigAASNYUTGaVYwsAAAAASUVORK5CYII=);"> </span><span style="vertical-align:top;color:rgb(59, 115, 175);">展开源码</span></span>
+  
+ </div>
+ 
+</div><p style="padding:0px;margin:10px 0px 0px;">启动locust：locust -f locustfile.py  --host=<a href="http://10.44.11.11:8000/" rel="nofollow" style="text-decoration:none;color:rgb(0, 68, 204);">http://10.44.11.11:8000</a> --spawn-rate 10，--spawn-rate每秒生成10个用户，观察qwen-0.5b大模型副本数是否增加：</p><p style="padding:0px;margin:10px 0px 0px;"><span style="position:relative;display:inline-block;max-width:none;"><div class="media-placeholder">[图片/附件]</div></en-media></span></p></div></div></div>
+
+                
+        
+    
+        <div dir="ltr" style="margin:0px;padding:0px;pointer-events:none;position:absolute;inset:0px;overflow:hidden;z-index:-1;visibility:hidden;max-width:100%;"><div style="margin:0px;padding:0px;pointer-events:none;position:absolute;inset:0px;overflow:hidden;z-index:-1;visibility:hidden;max-width:100%;"><div style="margin:0px;padding:0px;position:absolute;left:0px;top:0px;transition:all;width:1109px;height:8764px;"></div></div><div style="margin:0px;padding:0px;pointer-events:none;position:absolute;inset:0px;overflow:hidden;z-index:-1;visibility:hidden;max-width:100%;"><div style="margin:0px;padding:0px;position:absolute;left:0px;top:0px;transition:all;width:200%;height:200%;"></div></div></div></div>
+
+                        
+    
+
+
+
+<div style="overflow:hidden;clear:both;margin:10px 0px;padding:10px 0px;"><div style="margin:0px;padding:0px;width:48%;float:left;font-size:12px;font-weight:300;color:rgb(63, 76, 102);"><a href="https://docs.kylincloud.org/pages/viewpage.action?pageId=128944157" style="text-decoration:none;color:rgb(0, 68, 204);display:block;float:left;"><span style="background-repeat:no-repeat;background-position:0px 0px;border:none;display:inline-block;margin:0px;padding:0px;text-align:left;text-indent:-999em;vertical-align:text-bottom;line-height:0;position:relative;height:16px;width:16px;color:rgb(80, 95, 121);"><span style="text-align:left;text-indent:-999em;line-height:0;color:rgb(80, 95, 121);-webkit-font-smoothing:antialiased;-webkit-text-stroke-width:0px;font-family:Adgs Icons;font-weight:400;font-style:normal;speak:none;left:0px;position:absolute;top:50%;font-size:16px;margin-top:-8px;"></span></span><span style="padding-left:5px;">赞</span></a><span style="padding-left:20px;">成为第一个赞同者</span></div><div style="margin:0px;padding:0px;width:48%;float:right;">
+    <div style="margin:0px;padding:0px;">
+	<div style="margin:0px;padding:0px;position:relative;font-size:12px;font-weight:300;vertical-align:middle;">
+		
+    <ul style="padding:0px;color:rgb(94, 108, 132);margin:0px;text-align:right;padding-right:20px;">
+            <li style="display:inline-block;">
+            无标签
+        </li>
+                <li style="display:inline-block;max-width:16px;overflow:hidden;vertical-align:middle;position:absolute;top:0px;right:0px;">
+            <a href="https://docs.kylincloud.org/pages/viewpage.action?pageId=128944157#" title="编辑标签 (Type 'l')" style="text-decoration:none;color:rgb(0, 68, 204);">
+                <span style="background-repeat:no-repeat;background-position:0px 0px;border:none;display:inline-block;margin:0px;padding:0px;text-align:left;text-indent:-999em;vertical-align:text-bottom;line-height:0;position:relative;height:16px;width:16px;color:rgb(80, 95, 121);"><span style="text-align:left;text-indent:-999em;line-height:0;color:rgb(80, 95, 121);-webkit-font-smoothing:antialiased;-webkit-text-stroke-width:0px;font-family:Adgs Icons;font-weight:400;font-style:normal;speak:none;left:0px;position:absolute;top:50%;font-size:16px;margin-top:-8px;"></span>编辑标签</span>
+            </a>
+        </li>
+        </ul>
+
+    </div>
+</div>
+</div></div>
+        
+		
+            
+
+
+
+
+            
+        
+
+
+
+
+
+
+
+
+                        
+    
+<div style="margin:0px;padding:0px;margin-top:11px;">
+        
+    
+
+
+    <div style="margin:0px;padding:0px;">
+                
+                    
+    
+
+
+        
+        
+    
+    <div style="clear:left;position:relative;overflow-wrap:break-word;margin:0px 0px -1px;padding:10px 0px;margin-top:10px;border-top:0px;"><p style="width:32px;float:left;margin:1px 10px 0px 0px;padding:0px;"><a style="text-decoration:none;display:inline;line-height:30px;color:rgb(0, 68, 204);"><div class="media-placeholder">[图片/附件]</div></en-media></a></p><div style="margin:0px;padding:0px;padding-left:42px;"><div style="margin:0px;padding:0px;"></div><div style="margin:0px;padding:0px;"></div><div style="padding:0px;animation-duration:0.01s;animation-name:StructurePagesNodeInserted;position:relative;margin:20px 0px 0px;margin-top:0px;display:block;"><div title="添加评论 (Type 'm')" style="margin:0px;padding:0px;color:rgb(52, 69, 99);padding-top:5px;border-radius:3px;height:59px;background-color:rgb(250, 251, 252);border:1px solid rgb(235, 236, 240);"><span style="padding:8px;">写评论...</span></div></div></div></div>
+
+            </div>
+
+            
+    </div>
+        
+
+
+                
+    
+            
+<div style="margin:0px;padding:0px;position:absolute;min-width:100px;width:187px;top:168.993px;left:1174px;"></div></div>
+
+    
+
+    
+
+
+
+
+    
+    
+
+    
+    
+    
+
+
+    
+
+        
+
+
+
+            </div>
+            
+    
+    
+        
+            
+            
+
+<div style="margin:0px;padding:0px;clear:both;float:left;position:absolute;right:0px;left:0px;width:auto;margin-left:279px;">
+    <div style="color:rgb(122, 134, 154);font-size:12px;line-height:1.66667;margin:20px 0px;padding:0px 10px 21px;min-height:44px;text-align:center;background:url(https://docs.kylincloud.org/s/-74b5ic/8506/5d4cfda2b837dbf77e088aa916d969d565373c86/1.0/_/download/resources/confluence.web.resources:ajs/images/brand-images/atlassian/atlassian-horizontal-neutral.svg) center bottom / 127px 26px no-repeat;">
+
+                                                    
+        
+
+        
+        <div style="margin:0px;padding:0px;"><span></span></div>
+<ul style="margin:10px 0px 0px;display:block;font-size:0px;list-style:none;padding:0px;">
+            <li style="display:inline-block;font-size:12px;line-height:1.66667;padding:0px;white-space:nowrap;">基于 <a href="http://www.atlassian.com/software/confluence" rel="nofollow" style="text-decoration:none;color:rgb(122, 134, 154);">Atlassian Confluence</a> <span>7.10.2</span> 技术构建<span style="font-size:12px;line-height:1.66667;white-space:nowrap;margin-left:10px;speak:none;">·</span></li>
+            
+            <li style="display:inline-block;font-size:12px;line-height:1.66667;padding:0px;white-space:nowrap;margin-left:10px;"><a href="https://support.atlassian.com/help/confluence" rel="nofollow" style="text-decoration:none;color:rgb(122, 134, 154);">报告缺陷</a><span style="font-size:12px;line-height:1.66667;white-space:nowrap;margin-left:10px;speak:none;">·</span></li>
+            <li style="display:inline-block;font-size:12px;line-height:1.66667;padding:0px;white-space:nowrap;margin-left:10px;"><a href="https://www.atlassian.com/company" rel="nofollow" style="text-decoration:none;color:rgb(122, 134, 154);">Atlassian 新闻</a><span style="font-size:12px;line-height:1.66667;white-space:nowrap;margin-left:10px;speak:none;display:none;">·</span></li>
+        </ul>
+
+        
+
+        <div style="margin:0px;padding:0px;background:rgb(245, 245, 245);position:relative;bottom:-21px;"><a href="http://www.atlassian.com/" rel="nofollow" style="text-decoration:none;background:url(https://docs.kylincloud.org/s/-74b5ic/8506/5d4cfda2b837dbf77e088aa916d969d565373c86/1.0/_/download/resources/confluence.web.resources:ajs/images/brand-images/atlassian/atlassian-horizontal-neutral.svg) center bottom / 127px 26px no-repeat;display:block;height:26px;margin:0px auto;text-align:left;text-indent:-9999em;width:127px;color:rgb(122, 134, 154);">Atlassian</a></div>
+
+                    
+        
+    </div>
+</div>
+
+    
+</div>
+
+</div>
+</div>
+
+    
+
+
+    
+<div style="margin:0px;padding:0px;margin-left:-132px;top:20px;position:absolute;left:50%;"></div><div style="margin:0px;padding:0px;display:flex;"><div style="margin:0px;padding:0px;z-index:600;"></div></div><div style="margin:0px;padding:0px;"></div><div style="margin:0px;padding:0px;"><div style="margin:0px;padding:0px;"><div style="margin:0px;padding:0px;"></div></div></div><span></span></div></div></div></div>
+</div>
+<a class="back-link" href="../articles.html">← 返回笔记列表</a>
+</body>
+</html>

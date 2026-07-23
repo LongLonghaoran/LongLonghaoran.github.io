@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="zh-CN" data-theme="light">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PostCSS工具与AutoPrefixer — 技术笔记</title>
+<style>
+:root { --bg:#fff; --text:#1a1a1a; --muted:#666; --border:#e0e0e0; --code-bg:#f5f5f5; --link:#0066cc; }
+@media (prefers-color-scheme: dark) { :root { --bg:#1a1a1a; --text:#e0e0e0; --muted:#999; --border:#333; --code-bg:#2a2a2a; --link:#66bbff; } }
+* { box-sizing:border-box; margin:0; padding:0; }
+body { font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Arial,sans-serif; line-height:1.7; color:var(--text); background:var(--bg); max-width:860px; margin:0 auto; padding:2rem 1.5rem; }
+.note-header { border-bottom:2px solid var(--border); padding-bottom:1rem; margin-bottom:2rem; }
+.note-title { font-size:1.6rem; font-weight:700; margin-bottom:0.3rem; }
+.note-meta { color:var(--muted); font-size:0.85rem; }
+.note-content { font-size:0.95rem; }
+.note-content h1 { font-size:1.4rem; margin:1.2rem 0 0.6rem; }
+.note-content h2 { font-size:1.2rem; margin:1rem 0 0.5rem; }
+.note-content h3 { font-size:1.05rem; margin:0.8rem 0 0.4rem; }
+.note-content p { margin:0.5rem 0; }
+.note-content ul,.note-content ol { margin:0.5rem 0 0.5rem 2rem; }
+.note-content li { margin:0.2rem 0; }
+.note-content pre { background:var(--code-bg); padding:1rem; border-radius:6px; overflow-x:auto; margin:0.8rem 0; font-size:0.85rem; }
+.note-content code { background:var(--code-bg); padding:0.1rem 0.3rem; border-radius:3px; font-size:0.88em; }
+.note-content pre code { background:none; padding:0; }
+.note-content blockquote { border-left:3px solid var(--border); padding-left:1rem; color:var(--muted); margin:0.8rem 0; }
+.note-content a { color:var(--link); }
+.note-content img { max-width:100%; height:auto; border-radius:6px; margin:0.5rem 0; }
+.note-content table { border-collapse:collapse; width:100%; margin:0.8rem 0; }
+.note-content th,.note-content td { border:1px solid var(--border); padding:0.5rem; }
+.note-content th { background:var(--code-bg); }
+.media-placeholder { background:var(--code-bg); padding:1rem; text-align:center; color:var(--muted); border-radius:6px; margin:0.5rem 0; font-size:0.85rem; }
+.encrypt-placeholder { background:#fff3cd; padding:0.5rem; text-align:center; color:#856404; border-radius:6px; margin:0.5rem 0; font-size:0.85rem; }
+.back-link { display:inline-block; margin-top:2rem; color:var(--link); text-decoration:none; font-size:0.85rem; }
+</style>
+</head>
+<body>
+<div class="note-header"><div class="note-title">PostCSS工具与AutoPrefixer</div><div class="note-meta">笔记本：前端学习</div></div>
+<div class="note-content"><div>一句话简介: </div><div><span style="color: rgb(255, 255, 255); font-family: &quot;Fira Sans&quot;, sans-serif; font-size: 32px; font-variant-ligatures: normal; font-variant-caps: normal; letter-spacing: normal; orphans: 2; text-indent: 0px; text-transform: none; white-space: normal; widows: 2; word-spacing: 0px; -webkit-text-stroke-width: 0px; background-color: rgb(43, 39, 35);">A tool for transforming CSS with JavaScript</span></div><div style="orphans: 2; widows: 2; "><font face="Fira Sans, sans-serif" style="color: rgb(204, 204, 204); --inversion-type-color: simple;"><span style="caret-color: rgb(51, 51, 51);"><span></span></span></font></div><div style="orphans: 2; widows: 2; "><br /></div><div>使用Js来转换CSS的工具</div><div><br /></div><h3 style="padding: 24px 0px 28px; border: 0px; font-size: 1.5625rem; line-height: 1.875rem; clear: left; color: rgb(63, 63, 63); font-family: ibm-plex-sans, &quot;Helvetica Neue&quot;, Arial, sans-serif; font-variant-ligatures: normal; font-variant-caps: normal; letter-spacing: normal; orphans: 2; text-align: start; text-indent: 0px; text-transform: none; white-space: normal; widows: 2; word-spacing: 0px; -webkit-text-stroke-width: 0px; background-color: rgb(255, 255, 255);"><span style="border: 0px; font-size: 1.5625rem; line-height: 1.875rem; clear: left; color: rgb(63, 63, 63); font-family: ibm-plex-sans, &quot;Helvetica Neue&quot;, Arial, sans-serif; font-variant-ligatures: normal; font-variant-caps: normal; letter-spacing: normal; orphans: 2; text-indent: 0px; text-transform: none; white-space: normal; widows: 2; word-spacing: 0px; -webkit-text-stroke-width: 0px; background-color: rgb(255, 255, 255);">Autoprefixer
+</span></h3><div style="padding: 0px 0px 22px; border: 0px; font-size: 1.0625rem; line-height: 1.625rem; color: rgb(50, 50, 50); font-family: ibm-plex-sans, &quot;Helvetica Neue&quot;, Arial, sans-serif; font-variant-ligatures: normal; font-variant-caps: normal; letter-spacing: normal; orphans: 2; text-align: start; text-indent: 0px; text-transform: none; white-space: normal; widows: 2; word-spacing: 0px; -webkit-text-stroke-width: 0px; background-color: rgb(255, 255, 255); margin-top: 1em; margin-bottom: 1em;"><span style="border: 0px; font-size: 1.0625rem; line-height: 1.625rem; color: rgb(50, 50, 50); font-family: ibm-plex-sans, &quot;Helvetica Neue&quot;, Arial, sans-serif; font-variant-ligatures: normal; font-variant-caps: normal; letter-spacing: normal; orphans: 2; text-indent: 0px; text-transform: none; white-space: normal; widows: 2; word-spacing: 0px; -webkit-text-stroke-width: 0px; background-color: rgb(255, 255, 255);-en-paragraph:true;">Autoprefixer 是一个流行的 PostCSS 插件，其作用是为 CSS 中的属性添加浏览器特定的前缀。由于 CSS 规范的制定和完善一般需要花费比较长的时间，浏览器厂商在实现某个 CSS 新功能时，会使用特定的浏览器前缀来作为正式规范版本之前的实验性实现。比如 Webkit 核心的浏览器使用-webkit-，微软的 IE 使用-ms-。为了兼容不同浏览器的不同版本，在编写 CSS 样式规则声明时通常需要添加额外的带前缀的属性。这是一项繁琐而无趣的工作。Autoprefixer 可以自动的完成这项工作。Autoprefixer 可以根据需要指定支持的浏览器类型和版本，自动添加所需的带前缀的属性声明。开发人员在编写 CSS 时只需要使用 CSS 规范中的标准属性名即可。
+</span></div></div>
+<a class="back-link" href="../articles.html">← 返回笔记列表</a>
+</body></html>

@@ -1,0 +1,290 @@
+<!DOCTYPE html>
+<html lang="zh-CN" data-theme="light">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ruby - 为什么这个 Ruby 程序不将堆内存返回给操作系统？ - IT工具网 — 技术笔记</title>
+<style>
+:root {
+  --bg: #ffffff;
+  --text: #1a1a1a;
+  --muted: #666;
+  --border: #e0e0e0;
+  --code-bg: #f5f5f5;
+  --link: #0066cc;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #1a1a1a;
+    --text: #e0e0e0;
+    --muted: #999;
+    --border: #333;
+    --code-bg: #2a2a2a;
+    --link: #66bbff;
+  }
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  line-height: 1.7;
+  color: var(--text);
+  background: var(--bg);
+  max-width: 860px;
+  margin: 0 auto;
+  padding: 2rem 1.5rem;
+}
+.note-header {
+  border-bottom: 2px solid var(--border);
+  padding-bottom: 1rem;
+  margin-bottom: 2rem;
+}
+.note-title {
+  font-size: 1.6rem;
+  font-weight: 700;
+  margin-bottom: 0.3rem;
+}
+.note-meta {
+  color: var(--muted);
+  font-size: 0.85rem;
+}
+.note-content {
+  font-size: 0.95rem;
+}
+.note-content h1 { font-size: 1.4rem; margin: 1.2rem 0 0.6rem; }
+.note-content h2 { font-size: 1.2rem; margin: 1rem 0 0.5rem; }
+.note-content h3 { font-size: 1.05rem; margin: 0.8rem 0 0.4rem; }
+.note-content p { margin: 0.5rem 0; }
+.note-content ul, .note-content ol { margin: 0.5rem 0 0.5rem 2rem; }
+.note-content li { margin: 0.2rem 0; }
+.note-content pre {
+  background: var(--code-bg);
+  padding: 1rem;
+  border-radius: 6px;
+  overflow-x: auto;
+  margin: 0.8rem 0;
+  font-size: 0.85rem;
+}
+.note-content code {
+  background: var(--code-bg);
+  padding: 0.1rem 0.3rem;
+  border-radius: 3px;
+  font-size: 0.88em;
+}
+.note-content pre code {
+  background: none;
+  padding: 0;
+}
+.note-content blockquote {
+  border-left: 3px solid var(--border);
+  padding-left: 1rem;
+  color: var(--muted);
+  margin: 0.8rem 0;
+}
+.note-content a { color: var(--link); }
+.note-content img {
+  max-width: 100%;
+  height: auto;
+  border-radius: 6px;
+  margin: 0.5rem 0;
+}
+.note-content table {
+  border-collapse: collapse;
+  width: 100%;
+  margin: 0.8rem 0;
+}
+.note-content th, .note-content td {
+  border: 1px solid var(--border);
+  padding: 0.5rem;
+}
+.note-content th { background: var(--code-bg); }
+.media-placeholder {
+  background: var(--code-bg);
+  padding: 1rem;
+  text-align: center;
+  color: var(--muted);
+  border-radius: 6px;
+  margin: 0.5rem 0;
+  font-size: 0.85rem;
+}
+.encrypt-placeholder {
+  background: #fff3cd;
+  padding: 0.5rem;
+  text-align: center;
+  color: #856404;
+  border-radius: 6px;
+  margin: 0.5rem 0;
+  font-size: 0.85rem;
+}
+.back-link {
+  display: inline-block;
+  margin-top: 2rem;
+  color: var(--link);
+  text-decoration: none;
+  font-size: 0.85rem;
+}
+</style>
+</head>
+<body>
+<div class="note-header">
+  <div class="note-title">ruby - 为什么这个 Ruby 程序不将堆内存返回给操作系统？ - IT工具网</div>
+  <div class="note-meta">笔记本：Ruby</div>
+</div>
+<div class="note-content">
+<div style="--en-clipped-content:article; --en-clipped-source-url:https://www.coder.work/article/1073391; --en-clipped-source-title:ruby - 为什么这个 Ruby 程序不将堆内存返回给操作系统？ - IT工具网;">
+<div><br/></div><div style="min-height: 2689px; font-size: 16px; display: block; min-width: 100%; position: relative;"> <div style="box-sizing:border-box;font-family:sans-serif;line-height:1.15;text-size-adjust:100%;-webkit-tap-highlight-color:transparent;overflow-wrap:break-word;"><div style="box-sizing:border-box;font-family:-apple-system, BlinkMacSystemFont, &quot;Segoe UI&quot;, Roboto, &quot;Helvetica Neue&quot;, Arial, &quot;Noto Sans&quot;, sans-serif, &quot;Apple Color Emoji&quot;, &quot;Segoe UI Emoji&quot;, &quot;Segoe UI Symbol&quot;, &quot;Noto Color Emoji&quot;;font-size:16px;font-weight:400;line-height:1.5;color:rgb(33, 37, 41);text-align:left;background-color:rgb(255, 255, 255);overflow-wrap:break-word;"><div style="overflow:auto;box-sizing:border-box;"><div style="box-sizing:border-box;"><div style="box-sizing:border-box;">
+				<div style="box-sizing:border-box;text-align:center;">
+		            <h1 style="box-sizing:border-box;margin-top:0px;font-weight:500;line-height:1.2;margin-bottom:8px;font-size:30px;">ruby - 为什么这个 Ruby 程序不将堆内存返回给操作系统？ </h1>
+				</div>
+
+	            <div style="box-sizing:border-box;margin-top:30px;">
+	            	<p style="box-sizing:border-box;margin-top:0px;margin-bottom:16px;font-size:14px;">
+	            		
+						标签
+						
+						<span style="box-sizing:border-box;"><a href="https://www.coder.work/article/1073391undefined" title="ruby" style="box-sizing:border-box;color:rgb(0, 123, 255);text-decoration:none;background-color:transparent;margin-left:2px;margin-right:2px;">ruby</a></span>
+						
+						<span style="box-sizing:border-box;"><a href="https://www.coder.work/article/1073391undefined" title="memory-management" style="box-sizing:border-box;color:rgb(0, 123, 255);text-decoration:none;background-color:transparent;margin-left:2px;margin-right:2px;">memory-management</a></span>
+						
+						<span style="box-sizing:border-box;"><a href="https://www.coder.work/article/1073391undefined" title="mri" style="box-sizing:border-box;color:rgb(0, 123, 255);text-decoration:none;background-color:transparent;margin-left:2px;margin-right:2px;">mri</a></span>
+						
+					</p>
+	            </div>
+
+	            <div style="box-sizing:border-box;margin-top:20px;">
+	            	
+	            		<div style="box-sizing:border-box;">
+	            			<p style="box-sizing:border-box;margin-top:0px;margin-bottom:16px;">我试图了解从 Ruby 堆分配的内存何时返回给操作系统。我知道 Ruby 永远不会返回分配给它的堆的内存，但我仍然不确定堆外内存的行为。即那些不适合 40 字节 RVALUE 的对象。<br style="box-sizing:border-box;"/><br style="box-sizing:border-box;"/>考虑以下程序，该程序分配一些大字符串，然后强制执行主 GC。<br style="box-sizing:border-box;"/></p><pre style="box-sizing:border-box;font-family:SFMono-Regular, Menlo, Monaco, Consolas, &quot;Liberation Mono&quot;, &quot;Courier New&quot;, monospace;margin-top:0px;margin-bottom:16px;overflow:auto;display:block;color:rgb(33, 37, 41);font-size:87.5%;"><code style="box-sizing:border-box;font-family:SFMono-Regular, Menlo, Monaco, Consolas, &quot;Liberation Mono&quot;, &quot;Courier New&quot;, monospace;font-size:inherit;word-break:normal;margin-top:10px;margin-left:2px;margin-right:2px;display:block;overflow-x:auto;background:rgb(244, 243, 236);padding:0.5em;color:rgb(95, 94, 78);"><span style="box-sizing:border-box;color:rgb(95, 145, 130);">require</span> <span style="box-sizing:border-box;color:rgb(125, 151, 38);">'objspace'</span>
+
+STRING_SIZE = <span style="box-sizing:border-box;color:rgb(174, 115, 19);">250</span>
+
+<span style="box-sizing:border-box;"><span style="box-sizing:border-box;color:rgb(95, 145, 130);">def</span> <span style="box-sizing:border-box;color:rgb(54, 161, 102);">print_stats</span><span style="box-sizing:border-box;color:rgb(174, 115, 19);">(msg)</span></span>
+  puts <span style="box-sizing:border-box;color:rgb(125, 151, 38);">'-------------------'</span>
+  puts msg
+  puts <span style="box-sizing:border-box;color:rgb(125, 151, 38);">'-------------------'</span>
+  puts <span style="box-sizing:border-box;color:rgb(125, 151, 38);">"RSS: <span style="box-sizing:border-box;">#{<span style="box-sizing:border-box;color:rgb(125, 151, 38);">`ps -eo rss,pid | grep <span style="box-sizing:border-box;">#{Process.pid}</span> | grep -v grep | awk '{ print $1,"KB";}'`</span>}</span>"</span>
+  puts <span style="box-sizing:border-box;color:rgb(125, 151, 38);">"HEAP SIZE: <span style="box-sizing:border-box;">#{(GC.stat[<span style="box-sizing:border-box;color:rgb(125, 151, 38);">:heap_sorted_length</span>] * <span style="box-sizing:border-box;color:rgb(174, 115, 19);">408</span> * <span style="box-sizing:border-box;color:rgb(174, 115, 19);">40</span>)/<span style="box-sizing:border-box;color:rgb(174, 115, 19);">1024</span>}</span> KB"</span>
+  puts <span style="box-sizing:border-box;color:rgb(125, 151, 38);">"SIZE OF ALL OBJECTS: <span style="box-sizing:border-box;">#{ObjectSpace.memsize_of_all/<span style="box-sizing:border-box;color:rgb(174, 115, 19);">1024</span>}</span> KB"</span>
+<span style="box-sizing:border-box;color:rgb(95, 145, 130);">end</span>
+
+<span style="box-sizing:border-box;"><span style="box-sizing:border-box;color:rgb(95, 145, 130);">def</span> <span style="box-sizing:border-box;color:rgb(54, 161, 102);">run</span></span>
+  print_stats(<span style="box-sizing:border-box;color:rgb(125, 151, 38);">'START WORK'</span>)
+  @data=[]
+  <span style="box-sizing:border-box;color:rgb(174, 115, 19);">600_000</span>.times <span style="box-sizing:border-box;color:rgb(95, 145, 130);">do</span>
+    @data &lt;&lt;  <span style="box-sizing:border-box;color:rgb(125, 151, 38);">" "</span>  * STRING_SIZE
+  <span style="box-sizing:border-box;color:rgb(95, 145, 130);">end</span>
+  print_stats(<span style="box-sizing:border-box;color:rgb(125, 151, 38);">'END WORK'</span>)
+  @data=<span style="box-sizing:border-box;color:rgb(174, 115, 19);">nil</span>
+<span style="box-sizing:border-box;color:rgb(95, 145, 130);">end</span>
+
+run
+GC.start
+print_stats(<span style="box-sizing:border-box;color:rgb(125, 151, 38);">'AFTER FORCED MAJOR GC'</span>)
+</code></pre><br style="box-sizing:border-box;"/>在 MRI 上使用 Ruby 2.2.3 运行此程序会产生以下输出。强制主 GC 后，堆大小符合预期，但 RSS 没有显着下降。<br style="box-sizing:border-box;"/><pre style="box-sizing:border-box;font-family:SFMono-Regular, Menlo, Monaco, Consolas, &quot;Liberation Mono&quot;, &quot;Courier New&quot;, monospace;margin-top:0px;margin-bottom:16px;overflow:auto;display:block;color:rgb(33, 37, 41);font-size:87.5%;"><code style="box-sizing:border-box;font-family:SFMono-Regular, Menlo, Monaco, Consolas, &quot;Liberation Mono&quot;, &quot;Courier New&quot;, monospace;font-size:inherit;word-break:normal;margin-top:10px;margin-left:2px;margin-right:2px;display:block;overflow-x:auto;background:rgb(244, 243, 236);padding:0.5em;color:rgb(95, 94, 78);"><span style="box-sizing:border-box;color:rgb(108, 107, 90);">-------------------</span>
+<span style="box-sizing:border-box;color:rgb(95, 145, 130);">START</span> <span style="box-sizing:border-box;color:rgb(95, 145, 130);">WORK</span>
+<span style="box-sizing:border-box;color:rgb(108, 107, 90);">-------------------</span>
+RSS: <span style="box-sizing:border-box;color:rgb(174, 115, 19);">7036</span> KB
+<span style="box-sizing:border-box;color:rgb(95, 145, 130);">HEAP</span> <span style="box-sizing:border-box;color:rgb(95, 145, 130);">SIZE</span>: <span style="box-sizing:border-box;color:rgb(174, 115, 19);">1195</span> KB
+<span style="box-sizing:border-box;color:rgb(95, 145, 130);">SIZE</span> <span style="box-sizing:border-box;color:rgb(95, 145, 130);">OF</span> <span style="box-sizing:border-box;color:rgb(95, 145, 130);">ALL</span> OBJECTS: <span style="box-sizing:border-box;color:rgb(174, 115, 19);">3172</span> KB
+<span style="box-sizing:border-box;color:rgb(108, 107, 90);">-------------------</span>
+<span style="box-sizing:border-box;color:rgb(95, 145, 130);">END</span> <span style="box-sizing:border-box;color:rgb(95, 145, 130);">WORK</span>
+<span style="box-sizing:border-box;color:rgb(108, 107, 90);">-------------------</span>
+RSS: <span style="box-sizing:border-box;color:rgb(174, 115, 19);">205660</span> KB
+<span style="box-sizing:border-box;color:rgb(95, 145, 130);">HEAP</span> <span style="box-sizing:border-box;color:rgb(95, 145, 130);">SIZE</span>: <span style="box-sizing:border-box;color:rgb(174, 115, 19);">35046</span> KB
+<span style="box-sizing:border-box;color:rgb(95, 145, 130);">SIZE</span> <span style="box-sizing:border-box;color:rgb(95, 145, 130);">OF</span> <span style="box-sizing:border-box;color:rgb(95, 145, 130);">ALL</span> OBJECTS: <span style="box-sizing:border-box;color:rgb(174, 115, 19);">178423</span> KB
+<span style="box-sizing:border-box;color:rgb(108, 107, 90);">-------------------</span>
+<span style="box-sizing:border-box;color:rgb(95, 145, 130);">AFTER</span> FORCED MAJOR GC
+<span style="box-sizing:border-box;color:rgb(108, 107, 90);">-------------------</span>
+RSS: <span style="box-sizing:border-box;color:rgb(174, 115, 19);">164492</span> KB
+<span style="box-sizing:border-box;color:rgb(95, 145, 130);">HEAP</span> <span style="box-sizing:border-box;color:rgb(95, 145, 130);">SIZE</span>: <span style="box-sizing:border-box;color:rgb(174, 115, 19);">35046</span> KB
+<span style="box-sizing:border-box;color:rgb(95, 145, 130);">SIZE</span> <span style="box-sizing:border-box;color:rgb(95, 145, 130);">OF</span> <span style="box-sizing:border-box;color:rgb(95, 145, 130);">ALL</span> OBJECTS: <span style="box-sizing:border-box;color:rgb(174, 115, 19);">2484</span> KB
+</code></pre><br style="box-sizing:border-box;"/>当我们分配一个大对象而不是许多小对象时，将这些结果与以下结果进行比较。<br style="box-sizing:border-box;"/><pre style="box-sizing:border-box;font-family:SFMono-Regular, Menlo, Monaco, Consolas, &quot;Liberation Mono&quot;, &quot;Courier New&quot;, monospace;margin-top:0px;margin-bottom:16px;overflow:auto;display:block;color:rgb(33, 37, 41);font-size:87.5%;"><code style="box-sizing:border-box;font-family:SFMono-Regular, Menlo, Monaco, Consolas, &quot;Liberation Mono&quot;, &quot;Courier New&quot;, monospace;font-size:inherit;word-break:normal;margin-top:10px;margin-left:2px;margin-right:2px;display:block;overflow-x:auto;background:rgb(244, 243, 236);padding:0.5em;color:rgb(95, 94, 78);"><span style="box-sizing:border-box;color:rgb(125, 151, 38);">def</span> <span style="box-sizing:border-box;color:rgb(125, 151, 38);">run</span>
+  <span style="box-sizing:border-box;color:rgb(125, 151, 38);">print_stats('START</span> <span style="box-sizing:border-box;color:rgb(125, 151, 38);">WORK')</span>
+  <span style="box-sizing:border-box;color:rgb(125, 151, 38);">@data</span> <span style="box-sizing:border-box;color:rgb(125, 151, 38);">=</span> <span style="box-sizing:border-box;color:rgb(125, 151, 38);">" "</span> <span style="box-sizing:border-box;color:rgb(125, 151, 38);">*</span> <span style="box-sizing:border-box;color:rgb(125, 151, 38);">STRING_SIZE</span> <span style="box-sizing:border-box;color:rgb(125, 151, 38);">*</span> <span style="box-sizing:border-box;color:rgb(125, 151, 38);">600_000</span>
+  <span style="box-sizing:border-box;color:rgb(125, 151, 38);">print_stats('END</span> <span style="box-sizing:border-box;color:rgb(125, 151, 38);">WORK')</span>
+  <span style="box-sizing:border-box;color:rgb(125, 151, 38);">@data=nil</span>
+<span style="box-sizing:border-box;color:rgb(125, 151, 38);">end</span>
+
+<span style="box-sizing:border-box;color:rgb(125, 151, 38);">-------------------</span>
+<span style="box-sizing:border-box;color:rgb(125, 151, 38);">START</span> <span style="box-sizing:border-box;color:rgb(125, 151, 38);">WORK</span>
+<span style="box-sizing:border-box;color:rgb(125, 151, 38);">-------------------</span>
+<span style="box-sizing:border-box;">RSS:</span> <span style="box-sizing:border-box;color:rgb(174, 115, 19);">7072 </span><span style="box-sizing:border-box;color:rgb(125, 151, 38);">KB</span>
+<span style="box-sizing:border-box;">HEAP SIZE:</span> <span style="box-sizing:border-box;color:rgb(174, 115, 19);">1195 </span><span style="box-sizing:border-box;color:rgb(125, 151, 38);">KB</span>
+<span style="box-sizing:border-box;">SIZE OF ALL OBJECTS:</span> <span style="box-sizing:border-box;color:rgb(174, 115, 19);">3170 </span><span style="box-sizing:border-box;color:rgb(125, 151, 38);">KB</span>
+<span style="box-sizing:border-box;color:rgb(125, 151, 38);">-------------------</span>
+<span style="box-sizing:border-box;color:rgb(125, 151, 38);">END</span> <span style="box-sizing:border-box;color:rgb(125, 151, 38);">WORK</span>
+<span style="box-sizing:border-box;color:rgb(125, 151, 38);">-------------------</span>
+<span style="box-sizing:border-box;">RSS:</span> <span style="box-sizing:border-box;color:rgb(174, 115, 19);">153584</span> <span style="box-sizing:border-box;color:rgb(125, 151, 38);">KB</span>
+<span style="box-sizing:border-box;">HEAP SIZE:</span> <span style="box-sizing:border-box;color:rgb(174, 115, 19);">1195 </span><span style="box-sizing:border-box;color:rgb(125, 151, 38);">KB</span>
+<span style="box-sizing:border-box;">SIZE OF ALL OBJECTS:</span> <span style="box-sizing:border-box;color:rgb(174, 115, 19);">149064</span> <span style="box-sizing:border-box;color:rgb(125, 151, 38);">KB</span>
+<span style="box-sizing:border-box;color:rgb(125, 151, 38);">-------------------</span>
+<span style="box-sizing:border-box;color:rgb(125, 151, 38);">AFTER</span> <span style="box-sizing:border-box;color:rgb(125, 151, 38);">FORCED</span> <span style="box-sizing:border-box;color:rgb(125, 151, 38);">MAJOR</span> <span style="box-sizing:border-box;color:rgb(125, 151, 38);">GC</span>
+<span style="box-sizing:border-box;color:rgb(125, 151, 38);">-------------------</span>
+<span style="box-sizing:border-box;">RSS:</span> <span style="box-sizing:border-box;color:rgb(174, 115, 19);">7096 </span><span style="box-sizing:border-box;color:rgb(125, 151, 38);">KB</span>
+<span style="box-sizing:border-box;">HEAP SIZE:</span> <span style="box-sizing:border-box;color:rgb(174, 115, 19);">1195 </span><span style="box-sizing:border-box;color:rgb(125, 151, 38);">KB</span>
+<span style="box-sizing:border-box;">SIZE OF ALL OBJECTS:</span> <span style="box-sizing:border-box;color:rgb(174, 115, 19);">2483 </span><span style="box-sizing:border-box;color:rgb(125, 151, 38);">KB</span>
+</code></pre><br style="box-sizing:border-box;"/>请注意最终的 RSS 值。我们似乎已经释放了为大字符串分配的所有内存。<br style="box-sizing:border-box;"/><br style="box-sizing:border-box;"/>我不确定为什么第二个示例释放内存，但第一个示例没有，因为它们都从 Ruby 堆分配内存。这是一个 <a href="https://www.coder.work/article/1073391undefined" rel="noreferrer noopener nofollow" style="box-sizing:border-box;color:rgb(0, 123, 255);text-decoration:none;background-color:transparent;margin-left:2px;margin-right:2px;">reference</a>这可以提供解释，但我会对其他人的解释感兴趣。<br style="box-sizing:border-box;"/><br style="box-sizing:border-box;"/> <blockquote style="font-size:16px;line-height:1.5;padding:0px 1em;color:rgb(106, 115, 125);border-left:0.25em solid rgb(223, 226, 229);box-sizing:border-box;margin:0px 0px 16px;">
+  <p style="box-sizing:border-box;margin-top:0px;margin-bottom:16px;">Releasing memory back to the kernel also has a cost. User space memory
+  allocators may hold onto that memory (privately) in the hope it can be
+  reused within the same process and not give it back to the kernel for
+  use in other processes.</p>
+</blockquote><p style="box-sizing:border-box;margin-top:0px;margin-bottom:16px;"></p>
+			            </div>
+
+		            	
+							
+							<ins style="box-sizing:border-box;display:block;"></ins>
+							
+							
+						
+
+		            	<div style="box-sizing:border-box;margin-top:20px;">
+		            		<p style="box-sizing:border-box;margin-top:0px;margin-bottom:16px;">
+		            			<strong style="box-sizing:border-box;font-weight:bolder;"><font size="5" style="box-sizing:border-box;">最佳答案</font></strong>
+		            		</p>
+		            	</div>
+
+		            	<div style="box-sizing:border-box;">
+		            		<p style="box-sizing:border-box;margin-top:0px;margin-bottom:16px;">@joanbm 在这里有一个很好的观点。他的引用 <a href="https://www.coder.work/article/1073391undefined" rel="noreferrer noopener nofollow" style="box-sizing:border-box;color:rgb(0, 123, 255);text-decoration:none;background-color:transparent;margin-left:2px;margin-right:2px;">article explains this pretty well</a> :<br style="box-sizing:border-box;"/><br style="box-sizing:border-box;"/>Ruby 的 GC 会逐渐释放内存，因此当您对 1 个引用指向的 1 大内存块执行 GC 时，它会释放所有内存，但是当有大量引用时，GC 会以较小的 block 释放内存。<br style="box-sizing:border-box;"/><br style="box-sizing:border-box;"/>多次调用 <code style="box-sizing:border-box;font-family:SFMono-Regular, Menlo, Monaco, Consolas, &quot;Liberation Mono&quot;, &quot;Courier New&quot;, monospace;color:rgb(232, 62, 140);word-break:break-word;font-size:87.5%;margin-top:10px;margin-left:2px;margin-right:2px;">GC.start</code>将在第一个示例中释放越来越多的内存。<br style="box-sizing:border-box;"/><br style="box-sizing:border-box;"/>这里有 2 篇其他文章可以深入挖掘:<br style="box-sizing:border-box;"/></p><li style="box-sizing:border-box;"> <a href="https://www.coder.work/article/1073391undefined" rel="noreferrer noopener nofollow" style="box-sizing:border-box;color:rgb(0, 123, 255);text-decoration:none;background-color:transparent;margin-left:2px;margin-right:2px;">http://thorstenball.com/blog/2014/03/12/watching-understanding-ruby-2.1-garbage-collector/</a> </li><li style="box-sizing:border-box;"> <a href="https://www.coder.work/article/1073391undefined" rel="noreferrer noopener nofollow" style="box-sizing:border-box;color:rgb(0, 123, 255);text-decoration:none;background-color:transparent;margin-left:2px;margin-right:2px;">https://samsaffron.com/archive/2013/11/22/demystifying-the-ruby-gc</a> </li><p style="box-sizing:border-box;margin-top:0px;margin-bottom:16px;"></p>
+			            </div>
+
+					
+
+					
+					<div style="box-sizing:border-box;margin-top:20px;margin-bottom:40px;">
+						<p style="box-sizing:border-box;margin-top:0px;margin-bottom:16px;font-size:20px;">关于ruby - 为什么这个 Ruby 程序不将堆内存返回给操作系统？，我们在Stack Overflow上找到一个类似的问题：
+							<a href="https://www.coder.work/article/1073391undefined" rel="noreferrer noopener nofollow" style="box-sizing:border-box;color:red;text-decoration:none;background-color:transparent;margin-left:2px;margin-right:2px;">
+								https://stackoverflow.com/questions/32923610/
+							</a>
+						</p>
+					</div>
+					
+
+					
+						
+						<ins style="box-sizing:border-box;display:block;"></ins>
+						
+						
+					
+
+	            </div>
+
+	    	    
+				
+	            <div style="box-sizing:border-box;text-align:center;margin-top:40px;">
+					
+					<h3 style="box-sizing:border-box;margin-top:0px;font-weight:500;line-height:1.2;margin-bottom:8px;font-size:18px;">
+						<span style="box-sizing:border-box;">上一篇：<a href="https://www.coder.work/article/1073391undefined" title="ruby-on-rails - Arel + Rails 4.2 导致问题(绑定(bind)丢失)" style="box-sizing:border-box;color:rgb(0, 123, 255);text-decoration:none;background-color:transparent;margin-left:2px;margin-right:2px;">ruby-on-rails - Arel + Rails 4.2 导致问题(绑定(bind)丢失)</a></span>
+					</h3>
+					
+					
+					<h3 style="box-sizing:border-box;margin-top:0px;font-weight:500;line-height:1.2;margin-bottom:8px;font-size:18px;">
+						<span style="box-sizing:border-box;">下一篇：<a href="https://www.coder.work/article/1073391undefined" title="ruby-on-rails - 为什么在 ruby​​ 中进行内存分析如此困难？" style="box-sizing:border-box;color:rgb(0, 123, 255);text-decoration:none;background-color:transparent;margin-left:2px;margin-right:2px;">ruby-on-rails - 为什么在 ruby​​ 中进行内存分析如此困难？</a></span>
+					</h3>
+					
+				</div>
+			</div></div></div></div></div></div>
+</div>
+</div>
+<a class="back-link" href="../articles.html">← 返回笔记列表</a>
+</body>
+</html>

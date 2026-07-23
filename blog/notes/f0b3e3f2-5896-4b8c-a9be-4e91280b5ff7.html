@@ -1,0 +1,213 @@
+<!DOCTYPE html>
+<html lang="zh-CN" data-theme="light">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>梯度是如何计算的 — 技术笔记</title>
+<style>
+:root {
+  --bg: #ffffff;
+  --text: #1a1a1a;
+  --muted: #666;
+  --border: #e0e0e0;
+  --code-bg: #f5f5f5;
+  --link: #0066cc;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #1a1a1a;
+    --text: #e0e0e0;
+    --muted: #999;
+    --border: #333;
+    --code-bg: #2a2a2a;
+    --link: #66bbff;
+  }
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  line-height: 1.7;
+  color: var(--text);
+  background: var(--bg);
+  max-width: 860px;
+  margin: 0 auto;
+  padding: 2rem 1.5rem;
+}
+.note-header {
+  border-bottom: 2px solid var(--border);
+  padding-bottom: 1rem;
+  margin-bottom: 2rem;
+}
+.note-title {
+  font-size: 1.6rem;
+  font-weight: 700;
+  margin-bottom: 0.3rem;
+}
+.note-meta {
+  color: var(--muted);
+  font-size: 0.85rem;
+}
+.note-content {
+  font-size: 0.95rem;
+}
+.note-content h1 { font-size: 1.4rem; margin: 1.2rem 0 0.6rem; }
+.note-content h2 { font-size: 1.2rem; margin: 1rem 0 0.5rem; }
+.note-content h3 { font-size: 1.05rem; margin: 0.8rem 0 0.4rem; }
+.note-content p { margin: 0.5rem 0; }
+.note-content ul, .note-content ol { margin: 0.5rem 0 0.5rem 2rem; }
+.note-content li { margin: 0.2rem 0; }
+.note-content pre {
+  background: var(--code-bg);
+  padding: 1rem;
+  border-radius: 6px;
+  overflow-x: auto;
+  margin: 0.8rem 0;
+  font-size: 0.85rem;
+}
+.note-content code {
+  background: var(--code-bg);
+  padding: 0.1rem 0.3rem;
+  border-radius: 3px;
+  font-size: 0.88em;
+}
+.note-content pre code {
+  background: none;
+  padding: 0;
+}
+.note-content blockquote {
+  border-left: 3px solid var(--border);
+  padding-left: 1rem;
+  color: var(--muted);
+  margin: 0.8rem 0;
+}
+.note-content a { color: var(--link); }
+.note-content img {
+  max-width: 100%;
+  height: auto;
+  border-radius: 6px;
+  margin: 0.5rem 0;
+}
+.note-content table {
+  border-collapse: collapse;
+  width: 100%;
+  margin: 0.8rem 0;
+}
+.note-content th, .note-content td {
+  border: 1px solid var(--border);
+  padding: 0.5rem;
+}
+.note-content th { background: var(--code-bg); }
+.media-placeholder {
+  background: var(--code-bg);
+  padding: 1rem;
+  text-align: center;
+  color: var(--muted);
+  border-radius: 6px;
+  margin: 0.5rem 0;
+  font-size: 0.85rem;
+}
+.encrypt-placeholder {
+  background: #fff3cd;
+  padding: 0.5rem;
+  text-align: center;
+  color: #856404;
+  border-radius: 6px;
+  margin: 0.5rem 0;
+  font-size: 0.85rem;
+}
+.back-link {
+  display: inline-block;
+  margin-top: 2rem;
+  color: var(--link);
+  text-decoration: none;
+  font-size: 0.85rem;
+}
+</style>
+</head>
+<body>
+<div class="note-header">
+  <div class="note-title">梯度是如何计算的</div>
+  <div class="note-meta">笔记本：AI</div>
+</div>
+<div class="note-content">
+<div style="--en-clipped-content:article">
+<div><br/></div><div style="font-size: 16px; display:block; min-width: 100%; position: relative;"> <div style="color-scheme:light;"><div style="font-family:-apple-system, &quot;system-ui&quot;, &quot;Helvetica Neue&quot;, &quot;PingFang SC&quot;, &quot;Microsoft YaHei&quot;, &quot;Source Han Sans SC&quot;, &quot;Noto Sans CJK SC&quot;, &quot;WenQuanYi Micro Hei&quot;, sans-serif;color:rgb(25, 27, 31);-webkit-tap-highlight-color:oklch(0.221713 0.00837101 264.445 / 0);background:rgb(255, 255, 255) none repeat scroll 0% 0% / auto padding-box border-box;"><div><div><span><div style="background:rgb(255, 255, 255) none repeat scroll 0% 0% / auto padding-box border-box;min-width:1000px;"><div style="box-sizing:border-box;"><div style="margin:0px auto;width:690px;"><h1 style="font:inherit;font-weight:600;overflow-wrap:break-word;font-size:24px;line-height:1.22;margin:24px 0px;">梯度是如何计算的</h1><div style="-webkit-box-align:center;align-items:center;display:flex;"><div style="-webkit-box-align:center;-webkit-box-pack:justify;align-items:center;display:flex;justify-content:space-between;max-width:654px;position:relative;-webkit-box-flex:1;flex:1 1 0%;overflow:hidden;white-space:nowrap;"><div style="-webkit-box-align:center;-webkit-box-pack:justify;align-items:center;display:flex;justify-content:space-between;max-width:654px;position:relative;-webkit-box-flex:1;flex:1 1 0%;overflow:hidden;white-space:nowrap;"><span><div style="position:relative;display:inline-block;"><a href="https://www.zhihu.com/people/xiaohuzc" target="_blank" style="color:inherit;text-decoration:none;"><div class="media-placeholder">[图片/附件]</div></en-media></a></div></span><div style="-webkit-box-flex:1;flex:1 1 0%;margin-left:14px;overflow:hidden;"><div style="-webkit-box-align:center;align-items:center;display:flex;flex-shrink:0;font-size:15px;line-height:1.1;"><span style="font-weight:600;color:rgb(55, 58, 64);"><div style="position:relative;display:inline-block;"><a href="https://www.zhihu.com/people/xiaohuzc" target="_blank" style="color:inherit;text-decoration:none;">小小将</a></div><a href="https://www.zhihu.com/question/48509984" target="_blank" style="text-decoration:none;box-sizing:border-box;margin:0px 0px 0px 0.3em;min-width:0px;display:inline-block;color:rgb(9, 64, 142);"><span style="display:inline-flex;align-items:center;">​<img style="transform:scale(1.1);" src="data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' width='18' height='18' fill='none' viewBox='0 0 24 24' class='ZDI ZDI--BadgeCgNewStrokeLightFill24 css-1ldqog6 js-evernote-checked' data-evernote-id='10'%3e%3cpath fill='%23fff' d='M21.97 8.62c-.63-1.52.3-2.22-1.1-3.69-1.36-1.35-2.21-.49-3.69-1.1C15.66 3.2 15.82 2.05 13.8 2c-.95.02-1.41.29-1.8.63-.39-.34-.85-.61-1.8-.63-2.02.05-1.86 1.2-3.38 1.83-1.48.61-2.33-.26-3.69 1.1-1.39 1.47-.46 2.17-1.1 3.69C1.4 10.14.25 9.98.2 12c.05 2.02 1.2 1.86 1.83 3.38.63 1.52-.3 2.22 1.1 3.69 1.36 1.35 2.21.49 3.69 1.1 1.52.63 1.36 1.78 3.38 1.83.95-.02 1.41-.29 1.8-.63.39.34.85.61 1.8.63 2.02-.05 1.86-1.2 3.38-1.83 1.48-.61 2.33.26 3.69-1.1 1.39-1.47.46-2.16 1.1-3.69.63-1.52 1.78-1.36 1.83-3.38-.05-2.02-1.2-1.86-1.83-3.38Z' style='fill:%23fff%3bfill-opacity:1'%3e%3c/path%3e%3cpath fill='url(%23id-3630875048-a)' fill-rule='evenodd' d='M21.04 9c-.72-1.75.14-2.34-.88-3.37-1.02-1.03-1.62-.15-3.37-.88-1.75-.72-1.55-1.76-3-1.76C12.82 3 12.58 3.47 12 4c.28.25.63.52 1.2.75 1.75.73 2.34-.14 3.37.88 1.03 1.03.16 1.62.88 3.37s1.76 1.55 1.76 3-1.03 1.25-1.76 3 .14 2.34-.88 3.37c-1.03 1.03-1.62.16-3.37.88-.57.23-.92.5-1.2.75.58.53.82 1 1.8 1 1.45 0 1.25-1.04 3-1.76s2.34.14 3.37-.88c1.03-1.02.15-1.62.88-3.37.72-1.75 1.76-1.56 1.76-3s-1.03-1.25-1.76-3l-.01.01Z' clip-rule='evenodd'%3e%3c/path%3e%3cpath fill='url(%23id-3630875048-b)' fill-rule='evenodd' d='M1.2 11.995c0 1.45 1.035 1.251 1.755 2.997s-.144 2.34.882 3.366c1.026 1.026 1.62.153 3.366.882 1.746.72 1.548 1.755 2.997 1.755 1.45 0 1.251-1.035 2.997-1.755s2.34.144 3.366-.882c1.026-1.026.153-1.62.882-3.366.72-1.746 1.755-1.557 1.755-2.997 0-1.449-1.035-1.25-1.755-2.997-.72-1.746.144-2.34-.882-3.366-1.026-1.026-1.62-.153-3.366-.882-1.746-.72-1.548-1.755-2.997-1.755-1.449 0-1.25 1.035-2.997 1.755-1.746.72-2.34-.144-3.366.882-1.026 1.026-.153 1.62-.882 3.366-.72 1.746-1.755 1.548-1.755 2.997Z' clip-rule='evenodd'%3e%3c/path%3e%3cpath fill='%23fff' fill-rule='evenodd' d='m14.621 11.174-2.126 1.822.65 2.722c.115.48-.13.664-.556.404l-2.389-1.46-2.389 1.46c-.421.258-.671.081-.555-.404l.649-2.722-2.126-1.822c-.375-.321-.285-.613.212-.653l2.791-.224 1.075-2.584c.19-.457.495-.461.686 0l1.076 2.584 2.79.224c.492.04.591.328.212.653Z' clip-rule='evenodd' style='fill:%23fff%3bfill-opacity:1'%3e%3c/path%3e%3cdefs%3e%3clinearGradient id='id-3630875048-a' x1='13.621' x2='23.802' y1='5.691' y2='14.024' gradientUnits='userSpaceOnUse'%3e%3cstop stop-color='%2347D3FF' style='stop-color:stop-opacity:1'%3e%3c/stop%3e%3cstop offset='1' stop-color='%234A7DFF' style='stop-color:%234a7dff%3bstop-opacity:1'%3e%3c/stop%3e%3c/linearGradient%3e%3clinearGradient id='id-3630875048-b' x1='12.684' x2='5.772' y1='17.719' y2='5.515' gradientUnits='userSpaceOnUse'%3e%3cstop stop-color='%23FF5B14' style='stop-color:%23ff5b14%3bstop-opacity:1'%3e%3c/stop%3e%3cstop offset='1' stop-color='%23FFAB38' style='stop-color:%23ffab38%3bstop-opacity:1'%3e%3c/stop%3e%3c/linearGradient%3e%3c/defs%3e%3c/svg%3e"/></span></a></span></div><div style="overflow:hidden;color:rgb(83, 88, 97);"><div style="-webkit-box-align:center;align-items:center;display:flex;font-size:14px;margin-top:2px;"><div style="line-height:1.6;word-break:break-word;color:rgb(83, 88, 97);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">人工智能话题下的优秀答主</div></div></div></div></div></div></div><div style="margin:0px;"></div><div><div style="box-sizing:border-box;margin:12px 0px;min-width:0px;-webkit-box-align:center;align-items:center;cursor:pointer;display:inline-flex;"><div style="box-sizing:border-box;margin:0px;min-width:0px;font-size:14px;font-weight:normal;color:rgb(132, 145, 165);display:-webkit-box;text-overflow:ellipsis;overflow:hidden;-webkit-box-orient:vertical;-webkit-line-clamp:1;">68 人赞同了该文章</div></div></div><span style="color:rgb(132, 145, 165);"></span></div><div style="position:relative;margin:0px auto;width:690px;overflow:visible;"><div style="margin-top:16px;position:relative;"><div style="position:relative;display:inline;"><div style="word-break:break-word;line-height:1.6;"><p style="margin:1.4em 0px;margin-top:0px;"><b style="font-weight:600;">欢迎交流与转载，文章会同步发布在公众号：机器学习算法全栈工程师(Jeemy110)</b></p><h2 style="font:inherit;margin:0px;clear:left;margin-top:2.33333em;margin-bottom:1.16667em;font-size:1.2em;line-height:1.5;font-weight:600;">引言</h2><p style="margin:1.4em 0px;">深度学习模型的训练本质上是一个优化问题，而常采用的优化算法是梯度下降法（GD）。对于GD算法，最重要的就是如何计算梯度。此时，估计跟多人会告诉你：采用BP（backpropagation）算法，这没有错，因为神经网络曾经的一大进展就是使用BP算法计算梯度提升训练速度。但是从BP的角度，很多人陷入了推导公式的深渊。如果你学过微积分，我相信你一定知道如何计算梯度，或者说计算导数。对于深度网络来说，其可以看成多层非线性函数的堆积，即：</p><p style="margin:1.4em 0px;"><span><span></span><span><span style="color:inherit;display:contents;"></span><span style="display:inline-block;font-style:normal;font-weight:normal;line-height:normal;font-size:100%;text-indent:0px;text-align:left;text-transform:none;letter-spacing:normal;word-spacing:normal;overflow-wrap:normal;white-space:nowrap;float:none;direction:ltr;max-width:none;max-height:none;min-width:0px;min-height:0px;border:0px;padding:0px;margin:0px;position:relative;"><img style="max-width:100%;transition:none 0s ease 0s;vertical-align:-0.718ex;" src="data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' xmlns:xlink='http://www.w3.org/1999/xlink' width='32.057ex' height='2.623ex' viewBox='0 -820.5 13802.1 1129.4' role='img' focusable='false' aria-hidden='true' style='vertical-align: -0.718ex%3b' data-evernote-id='559' class='js-evernote-checked'%3e%3cg stroke='currentColor' fill='currentColor' stroke-width='0' transform='matrix(1 0 0 -1 0 0)' data-evernote-id='561' class='js-evernote-checked'%3e%3cuse xlink:href='%23MJMATHI-6F' x='0' y='0' data-evernote-id='562' class='js-evernote-checked'%3e%3c/use%3e%3cuse xlink:href='%23MJMATHI-75' x='485' y='0' data-evernote-id='563' class='js-evernote-checked'%3e%3c/use%3e%3cuse xlink:href='%23MJMATHI-74' x='1058' y='0' data-evernote-id='564' class='js-evernote-checked'%3e%3c/use%3e%3cuse xlink:href='%23MJMATHI-70' x='1419' y='0' data-evernote-id='565' class='js-evernote-checked'%3e%3c/use%3e%3cuse xlink:href='%23MJMATHI-75' x='1923' y='0' data-evernote-id='566' class='js-evernote-checked'%3e%3c/use%3e%3cuse xlink:href='%23MJMATHI-74' x='2495' y='0' data-evernote-id='567' class='js-evernote-checked'%3e%3c/use%3e%3cuse xlink:href='%23MJMAIN-3D' x='3134' y='0' data-evernote-id='568' class='js-evernote-checked'%3e%3c/use%3e%3cg transform='translate(4191%2c0)' data-evernote-id='569' class='js-evernote-checked'%3e%3cuse xlink:href='%23MJMATHI-66' x='0' y='0' data-evernote-id='570' class='js-evernote-checked'%3e%3c/use%3e%3cuse transform='scale(0.707)' xlink:href='%23MJMATHI-6E' x='693' y='-213' data-evernote-id='571' class='js-evernote-checked'%3e%3c/use%3e%3c/g%3e%3cuse xlink:href='%23MJMAIN-28' x='5206' y='0' data-evernote-id='572' class='js-evernote-checked'%3e%3c/use%3e%3cg transform='translate(5595%2c0)' data-evernote-id='573' class='js-evernote-checked'%3e%3cuse xlink:href='%23MJMATHI-3B8' x='0' y='0' data-evernote-id='574' class='js-evernote-checked'%3e%3c/use%3e%3cuse transform='scale(0.707)' xlink:href='%23MJMATHI-6E' x='663' y='-213' data-evernote-id='575' class='js-evernote-checked'%3e%3c/use%3e%3c/g%3e%3cuse xlink:href='%23MJMAIN-2C' x='6589' y='0' data-evernote-id='576' class='js-evernote-checked'%3e%3c/use%3e%3cg transform='translate(7034%2c0)' data-evernote-id='577' class='js-evernote-checked'%3e%3cuse xlink:href='%23MJMATHI-66' x='0' y='0' data-evernote-id='578' class='js-evernote-checked'%3e%3c/use%3e%3cg transform='translate(490%2c-150)' data-evernote-id='579' class='js-evernote-checked'%3e%3cuse transform='scale(0.707)' xlink:href='%23MJMATHI-6E' x='0' y='0' data-evernote-id='580' class='js-evernote-checked'%3e%3c/use%3e%3cuse transform='scale(0.707)' xlink:href='%23MJMAIN-2212' x='600' y='0' data-evernote-id='581' class='js-evernote-checked'%3e%3c/use%3e%3cuse transform='scale(0.707)' xlink:href='%23MJMAIN-31' x='1379' y='0' data-evernote-id='582' class='js-evernote-checked'%3e%3c/use%3e%3c/g%3e%3c/g%3e%3cuse xlink:href='%23MJMAIN-28' x='8954' y='0' data-evernote-id='583' class='js-evernote-checked'%3e%3c/use%3e%3cg transform='translate(9343%2c0)' data-evernote-id='584' class='js-evernote-checked'%3e%3cuse xlink:href='%23MJMATHI-3B8' x='0' y='0' data-evernote-id='585' class='js-evernote-checked'%3e%3c/use%3e%3cg transform='translate(469%2c-150)' data-evernote-id='586' class='js-evernote-checked'%3e%3cuse transform='scale(0.707)' xlink:href='%23MJMATHI-6E' x='0' y='0' data-evernote-id='587' class='js-evernote-checked'%3e%3c/use%3e%3cuse transform='scale(0.707)' xlink:href='%23MJMAIN-2212' x='600' y='0' data-evernote-id='588' class='js-evernote-checked'%3e%3c/use%3e%3cuse transform='scale(0.707)' xlink:href='%23MJMAIN-31' x='1379' y='0' data-evernote-id='589' class='js-evernote-checked'%3e%3c/use%3e%3c/g%3e%3c/g%3e%3cuse xlink:href='%23MJMAIN-2C' x='11242' y='0' data-evernote-id='590' class='js-evernote-checked'%3e%3c/use%3e%3cuse xlink:href='%23MJMAIN-2E' x='11687' y='0' data-evernote-id='591' class='js-evernote-checked'%3e%3c/use%3e%3cuse xlink:href='%23MJMAIN-2E' x='12132' y='0' data-evernote-id='592' class='js-evernote-checked'%3e%3c/use%3e%3cuse xlink:href='%23MJMAIN-2E' x='12577' y='0' data-evernote-id='593' class='js-evernote-checked'%3e%3c/use%3e%3cuse xlink:href='%23MJMAIN-29' x='13023' y='0' data-evernote-id='594' class='js-evernote-checked'%3e%3c/use%3e%3cuse xlink:href='%23MJMAIN-29' x='13412' y='0' data-evernote-id='595' class='js-evernote-checked'%3e%3c/use%3e%3c/g%3e%3c/svg%3e"/><span style="top:0px;left:0px;clip:rect(1px, 1px, 1px, 1px);user-select:none;transition:none 0s ease 0s;position:absolute;padding:1px 0px 0px;border:0px;height:1px;width:1px;overflow:hidden;display:block;"><span style="transition:none 0s ease 0s;"><span style="transition:none 0s ease 0s;">o</span><span style="transition:none 0s ease 0s;">u</span><span style="transition:none 0s ease 0s;">t</span><span style="transition:none 0s ease 0s;">p</span><span style="transition:none 0s ease 0s;">u</span><span style="transition:none 0s ease 0s;">t</span><span style="transition:none 0s ease 0s;">=</span><span style="transition:none 0s ease 0s;"><span style="transition:none 0s ease 0s;">f</span><span style="transition:none 0s ease 0s;"><span style="transition:none 0s ease 0s;">n</span></span></span><span style="transition:none 0s ease 0s;">(</span><span style="transition:none 0s ease 0s;"><span style="transition:none 0s ease 0s;">θ</span><span style="transition:none 0s ease 0s;"><span style="transition:none 0s ease 0s;">n</span></span></span><span style="transition:none 0s ease 0s;">,</span><span style="transition:none 0s ease 0s;"><span style="transition:none 0s ease 0s;">f</span><span style="transition:none 0s ease 0s;"><span style="transition:none 0s ease 0s;">n</span><span style="transition:none 0s ease 0s;">−</span><span style="transition:none 0s ease 0s;">1</span></span></span><span style="transition:none 0s ease 0s;">(</span><span style="transition:none 0s ease 0s;"><span style="transition:none 0s ease 0s;">θ</span><span style="transition:none 0s ease 0s;"><span style="transition:none 0s ease 0s;">n</span><span style="transition:none 0s ease 0s;">−</span><span style="transition:none 0s ease 0s;">1</span></span></span><span style="transition:none 0s ease 0s;">,</span><span style="transition:none 0s ease 0s;">.</span><span style="transition:none 0s ease 0s;">.</span><span style="transition:none 0s ease 0s;">.</span><span style="transition:none 0s ease 0s;">)</span><span style="transition:none 0s ease 0s;">)</span></span></span></span></span></span> </p><p style="margin:1.4em 0px;">而我们知道深度学习模型的优化目标L一般是output的函数，如果要你求L关于各个参数的导数，你会不假思索地想到：链式法则。因为output是一个复合函数。在微积分里面，求解复合函数的导数采用链式法则再合适不过了。其实本质上BP算法就是链式法则的一个调用。让我们先忘记BP算法，从链式法则开始说起。</p><h2 style="font:inherit;margin:0px;clear:left;margin-top:2.33333em;margin-bottom:1.16667em;font-size:1.2em;line-height:1.5;font-weight:600;">链式法则</h2><p style="margin:1.4em 0px;">链式法则无非是将一个复杂的复合函数从上到下逐层求导，比如你要求导式子：f(x,y,z)=(x+y)(x+z)。当然这个例子是足够简单的，但是我们要使用链式法则的方式来求导。首先可以将f(x,y,z)看成两个函数p(x,y)=(x+y)与q(x,z)=(x+z)的复合：f=pq。假如你要求df/dz，首先我们先要求出df/dp与df/dq。很显然，df/dp=q，df/dq=p。然后要求dp/dx与dq/dx，显然，dp/dx=1.0，dq/dx=1.0。这个时候已经求到最底层了，可以利用链式法则求出最终的结果了：df/dx=(df/dp)(dp/dx)+(df/dq)(dq/dx)=q+p。同样的方法，可以求出：df/dy=q，df/dz=p。如果大家细致观察的话，可以看到要求出最终的导数，你需要计算出中间结果：p与q。计算中间结果的过程一般是前向（forward）过程，然后再反向（backward）计算出最终的导数。过程如下：</p><div style="margin:1em 0px;"><pre style="border-radius:4px;background-color: #fbfaf8;border: 1px solid rgba(0,0,0,.14902);color: #333;font-size: 12px;padding: 8px;font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif;box-sizing: border-box;"><code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span style="font-style:italic;color:rgb(145, 150, 161);"># 输入</span>
+<span>x</span><span>,</span> <span>y</span><span>,</span> <span>z</span> <span style="font-weight:600;">=</span> <span style="font-weight:600;">-</span><span style="color:rgb(23, 114, 246);">3</span><span>,</span> <span style="color:rgb(23, 114, 246);">2</span><span>,</span> <span style="color:rgb(23, 114, 246);">5</span>
+<span style="font-style:italic;color:rgb(145, 150, 161);"># 执行前向过程</span>
+<span>p</span> <span style="font-weight:600;">=</span> <span>x</span> <span style="font-weight:600;">+</span> <span>y</span>   <span style="font-style:italic;color:rgb(145, 150, 161);"># p = -1</span>
+<span>q</span> <span style="font-weight:600;">=</span> <span>x</span> <span style="font-weight:600;">+</span> <span>z</span>   <span style="font-style:italic;color:rgb(145, 150, 161);"># q = 2</span>
+<span style="font-style:italic;color:rgb(145, 150, 161);"># 执行反向过程计算梯度</span>
+<span style="font-style:italic;color:rgb(145, 150, 161);"># 第一个层反向：f = pq</span>
+<span>dfdp</span> <span style="font-weight:600;">=</span> <span>q</span>    <span style="font-style:italic;color:rgb(145, 150, 161);"># df/dp = 2</span>
+<span>dfdq</span> <span style="font-weight:600;">=</span> <span>p</span>    <span style="font-style:italic;color:rgb(145, 150, 161);"># df/dq = -1</span>
+<span style="font-style:italic;color:rgb(145, 150, 161);"># 第二个层反向，并累计第一层梯度：p = x + y, q = x + z</span>
+<span>dfdx</span> <span style="font-weight:600;">=</span> <span style="color:rgb(23, 114, 246);">1.0</span> <span style="font-weight:600;">*</span> <span>dfdp</span> <span style="font-weight:600;">+</span> <span style="color:rgb(23, 114, 246);">1.0</span> <span style="font-weight:600;">*</span> <span>dfdq</span>  <span style="font-style:italic;color:rgb(145, 150, 161);"># df/dx = 1</span>
+<span>dfdy</span> <span style="font-weight:600;">=</span> <span style="color:rgb(23, 114, 246);">1.0</span> <span style="font-weight:600;">*</span> <span>dfdp</span>            <span style="font-style:italic;color:rgb(145, 150, 161);"># df/dy = 2</span>
+<span>dfdz</span> <span style="font-weight:600;">=</span> <span style="color:rgb(23, 114, 246);">1.0</span> <span style="font-weight:600;">*</span> <span>dfdq</span>            <span style="font-style:italic;color:rgb(145, 150, 161);"># df/dz = -1</span></code></pre></div><p style="margin:1.4em 0px;">上面的一个过程就是BP算法，包含两个过程：前向（forward）过程与反向（backword）过程。前向过程是从输入计算得到输出，而反向过程就是一个梯度累积的过程，或者说是BP，即误差反向传播。这就是BP的思想。上面的例子应该是比较简单的，而对于深度学习模型来说，其只不过是函数复杂一点罢了，但是如果你严格按照链式法则来去推导，只要你会基本求导方法，应该都不是什么难事了。</p><h2 style="font:inherit;margin:0px;clear:left;margin-top:2.33333em;margin-bottom:1.16667em;font-size:1.2em;line-height:1.5;font-weight:600;">矩阵运算</h2><p style="margin:1.4em 0px;">其实对于深度学习模型来说，其运算都是基于矩阵运算的。对于新手来说，矩阵运算的求导可能会是一件比较头疼的事。其实矩阵运算求导是一个纸老虎。对于元素级的矩阵运算来说，比如激活函数这种，你完全可以把看成普通的求导。但是对于矩阵乘法，你需要特别注意，这里先抛出例子：</p><div style="margin:1em 0px;"><pre style="border-radius:4px;background-color: #fbfaf8;border: 1px solid rgba(0,0,0,.14902);color: #333;font-size: 12px;padding: 8px;font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif;box-sizing: border-box;"><code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span style="font-weight:600;">import</span> <span style="color:rgb(83, 88, 97);">numpy</span> <span style="font-weight:600;">as</span> <span style="color:rgb(83, 88, 97);">np</span>
+
+<span style="font-style:italic;color:rgb(145, 150, 161);"># 前向过程</span>
+<span>W</span> <span style="font-weight:600;">=</span> <span>np</span><span style="font-weight:600;">.</span><span>random</span><span style="font-weight:600;">.</span><span>randn</span><span>(</span><span style="color:rgb(23, 114, 246);">5</span><span>,</span> <span style="color:rgb(23, 114, 246);">10</span><span>)</span>
+<span>X</span> <span style="font-weight:600;">=</span> <span>np</span><span style="font-weight:600;">.</span><span>random</span><span style="font-weight:600;">.</span><span>randn</span><span>(</span><span style="color:rgb(23, 114, 246);">10</span><span>,</span> <span style="color:rgb(23, 114, 246);">3</span><span>)</span>
+<span>D</span> <span style="font-weight:600;">=</span> <span>W</span><span style="font-weight:600;">.</span><span>dot</span><span>(</span><span>X</span><span>)</span>
+
+<span style="font-style:italic;color:rgb(145, 150, 161);"># 反向过程</span>
+<span>dD</span> <span style="font-weight:600;">=</span> <span>np</span><span style="font-weight:600;">.</span><span>random</span><span style="font-weight:600;">.</span><span>randn</span><span>(</span><span style="font-weight:600;">*</span><span>D</span><span style="font-weight:600;">.</span><span>shape</span><span>)</span>   <span style="font-style:italic;color:rgb(145, 150, 161);"># 这里假定dD是后面传播过来的梯度项</span>
+<span>dW</span> <span style="font-weight:600;">=</span> <span>dD</span><span style="font-weight:600;">.</span><span>dot</span><span>(</span><span>X</span><span style="font-weight:600;">.</span><span>T</span><span>)</span> 
+<span>dX</span> <span style="font-weight:600;">=</span> <span>W</span><span style="font-weight:600;">.</span><span>T</span><span style="font-weight:600;">.</span><span>dot</span><span>(</span><span>dD</span><span>)</span></code></pre></div><p style="margin:1.4em 0px;">如果你认真推导的话，是可以得到上面的结果的。但是这里有其它捷径。对于两个矩阵相乘的话，在反向传播时反正是另外一个项与传播过来的梯度项相乘。差别就在于位置以及翻转。这里有个小窍门，就是最后计算出梯度肯定要与原来的矩阵是同样的shape。那么这就容易了，反正组合不多。比如你要计算dW，你知道要用dD与X两个矩阵相乘就可以得到。W的shape是[5,10]，而dD的shape是[5,3]，X的shape是[10,3]。要保证dW与W的shape一致，好吧，此时只能用dD.dot(X.T)，真的没有其它选择了，那这就是对了。</p><h2 style="font:inherit;margin:0px;clear:left;margin-top:2.33333em;margin-bottom:1.16667em;font-size:1.2em;line-height:1.5;font-weight:600;">活学活用：实现一个简单的神经网络</h2><p style="margin:1.4em 0px;">上面我们讲了链式法则，也讲了BP的思想，并且也讲了如何对矩阵运算求梯度。下面我们基于Python中的Numpy库实现一个简单的神经网络模型，代码如下：</p><div style="margin:1em 0px;"><pre style="border-radius:4px;background-color: #fbfaf8;border: 1px solid rgba(0,0,0,.14902);color: #333;font-size: 12px;padding: 8px;font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif;box-sizing: border-box;"><code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span style="color:rgb(217, 83, 80);">"""
+</span><span style="color:rgb(217, 83, 80);">一个简单两层神经网络回归模型
+</span><span style="color:rgb(217, 83, 80);">"""</span>
+<span style="font-weight:600;">import</span> <span style="color:rgb(83, 88, 97);">numpy</span> <span style="font-weight:600;">as</span> <span style="color:rgb(83, 88, 97);">np</span>
+
+<span style="font-style:italic;color:rgb(145, 150, 161);"># batch size</span>
+<span>N</span> <span style="font-weight:600;">=</span> <span style="color:rgb(23, 114, 246);">32</span>
+<span style="font-style:italic;color:rgb(145, 150, 161);"># 输入维度</span>
+<span>D</span> <span style="font-weight:600;">=</span> <span style="color:rgb(23, 114, 246);">100</span>
+<span style="font-style:italic;color:rgb(145, 150, 161);"># 隐含层单元数</span>
+<span>H</span> <span style="font-weight:600;">=</span> <span style="color:rgb(23, 114, 246);">200</span>
+<span style="font-style:italic;color:rgb(145, 150, 161);"># 输出维度</span>
+<span>O</span> <span style="font-weight:600;">=</span> <span style="color:rgb(23, 114, 246);">10</span>
+
+<span style="font-style:italic;color:rgb(145, 150, 161);"># 训练样本（这里随机生成）</span>
+<span>X</span> <span style="font-weight:600;">=</span> <span>np</span><span style="font-weight:600;">.</span><span>random</span><span style="font-weight:600;">.</span><span>randn</span><span>(</span><span>N</span><span>,</span> <span>D</span><span>)</span>
+<span>y</span> <span style="font-weight:600;">=</span> <span>np</span><span style="font-weight:600;">.</span><span>random</span><span style="font-weight:600;">.</span><span>randn</span><span>(</span><span>N</span><span>,</span> <span>O</span><span>)</span>
+
+<span style="font-style:italic;color:rgb(145, 150, 161);"># 初始化参数</span>
+<span>W1</span> <span style="font-weight:600;">=</span> <span>np</span><span style="font-weight:600;">.</span><span>random</span><span style="font-weight:600;">.</span><span>randn</span><span>(</span><span>D</span><span>,</span> <span>H</span><span>)</span>
+<span>b1</span> <span style="font-weight:600;">=</span> <span>np</span><span style="font-weight:600;">.</span><span>zeros</span><span>((</span><span>H</span><span>,))</span>
+<span>W2</span> <span style="font-weight:600;">=</span> <span>np</span><span style="font-weight:600;">.</span><span>random</span><span style="font-weight:600;">.</span><span>randn</span><span>(</span><span>H</span><span>,</span> <span>O</span><span>)</span>
+<span>b2</span> <span style="font-weight:600;">=</span> <span>np</span><span style="font-weight:600;">.</span><span>zeros</span><span>((</span><span>O</span><span>,))</span>
+
+<span style="font-style:italic;color:rgb(145, 150, 161);"># 训练参数</span>
+<span>learning_rate</span> <span style="font-weight:600;">=</span> <span style="color:rgb(23, 114, 246);">1e-02</span>
+<span>iterations</span> <span style="font-weight:600;">=</span> <span style="color:rgb(23, 114, 246);">200</span>
+
+<span style="font-style:italic;color:rgb(145, 150, 161);"># 训练过程</span>
+<span style="font-weight:600;">for</span> <span>t</span> <span style="font-weight:600;">in</span> <span style="color:rgb(23, 114, 246);">range</span><span>(</span><span>iterations</span><span>):</span>
+    <span style="font-style:italic;color:rgb(145, 150, 161);"># 前向过程</span>
+    <span>h</span> <span style="font-weight:600;">=</span> <span>X</span><span style="font-weight:600;">.</span><span>dot</span><span>(</span><span>W1</span><span>)</span> <span style="font-weight:600;">+</span> <span>b1</span>
+    <span>h_relu</span> <span style="font-weight:600;">=</span> <span>np</span><span style="font-weight:600;">.</span><span>maximum</span><span>(</span><span>h</span><span>,</span> <span style="color:rgb(23, 114, 246);">0</span><span>)</span>
+    <span>pred</span> <span style="font-weight:600;">=</span> <span>h_relu</span><span style="font-weight:600;">.</span><span>dot</span><span>(</span><span>W2</span><span>)</span> <span style="font-weight:600;">+</span> <span>b2</span>
+
+    <span style="font-style:italic;color:rgb(145, 150, 161);"># 定义loss，采用均方差</span>
+    <span>loss</span> <span style="font-weight:600;">=</span> <span>np</span><span style="font-weight:600;">.</span><span>sum</span><span>(</span><span>np</span><span style="font-weight:600;">.</span><span>square</span><span>(</span><span>y</span> <span style="font-weight:600;">-</span> <span>pred</span><span>))</span>
+    <span style="font-weight:600;">print</span><span>(</span><span style="color:rgb(217, 83, 80);">"Iteration </span><span style="color:rgb(217, 83, 80);">%d</span><span style="color:rgb(217, 83, 80);"> loss: </span><span style="color:rgb(217, 83, 80);">%f</span><span style="color:rgb(217, 83, 80);">"</span> <span style="font-weight:600;">%</span> <span>(</span><span>t</span><span>,</span> <span>loss</span><span>))</span>
+
+    <span style="font-style:italic;color:rgb(145, 150, 161);"># 反向过程计算梯度</span>
+    <span>dpred</span> <span style="font-weight:600;">=</span> <span style="color:rgb(23, 114, 246);">2.0</span> <span style="font-weight:600;">*</span> <span>(</span><span>pred</span> <span style="font-weight:600;">-</span> <span>y</span><span>)</span>
+    <span>db2</span> <span style="font-weight:600;">=</span> <span>np</span><span style="font-weight:600;">.</span><span>sum</span><span>(</span><span>dpred</span><span>,</span> <span>axis</span><span style="font-weight:600;">=</span><span style="color:rgb(23, 114, 246);">0</span><span>)</span>
+    <span>dW2</span> <span style="font-weight:600;">=</span> <span>h_relu</span><span style="font-weight:600;">.</span><span>T</span><span style="font-weight:600;">.</span><span>dot</span><span>(</span><span>dpred</span><span>)</span>
+    <span>dh_relu</span> <span style="font-weight:600;">=</span> <span>db2</span><span style="font-weight:600;">.</span><span>dot</span><span>(</span><span>W2</span><span style="font-weight:600;">.</span><span>T</span><span>)</span>
+    <span>dh</span> <span style="font-weight:600;">=</span> <span>(</span><span>h</span> <span style="font-weight:600;">&gt;</span> <span style="color:rgb(23, 114, 246);">0</span><span>)</span> <span style="font-weight:600;">*</span> <span>dh_relu</span>
+    <span>db1</span> <span style="font-weight:600;">=</span> <span>np</span><span style="font-weight:600;">.</span><span>sum</span><span>(</span><span>dh</span><span>,</span> <span>axis</span><span style="font-weight:600;">=</span><span style="color:rgb(23, 114, 246);">0</span><span>)</span>
+    <span>dW1</span> <span style="font-weight:600;">=</span> <span>X</span><span style="font-weight:600;">.</span><span>T</span><span style="font-weight:600;">.</span><span>dot</span><span>(</span><span>dh</span><span>)</span>
+
+    <span style="font-style:italic;color:rgb(145, 150, 161);"># SGD更新梯度</span>
+    <span>params</span> <span style="font-weight:600;">=</span> <span>[</span><span>W1</span><span>,</span> <span>b1</span><span>,</span> <span>W2</span><span>,</span> <span>b2</span><span>]</span>
+    <span>grads</span> <span style="font-weight:600;">=</span> <span>[</span><span>dW1</span><span>,</span> <span>db1</span><span>,</span> <span>dW2</span><span>,</span> <span>db2</span><span>]</span>
+    <span style="font-weight:600;">for</span> <span>p</span><span>,</span> <span>g</span> <span style="font-weight:600;">in</span> <span style="color:rgb(23, 114, 246);">zip</span><span>(</span><span>params</span><span>,</span> <span>grads</span><span>):</span>
+        <span>p</span> <span style="font-weight:600;">+=</span> <span style="font-weight:600;">-</span><span>learning_rate</span> <span style="font-weight:600;">*</span> <span>g</span></code></pre></div><h2 style="font:inherit;margin:0px;clear:left;margin-top:2.33333em;margin-bottom:1.16667em;font-size:1.2em;line-height:1.5;font-weight:600;">总结</h2><p style="margin:1.4em 0px;">这里我们简单介绍了梯度下降法中最重要的一部分，就是如何计算梯度。相信通过本文，大家对BP算法以及链式法则有更深刻的理解。</p><h2 style="font:inherit;margin:0px;clear:left;margin-top:2.33333em;margin-bottom:1.16667em;font-size:1.2em;line-height:1.5;font-weight:600;">参考资料</h2><p style="margin:1.4em 0px;"><a href="https://link.zhihu.com/?target=http%3A//cs231n.github.io/optimization-2/" target="_blank" rel="nofollow noreferrer" style="color:inherit;cursor:pointer;border-bottom:0.909091px solid rgb(129, 133, 143);text-decoration:none;">cs231n教程</a></p><p style="margin:1.4em 0px;margin-bottom:0px;"><b style="font-weight:600;">欢迎交流与转载，文章会同步发布在公众号：机器学习算法全栈工程师(Jeemy110)</b></p></div></div></div></div><div style="color:rgb(132, 145, 165);font-size:14px;padding:16px 0px;margin:0px auto;overflow:hidden;width:690px;">编辑于 2020-08-09 20:34</div><div style="color:rgb(129, 133, 143);font-size:14px;text-align:center;margin:0px auto;overflow:hidden;width:690px;"><div><div style="font-size:15px;line-height:18px;margin-top:60px;">「真诚赞赏，手留余香」</div></div><div style="margin-top:20px;">还没有人赞赏，快来当第一个赞赏的人吧！</div></div><div style="margin:0px auto;overflow:hidden;width:690px;display:flex;"><div style="-webkit-box-orient:horizontal;-webkit-box-direction:normal;-webkit-box-align:center;align-items:center;display:flex;flex-flow:wrap;margin-bottom:-10px;padding:16px 0px;"><div style="position:relative;display:inline-block;padding:0px 12px;color:rgb(23, 114, 246);vertical-align:top;border-radius:100px;background:rgba(23, 114, 246, 0.1);margin-bottom:10px;overflow:hidden;height:33px;font-size:13px;line-height:33px;margin-right:5px;"><span><a href="https://www.zhihu.com/topic/19607065" target="_blank" style="color:inherit;text-decoration:none;"><div style="position:relative;display:inline-block;">神经网络</div></a></span></div><div style="position:relative;display:inline-block;padding:0px 12px;color:rgb(23, 114, 246);border-radius:100px;background:rgba(23, 114, 246, 0.1);vertical-align:middle;margin-bottom:10px;overflow:hidden;height:33px;font-size:13px;line-height:33px;margin-right:5px;"><span><a href="https://www.zhihu.com/topic/19813032" target="_blank" style="color:inherit;text-decoration:none;"><div style="position:relative;display:inline-block;">深度学习（Deep Learning）</div></a></span></div><div style="position:relative;display:inline-block;padding:0px 12px;color:rgb(23, 114, 246);border-radius:100px;background:rgba(23, 114, 246, 0.1);vertical-align:middle;margin-bottom:10px;overflow:hidden;height:33px;font-size:13px;line-height:33px;"><span><a href="https://www.zhihu.com/topic/19650497" target="_blank" style="color:inherit;text-decoration:none;"><div style="position:relative;display:inline-block;">梯度下降</div></a></span></div></div></div><div style="margin:0px auto;overflow:hidden;width:690px;"><div style="visibility:hidden;position:static;inset:auto auto 0px 0px;display:block;float:none;margin:0px 0px 10px;height:53.8139px;"></div></div></div></div></span></div></div></div></div></div>
+</div>
+</div>
+<a class="back-link" href="../articles.html">← 返回笔记列表</a>
+</body>
+</html>

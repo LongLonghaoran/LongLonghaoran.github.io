@@ -1,0 +1,237 @@
+<!DOCTYPE html>
+<html lang="zh-CN" data-theme="light">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Rails 5 Routes: Scope vs Namespace - Devblast — 技术笔记</title>
+<style>
+:root {
+  --bg: #ffffff;
+  --text: #1a1a1a;
+  --muted: #666;
+  --border: #e0e0e0;
+  --code-bg: #f5f5f5;
+  --link: #0066cc;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #1a1a1a;
+    --text: #e0e0e0;
+    --muted: #999;
+    --border: #333;
+    --code-bg: #2a2a2a;
+    --link: #66bbff;
+  }
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  line-height: 1.7;
+  color: var(--text);
+  background: var(--bg);
+  max-width: 860px;
+  margin: 0 auto;
+  padding: 2rem 1.5rem;
+}
+.note-header {
+  border-bottom: 2px solid var(--border);
+  padding-bottom: 1rem;
+  margin-bottom: 2rem;
+}
+.note-title {
+  font-size: 1.6rem;
+  font-weight: 700;
+  margin-bottom: 0.3rem;
+}
+.note-meta {
+  color: var(--muted);
+  font-size: 0.85rem;
+}
+.note-content {
+  font-size: 0.95rem;
+}
+.note-content h1 { font-size: 1.4rem; margin: 1.2rem 0 0.6rem; }
+.note-content h2 { font-size: 1.2rem; margin: 1rem 0 0.5rem; }
+.note-content h3 { font-size: 1.05rem; margin: 0.8rem 0 0.4rem; }
+.note-content p { margin: 0.5rem 0; }
+.note-content ul, .note-content ol { margin: 0.5rem 0 0.5rem 2rem; }
+.note-content li { margin: 0.2rem 0; }
+.note-content pre {
+  background: var(--code-bg);
+  padding: 1rem;
+  border-radius: 6px;
+  overflow-x: auto;
+  margin: 0.8rem 0;
+  font-size: 0.85rem;
+}
+.note-content code {
+  background: var(--code-bg);
+  padding: 0.1rem 0.3rem;
+  border-radius: 3px;
+  font-size: 0.88em;
+}
+.note-content pre code {
+  background: none;
+  padding: 0;
+}
+.note-content blockquote {
+  border-left: 3px solid var(--border);
+  padding-left: 1rem;
+  color: var(--muted);
+  margin: 0.8rem 0;
+}
+.note-content a { color: var(--link); }
+.note-content img {
+  max-width: 100%;
+  height: auto;
+  border-radius: 6px;
+  margin: 0.5rem 0;
+}
+.note-content table {
+  border-collapse: collapse;
+  width: 100%;
+  margin: 0.8rem 0;
+}
+.note-content th, .note-content td {
+  border: 1px solid var(--border);
+  padding: 0.5rem;
+}
+.note-content th { background: var(--code-bg); }
+.media-placeholder {
+  background: var(--code-bg);
+  padding: 1rem;
+  text-align: center;
+  color: var(--muted);
+  border-radius: 6px;
+  margin: 0.5rem 0;
+  font-size: 0.85rem;
+}
+.encrypt-placeholder {
+  background: #fff3cd;
+  padding: 0.5rem;
+  text-align: center;
+  color: #856404;
+  border-radius: 6px;
+  margin: 0.5rem 0;
+  font-size: 0.85rem;
+}
+.back-link {
+  display: inline-block;
+  margin-top: 2rem;
+  color: var(--link);
+  text-decoration: none;
+  font-size: 0.85rem;
+}
+</style>
+</head>
+<body>
+<div class="note-header">
+  <div class="note-title">Rails 5 Routes: Scope vs Namespace - Devblast</div>
+  <div class="note-meta">笔记本：RubyOnRails</div>
+</div>
+<div class="note-content">
+<div style="--en-clipped-content:simplified; --en-clipped-source-url:https://devblast.com/b/rails-5-routes-scope-vs-namespace; --en-clipped-source-title:Rails 5 Routes: Scope vs Namespace - Devblast;">
+<div><br/></div><div style="min-height: 3680px; font-size: 16px; display:block; min-width: 100%; "> <div style="background-color:transparent;font:inherit;vertical-align:baseline;"><div style="background-color:transparent;font:inherit;vertical-align:baseline;font-family:&quot;PT Serif&quot;;font-size:16px;line-height:1.5em;color:rgb(31, 9, 9);text-align:left;"><div style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;"><div style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;width:36em;z-index:200;padding-left:2em;padding-right:2em;margin-left:auto;margin-right:auto;position:relative;"><div style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;position:relative;margin-left:-25px;margin-right:25px;"><div style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;padding-top:0px;padding-bottom:9em;position:relative;"><div style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;margin-bottom:1.5em;"><div style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;position:relative;margin-bottom:0px;"><div style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;margin-bottom:0px;"><div style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;margin-bottom:0px;"><h1 style="font-family:&quot;PT Serif&quot;;text-align:left;border:0px;font:inherit;vertical-align:baseline;font-size:35px;font-weight:normal;line-height:35px;margin-bottom:20px;padding:0px;margin:0px;">Rails 5 Routes: Scope vs Namespace</h1><div style="padding:0px;border:0px;font:inherit;vertical-align:baseline;position:relative;height:1em;line-height:1;text-align:center;margin:0px;padding-top:1.5em;padding-bottom:1.5em;margin-bottom:0px;"><div style="padding:0px;border:0px;font:inherit;vertical-align:baseline;background:-webkit-linear-gradient(0deg, rgb(243, 242, 238) 1%, rgb(31, 9, 9) 50%, rgb(243, 242, 238) 99%);position:absolute;left:-4em;top:50%;z-index:10;width:100%;padding-left:4em;padding-right:4em;height:0.1em;opacity:0.5;margin:0px;margin-bottom:0px;"><span style="font:inherit;position:absolute;left:-4em;top:50%;z-index:10;width:100%;padding-left:4em;padding-right:4em;height:0.1em;margin:0px;opacity:0.5;background:-webkit-linear-gradient(0deg, rgb(243, 242, 238) 1%, rgb(31, 9, 9) 50%, rgb(243, 242, 238) 99%);"></span></div></div></div>
+
+
+
+  <div style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;margin-bottom:1.5em;">
+    <div style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;margin-bottom:0px;">
+      <div style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;margin-bottom:0px;">
+
+        <div style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;margin-bottom:0px;">
+          
+          <h3 style="font-family:&quot;PT Serif&quot;;text-align:left;margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;font-size:30px;line-height:35px;margin-top:35px;font-weight:normal;margin-bottom:15px;">by Thibault - September 26, 2016</h3>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <hr style="border-color:rgb(31, 9, 9);border-top:none;border-right:none;border-bottom:1px solid;border-left:none;"/>
+
+  
+    
+
+  		
+          <div style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;display:block;margin-bottom:1em;margin-top:1em;">
+            <div style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;display:block;text-align:center;margin-top:1em;margin-bottom:0px;"><div class="media-placeholder">[图片/附件]</div></en-media></div>
+          </div>
+        <p style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;margin-bottom:1.5em;">You may be wondering about the difference between <code style="font-family:Inconsolata;margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;font-size:0.875em;line-height:1.71429em;">scope</code> and <code style="font-family:Inconsolata;margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;font-size:0.875em;line-height:1.71429em;">namespace</code> for the routes in your Rails application. It’s important to know the difference, because they affect the path of your resources and the controllers.</p>
+<h2 style="font-family:&quot;PT Serif&quot;;text-align:left;margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;font-weight:bold;font-size:30px;line-height:35px;margin-top:35px;margin-bottom:15px;"><code style="font-family:Inconsolata;margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;font-size:0.875em;line-height:1.71429em;">namespace</code></h2>
+<p style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;margin-bottom:1.5em;">This is the simple option. When you use <code style="font-family:Inconsolata;margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;font-size:0.875em;line-height:1.71429em;">namespace</code>, it will prefix the URL path for the specified resources, and try to locate the controller under a module named in the same manner as the namespace.</p>
+<p style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;margin-bottom:1.5em;">With the following code in the <code style="font-family:Inconsolata;margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;font-size:0.875em;line-height:1.71429em;">routes.rb</code> file,</p>
+<pre style="background-color:rgb(243, 242, 238);font-family:Inconsolata;margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;width:auto;font-size:0.875em;line-height:1.71429em;"><code style="font-family:Inconsolata;margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;line-height:1.71429em;font-size:1.15em;">namespace :admin do
+  resources :users
+end</code></pre>
+<p style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;margin-bottom:1.5em;">You will end up with the following routes:</p>
+<pre style="background-color:rgb(243, 242, 238);font-family:Inconsolata;margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;width:auto;font-size:0.875em;line-height:1.71429em;"><code style="font-family:Inconsolata;margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;line-height:1.71429em;font-size:1.15em;">Prefix Verb   URI Pattern                Controller#Action
+admin_users GET    /admin/users(.:format)     admin/users#index
+            POST   /admin/users(.:format)     admin/users#create
+admin_user  GET    /admin/users/:id(.:format) admin/users#show
+            PATCH  /admin/users/:id(.:format) admin/users#update
+            PUT    /admin/users/:id(.:format) admin/users#update
+            DELETE /admin/users/:id(.:format) admin/users#destroy</code></pre>
+<p style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;margin-bottom:1.5em;">As you can see, <code style="font-family:Inconsolata;margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;font-size:0.875em;line-height:1.71429em;">admin</code> was added as a prefix in the URI path (<code style="font-family:Inconsolata;margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;font-size:0.875em;line-height:1.71429em;">/admin/users</code>) and as a module containing the controller (<code style="font-family:Inconsolata;margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;font-size:0.875em;line-height:1.71429em;">admin/users#index</code>). With this code, Rails will expect <code style="font-family:Inconsolata;margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;font-size:0.875em;line-height:1.71429em;">Admin::UsersController</code> to be located at <code style="font-family:Inconsolata;margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;font-size:0.875em;line-height:1.71429em;">app/controllers/admin/users_controller.rb</code>.</p>
+<h2 style="font-family:&quot;PT Serif&quot;;text-align:left;margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;font-weight:bold;font-size:30px;line-height:35px;margin-top:35px;margin-bottom:15px;"><code style="font-family:Inconsolata;margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;font-size:0.875em;line-height:1.71429em;">scope</code></h2>
+<p style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;margin-bottom:1.5em;"><code style="font-family:Inconsolata;margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;font-size:0.875em;line-height:1.71429em;">scope</code> is a bit more complex - but the advantage is that it gives you more options to fine-tune exactly what you want to do.</p>
+<h3 style="font-family:&quot;PT Serif&quot;;text-align:left;margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;font-size:30px;line-height:35px;margin-top:35px;font-weight:normal;margin-bottom:15px;">No Options</h3>
+<p style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;margin-bottom:1.5em;">When using <code style="font-family:Inconsolata;margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;font-size:0.875em;line-height:1.71429em;">scope</code> without any options and only a scope name, it will just change the resources path.</p>
+<pre style="background-color:rgb(243, 242, 238);font-family:Inconsolata;margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;width:auto;font-size:0.875em;line-height:1.71429em;"><code style="font-family:Inconsolata;margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;line-height:1.71429em;font-size:1.15em;"># routes.rb
+scope :admin do
+  resources :users
+end</code></pre>
+<p style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;margin-bottom:1.5em;">Here are the generated routes:</p>
+<pre style="background-color:rgb(243, 242, 238);font-family:Inconsolata;margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;width:auto;font-size:0.875em;line-height:1.71429em;"><code style="font-family:Inconsolata;margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;line-height:1.71429em;font-size:1.15em;">Prefix Verb   URI Pattern                Controller#Action
+ users GET    /admin/users(.:format)     users#index
+       POST   /admin/users(.:format)     users#create
+  user GET    /admin/users/:id(.:format) users#show
+       PATCH  /admin/users/:id(.:format) users#update
+       PUT    /admin/users/:id(.:format) users#update
+       DELETE /admin/users/:id(.:format) users#destroy</code></pre>
+<p style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;margin-bottom:1.5em;">As you can see, <code style="font-family:Inconsolata;margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;font-size:0.875em;line-height:1.71429em;">/admin</code> was added as a prefix before <code style="font-family:Inconsolata;margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;font-size:0.875em;line-height:1.71429em;">/users</code>, but the <code style="font-family:Inconsolata;margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;font-size:0.875em;line-height:1.71429em;">users</code> controller doesn’t have to be inside any module.</p>
+<h3 style="font-family:&quot;PT Serif&quot;;text-align:left;margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;font-size:30px;line-height:35px;margin-top:35px;font-weight:normal;margin-bottom:15px;">With Options</h3>
+<p style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;margin-bottom:1.5em;"><code style="font-family:Inconsolata;margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;font-size:0.875em;line-height:1.71429em;">scope</code> supports three options: <code style="font-family:Inconsolata;margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;font-size:0.875em;line-height:1.71429em;">module</code>, <code style="font-family:Inconsolata;margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;font-size:0.875em;line-height:1.71429em;">path</code> and <code style="font-family:Inconsolata;margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;font-size:0.875em;line-height:1.71429em;">as</code>.</p>
+<h4 style="font-family:&quot;PT Serif&quot;;text-align:left;margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;font-weight:bold;font-size:20px;margin-top:30px;margin-bottom:1.5em;"><code style="font-family:Inconsolata;margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;font-size:0.875em;line-height:1.71429em;">module</code></h4>
+<p style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;margin-bottom:1.5em;"><code style="font-family:Inconsolata;margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;font-size:0.875em;line-height:1.71429em;">module</code> lets us define in which module the controller for the embedded resources will live.</p>
+<pre style="background-color:rgb(243, 242, 238);font-family:Inconsolata;margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;width:auto;font-size:0.875em;line-height:1.71429em;"><code style="font-family:Inconsolata;margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;line-height:1.71429em;font-size:1.15em;">scope module: 'admin' do
+  resources :users
+end</code></pre>
+<pre style="background-color:rgb(243, 242, 238);font-family:Inconsolata;margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;width:auto;font-size:0.875em;line-height:1.71429em;"><code style="font-family:Inconsolata;margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;line-height:1.71429em;font-size:1.15em;">Prefix Verb   URI Pattern          Controller#Action
+ users GET    /users(.:format)     admin/users#index
+       POST   /users(.:format)     admin/users#create
+  user GET    /users/:id(.:format) admin/users#show
+       PATCH  /users/:id(.:format) admin/users#update
+       PUT    /users/:id(.:format) admin/users#update
+       DELETE /users/:id(.:format) admin/users#destroy</code></pre>
+<h4 style="font-family:&quot;PT Serif&quot;;text-align:left;margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;font-weight:bold;font-size:20px;margin-top:30px;margin-bottom:1.5em;"><code style="font-family:Inconsolata;margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;font-size:0.875em;line-height:1.71429em;">path</code></h4>
+<p style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;margin-bottom:1.5em;"><code style="font-family:Inconsolata;margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;font-size:0.875em;line-height:1.71429em;">path</code> allows us to set the prefix that will appear in the URI, before the resource name.</p>
+<pre style="background-color:rgb(243, 242, 238);font-family:Inconsolata;margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;width:auto;font-size:0.875em;line-height:1.71429em;"><code style="font-family:Inconsolata;margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;line-height:1.71429em;font-size:1.15em;">scope module: 'admin', path: 'fu' do
+  resources :users
+end</code></pre>
+<pre style="background-color:rgb(243, 242, 238);font-family:Inconsolata;margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;width:auto;font-size:0.875em;line-height:1.71429em;"><code style="font-family:Inconsolata;margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;line-height:1.71429em;font-size:1.15em;">Prefix Verb   URI Pattern             Controller#Action
+ users GET    /fu/users(.:format)     admin/users#index
+       POST   /fu/users(.:format)     admin/users#create
+  user GET    /fu/users/:id(.:format) admin/users#show
+       PATCH  /fu/users/:id(.:format) admin/users#update
+       PUT    /fu/users/:id(.:format) admin/users#update
+       DELETE /fu/users/:id(.:format) admin/users#destroy</code></pre>
+<h4 style="font-family:&quot;PT Serif&quot;;text-align:left;margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;font-weight:bold;font-size:20px;margin-top:30px;margin-bottom:1.5em;"><code style="font-family:Inconsolata;margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;font-size:0.875em;line-height:1.71429em;">as</code></h4>
+<p style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;margin-bottom:1.5em;">Finally, <code style="font-family:Inconsolata;margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;font-size:0.875em;line-height:1.71429em;">as</code> can be used to change the name of the path method used to identify the resources.</p>
+<pre style="background-color:rgb(243, 242, 238);font-family:Inconsolata;margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;width:auto;font-size:0.875em;line-height:1.71429em;"><code style="font-family:Inconsolata;margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;line-height:1.71429em;font-size:1.15em;">scope module: 'admin', path: 'fu', as: 'cool' do
+  resources :users
+end</code></pre>
+<p style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;margin-bottom:1.5em;">In this case, we now have <code style="font-family:Inconsolata;margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;font-size:0.875em;line-height:1.71429em;">cool</code> as a prefix for the path names <code style="font-family:Inconsolata;margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;font-size:0.875em;line-height:1.71429em;">cool_users</code> and <code style="font-family:Inconsolata;margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;font-size:0.875em;line-height:1.71429em;">cool_user</code>.</p>
+<pre style="background-color:rgb(243, 242, 238);font-family:Inconsolata;margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;width:auto;font-size:0.875em;line-height:1.71429em;"><code style="font-family:Inconsolata;margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;line-height:1.71429em;font-size:1.15em;">Prefix Verb   URI Pattern             Controller#Action
+cool_users GET    /fu/users(.:format)     admin/users#index
+           POST   /fu/users(.:format)     admin/users#create
+cool_user  GET    /fu/users/:id(.:format) admin/users#show
+           PATCH  /fu/users/:id(.:format) admin/users#update
+           PUT    /fu/users/:id(.:format) admin/users#update
+           DELETE /fu/users/:id(.:format) admin/users#destroy</code></pre>
+
+      </div></div></div></div></div></div></div></div></div></div>
+</div>
+</div>
+<a class="back-link" href="../articles.html">← 返回笔记列表</a>
+</body>
+</html>

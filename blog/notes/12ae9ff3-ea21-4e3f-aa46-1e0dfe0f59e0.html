@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="zh-CN" data-theme="light">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Huggingface Transformers Quickstart — 技术笔记</title>
+<style>
+:root {
+  --bg: #ffffff;
+  --text: #1a1a1a;
+  --muted: #666;
+  --border: #e0e0e0;
+  --code-bg: #f5f5f5;
+  --link: #0066cc;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #1a1a1a;
+    --text: #e0e0e0;
+    --muted: #999;
+    --border: #333;
+    --code-bg: #2a2a2a;
+    --link: #66bbff;
+  }
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  line-height: 1.7;
+  color: var(--text);
+  background: var(--bg);
+  max-width: 860px;
+  margin: 0 auto;
+  padding: 2rem 1.5rem;
+}
+.note-header {
+  border-bottom: 2px solid var(--border);
+  padding-bottom: 1rem;
+  margin-bottom: 2rem;
+}
+.note-title {
+  font-size: 1.6rem;
+  font-weight: 700;
+  margin-bottom: 0.3rem;
+}
+.note-meta {
+  color: var(--muted);
+  font-size: 0.85rem;
+}
+.note-content {
+  font-size: 0.95rem;
+}
+.note-content h1 { font-size: 1.4rem; margin: 1.2rem 0 0.6rem; }
+.note-content h2 { font-size: 1.2rem; margin: 1rem 0 0.5rem; }
+.note-content h3 { font-size: 1.05rem; margin: 0.8rem 0 0.4rem; }
+.note-content p { margin: 0.5rem 0; }
+.note-content ul, .note-content ol { margin: 0.5rem 0 0.5rem 2rem; }
+.note-content li { margin: 0.2rem 0; }
+.note-content pre {
+  background: var(--code-bg);
+  padding: 1rem;
+  border-radius: 6px;
+  overflow-x: auto;
+  margin: 0.8rem 0;
+  font-size: 0.85rem;
+}
+.note-content code {
+  background: var(--code-bg);
+  padding: 0.1rem 0.3rem;
+  border-radius: 3px;
+  font-size: 0.88em;
+}
+.note-content pre code {
+  background: none;
+  padding: 0;
+}
+.note-content blockquote {
+  border-left: 3px solid var(--border);
+  padding-left: 1rem;
+  color: var(--muted);
+  margin: 0.8rem 0;
+}
+.note-content a { color: var(--link); }
+.note-content img {
+  max-width: 100%;
+  height: auto;
+  border-radius: 6px;
+  margin: 0.5rem 0;
+}
+.note-content table {
+  border-collapse: collapse;
+  width: 100%;
+  margin: 0.8rem 0;
+}
+.note-content th, .note-content td {
+  border: 1px solid var(--border);
+  padding: 0.5rem;
+}
+.note-content th { background: var(--code-bg); }
+.media-placeholder {
+  background: var(--code-bg);
+  padding: 1rem;
+  text-align: center;
+  color: var(--muted);
+  border-radius: 6px;
+  margin: 0.5rem 0;
+  font-size: 0.85rem;
+}
+.encrypt-placeholder {
+  background: #fff3cd;
+  padding: 0.5rem;
+  text-align: center;
+  color: #856404;
+  border-radius: 6px;
+  margin: 0.5rem 0;
+  font-size: 0.85rem;
+}
+.back-link {
+  display: inline-block;
+  margin-top: 2rem;
+  color: var(--link);
+  text-decoration: none;
+  font-size: 0.85rem;
+}
+</style>
+</head>
+<body>
+<div class="note-header">
+  <div class="note-title">Huggingface Transformers Quickstart</div>
+  <div class="note-meta">笔记本：AI</div>
+</div>
+<div class="note-content">
+<div>Transformers</div><div><span><span><span>加载模型</span></span></span></div><div><span><span><span>用pipeline运行推理</span></span></span></div><div><span><span><span><span>用Trainer微调模型</span></span></span></span></div><div><br /></div><div><span><span><span>安装torch transformers datasets evaluate accelerate timm</span></span></span></div><div><span><span><span><br /></span></span></span></div><div><span><span><span>每个预训练模型都继承自三个基类：</span></span></span></div><div><span><span><span>PretrainedConfig </span></span></span></div><div><span><span><span><span>    指定模型属性的文件，比如注意力头数量，词汇表尺寸</span><br /></span></span></span></div><div><span><span><span>PreTrainedModel </span></span></span></div><div><span><span><span><span>    </span></span></span></span><span style="color: rgb(0, 0, 0); font-family: PingFangSC-Regular; font-size: 14px; font-variant-ligatures: normal; font-variant-caps: normal; letter-spacing: normal; orphans: 2; text-indent: 0px; text-transform: none; widows: 2; word-spacing: 0px; -webkit-text-stroke-width: 0px; white-space: normal;">由配置文件中的模型属性定义的模型（或架构）。预训练模型仅返回原始隐藏状态。对于特定任务，需使用相应的模型头将原始隐藏状态转换为有意义的结果（例如LlamaModel与LlamaForCausalLM的区别）。</span></div><div><span><span><span>Preprocessor</span></span></span></div><div><span><span><span><span>    将输入转换为模型需要的数字输入的类，比如PreTrainedTokenizer将文本转换为张量，ImageProcessingMixin将像素转换为张量</span><br /></span></span></span></div><div><span><span><span><span><br /></span></span></span></span></div><div>推理示例只需要几行就可以演示一个例子:</div><div>from transformers import AutoModelForCausalLM, AutoTokenizer</div><div>model = AutoModelForCausalLM.from_pretrained("meta-llama/Llama-2-7b-hf", torch_dtype="auto", device_map="auto")</div><div>tokenizer = AutoTokenizer.from_pretrained("meta-llama/Llama-2-7b-hf")</div><div>model_inputs = tokenizer(["The secret to baking a good cake is "], return_tensors="pt").to("cuda")</div><div>generated_ids = model.generate(**model_inputs, max_length=30)</div><div>tokenizer.batch_decode(generated_ids)[0]</div><div>'&lt;s&gt; The secret to baking a good cake is 100% in the preparation. There are so many recipes out there,'</div><div><br /></div><div>Pipeline:</div><div>Pipeline是最方便的用预训练模型进行推理的类。</div><div>from transformers import pipeline</div><div>pipeline = pipeline("text-generation", model="meta-llama/Llama-2-7b-hf", device="cuda")</div><div>pipeline("你好", max_length=50)</div><div><br /></div><div>训练、推理都保证保证模型文件已经从huggingface下载好到本地</div><div>Trainer:</div><div>from transformers import AutoModelForSequenceClassification, AutoTokenizer</div><div>from datasets import load_dataset</div><div><br /></div><div>import torch</div><div>device = torch.device("cuda:5")</div><div>model_path = "/home/data/qwen2-7b-instruct/"</div><div>model = AutoModelForSequenceClassification.from_pretrained(model_path).to("cuda:4")</div><div>model.to(device)</div><div>tokenizer = AutoTokenizer.from_pretrained(model_path)</div><div>dataset = load_dataset("/home/data/MrbBakh-Rotten_Tomatoes/")</div><div>tokenizer.pad_token = tokenizer.eos_token</div><div>tokenizer.pad_token_id = tokenizer.eos_token_id</div><div>model.config.pad_token_id = tokenizer.pad_token_id</div><div><br /></div><div>def tokenize_dataset(dataset):</div><div>    return tokenizer(dataset["text"])</div><div>dataset = dataset.map(tokenize_dataset, batched=True)</div><div><br /></div><div>from transformers import DataCollatorWithPadding</div><div><br /></div><div>data_collator = DataCollatorWithPadding(tokenizer=tokenizer)</div><div><br /></div><div>from transformers import TrainingArguments</div><div><br /></div><div>training_args = TrainingArguments(</div><div>    output_dir="distilbert-rotten-tomatoes",</div><div>    learning_rate=2e-5,</div><div>    per_device_train_batch_size=8,</div><div>    per_device_eval_batch_size=8,</div><div>    num_train_epochs=2,</div><div>    push_to_hub=False,</div><div>)</div><div><br /></div><div>from transformers import Trainer</div><div><br /></div><div>trainer = Trainer(</div><div>    model=model,</div><div>    args=training_args,</div><div>    train_dataset=dataset["train"],</div><div>    eval_dataset=dataset["test"],</div><div>    tokenizer=tokenizer,</div><div>    data_collator=data_collator,</div><div>)</div><div><br /></div><div>trainer.train()</div><div><br /></div><div><br /></div><div><br /></div>
+</div>
+<a class="back-link" href="../articles.html">← 返回笔记列表</a>
+</body>
+</html>

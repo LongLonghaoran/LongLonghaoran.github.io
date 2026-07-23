@@ -1,0 +1,336 @@
+<!DOCTYPE html>
+<html lang="zh-CN" data-theme="light">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PyTorch 自动微分 - PyTorch官方教程中文版 — 技术笔记</title>
+<style>
+:root {
+  --bg: #ffffff;
+  --text: #1a1a1a;
+  --muted: #666;
+  --border: #e0e0e0;
+  --code-bg: #f5f5f5;
+  --link: #0066cc;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #1a1a1a;
+    --text: #e0e0e0;
+    --muted: #999;
+    --border: #333;
+    --code-bg: #2a2a2a;
+    --link: #66bbff;
+  }
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  line-height: 1.7;
+  color: var(--text);
+  background: var(--bg);
+  max-width: 860px;
+  margin: 0 auto;
+  padding: 2rem 1.5rem;
+}
+.note-header {
+  border-bottom: 2px solid var(--border);
+  padding-bottom: 1rem;
+  margin-bottom: 2rem;
+}
+.note-title {
+  font-size: 1.6rem;
+  font-weight: 700;
+  margin-bottom: 0.3rem;
+}
+.note-meta {
+  color: var(--muted);
+  font-size: 0.85rem;
+}
+.note-content {
+  font-size: 0.95rem;
+}
+.note-content h1 { font-size: 1.4rem; margin: 1.2rem 0 0.6rem; }
+.note-content h2 { font-size: 1.2rem; margin: 1rem 0 0.5rem; }
+.note-content h3 { font-size: 1.05rem; margin: 0.8rem 0 0.4rem; }
+.note-content p { margin: 0.5rem 0; }
+.note-content ul, .note-content ol { margin: 0.5rem 0 0.5rem 2rem; }
+.note-content li { margin: 0.2rem 0; }
+.note-content pre {
+  background: var(--code-bg);
+  padding: 1rem;
+  border-radius: 6px;
+  overflow-x: auto;
+  margin: 0.8rem 0;
+  font-size: 0.85rem;
+}
+.note-content code {
+  background: var(--code-bg);
+  padding: 0.1rem 0.3rem;
+  border-radius: 3px;
+  font-size: 0.88em;
+}
+.note-content pre code {
+  background: none;
+  padding: 0;
+}
+.note-content blockquote {
+  border-left: 3px solid var(--border);
+  padding-left: 1rem;
+  color: var(--muted);
+  margin: 0.8rem 0;
+}
+.note-content a { color: var(--link); }
+.note-content img {
+  max-width: 100%;
+  height: auto;
+  border-radius: 6px;
+  margin: 0.5rem 0;
+}
+.note-content table {
+  border-collapse: collapse;
+  width: 100%;
+  margin: 0.8rem 0;
+}
+.note-content th, .note-content td {
+  border: 1px solid var(--border);
+  padding: 0.5rem;
+}
+.note-content th { background: var(--code-bg); }
+.media-placeholder {
+  background: var(--code-bg);
+  padding: 1rem;
+  text-align: center;
+  color: var(--muted);
+  border-radius: 6px;
+  margin: 0.5rem 0;
+  font-size: 0.85rem;
+}
+.encrypt-placeholder {
+  background: #fff3cd;
+  padding: 0.5rem;
+  text-align: center;
+  color: #856404;
+  border-radius: 6px;
+  margin: 0.5rem 0;
+  font-size: 0.85rem;
+}
+.back-link {
+  display: inline-block;
+  margin-top: 2rem;
+  color: var(--link);
+  text-decoration: none;
+  font-size: 0.85rem;
+}
+</style>
+</head>
+<body>
+<div class="note-header">
+  <div class="note-title">PyTorch 自动微分 - PyTorch官方教程中文版</div>
+  <div class="note-meta">笔记本：AI</div>
+</div>
+<div class="note-content">
+<div style="--en-clipped-content:article">
+<div><br/></div><div style="font-size: 16px; display:block; min-width: 100%; position: relative;"> <div style="box-sizing:border-box;font-size:100%;text-size-adjust:100%;overflow-x:hidden;"><div style="box-sizing:border-box;font-family:Lato, proxima-nova, &quot;Helvetica Neue&quot;, Arial, sans-serif;font-weight:normal;color:rgb(64, 64, 64);overflow-x:hidden;background:rgb(252, 252, 252);"><div style="box-sizing:border-box;"><div style="box-sizing:border-box;background:rgba(0, 0, 0, 0.05);"><div style="box-sizing:border-box;background:rgb(252, 252, 252);"><div style="box-sizing:border-box;"><div style="box-sizing:border-box;"><div style="box-sizing:border-box;">
+              
+                <p style="box-sizing:border-box;line-height:24px;margin:0px 0px 24px;font-size:16px;">autograd 包是 PyTorch 中所有神经网络的核心。首先让我们简要地介绍它，然后我们将会去训练我们的第一个神经网络。该 autograd 软件包为 Tensors 上的所有操作提供自动微分。它是一个由运行定义的框架，这意味着以代码运行方式定义你的后向传播，并且每次迭代都可以不同。我们从 tensor 和 gradients 来举一些例子。</p>
+<p style="box-sizing:border-box;line-height:24px;margin:0px 0px 24px;font-size:16px;">1、TENSOR</p>
+<p style="box-sizing:border-box;line-height:24px;margin:0px 0px 24px;font-size:16px;">torch.Tensor 是包的核心类。如果将其属性 .requires_grad 设置为 True，则会开始跟踪针对 tensor 的所有操作。完成计算后，您可以调用 .backward() 来自动计算所有梯度。该张量的梯度将累积到 .grad 属性中。</p>
+<p style="box-sizing:border-box;line-height:24px;margin:0px 0px 24px;font-size:16px;">要停止 tensor 历史记录的跟踪，您可以调用 .detach()，它将其与计算历史记录分离，并防止将来的计算被跟踪。</p>
+<p style="box-sizing:border-box;line-height:24px;margin:0px 0px 24px;font-size:16px;">要停止跟踪历史记录（和使用内存），您还可以将代码块使用 with torch.no_grad(): 包装起来。在评估模型时，这是特别有用，因为模型在训练阶段具有 requires_grad = True 的可训练参数有利于调参，但在评估阶段我们不需要梯度。</p>
+<p style="box-sizing:border-box;line-height:24px;margin:0px 0px 24px;font-size:16px;">还有一个类对于 autograd 实现非常重要那就是 Function。Tensor 和 Function 互相连接并构建一个非循环图，它保存整个完整的计算过程的历史信息。每个张量都有一个 .grad_fn 属性保存着创建了张量的 Function 的引用，（如果用户自己创建张量，则g rad_fn 是 None ）。</p>
+<p style="box-sizing:border-box;line-height:24px;margin:0px 0px 24px;font-size:16px;">如果你想计算导数，你可以调用 Tensor.backward()。如果 Tensor 是标量（即它包含一个元素数据），则不需要指定任何参数backward()，但是如果它有更多元素，则需要指定一个gradient 参数来指定张量的形状。</p>
+<pre style="border-radius:4px;background-color: #fbfaf8;border: 1px solid rgba(0,0,0,.14902);color: #333;font-size: 12px;padding: 8px;font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif;box-sizing: border-box;"><code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span style="box-sizing:border-box;color:rgb(51, 51, 51);font-weight:bold;">import</span> torch
+</code></pre>
+<p style="box-sizing:border-box;line-height:24px;margin:0px 0px 24px;font-size:16px;">创建一个张量，设置 requires_grad=True 来跟踪与它相关的计算</p>
+<pre style="border-radius:4px;background-color: #fbfaf8;border: 1px solid rgba(0,0,0,.14902);color: #333;font-size: 12px;padding: 8px;font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif;box-sizing: border-box;"><code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif">x = torch.ones(<span style="box-sizing:border-box;color:rgb(0, 128, 128);">2</span>, <span style="box-sizing:border-box;color:rgb(0, 128, 128);">2</span>, requires_grad=<span style="box-sizing:border-box;color:rgb(51, 51, 51);font-weight:bold;">True</span>)
+print(x)
+</code></pre>
+<p style="box-sizing:border-box;line-height:24px;margin:0px 0px 24px;font-size:16px;">输出：</p>
+<pre style="border-radius:4px;background-color: #fbfaf8;border: 1px solid rgba(0,0,0,.14902);color: #333;font-size: 12px;padding: 8px;font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif;box-sizing: border-box;"><code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif">tensor([[<span style="box-sizing:border-box;color:rgb(0, 128, 128);">1.</span>, <span style="box-sizing:border-box;color:rgb(0, 128, 128);">1.</span>],
+        [<span style="box-sizing:border-box;color:rgb(0, 128, 128);">1.</span>, <span style="box-sizing:border-box;color:rgb(0, 128, 128);">1.</span>]], requires_grad=<span style="box-sizing:border-box;color:rgb(51, 51, 51);font-weight:bold;">True</span>)
+</code></pre>
+<p style="box-sizing:border-box;line-height:24px;margin:0px 0px 24px;font-size:16px;">针对张量做一个操作</p>
+<pre style="border-radius:4px;background-color: #fbfaf8;border: 1px solid rgba(0,0,0,.14902);color: #333;font-size: 12px;padding: 8px;font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif;box-sizing: border-box;"><code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif">y = x + <span style="box-sizing:border-box;color:rgb(0, 128, 128);">2</span>
+print(y)
+</code></pre>
+<p style="box-sizing:border-box;line-height:24px;margin:0px 0px 24px;font-size:16px;">输出：</p>
+<pre style="border-radius:4px;background-color: #fbfaf8;border: 1px solid rgba(0,0,0,.14902);color: #333;font-size: 12px;padding: 8px;font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif;box-sizing: border-box;"><code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif">tensor([[<span style="box-sizing:border-box;color:rgb(0, 128, 128);">3.</span>, <span style="box-sizing:border-box;color:rgb(0, 128, 128);">3.</span>],
+        [<span style="box-sizing:border-box;color:rgb(0, 128, 128);">3.</span>, <span style="box-sizing:border-box;color:rgb(0, 128, 128);">3.</span>]], grad_fn=&lt;AddBackward0&gt;)
+</code></pre>
+<p style="box-sizing:border-box;line-height:24px;margin:0px 0px 24px;font-size:16px;">y 作为操作的结果被创建，所以它有 grad_fn</p>
+<pre style="border-radius:4px;background-color: #fbfaf8;border: 1px solid rgba(0,0,0,.14902);color: #333;font-size: 12px;padding: 8px;font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif;box-sizing: border-box;"><code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif">print(y.grad_fn)
+
+</code></pre>
+<p style="box-sizing:border-box;line-height:24px;margin:0px 0px 24px;font-size:16px;">输出：</p>
+<pre style="border-radius:4px;background-color: #fbfaf8;border: 1px solid rgba(0,0,0,.14902);color: #333;font-size: 12px;padding: 8px;font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif;box-sizing: border-box;"><code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif">&lt;AddBackward0 object at <span style="box-sizing:border-box;color:rgb(0, 128, 128);">0x7fe1db427470</span>&gt;
+
+</code></pre>
+<p style="box-sizing:border-box;line-height:24px;margin:0px 0px 24px;font-size:16px;">针对 y 做更多的操作：</p>
+<pre style="border-radius:4px;background-color: #fbfaf8;border: 1px solid rgba(0,0,0,.14902);color: #333;font-size: 12px;padding: 8px;font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif;box-sizing: border-box;"><code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif">
+z = y * y * <span style="box-sizing:border-box;color:rgb(0, 128, 128);">3</span>
+out = z.mean()
+
+print(z, out)
+</code></pre>
+<p style="box-sizing:border-box;line-height:24px;margin:0px 0px 24px;font-size:16px;">输出：</p>
+<pre style="border-radius:4px;background-color: #fbfaf8;border: 1px solid rgba(0,0,0,.14902);color: #333;font-size: 12px;padding: 8px;font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif;box-sizing: border-box;"><code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif">tensor([[<span style="box-sizing:border-box;color:rgb(0, 128, 128);">27.</span>, <span style="box-sizing:border-box;color:rgb(0, 128, 128);">27.</span>],
+        [<span style="box-sizing:border-box;color:rgb(0, 128, 128);">27.</span>, <span style="box-sizing:border-box;color:rgb(0, 128, 128);">27.</span>]], grad_fn=&lt;MulBackward0&gt;) 
+tensor(<span style="box-sizing:border-box;color:rgb(0, 128, 128);">27.</span>, grad_fn=&lt;MeanBackward0&gt;)
+</code></pre>
+<p style="box-sizing:border-box;line-height:24px;margin:0px 0px 24px;font-size:16px;">.requires_grad_( ... ) 会改变张量的 requires_grad 标记。输入的标记默认为  False ，如果没有提供相应的参数。</p>
+<pre style="border-radius:4px;background-color: #fbfaf8;border: 1px solid rgba(0,0,0,.14902);color: #333;font-size: 12px;padding: 8px;font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif;box-sizing: border-box;"><code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif">
+a = torch.randn(<span style="box-sizing:border-box;color:rgb(0, 128, 128);">2</span>, <span style="box-sizing:border-box;color:rgb(0, 128, 128);">2</span>)
+a = ((a * <span style="box-sizing:border-box;color:rgb(0, 128, 128);">3</span>) / (a - <span style="box-sizing:border-box;color:rgb(0, 128, 128);">1</span>))
+print(a.requires_grad)
+a.requires_grad_(<span style="box-sizing:border-box;color:rgb(51, 51, 51);font-weight:bold;">True</span>)
+print(a.requires_grad)
+b = (a * a).sum()
+print(b.grad_fn)
+</code></pre>
+<p style="box-sizing:border-box;line-height:24px;margin:0px 0px 24px;font-size:16px;">输出：</p>
+<pre style="border-radius:4px;background-color: #fbfaf8;border: 1px solid rgba(0,0,0,.14902);color: #333;font-size: 12px;padding: 8px;font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif;box-sizing: border-box;"><code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span style="box-sizing:border-box;color:rgb(51, 51, 51);font-weight:bold;">False</span>
+<span style="box-sizing:border-box;color:rgb(51, 51, 51);font-weight:bold;">True</span>
+&lt;SumBackward0 object at <span style="box-sizing:border-box;color:rgb(0, 128, 128);">0x7fe1db427dd8</span>&gt;
+
+</code></pre>
+<p style="box-sizing:border-box;line-height:24px;margin:0px 0px 24px;font-size:16px;">梯度：</p>
+<p style="box-sizing:border-box;line-height:24px;margin:0px 0px 24px;font-size:16px;">我们现在后向传播，因为输出包含了一个标量，out.backward() 等同于out.backward(torch.tensor(1.))。</p>
+<pre style="border-radius:4px;background-color: #fbfaf8;border: 1px solid rgba(0,0,0,.14902);color: #333;font-size: 12px;padding: 8px;font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif;box-sizing: border-box;"><code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif">
+out.backward()
+</code></pre>
+<p style="box-sizing:border-box;line-height:24px;margin:0px 0px 24px;font-size:16px;">打印梯度  d(out)/dx</p>
+<pre style="border-radius:4px;background-color: #fbfaf8;border: 1px solid rgba(0,0,0,.14902);color: #333;font-size: 12px;padding: 8px;font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif;box-sizing: border-box;"><code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif">
+print(x.grad)
+
+</code></pre>
+<p style="box-sizing:border-box;line-height:24px;margin:0px 0px 24px;font-size:16px;">输出：</p>
+<pre style="border-radius:4px;background-color: #fbfaf8;border: 1px solid rgba(0,0,0,.14902);color: #333;font-size: 12px;padding: 8px;font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif;box-sizing: border-box;"><code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif">tensor([[<span style="box-sizing:border-box;color:rgb(0, 128, 128);">4.5000</span>, <span style="box-sizing:border-box;color:rgb(0, 128, 128);">4.5000</span>],
+        [<span style="box-sizing:border-box;color:rgb(0, 128, 128);">4.5000</span>, <span style="box-sizing:border-box;color:rgb(0, 128, 128);">4.5000</span>]])
+</code></pre>
+<p style="box-sizing:border-box;line-height:24px;margin:0px 0px 24px;font-size:16px;">原理解释：</p>
+<p style="box-sizing:border-box;line-height:24px;margin:0px 0px 24px;font-size:16px;"><img width="3544" height="1952" src="https://pytorchchina.com/wp-content/uploads/2018/12/WechatIMG1376.jpeg" style="box-sizing:border-box;border:0px;vertical-align:middle;height:auto;max-width:100%;"/></p>
+<div style="box-sizing:border-box;">
+<div style="box-sizing:border-box;">
+<div dir="ltr" style="box-sizing:border-box;">
+<div style="box-sizing:border-box;">
+<div style="box-sizing:border-box;"></div>
+</div>
+</div>
+</div>
+</div>
+<div style="box-sizing:border-box;">
+<div style="box-sizing:border-box;">
+<div style="box-sizing:border-box;">
+<div dir="ltr" style="box-sizing:border-box;">
+
+
+现在让我们看一个雅可比向量积的例子：
+
+
+<pre style="border-radius:4px;background-color: #fbfaf8;border: 1px solid rgba(0,0,0,.14902);color: #333;font-size: 12px;padding: 8px;font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif;box-sizing: border-box;"><code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif">
+x = torch.randn(<span style="box-sizing:border-box;color:rgb(0, 128, 128);">3</span>, requires_grad=<span style="box-sizing:border-box;color:rgb(51, 51, 51);font-weight:bold;">True</span>)
+
+y = x * <span style="box-sizing:border-box;color:rgb(0, 128, 128);">2</span>
+<span style="box-sizing:border-box;color:rgb(51, 51, 51);font-weight:bold;">while</span> y.data.norm() &lt; <span style="box-sizing:border-box;color:rgb(0, 128, 128);">1000</span>:
+    y = y * <span style="box-sizing:border-box;color:rgb(0, 128, 128);">2</span>
+
+print(y)
+</code></pre>
+
+输出：
+
+
+<pre style="border-radius:4px;background-color: #fbfaf8;border: 1px solid rgba(0,0,0,.14902);color: #333;font-size: 12px;padding: 8px;font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif;box-sizing: border-box;"><code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif">
+tensor([ <span style="box-sizing:border-box;color:rgb(0, 128, 128);">-444.6791</span>,   <span style="box-sizing:border-box;color:rgb(0, 128, 128);">762.9810</span>, <span style="box-sizing:border-box;color:rgb(0, 128, 128);">-1690.0941</span>], grad_fn=&lt;MulBackward0&gt;)
+</code></pre>
+
+现在在这种情况下，y 不再是一个标量。torch.autograd 不能够直接计算整个雅可比，但是如果我们只想要雅可比向量积，只需要简单的传递向量给 backward 作为参数。
+
+
+<pre style="border-radius:4px;background-color: #fbfaf8;border: 1px solid rgba(0,0,0,.14902);color: #333;font-size: 12px;padding: 8px;font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif;box-sizing: border-box;"><code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif">v = torch.tensor([<span style="box-sizing:border-box;color:rgb(0, 128, 128);">0.1</span>, <span style="box-sizing:border-box;color:rgb(0, 128, 128);">1.0</span>, <span style="box-sizing:border-box;color:rgb(0, 128, 128);">0.0001</span>], dtype=torch.float)
+y.backward(v)
+
+print(x.grad)
+
+</code></pre>
+
+
+输出：
+
+
+<pre style="border-radius:4px;background-color: #fbfaf8;border: 1px solid rgba(0,0,0,.14902);color: #333;font-size: 12px;padding: 8px;font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif;box-sizing: border-box;"><code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif">tensor([<span style="box-sizing:border-box;color:rgb(0, 128, 128);">1.0240e+02</span>, <span style="box-sizing:border-box;color:rgb(0, 128, 128);">1.0240e+03</span>, <span style="box-sizing:border-box;color:rgb(0, 128, 128);">1.0240e-01</span>])
+
+
+</code></pre>
+
+你可以通过将代码包裹在 with torch.no_grad()，来停止对从跟踪历史中 的 .requires_grad=True 的张量自动求导。
+
+
+<pre style="border-radius:4px;background-color: #fbfaf8;border: 1px solid rgba(0,0,0,.14902);color: #333;font-size: 12px;padding: 8px;font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif;box-sizing: border-box;"><code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif">
+print(x.requires_grad)
+print((x ** <span style="box-sizing:border-box;color:rgb(0, 128, 128);">2</span>).requires_grad)
+
+<span style="box-sizing:border-box;color:rgb(51, 51, 51);font-weight:bold;">with</span> torch.no_grad():
+    print((x ** <span style="box-sizing:border-box;color:rgb(0, 128, 128);">2</span>).requires_grad)
+</code></pre>
+
+
+输出：
+
+
+<pre style="border-radius:4px;background-color: #fbfaf8;border: 1px solid rgba(0,0,0,.14902);color: #333;font-size: 12px;padding: 8px;font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif;box-sizing: border-box;"><code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif">
+<span style="box-sizing:border-box;color:rgb(51, 51, 51);font-weight:bold;">True</span>
+<span style="box-sizing:border-box;color:rgb(51, 51, 51);font-weight:bold;">True</span>
+<span style="box-sizing:border-box;color:rgb(51, 51, 51);font-weight:bold;">False</span>
+</code></pre>
+
+
+稍后可以阅读：
+
+autograd 和 Function 的文档在： https://pytorch.org/docs/autograd
+
+
+下载 Python 源代码：
+
+<a href="http://pytorchchina.com/wp-content/uploads/2018/12/autograd_tutorial.py_.zip" style="box-sizing:border-box;color:rgb(41, 128, 185);text-decoration:none;cursor:pointer;">autograd_tutorial.py</a>
+
+下载 Jupyter 源代码：
+
+<a href="http://pytorchchina.com/wp-content/uploads/2018/12/autograd_tutorial.ipynb_.zip" style="box-sizing:border-box;color:rgb(41, 128, 185);text-decoration:none;cursor:pointer;">autograd_tutorial.ipynb</a>
+              
+            </div>
+          </div>
+          <div style="display:block;box-sizing:border-box;color:gray;">
+  
+    <div style="box-sizing:border-box;"><span style="width:100%;display:table;"></span>
+      
+        <a href="https://pytorch123.com/SecondSection/neural_networks/" title="PyTorch 神经网络" style="box-sizing:border-box;-webkit-font-smoothing:antialiased;display:inline-block;border-radius:2px;line-height:normal;white-space:nowrap;text-align:center;font-size:100%;padding:6px 12px 8px;border:1px solid rgba(0, 0, 0, 0.1);font-weight:normal;font-family:Lato, proxima-nova, &quot;Helvetica Neue&quot;, Arial, sans-serif;box-shadow:rgba(255, 255, 255, 0.5) 0px 1px 2px -1px inset, rgba(0, 0, 0, 0.1) 0px -2px 0px 0px inset;vertical-align:middle;zoom:1;-webkit-user-drag:none;user-select:none;transition:all 0.1s linear 0s;cursor:pointer;text-decoration:none;float:right;background-color:rgb(243, 246, 246);color:rgb(64, 64, 64);"><span style="line-height:normal;white-space:nowrap;text-align:center;cursor:pointer;font-size:100%;color:rgb(64, 64, 64);font-weight:normal;font-family:Lato, proxima-nova, Helvetica Neue, Arial, sans-serif;-webkit-font-smoothing:antialiased;"></span>Next <span style="box-sizing:border-box;font-style:normal;font-variant:normal;font-kerning:auto;font-optical-sizing:auto;font-feature-settings:normal;font-variation-settings:normal;font-weight:normal;font-stretch:normal;line-height:1;font-size:inherit;text-rendering:auto;-webkit-font-smoothing:antialiased;font-family:inherit;text-decoration:inherit;display:inline;"><span style="font-style:normal;font-variant:normal;font-weight:normal;line-height:1;font-family:FontAwesome;font-size:inherit;-webkit-font-smoothing:antialiased;display:inline-block;text-decoration:inherit;"></span></span></a>
+      
+      
+        <a href="https://pytorch123.com/SecondSection/what_is_pytorch/" title="PyTorch 入门" style="box-sizing:border-box;-webkit-font-smoothing:antialiased;display:inline-block;border-radius:2px;line-height:normal;white-space:nowrap;text-align:center;font-size:100%;padding:6px 12px 8px;border:1px solid rgba(0, 0, 0, 0.1);font-weight:normal;font-family:Lato, proxima-nova, &quot;Helvetica Neue&quot;, Arial, sans-serif;box-shadow:rgba(255, 255, 255, 0.5) 0px 1px 2px -1px inset, rgba(0, 0, 0, 0.1) 0px -2px 0px 0px inset;vertical-align:middle;zoom:1;-webkit-user-drag:none;user-select:none;transition:all 0.1s linear 0s;cursor:pointer;text-decoration:none;background-color:rgb(243, 246, 246);color:rgb(64, 64, 64);"><span style="line-height:normal;white-space:nowrap;text-align:center;cursor:pointer;font-size:100%;color:rgb(64, 64, 64);font-weight:normal;font-family:Lato, proxima-nova, Helvetica Neue, Arial, sans-serif;-webkit-font-smoothing:antialiased;"></span><span style="box-sizing:border-box;font-style:normal;font-variant:normal;font-kerning:auto;font-optical-sizing:auto;font-feature-settings:normal;font-variation-settings:normal;font-weight:normal;font-stretch:normal;line-height:1;font-size:inherit;text-rendering:auto;-webkit-font-smoothing:antialiased;font-family:inherit;text-decoration:inherit;display:inline;"><span style="font-style:normal;font-variant:normal;font-weight:normal;line-height:1;font-family:FontAwesome;font-size:inherit;-webkit-font-smoothing:antialiased;display:inline-block;text-decoration:inherit;"></span></span> Previous</a>
+      
+    <span style="width:100%;display:table;clear:both;"></span></div>
+  
+
+  <hr style="box-sizing:border-box;display:block;height:1px;border-width:1px 0px 0px;border-right-style:initial;border-bottom-style:initial;border-left-style:initial;border-right-color:initial;border-bottom-color:initial;border-left-color:initial;border-image:initial;border-top-style:solid;border-top-color:rgb(225, 228, 229);margin:24px 0px;padding:0px;"/>
+
+  <div style="box-sizing:border-box;">
+    
+    
+      <p style="box-sizing:border-box;line-height:24px;margin:0px 0px 24px;font-size:16px;margin-bottom:12px;">Copyright 2017-2019,  All Rights Reserved. <br style="box-sizing:border-box;"/>粤ICP备18085907号 深圳市磐创网络科技有限公司</p>
+    
+  </div>
+
+  Built with <a href="https://www.mkdocs.org/" style="box-sizing:border-box;color:rgb(41, 128, 185);text-decoration:none;cursor:pointer;">MkDocs</a> using a <a href="https://github.com/snide/sphinx_rtd_theme" style="box-sizing:border-box;color:rgb(41, 128, 185);text-decoration:none;cursor:pointer;">theme</a> provided by <a href="https://readthedocs.org/" style="box-sizing:border-box;color:rgb(41, 128, 185);text-decoration:none;cursor:pointer;">Read the Docs</a>.
+</div>
+      
+        </div>
+      </div>
+
+    </div></div></div></div></div></div></div></div></div>
+</div>
+</div>
+<a class="back-link" href="../articles.html">← 返回笔记列表</a>
+</body>
+</html>

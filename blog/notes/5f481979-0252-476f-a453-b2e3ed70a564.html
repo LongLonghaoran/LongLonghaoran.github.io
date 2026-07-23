@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="zh-CN" data-theme="light">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>使用freessl基于ACME v2证书自动化快速入门 — 技术笔记</title>
+<style>
+:root { --bg:#fff; --text:#1a1a1a; --muted:#666; --border:#e0e0e0; --code-bg:#f5f5f5; --link:#0066cc; }
+@media (prefers-color-scheme: dark) { :root { --bg:#1a1a1a; --text:#e0e0e0; --muted:#999; --border:#333; --code-bg:#2a2a2a; --link:#66bbff; } }
+* { box-sizing:border-box; margin:0; padding:0; }
+body { font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Arial,sans-serif; line-height:1.7; color:var(--text); background:var(--bg); max-width:860px; margin:0 auto; padding:2rem 1.5rem; }
+.note-header { border-bottom:2px solid var(--border); padding-bottom:1rem; margin-bottom:2rem; }
+.note-title { font-size:1.6rem; font-weight:700; margin-bottom:0.3rem; }
+.note-meta { color:var(--muted); font-size:0.85rem; }
+.note-content { font-size:0.95rem; }
+.note-content h1 { font-size:1.4rem; margin:1.2rem 0 0.6rem; }
+.note-content h2 { font-size:1.2rem; margin:1rem 0 0.5rem; }
+.note-content h3 { font-size:1.05rem; margin:0.8rem 0 0.4rem; }
+.note-content p { margin:0.5rem 0; }
+.note-content ul,.note-content ol { margin:0.5rem 0 0.5rem 2rem; }
+.note-content li { margin:0.2rem 0; }
+.note-content pre { background:var(--code-bg); padding:1rem; border-radius:6px; overflow-x:auto; margin:0.8rem 0; font-size:0.85rem; }
+.note-content code { background:var(--code-bg); padding:0.1rem 0.3rem; border-radius:3px; font-size:0.88em; }
+.note-content pre code { background:none; padding:0; }
+.note-content blockquote { border-left:3px solid var(--border); padding-left:1rem; color:var(--muted); margin:0.8rem 0; }
+.note-content a { color:var(--link); }
+.note-content img { max-width:100%; height:auto; border-radius:6px; margin:0.5rem 0; }
+.note-content table { border-collapse:collapse; width:100%; margin:0.8rem 0; }
+.note-content th,.note-content td { border:1px solid var(--border); padding:0.5rem; }
+.note-content th { background:var(--code-bg); }
+.media-placeholder { background:var(--code-bg); padding:1rem; text-align:center; color:var(--muted); border-radius:6px; margin:0.5rem 0; font-size:0.85rem; }
+.encrypt-placeholder { background:#fff3cd; padding:0.5rem; text-align:center; color:#856404; border-radius:6px; margin:0.5rem 0; font-size:0.85rem; }
+.back-link { display:inline-block; margin-top:2rem; color:var(--link); text-decoration:none; font-size:0.85rem; }
+</style>
+</head>
+<body>
+<div class="note-header"><div class="note-title">使用freessl基于ACME v2证书自动化快速入门</div><div class="note-meta">笔记本：关于加密、解密、签名</div></div>
+<div class="note-content"><div style="--en-clipped-content:simplified; --en-clipped-source-url:https://blog.freessl.cn/acme-quick-start/; --en-clipped-source-title:ACME v2证书自动化快速入门;">
+<div><br/></div><div style="min-height: 2892px; font-size: 16px; display: block; min-width: 100%; position: relative;"> <div style="background-color:transparent;font:inherit;vertical-align:baseline;"><div style="background-color:transparent;font:inherit;vertical-align:baseline;font-family:&quot;PT Serif&quot;;font-size:16px;line-height:1.5em;color:rgb(31, 9, 9);text-align:left;"><div style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;"><div style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;width:36em;z-index:200;padding-left:2em;padding-right:2em;margin-left:auto;margin-right:auto;position:relative;"><div style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;position:relative;margin-left:-25px;margin-right:25px;"><div style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;padding-top:0px;padding-bottom:9em;position:relative;"><div style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;margin-bottom:1.5em;"><div style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;position:relative;margin-bottom:0px;"><div style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;margin-bottom:0px;"><div style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;margin-bottom:0px;"><h1 style="font-family:&quot;PT Serif&quot;;text-align:left;border:0px;font:inherit;vertical-align:baseline;font-size:35px;font-weight:normal;line-height:35px;margin-bottom:20px;padding:0px;margin:0px;">1.安装acme.sh</h1><div style="padding:0px;border:0px;font:inherit;vertical-align:baseline;position:relative;height:1em;line-height:1;text-align:center;margin:0px;padding-top:1.5em;padding-bottom:1.5em;margin-bottom:0px;"><div style="padding:0px;border:0px;font:inherit;vertical-align:baseline;background:-webkit-linear-gradient(0deg, rgb(243, 242, 238) 1%, rgb(31, 9, 9) 50%, rgb(243, 242, 238) 99%);position:absolute;left:-4em;top:50%;z-index:10;width:100%;padding-left:4em;padding-right:4em;height:0.1em;opacity:0.5;margin:0px;margin-bottom:0px;"></div></div></div>
+<p style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;margin-bottom:1.5em;">建议切换到root模式，可以减少证书安装时的问题<br/>
+<code style="font-family:Inconsolata;margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;font-size:0.875em;line-height:1.71429em;">sudo su</code> 注意：MacOS 不用切换到root更简单。</p>
+<pre style="background-color:rgb(243, 242, 238);font-family:Inconsolata;margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;width:auto;font-size:0.875em;line-height:1.71429em;"><code style="font-family:Inconsolata;margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;line-height:1.71429em;font-size:1.15em;">curl https://get.acme.sh | sh -s email=my@example.com
+</code></pre>
+<p style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;margin-bottom:1.5em;">如果上面官方下载地址失败 或者 太慢，可以选用国内的备用地址</p>
+<pre style="background-color:rgb(243, 242, 238);font-family:Inconsolata;margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;width:auto;font-size:0.875em;line-height:1.71429em;"><code style="font-family:Inconsolata;margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;line-height:1.71429em;font-size:1.15em;">curl https://gitcode.net/cert/cn-acme.sh/-/raw/master/install.sh?inline=false | sh -s email=my@example.com
+</code></pre>
+<p style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;margin-bottom:1.5em;">注意：安装完成后，再重新打开命令行（如果是 SSH，选择重新连接），以使acme.sh命令生效。</p>
+<h1 style="font-family:&quot;PT Serif&quot;;text-align:left;margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;font-size:35px;font-weight:normal;line-height:35px;margin-bottom:20px;">2.对域名进行授权</h1>
+<p style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;margin-bottom:1.5em;">输入域名</p><div style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;display:block;text-align:center;margin-bottom:1em;margin-top:1em;"><div class="media-placeholder">[图片/附件]</div></en-media></div><p style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;margin-bottom:1.5em;"></p>
+<p style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;margin-bottom:1.5em;">获得域名验证（DCV）授权信息</p><div style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;display:block;text-align:center;margin-bottom:1em;margin-top:1em;"><div class="media-placeholder">[图片/附件]</div></en-media></div><p style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;margin-bottom:1.5em;"></p>
+<p style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;margin-bottom:1.5em;">到您的域名解析服务商添加解析记录，下面以DNSPod为例：</p><div style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;display:block;text-align:center;margin-bottom:1em;margin-top:1em;"><div class="media-placeholder">[图片/附件]</div></en-media></div><p style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;margin-bottom:1.5em;"></p>
+<h1 style="font-family:&quot;PT Serif&quot;;text-align:left;margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;font-size:35px;font-weight:normal;line-height:35px;margin-bottom:20px;">3.证书申请 &amp; 部署</h1>
+<p style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;margin-bottom:1.5em;"><strong style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;font-weight:bold;">点击【配置完成，立即检测】后获得证书申请命令</strong></p><div style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;display:block;text-align:center;margin-bottom:1em;margin-top:1em;"><div class="media-placeholder">[图片/附件]</div></en-media></div><p style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;margin-bottom:1.5em;"></p>
+<p style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;margin-bottom:1.5em;"><strong style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;font-weight:bold;">部署到 WebServer</strong></p>
+<p style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;margin-bottom:1.5em;">Apache example:</p>
+<pre style="background-color:rgb(243, 242, 238);font-family:Inconsolata;margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;width:auto;font-size:0.875em;line-height:1.71429em;"><code style="font-family:Inconsolata;margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;line-height:1.71429em;font-size:1.15em;">acme.sh --install-cert -d example.com 
+--cert-file      /path/to/certfile/in/apache/cert.pem  
+--key-file       /path/to/keyfile/in/apache/key.pem  
+--fullchain-file /path/to/fullchain/certfile/apache/fullchain.pem 
+--reloadcmd     &quot;service apache2 force-reload&quot;
+</code></pre>
+<p style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;margin-bottom:1.5em;">Nginx example:</p>
+<pre style="background-color:rgb(243, 242, 238);font-family:Inconsolata;margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;width:auto;font-size:0.875em;line-height:1.71429em;"><code style="font-family:Inconsolata;margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;line-height:1.71429em;font-size:1.15em;">acme.sh --install-cert -d example.com 
+--key-file       /path/to/keyfile/in/nginx/key.pem  
+--fullchain-file /path/to/fullchain/nginx/cert.pem 
+--reloadcmd     &quot;service nginx force-reload&quot;
+</code></pre>
+<p style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;margin-bottom:0px;">享受自动续期吧！<br/>
+证书进入到30天有效期，acme.sh 会自动完成续期。</p>
+</div></div></div></div></div></div></div></div></div></div>
+</div></div>
+<a class="back-link" href="../articles.html">← 返回笔记列表</a>
+</body></html>

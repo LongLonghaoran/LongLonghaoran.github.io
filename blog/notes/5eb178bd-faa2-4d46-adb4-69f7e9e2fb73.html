@@ -1,0 +1,417 @@
+<!DOCTYPE html>
+<html lang="zh-CN" data-theme="light">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>重新生成puppet证书 — 技术笔记</title>
+<style>
+:root {
+  --bg: #ffffff;
+  --text: #1a1a1a;
+  --muted: #666;
+  --border: #e0e0e0;
+  --code-bg: #f5f5f5;
+  --link: #0066cc;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #1a1a1a;
+    --text: #e0e0e0;
+    --muted: #999;
+    --border: #333;
+    --code-bg: #2a2a2a;
+    --link: #66bbff;
+  }
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  line-height: 1.7;
+  color: var(--text);
+  background: var(--bg);
+  max-width: 860px;
+  margin: 0 auto;
+  padding: 2rem 1.5rem;
+}
+.note-header {
+  border-bottom: 2px solid var(--border);
+  padding-bottom: 1rem;
+  margin-bottom: 2rem;
+}
+.note-title {
+  font-size: 1.6rem;
+  font-weight: 700;
+  margin-bottom: 0.3rem;
+}
+.note-meta {
+  color: var(--muted);
+  font-size: 0.85rem;
+}
+.note-content {
+  font-size: 0.95rem;
+}
+.note-content h1 { font-size: 1.4rem; margin: 1.2rem 0 0.6rem; }
+.note-content h2 { font-size: 1.2rem; margin: 1rem 0 0.5rem; }
+.note-content h3 { font-size: 1.05rem; margin: 0.8rem 0 0.4rem; }
+.note-content p { margin: 0.5rem 0; }
+.note-content ul, .note-content ol { margin: 0.5rem 0 0.5rem 2rem; }
+.note-content li { margin: 0.2rem 0; }
+.note-content pre {
+  background: var(--code-bg);
+  padding: 1rem;
+  border-radius: 6px;
+  overflow-x: auto;
+  margin: 0.8rem 0;
+  font-size: 0.85rem;
+}
+.note-content code {
+  background: var(--code-bg);
+  padding: 0.1rem 0.3rem;
+  border-radius: 3px;
+  font-size: 0.88em;
+}
+.note-content pre code {
+  background: none;
+  padding: 0;
+}
+.note-content blockquote {
+  border-left: 3px solid var(--border);
+  padding-left: 1rem;
+  color: var(--muted);
+  margin: 0.8rem 0;
+}
+.note-content a { color: var(--link); }
+.note-content img {
+  max-width: 100%;
+  height: auto;
+  border-radius: 6px;
+  margin: 0.5rem 0;
+}
+.note-content table {
+  border-collapse: collapse;
+  width: 100%;
+  margin: 0.8rem 0;
+}
+.note-content th, .note-content td {
+  border: 1px solid var(--border);
+  padding: 0.5rem;
+}
+.note-content th { background: var(--code-bg); }
+.media-placeholder {
+  background: var(--code-bg);
+  padding: 1rem;
+  text-align: center;
+  color: var(--muted);
+  border-radius: 6px;
+  margin: 0.5rem 0;
+  font-size: 0.85rem;
+}
+.encrypt-placeholder {
+  background: #fff3cd;
+  padding: 0.5rem;
+  text-align: center;
+  color: #856404;
+  border-radius: 6px;
+  margin: 0.5rem 0;
+  font-size: 0.85rem;
+}
+.back-link {
+  display: inline-block;
+  margin-top: 2rem;
+  color: var(--link);
+  text-decoration: none;
+  font-size: 0.85rem;
+}
+</style>
+</head>
+<body>
+<div class="note-header">
+  <div class="note-title">重新生成puppet证书</div>
+  <div class="note-meta">笔记本：Puppet</div>
+</div>
+<div class="note-content">
+<div style="--en-clipped-content:simplified; --en-clipped-source-url:https://puppet.com/docs/puppet/6/ssl_regenerate_certificates.html; --en-clipped-source-title:重新生成puppet证书;">
+<div><br/></div><div style="min-height: 4676px; font-size: 16px; display:block; min-width: 100%; "> <div style="background-color:transparent;font:inherit;vertical-align:baseline;"><div style="background-color:transparent;font:inherit;vertical-align:baseline;font-family:&quot;PT Serif&quot;;font-size:16px;line-height:1.5em;color:rgb(31, 9, 9);text-align:left;"><div style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;"><div style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;width:36em;z-index:200;padding-left:2em;padding-right:2em;margin-left:auto;margin-right:auto;position:relative;"><div style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;position:relative;margin-left:-25px;margin-right:25px;"><div style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;padding-top:0px;padding-bottom:9em;position:relative;"><div style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;margin-bottom:1.5em;"><div style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;position:relative;margin-bottom:0px;"><div style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;margin-bottom:0px;"><div style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;margin-bottom:0px;"><h1 style="font-family:&quot;PT Serif&quot;;text-align:left;border:0px;font:inherit;vertical-align:baseline;font-size:35px;font-weight:normal;line-height:35px;margin-bottom:20px;padding:0px;margin:0px;">Regenerating certificates in a Puppet deployment</h1><div style="padding:0px;border:0px;font:inherit;vertical-align:baseline;position:relative;height:1em;line-height:1;text-align:center;margin:0px;padding-top:1.5em;padding-bottom:1.5em;margin-bottom:0px;"><div style="padding:0px;border:0px;font:inherit;vertical-align:baseline;background:-webkit-linear-gradient(0deg, rgb(243, 242, 238) 1%, rgb(31, 9, 9) 50%, rgb(243, 242, 238) 99%);position:absolute;left:-4em;top:50%;z-index:10;width:100%;padding-left:4em;padding-right:4em;height:0.1em;opacity:0.5;margin:0px;margin-bottom:0px;"><span style="font:inherit;position:absolute;left:-4em;top:50%;z-index:10;width:100%;padding-left:4em;padding-right:4em;height:0.1em;margin:0px;opacity:0.5;background:-webkit-linear-gradient(0deg, rgb(243, 242, 238) 1%, rgb(31, 9, 9) 50%, rgb(243, 242, 238) 99%);"></span></div></div></div><div style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;margin-bottom:1.5em;">Open Source Puppet — 6.22</div>
+    
+    
+    
+    <div style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;margin-bottom:1.5em;"><p style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;margin-bottom:1.5em;">In some cases, you might need to regenerate the
+        certificates and security credentials (private and public keys) that are generated by Puppet’s built-in PKI systems.</p>
+        <p style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;margin-bottom:1.5em;">For example, you might have a Puppet
+            primary server you need to move to a different network in your infrastructure, or you might have
+            experienced a security vulnerability that makes existing credentials untrustworthy.</p>
+        <div style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;margin-bottom:1.5em;">
+            <div style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;margin-bottom:1.5em;">Note: There are other, more automated ways of doing
+                this. We recommend using Bolt to regenerate certs
+                when needed. See the <a href="https://puppet.com/docs/bolt/latest/bolt.html" style="color:rgb(6, 85, 136);margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;text-decoration:none;">Bolt
+                    documentation</a> for more information. There is also a <code style="font-family:Inconsolata;margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;font-size:0.875em;line-height:1.71429em;">
+                    <a href="https://forge.puppet.com/puppetlabs/certregen" style="color:rgb(6, 85, 136);margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;text-decoration:none;">puppetlabs-certregen</a>
+                </code> module but is not supported with Puppet Server 6. </div>
+            <div style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;margin-bottom:0px;">Important: The information on this page describes the
+                steps for regenerating certs in an open source Puppet
+                deployment. If you use Puppet Enterprise do not use
+                the information on this page, as it leaves you with an incomplete replacement and
+                non-functional deployment. Instead, PE customers
+                must refer to one of the following pages: 
+            </div>
+        </div>
+        <div style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;margin-bottom:0px;">
+            <table style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;border-collapse:collapse;border-spacing:0px;font-size:1em;margin-bottom:0px;"><colgroup><col/><col/></colgroup><thead style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;">
+                        <tr style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;">
+                            <th style="margin:0px;border:0px;font:inherit;vertical-align:baseline;padding:0.25em 0.25em 0.25em 0.4em;text-transform:uppercase;text-align:left;">
+                                <strong style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;font-weight:bold;">If your goal is to...</strong>
+                            </th>
+                            <th style="margin:0px;border:0px;font:inherit;vertical-align:baseline;padding:0.25em 0.25em 0.25em 0.4em;text-transform:uppercase;text-align:left;">
+                                <strong style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;font-weight:bold;">Do this...</strong>
+                            </th>
+                        </tr>
+                    </thead><tbody style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;">
+                        <tr style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;">
+                            <td style="margin:0px;border:0px;font:inherit;padding:0.25em 0.25em 0.25em 0.4em;vertical-align:top;">Regenerate an agent’s certificate</td>
+                            <td style="margin:0px;border:0px;font:inherit;padding:0.25em 0.25em 0.25em 0.4em;vertical-align:top;">
+                                <p style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;margin-bottom:0px;">
+                                    <a title="To replace the certs on agents, you’ll need to log into each agent node and do the following steps." href="https://puppet.com/docs/puppet/6/ssl_regenerate_certificates.html#clear_regenerate_certs_for_agents" style="color:rgb(6, 85, 136);margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;text-decoration:none;">Clear and
+                                        regenerate certs for Puppet
+                                        agents</a>
+                                </p>
+                            </td>
+                        </tr>
+                        <tr style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;">
+                            <td style="margin:0px;border:0px;font:inherit;padding:0.25em 0.25em 0.25em 0.4em;vertical-align:top;">Fix a compromised or damaged certificate
+                                authority</td>
+                            <td style="margin:0px;border:0px;font:inherit;padding:0.25em 0.25em 0.25em 0.4em;vertical-align:top;">
+                                <p style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;margin-bottom:0px;">
+                                    <a href="https://puppet.com/docs/puppet/6/ssl_regenerate_certificates.html#regenerate_ca_and_all_certificates" style="color:rgb(6, 85, 136);margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;text-decoration:none;">Regenerate
+                                        the CA and all certificates</a>
+                                </p>
+                            </td>
+                        </tr>
+                        <tr style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;">
+                            <td style="margin:0px;border:0px;font:inherit;padding:0.25em 0.25em 0.25em 0.4em;vertical-align:top;">Completely regenerate all Puppet deployment
+                                certificates</td>
+                            <td style="margin:0px;border:0px;font:inherit;padding:0.25em 0.25em 0.25em 0.4em;vertical-align:top;">
+                                <p style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;margin-bottom:0px;">
+                                    <a href="https://puppet.com/docs/puppet/6/ssl_regenerate_certificates.html#regenerate_ca_and_all_certificates" style="color:rgb(6, 85, 136);margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;text-decoration:none;">Regenerate
+                                        the CA and all certificates</a>
+                                </p>
+                            </td>
+                        </tr>
+                        <tr style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;">
+                            <td style="margin:0px;border:0px;font:inherit;padding:0.25em 0.25em 0.25em 0.4em;vertical-align:top;">Add DNS alt-names or other certificate
+                                extensions to your existing Puppet
+                                primary server</td>
+                            <td style="margin:0px;border:0px;font:inherit;padding:0.25em 0.25em 0.25em 0.4em;vertical-align:top;">
+                                <a title="This option preserves the primary server/agent relationship and lets you add DNS alt-names or certificate extensions to your existing primary server." href="https://puppet.com/docs/puppet/6/ssl_regenerate_certificates.html#regenerate_agent_certs_and_add_dns_alt_names" style="color:rgb(6, 85, 136);margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;text-decoration:none;">Regenerate the agent certificate of your Puppet primary server and add DNS
+                                    alt-names or other certificates</a>
+                            </td>
+                        </tr>
+                    </tbody></table>
+        </div>
+    </div>
+<div style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;display:block;">
+    <h2 style="font-family:&quot;PT Serif&quot;;text-align:left;margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;font-weight:bold;font-size:30px;line-height:35px;margin-top:35px;margin-bottom:15px;">Regenerate the agent certificate of your Puppet primary server and add DNS alt-names or other certificate
+        extensions</h2>
+    
+    
+    <div style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;margin-bottom:0px;"><p style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;margin-bottom:1.5em;">This option preserves the primary server/agent relationship and
+        lets you add DNS alt-names or certificate extensions to your existing primary server.</p>
+        <div style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;display:block;position:relative;margin-top:1.5em;padding-top:1.5em;"><span style="font:inherit;position:absolute;left:25%;top:0px;z-index:10;width:50%;padding-left:0px;padding-right:0px;height:0.1em;margin:0px;opacity:0.25;display:block;background:-webkit-linear-gradient(0deg, rgb(243, 242, 238) 1%, rgb(31, 9, 9) 50%, rgb(243, 242, 238) 99%);"> </span><ol style="padding:0px;border:0px;font:inherit;vertical-align:baseline;margin:0px 0px 1.5em 1.5em;list-style:none;list-style-type:decimal;"><li style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;list-style-type:inherit;list-style-position:outside;">
+                 Revoke the Puppet
+                    primary server’s certificate and clean the CA files pertaining to it. Note that the
+                    agents won’t be able to connect to the primary server until all of the following steps
+                    are finished.
+                <div style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;margin-bottom:0px;"><div style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;margin-bottom:0px;"><pre style="background-color:rgb(243, 242, 238);font-family:Inconsolata;margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;width:auto;font-size:0.875em;line-height:1.71429em;"><code style="font-family:Inconsolata;margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;line-height:1.71429em;font-size:1.15em;">puppetserver ca clean --certname &lt;CERTNAME_OF_YOUR_SERVER&gt;</code></pre></div></div>
+            </li><li style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;list-style-type:inherit;list-style-position:outside;">
+                Remove the agent-specific copy of the public key,
+                    private key, and certificate-signing request  pertaining to the
+                    certificate:
+                <div style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;margin-bottom:0px;"><div style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;margin-bottom:0px;"><pre style="background-color:rgb(243, 242, 238);font-family:Inconsolata;margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;width:auto;font-size:0.875em;line-height:1.71429em;"><code style="font-family:Inconsolata;margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;line-height:1.71429em;font-size:1.15em;">puppet ssl clean</code></pre></div></div>
+            </li><li style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;list-style-type:inherit;list-style-position:outside;">
+                Stop the Puppet
+                    primary server service:
+                <div style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;margin-bottom:0px;"><div style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;margin-bottom:0px;"><pre style="background-color:rgb(243, 242, 238);font-family:Inconsolata;margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;width:auto;font-size:0.875em;line-height:1.71429em;"><code style="font-family:Inconsolata;margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;line-height:1.71429em;font-size:1.15em;">puppet resource service puppetserver ensure=stopped</code></pre><div style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;margin-bottom:0px;">Note: The CA and server run in the same
+                                primary server so this also stops the CA.</div></div></div>
+            </li><li style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;list-style-type:inherit;list-style-position:outside;">
+                After you’ve stopped the primary server and CA service,
+                    create a certificate signed by the CA and add DNS alt names (comma
+                    separated):
+                <div style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;margin-bottom:0px;"><div style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;margin-bottom:0px;"><pre style="background-color:rgb(243, 242, 238);font-family:Inconsolata;margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;width:auto;font-size:0.875em;line-height:1.71429em;"><code style="font-family:Inconsolata;margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;line-height:1.71429em;font-size:1.15em;"> puppetserver ca generate --certname &lt;CERTNAME&gt; --subject-alt-names &lt;DNS ALT NAMES&gt; --ca-client</code></pre><div style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;margin-bottom:0px;">Note: If you don’t want to add DNS alt names
+                                to your primary server, omit the <code style="font-family:Inconsolata;margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;font-size:0.875em;line-height:1.71429em;">--subject-alt-names &lt;DNS ALT NAMES&gt;</code>
+                            option from the command above.</div></div></div>
+            </li><li style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;list-style-type:inherit;list-style-position:outside;">
+                Restart the Puppet
+                    primary server service:
+                <div style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;margin-bottom:0px;"><div style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;margin-bottom:0px;"><pre style="background-color:rgb(243, 242, 238);font-family:Inconsolata;margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;width:auto;font-size:0.875em;line-height:1.71429em;"><code style="font-family:Inconsolata;margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;line-height:1.71429em;font-size:1.15em;">puppet resource service puppetserver ensure=running</code></pre></div></div>
+            </li></ol></div>
+    </div>
+</div><div style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;display:block;">
+    <h2 style="font-family:&quot;PT Serif&quot;;text-align:left;margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;font-weight:bold;font-size:30px;line-height:35px;margin-top:35px;margin-bottom:15px;">Regenerate the CA and all certificates</h2>
+    
+    <div style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;margin-bottom:1.5em;">
+        <div style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;display:block;position:relative;margin-top:0px;padding-top:0px;"><span style="font:inherit;position:absolute;left:25%;top:0px;z-index:10;width:50%;padding-left:0px;padding-right:0px;height:0.1em;margin:0px;opacity:0.25;display:none !important;background:-webkit-linear-gradient(0deg, rgb(243, 242, 238) 1%, rgb(31, 9, 9) 50%, rgb(243, 242, 238) 99%);"> </span><div style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;margin-bottom:0px;"><div style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;margin-bottom:0px;">CAUTION: This process destroys the certificate authority and
+                    all other certificates. It is meant for use in the event of a total compromise
+                    of your site, or some other unusual circumstance. If you want to preserve the
+                    primary server/agent relationship, <a title="This option preserves the primary server/agent relationship and lets you add DNS alt-names or certificate extensions to your existing primary server." href="https://puppet.com/docs/puppet/6/ssl_regenerate_certificates.html#regenerate_agent_certs_and_add_dns_alt_names" style="color:rgb(6, 85, 136);margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;text-decoration:none;">regenerate the
+                        agent certificate of your Puppet
+                        primary server</a>. If you just need to replace a few agent certificates, <a title="To replace the certs on agents, you’ll need to log into each agent node and do the following steps." href="https://puppet.com/docs/puppet/6/ssl_regenerate_certificates.html#clear_regenerate_certs_for_agents" style="color:rgb(6, 85, 136);margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;text-decoration:none;">clear
+                        and regenerate certs for Puppet
+                    agents</a>.</div></div></div>
+    </div>
+<div style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;display:block;">
+    <h3 style="font-family:&quot;PT Serif&quot;;text-align:left;margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;font-size:30px;line-height:35px;margin-top:35px;font-weight:normal;margin-bottom:15px;">Step 1: Clear and regenerate certs on your primary Puppet server</h3>
+    
+    
+    <div style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;margin-bottom:0px;">
+        <div style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;display:block;position:relative;margin-top:0px;padding-top:0px;"><span style="font:inherit;position:absolute;left:25%;top:0px;z-index:10;width:50%;padding-left:0px;padding-right:0px;height:0.1em;margin:0px;opacity:0.25;display:none !important;background:-webkit-linear-gradient(0deg, rgb(243, 242, 238) 1%, rgb(31, 9, 9) 50%, rgb(243, 242, 238) 99%);"> </span><p style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;margin-bottom:0px;">On the primary server hosting the CA:</p></div>
+        <div style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;display:block;position:relative;margin-top:1.5em;padding-top:1.5em;"><span style="font:inherit;position:absolute;left:25%;top:0px;z-index:10;width:50%;padding-left:0px;padding-right:0px;height:0.1em;margin:0px;opacity:0.25;display:block;background:-webkit-linear-gradient(0deg, rgb(243, 242, 238) 1%, rgb(31, 9, 9) 50%, rgb(243, 242, 238) 99%);"> </span><ol style="padding:0px;border:0px;font:inherit;vertical-align:baseline;margin:0px 0px 1.5em 1.5em;list-style:none;list-style-type:decimal;"><li style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;list-style-type:inherit;list-style-position:outside;">
+                Back up the <a title="Puppet stores its certificate infrastructure in the SSL directory (ssldir) which has a similar structure on all Puppet nodes, whether they are agent nodes, primary Puppet servers, or the certificate authority (CA) server." href="https://puppet.com/docs/puppet/6/dirs_ssldir.html" style="color:rgb(6, 85, 136);margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;text-decoration:none;">SSL
+                    directory</a>, which is in <code style="font-family:Inconsolata;margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;font-size:0.875em;line-height:1.71429em;">/etc/puppetlabs/puppet/ssl/</code>. If something goes
+                    wrong, you can restore this directory so your deployment can stay functional.
+                    However, if you needed to regenerate your certs for security reasons and
+                    couldn’t, get some assistance as soon as possible so you can keep your site
+                    secure.
+            </li><li style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;list-style-type:inherit;list-style-position:outside;">
+                Stop the agent service:
+                <div style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;margin-bottom:0px;"><div style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;margin-bottom:0px;">
+                        <pre style="background-color:rgb(243, 242, 238);font-family:Inconsolata;margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;width:auto;font-size:0.875em;line-height:1.71429em;"><code style="font-family:Inconsolata;margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;line-height:1.71429em;font-size:1.15em;">sudo puppet resource service puppet ensure=stopped
+</code></pre>
+                    </div></div>
+            </li><li style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;list-style-type:inherit;list-style-position:outside;">
+                Stop the primary server service.
+                <div style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;margin-bottom:0px;">
+                    <div style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;margin-bottom:0px;">For Puppet Server, run:
+                        <pre style="background-color:rgb(243, 242, 238);font-family:Inconsolata;margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;width:auto;font-size:0.875em;line-height:1.71429em;"><code style="font-family:Inconsolata;margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;line-height:1.71429em;font-size:1.15em;">sudo puppet resource service puppetserver ensure=stopped</code></pre>
+                    </div>
+                </div>
+            </li><li style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;list-style-type:inherit;list-style-position:outside;">
+                Delete the SSL directory:
+                <div style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;margin-bottom:0px;"><div style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;margin-bottom:0px;">
+                        <pre style="background-color:rgb(243, 242, 238);font-family:Inconsolata;margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;width:auto;font-size:0.875em;line-height:1.71429em;"><code style="font-family:Inconsolata;margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;line-height:1.71429em;font-size:1.15em;">sudo rm -r /etc/puppetlabs/puppet/ssl</code></pre>
+                    </div></div>
+            </li><li style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;list-style-type:inherit;list-style-position:outside;">
+                Regenerate the CA and primary server's cert:
+                <div style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;margin-bottom:1.5em;">
+                    <div style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;margin-bottom:0px;">
+                        <pre style="background-color:rgb(243, 242, 238);font-family:Inconsolata;margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;width:auto;font-size:0.875em;line-height:1.71429em;"><code style="font-family:Inconsolata;margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;line-height:1.71429em;font-size:1.15em;">sudo puppetserver ca setup</code></pre>
+                    </div>
+                </div>
+                <div style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;margin-bottom:0px;">
+                    <p style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;margin-bottom:0px;">You will see this message: <code style="font-family:Inconsolata;margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;font-size:0.875em;line-height:1.71429em;">Notice: Signed
+                            certificate request for ca</code>.</p>
+                </div>
+            </li><li style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;list-style-type:inherit;list-style-position:outside;">
+                Start the primary server  service by running: 
+                <div style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;margin-bottom:0px;">
+                    <div style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;margin-bottom:0px;">
+                        <pre style="background-color:rgb(243, 242, 238);font-family:Inconsolata;margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;width:auto;font-size:0.875em;line-height:1.71429em;"><code style="font-family:Inconsolata;margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;line-height:1.71429em;font-size:1.15em;">sudo puppet resource service puppetserver ensure=running</code></pre>
+                    </div>
+                </div>
+            </li><li style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;list-style-type:inherit;list-style-position:outside;">
+                Start the Puppet
+                    agent service by running this command:
+                <div style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;margin-bottom:0px;"><div style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;margin-bottom:0px;">
+                        <pre style="background-color:rgb(243, 242, 238);font-family:Inconsolata;margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;width:auto;font-size:0.875em;line-height:1.71429em;"><code style="font-family:Inconsolata;margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;line-height:1.71429em;font-size:1.15em;">sudo puppet resource service puppet ensure=running
+</code></pre>
+                    </div></div>
+            </li></ol></div>
+        <div style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;display:block;position:relative;margin-top:1.5em;padding-top:1.5em;"><span style="font:inherit;position:absolute;left:25%;top:0px;z-index:10;width:50%;padding-left:0px;padding-right:0px;height:0.1em;margin:0px;opacity:0.25;display:block;background:-webkit-linear-gradient(0deg, rgb(243, 242, 238) 1%, rgb(31, 9, 9) 50%, rgb(243, 242, 238) 99%);"> </span><div style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;margin-bottom:1.5em;">Results</div><div style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;margin-bottom:0px;">At this point: <ul style="padding:0px;border:0px;font:inherit;vertical-align:baseline;margin:0px 0px 1.5em 1.5em;list-style:none;list-style-type:disc;">
+                    <li style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;list-style-type:inherit;list-style-position:outside;"><p style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;margin-bottom:0px;">You have a new CA certificate and
+                            key.</p></li>
+                    <li style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;list-style-type:inherit;list-style-position:outside;"><p style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;margin-bottom:0px;">Your primary server has a certificate from the new CA, and it can field new certificate requests. </p></li>
+                    <li style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;list-style-type:inherit;list-style-position:outside;"><p style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;margin-bottom:0px;">The primary server  rejects any requests for configuration catalogs from nodes that haven’t
+                            replaced their certificates. At this point, it is all of them except
+                            itself. </p></li>
+                    <li style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;list-style-type:inherit;list-style-position:outside;"><p style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;margin-bottom:0px;">When using any extensions that rely on Puppet certificates, like
+                                PuppetDB, the primary server won’t be
+                            able to communicate with them. Consequently, it might not be able to
+                            serve catalogs, even to agents that do have new certificates. </p></li>
+                </ul>
+            </div></div>
+    </div>
+</div><div style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;display:block;">
+                <h3 style="font-family:&quot;PT Serif&quot;;text-align:left;margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;font-size:30px;line-height:35px;margin-top:35px;font-weight:normal;margin-bottom:15px;">Step 2: Clear and regenerate certs for any
+                                extension</h3>
+                
+                
+                <div style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;margin-bottom:0px;"><p style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;margin-bottom:1.5em;">You might be using an extension, like PuppetDB or MCollective, to enhance Puppet. These extensions probably use certificates from Puppet’s CA in order to communicate securely with the primary Puppet server. For each extension like this, you’ll need to
+    regenerate the certificates it uses. </p>
+                                <p style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;margin-bottom:1.5em;">Many tools have scripts or documentation to
+                                                help you set up SSL, and you can often just re-run
+                                                the setup instructions.</p>
+                                <div style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;display:block;position:relative;margin-top:1.5em;padding-top:1.5em;"><span style="font:inherit;position:absolute;left:25%;top:0px;z-index:10;width:50%;padding-left:0px;padding-right:0px;height:0.1em;margin:0px;opacity:0.25;display:block;background:-webkit-linear-gradient(0deg, rgb(243, 242, 238) 1%, rgb(31, 9, 9) 50%, rgb(243, 242, 238) 99%);"> </span><h4 style="font-family:&quot;PT Serif&quot;;text-align:left;margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;font-weight:bold;font-size:20px;margin-top:30px;margin-bottom:1.5em;">
+        PuppetDB
+      </h4>
+      
+      <p style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;margin-bottom:0px;">We recommend PuppetDB users first follow the instructions in
+        Step 3: Clear and regenerate certs for agents, below, because PuppetDB re-uses Puppet agents’
+        certificates. After that, restart the PuppetDB service. See
+          <a href="https://puppet.com/docs/puppetdb/latest/maintain_and_tune.html" style="color:rgb(6, 85, 136);margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;text-decoration:none;">Redo SSL setup after changing certificates</a> for more information.
+      </p>
+    </div>
+                </div>
+</div><div style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;display:block;">
+                <h3 style="font-family:&quot;PT Serif&quot;;text-align:left;margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;font-size:30px;line-height:35px;margin-top:35px;font-weight:normal;margin-bottom:15px;">Step 3: Clear and regenerate certs for Puppet agents</h3>
+                
+                
+                <div style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;margin-bottom:0px;"><p style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;margin-bottom:1.5em;">To replace the certs on agents, you’ll need to
+                                log into each agent node and do the following steps.</p>
+                                <div style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;display:block;position:relative;margin-top:1.5em;padding-top:1.5em;"><span style="font:inherit;position:absolute;left:25%;top:0px;z-index:10;width:50%;padding-left:0px;padding-right:0px;height:0.1em;margin:0px;opacity:0.25;display:block;background:-webkit-linear-gradient(0deg, rgb(243, 242, 238) 1%, rgb(31, 9, 9) 50%, rgb(243, 242, 238) 99%);"> </span><ol style="padding:0px;border:0px;font:inherit;vertical-align:baseline;margin:0px 0px 1.5em 1.5em;list-style:none;list-style-type:decimal;"><li style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;list-style-type:inherit;list-style-position:outside;">
+                                                  Stop the agent
+                                                  service. On *nix:
+                                                  <div style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;margin-bottom:0px;"><div style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;margin-bottom:0px;">
+                                                  <pre style="background-color:rgb(243, 242, 238);font-family:Inconsolata;margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;width:auto;font-size:0.875em;line-height:1.71429em;"><code style="font-family:Inconsolata;margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;line-height:1.71429em;font-size:1.15em;">sudo puppet resource service puppet ensure=stopped</code></pre>On
+                                                  Windows, with
+                                                  Administrator
+                                                  privileges: <pre style="background-color:rgb(243, 242, 238);font-family:Inconsolata;margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;width:auto;font-size:0.875em;line-height:1.71429em;"><code style="font-family:Inconsolata;margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;line-height:1.71429em;font-size:1.15em;">puppet resource service puppet ensure=stopped</code></pre>
+                                                  </div></div>
+                                                </li><li style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;list-style-type:inherit;list-style-position:outside;">
+                                                  Locate Puppet’s <a title="Puppet stores its certificate infrastructure in the SSL directory (ssldir) which has a similar structure on all Puppet nodes, whether they are agent nodes, primary Puppet servers, or the certificate authority (CA) server." href="https://puppet.com/docs/puppet/6/dirs_ssldir.html" style="color:rgb(6, 85, 136);margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;text-decoration:none;">SSL
+                                                  directory</a> and delete its
+                                                  contents.
+                                                  <div style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;margin-bottom:0px;"><p style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;margin-bottom:0px;">The SSL directory can be
+                                                  determined by running <code style="font-family:Inconsolata;margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;font-size:0.875em;line-height:1.71429em;">puppet config print
+                                                  ssldir --section agent</code>
+                                                  </p></div>
+                                                </li><li style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;list-style-type:inherit;list-style-position:outside;">
+                                                  Restart the
+                                                  agent service. On *nix:
+                                                  <div style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;margin-bottom:1.5em;"><div style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;margin-bottom:0px;">
+                                                  <pre style="background-color:rgb(243, 242, 238);font-family:Inconsolata;margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;width:auto;font-size:0.875em;line-height:1.71429em;"><code style="font-family:Inconsolata;margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;line-height:1.71429em;font-size:1.15em;">sudo puppet resource service puppet ensure=running</code></pre>On
+                                                  Windows, with
+                                                  Administrator
+                                                  privileges:<pre style="background-color:rgb(243, 242, 238);font-family:Inconsolata;margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;width:auto;font-size:0.875em;line-height:1.71429em;"><code style="font-family:Inconsolata;margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;line-height:1.71429em;font-size:1.15em;">puppet resource service puppet ensure=running</code></pre>
+                                                  </div></div>
+                                                  <div style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;margin-bottom:0px;"><p style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;margin-bottom:0px;">When the agent starts, it generates keys and requests a new certificate from the CA primary
+            server.</p></div>
+                                                </li><li style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;list-style-type:inherit;list-style-position:outside;">
+        If you are not using autosigning, log in to the CA primary server and sign each agent
+          node’s certificate request.
+        <div style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;margin-bottom:1.5em;">
+          <div style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;margin-bottom:1.5em;">To view pending requests,
+            run:<pre style="background-color:rgb(243, 242, 238);font-family:Inconsolata;margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;width:auto;font-size:0.875em;line-height:1.71429em;"><code style="font-family:Inconsolata;margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;line-height:1.71429em;font-size:1.15em;">sudo puppetserver ca list</code></pre>
+          </div>
+          <div style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;margin-bottom:0px;">To sign requests,
+            run:<pre style="background-color:rgb(243, 242, 238);font-family:Inconsolata;margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;width:auto;font-size:0.875em;line-height:1.71429em;"><code style="font-family:Inconsolata;margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;line-height:1.71429em;font-size:1.15em;">sudo puppetserver ca sign --certname &lt;NAME&gt;</code></pre>
+          </div>
+        </div>
+        <div style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;margin-bottom:0px;">
+          <p style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;margin-bottom:0px;">After an agent node’s new certificate is signed, it's retrieved within a few minutes
+            and a Puppet run starts.</p>
+        </div>
+      </li></ol></div>
+                                <div style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;display:block;position:relative;margin-top:1.5em;padding-top:1.5em;"><span style="font:inherit;position:absolute;left:25%;top:0px;z-index:10;width:50%;padding-left:0px;padding-right:0px;height:0.1em;margin:0px;opacity:0.25;display:block;background:-webkit-linear-gradient(0deg, rgb(243, 242, 238) 1%, rgb(31, 9, 9) 50%, rgb(243, 242, 238) 99%);"> </span><div style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;margin-bottom:1.5em;">Results</div><p style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;margin-bottom:1.5em;">After you have regenerated all agents’
+                                                  certificates, everything will be fully functional
+                                                  under the new CA.</p><div style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;margin-bottom:0px;">
+                                                  <div style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;margin-bottom:0px;">Note: You can
+                                                  achieve the same results by turning these steps
+                                                  into Bolt tasks or
+                                                  plans. See the <a href="https://puppet.com/docs/bolt/latest/bolt.html" style="color:rgb(6, 85, 136);margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;text-decoration:none;">Bolt documentation</a> for
+                                                  more information.</div>
+                                                </div></div>
+                </div>
+</div></div></div></div></div></div></div></div></div></div></div></div>
+</div>
+</div>
+<a class="back-link" href="../articles.html">← 返回笔记列表</a>
+</body>
+</html>

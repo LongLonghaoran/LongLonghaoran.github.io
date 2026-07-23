@@ -1,0 +1,560 @@
+<!DOCTYPE html>
+<html lang="zh-CN" data-theme="light">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>如何删除一直处于Terminating的namespace — 技术笔记</title>
+<style>
+:root {
+  --bg: #ffffff;
+  --text: #1a1a1a;
+  --muted: #666;
+  --border: #e0e0e0;
+  --code-bg: #f5f5f5;
+  --link: #0066cc;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #1a1a1a;
+    --text: #e0e0e0;
+    --muted: #999;
+    --border: #333;
+    --code-bg: #2a2a2a;
+    --link: #66bbff;
+  }
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  line-height: 1.7;
+  color: var(--text);
+  background: var(--bg);
+  max-width: 860px;
+  margin: 0 auto;
+  padding: 2rem 1.5rem;
+}
+.note-header {
+  border-bottom: 2px solid var(--border);
+  padding-bottom: 1rem;
+  margin-bottom: 2rem;
+}
+.note-title {
+  font-size: 1.6rem;
+  font-weight: 700;
+  margin-bottom: 0.3rem;
+}
+.note-meta {
+  color: var(--muted);
+  font-size: 0.85rem;
+}
+.note-content {
+  font-size: 0.95rem;
+}
+.note-content h1 { font-size: 1.4rem; margin: 1.2rem 0 0.6rem; }
+.note-content h2 { font-size: 1.2rem; margin: 1rem 0 0.5rem; }
+.note-content h3 { font-size: 1.05rem; margin: 0.8rem 0 0.4rem; }
+.note-content p { margin: 0.5rem 0; }
+.note-content ul, .note-content ol { margin: 0.5rem 0 0.5rem 2rem; }
+.note-content li { margin: 0.2rem 0; }
+.note-content pre {
+  background: var(--code-bg);
+  padding: 1rem;
+  border-radius: 6px;
+  overflow-x: auto;
+  margin: 0.8rem 0;
+  font-size: 0.85rem;
+}
+.note-content code {
+  background: var(--code-bg);
+  padding: 0.1rem 0.3rem;
+  border-radius: 3px;
+  font-size: 0.88em;
+}
+.note-content pre code {
+  background: none;
+  padding: 0;
+}
+.note-content blockquote {
+  border-left: 3px solid var(--border);
+  padding-left: 1rem;
+  color: var(--muted);
+  margin: 0.8rem 0;
+}
+.note-content a { color: var(--link); }
+.note-content img {
+  max-width: 100%;
+  height: auto;
+  border-radius: 6px;
+  margin: 0.5rem 0;
+}
+.note-content table {
+  border-collapse: collapse;
+  width: 100%;
+  margin: 0.8rem 0;
+}
+.note-content th, .note-content td {
+  border: 1px solid var(--border);
+  padding: 0.5rem;
+}
+.note-content th { background: var(--code-bg); }
+.media-placeholder {
+  background: var(--code-bg);
+  padding: 1rem;
+  text-align: center;
+  color: var(--muted);
+  border-radius: 6px;
+  margin: 0.5rem 0;
+  font-size: 0.85rem;
+}
+.encrypt-placeholder {
+  background: #fff3cd;
+  padding: 0.5rem;
+  text-align: center;
+  color: #856404;
+  border-radius: 6px;
+  margin: 0.5rem 0;
+  font-size: 0.85rem;
+}
+.back-link {
+  display: inline-block;
+  margin-top: 2rem;
+  color: var(--link);
+  text-decoration: none;
+  font-size: 0.85rem;
+}
+</style>
+</head>
+<body>
+<div class="note-header">
+  <div class="note-title">如何删除一直处于Terminating的namespace</div>
+  <div class="note-meta">笔记本：Kubernetes学习笔记</div>
+</div>
+<div class="note-content">
+<div style="--en-clipped-content:article; --en-clipped-source-url:https://support.huaweicloud.com/cce_faq/cce_faq_00277.html; --en-clipped-source-title:如何删除一直处于Terminating的namespace;">
+<div><br/></div><div style="min-height: 3903px; font-size: 16px; display: block; min-width: 100%; position: relative;"> <div style="font-family:sans-serif;line-height:1.15;text-size-adjust:100%;box-sizing:border-box;font-size:10px;-webkit-tap-highlight-color:rgba(0, 0, 0, 0);"><div style="box-sizing:border-box;font-family:-apple-system, HuaweiSans, &quot;Helvetica Neue&quot;, Helvetica, Arial, &quot;PingFang SC&quot;, &quot;Hiragino Sans GB&quot;, STHeiti, &quot;Microsoft YaHei&quot;, &quot;Microsoft JhengHei&quot;, SimSun, sans-serif;font-size:14px;line-height:1.5;color:rgb(87, 93, 108);background-color:rgb(255, 255, 255);touch-action:initial;">
+    
+    
+    
+        
+
+    
+
+
+
+    
+        <div style="box-sizing:border-box;height:100px;visibility:visible;display:block;">  </div>
+    
+
+
+    
+
+
+    
+    <div style="box-sizing:border-box;overflow:hidden;background:rgb(255, 255, 255);">
+        <div style="box-sizing:border-box;">
+            <div style="box-sizing:border-box;">
+                
+                
+            </div>
+            <div style="box-sizing:border-box;padding-top:0px;">
+                <div style="box-sizing:border-box;position:relative;">
+                    
+                    
+                    <div style="box-sizing:border-box;margin-left:auto;margin-right:auto;max-width:none;padding-left:16.7vw;position:relative;z-index:0;"><span style="display:table;"> </span>
+                        
+
+                        <div style="box-sizing:border-box;z-index:1;float:left;position:relative;margin:auto;border-left:1px solid transparent;width:calc(100% - 192px);min-height:calc(100vh - 83px);padding:0px 48px;overflow:visible;"><span style="display:table;"> </span><span title="调整宽度" style="box-sizing:border-box;position:absolute;width:10px;height:100%;left:-5px;top:0px;z-index:20;"></span>
+  
+  <div style="box-sizing:border-box;color:rgb(87, 93, 108);line-height:22px;margin-top:24px;">
+    <a href="https://support.huaweicloud.com/index.html" rel="nofollow" style="outline:none;margin:0px;padding:0px;font-weight:inherit;background-color:transparent;box-sizing:border-box;text-decoration:none;line-height:22px;margin-right:5px;color:rgb(87, 93, 108);font-size:14px;">文档首页</a><span style="box-sizing:border-box;">&gt;</span>
+    
+    
+    <a href="https://support.huaweicloud.com/cce/index.html" style="outline:none;margin:0px;padding:0px;font-weight:inherit;background-color:transparent;box-sizing:border-box;text-decoration:none;line-height:22px;margin-right:5px;color:rgb(87, 93, 108);font-size:14px;">云容器引擎 CCE</a><span style="box-sizing:border-box;">&gt;</span>
+    
+    
+    
+    
+    <a href="https://support.huaweicloud.com/cce_faq/cce_faq_00006.html" style="outline:none;margin:0px;padding:0px;font-weight:inherit;background-color:transparent;box-sizing:border-box;text-decoration:none;line-height:22px;margin-right:5px;color:rgb(87, 93, 108);font-size:14px;">常见问题</a><span style="box-sizing:border-box;">&gt;</span>
+    
+    
+    <a href="https://support.huaweicloud.com/cce_faq/cce_faq_00024.html" style="outline:none;margin:0px;padding:0px;font-weight:inherit;background-color:transparent;box-sizing:border-box;text-decoration:none;line-height:22px;margin-right:5px;color:rgb(87, 93, 108);font-size:14px;">集群</a><span style="box-sizing:border-box;">&gt;</span>
+    
+    
+    <a href="https://support.huaweicloud.com/cce_faq/cce_faq_00279.html" style="outline:none;margin:0px;padding:0px;font-weight:inherit;background-color:transparent;box-sizing:border-box;text-decoration:none;line-height:22px;margin-right:5px;color:rgb(87, 93, 108);font-size:14px;">集群运行</a><span style="box-sizing:border-box;">&gt;</span>
+    
+    
+    <span style="box-sizing:border-box;display:inline;font-size:14px;line-height:22px;color:rgb(37, 43, 58);">如何更新Terminating状态的命名空间？</span>
+    
+  </div>
+
+  <div style="box-sizing:border-box;position:relative;padding-top:24px;"><div style="box-sizing:border-box;"><div style="box-sizing:border-box;"><div style="box-sizing:border-box;"><div style="display:block;position:relative;text-decoration:none;overflow:hidden;margin:0px auto;box-sizing:border-box;width:100%;height:100%;">
+            
+            <a href="https://activity.huaweicloud.com/618_promotion/index.html" target="_blank" style="outline:none;margin:0px;padding:0px;color:inherit;font-size:inherit;font-weight:inherit;background-color:transparent;box-sizing:border-box;text-decoration:none;">  
+                <div class="media-placeholder">[图片/附件]</div></en-media>
+            </a>
+        
+        </div></div></div></div><span style="box-sizing:border-box;display:inline-block;width:40px;height:40px;position:absolute;right:60px;top:calc(50% - 8px);cursor:pointer;"></span></div>
+
+  <div style="box-sizing:border-box;font-size:14px;color:rgb(37, 43, 58);overflow-wrap:break-word;padding-top:24px;">
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+
+    
+    
+    
+    <a name="cce_faq_00277" style="outline:none;padding:0px;background-color:transparent;box-sizing:border-box;text-decoration:none;margin:0px;transition:all 0.2s ease 0s;color:rgb(82, 110, 204);font-size:14px;font-weight:400;"></a><a name="cce_faq_00277" style="outline:none;padding:0px;background-color:transparent;box-sizing:border-box;text-decoration:none;margin:0px;transition:all 0.2s ease 0s;color:rgb(82, 110, 204);font-size:14px;font-weight:400;"></a>
+<h1 style="padding:0px;font-weight:inherit;margin:0.67em 0px;box-sizing:border-box;margin-top:0px;line-height:38px;font-size:30px;color:rgb(37, 43, 58);margin-bottom:8px;min-width:0px;min-height:0px;">如何更新Terminating状态的命名空间？</h1><div style="box-sizing:border-box;margin-bottom:20px;font-size:12px;line-height:22px;display:inline-block;color:rgb(138, 142, 153);">
+      更新时间：<span style="box-sizing:border-box;overflow-wrap:break-word;font-size:12px;line-height:18px;">2023-04-20 GMT+08:00</span>
+    </div><div style="box-sizing:border-box;display:inline-block;margin-left:20px;float:right;"><div style="box-sizing:border-box;position:relative;display:inline-block;">
+      <a target="_blank" href="https://support.huaweicloud.com/cce_faq/cce-faq.pdf" style="outline:none;margin:0px;padding:0px;background-color:transparent;box-sizing:border-box;text-decoration:none;font-weight:400;display:inline-block;line-height:22px;color:rgb(102, 106, 117);font-size:14px;transition:all 0.3s ease 0s;"><i style="box-sizing:border-box;font-style:normal;width:24px;height:24px;display:inline-block;background:url(https://res-static.hc-cdn.cn/aem/content/dam/cloudbu-site/archive/china/zh-cn/support/resource/framework/v3/css/https://res-static.hc-cdn.cn/aem/content/dam/cloudbu-site/archive/china/zh-cn/support/resource/framework/v3/css/./../images/support-doc-new-pdf-h.svg) center center / cover no-repeat;vertical-align:middle;margin-right:5px;transition:all 0.3s ease 0s;"></i><span style="box-sizing:border-box;overflow-wrap:break-word;display:inline-block;vertical-align:middle;">查看PDF</span></a>
+    </div><div style="box-sizing:border-box;position:relative;margin-left:20px;display:inline-block;">
+      <a href="#" rel="nofollow" style="outline:none;margin:0px;padding:0px;background-color:transparent;box-sizing:border-box;text-decoration:none;font-weight:400;line-height:22px;display:inline-block;color:rgb(102, 106, 117);font-size:14px;transition:all 0.3s ease 0s;"><i style="box-sizing:border-box;font-style:normal;width:24px;height:24px;display:inline-block;background:url(https://res-static.hc-cdn.cn/aem/content/dam/cloudbu-site/archive/china/zh-cn/support/resource/framework/v3/css/./../images/support-doc-new-share-n.svg) center center / cover no-repeat;vertical-align:middle;transition:all 0.3s ease 0s;"></i><span style="box-sizing:border-box;overflow-wrap:break-word;display:inline-block;vertical-align:middle;">分享</span></a>
+      
+    </div></div>
+<div style="box-sizing:border-box;">
+ <p style="box-sizing:border-box;margin:0px;padding:0px;font-weight:inherit;margin-top:0px;line-height:22px;overflow-wrap:break-word;color:rgb(37, 43, 58);font-size:14px;margin-bottom:12px;min-height:0px;min-width:0px;">Kubernetes中namespace有两种常见的状态，即Active和Terminating状态，其中Terminating状态一般会比较少见，当对应的命名空间下还存在运行的资源，但该命名空间被删除时才会出现所谓的Terminating状态，这种情况下只要等待Kubernetes本身将命名空间下的资源回收后，该命名空间将会被系统自动删除。</p>
+ <p style="box-sizing:border-box;margin:0px;padding:0px;font-weight:inherit;margin-top:0px;line-height:22px;overflow-wrap:break-word;color:rgb(37, 43, 58);font-size:14px;margin-bottom:12px;min-height:0px;min-width:0px;">但是在某些情况下，即使命名空间下没有运行的资源，但依然无法删除Terminating状态的命名空间的情况，它会一直卡在Terminating状态下。</p>
+ <p style="box-sizing:border-box;margin:0px;padding:0px;font-weight:inherit;margin-top:0px;line-height:22px;overflow-wrap:break-word;color:rgb(37, 43, 58);font-size:14px;margin-bottom:12px;min-height:0px;min-width:0px;">解决这个问题的步骤为：</p>
+ <ol style="box-sizing:border-box;padding:0px 0px 0px 20px;margin:10px 0px 0px;">
+  <li style="box-sizing:border-box;margin:0px;padding:0px;font-weight:inherit;overflow-wrap:break-word;line-height:22px;list-style:decimal;color:rgb(37, 43, 58);font-size:14px;"><span style="box-sizing:border-box;overflow-wrap:break-word;font-size:14px;color:rgb(37, 43, 58);line-height:22px;">查看命名空间详情</span><p style="box-sizing:border-box;margin:0px;padding:0px;font-weight:inherit;margin-top:0px;overflow-wrap:break-word;color:rgb(37, 43, 58);font-size:14px;margin-bottom:0px;line-height:22px;min-height:0px;min-width:0px;"></p><div style="box-sizing:border-box;position:relative;"><pre style="overflow:auto;font-size:1em;box-sizing:border-box;font-family:Consolas, &quot;Bitstream Vera Sans Mono&quot;, &quot;Courier New&quot;, Courier, monospace;background:rgb(246, 247, 255);border:1px solid rgb(231, 233, 250);transition:background-color 1s ease 0s;padding:30px 10px 10px;color:rgb(29, 33, 41);background-color:rgb(250, 250, 250);">$ kubectl  get ns  | grep rdb
+rdbms                  Terminating   6d21h
+
+$ kubectl  get ns rdbms -o yaml
+apiVersion: v1
+kind: Namespace
+metadata:
+  annotations:
+    kubectl.kubernetes.io/last-applied-configuration: |
+      {&quot;apiVersion&quot;:&quot;v1&quot;,&quot;kind&quot;:&quot;Namespace&quot;,&quot;metadata&quot;:{&quot;annotations&quot;:{},&quot;name&quot;:&quot;rdbms&quot;}}
+  creationTimestamp: &quot;2020-05-07T15:19:43Z&quot;
+  deletionTimestamp: &quot;2020-05-07T15:33:23Z&quot;
+  name: rdbms
+  resourceVersion: &quot;84553454&quot;
+  selfLink: /api/v1/namespaces/rdbms
+  uid: 457788ddf-53d7-4hde-afa3-1fertg21ewe1
+spec:
+  finalizers:
+  - kubernetes
+status:
+  <span style="box-sizing:border-box;overflow-wrap:break-word;font-size:14px;color:#FF0000;line-height:22px;">phase: Terminating</span></pre><div style="box-sizing:border-box;position:absolute;top:10px;right:10px;width:24px;height:24px;background-size:16px;background-position:center center;background-repeat:no-repeat;cursor:pointer;display:block;background-image:url(https://res-static.hc-cdn.cn/aem/content/dam/cloudbu-site/archive/china/zh-cn/support/resource/framework/v3/css/https://res-static.hc-cdn.cn/aem/content/dam/cloudbu-site/archive/china/zh-cn/support/resource/framework/v3/css/https://res-static.hc-cdn.cn/aem/content/dam/cloudbu-site/archive/china/zh-cn/support/resource/framework/v3/css/./../images/support-doc-new-cgc-m.svg);"></div></div> <p style="box-sizing:border-box;margin:0px;padding:0px;font-weight:inherit;margin-top:0px;overflow-wrap:break-word;color:rgb(37, 43, 58);font-size:14px;margin-bottom:0px;line-height:22px;min-height:0px;min-width:0px;"></p></li>
+  <li style="box-sizing:border-box;margin:0px;padding:0px;font-weight:inherit;overflow-wrap:break-word;margin-top:8px;line-height:22px;list-style:decimal;color:rgb(37, 43, 58);font-size:14px;"><span style="box-sizing:border-box;overflow-wrap:break-word;font-size:14px;color:rgb(37, 43, 58);line-height:22px;">查看该命名空间下的资源</span><p style="box-sizing:border-box;margin:0px;padding:0px;font-weight:inherit;margin-top:0px;overflow-wrap:break-word;color:rgb(37, 43, 58);font-size:14px;margin-bottom:0px;line-height:22px;min-height:0px;min-width:0px;"></p><div style="box-sizing:border-box;position:relative;"><pre style="overflow:auto;font-size:1em;box-sizing:border-box;font-family:Consolas, &quot;Bitstream Vera Sans Mono&quot;, &quot;Courier New&quot;, Courier, monospace;background:rgb(246, 247, 255);border:1px solid rgb(231, 233, 250);transition:background-color 1s ease 0s;padding:30px 10px 10px;color:rgb(29, 33, 41);background-color:rgb(250, 250, 250);"># 查看集群中可以使用命名空间隔离的资源
+$ kubectl api-resources -o name --verbs=list --namespaced | xargs -n 1 kubectl get --show-kind --ignore-not-found -n rdbms</pre><div style="box-sizing:border-box;position:absolute;top:10px;right:10px;width:24px;height:24px;background-size:16px;background-position:center center;background-repeat:no-repeat;cursor:pointer;display:block;background-image:url(https://res-static.hc-cdn.cn/aem/content/dam/cloudbu-site/archive/china/zh-cn/support/resource/framework/v3/css/https://res-static.hc-cdn.cn/aem/content/dam/cloudbu-site/archive/china/zh-cn/support/resource/framework/v3/css/https://res-static.hc-cdn.cn/aem/content/dam/cloudbu-site/archive/china/zh-cn/support/resource/framework/v3/css/./../images/support-doc-new-cgc-m.svg);"></div></div> <p style="box-sizing:border-box;margin:0px;padding:0px;font-weight:inherit;margin-top:0px;overflow-wrap:break-word;color:rgb(37, 43, 58);font-size:14px;margin-bottom:0px;line-height:22px;min-height:0px;min-width:0px;">发现rdbms命名空间下并无资源占用。</p> <p style="box-sizing:border-box;margin:0px;padding:0px;font-weight:inherit;margin-top:0px;overflow-wrap:break-word;color:rgb(37, 43, 58);font-size:14px;margin-bottom:0px;line-height:22px;min-height:0px;min-width:0px;"></p></li>
+  <li style="box-sizing:border-box;margin:0px;padding:0px;font-weight:inherit;overflow-wrap:break-word;margin-top:8px;line-height:22px;list-style:decimal;color:rgb(37, 43, 58);font-size:14px;"><span style="box-sizing:border-box;overflow-wrap:break-word;font-size:14px;color:rgb(37, 43, 58);line-height:22px;">尝试对命名空间进行删除</span><p style="box-sizing:border-box;margin:0px;padding:0px;font-weight:inherit;margin-top:0px;overflow-wrap:break-word;color:rgb(37, 43, 58);font-size:14px;margin-bottom:0px;line-height:22px;min-height:0px;min-width:0px;"></p>
+   <div style="box-sizing:border-box;font-size:14px;color:rgb(37, 43, 58);line-height:26px;margin-bottom:10px;">
+    直接删除命名空间rdbms
+    <div style="box-sizing:border-box;position:relative;"><pre style="overflow:auto;font-size:1em;box-sizing:border-box;font-family:Consolas, &quot;Bitstream Vera Sans Mono&quot;, &quot;Courier New&quot;, Courier, monospace;background:rgb(246, 247, 255);border:1px solid rgb(231, 233, 250);transition:background-color 1s ease 0s;padding:30px 10px 10px;color:rgb(29, 33, 41);background-color:rgb(250, 250, 250);">$ kubectl  delete ns rdbms
+Error from server (Conflict): Operation cannot be fulfilled on namespaces &quot;rdbms&quot;: The system is ensuring all content is removed from this namespace.  Upon completion, this namespace will automatically be purged by the system.</pre><div style="box-sizing:border-box;position:absolute;top:10px;right:10px;width:24px;height:24px;background-size:16px;background-position:center center;background-repeat:no-repeat;cursor:pointer;display:block;background-image:url(https://res-static.hc-cdn.cn/aem/content/dam/cloudbu-site/archive/china/zh-cn/support/resource/framework/v3/css/https://res-static.hc-cdn.cn/aem/content/dam/cloudbu-site/archive/china/zh-cn/support/resource/framework/v3/css/https://res-static.hc-cdn.cn/aem/content/dam/cloudbu-site/archive/china/zh-cn/support/resource/framework/v3/css/./../images/support-doc-new-cgc-m.svg);"></div></div>
+   </div> <p style="box-sizing:border-box;margin:0px;padding:0px;font-weight:inherit;margin-top:0px;overflow-wrap:break-word;color:rgb(37, 43, 58);font-size:14px;margin-bottom:0px;line-height:22px;min-height:0px;min-width:0px;">提示删除操作未能完成，说系统会在确定没用资源后将会被自动删除。</p> <p style="box-sizing:border-box;margin:0px;padding:0px;font-weight:inherit;margin-top:0px;overflow-wrap:break-word;color:rgb(37, 43, 58);font-size:14px;margin-bottom:0px;line-height:22px;min-height:0px;min-width:0px;"></p></li>
+  <li style="box-sizing:border-box;margin:0px;padding:0px;font-weight:inherit;overflow-wrap:break-word;margin-top:8px;line-height:22px;list-style:decimal;color:rgb(37, 43, 58);font-size:14px;"><span style="box-sizing:border-box;overflow-wrap:break-word;font-size:14px;color:rgb(37, 43, 58);line-height:22px;">使用强制删除</span><p style="box-sizing:border-box;margin:0px;padding:0px;font-weight:inherit;margin-top:0px;overflow-wrap:break-word;color:rgb(37, 43, 58);font-size:14px;margin-bottom:0px;line-height:22px;min-height:0px;min-width:0px;"></p><div style="box-sizing:border-box;position:relative;"><pre style="overflow:auto;font-size:1em;box-sizing:border-box;font-family:Consolas, &quot;Bitstream Vera Sans Mono&quot;, &quot;Courier New&quot;, Courier, monospace;background:rgb(246, 247, 255);border:1px solid rgb(231, 233, 250);transition:background-color 1s ease 0s;padding:30px 10px 10px;color:rgb(29, 33, 41);background-color:rgb(250, 250, 250);">$ kubectl  delete ns rdbms --force --grace-period=0
+warning: Immediate deletion does not wait for confirmation that the running resource has been terminated. The resource may continue to run on the cluster indefinitely.
+Error from server (Conflict): Operation cannot be fulfilled on namespaces &quot;rdbms&quot;: The system is ensuring all content is removed from this namespace.  Upon completion, this namespace will automatically be purged by the system.</pre><div style="box-sizing:border-box;position:absolute;top:10px;right:10px;width:24px;height:24px;background-size:16px;background-position:center center;background-repeat:no-repeat;cursor:pointer;display:block;background-image:url(https://res-static.hc-cdn.cn/aem/content/dam/cloudbu-site/archive/china/zh-cn/support/resource/framework/v3/css/https://res-static.hc-cdn.cn/aem/content/dam/cloudbu-site/archive/china/zh-cn/support/resource/framework/v3/css/https://res-static.hc-cdn.cn/aem/content/dam/cloudbu-site/archive/china/zh-cn/support/resource/framework/v3/css/./../images/support-doc-new-cgc-m.svg);"></div></div> <p style="box-sizing:border-box;margin:0px;padding:0px;font-weight:inherit;margin-top:0px;overflow-wrap:break-word;color:rgb(37, 43, 58);font-size:14px;margin-bottom:0px;line-height:22px;min-height:0px;min-width:0px;">依然无法删除该命名空间。</p> <p style="box-sizing:border-box;margin:0px;padding:0px;font-weight:inherit;margin-top:0px;overflow-wrap:break-word;color:rgb(37, 43, 58);font-size:14px;margin-bottom:0px;line-height:22px;min-height:0px;min-width:0px;"></p></li>
+  <li style="box-sizing:border-box;margin:0px;padding:0px;font-weight:inherit;overflow-wrap:break-word;margin-top:8px;line-height:22px;list-style:decimal;color:rgb(37, 43, 58);font-size:14px;"><span style="box-sizing:border-box;overflow-wrap:break-word;font-size:14px;color:rgb(37, 43, 58);line-height:22px;">但是大部分时候，这些资源也杀不掉，解决办法是使用原生接口删除</span><p style="box-sizing:border-box;margin:0px;padding:0px;font-weight:inherit;margin-top:0px;overflow-wrap:break-word;color:rgb(37, 43, 58);font-size:14px;margin-bottom:0px;line-height:22px;min-height:0px;min-width:0px;"></p>
+   <div style="box-sizing:border-box;font-size:14px;color:rgb(37, 43, 58);line-height:26px;margin-bottom:10px;">
+    获取namespace的详情信息
+    <div style="box-sizing:border-box;position:relative;"><pre style="overflow:auto;font-size:1em;box-sizing:border-box;font-family:Consolas, &quot;Bitstream Vera Sans Mono&quot;, &quot;Courier New&quot;, Courier, monospace;background:rgb(246, 247, 255);border:1px solid rgb(231, 233, 250);transition:background-color 1s ease 0s;padding:30px 10px 10px;color:rgb(29, 33, 41);background-color:rgb(250, 250, 250);">$ kubectl  get ns rdbms  -o json &gt; rdbms.json</pre><div style="box-sizing:border-box;position:absolute;top:10px;right:10px;width:24px;height:24px;background-size:16px;background-position:center center;background-repeat:no-repeat;cursor:pointer;display:block;background-image:url(https://res-static.hc-cdn.cn/aem/content/dam/cloudbu-site/archive/china/zh-cn/support/resource/framework/v3/css/https://res-static.hc-cdn.cn/aem/content/dam/cloudbu-site/archive/china/zh-cn/support/resource/framework/v3/css/https://res-static.hc-cdn.cn/aem/content/dam/cloudbu-site/archive/china/zh-cn/support/resource/framework/v3/css/./../images/support-doc-new-cgc-m.svg);"></div></div>
+   </div> <p style="box-sizing:border-box;margin:0px;padding:0px;font-weight:inherit;margin-top:0px;overflow-wrap:break-word;color:rgb(37, 43, 58);font-size:14px;margin-bottom:0px;line-height:22px;min-height:0px;min-width:0px;">查看namespace定义的json配置，编辑json文件并删除掉spec部分。</p> <div style="box-sizing:border-box;position:relative;"><pre style="overflow:auto;font-size:1em;box-sizing:border-box;font-family:Consolas, &quot;Bitstream Vera Sans Mono&quot;, &quot;Courier New&quot;, Courier, monospace;background:rgb(246, 247, 255);border:1px solid rgb(231, 233, 250);transition:background-color 1s ease 0s;padding:30px 10px 10px;color:rgb(29, 33, 41);background-color:rgb(250, 250, 250);">$ cat rdbms.json
+{
+    &quot;apiVersion&quot;: &quot;v1&quot;,
+    &quot;kind&quot;: &quot;Namespace&quot;,
+    &quot;metadata&quot;: {
+        &quot;annotations&quot;: {
+            &quot;kubectl.kubernetes.io/last-applied-configuration&quot;: &quot;{&quot;apiVersion&quot;:&quot;v1&quot;,&quot;kind&quot;:&quot;Namespace&quot;,&quot;metadata&quot;:{&quot;annotations&quot;:{},&quot;name&quot;:&quot;rdbms&quot;}}n&quot;
+        },
+        &quot;creationTimestamp&quot;: &quot;2019-10-14T12:17:44Z&quot;,
+        &quot;deletionTimestamp&quot;: &quot;2019-10-14T12:30:27Z&quot;,
+        &quot;name&quot;: &quot;rdbms&quot;,
+        &quot;resourceVersion&quot;: &quot;8844754&quot;,
+        &quot;selfLink&quot;: &quot;/api/v1/namespaces/rdbms&quot;,
+        &quot;uid&quot;: &quot;29067ddf-56d7-4cce-afa3-1fbdbb221ab1&quot;
+    },
+<span style="box-sizing:border-box;overflow-wrap:break-word;font-size:14px;color:#FF0000;line-height:22px;">    &quot;spec&quot;: {</span>
+<span style="box-sizing:border-box;overflow-wrap:break-word;font-size:14px;color:#FF0000;line-height:22px;">        &quot;finalizers&quot;: [</span>
+<span style="box-sizing:border-box;overflow-wrap:break-word;font-size:14px;color:#FF0000;line-height:22px;">            &quot;kubernetes&quot;</span>
+<span style="box-sizing:border-box;overflow-wrap:break-word;font-size:14px;color:#FF0000;line-height:22px;">        ]</span>
+<span style="box-sizing:border-box;overflow-wrap:break-word;font-size:14px;color:#FF0000;line-height:22px;">    },</span>
+    &quot;status&quot;: {
+        &quot;phase&quot;: &quot;Terminating&quot;
+    }
+}</pre><div style="box-sizing:border-box;position:absolute;top:10px;right:10px;width:24px;height:24px;background-size:16px;background-position:center center;background-repeat:no-repeat;cursor:pointer;display:block;background-image:url(https://res-static.hc-cdn.cn/aem/content/dam/cloudbu-site/archive/china/zh-cn/support/resource/framework/v3/css/https://res-static.hc-cdn.cn/aem/content/dam/cloudbu-site/archive/china/zh-cn/support/resource/framework/v3/css/https://res-static.hc-cdn.cn/aem/content/dam/cloudbu-site/archive/china/zh-cn/support/resource/framework/v3/css/./../images/support-doc-new-cgc-m.svg);"></div></div> <p style="box-sizing:border-box;margin:0px;padding:0px;font-weight:inherit;margin-top:0px;overflow-wrap:break-word;color:rgb(37, 43, 58);font-size:14px;margin-bottom:0px;line-height:22px;min-height:0px;min-width:0px;">执行接口PUT请求更新后，命名空间将自动删除。</p> <div style="box-sizing:border-box;position:relative;"><pre style="overflow:auto;font-size:1em;box-sizing:border-box;font-family:Consolas, &quot;Bitstream Vera Sans Mono&quot;, &quot;Courier New&quot;, Courier, monospace;background:rgb(246, 247, 255);border:1px solid rgb(231, 233, 250);transition:background-color 1s ease 0s;padding:30px 10px 10px;color:rgb(29, 33, 41);background-color:rgb(250, 250, 250);">$ curl --cacert /root/ca.crt --cert /root/client.crt --key /root/client.key -k -H &quot;Content-Type:application/json&quot; -X PUT --data-binary @rdbms.json <strong style="box-sizing:border-box;color:inherit;font-weight:700;">https://x.x.x.x:5443</strong>/api/v1/namespaces/rdbms/finalize 
+{
+  &quot;kind&quot;: &quot;Namespace&quot;,
+  &quot;apiVersion&quot;: &quot;v1&quot;,
+  &quot;metadata&quot;: {
+    &quot;name&quot;: &quot;rdbms&quot;,
+    &quot;selfLink&quot;: &quot;/api/v1/namespaces/rdbms/finalize&quot;,
+    &quot;uid&quot;: &quot;29067ddf-56d7-4cce-afa3-1fbdbb221ab1&quot;,
+    &quot;resourceVersion&quot;: &quot;8844754&quot;,
+    &quot;creationTimestamp&quot;: &quot;2019-10-14T12:17:44Z&quot;,
+    &quot;deletionTimestamp&quot;: &quot;2019-10-14T12:30:27Z&quot;,
+    &quot;annotations&quot;: {
+      &quot;kubectl.kubernetes.io/last-applied-configuration&quot;: &quot;{&quot;apiVersion&quot;:&quot;v1&quot;,&quot;kind&quot;:&quot;Namespace&quot;,&quot;metadata&quot;:{&quot;annotations&quot;:{},&quot;name&quot;:&quot;rdbms&quot;}}n&quot;
+    }
+  },
+<span style="box-sizing:border-box;overflow-wrap:break-word;font-size:14px;color:#FF0000;line-height:22px;">  &quot;spec&quot;: {</span>
+
+<span style="box-sizing:border-box;overflow-wrap:break-word;font-size:14px;color:#FF0000;line-height:22px;">  },</span>
+  &quot;status&quot;: {
+    &quot;phase&quot;: &quot;Terminating&quot;
+  }</pre><div style="box-sizing:border-box;position:absolute;top:10px;right:10px;width:24px;height:24px;background-size:16px;background-position:center center;background-repeat:no-repeat;cursor:pointer;display:block;background-image:url(https://res-static.hc-cdn.cn/aem/content/dam/cloudbu-site/archive/china/zh-cn/support/resource/framework/v3/css/https://res-static.hc-cdn.cn/aem/content/dam/cloudbu-site/archive/china/zh-cn/support/resource/framework/v3/css/https://res-static.hc-cdn.cn/aem/content/dam/cloudbu-site/archive/china/zh-cn/support/resource/framework/v3/css/./../images/support-doc-new-cgc-m.svg);"></div></div> <p style="box-sizing:border-box;margin:0px;padding:0px;font-weight:inherit;margin-top:0px;overflow-wrap:break-word;color:rgb(37, 43, 58);font-size:14px;margin-bottom:0px;line-height:22px;min-height:0px;min-width:0px;">如果仍然无法删除命名空间，请查看metadata部分是否存在finalizers字段，如果存在，需要通过如下命令进入命名空间后删除该字段：</p> <div style="box-sizing:border-box;position:relative;"><pre style="overflow:auto;font-size:1em;box-sizing:border-box;font-family:Consolas, &quot;Bitstream Vera Sans Mono&quot;, &quot;Courier New&quot;, Courier, monospace;background:rgb(246, 247, 255);border:1px solid rgb(231, 233, 250);transition:background-color 1s ease 0s;padding:30px 10px 10px;color:rgb(29, 33, 41);background-color:rgb(250, 250, 250);">kubectl edit ns rdbms</pre><div style="box-sizing:border-box;position:absolute;top:10px;right:10px;width:24px;height:24px;background-size:16px;background-position:center center;background-repeat:no-repeat;cursor:pointer;display:block;background-image:url(https://res-static.hc-cdn.cn/aem/content/dam/cloudbu-site/archive/china/zh-cn/support/resource/framework/v3/css/https://res-static.hc-cdn.cn/aem/content/dam/cloudbu-site/archive/china/zh-cn/support/resource/framework/v3/css/https://res-static.hc-cdn.cn/aem/content/dam/cloudbu-site/archive/china/zh-cn/support/resource/framework/v3/css/./../images/support-doc-new-cgc-m.svg);"></div></div>
+   <div style="box-sizing:border-box;background:rgb(233, 237, 250);padding:20px;margin-top:12px;margin-bottom:12px;">
+    <div class="media-placeholder">[图片/附件]</div></en-media>说明：<span style="box-sizing:border-box;overflow-wrap:break-word;display:inline-block;vertical-align:middle;font-size:14px;color:rgb(37, 43, 58);line-height:22px;font-weight:700;"> </span>
+    <div style="box-sizing:border-box;margin-top:4px;">
+     <ul style="box-sizing:border-box;margin:0px;padding:0px;color:inherit;font-size:inherit;font-weight:inherit;padding-left:0px;list-style:none;margin-top:8px;margin-bottom:8px;">
+      <li style="list-style:none;box-sizing:border-box;margin:0px;padding:0px;font-weight:inherit;overflow-wrap:break-word;padding-left:12px;position:relative;line-height:22px;font-size:14px;color:rgb(37, 43, 58);">集群证书获取方法请参见<a href="https://support.huaweicloud.com/usermanual-cce/cce_01_0175.html" target="_blank" rel="noopener noreferrer" style="outline:none;margin:0px;padding:0px;background-color:transparent;box-sizing:border-box;text-decoration:none;transition:all 0.2s ease 0s;color:rgb(82, 110, 204);font-size:14px;font-weight:400;overflow-wrap:break-word;">获取集群证书</a>。</li>
+      <li style="list-style:none;box-sizing:border-box;margin:0px;padding:0px;font-weight:inherit;overflow-wrap:break-word;padding-left:12px;position:relative;margin-top:8px;line-height:22px;font-size:14px;color:rgb(37, 43, 58);"><strong style="box-sizing:border-box;font-weight:700;color:rgb(37, 43, 58);">https://x.x.x.x:5443</strong>：为连接集群的地址，登录CCE控制台，进入集群，在连接信息的内网地址。</li>
+     </ul>
+    </div>
+   </div> <p style="box-sizing:border-box;margin:0px;padding:0px;font-weight:inherit;margin-top:0px;overflow-wrap:break-word;color:rgb(37, 43, 58);font-size:14px;margin-bottom:0px;line-height:22px;min-height:0px;min-width:0px;"></p></li>
+  <li style="box-sizing:border-box;margin:0px;padding:0px;font-weight:inherit;overflow-wrap:break-word;margin-top:8px;line-height:22px;list-style:decimal;color:rgb(37, 43, 58);font-size:14px;"><span style="box-sizing:border-box;overflow-wrap:break-word;font-size:14px;color:rgb(37, 43, 58);line-height:22px;">再次查看namespace发现已经被删除了</span><p style="box-sizing:border-box;margin:0px;padding:0px;font-weight:inherit;margin-top:0px;overflow-wrap:break-word;color:rgb(37, 43, 58);font-size:14px;margin-bottom:0px;line-height:22px;min-height:0px;min-width:0px;"></p><div style="box-sizing:border-box;position:relative;"><pre style="overflow:auto;font-size:1em;box-sizing:border-box;font-family:Consolas, &quot;Bitstream Vera Sans Mono&quot;, &quot;Courier New&quot;, Courier, monospace;background:rgb(246, 247, 255);border:1px solid rgb(231, 233, 250);transition:background-color 1s ease 0s;padding:30px 10px 10px;color:rgb(29, 33, 41);background-color:rgb(250, 250, 250);">$ kubectl  get ns  | grep rdb</pre><div style="box-sizing:border-box;position:absolute;top:10px;right:10px;width:24px;height:24px;background-size:16px;background-position:center center;background-repeat:no-repeat;cursor:pointer;display:block;background-image:url(https://res-static.hc-cdn.cn/aem/content/dam/cloudbu-site/archive/china/zh-cn/support/resource/framework/v3/css/https://res-static.hc-cdn.cn/aem/content/dam/cloudbu-site/archive/china/zh-cn/support/resource/framework/v3/css/https://res-static.hc-cdn.cn/aem/content/dam/cloudbu-site/archive/china/zh-cn/support/resource/framework/v3/css/./../images/support-doc-new-cgc-m.svg);"></div></div> <p style="box-sizing:border-box;margin:0px;padding:0px;font-weight:inherit;margin-top:0px;overflow-wrap:break-word;color:rgb(37, 43, 58);font-size:14px;margin-bottom:0px;line-height:22px;min-height:0px;min-width:0px;"></p></li>
+ </ol>
+</div>
+<div style="box-sizing:border-box;">
+ <div style="box-sizing:border-box;margin-top:16px;margin-bottom:8px;">
+  <div style="box-sizing:border-box;">
+   <strong style="color:rgb(54, 56, 60);box-sizing:border-box;font-weight:700;">父主题：</strong> <a href="https://support.huaweicloud.com/cce_faq/cce_faq_00279.html" style="outline:none;margin:0px;padding:0px;background-color:transparent;box-sizing:border-box;text-decoration:none;transition:all 0.2s ease 0s;color:rgb(82, 110, 204);font-size:14px;font-weight:400;">集群运行</a>
+  </div>
+ </div>
+</div>
+    
+  </div>
+
+  
+
+  <div style="box-sizing:border-box;margin:32px 0px 10px;background:rgb(255, 255, 255);">
+    
+  </div>
+  
+  
+  <div style="box-sizing:border-box;position:relative;display:inline-block;padding-bottom:20px;">
+    <i style="box-sizing:border-box;font-style:normal;"></i>
+    <div style="box-sizing:border-box;top:38px;left:-27px;border-radius:2px;z-index:99;vertical-align:middle;position:static;width:auto;height:auto;background:none;box-shadow:none;padding-top:0px;display:inline-block;">
+      <ul style="box-sizing:border-box;margin:0px;padding:0px;color:inherit;font-size:inherit;font-weight:inherit;padding-left:0px;list-style:none;margin-bottom:0px;margin-top:0px;">
+        
+        <li style="list-style:none;box-sizing:border-box;padding:0px;color:inherit;font-size:inherit;font-weight:inherit;float:left;margin:0px 8px 0px 0px;padding-left:0px;position:relative;">
+          <a target="_blank" href="https://support.huaweicloud.com/cce_faq/cce-faq.pdf" style="outline:none;margin:0px;padding:0px;font-weight:inherit;background-color:transparent;box-sizing:border-box;text-decoration:none;line-height:22px;transition:all 0.3s ease 0s;color:rgb(102, 106, 117);font-size:14px;height:30px;display:block;"><i style="box-sizing:border-box;font-style:normal;display:inline-block;vertical-align:middle;transition:all 0.3s ease 0s;width:24px;height:24px;background:url(https://res-static.hc-cdn.cn/aem/content/dam/cloudbu-site/archive/china/zh-cn/support/resource/framework/v3/css/./../images/support-doc-new-b-pdf-n.svg) center center / cover no-repeat;margin-right:0px;"></i></a>
+          
+        </li>
+        
+        <li style="list-style:none;box-sizing:border-box;padding:0px;color:inherit;font-size:inherit;font-weight:inherit;float:left;margin:0px 8px 0px 0px;padding-left:0px;position:relative;">
+          <a href="#" rel="nofollow" style="outline:none;margin:0px;padding:0px;font-weight:inherit;background-color:transparent;box-sizing:border-box;text-decoration:none;line-height:22px;transition:all 0.3s ease 0s;color:rgb(102, 106, 117);font-size:14px;height:30px;display:block;"><i style="box-sizing:border-box;font-style:normal;display:inline-block;vertical-align:middle;transition:all 0.3s ease 0s;width:24px;height:24px;background:url(https://res-static.hc-cdn.cn/aem/content/dam/cloudbu-site/archive/china/zh-cn/support/resource/framework/v3/css/./../images/support-doc-new-b-weibo-n.svg) center center / 100% 100% no-repeat;margin-right:0px;"></i></a>
+          
+        </li>
+        <li style="list-style:none;box-sizing:border-box;padding:0px;color:inherit;font-size:inherit;font-weight:inherit;float:left;margin:0px 8px 0px 0px;padding-left:0px;position:relative;">
+          <a href="#" rel="nofollow" style="outline:none;margin:0px;padding:0px;font-weight:inherit;background-color:transparent;box-sizing:border-box;text-decoration:none;line-height:22px;transition:all 0.3s ease 0s;color:rgb(102, 106, 117);font-size:14px;height:30px;display:block;"><i style="box-sizing:border-box;font-style:normal;display:inline-block;vertical-align:middle;transition:all 0.3s ease 0s;width:24px;height:24px;background:url(https://res-static.hc-cdn.cn/aem/content/dam/cloudbu-site/archive/china/zh-cn/support/resource/framework/v3/css/./../images/support-doc-new-b-weixin-n.svg) center center / 100% 100% no-repeat;margin-right:0px;"></i></a>
+          
+        </li>
+        <li style="list-style:none;box-sizing:border-box;padding:0px;color:inherit;font-size:inherit;font-weight:inherit;float:left;margin:0px 8px 0px 0px;padding-left:0px;position:relative;">
+          <a href="#" rel="nofollow" style="outline:none;margin:0px;padding:0px;font-weight:inherit;background-color:transparent;box-sizing:border-box;text-decoration:none;line-height:22px;transition:all 0.3s ease 0s;color:rgb(102, 106, 117);font-size:14px;height:30px;display:block;"><i style="box-sizing:border-box;font-style:normal;display:inline-block;vertical-align:middle;transition:all 0.3s ease 0s;width:24px;height:24px;background:url(https://res-static.hc-cdn.cn/aem/content/dam/cloudbu-site/archive/china/zh-cn/support/resource/framework/v3/css/./../images/support-doc-new-b-link-n.svg) center center / 100% 100% no-repeat;margin-right:0px;"></i></a>
+          
+        </li>
+      </ul>
+    </div>
+  </div>
+  
+  
+  <div style="box-sizing:border-box;border-radius:2px;margin-bottom:30px;background:rgb(241, 245, 250);padding:20px;">
+    <h1 style="padding:0px;font-weight:inherit;margin:0.67em 0px;box-sizing:border-box;margin-top:0px;line-height:22px;font-size:16px;color:rgb(37, 43, 58);margin-bottom:10px;min-width:0px;min-height:0px;">
+      集群运行
+      所有常见问题</h1>
+    <div style="box-sizing:border-box;overflow:visible;">
+      <ul style="box-sizing:border-box;margin:0px;padding:0px;color:inherit;font-size:inherit;font-weight:inherit;padding-left:0px;list-style:none;margin-top:0px;margin-bottom:0px;padding-bottom:20px;"><span style="list-style:none;color:inherit;font-size:inherit;font-weight:inherit;display:table;"> </span>
+        
+        <li style="list-style:none;box-sizing:border-box;margin:0px;padding:0px;color:inherit;font-size:inherit;font-weight:inherit;width:50%;float:left;margin-bottom:0px;padding-left:10px;height:28px;position:relative;margin-top:0px;"><a target="_self" href="https://support.huaweicloud.com/cce_faq/cce_faq_00039.html" style="outline:none;margin:0px;padding:0px;font-weight:inherit;background-color:transparent;box-sizing:border-box;text-decoration:none;line-height:28px;width:100%;padding-right:20px;display:inline-block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:rgb(82, 110, 204);font-size:14px;">当集群状态为“不可用”时，如何排查解决？</a></li>
+        
+        <li style="list-style:none;box-sizing:border-box;margin:0px;padding:0px;color:inherit;font-size:inherit;font-weight:inherit;width:50%;float:left;margin-bottom:0px;padding-left:10px;height:28px;position:relative;margin-top:0px;"><a target="_self" href="https://support.huaweicloud.com/cce_faq/cce_faq_00257.html" style="outline:none;margin:0px;padding:0px;font-weight:inherit;background-color:transparent;box-sizing:border-box;text-decoration:none;line-height:28px;width:100%;padding-right:20px;display:inline-block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:rgb(82, 110, 204);font-size:14px;">CCE集群如何重置或重装？</a></li>
+        
+        <li style="list-style:none;box-sizing:border-box;margin:0px;padding:0px;color:inherit;font-size:inherit;font-weight:inherit;width:50%;float:left;margin-bottom:0px;padding-left:10px;height:28px;position:relative;margin-top:0px;"><a target="_self" href="https://support.huaweicloud.com/cce_faq/cce_faq_00155.html" style="outline:none;margin:0px;padding:0px;font-weight:inherit;background-color:transparent;box-sizing:border-box;text-decoration:none;line-height:28px;width:100%;padding-right:20px;display:inline-block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:rgb(82, 110, 204);font-size:14px;">如何确认已创建的集群是否为多控制节点模式？</a></li>
+        
+        <li style="list-style:none;box-sizing:border-box;margin:0px;padding:0px;color:inherit;font-size:inherit;font-weight:inherit;width:50%;float:left;margin-bottom:0px;padding-left:10px;height:28px;position:relative;margin-top:0px;"><a target="_self" href="https://support.huaweicloud.com/cce_faq/cce_faq_00131.html" style="outline:none;margin:0px;padding:0px;font-weight:inherit;background-color:transparent;box-sizing:border-box;text-decoration:none;line-height:28px;width:100%;padding-right:20px;display:inline-block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:rgb(82, 110, 204);font-size:14px;">是否可以直接连接集群的控制节点？</a></li>
+        
+        <li style="list-style:none;box-sizing:border-box;margin:0px;padding:0px;color:inherit;font-size:inherit;font-weight:inherit;width:50%;float:left;margin-bottom:0px;padding-left:10px;height:28px;position:relative;margin-top:0px;"><a target="_self" href="https://support.huaweicloud.com/cce_faq/cce_faq_00040.html" style="outline:none;margin:0px;padding:0px;font-weight:inherit;background-color:transparent;box-sizing:border-box;text-decoration:none;line-height:28px;width:100%;padding-right:20px;display:inline-block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:rgb(82, 110, 204);font-size:14px;">集群删除之后相关数据能否再次找回？</a></li>
+        
+        <li style="list-style:none;box-sizing:border-box;margin:0px;padding:0px;color:inherit;font-size:inherit;font-weight:inherit;width:50%;float:left;margin-bottom:0px;padding-left:10px;height:28px;position:relative;margin-top:0px;"><a target="_self" href="https://support.huaweicloud.com/cce_faq/cce_faq_00277.html" style="outline:none;margin:0px;padding:0px;font-weight:inherit;background-color:transparent;box-sizing:border-box;text-decoration:none;line-height:28px;width:100%;padding-right:20px;display:inline-block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:rgb(82, 110, 204);font-size:14px;">如何更新Terminating状态的命名空间？</a></li>
+        
+        <li style="list-style:none;box-sizing:border-box;margin:0px;padding:0px;color:inherit;font-size:inherit;font-weight:inherit;width:50%;float:left;margin-bottom:0px;padding-left:10px;height:28px;position:relative;margin-top:0px;"><a target="_self" href="https://support.huaweicloud.com/cce_faq/cce_faq_00249.html" style="outline:none;margin:0px;padding:0px;font-weight:inherit;background-color:transparent;box-sizing:border-box;text-decoration:none;line-height:28px;width:100%;padding-right:20px;display:inline-block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:rgb(82, 110, 204);font-size:14px;">为什么CCE集群界面的节点磁盘监控看起来不准确？</a></li>
+        
+      <span style="list-style:none;color:inherit;font-size:inherit;font-weight:inherit;display:table;clear:both;"> </span></ul>
+      <div style="box-sizing:border-box;padding-top:24px;position:relative;">
+        <h3 style="box-sizing:border-box;margin:0px;padding:0px;margin-top:0px;margin-bottom:0px;letter-spacing:0px;line-height:18px;color:rgb(37, 43, 58);font-size:14px;font-weight:bold;min-width:0px;min-height:0px;">
+          <i style="box-sizing:border-box;font-style:normal;width:18px;height:18px;display:inline-block;background:url(https://res-static.hc-cdn.cn/aem/content/dam/cloudbu-site/archive/china/zh-cn/support/resource/framework/v3/images/support-doc-new-feedback.svg) center center / contain no-repeat;margin-right:5px;vertical-align:middle;"></i><span style="box-sizing:border-box;">意见反馈</span>
+        </h3>
+        
+        <div style="box-sizing:border-box;clear:both;font-size:0px;padding-top:12px;">
+    <h3 style="box-sizing:border-box;margin:0px;padding:0px;font-weight:inherit;margin-top:0px;display:inline-block;color:rgb(87, 93, 108);font-size:16px;margin-bottom:16px;margin-right:20px;line-height:32px;min-width:0px;min-height:0px;">文档内容是否对您有帮助？</h3>
+    <div style="box-sizing:border-box;display:inline-block;background:rgba(138, 142, 153, 0.1);border-radius:16px;position:relative;top:-4px;margin-right:20px;">
+        <a href="#" rel="nofollow" style="outline:none;margin:0px;font-weight:inherit;background-color:transparent;box-sizing:border-box;text-decoration:none;position:relative;height:32px;vertical-align:middle;padding:5px 16px 0px;color:rgb(102, 106, 117);font-size:16px;display:inline-block;text-align:center;cursor:pointer;">
+            
+            <i style="box-sizing:border-box;font-style:normal;display:inline-block;width:20px;height:20px;background:url(https://res-static.hc-cdn.cn/aem/content/dam/cloudbu-site/archive/china/zh-cn/support/resource/framework/v3/css/./../images/support-doc-new-help-form-y.svg) 0% 0% / cover;"></i>
+        </a>
+        <a href="#" rel="nofollow" style="outline:none;margin:0px;font-weight:inherit;background-color:transparent;box-sizing:border-box;text-decoration:none;position:relative;height:32px;vertical-align:middle;padding:5px 16px 0px;color:rgb(102, 106, 117);font-size:16px;display:inline-block;text-align:center;cursor:pointer;">
+            
+            <i style="box-sizing:border-box;font-style:normal;display:inline-block;width:20px;height:20px;background:url(https://res-static.hc-cdn.cn/aem/content/dam/cloudbu-site/archive/china/zh-cn/support/resource/framework/v3/css/./../images/support-doc-new-help-form-n.svg) 0% 0% / cover;"></i>
+        </a>
+    </div>
+    <a style="outline:none;margin:0px;font-weight:inherit;box-sizing:border-box;text-decoration:none;position:relative;height:32px;vertical-align:middle;text-align:center;line-height:22px;cursor:pointer;color:rgb(82, 110, 204);font-size:14px;display:inline-block;border:0px;background-color:transparent;padding:0px;">提供反馈 <em style="box-sizing:border-box;content:&quot;&quot;;display:inline-block;vertical-align:middle;margin-top:-2px;margin-left:5px;background-size:cover;transition:all 0.3s ease-out 0s;font-style:normal;font-size:20px;line-height:1;font-family:u-icon;"><span style="font-style:normal;font-size:20px;line-height:1;font-family:u-icon;"></span></em></a>
+    
+    
+    
+    
+    
+    <div style="box-sizing:border-box;margin-top:20px;">
+        <p style="box-sizing:border-box;margin:0px;padding:0px;font-weight:inherit;margin-top:0px;margin-bottom:0px;display:inline-block;letter-spacing:0px;line-height:22px;margin-right:12px;color:rgb(87, 93, 108);font-size:14px;min-width:0px;min-height:0px;">如您有其它疑问，您也可以通过华为云社区问答频道来与我们联系探讨</p>
+        <a href="https://console.huaweicloud.com/smartadvisor/" target="_blank" style="outline:none;margin:0px;padding:0px;font-weight:inherit;background-color:transparent;box-sizing:border-box;text-decoration:none;line-height:22px;display:inline-block;cursor:pointer;color:rgb(82, 110, 204);font-size:14px;margin-right:20px;">智能客服提问<em style="box-sizing:border-box;content:&quot;&quot;;display:inline-block;vertical-align:middle;margin-top:-2px;margin-left:5px;background-size:cover;transition:all 0.3s ease-out 0s;font-style:normal;font-size:20px;line-height:1;font-family:u-icon;"><span style="font-style:normal;font-size:20px;line-height:1;font-family:u-icon;"></span></em></a><a href="https://bbs.huaweicloud.com/forum/" target="_blank" style="outline:none;margin:0px;padding:0px;font-weight:inherit;background-color:transparent;box-sizing:border-box;text-decoration:none;line-height:22px;display:inline-block;cursor:pointer;color:rgb(82, 110, 204);font-size:14px;">云社区提问<em style="box-sizing:border-box;content:&quot;&quot;;display:inline-block;vertical-align:middle;margin-top:-2px;margin-left:5px;background-size:cover;transition:all 0.3s ease-out 0s;font-style:normal;font-size:20px;line-height:1;font-family:u-icon;"><span style="font-style:normal;font-size:20px;line-height:1;font-family:u-icon;"></span></em></a>
+    </div>
+    
+</div>
+        
+      </div>
+    </div>
+    
+  </div>
+  
+  
+<span style="display:table;clear:both;"> </span></div>
+
+<div style="box-sizing:border-box;">
+  
+  
+</div>
+
+                    <span style="display:table;clear:both;"> </span></div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div style="box-sizing:border-box;background:rgb(243, 243, 243);position:relative;visibility:visible;"></div>
+    
+    
+    
+        <div style="box-sizing:border-box;"></div>
+    
+
+
+    
+    
+        <div style="box-sizing:border-box;"></div>
+    
+
+
+    
+    
+        
+
+    
+
+
+
+    
+        <div style="box-sizing:border-box;background:rgb(243, 243, 243);position:relative;visibility:visible;">    </div>  <div style="box-sizing:border-box;background:rgb(243, 243, 243);color:rgba(37, 43, 58, 0.7);position:relative;visibility:visible;">    <div style="box-sizing:border-box;background:rgb(243, 243, 243);display:block;border-top:none;">  <div style="box-sizing:border-box;border-top:1px solid rgb(226, 226, 226);margin-left:auto;margin-right:auto;max-width:1600px;padding-bottom:20px;padding-top:20px;padding-left:5%;padding-right:5%;">      <ul style="margin:0px;padding:0px;color:inherit;font-weight:inherit;box-sizing:border-box;padding-left:0px;list-style:none;margin-top:0px;margin-bottom:0px;float:right;overflow:hidden;font-size:0px;">          <li style="list-style:none;margin:0px;padding:0px;color:inherit;font-weight:inherit;box-sizing:border-box;display:inline-block;line-height:18px;font-size:14px;"><a href="https://www.huaweicloud.com/declaration/statement.html" target="_blank" rel="nofollow" style="outline:none;margin:0px;padding:0px;color:inherit;font-size:inherit;font-weight:inherit;background-color:transparent;box-sizing:border-box;text-decoration:none;transition:all 0.2s ease 0s;">法律声明</a></li>          <li style="list-style:none;margin:0px;padding:0px;color:inherit;font-weight:inherit;box-sizing:border-box;display:inline-block;line-height:18px;font-size:14px;"><span style="list-style:none;color:inherit;font-size:14px;font-weight:inherit;line-height:18px;margin-left:10px;margin-right:10px;box-sizing:border-box;">|</span><a href="https://www.huaweicloud.com/declaration/sa_prp.html" target="_blank" rel="nofollow" style="outline:none;margin:0px;padding:0px;color:inherit;font-size:inherit;font-weight:inherit;background-color:transparent;box-sizing:border-box;text-decoration:none;transition:all 0.2s ease 0s;">隐私政策</a></li>      </ul>      <div style="box-sizing:border-box;float:left;font-size:0px;">          <span style="box-sizing:border-box;display:inline-block;font-size:14px;line-height:18px;margin-right:10px;">©2023 Huaweicloud.com 版权所有</span>          <a href="https://beian.miit.gov.cn/" target="_blank" rel="nofollow" style="outline:none;margin:0px;padding:0px;color:inherit;font-weight:inherit;background-color:transparent;box-sizing:border-box;text-decoration:none;transition:all 0.2s ease 0s;display:inline-block;line-height:18px;margin-right:10px;font-size:14px;">黔ICP备20004760号-14</a>          <span style="box-sizing:border-box;display:inline-block;font-size:14px;line-height:18px;margin-right:10px;">苏B2-20130048号</span>          <span style="box-sizing:border-box;display:inline-block;font-size:14px;line-height:18px;margin-right:10px;">A2.B1.B2-20070312</span>          <span style="box-sizing:border-box;display:inline-block;font-size:14px;line-height:18px;margin-right:10px;">代理域名注册服务机构：新网、西数</span>      </div>      <div style="box-sizing:border-box;clear:both;font-size:0px;padding-top:5px;">          <i style="box-sizing:border-box;font-style:normal;background-size:100% 100%;display:inline-block;height:18px;margin-right:8px;vertical-align:middle;width:18px;background-image:url(&apos;data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABIAAAASCAMAAABhEH5lAAACUlBMVEUAAADe/962i1DdvXrmyojGo2PhuZHCo1zEpnLfxom3k1rTwnvQrGS9n2nf0I/g05mSttzOqE3o0ovRtHG3VjHAb0HHrHjIp2DKfUnVu3HLsHLHq3Hfy47ZwYe8m2G1lWLPs3XKr3K+o2/Jr3/OqmrhyI3tz4a9jE/FpWvSpmHNr2fRs3TUtnjkz4HXvHfAoV7St3W9jk/Utn/l0IXgz4rFrWq7mFm8m2fLtoC7mFrKp2rTt3rb247Co3q1lWDYxInhIhvHrHTIrm/Xh1Gxgj2+SyvYOybcHRjUFxPZwofexnG8n2/ApG28oW23m2jQsmbPsV/BoF3dvVzMrFm5lFTPrFLgfErgXjvFZTrRYDm5YjXDWDXYVDXOTy60Ui21TSvbOyrcQim1WyfZNSaxRSTJNSG2MR6yLh7iHhrTIBjfGRjXxZnNtoTWvoDHr4Dg0HnWv3nDp3fDq3PXv3LXum/axm3JrWzDqWy6nmbFq2Xhl2S1lWLStWDUmF++nFzJp1u1lVvmi1vXklnGolbGoFbawFPNmFO/n1LqblHFl1DOh1DJkU+2kU+wh0zGmkrIfkrHg0m3kEjPfkjNeUeugkTBfUPoaUO9kEKkfELcYkHWtD+9iDvEYjjZXDi3gzemdTfFbjbKZTbFWjXLWTXOVjXDVzO5XDLVUzKoXTHlTTDgQy6iVi2yVC27XivCSyvKTCq7SinjQCnRNievRCaxSyXBOyXUMyTcNCPnMyPDQSLXNiLQNiLaMyK6MiDTLSDjKh7cJxzdIhvXHxjkHBjaHBfWFRN2Gm/TAAAAQHRSTlMAB40nHhwG/rh3dmRfRTsUA/79/f37+vn18/Ls6urp5OPh4d3b0snFurqvrKGgn56OjomIa2phXFRSOi4rGRgNXJsWNAAAAUBJREFUGNNigAJGbhNGEA3n85mqi0RoctvARQT0RF3XbXCNXCxhDBWx0pp8KKx/6aKuRgdnXWuQCL9KrMfM2m1uCfuaOtynqYFMtPDf7eEcczA52WF5VcYqIT4GBjb90PUek8LdN8c7zHXOCvcyEGBglixdeDS2O271imVtMVlh+TIsDMxSlVMzM6Mj1kTNWeLgMMFJlgUwBhbpkOmp7qmucVHRmw4nTvRV5GfQYfesWXvkwK6E7Xv2ZywIyBXnZDBydCwR3Lkj0c1t48rI0OAiT04GViU/p+LOlL3paVvj+7zK8xRYGRjMxHJCCmanpKdtmRccmC3Mw8DAq+zj61MWNCspqTWIvcLPSZWZwZaj0Lu6riXAv725PrDB21HbHuh8cw75GfNdeqe4uPTIafCwQcLCjpeLicmQicuSFcQDAF2FXflf7Dj/AAAAAElFTkSuQmCC&apos;);"></i>          <i style="box-sizing:border-box;font-style:normal;background-size:100% 100%;display:inline-block;height:18px;margin-right:8px;vertical-align:middle;width:18px;background-image:url(&apos;data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABIAAAASCAMAAABhEH5lAAACXlBMVEUAAADax4rGxqP556zmsVD/6KXu5JvwvFPglEFnY3nnpEjosU1+XFTmuVfu13Hrv1jpsFa1k3mne2HlvnPdqmPqz3fu3YrJoWv04J/mz5z246aSi3i2p2/0zGj82WDrtFjar1O7klO4dkfimUJcWnbho0rgr1vntFfmvFflvGOZdFKXZkOUemnmv2XkuWWVe2ziqlXnt1Tr0HDpwl6ObmCkbEKqhVyOc2jdoVHmuljfrmDq0nPapWDUnErqy3XjtWXesXLrzHjz34rqzYfmw3fy4YrqyYDevW/dzoTIhkndsXLRsIneuHjlyIzQroTjuXjlyYfktWvw2prhvoHTmGfx45j3773TuYT/25LdijyKf321oXU+Nm3cumXfuWLtwlzpwVz40FvpvlvqvFfouFXjrlHipEjcmEfknEXPbzfbZyzZQR/YMBrWKBrhJhLdHxDTGg5HV4xBT4YYKYaWk4SDgYIWIYBybH0qLn1KS3tlZHpNS3WGfHIcHXEwLHAnF28rKW07NGuzn2pNQ2ruzWnDrGnuy2jryGjAnGgoH2j1x2RCNGPcrmIsEGGQdl/pu17YtV7FoV3muVxoRVzWqFvSmVp2SVbyw1XbkVTuvFPfo1PgmVPpt1LcnFLWkVLlp1F7W1HpsU92QE5oMUtFAUrpqUjnjUFOAEHUgz+DUj14FzvbczieMTdhATfodjXWcDXcbjXVcTS/Xi/hay7WXS3cWS3vYyvaVSrUVymnJSjXSyeKDSbNSiWfHCPMTyLFQiHkSR/lPxvVLRrPLBnUJRfUHhbaJxXVGxTZJxPNFhBdOhm/AAAAWXRSTlMABQIU/hIJ/v79/Pj29PPx4cC6s7CNfmxZWRv+/v7+/v7+/v78/Pr6+fPz8vHq6ujl5eTj4ODe2NTQzMW6ubKsnJeQkJCJiIOBgX9ubGpoW1lMREM0JR8dDgvYx1gAAAE7SURBVBjTYgADJmZJQUFJZiYGOGD2EzLV1jIT8paCibCJ86zctGPD1D4ecUaICKuPyYLMYznZOfNqzP0jwEJBOt1KB4/mHjqZ3dGsHwxW5M4Zk5l/PPdIQcGMShUPVqBlgQLlMSvyDq+P3HVidjWnkQQTA5MXV1SFYtb+jZGrl02si2J3Y2JgFMmILl68efueLVvXLSqLXirCCBgDow1HT+GS/AP7srblLS+K5bIHCjmodpXUr929d+eaVb3SsuouQCHhufPjShsbJk/rrK2KW8hiBxRyVkvnkI9tnaDQJDNFOU1DDOjRMEfe9Mjpiewz5RIzZmmKMoPcKqGbkJqSkBSfnDqpXS+ACeRpJ76W/uSUpDlpLPFtfK5soLAKFbU05Odm4eblN7YWk4KEGWOIp62FgYCVsG84SAAAL7BaooX965sAAAAASUVORK5CYII=&apos;);"><a href="http://www.beian.gov.cn/portal/registerSystemInfo?recordcode=52990002000093" target="_blank" style="outline:none;margin:0px;padding:0px;color:inherit;font-weight:inherit;background-color:transparent;box-sizing:border-box;text-decoration:none;display:block;height:18px;width:18px;line-height:18px;margin-right:5px;vertical-align:middle;font-size:12px;"></a></i>          <span style="box-sizing:border-box;font-size:12px;line-height:18px;margin-right:5px;vertical-align:middle;"><a href="http://www.beian.gov.cn/portal/registerSystemInfo?recordcode=52990002000093" target="_blank" style="outline:none;margin:0px;padding:0px;color:inherit;font-weight:inherit;background-color:transparent;box-sizing:border-box;text-decoration:none;transition:all 0.2s ease 0s;line-height:18px;margin-right:5px;vertical-align:middle;font-size:12px;">贵公网安备 52990002000093号</a></span>      </div>  </div></div>
+      
+      
+    </div>
+    
+
+
+
+
+
+    
+
+    
+    
+    
+    
+    
+    
+    <div style="box-sizing:border-box;">
+        <div style="box-sizing:border-box;">
+            <div style="box-sizing:border-box;"></div>
+        </div>
+    </div>
+    
+
+    
+    
+    
+
+    
+
+
+
+
+
+
+
+
+
+
+
+<div style="box-sizing:border-box;height:0;width:0;"></div>
+
+
+
+
+    
+        
+    
+
+
+
+
+
+
+
+
+
+
+
+    
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    
+    <div class="media-placeholder">[图片/附件]</div></en-media>
+    <div class="media-placeholder">[图片/附件]</div></en-media>
+    <div class="media-placeholder">[图片/附件]</div></en-media>
+    <div class="media-placeholder">[图片/附件]</div></en-media>
+    <div class="media-placeholder">[图片/附件]</div></en-media>
+    <div class="media-placeholder">[图片/附件]</div></en-media>
+    <div class="media-placeholder">[图片/附件]</div></en-media>
+    <div class="media-placeholder">[图片/附件]</div></en-media>
+
+
+
+            
+            
+        <div style="box-sizing:border-box;visibility:hidden;position:absolute;top:2495px;left:659.977px;padding:0px 20px;height:33px;text-align:center;background:rgb(255, 255, 255);font-size:12px;line-height:33px;color:rgb(199, 0, 11);border-radius:2px;border:1px solid rgb(199, 0, 11);z-index:999;opacity:0;transition:opacity 0.3s ease 0s;cursor:pointer;">文档反馈</div></div></div></div>
+</div>
+</div>
+<a class="back-link" href="../articles.html">← 返回笔记列表</a>
+</body>
+</html>

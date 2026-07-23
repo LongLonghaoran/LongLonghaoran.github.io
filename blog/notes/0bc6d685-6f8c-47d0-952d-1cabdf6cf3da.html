@@ -1,0 +1,777 @@
+<!DOCTYPE html>
+<html lang="zh-CN" data-theme="light">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Go Concurrency Patterns: Pipelines and cancellation - The Go Programming Language — 技术笔记</title>
+<style>
+:root {
+  --bg: #ffffff;
+  --text: #1a1a1a;
+  --muted: #666;
+  --border: #e0e0e0;
+  --code-bg: #f5f5f5;
+  --link: #0066cc;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #1a1a1a;
+    --text: #e0e0e0;
+    --muted: #999;
+    --border: #333;
+    --code-bg: #2a2a2a;
+    --link: #66bbff;
+  }
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  line-height: 1.7;
+  color: var(--text);
+  background: var(--bg);
+  max-width: 860px;
+  margin: 0 auto;
+  padding: 2rem 1.5rem;
+}
+.note-header {
+  border-bottom: 2px solid var(--border);
+  padding-bottom: 1rem;
+  margin-bottom: 2rem;
+}
+.note-title {
+  font-size: 1.6rem;
+  font-weight: 700;
+  margin-bottom: 0.3rem;
+}
+.note-meta {
+  color: var(--muted);
+  font-size: 0.85rem;
+}
+.note-content {
+  font-size: 0.95rem;
+}
+.note-content h1 { font-size: 1.4rem; margin: 1.2rem 0 0.6rem; }
+.note-content h2 { font-size: 1.2rem; margin: 1rem 0 0.5rem; }
+.note-content h3 { font-size: 1.05rem; margin: 0.8rem 0 0.4rem; }
+.note-content p { margin: 0.5rem 0; }
+.note-content ul, .note-content ol { margin: 0.5rem 0 0.5rem 2rem; }
+.note-content li { margin: 0.2rem 0; }
+.note-content pre {
+  background: var(--code-bg);
+  padding: 1rem;
+  border-radius: 6px;
+  overflow-x: auto;
+  margin: 0.8rem 0;
+  font-size: 0.85rem;
+}
+.note-content code {
+  background: var(--code-bg);
+  padding: 0.1rem 0.3rem;
+  border-radius: 3px;
+  font-size: 0.88em;
+}
+.note-content pre code {
+  background: none;
+  padding: 0;
+}
+.note-content blockquote {
+  border-left: 3px solid var(--border);
+  padding-left: 1rem;
+  color: var(--muted);
+  margin: 0.8rem 0;
+}
+.note-content a { color: var(--link); }
+.note-content img {
+  max-width: 100%;
+  height: auto;
+  border-radius: 6px;
+  margin: 0.5rem 0;
+}
+.note-content table {
+  border-collapse: collapse;
+  width: 100%;
+  margin: 0.8rem 0;
+}
+.note-content th, .note-content td {
+  border: 1px solid var(--border);
+  padding: 0.5rem;
+}
+.note-content th { background: var(--code-bg); }
+.media-placeholder {
+  background: var(--code-bg);
+  padding: 1rem;
+  text-align: center;
+  color: var(--muted);
+  border-radius: 6px;
+  margin: 0.5rem 0;
+  font-size: 0.85rem;
+}
+.encrypt-placeholder {
+  background: #fff3cd;
+  padding: 0.5rem;
+  text-align: center;
+  color: #856404;
+  border-radius: 6px;
+  margin: 0.5rem 0;
+  font-size: 0.85rem;
+}
+.back-link {
+  display: inline-block;
+  margin-top: 2rem;
+  color: var(--link);
+  text-decoration: none;
+  font-size: 0.85rem;
+}
+</style>
+</head>
+<body>
+<div class="note-header">
+  <div class="note-title">Go Concurrency Patterns: Pipelines and cancellation - The Go Programming Language</div>
+  <div class="note-meta">笔记本：Go语言</div>
+</div>
+<div class="note-content">
+<div style="--en-clipped-content:article">
+<div><br/></div><div style="font-size: 16px; display:block; min-width: 100%; position: relative;"> <div style="box-sizing:border-box;text-decoration:underline;"><div style="box-sizing:border-box;font-family:-apple-system, BlinkMacSystemFont, &quot;Segoe UI&quot;, Helvetica, Arial, sans-serif, &quot;Apple Color Emoji&quot;, &quot;Segoe UI Emoji&quot;;line-height:1.4;"><span style="box-sizing:border-box;background:rgb(255, 255, 255) none repeat scroll 0% 0% / auto padding-box border-box;"><div style="box-sizing:border-box;"><div style="box-sizing:border-box;"><div style="box-sizing:border-box;"><div style="box-sizing:border-box;color:rgb(32, 34, 36);">
+    
+    <h1 style="box-sizing:border-box;margin-top:16px;margin-bottom:16px;color:rgb(32, 34, 36);font-weight:bold;font-size:16px;"><a href="https://go.dev/blog/" style="box-sizing:border-box;color:rgb(0, 125, 156);text-decoration:none;">The Go Blog</a></h1>
+    
+
+    <h1 style="box-sizing:border-box;margin-top:16px;margin-bottom:16px;color:rgb(32, 34, 36);font-size:36px;">Go Concurrency Patterns: Pipelines and cancellation</h1>
+      
+      <p style="box-sizing:border-box;margin-top:16px;margin-bottom:16px;color:rgb(32, 34, 36);font-size:16px;font-weight:normal;font-style:italic;">
+      Sameer Ajmani<br style="box-sizing:border-box;"/>
+      13 March 2014
+      </p>
+      
+      <h2 style="box-sizing:border-box;margin-top:16px;margin-bottom:16px;color:rgb(32, 34, 36);font-size:22.4px;">Introduction</h2>
+<p style="box-sizing:border-box;margin-top:16px;margin-bottom:16px;color:rgb(32, 34, 36);font-size:16px;font-style:normal;font-weight:normal;">Go’s concurrency primitives make it easy to construct streaming data pipelines
+that make efficient use of I/O and multiple CPUs.  This article presents
+examples of such pipelines, highlights subtleties that arise when operations
+fail, and introduces techniques for dealing with failures cleanly.</p>
+<h2 style="box-sizing:border-box;margin-top:16px;margin-bottom:16px;color:rgb(32, 34, 36);font-size:22.4px;">What is a pipeline?</h2>
+<p style="box-sizing:border-box;margin-top:16px;margin-bottom:16px;color:rgb(32, 34, 36);font-size:16px;font-style:normal;font-weight:normal;">There’s no formal definition of a pipeline in Go; it’s just one of many kinds of
+concurrent programs.  Informally, a pipeline is a series of <em style="box-sizing:border-box;">stages</em> connected
+by channels, where each stage is a group of goroutines running the same
+function.  In each stage, the goroutines</p>
+<ul style="box-sizing:border-box;margin-top:16px;margin-bottom:16px;color:rgb(32, 34, 36);font-size:16px;font-style:normal;font-weight:normal;">
+<li style="box-sizing:border-box;">receive values from <em style="box-sizing:border-box;">upstream</em> via <em style="box-sizing:border-box;">inbound</em> channels</li>
+<li style="box-sizing:border-box;">perform some function on that data, usually producing new values</li>
+<li style="box-sizing:border-box;">send values <em style="box-sizing:border-box;">downstream</em> via <em style="box-sizing:border-box;">outbound</em> channels</li>
+</ul>
+<p style="box-sizing:border-box;margin-top:16px;margin-bottom:16px;color:rgb(32, 34, 36);font-size:16px;font-style:normal;font-weight:normal;">Each stage has any number of inbound and outbound channels, except the
+first and last stages, which have only outbound or inbound channels,
+respectively.  The first stage is sometimes called the <em style="box-sizing:border-box;">source</em> or
+<em style="box-sizing:border-box;">producer</em>; the last stage, the <em style="box-sizing:border-box;">sink</em> or <em style="box-sizing:border-box;">consumer</em>.</p>
+<p style="box-sizing:border-box;margin-top:16px;margin-bottom:16px;color:rgb(32, 34, 36);font-size:16px;font-style:normal;font-weight:normal;">We’ll begin with a simple example pipeline to explain the ideas and techniques.
+Later, we’ll present a more realistic example.</p>
+<h2 style="box-sizing:border-box;margin-top:16px;margin-bottom:16px;color:rgb(32, 34, 36);font-size:22.4px;">Squaring numbers</h2>
+<p style="box-sizing:border-box;margin-top:16px;margin-bottom:16px;color:rgb(32, 34, 36);font-size:16px;font-style:normal;font-weight:normal;">Consider a pipeline with three stages.</p>
+<p style="box-sizing:border-box;margin-top:16px;margin-bottom:16px;color:rgb(32, 34, 36);font-size:16px;font-style:normal;font-weight:normal;">The first stage, <code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif">gen</code>, is a function that converts a list of integers to a
+channel that emits the integers in the list.  The <code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif">gen</code> function starts a
+goroutine that sends the integers on the channel and closes the channel when all
+the values have been sent:</p>
+<div style="box-sizing:border-box;width:auto;margin:20px;padding:10px;border-radius:5px;background:rgb(248, 248, 248) none repeat scroll 0% 0% / auto padding-box border-box;">
+<pre style="box-sizing:border-box;font-size:13.28px;line-height:1.4;overflow-x:auto;color:rgb(32, 34, 36);font-family:monospace;width:auto;border-radius:5px;border:none;outline:transparent solid 0px;overflow:auto;margin:0px;background:none;padding:0px;">func gen(nums ...int) &lt;-chan int {
+    out := make(chan int)
+    go func() {
+        for _, n := range nums {
+            out &lt;- n
+        }
+        close(out)
+    }()
+    return out
+}
+</pre>
+</div>
+<p style="box-sizing:border-box;margin-top:16px;margin-bottom:16px;color:rgb(32, 34, 36);font-size:16px;font-style:normal;font-weight:normal;">The second stage, <code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif">sq</code>, receives integers from a channel and returns a
+channel that emits the square of each received integer.  After the
+inbound channel is closed and this stage has sent all the values
+downstream, it closes the outbound channel:</p>
+<div style="box-sizing:border-box;width:auto;margin:20px;padding:10px;border-radius:5px;background:rgb(248, 248, 248) none repeat scroll 0% 0% / auto padding-box border-box;">
+<pre style="box-sizing:border-box;font-size:13.28px;line-height:1.4;overflow-x:auto;color:rgb(32, 34, 36);font-family:monospace;width:auto;border-radius:5px;border:none;outline:transparent solid 0px;overflow:auto;margin:0px;background:none;padding:0px;">func sq(in &lt;-chan int) &lt;-chan int {
+    out := make(chan int)
+    go func() {
+        for n := range in {
+            out &lt;- n * n
+        }
+        close(out)
+    }()
+    return out
+}
+</pre>
+</div>
+<p style="box-sizing:border-box;margin-top:16px;margin-bottom:16px;color:rgb(32, 34, 36);font-size:16px;font-style:normal;font-weight:normal;">The <code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif">main</code> function sets up the pipeline and runs the final stage: it receives
+values from the second stage and prints each one, until the channel is closed:</p>
+<div style="box-sizing:border-box;width:auto;margin:20px;padding:10px;border-radius:5px;background:rgb(248, 248, 248) none repeat scroll 0% 0% / auto padding-box border-box;">
+<pre style="box-sizing:border-box;font-size:13.28px;line-height:1.4;overflow-x:auto;color:rgb(32, 34, 36);font-family:monospace;width:auto;border-radius:5px;border:none;outline:transparent solid 0px;overflow:auto;margin:0px;background:none;padding:0px;">func main() {
+    <span style="box-sizing:border-box;color:rgb(0, 125, 156);">// Set up the pipeline.</span>
+    c := gen(2, 3)
+    out := sq(c)
+
+    <span style="box-sizing:border-box;color:rgb(0, 125, 156);">// Consume the output.</span>
+    fmt.Println(&lt;-out) <span style="box-sizing:border-box;color:rgb(0, 125, 156);">// 4</span>
+    fmt.Println(&lt;-out) <span style="box-sizing:border-box;color:rgb(0, 125, 156);">// 9</span>
+}
+</pre>
+</div>
+<p style="box-sizing:border-box;margin-top:16px;margin-bottom:16px;color:rgb(32, 34, 36);font-size:16px;font-style:normal;font-weight:normal;">Since <code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif">sq</code> has the same type for its inbound and outbound channels, we
+can compose it any number of times.  We can also rewrite <code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif">main</code> as a
+range loop, like the other stages:</p>
+<div style="box-sizing:border-box;width:auto;margin:20px;padding:10px;border-radius:5px;background:rgb(248, 248, 248) none repeat scroll 0% 0% / auto padding-box border-box;">
+<pre style="box-sizing:border-box;font-size:13.28px;line-height:1.4;overflow-x:auto;color:rgb(32, 34, 36);font-family:monospace;width:auto;border-radius:5px;border:none;outline:transparent solid 0px;overflow:auto;margin:0px;background:none;padding:0px;">func main() {
+    <span style="box-sizing:border-box;color:rgb(0, 125, 156);">// Set up the pipeline and consume the output.</span>
+    for n := range sq(sq(gen(2, 3))) {
+        fmt.Println(n) <span style="box-sizing:border-box;color:rgb(0, 125, 156);">// 16 then 81</span>
+    }
+}
+</pre>
+</div>
+<h2 style="box-sizing:border-box;margin-top:16px;margin-bottom:16px;color:rgb(32, 34, 36);font-size:22.4px;">Fan-out, fan-in</h2>
+<p style="box-sizing:border-box;margin-top:16px;margin-bottom:16px;color:rgb(32, 34, 36);font-size:16px;font-style:normal;font-weight:normal;">Multiple functions can read from the same channel until that channel is closed;
+this is called <em style="box-sizing:border-box;">fan-out</em>. This provides a way to distribute work amongst a group
+of workers to parallelize CPU use and I/O.</p>
+<p style="box-sizing:border-box;margin-top:16px;margin-bottom:16px;color:rgb(32, 34, 36);font-size:16px;font-style:normal;font-weight:normal;">A function can read from multiple inputs and proceed until all are closed by
+multiplexing the input channels onto a single channel that’s closed when all the
+inputs are closed.  This is called <em style="box-sizing:border-box;">fan-in</em>.</p>
+<p style="box-sizing:border-box;margin-top:16px;margin-bottom:16px;color:rgb(32, 34, 36);font-size:16px;font-style:normal;font-weight:normal;">We can change our pipeline to run two instances of <code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif">sq</code>, each reading from the
+same input channel.  We introduce a new function, <em style="box-sizing:border-box;">merge</em>, to fan in the
+results:</p>
+<div style="box-sizing:border-box;width:auto;margin:20px;padding:10px;border-radius:5px;background:rgb(248, 248, 248) none repeat scroll 0% 0% / auto padding-box border-box;">
+<pre style="box-sizing:border-box;font-size:13.28px;line-height:1.4;overflow-x:auto;color:rgb(32, 34, 36);font-family:monospace;width:auto;border-radius:5px;border:none;outline:transparent solid 0px;overflow:auto;margin:0px;background:none;padding:0px;">func main() {
+    in := gen(2, 3)
+
+    <span style="box-sizing:border-box;color:rgb(0, 125, 156);">// Distribute the sq work across two goroutines that both read from in.</span>
+    c1 := sq(in)
+    c2 := sq(in)
+
+    <span style="box-sizing:border-box;color:rgb(0, 125, 156);">// Consume the merged output from c1 and c2.</span>
+    for n := range merge(c1, c2) {
+        fmt.Println(n) <span style="box-sizing:border-box;color:rgb(0, 125, 156);">// 4 then 9, or 9 then 4</span>
+    }
+}
+</pre>
+</div>
+<p style="box-sizing:border-box;margin-top:16px;margin-bottom:16px;color:rgb(32, 34, 36);font-size:16px;font-style:normal;font-weight:normal;">The <code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif">merge</code> function converts a list of channels to a single channel by starting
+a goroutine for each inbound channel that copies the values to the sole outbound
+channel.  Once all the <code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif">output</code> goroutines have been started, <code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif">merge</code> starts one
+more goroutine to close the outbound channel after all sends on that channel are
+done.</p>
+<p style="box-sizing:border-box;margin-top:16px;margin-bottom:16px;color:rgb(32, 34, 36);font-size:16px;font-style:normal;font-weight:normal;">Sends on a closed channel panic, so it’s important to ensure all sends
+are done before calling close.  The
+<a href="https://go.dev/pkg/sync/#WaitGroup" style="box-sizing:border-box;color:rgb(0, 125, 156);text-decoration:none;"><code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif">sync.WaitGroup</code></a> type
+provides a simple way to arrange this synchronization:</p>
+<div style="box-sizing:border-box;width:auto;margin:20px;padding:10px;border-radius:5px;background:rgb(248, 248, 248) none repeat scroll 0% 0% / auto padding-box border-box;">
+<pre style="box-sizing:border-box;font-size:13.28px;line-height:1.4;overflow-x:auto;color:rgb(32, 34, 36);font-family:monospace;width:auto;border-radius:5px;border:none;outline:transparent solid 0px;overflow:auto;margin:0px;background:none;padding:0px;">func merge(cs ...&lt;-chan int) &lt;-chan int {
+    <span style="box-sizing:border-box;background:rgb(253, 221, 0) none repeat scroll 0% 0% / auto padding-box border-box;color:rgb(32, 34, 36);font-weight:bold;">var wg sync.WaitGroup</span>
+    out := make(chan int)
+
+    <span style="box-sizing:border-box;color:rgb(0, 125, 156);">// Start an output goroutine for each input channel in cs.  output</span>
+    <span style="box-sizing:border-box;color:rgb(0, 125, 156);">// copies values from c to out until c is closed, then calls wg.Done.</span>
+    output := func(c &lt;-chan int) {
+        for n := range c {
+            out &lt;- n
+        }
+        <span style="box-sizing:border-box;background:rgb(253, 221, 0) none repeat scroll 0% 0% / auto padding-box border-box;color:rgb(32, 34, 36);font-weight:bold;">wg.Done()</span>
+    }
+    <span style="box-sizing:border-box;background:rgb(253, 221, 0) none repeat scroll 0% 0% / auto padding-box border-box;color:rgb(32, 34, 36);font-weight:bold;">wg.Add(len(cs))</span>
+    for _, c := range cs {
+        go output(c)
+    }
+
+    <span style="box-sizing:border-box;color:rgb(0, 125, 156);">// Start a goroutine to close out once all the output goroutines are</span>
+    <span style="box-sizing:border-box;color:rgb(0, 125, 156);">// done.  This must start after the wg.Add call.</span>
+    go func() {
+        <span style="box-sizing:border-box;background:rgb(253, 221, 0) none repeat scroll 0% 0% / auto padding-box border-box;color:rgb(32, 34, 36);font-weight:bold;">wg.Wait()</span>
+        close(out)
+    }()
+    return out
+}
+</pre>
+</div>
+<h2 style="box-sizing:border-box;margin-top:16px;margin-bottom:16px;color:rgb(32, 34, 36);font-size:22.4px;">Stopping short</h2>
+<p style="box-sizing:border-box;margin-top:16px;margin-bottom:16px;color:rgb(32, 34, 36);font-size:16px;font-style:normal;font-weight:normal;">There is a pattern to our pipeline functions:</p>
+<ul style="box-sizing:border-box;margin-top:16px;margin-bottom:16px;color:rgb(32, 34, 36);font-size:16px;font-style:normal;font-weight:normal;">
+<li style="box-sizing:border-box;">stages close their outbound channels when all the send operations are done.</li>
+<li style="box-sizing:border-box;">stages keep receiving values from inbound channels until those channels are closed.</li>
+</ul>
+<p style="box-sizing:border-box;margin-top:16px;margin-bottom:16px;color:rgb(32, 34, 36);font-size:16px;font-style:normal;font-weight:normal;">This pattern allows each receiving stage to be written as a <code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif">range</code> loop and
+ensures that all goroutines exit once all values have been successfully sent
+downstream.</p>
+<p style="box-sizing:border-box;margin-top:16px;margin-bottom:16px;color:rgb(32, 34, 36);font-size:16px;font-style:normal;font-weight:normal;">But in real pipelines, stages don’t always receive all the inbound
+values.  Sometimes this is by design: the receiver may only need a
+subset of values to make progress.  More often, a stage exits early
+because an inbound value represents an error in an earlier stage. In
+either case the receiver should not have to wait for the remaining
+values to arrive, and we want earlier stages to stop producing values
+that later stages don’t need.</p>
+<p style="box-sizing:border-box;margin-top:16px;margin-bottom:16px;color:rgb(32, 34, 36);font-size:16px;font-style:normal;font-weight:normal;">In our example pipeline, if a stage fails to consume all the inbound values, the
+goroutines attempting to send those values will block indefinitely:</p>
+<div style="box-sizing:border-box;width:auto;margin:20px;padding:10px;border-radius:5px;background:rgb(248, 248, 248) none repeat scroll 0% 0% / auto padding-box border-box;">
+<pre style="box-sizing:border-box;font-size:13.28px;line-height:1.4;overflow-x:auto;color:rgb(32, 34, 36);font-family:monospace;width:auto;border-radius:5px;border:none;outline:transparent solid 0px;overflow:auto;margin:0px;background:none;padding:0px;">    <span style="box-sizing:border-box;color:rgb(0, 125, 156);">// Consume the first value from the output.</span>
+    out := merge(c1, c2)
+    fmt.Println(&lt;-out) <span style="box-sizing:border-box;color:rgb(0, 125, 156);">// 4 or 9</span>
+    return
+    <span style="box-sizing:border-box;color:rgb(0, 125, 156);">// Since we didn't receive the second value from out,</span>
+    <span style="box-sizing:border-box;color:rgb(0, 125, 156);">// one of the output goroutines is hung attempting to send it.</span>
+}
+</pre>
+</div>
+<p style="box-sizing:border-box;margin-top:16px;margin-bottom:16px;color:rgb(32, 34, 36);font-size:16px;font-style:normal;font-weight:normal;">This is a resource leak: goroutines consume memory and runtime resources, and
+heap references in goroutine stacks keep data from being garbage collected.
+Goroutines are not garbage collected; they must exit on their own.</p>
+<p style="box-sizing:border-box;margin-top:16px;margin-bottom:16px;color:rgb(32, 34, 36);font-size:16px;font-style:normal;font-weight:normal;">We need to arrange for the upstream stages of our pipeline to exit even when the
+downstream stages fail to receive all the inbound values.  One way to do this is
+to change the outbound channels to have a buffer.  A buffer can hold a fixed
+number of values; send operations complete immediately if there’s room in the
+buffer:</p>
+<pre style="border-radius:4px;background-color: #fbfaf8;border: 1px solid rgba(0,0,0,.14902);color: #333;font-size: 12px;padding: 8px;font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif;box-sizing: border-box;"><code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif">c := make(chan int, 2) // buffer size 2
+c &lt;- 1  // succeeds immediately
+c &lt;- 2  // succeeds immediately
+c &lt;- 3  // blocks until another goroutine does &lt;-c and receives 1
+</code></pre>
+<p style="box-sizing:border-box;margin-top:16px;margin-bottom:16px;color:rgb(32, 34, 36);font-size:16px;font-style:normal;font-weight:normal;">When the number of values to be sent is known at channel creation time, a buffer
+can simplify the code.  For example, we can rewrite <code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif">gen</code> to copy the list of
+integers into a buffered channel and avoid creating a new goroutine:</p>
+<div style="box-sizing:border-box;width:auto;margin:20px;padding:10px;border-radius:5px;background:rgb(248, 248, 248) none repeat scroll 0% 0% / auto padding-box border-box;">
+<pre style="box-sizing:border-box;font-size:13.28px;line-height:1.4;overflow-x:auto;color:rgb(32, 34, 36);font-family:monospace;width:auto;border-radius:5px;border:none;outline:transparent solid 0px;overflow:auto;margin:0px;background:none;padding:0px;">func gen(nums ...int) &lt;-chan int {
+    out := make(chan int, len(nums))
+    for _, n := range nums {
+        out &lt;- n
+    }
+    close(out)
+    return out
+}
+</pre>
+</div>
+<p style="box-sizing:border-box;margin-top:16px;margin-bottom:16px;color:rgb(32, 34, 36);font-size:16px;font-style:normal;font-weight:normal;">Returning to the blocked goroutines in our pipeline, we might consider adding a
+buffer to the outbound channel returned by <code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif">merge</code>:</p>
+<div style="box-sizing:border-box;width:auto;margin:20px;padding:10px;border-radius:5px;background:rgb(248, 248, 248) none repeat scroll 0% 0% / auto padding-box border-box;">
+<pre style="box-sizing:border-box;font-size:13.28px;line-height:1.4;overflow-x:auto;color:rgb(32, 34, 36);font-family:monospace;width:auto;border-radius:5px;border:none;outline:transparent solid 0px;overflow:auto;margin:0px;background:none;padding:0px;">func merge(cs ...&lt;-chan int) &lt;-chan int {
+    var wg sync.WaitGroup
+    out := make(chan int, 1) <span style="box-sizing:border-box;color:rgb(0, 125, 156);">// enough space for the unread inputs</span>
+    <span style="box-sizing:border-box;color:rgb(0, 125, 156);">// ... the rest is unchanged ...</span>
+</pre>
+</div>
+<p style="box-sizing:border-box;margin-top:16px;margin-bottom:16px;color:rgb(32, 34, 36);font-size:16px;font-style:normal;font-weight:normal;">While this fixes the blocked goroutine in this program, this is bad code.  The
+choice of buffer size of 1 here depends on knowing the number of values <code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif">merge</code>
+will receive and the number of values downstream stages will consume.  This is
+fragile: if we pass an additional value to <code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif">gen</code>, or if the downstream stage
+reads any fewer values, we will again have blocked goroutines.</p>
+<p style="box-sizing:border-box;margin-top:16px;margin-bottom:16px;color:rgb(32, 34, 36);font-size:16px;font-style:normal;font-weight:normal;">Instead, we need to provide a way for downstream stages to indicate to the
+senders that they will stop accepting input.</p>
+<h2 style="box-sizing:border-box;margin-top:16px;margin-bottom:16px;color:rgb(32, 34, 36);font-size:22.4px;">Explicit cancellation</h2>
+<p style="box-sizing:border-box;margin-top:16px;margin-bottom:16px;color:rgb(32, 34, 36);font-size:16px;font-style:normal;font-weight:normal;">When <code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif">main</code> decides to exit without receiving all the values from
+<code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif">out</code>, it must tell the goroutines in the upstream stages to abandon
+the values they’re trying to send.  It does so by sending values on a
+channel called <code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif">done</code>.  It sends two values since there are
+potentially two blocked senders:</p>
+<div style="box-sizing:border-box;width:auto;margin:20px;padding:10px;border-radius:5px;background:rgb(248, 248, 248) none repeat scroll 0% 0% / auto padding-box border-box;">
+<pre style="box-sizing:border-box;font-size:13.28px;line-height:1.4;overflow-x:auto;color:rgb(32, 34, 36);font-family:monospace;width:auto;border-radius:5px;border:none;outline:transparent solid 0px;overflow:auto;margin:0px;background:none;padding:0px;">func main() {
+    in := gen(2, 3)
+
+    <span style="box-sizing:border-box;color:rgb(0, 125, 156);">// Distribute the sq work across two goroutines that both read from in.</span>
+    c1 := sq(in)
+    c2 := sq(in)
+
+    <span style="box-sizing:border-box;color:rgb(0, 125, 156);">// Consume the first value from output.</span>
+    <span style="box-sizing:border-box;background:rgb(253, 221, 0) none repeat scroll 0% 0% / auto padding-box border-box;color:rgb(32, 34, 36);font-weight:bold;">done := make(chan struct{}, 2)</span>
+    out := merge(done, c1, c2)
+    fmt.Println(&lt;-out) <span style="box-sizing:border-box;color:rgb(0, 125, 156);">// 4 or 9</span>
+
+    <span style="box-sizing:border-box;color:rgb(0, 125, 156);">// Tell the remaining senders we're leaving.</span>
+    <span style="box-sizing:border-box;background:rgb(253, 221, 0) none repeat scroll 0% 0% / auto padding-box border-box;color:rgb(32, 34, 36);font-weight:bold;">done &lt;- struct{}{}</span>
+    <span style="box-sizing:border-box;background:rgb(253, 221, 0) none repeat scroll 0% 0% / auto padding-box border-box;color:rgb(32, 34, 36);font-weight:bold;">done &lt;- struct{}{}</span>
+}
+</pre>
+</div>
+<p style="box-sizing:border-box;margin-top:16px;margin-bottom:16px;color:rgb(32, 34, 36);font-size:16px;font-style:normal;font-weight:normal;">The sending goroutines replace their send operation with a <code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif">select</code> statement
+that proceeds either when the send on <code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif">out</code> happens or when they receive a value
+from <code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif">done</code>.  The value type of <code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif">done</code> is the empty struct because the value
+doesn’t matter: it is the receive event that indicates the send on <code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif">out</code> should
+be abandoned.  The <code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif">output</code> goroutines continue looping on their inbound
+channel, <code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif">c</code>, so the upstream stages are not blocked. (We’ll discuss in a moment
+how to allow this loop to return early.)</p>
+<div style="box-sizing:border-box;width:auto;margin:20px;padding:10px;border-radius:5px;background:rgb(248, 248, 248) none repeat scroll 0% 0% / auto padding-box border-box;">
+<pre style="box-sizing:border-box;font-size:13.28px;line-height:1.4;overflow-x:auto;color:rgb(32, 34, 36);font-family:monospace;width:auto;border-radius:5px;border:none;outline:transparent solid 0px;overflow:auto;margin:0px;background:none;padding:0px;">func merge(done &lt;-chan struct{}, cs ...&lt;-chan int) &lt;-chan int {
+    var wg sync.WaitGroup
+    out := make(chan int)
+
+    <span style="box-sizing:border-box;color:rgb(0, 125, 156);">// Start an output goroutine for each input channel in cs.  output</span>
+    <span style="box-sizing:border-box;color:rgb(0, 125, 156);">// copies values from c to out until c is closed or it receives a value</span>
+    <span style="box-sizing:border-box;color:rgb(0, 125, 156);">// from done, then output calls wg.Done.</span>
+    output := func(c &lt;-chan int) {
+        for n := range c {
+            select {
+            case out &lt;- n:
+            <span style="box-sizing:border-box;background:rgb(253, 221, 0) none repeat scroll 0% 0% / auto padding-box border-box;color:rgb(32, 34, 36);font-weight:bold;">case &lt;-done:</span>
+            }
+        }
+        wg.Done()
+    }
+    <span style="box-sizing:border-box;color:rgb(0, 125, 156);">// ... the rest is unchanged ...</span>
+</pre>
+</div>
+<p style="box-sizing:border-box;margin-top:16px;margin-bottom:16px;color:rgb(32, 34, 36);font-size:16px;font-style:normal;font-weight:normal;">This approach has a problem: <em style="box-sizing:border-box;">each</em> downstream receiver needs to know the number
+of potentially blocked upstream senders and arrange to signal those senders on
+early return.  Keeping track of these counts is tedious and error-prone.</p>
+<p style="box-sizing:border-box;margin-top:16px;margin-bottom:16px;color:rgb(32, 34, 36);font-size:16px;font-style:normal;font-weight:normal;">We need a way to tell an unknown and unbounded number of goroutines to
+stop sending their values downstream.  In Go, we can do this by
+closing a channel, because
+<a href="https://go.dev/ref/spec#Receive_operator" style="box-sizing:border-box;color:rgb(0, 125, 156);text-decoration:none;">a receive operation on a closed channel can always proceed immediately, yielding the element type’s zero value.</a></p>
+<p style="box-sizing:border-box;margin-top:16px;margin-bottom:16px;color:rgb(32, 34, 36);font-size:16px;font-style:normal;font-weight:normal;">This means that <code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif">main</code> can unblock all the senders simply by closing
+the <code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif">done</code> channel.  This close is effectively a broadcast signal to
+the senders.  We extend <em style="box-sizing:border-box;">each</em> of our pipeline functions to accept
+<code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif">done</code> as a parameter and arrange for the close to happen via a
+<code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif">defer</code> statement, so that all return paths from <code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif">main</code> will signal
+the pipeline stages to exit.</p>
+<div style="box-sizing:border-box;width:auto;margin:20px;padding:10px;border-radius:5px;background:rgb(248, 248, 248) none repeat scroll 0% 0% / auto padding-box border-box;">
+<pre style="box-sizing:border-box;font-size:13.28px;line-height:1.4;overflow-x:auto;color:rgb(32, 34, 36);font-family:monospace;width:auto;border-radius:5px;border:none;outline:transparent solid 0px;overflow:auto;margin:0px;background:none;padding:0px;">func main() {
+    <span style="box-sizing:border-box;color:rgb(0, 125, 156);">// Set up a done channel that's shared by the whole pipeline,</span>
+    <span style="box-sizing:border-box;color:rgb(0, 125, 156);">// and close that channel when this pipeline exits, as a signal</span>
+    <span style="box-sizing:border-box;color:rgb(0, 125, 156);">// for all the goroutines we started to exit.</span>
+    <span style="box-sizing:border-box;background:rgb(253, 221, 0) none repeat scroll 0% 0% / auto padding-box border-box;color:rgb(32, 34, 36);font-weight:bold;">done := make(chan struct{})</span>
+    <span style="box-sizing:border-box;background:rgb(253, 221, 0) none repeat scroll 0% 0% / auto padding-box border-box;color:rgb(32, 34, 36);font-weight:bold;">defer close(done)          </span>
+
+    in := gen(done, 2, 3)
+
+    <span style="box-sizing:border-box;color:rgb(0, 125, 156);">// Distribute the sq work across two goroutines that both read from in.</span>
+    c1 := sq(done, in)
+    c2 := sq(done, in)
+
+    <span style="box-sizing:border-box;color:rgb(0, 125, 156);">// Consume the first value from output.</span>
+    out := merge(done, c1, c2)
+    fmt.Println(&lt;-out) <span style="box-sizing:border-box;color:rgb(0, 125, 156);">// 4 or 9</span>
+
+    <span style="box-sizing:border-box;background:rgb(253, 221, 0) none repeat scroll 0% 0% / auto padding-box border-box;color:rgb(32, 34, 36);">// done will be closed by the deferred call.</span><span style="box-sizing:border-box;color:rgb(0, 125, 156);">      </span>
+}
+</pre>
+</div>
+<p style="box-sizing:border-box;margin-top:16px;margin-bottom:16px;color:rgb(32, 34, 36);font-size:16px;font-style:normal;font-weight:normal;">Each of our pipeline stages is now free to return as soon as <code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif">done</code> is closed.
+The <code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif">output</code> routine in <code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif">merge</code> can return without draining its inbound channel,
+since it knows the upstream sender, <code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif">sq</code>, will stop attempting to send when
+<code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif">done</code> is closed.  <code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif">output</code> ensures <code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif">wg.Done</code> is called on all return paths via
+a <code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif">defer</code> statement:</p>
+<div style="box-sizing:border-box;width:auto;margin:20px;padding:10px;border-radius:5px;background:rgb(248, 248, 248) none repeat scroll 0% 0% / auto padding-box border-box;">
+<pre style="box-sizing:border-box;font-size:13.28px;line-height:1.4;overflow-x:auto;color:rgb(32, 34, 36);font-family:monospace;width:auto;border-radius:5px;border:none;outline:transparent solid 0px;overflow:auto;margin:0px;background:none;padding:0px;">func merge(done &lt;-chan struct{}, cs ...&lt;-chan int) &lt;-chan int {
+    var wg sync.WaitGroup
+    out := make(chan int)
+
+    <span style="box-sizing:border-box;color:rgb(0, 125, 156);">// Start an output goroutine for each input channel in cs.  output</span>
+    <span style="box-sizing:border-box;color:rgb(0, 125, 156);">// copies values from c to out until c or done is closed, then calls</span>
+    <span style="box-sizing:border-box;color:rgb(0, 125, 156);">// wg.Done.</span>
+    output := func(c &lt;-chan int) {
+        <span style="box-sizing:border-box;background:rgb(253, 221, 0) none repeat scroll 0% 0% / auto padding-box border-box;color:rgb(32, 34, 36);font-weight:bold;">defer wg.Done()</span>
+        for n := range c {
+            select {
+            case out &lt;- n:
+            case &lt;-done:
+                <span style="box-sizing:border-box;background:rgb(253, 221, 0) none repeat scroll 0% 0% / auto padding-box border-box;color:rgb(32, 34, 36);font-weight:bold;">return</span>
+            }
+        }
+    }
+    <span style="box-sizing:border-box;color:rgb(0, 125, 156);">// ... the rest is unchanged ...</span>
+</pre>
+</div>
+<p style="box-sizing:border-box;margin-top:16px;margin-bottom:16px;color:rgb(32, 34, 36);font-size:16px;font-style:normal;font-weight:normal;">Similarly, <code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif">sq</code> can return as soon as <code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif">done</code> is closed.  <code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif">sq</code> ensures its <code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif">out</code>
+channel is closed on all return paths via a <code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif">defer</code> statement:</p>
+<div style="box-sizing:border-box;width:auto;margin:20px;padding:10px;border-radius:5px;background:rgb(248, 248, 248) none repeat scroll 0% 0% / auto padding-box border-box;">
+<pre style="box-sizing:border-box;font-size:13.28px;line-height:1.4;overflow-x:auto;color:rgb(32, 34, 36);font-family:monospace;width:auto;border-radius:5px;border:none;outline:transparent solid 0px;overflow:auto;margin:0px;background:none;padding:0px;">func sq(done &lt;-chan struct{}, in &lt;-chan int) &lt;-chan int {
+    out := make(chan int)
+    go func() {
+        <span style="box-sizing:border-box;background:rgb(253, 221, 0) none repeat scroll 0% 0% / auto padding-box border-box;color:rgb(32, 34, 36);font-weight:bold;">defer close(out)</span>
+        for n := range in {
+            select {
+            case out &lt;- n * n:
+            case &lt;-done:
+                <span style="box-sizing:border-box;background:rgb(253, 221, 0) none repeat scroll 0% 0% / auto padding-box border-box;color:rgb(32, 34, 36);font-weight:bold;">return</span>
+            }
+        }
+    }()
+    return out
+}
+</pre>
+</div>
+<p style="box-sizing:border-box;margin-top:16px;margin-bottom:16px;color:rgb(32, 34, 36);font-size:16px;font-style:normal;font-weight:normal;">Here are the guidelines for pipeline construction:</p>
+<ul style="box-sizing:border-box;margin-top:16px;margin-bottom:16px;color:rgb(32, 34, 36);font-size:16px;font-style:normal;font-weight:normal;">
+<li style="box-sizing:border-box;">stages close their outbound channels when all the send operations are done.</li>
+<li style="box-sizing:border-box;">stages keep receiving values from inbound channels until those channels are closed or the senders are unblocked.</li>
+</ul>
+<p style="box-sizing:border-box;margin-top:16px;margin-bottom:16px;color:rgb(32, 34, 36);font-size:16px;font-style:normal;font-weight:normal;">Pipelines unblock senders either by ensuring there’s enough buffer for all the
+values that are sent or by explicitly signalling senders when the receiver may
+abandon the channel.</p>
+<h2 style="box-sizing:border-box;margin-top:16px;margin-bottom:16px;color:rgb(32, 34, 36);font-size:22.4px;">Digesting a tree</h2>
+<p style="box-sizing:border-box;margin-top:16px;margin-bottom:16px;color:rgb(32, 34, 36);font-size:16px;font-style:normal;font-weight:normal;">Let’s consider a more realistic pipeline.</p>
+<p style="box-sizing:border-box;margin-top:16px;margin-bottom:16px;color:rgb(32, 34, 36);font-size:16px;font-style:normal;font-weight:normal;">MD5 is a message-digest algorithm that’s useful as a file checksum.  The command
+line utility <code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif">md5sum</code> prints digest values for a list of files.</p>
+<pre style="border-radius:4px;background-color: #fbfaf8;border: 1px solid rgba(0,0,0,.14902);color: #333;font-size: 12px;padding: 8px;font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif;box-sizing: border-box;"><code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif">% md5sum *.go
+d47c2bbc28298ca9befdfbc5d3aa4e65  bounded.go
+ee869afd31f83cbb2d10ee81b2b831dc  parallel.go
+b88175e65fdcbc01ac08aaf1fd9b5e96  serial.go
+</code></pre>
+<p style="box-sizing:border-box;margin-top:16px;margin-bottom:16px;color:rgb(32, 34, 36);font-size:16px;font-style:normal;font-weight:normal;">Our example program is like <code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif">md5sum</code> but instead takes a single directory as an
+argument and prints the digest values for each regular file under that
+directory, sorted by path name.</p>
+<pre style="border-radius:4px;background-color: #fbfaf8;border: 1px solid rgba(0,0,0,.14902);color: #333;font-size: 12px;padding: 8px;font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif;box-sizing: border-box;"><code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif">% go run serial.go .
+d47c2bbc28298ca9befdfbc5d3aa4e65  bounded.go
+ee869afd31f83cbb2d10ee81b2b831dc  parallel.go
+b88175e65fdcbc01ac08aaf1fd9b5e96  serial.go
+</code></pre>
+<p style="box-sizing:border-box;margin-top:16px;margin-bottom:16px;color:rgb(32, 34, 36);font-size:16px;font-style:normal;font-weight:normal;">The main function of our program invokes a helper function <code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif">MD5All</code>, which
+returns a map from path name to digest value, then sorts and prints the results:</p>
+<div style="box-sizing:border-box;width:auto;margin:20px;padding:10px;border-radius:5px;background:rgb(248, 248, 248) none repeat scroll 0% 0% / auto padding-box border-box;">
+<pre style="box-sizing:border-box;font-size:13.28px;line-height:1.4;overflow-x:auto;color:rgb(32, 34, 36);font-family:monospace;width:auto;border-radius:5px;border:none;outline:transparent solid 0px;overflow:auto;margin:0px;background:none;padding:0px;">func main() {
+    <span style="box-sizing:border-box;color:rgb(0, 125, 156);">// Calculate the MD5 sum of all files under the specified directory,</span>
+    <span style="box-sizing:border-box;color:rgb(0, 125, 156);">// then print the results sorted by path name.</span>
+    <span style="box-sizing:border-box;background:rgb(253, 221, 0) none repeat scroll 0% 0% / auto padding-box border-box;color:rgb(32, 34, 36);font-weight:bold;">m, err := MD5All(os.Args[1])</span>
+    if err != nil {
+        fmt.Println(err)
+        return
+    }
+    var paths []string
+    for path := range m {
+        paths = append(paths, path)
+    }
+    <span style="box-sizing:border-box;background:rgb(253, 221, 0) none repeat scroll 0% 0% / auto padding-box border-box;color:rgb(32, 34, 36);font-weight:bold;">sort.Strings(paths)</span>
+    for _, path := range paths {
+        fmt.Printf("%x  %s\n", m[path], path)
+    }
+}
+</pre>
+</div>
+<p style="box-sizing:border-box;margin-top:16px;margin-bottom:16px;color:rgb(32, 34, 36);font-size:16px;font-style:normal;font-weight:normal;">The <code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif">MD5All</code> function is the focus of our discussion.  In
+<a href="https://go.dev/blog/pipelines/serial.go" style="box-sizing:border-box;color:rgb(0, 125, 156);text-decoration:none;">serial.go</a>, the implementation uses no concurrency and
+simply reads and sums each file as it walks the tree.</p>
+<div style="box-sizing:border-box;width:auto;margin:20px;padding:10px;border-radius:5px;background:rgb(248, 248, 248) none repeat scroll 0% 0% / auto padding-box border-box;">
+<pre style="box-sizing:border-box;font-size:13.28px;line-height:1.4;overflow-x:auto;color:rgb(32, 34, 36);font-family:monospace;width:auto;border-radius:5px;border:none;outline:transparent solid 0px;overflow:auto;margin:0px;background:none;padding:0px;"><span style="box-sizing:border-box;color:rgb(0, 125, 156);">// MD5All reads all the files in the file tree rooted at root and returns a map</span>
+<span style="box-sizing:border-box;color:rgb(0, 125, 156);">// from file path to the MD5 sum of the file's contents.  If the directory walk</span>
+<span style="box-sizing:border-box;color:rgb(0, 125, 156);">// fails or any read operation fails, MD5All returns an error.</span>
+func MD5All(root string) (map[string][md5.Size]byte, error) {
+    m := make(map[string][md5.Size]byte)
+    <span style="box-sizing:border-box;background:rgb(253, 221, 0) none repeat scroll 0% 0% / auto padding-box border-box;color:rgb(32, 34, 36);font-weight:bold;">err := filepath.Walk(root, func(path string, info os.FileInfo, err error) error {</span>
+        if err != nil {
+            return err
+        }
+        if !info.Mode().IsRegular() {
+            return nil
+        }
+        <span style="box-sizing:border-box;background:rgb(253, 221, 0) none repeat scroll 0% 0% / auto padding-box border-box;color:rgb(32, 34, 36);font-weight:bold;">data, err := ioutil.ReadFile(path)</span>
+        if err != nil {
+            return err
+        }
+        <span style="box-sizing:border-box;background:rgb(253, 221, 0) none repeat scroll 0% 0% / auto padding-box border-box;color:rgb(32, 34, 36);font-weight:bold;">m[path] = md5.Sum(data)</span>
+        return nil
+    })
+    if err != nil {
+        return nil, err
+    }
+    return m, nil
+}
+</pre>
+</div>
+<h2 style="box-sizing:border-box;margin-top:16px;margin-bottom:16px;color:rgb(32, 34, 36);font-size:22.4px;">Parallel digestion</h2>
+<p style="box-sizing:border-box;margin-top:16px;margin-bottom:16px;color:rgb(32, 34, 36);font-size:16px;font-style:normal;font-weight:normal;">In <a href="https://go.dev/blog/pipelines/parallel.go" style="box-sizing:border-box;color:rgb(0, 125, 156);text-decoration:none;">parallel.go</a>, we split <code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif">MD5All</code> into a two-stage
+pipeline.  The first stage, <code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif">sumFiles</code>, walks the tree, digests each file in
+a new goroutine, and sends the results on a channel with value type <code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif">result</code>:</p>
+<div style="box-sizing:border-box;width:auto;margin:20px;padding:10px;border-radius:5px;background:rgb(248, 248, 248) none repeat scroll 0% 0% / auto padding-box border-box;">
+<pre style="box-sizing:border-box;font-size:13.28px;line-height:1.4;overflow-x:auto;color:rgb(32, 34, 36);font-family:monospace;width:auto;border-radius:5px;border:none;outline:transparent solid 0px;overflow:auto;margin:0px;background:none;padding:0px;">type result struct {
+    path string
+    sum  [md5.Size]byte
+    err  error
+}
+</pre>
+</div>
+<p style="box-sizing:border-box;margin-top:16px;margin-bottom:16px;color:rgb(32, 34, 36);font-size:16px;font-style:normal;font-weight:normal;"><code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif">sumFiles</code> returns two channels: one for the <code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif">results</code> and another for the error
+returned by <code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif">filepath.Walk</code>.  The walk function starts a new goroutine to
+process each regular file, then checks <code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif">done</code>.  If <code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif">done</code> is closed, the walk
+stops immediately:</p>
+<div style="box-sizing:border-box;width:auto;margin:20px;padding:10px;border-radius:5px;background:rgb(248, 248, 248) none repeat scroll 0% 0% / auto padding-box border-box;">
+<pre style="box-sizing:border-box;font-size:13.28px;line-height:1.4;overflow-x:auto;color:rgb(32, 34, 36);font-family:monospace;width:auto;border-radius:5px;border:none;outline:transparent solid 0px;overflow:auto;margin:0px;background:none;padding:0px;">func sumFiles(done &lt;-chan struct{}, root string) (&lt;-chan result, &lt;-chan error) {
+    <span style="box-sizing:border-box;color:rgb(0, 125, 156);">// For each regular file, start a goroutine that sums the file and sends</span>
+    <span style="box-sizing:border-box;color:rgb(0, 125, 156);">// the result on c.  Send the result of the walk on errc.</span>
+    c := make(chan result)
+    errc := make(chan error, 1)
+    <span style="box-sizing:border-box;background:rgb(253, 221, 0) none repeat scroll 0% 0% / auto padding-box border-box;color:rgb(32, 34, 36);font-weight:bold;">go func() {</span>
+        var wg sync.WaitGroup
+        err := filepath.Walk(root, func(path string, info os.FileInfo, err error) error {
+            if err != nil {
+                return err
+            }
+            if !info.Mode().IsRegular() {
+                return nil
+            }
+            wg.Add(1)
+            <span style="box-sizing:border-box;background:rgb(253, 221, 0) none repeat scroll 0% 0% / auto padding-box border-box;color:rgb(32, 34, 36);font-weight:bold;">go func() {</span>
+                data, err := ioutil.ReadFile(path)
+                select {
+                <span style="box-sizing:border-box;background:rgb(253, 221, 0) none repeat scroll 0% 0% / auto padding-box border-box;color:rgb(32, 34, 36);font-weight:bold;">case c &lt;- result{path, md5.Sum(data), err}:</span>
+                <span style="box-sizing:border-box;background:rgb(253, 221, 0) none repeat scroll 0% 0% / auto padding-box border-box;color:rgb(32, 34, 36);font-weight:bold;">case &lt;-done:</span>
+                }
+                wg.Done()
+            }()
+            <span style="box-sizing:border-box;color:rgb(0, 125, 156);">// Abort the walk if done is closed.</span>
+            select {
+            <span style="box-sizing:border-box;background:rgb(253, 221, 0) none repeat scroll 0% 0% / auto padding-box border-box;color:rgb(32, 34, 36);font-weight:bold;">case &lt;-done:</span>
+                return errors.New("walk canceled")
+            default:
+                return nil
+            }
+        })
+        <span style="box-sizing:border-box;color:rgb(0, 125, 156);">// Walk has returned, so all calls to wg.Add are done.  Start a</span>
+        <span style="box-sizing:border-box;color:rgb(0, 125, 156);">// goroutine to close c once all the sends are done.</span>
+        <span style="box-sizing:border-box;background:rgb(253, 221, 0) none repeat scroll 0% 0% / auto padding-box border-box;color:rgb(32, 34, 36);font-weight:bold;">go func() {</span>
+            wg.Wait()
+            <span style="box-sizing:border-box;background:rgb(253, 221, 0) none repeat scroll 0% 0% / auto padding-box border-box;color:rgb(32, 34, 36);font-weight:bold;">close(c)</span>
+        }()
+        <span style="box-sizing:border-box;color:rgb(0, 125, 156);">// No select needed here, since errc is buffered.</span>
+        <span style="box-sizing:border-box;background:rgb(253, 221, 0) none repeat scroll 0% 0% / auto padding-box border-box;color:rgb(32, 34, 36);font-weight:bold;">errc &lt;- err</span>
+    }()
+    return c, errc
+}
+</pre>
+</div>
+<p style="box-sizing:border-box;margin-top:16px;margin-bottom:16px;color:rgb(32, 34, 36);font-size:16px;font-style:normal;font-weight:normal;"><code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif">MD5All</code> receives the digest values from <code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif">c</code>.  <code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif">MD5All</code> returns early on error,
+closing <code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif">done</code> via a <code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif">defer</code>:</p>
+<div style="box-sizing:border-box;width:auto;margin:20px;padding:10px;border-radius:5px;background:rgb(248, 248, 248) none repeat scroll 0% 0% / auto padding-box border-box;">
+<pre style="box-sizing:border-box;font-size:13.28px;line-height:1.4;overflow-x:auto;color:rgb(32, 34, 36);font-family:monospace;width:auto;border-radius:5px;border:none;outline:transparent solid 0px;overflow:auto;margin:0px;background:none;padding:0px;">func MD5All(root string) (map[string][md5.Size]byte, error) {
+    <span style="box-sizing:border-box;color:rgb(0, 125, 156);">// MD5All closes the done channel when it returns; it may do so before</span>
+    <span style="box-sizing:border-box;color:rgb(0, 125, 156);">// receiving all the values from c and errc.</span>
+    <span style="box-sizing:border-box;background:rgb(253, 221, 0) none repeat scroll 0% 0% / auto padding-box border-box;color:rgb(32, 34, 36);font-weight:bold;">done := make(chan struct{})</span>
+    <span style="box-sizing:border-box;background:rgb(253, 221, 0) none repeat scroll 0% 0% / auto padding-box border-box;color:rgb(32, 34, 36);font-weight:bold;">defer close(done)          </span>
+
+    <span style="box-sizing:border-box;background:rgb(253, 221, 0) none repeat scroll 0% 0% / auto padding-box border-box;color:rgb(32, 34, 36);font-weight:bold;">c, errc := sumFiles(done, root)</span>
+
+    m := make(map[string][md5.Size]byte)
+    for r := range c {
+        if r.err != nil {
+            return nil, r.err
+        }
+        m[r.path] = r.sum
+    }
+    if err := &lt;-errc; err != nil {
+        return nil, err
+    }
+    return m, nil
+}
+</pre>
+</div>
+<h2 style="box-sizing:border-box;margin-top:16px;margin-bottom:16px;color:rgb(32, 34, 36);font-size:22.4px;">Bounded parallelism</h2>
+<p style="box-sizing:border-box;margin-top:16px;margin-bottom:16px;color:rgb(32, 34, 36);font-size:16px;font-style:normal;font-weight:normal;">The <code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif">MD5All</code> implementation in <a href="https://go.dev/blog/pipelines/parallel.go" style="box-sizing:border-box;color:rgb(0, 125, 156);text-decoration:none;">parallel.go</a>
+starts a new goroutine for each file. In a directory with many large
+files, this may allocate more memory than is available on the machine.</p>
+<p style="box-sizing:border-box;margin-top:16px;margin-bottom:16px;color:rgb(32, 34, 36);font-size:16px;font-style:normal;font-weight:normal;">We can limit these allocations by bounding the number of files read in
+parallel.  In <a href="https://go.dev/blog/pipelines/bounded.go" style="box-sizing:border-box;color:rgb(0, 125, 156);text-decoration:none;">bounded.go</a>, we do this by
+creating a fixed number of goroutines for reading files.  Our pipeline
+now has three stages: walk the tree, read and digest the files, and
+collect the digests.</p>
+<p style="box-sizing:border-box;margin-top:16px;margin-bottom:16px;color:rgb(32, 34, 36);font-size:16px;font-style:normal;font-weight:normal;">The first stage, <code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif">walkFiles</code>, emits the paths of regular files in the tree:</p>
+<div style="box-sizing:border-box;width:auto;margin:20px;padding:10px;border-radius:5px;background:rgb(248, 248, 248) none repeat scroll 0% 0% / auto padding-box border-box;">
+<pre style="box-sizing:border-box;font-size:13.28px;line-height:1.4;overflow-x:auto;color:rgb(32, 34, 36);font-family:monospace;width:auto;border-radius:5px;border:none;outline:transparent solid 0px;overflow:auto;margin:0px;background:none;padding:0px;">func walkFiles(done &lt;-chan struct{}, root string) (&lt;-chan string, &lt;-chan error) {
+    paths := make(chan string)
+    errc := make(chan error, 1)
+    <span style="box-sizing:border-box;background:rgb(253, 221, 0) none repeat scroll 0% 0% / auto padding-box border-box;color:rgb(32, 34, 36);font-weight:bold;">go func() {</span>
+        <span style="box-sizing:border-box;color:rgb(0, 125, 156);">// Close the paths channel after Walk returns.</span>
+        <span style="box-sizing:border-box;background:rgb(253, 221, 0) none repeat scroll 0% 0% / auto padding-box border-box;color:rgb(32, 34, 36);font-weight:bold;">defer close(paths)</span>
+        <span style="box-sizing:border-box;color:rgb(0, 125, 156);">// No select needed for this send, since errc is buffered.</span>
+        <span style="box-sizing:border-box;background:rgb(253, 221, 0) none repeat scroll 0% 0% / auto padding-box border-box;color:rgb(32, 34, 36);font-weight:bold;">errc &lt;- filepath.Walk(root, func(path string, info os.FileInfo, err error) error {</span>
+            if err != nil {
+                return err
+            }
+            if !info.Mode().IsRegular() {
+                return nil
+            }
+            select {
+            <span style="box-sizing:border-box;background:rgb(253, 221, 0) none repeat scroll 0% 0% / auto padding-box border-box;color:rgb(32, 34, 36);font-weight:bold;">case paths &lt;- path:</span>
+            <span style="box-sizing:border-box;background:rgb(253, 221, 0) none repeat scroll 0% 0% / auto padding-box border-box;color:rgb(32, 34, 36);font-weight:bold;">case &lt;-done:</span>
+                return errors.New("walk canceled")
+            }
+            return nil
+        })
+    }()
+    return paths, errc
+}
+</pre>
+</div>
+<p style="box-sizing:border-box;margin-top:16px;margin-bottom:16px;color:rgb(32, 34, 36);font-size:16px;font-style:normal;font-weight:normal;">The middle stage starts a fixed number of <code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif">digester</code> goroutines that receive
+file names from <code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif">paths</code> and send <code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif">results</code> on channel <code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif">c</code>:</p>
+<div style="box-sizing:border-box;width:auto;margin:20px;padding:10px;border-radius:5px;background:rgb(248, 248, 248) none repeat scroll 0% 0% / auto padding-box border-box;">
+<pre style="box-sizing:border-box;font-size:13.28px;line-height:1.4;overflow-x:auto;color:rgb(32, 34, 36);font-family:monospace;width:auto;border-radius:5px;border:none;outline:transparent solid 0px;overflow:auto;margin:0px;background:none;padding:0px;">func digester(done &lt;-chan struct{}, paths &lt;-chan string, c chan&lt;- result) {
+    <span style="box-sizing:border-box;background:rgb(253, 221, 0) none repeat scroll 0% 0% / auto padding-box border-box;color:rgb(32, 34, 36);font-weight:bold;">for path := range paths {</span>
+        data, err := ioutil.ReadFile(path)
+        select {
+        case c &lt;- result{path, md5.Sum(data), err}:
+        case &lt;-done:
+            return
+        }
+    }
+}
+</pre>
+</div>
+<p style="box-sizing:border-box;margin-top:16px;margin-bottom:16px;color:rgb(32, 34, 36);font-size:16px;font-style:normal;font-weight:normal;">Unlike our previous examples, <code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif">digester</code> does not close its output channel, as
+multiple goroutines are sending on a shared channel.  Instead, code in <code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif">MD5All</code>
+arranges for the channel to be closed when all the <code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif">digesters</code> are done:</p>
+<div style="box-sizing:border-box;width:auto;margin:20px;padding:10px;border-radius:5px;background:rgb(248, 248, 248) none repeat scroll 0% 0% / auto padding-box border-box;">
+<pre style="box-sizing:border-box;font-size:13.28px;line-height:1.4;overflow-x:auto;color:rgb(32, 34, 36);font-family:monospace;width:auto;border-radius:5px;border:none;outline:transparent solid 0px;overflow:auto;margin:0px;background:none;padding:0px;">    <span style="box-sizing:border-box;color:rgb(0, 125, 156);">// Start a fixed number of goroutines to read and digest files.</span>
+    <span style="box-sizing:border-box;background:rgb(253, 221, 0) none repeat scroll 0% 0% / auto padding-box border-box;color:rgb(32, 34, 36);font-weight:bold;">c := make(chan result)</span>
+    var wg sync.WaitGroup
+    const numDigesters = 20
+    wg.Add(numDigesters)
+    for i := 0; i &lt; numDigesters; i++ {
+        go func() {
+            <span style="box-sizing:border-box;background:rgb(253, 221, 0) none repeat scroll 0% 0% / auto padding-box border-box;color:rgb(32, 34, 36);font-weight:bold;">digester(done, paths, c)</span>
+            wg.Done()
+        }()
+    }
+    go func() {
+        wg.Wait()
+        <span style="box-sizing:border-box;background:rgb(253, 221, 0) none repeat scroll 0% 0% / auto padding-box border-box;color:rgb(32, 34, 36);font-weight:bold;">close(c)</span>
+    }()
+</pre>
+</div>
+<p style="box-sizing:border-box;margin-top:16px;margin-bottom:16px;color:rgb(32, 34, 36);font-size:16px;font-style:normal;font-weight:normal;">We could instead have each digester create and return its own output
+channel, but then we would need additional goroutines to fan-in the
+results.</p>
+<p style="box-sizing:border-box;margin-top:16px;margin-bottom:16px;color:rgb(32, 34, 36);font-size:16px;font-style:normal;font-weight:normal;">The final stage receives all the <code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif">results</code> from <code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif">c</code> then checks the
+error from <code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif">errc</code>.  This check cannot happen any earlier, since before
+this point, <code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif">walkFiles</code> may block sending values downstream:</p>
+<div style="box-sizing:border-box;width:auto;margin:20px;padding:10px;border-radius:5px;background:rgb(248, 248, 248) none repeat scroll 0% 0% / auto padding-box border-box;">
+<pre style="box-sizing:border-box;font-size:13.28px;line-height:1.4;overflow-x:auto;color:rgb(32, 34, 36);font-family:monospace;width:auto;border-radius:5px;border:none;outline:transparent solid 0px;overflow:auto;margin:0px;background:none;padding:0px;">    m := make(map[string][md5.Size]byte)
+    for r := range c {
+        if r.err != nil {
+            return nil, r.err
+        }
+        m[r.path] = r.sum
+    }
+    <span style="box-sizing:border-box;color:rgb(0, 125, 156);">// Check whether the Walk failed.</span>
+    <span style="box-sizing:border-box;background:rgb(253, 221, 0) none repeat scroll 0% 0% / auto padding-box border-box;color:rgb(32, 34, 36);font-weight:bold;">if err := &lt;-errc; err != nil {</span>
+        return nil, err
+    }
+    return m, nil
+}
+</pre>
+</div>
+<h2 style="box-sizing:border-box;margin-top:16px;margin-bottom:16px;color:rgb(32, 34, 36);font-size:22.4px;">Conclusion</h2>
+<p style="box-sizing:border-box;margin-top:16px;margin-bottom:16px;color:rgb(32, 34, 36);font-size:16px;font-style:normal;font-weight:normal;">This article has presented techniques for constructing streaming data pipelines
+in Go.  Dealing with failures in such pipelines is tricky, since each stage in
+the pipeline may block attempting to send values downstream, and the downstream
+stages may no longer care about the incoming data.  We showed how closing a
+channel can broadcast a “done” signal to all the goroutines started by a
+pipeline and defined guidelines for constructing pipelines correctly.</p>
+<p style="box-sizing:border-box;margin-top:16px;margin-bottom:16px;color:rgb(32, 34, 36);font-size:16px;font-style:normal;font-weight:normal;">Further reading:</p>
+<ul style="box-sizing:border-box;margin-top:16px;margin-bottom:16px;color:rgb(32, 34, 36);font-size:16px;font-style:normal;font-weight:normal;">
+<li style="box-sizing:border-box;"><a href="https://go.dev/talks/2012/concurrency.slide#1" style="box-sizing:border-box;color:rgb(0, 125, 156);text-decoration:none;">Go Concurrency Patterns</a>
+(<a href="https://www.youtube.com/watch?v=f6kdp27TYZs" rel="noreferrer" target="_blank" style="box-sizing:border-box;color:rgb(0, 125, 156);text-decoration:none;">video</a>) presents the basics
+of Go’s concurrency primitives and several ways to apply them.</li>
+<li style="box-sizing:border-box;"><a href="https://blog.golang.org/advanced-go-concurrency-patterns" rel="noreferrer" target="_blank" style="box-sizing:border-box;color:rgb(0, 125, 156);text-decoration:none;">Advanced Go Concurrency Patterns</a>
+(<a href="http://www.youtube.com/watch?v=QDDwwePbDtw" rel="noreferrer" target="_blank" style="box-sizing:border-box;color:rgb(0, 125, 156);text-decoration:none;">video</a>) covers more complex
+uses of Go’s primitives,
+especially <code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif">select</code>.</li>
+<li style="box-sizing:border-box;">Douglas McIlroy’s paper <a href="https://swtch.com/~rsc/thread/squint.pdf" rel="noreferrer" target="_blank" style="box-sizing:border-box;color:rgb(0, 125, 156);text-decoration:none;">Squinting at Power Series</a>
+shows how Go-like concurrency provides elegant support for complex calculations.</li>
+</ul>
+
+    </div></div></div></div></span></div></div></div>
+</div>
+</div>
+<a class="back-link" href="../articles.html">← 返回笔记列表</a>
+</body>
+</html>

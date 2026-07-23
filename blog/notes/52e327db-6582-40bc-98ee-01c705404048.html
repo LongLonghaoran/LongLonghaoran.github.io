@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="zh-CN" data-theme="light">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>kubebuilder — 技术笔记</title>
+<style>
+:root {
+  --bg: #ffffff;
+  --text: #1a1a1a;
+  --muted: #666;
+  --border: #e0e0e0;
+  --code-bg: #f5f5f5;
+  --link: #0066cc;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #1a1a1a;
+    --text: #e0e0e0;
+    --muted: #999;
+    --border: #333;
+    --code-bg: #2a2a2a;
+    --link: #66bbff;
+  }
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  line-height: 1.7;
+  color: var(--text);
+  background: var(--bg);
+  max-width: 860px;
+  margin: 0 auto;
+  padding: 2rem 1.5rem;
+}
+.note-header {
+  border-bottom: 2px solid var(--border);
+  padding-bottom: 1rem;
+  margin-bottom: 2rem;
+}
+.note-title {
+  font-size: 1.6rem;
+  font-weight: 700;
+  margin-bottom: 0.3rem;
+}
+.note-meta {
+  color: var(--muted);
+  font-size: 0.85rem;
+}
+.note-content {
+  font-size: 0.95rem;
+}
+.note-content h1 { font-size: 1.4rem; margin: 1.2rem 0 0.6rem; }
+.note-content h2 { font-size: 1.2rem; margin: 1rem 0 0.5rem; }
+.note-content h3 { font-size: 1.05rem; margin: 0.8rem 0 0.4rem; }
+.note-content p { margin: 0.5rem 0; }
+.note-content ul, .note-content ol { margin: 0.5rem 0 0.5rem 2rem; }
+.note-content li { margin: 0.2rem 0; }
+.note-content pre {
+  background: var(--code-bg);
+  padding: 1rem;
+  border-radius: 6px;
+  overflow-x: auto;
+  margin: 0.8rem 0;
+  font-size: 0.85rem;
+}
+.note-content code {
+  background: var(--code-bg);
+  padding: 0.1rem 0.3rem;
+  border-radius: 3px;
+  font-size: 0.88em;
+}
+.note-content pre code {
+  background: none;
+  padding: 0;
+}
+.note-content blockquote {
+  border-left: 3px solid var(--border);
+  padding-left: 1rem;
+  color: var(--muted);
+  margin: 0.8rem 0;
+}
+.note-content a { color: var(--link); }
+.note-content img {
+  max-width: 100%;
+  height: auto;
+  border-radius: 6px;
+  margin: 0.5rem 0;
+}
+.note-content table {
+  border-collapse: collapse;
+  width: 100%;
+  margin: 0.8rem 0;
+}
+.note-content th, .note-content td {
+  border: 1px solid var(--border);
+  padding: 0.5rem;
+}
+.note-content th { background: var(--code-bg); }
+.media-placeholder {
+  background: var(--code-bg);
+  padding: 1rem;
+  text-align: center;
+  color: var(--muted);
+  border-radius: 6px;
+  margin: 0.5rem 0;
+  font-size: 0.85rem;
+}
+.encrypt-placeholder {
+  background: #fff3cd;
+  padding: 0.5rem;
+  text-align: center;
+  color: #856404;
+  border-radius: 6px;
+  margin: 0.5rem 0;
+  font-size: 0.85rem;
+}
+.back-link {
+  display: inline-block;
+  margin-top: 2rem;
+  color: var(--link);
+  text-decoration: none;
+  font-size: 0.85rem;
+}
+</style>
+</head>
+<body>
+<div class="note-header">
+  <div class="note-title">kubebuilder</div>
+  <div class="note-meta">笔记本：Operator</div>
+</div>
+<div class="note-content">
+<div>Operator和kubebuilder中都提到Operator是基于kubebuilder的plugins实现的</div><div><br /></div><div>在kubebuilder中,版本3.13.0默认plugins含有go/v4</div><div>在operator-sdk中,版本v1.31.0-2-g8f24aa56默认含有go.kubebuilder.io/v3, 此外go/v4在这里的版本号仍然处于go.kubebuilder.io/v4-alpha</div><div>Plugins:</div><div>在macOS Apple silicon中直到go.kubebuilder.io/v4-alpha才获得支持</div><div><br /></div><div><div class="media-placeholder">[图片/附件]</div><br /></div><div>额外的特性：</div><div>deploy-image：用于生成api和controller的代码实现以部署和管理Operand</div><div>grafana: 用于生成grafana清单面板用于controller-runtime导出的默认指标</div><div>declarative: 用于生成apis/controllers（已废弃）</div><div><div class="media-placeholder">[图片/附件]</div><br /></div><div>扩展kubebuilder的两种方式：</div><div>复用现有插件，将kubebuilder作为一个库引入，构建一个你自己的kubebuilder</div><div>Extending the CLI and Scaffolds扩展CLI以及脚手架</div><div>通过扩展kubebuilder来让你的项目有相同的cli特性并提供插件脚手架</div><div><br /></div><div>扩展cli的具体实现可以参考operator-sdk的实现代码，它将kubebuilder作为工具库引入到</div><div>自己的项目中，并通过kubebuilder提供的cli包来扩充plugins选项</div><div><div class="media-placeholder">[图片/附件]</div><br /></div><div><div class="media-placeholder">[图片/附件]</div></div><div><span>如下是一个仅仅包含go.kubebuilder.io/v2的最基本的自定义，只有一个main.go文件即可实现</span></div><div style="background-color:rgb(31, 31, 31);color:rgb(204, 204, 204);font-family:Menlo, Monaco, &quot;Courier New&quot;, monospace;font-size:12px;line-height:18px;white-space:pre;"><span style="color: #6a9955;">// Copyright 2019 The Operator-SDK Authors</span></div><div style="background-color:rgb(31, 31, 31);color:rgb(204, 204, 204);font-family:Menlo, Monaco, &quot;Courier New&quot;, monospace;font-size:12px;line-height:18px;white-space:pre;"><span style="color: #6a9955;">//</span></div><div style="background-color:rgb(31, 31, 31);color:rgb(204, 204, 204);font-family:Menlo, Monaco, &quot;Courier New&quot;, monospace;font-size:12px;line-height:18px;white-space:pre;"><span style="color: #6a9955;">// Licensed under the Apache License, Version 2.0 (the "License");</span></div><div style="background-color:rgb(31, 31, 31);color:rgb(204, 204, 204);font-family:Menlo, Monaco, &quot;Courier New&quot;, monospace;font-size:12px;line-height:18px;white-space:pre;"><span style="color: #6a9955;">// you may not use this file except in compliance with the License.</span></div><div style="background-color:rgb(31, 31, 31);color:rgb(204, 204, 204);font-family:Menlo, Monaco, &quot;Courier New&quot;, monospace;font-size:12px;line-height:18px;white-space:pre;"><span style="color: #6a9955;">// You may obtain a copy of the License at</span></div><div style="background-color:rgb(31, 31, 31);color:rgb(204, 204, 204);font-family:Menlo, Monaco, &quot;Courier New&quot;, monospace;font-size:12px;line-height:18px;white-space:pre;"><span style="color: #6a9955;">//</span></div><div style="background-color:rgb(31, 31, 31);color:rgb(204, 204, 204);font-family:Menlo, Monaco, &quot;Courier New&quot;, monospace;font-size:12px;line-height:18px;white-space:pre;"><span style="color: #6a9955;">// </span><a href="http://www.apache.org/licenses/LICENSE-2.0" style="color: #6a9955;">http://www.apache.org/licenses/LICENSE-2.0</a></div><div style="background-color:rgb(31, 31, 31);color:rgb(204, 204, 204);font-family:Menlo, Monaco, &quot;Courier New&quot;, monospace;font-size:12px;line-height:18px;white-space:pre;"><span style="color: #6a9955;">//</span></div><div style="background-color:rgb(31, 31, 31);color:rgb(204, 204, 204);font-family:Menlo, Monaco, &quot;Courier New&quot;, monospace;font-size:12px;line-height:18px;white-space:pre;"><span style="color: #6a9955;">// Unless required by applicable law or agreed to in writing, software</span></div><div style="background-color:rgb(31, 31, 31);color:rgb(204, 204, 204);font-family:Menlo, Monaco, &quot;Courier New&quot;, monospace;font-size:12px;line-height:18px;white-space:pre;"><span style="color: #6a9955;">// distributed under the License is distributed on an "AS IS" BASIS,</span></div><div style="background-color:rgb(31, 31, 31);color:rgb(204, 204, 204);font-family:Menlo, Monaco, &quot;Courier New&quot;, monospace;font-size:12px;line-height:18px;white-space:pre;"><span style="color: #6a9955;">// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.</span></div><div style="background-color:rgb(31, 31, 31);color:rgb(204, 204, 204);font-family:Menlo, Monaco, &quot;Courier New&quot;, monospace;font-size:12px;line-height:18px;white-space:pre;"><span style="color: #6a9955;">// See the License for the specific language governing permissions and</span></div><div style="background-color:rgb(31, 31, 31);color:rgb(204, 204, 204);font-family:Menlo, Monaco, &quot;Courier New&quot;, monospace;font-size:12px;line-height:18px;white-space:pre;"><span style="color: #6a9955;">// limitations under the License.</span></div><div style="background-color:rgb(31, 31, 31);color:rgb(204, 204, 204);font-family:Menlo, Monaco, &quot;Courier New&quot;, monospace;font-size:12px;line-height:18px;white-space:pre;"><br /></div><div style="background-color:rgb(31, 31, 31);color:rgb(204, 204, 204);font-family:Menlo, Monaco, &quot;Courier New&quot;, monospace;font-size:12px;line-height:18px;white-space:pre;"><span style="color: #569cd6;">package</span> <span style="color: #cccccc;">main</span>
+</div><div style="background-color:rgb(31, 31, 31);color:rgb(204, 204, 204);font-family:Menlo, Monaco, &quot;Courier New&quot;, monospace;font-size:12px;line-height:18px;white-space:pre;"><br /></div><div style="background-color:rgb(31, 31, 31);color:rgb(204, 204, 204);font-family:Menlo, Monaco, &quot;Courier New&quot;, monospace;font-size:12px;line-height:18px;white-space:pre;"><span style="color: #569cd6;">import</span> <span style="color: #cccccc;">(</span>
+</div><div style="background-color:rgb(31, 31, 31);color:rgb(204, 204, 204);font-family:Menlo, Monaco, &quot;Courier New&quot;, monospace;font-size:12px;line-height:18px;white-space:pre;"><span style="color: #6a9955;">// Import all Kubernetes client auth plugins (e.g. Azure, GCP, OIDC, etc.)</span></div><div style="background-color:rgb(31, 31, 31);color:rgb(204, 204, 204);font-family:Menlo, Monaco, &quot;Courier New&quot;, monospace;font-size:12px;line-height:18px;white-space:pre;"><span style="color: #6a9955;">// to ensure that `exec-entrypoint` and `run` can make use of them.</span></div><div style="background-color:rgb(31, 31, 31);color:rgb(204, 204, 204);font-family:Menlo, Monaco, &quot;Courier New&quot;, monospace;font-size:12px;line-height:18px;white-space:pre;"><span style="color: #cccccc;">_</span> <span style="color: #ce9178;">"</span><a href="http://k8s.io/client-go/plugin/pkg/client/auth" style="color: #ce9178;">k8s.io/client-go/plugin/pkg/client/auth</a><span style="color: #ce9178;">"</span>
+</div><div style="background-color:rgb(31, 31, 31);color:rgb(204, 204, 204);font-family:Menlo, Monaco, &quot;Courier New&quot;, monospace;font-size:12px;line-height:18px;white-space:pre;"><span style="color: #ce9178;">"</span><a href="http://sigs.k8s.io/kubebuilder/v3/pkg/plugin" style="color: #ce9178;">sigs.k8s.io/kubebuilder/v3/pkg/plugin</a><span style="color: #ce9178;">"</span></div><div style="background-color:rgb(31, 31, 31);color:rgb(204, 204, 204);font-family:Menlo, Monaco, &quot;Courier New&quot;, monospace;font-size:12px;line-height:18px;white-space:pre;"><span style="color: #ce9178;">"</span><a href="http://sigs.k8s.io/kubebuilder/v3/pkg/plugins/golang" style="color: #ce9178;">sigs.k8s.io/kubebuilder/v3/pkg/plugins/golang</a><span style="color: #ce9178;">"</span></div><div style="background-color:rgb(31, 31, 31);color:rgb(204, 204, 204);font-family:Menlo, Monaco, &quot;Courier New&quot;, monospace;font-size:12px;line-height:18px;white-space:pre;"><br /></div><div style="background-color:rgb(31, 31, 31);color:rgb(204, 204, 204);font-family:Menlo, Monaco, &quot;Courier New&quot;, monospace;font-size:12px;line-height:18px;white-space:pre;"><span style="color: #cccccc;">log</span> <span style="color: #ce9178;">"</span><a href="http://github.com/sirupsen/logrus" style="color: #ce9178;">github.com/sirupsen/logrus</a><span style="color: #ce9178;">"</span>
+</div><div style="background-color:rgb(31, 31, 31);color:rgb(204, 204, 204);font-family:Menlo, Monaco, &quot;Courier New&quot;, monospace;font-size:12px;line-height:18px;white-space:pre;"><span style="color: #cccccc;">golangv2</span> <span style="color: #ce9178;">"</span><a href="http://sigs.k8s.io/kubebuilder/v3/pkg/plugins/golang/v2" style="color: #ce9178;">sigs.k8s.io/kubebuilder/v3/pkg/plugins/golang/v2</a><span style="color: #ce9178;">"</span>
+</div><div style="background-color:rgb(31, 31, 31);color:rgb(204, 204, 204);font-family:Menlo, Monaco, &quot;Courier New&quot;, monospace;font-size:12px;line-height:18px;white-space:pre;"><br /></div><div style="background-color:rgb(31, 31, 31);color:rgb(204, 204, 204);font-family:Menlo, Monaco, &quot;Courier New&quot;, monospace;font-size:12px;line-height:18px;white-space:pre;"><span style="color: #ce9178;">"</span><a href="http://sigs.k8s.io/kubebuilder/v3/pkg/cli" style="color: #ce9178;">sigs.k8s.io/kubebuilder/v3/pkg/cli</a><span style="color: #ce9178;">"</span></div><div style="background-color:rgb(31, 31, 31);color:rgb(204, 204, 204);font-family:Menlo, Monaco, &quot;Courier New&quot;, monospace;font-size:12px;line-height:18px;white-space:pre;"><span style="color: #cccccc;">)</span></div><div style="background-color:rgb(31, 31, 31);color:rgb(204, 204, 204);font-family:Menlo, Monaco, &quot;Courier New&quot;, monospace;font-size:12px;line-height:18px;white-space:pre;"><br /></div><div style="background-color:rgb(31, 31, 31);color:rgb(204, 204, 204);font-family:Menlo, Monaco, &quot;Courier New&quot;, monospace;font-size:12px;line-height:18px;white-space:pre;"><span style="color: #569cd6;">func</span> <span style="color: #dcdcaa;">main</span><span style="color: #cccccc;">() {</span>
+</div><div style="background-color:rgb(31, 31, 31);color:rgb(204, 204, 204);font-family:Menlo, Monaco, &quot;Courier New&quot;, monospace;font-size:12px;line-height:18px;white-space:pre;"><span style="color: #9cdcfe;">c</span> <span style="color: #d4d4d4;">:=</span> <span style="color: #dcdcaa;">GetPluginsCLIAndRoot</span><span style="color: #cccccc;">()</span>
+</div><div style="background-color:rgb(31, 31, 31);color:rgb(204, 204, 204);font-family:Menlo, Monaco, &quot;Courier New&quot;, monospace;font-size:12px;line-height:18px;white-space:pre;"><span style="color: #cccccc;">c.</span><span style="color: #dcdcaa;">Run</span><span style="color: #cccccc;">()</span></div><div style="background-color:rgb(31, 31, 31);color:rgb(204, 204, 204);font-family:Menlo, Monaco, &quot;Courier New&quot;, monospace;font-size:12px;line-height:18px;white-space:pre;"><span style="color: #cccccc;">}</span></div><div style="background-color:rgb(31, 31, 31);color:rgb(204, 204, 204);font-family:Menlo, Monaco, &quot;Courier New&quot;, monospace;font-size:12px;line-height:18px;white-space:pre;"><br /></div><div style="background-color:rgb(31, 31, 31);color:rgb(204, 204, 204);font-family:Menlo, Monaco, &quot;Courier New&quot;, monospace;font-size:12px;line-height:18px;white-space:pre;"><span style="color: #569cd6;">func</span> <span style="color: #dcdcaa;">GetPluginsCLIAndRoot</span><span style="color: #cccccc;">()</span> <span style="color: #d4d4d4;">*</span><span style="color: #cccccc;">cli.CLI {</span>
+</div><div style="background-color:rgb(31, 31, 31);color:rgb(204, 204, 204);font-family:Menlo, Monaco, &quot;Courier New&quot;, monospace;font-size:12px;line-height:18px;white-space:pre;"><span style="color: #9cdcfe;">gov2Bundle</span><span style="color: #cccccc;">,</span> <span style="color: #9cdcfe;">_</span> <span style="color: #d4d4d4;">:=</span> <span style="color: #cccccc;">plugin.</span><span style="color: #dcdcaa;">NewBundle</span><span style="color: #cccccc;">(</span>
+</div><div style="background-color:rgb(31, 31, 31);color:rgb(204, 204, 204);font-family:Menlo, Monaco, &quot;Courier New&quot;, monospace;font-size:12px;line-height:18px;white-space:pre;"><span style="color: #cccccc;">golang.DefaultNameQualifier,</span></div><div style="background-color:rgb(31, 31, 31);color:rgb(204, 204, 204);font-family:Menlo, Monaco, &quot;Courier New&quot;, monospace;font-size:12px;line-height:18px;white-space:pre;"><span style="color: #cccccc;">golangv2.Plugin{}.</span><span style="color: #dcdcaa;">Version</span><span style="color: #cccccc;">(),</span></div><div style="background-color:rgb(31, 31, 31);color:rgb(204, 204, 204);font-family:Menlo, Monaco, &quot;Courier New&quot;, monospace;font-size:12px;line-height:18px;white-space:pre;"><span style="color: #cccccc;">golangv2.Plugin{},</span></div><div style="background-color:rgb(31, 31, 31);color:rgb(204, 204, 204);font-family:Menlo, Monaco, &quot;Courier New&quot;, monospace;font-size:12px;line-height:18px;white-space:pre;"><span style="color: #cccccc;">)</span></div><div style="background-color:rgb(31, 31, 31);color:rgb(204, 204, 204);font-family:Menlo, Monaco, &quot;Courier New&quot;, monospace;font-size:12px;line-height:18px;white-space:pre;"><span style="color: #9cdcfe;">c</span><span style="color: #cccccc;">,</span> <span style="color: #9cdcfe;">err</span> <span style="color: #d4d4d4;">:=</span> <span style="color: #cccccc;">cli.</span><span style="color: #dcdcaa;">New</span><span style="color: #cccccc;">(</span>
+</div><div style="background-color:rgb(31, 31, 31);color:rgb(204, 204, 204);font-family:Menlo, Monaco, &quot;Courier New&quot;, monospace;font-size:12px;line-height:18px;white-space:pre;"><span style="color: #cccccc;">cli.</span><span style="color: #dcdcaa;">WithCommandName</span><span style="color: #cccccc;">(</span><span style="color: #ce9178;">"my-bin-builder"</span><span style="color: #cccccc;">),</span></div><div style="background-color:rgb(31, 31, 31);color:rgb(204, 204, 204);font-family:Menlo, Monaco, &quot;Courier New&quot;, monospace;font-size:12px;line-height:18px;white-space:pre;"><span style="color: #cccccc;">cli.</span><span style="color: #dcdcaa;">WithVersion</span><span style="color: #cccccc;">(</span><span style="color: #ce9178;">"版本号？"</span><span style="color: #cccccc;">),</span></div><div style="background-color:rgb(31, 31, 31);color:rgb(204, 204, 204);font-family:Menlo, Monaco, &quot;Courier New&quot;, monospace;font-size:12px;line-height:18px;white-space:pre;"><span style="color: #cccccc;">cli.</span><span style="color: #dcdcaa;">WithPlugins</span><span style="color: #cccccc;">(</span></div><div style="background-color:rgb(31, 31, 31);color:rgb(204, 204, 204);font-family:Menlo, Monaco, &quot;Courier New&quot;, monospace;font-size:12px;line-height:18px;white-space:pre;"><span style="color: #cccccc;">gov2Bundle,</span> <span style="color: #6a9955;">// Deprecated</span>
+</div><div style="background-color:rgb(31, 31, 31);color:rgb(204, 204, 204);font-family:Menlo, Monaco, &quot;Courier New&quot;, monospace;font-size:12px;line-height:18px;white-space:pre;"><span style="color: #cccccc;">),</span></div><div style="background-color:rgb(31, 31, 31);color:rgb(204, 204, 204);font-family:Menlo, Monaco, &quot;Courier New&quot;, monospace;font-size:12px;line-height:18px;white-space:pre;"><span style="color: #cccccc;">cli.</span><span style="color: #dcdcaa;">WithCompletion</span><span style="color: #cccccc;">(),</span></div><div style="background-color:rgb(31, 31, 31);color:rgb(204, 204, 204);font-family:Menlo, Monaco, &quot;Courier New&quot;, monospace;font-size:12px;line-height:18px;white-space:pre;"><span style="color: #cccccc;">)</span></div><div style="background-color:rgb(31, 31, 31);color:rgb(204, 204, 204);font-family:Menlo, Monaco, &quot;Courier New&quot;, monospace;font-size:12px;line-height:18px;white-space:pre;"><span style="color: #c586c0;">if</span> <span style="color: #cccccc;">err</span> <span style="color: #d4d4d4;">!=</span> <span style="color: #569cd6;">nil</span> <span style="color: #cccccc;">{</span>
+</div><div style="background-color:rgb(31, 31, 31);color:rgb(204, 204, 204);font-family:Menlo, Monaco, &quot;Courier New&quot;, monospace;font-size:12px;line-height:18px;white-space:pre;"><span style="color: #cccccc;">log.</span><span style="color: #dcdcaa;">Fatal</span><span style="color: #cccccc;">(err)</span></div><div style="background-color:rgb(31, 31, 31);color:rgb(204, 204, 204);font-family:Menlo, Monaco, &quot;Courier New&quot;, monospace;font-size:12px;line-height:18px;white-space:pre;"><span style="color: #cccccc;">}</span></div><div style="background-color:rgb(31, 31, 31);color:rgb(204, 204, 204);font-family:Menlo, Monaco, &quot;Courier New&quot;, monospace;font-size:12px;line-height:18px;white-space:pre;"><br /></div><div style="background-color:rgb(31, 31, 31);color:rgb(204, 204, 204);font-family:Menlo, Monaco, &quot;Courier New&quot;, monospace;font-size:12px;line-height:18px;white-space:pre;"><span style="color: #c586c0;">return</span> <span style="color: #cccccc;">c</span>
+</div><div style="background-color:rgb(31, 31, 31);color:rgb(204, 204, 204);font-family:Menlo, Monaco, &quot;Courier New&quot;, monospace;font-size:12px;line-height:18px;white-space:pre;"><span style="color: #cccccc;">}</span></div><div style="background-color:rgb(31, 31, 31);color:rgb(204, 204, 204);font-family:Menlo, Monaco, &quot;Courier New&quot;, monospace;font-size:12px;line-height:18px;white-space:pre;"><br /></div><div><br /></div><div>创建外部的独立的插件：</div><div><span><span><span><span><span><span><span><span><span><span><span><span><span><span>作为一个独立的二进制运行，kubebuilder直接调用该二进制来与之交互，因为其作为独立程序运行，所以可以使用任何编程语言来实现。</span></span></span></span></span></span></span></span></span></span></span></span></span></span></div><div><span>现有的例子有helm-operator和ansible-operator</span></div><div>实现方式：</div><div>原理：kubebuilder和插件之间通过stdio来通信，所以开发的插件一定不要有任何期望之外的输出到标准输出，如果需要打印日志之类的，应该考虑将日志输出到文件中去</div><div><div class="media-placeholder">[图片/附件]</div></div><div>使用的时候，通过将二进制插件放在预定义好的路径下就可以了</div><div><div class="media-placeholder">[图片/附件]</div></div><div><div class="media-placeholder">[图片/附件]</div></div><div><div class="media-placeholder">[图片/附件]</div></div><div>其实，通过环境变量EXTERNAL_PLUGINS_PATH也可以指定kubebuilder查找插件的路径:</div><div><div class="media-placeholder">[图片/附件]</div></div><div><br /></div>
+</div>
+<a class="back-link" href="../articles.html">← 返回笔记列表</a>
+</body>
+</html>

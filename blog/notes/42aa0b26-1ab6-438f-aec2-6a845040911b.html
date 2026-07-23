@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="zh-CN" data-theme="light">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>关键配置的设置 — 技术笔记</title>
+<style>
+:root {
+  --bg: #ffffff;
+  --text: #1a1a1a;
+  --muted: #666;
+  --border: #e0e0e0;
+  --code-bg: #f5f5f5;
+  --link: #0066cc;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #1a1a1a;
+    --text: #e0e0e0;
+    --muted: #999;
+    --border: #333;
+    --code-bg: #2a2a2a;
+    --link: #66bbff;
+  }
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  line-height: 1.7;
+  color: var(--text);
+  background: var(--bg);
+  max-width: 860px;
+  margin: 0 auto;
+  padding: 2rem 1.5rem;
+}
+.note-header {
+  border-bottom: 2px solid var(--border);
+  padding-bottom: 1rem;
+  margin-bottom: 2rem;
+}
+.note-title {
+  font-size: 1.6rem;
+  font-weight: 700;
+  margin-bottom: 0.3rem;
+}
+.note-meta {
+  color: var(--muted);
+  font-size: 0.85rem;
+}
+.note-content {
+  font-size: 0.95rem;
+}
+.note-content h1 { font-size: 1.4rem; margin: 1.2rem 0 0.6rem; }
+.note-content h2 { font-size: 1.2rem; margin: 1rem 0 0.5rem; }
+.note-content h3 { font-size: 1.05rem; margin: 0.8rem 0 0.4rem; }
+.note-content p { margin: 0.5rem 0; }
+.note-content ul, .note-content ol { margin: 0.5rem 0 0.5rem 2rem; }
+.note-content li { margin: 0.2rem 0; }
+.note-content pre {
+  background: var(--code-bg);
+  padding: 1rem;
+  border-radius: 6px;
+  overflow-x: auto;
+  margin: 0.8rem 0;
+  font-size: 0.85rem;
+}
+.note-content code {
+  background: var(--code-bg);
+  padding: 0.1rem 0.3rem;
+  border-radius: 3px;
+  font-size: 0.88em;
+}
+.note-content pre code {
+  background: none;
+  padding: 0;
+}
+.note-content blockquote {
+  border-left: 3px solid var(--border);
+  padding-left: 1rem;
+  color: var(--muted);
+  margin: 0.8rem 0;
+}
+.note-content a { color: var(--link); }
+.note-content img {
+  max-width: 100%;
+  height: auto;
+  border-radius: 6px;
+  margin: 0.5rem 0;
+}
+.note-content table {
+  border-collapse: collapse;
+  width: 100%;
+  margin: 0.8rem 0;
+}
+.note-content th, .note-content td {
+  border: 1px solid var(--border);
+  padding: 0.5rem;
+}
+.note-content th { background: var(--code-bg); }
+.media-placeholder {
+  background: var(--code-bg);
+  padding: 1rem;
+  text-align: center;
+  color: var(--muted);
+  border-radius: 6px;
+  margin: 0.5rem 0;
+  font-size: 0.85rem;
+}
+.encrypt-placeholder {
+  background: #fff3cd;
+  padding: 0.5rem;
+  text-align: center;
+  color: #856404;
+  border-radius: 6px;
+  margin: 0.5rem 0;
+  font-size: 0.85rem;
+}
+.back-link {
+  display: inline-block;
+  margin-top: 2rem;
+  color: var(--link);
+  text-decoration: none;
+  font-size: 0.85rem;
+}
+</style>
+</head>
+<body>
+<div class="note-header">
+  <div class="note-title">关键配置的设置</div>
+  <div class="note-meta">笔记本：Puppet</div>
+</div>
+<div class="note-content">
+<div>puppet有大约200个配置，所有配置都列在了配置参考种。大多数时候，你只需要使用其中的少量的配置。下面列出最重要的几个配置，假定你对像端口这些默认值都已经了okay了。</div><div>agent端设置（所有节点）</div><div>如下的agent设置大致上是按照重要性来排序列出的。它们中的大多数都可以[main]或者[agent]中设置，或者在命令行指定</div><div>基础</div><div><span>    server，请求配置的主服务主机名，默认是puppet。ca_server和report_server  如果使用了多个主服务，你将需要中心化ca。一种方式是通过设置ca_server在所有的客户端上。查看</span><a href="https://puppet.com/docs/puppetserver/latest/scaling_puppet_server.html" style="box-sizing: border-box; color: rgb(49, 140, 245); font-size: 18px; font-family: marketing-sans; font-variant-ligatures: normal; font-variant-caps: normal; letter-spacing: normal; orphans: 2; text-indent: 0px; text-transform: none; white-space: normal; widows: 2; word-spacing: 0px; -webkit-text-stroke-width: 0px; text-decoration: underline; -webkit-font-smoothing: antialiased !important;">Scaling Puppet Server with compile servers</a><br /></div><div><span>。report_server设置也一样，虽然不管你是否需要使用它都取决于你如何处理报告。</span></div><div><span>certname 节点的证书名称，以及当它请求编目文档的时候唯一标识。默认是fqdn。</span></div><div><span><span>    为了有最佳的兼容性，这个certname最好只使用小写字母来命名</span><br /></span></div><div><span><span><span>    ca是保留字段，不能用于certname</span><br /></span></span></div><div><span><span><span>environment，当联系主服务时使用的环境。默认是production，主服务的enc</span></span></span><span style="color: rgb(34, 34, 34); font-family: marketing-sans; font-size: 18px; font-variant-ligatures: normal; font-variant-caps: normal; letter-spacing: normal; orphans: 2; text-indent: 0px; text-transform: none; white-space: normal; widows: 2; word-spacing: 0px; -webkit-text-stroke-width: 0px;"> </span><a href="https://puppet.com/docs/puppet/6.22/nodes_external.html#writing-node-classifiers" style="box-sizing: border-box; color: rgb(49, 140, 245); font-size: 18px; font-family: marketing-sans; font-variant-ligatures: normal; font-variant-caps: normal; letter-spacing: normal; orphans: 2; text-indent: 0px; text-transform: none; white-space: normal; widows: 2; word-spacing: 0px; -webkit-text-stroke-width: 0px; -webkit-font-smoothing: antialiased !important; text-decoration: underline;" title="You can classify nodes using an external node classifier (ENC), which is a script or application that tells Puppet which classes a node must have. It can replace or work in concert with the node definitions in the main site manifest (site.pp).">ENC</a></div><div><br /></div><div>运行行为</div><div><span>    这些设置会影响到puppet应用编目文档时的方式</span><br /></div><div><span><span>    noop 开启的话，将不会对节点做出任何变更。它会查找出如果应用编目文档的话将会造成的所有的变更，并报告给主服务。</span><br /></span></div><div><span><span><span>    priority 优先级，允许你让客户端分享资源，这样其他应用在客户端进行应用编目文档的时候也能访问处理器。</span><br /></span></span></div><div><span><span><span><span>    report 意思是是否需要发送报告，默认是true</span><br /></span></span></span></div><div><span><span><span><span><span>    tags 让你限制puppet run只包含属于特定tag的资源</span><br /></span></span></span></span></div><div><span><span><span><span><span>service行为</span></span></span></span></span></div><div><span><span><span><span><span><span><span>    这些设置选项会影响puupet agent的行为，当其作为一个长期运行的服务的时候：</span></span></span></span></span></span></span></div><div><span><span><span><span><span><span><span>    runinterval : puppet run多久运行一次</span></span></span></span></span></span></span></div><div><span><span><span><span><span><span><span>    waitforcert: 如果客户端无法获得证书的时候是否需要持续尝试。默认行为就可以了，但是你可能会有你自己的理由需要去禁用它</span></span></span></span></span></span></span></div><div>使用cron来运行agent的有用选项</div><div><span>    </span><br /></div><div><span><br /></span></div><div>主服务的设置：</div><div><span>    大多数设置也对独立运行的puppet 应用节点有效，因为它们是作为它们自己的主服务来运行。这些设置是放置在server区块下的，除非你在生产模式下使用puppet apply，那样你得在main区块中设置</span><br /></div><div><span><br /></span></div><div>基础：</div><div><span>    dns_alt_names</span><br /></div><div><span><span><span><span><span><span><br /></span></span></span></span></span></span></div><div><br /></div>
+</div>
+<a class="back-link" href="../articles.html">← 返回笔记列表</a>
+</body>
+</html>

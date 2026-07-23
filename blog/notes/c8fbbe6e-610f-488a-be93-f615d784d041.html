@@ -1,0 +1,546 @@
+<!DOCTYPE html>
+<html lang="zh-CN" data-theme="light">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Classic to Zeitwerk HOWTO — Ruby on Rails Guides — 技术笔记</title>
+<style>
+:root {
+  --bg: #ffffff;
+  --text: #1a1a1a;
+  --muted: #666;
+  --border: #e0e0e0;
+  --code-bg: #f5f5f5;
+  --link: #0066cc;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #1a1a1a;
+    --text: #e0e0e0;
+    --muted: #999;
+    --border: #333;
+    --code-bg: #2a2a2a;
+    --link: #66bbff;
+  }
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  line-height: 1.7;
+  color: var(--text);
+  background: var(--bg);
+  max-width: 860px;
+  margin: 0 auto;
+  padding: 2rem 1.5rem;
+}
+.note-header {
+  border-bottom: 2px solid var(--border);
+  padding-bottom: 1rem;
+  margin-bottom: 2rem;
+}
+.note-title {
+  font-size: 1.6rem;
+  font-weight: 700;
+  margin-bottom: 0.3rem;
+}
+.note-meta {
+  color: var(--muted);
+  font-size: 0.85rem;
+}
+.note-content {
+  font-size: 0.95rem;
+}
+.note-content h1 { font-size: 1.4rem; margin: 1.2rem 0 0.6rem; }
+.note-content h2 { font-size: 1.2rem; margin: 1rem 0 0.5rem; }
+.note-content h3 { font-size: 1.05rem; margin: 0.8rem 0 0.4rem; }
+.note-content p { margin: 0.5rem 0; }
+.note-content ul, .note-content ol { margin: 0.5rem 0 0.5rem 2rem; }
+.note-content li { margin: 0.2rem 0; }
+.note-content pre {
+  background: var(--code-bg);
+  padding: 1rem;
+  border-radius: 6px;
+  overflow-x: auto;
+  margin: 0.8rem 0;
+  font-size: 0.85rem;
+}
+.note-content code {
+  background: var(--code-bg);
+  padding: 0.1rem 0.3rem;
+  border-radius: 3px;
+  font-size: 0.88em;
+}
+.note-content pre code {
+  background: none;
+  padding: 0;
+}
+.note-content blockquote {
+  border-left: 3px solid var(--border);
+  padding-left: 1rem;
+  color: var(--muted);
+  margin: 0.8rem 0;
+}
+.note-content a { color: var(--link); }
+.note-content img {
+  max-width: 100%;
+  height: auto;
+  border-radius: 6px;
+  margin: 0.5rem 0;
+}
+.note-content table {
+  border-collapse: collapse;
+  width: 100%;
+  margin: 0.8rem 0;
+}
+.note-content th, .note-content td {
+  border: 1px solid var(--border);
+  padding: 0.5rem;
+}
+.note-content th { background: var(--code-bg); }
+.media-placeholder {
+  background: var(--code-bg);
+  padding: 1rem;
+  text-align: center;
+  color: var(--muted);
+  border-radius: 6px;
+  margin: 0.5rem 0;
+  font-size: 0.85rem;
+}
+.encrypt-placeholder {
+  background: #fff3cd;
+  padding: 0.5rem;
+  text-align: center;
+  color: #856404;
+  border-radius: 6px;
+  margin: 0.5rem 0;
+  font-size: 0.85rem;
+}
+.back-link {
+  display: inline-block;
+  margin-top: 2rem;
+  color: var(--link);
+  text-decoration: none;
+  font-size: 0.85rem;
+}
+</style>
+</head>
+<body>
+<div class="note-header">
+  <div class="note-title">Classic to Zeitwerk HOWTO — Ruby on Rails Guides</div>
+  <div class="note-meta">笔记本：RubyOnRails</div>
+</div>
+<div class="note-content">
+<div style="--en-clipped-content:article; --en-clipped-source-url:https://guides.rubyonrails.org/classic_to_zeitwerk_howto.html; --en-clipped-source-title:Classic to Zeitwerk HOWTO — Ruby on Rails Guides;">
+<div><br/></div><div style="min-height: 12055px; font-size: 16px; display: block; min-width: 100%; position: relative;"> <div><div>
+  <div>
+    
+  </div>
+  <div>
+    <div>
+      <strong>More at <a href="https://rubyonrails.org/">rubyonrails.org:</a> </strong>
+      
+      <ul>
+        <li><a href="https://rubyonrails.org/blog">Blog</a></li>
+        <li><a href="https://guides.rubyonrails.org/">Guides</a></li>
+        <li><a href="https://api.rubyonrails.org/">API</a></li>
+        <li><a href="https://discuss.rubyonrails.org/">Forum</a></li>
+        <li><a href="https://github.com/rails/rails">Contribute on GitHub</a></li>
+      </ul>
+    </div>
+  </div>
+  <div>
+    <div>
+      <h1><a href="https://guides.rubyonrails.org/index.html" title="Return to home page">Guides.rubyonrails.org</a></h1>
+      <ul>
+        <li><a href="https://guides.rubyonrails.org/index.html">Home</a></li>
+        <li>
+          <a href="https://guides.rubyonrails.org/index.html">Guides Index</a>
+          
+        </li>
+        <li><a href="https://guides.rubyonrails.org/contributing_to_ruby_on_rails.html">Contribute</a></li>
+        
+      </ul>
+    </div>
+  </div>
+  
+
+  <div>
+    <div>
+      <h2>Classic to Zeitwerk HOWTO</h2><p>This guide documents how to migrate Rails applications from <code>classic</code> to <code>zeitwerk</code> mode.</p><p>After reading this guide, you will know:</p>
+<ul>
+<li>What are <code>classic</code> and <code>zeitwerk</code> modes</li>
+<li>Why switch from <code>classic</code> to <code>zeitwerk</code></li>
+<li>How to activate <code>zeitwerk</code> mode</li>
+<li>How to verify your application runs in <code>zeitwerk</code> mode</li>
+<li>How to verify your project loads OK in the command line</li>
+<li>How to verify your project loads OK in the test suite</li>
+<li>How to address possible edge cases</li>
+<li>New features in Zeitwerk you can leverage</li>
+</ul>
+
+
+                <div>
+            <h3><div class="media-placeholder">[图片/附件]</div></en-media>Chapters</h3>
+            <ol>
+<li><a href="https://guides.rubyonrails.org/classic_to_zeitwerk_howto.html#what-are-classic-and-zeitwerk-modes-questionmark">What are <code>classic</code> and <code>zeitwerk</code> Modes?</a></li>
+<li><a href="https://guides.rubyonrails.org/classic_to_zeitwerk_howto.html#why-switch-from-classic-to-zeitwerk-questionmark">Why Switch from <code>classic</code> to <code>zeitwerk</code>?</a></li>
+<li><a href="https://guides.rubyonrails.org/classic_to_zeitwerk_howto.html#i-am-scared">I am Scared</a></li>
+<li>
+<a href="https://guides.rubyonrails.org/classic_to_zeitwerk_howto.html#how-to-activate-zeitwerk-mode">How to Activate <code>zeitwerk</code> Mode</a>
+
+<ul>
+<li><a href="https://guides.rubyonrails.org/classic_to_zeitwerk_howto.html#applications-running-rails-5-x-or-less">Applications running Rails 5.x or Less</a></li>
+<li><a href="https://guides.rubyonrails.org/classic_to_zeitwerk_howto.html#applications-running-rails-6-x">Applications running Rails 6.x</a></li>
+<li><a href="https://guides.rubyonrails.org/classic_to_zeitwerk_howto.html#applications-running-rails-7">Applications Running Rails 7</a></li>
+</ul>
+</li>
+<li><a href="https://guides.rubyonrails.org/classic_to_zeitwerk_howto.html#how-to-verify-the-application-runs-in-zeitwerk-mode-questionmark">How to Verify The Application Runs in <code>zeitwerk</code> Mode?</a></li>
+<li>
+<a href="https://guides.rubyonrails.org/classic_to_zeitwerk_howto.html#does-my-application-comply-with-zeitwerk-conventions-questionmark">Does my Application Comply with Zeitwerk Conventions?</a>
+
+<ul>
+<li><a href="https://guides.rubyonrails.org/classic_to_zeitwerk_howto.html#config-eager-load-paths">config.eager_load_paths</a></li>
+<li><a href="https://guides.rubyonrails.org/classic_to_zeitwerk_howto.html#zeitwerk-check">zeitwerk:check</a></li>
+<li><a href="https://guides.rubyonrails.org/classic_to_zeitwerk_howto.html#acronyms">Acronyms</a></li>
+<li><a href="https://guides.rubyonrails.org/classic_to_zeitwerk_howto.html#concerns">Concerns</a></li>
+<li><a href="https://guides.rubyonrails.org/classic_to_zeitwerk_howto.html#having-app-in-the-autoload-paths">Having <code>app</code> in the autoload paths</a></li>
+<li><a href="https://guides.rubyonrails.org/classic_to_zeitwerk_howto.html#autoloaded-constants-and-explicit-namespaces">Autoloaded Constants and Explicit Namespaces</a></li>
+<li><a href="https://guides.rubyonrails.org/classic_to_zeitwerk_howto.html#one-file-one-constant-at-the-same-top-level">One file, one constant (at the same top-level)</a></li>
+<li><a href="https://guides.rubyonrails.org/classic_to_zeitwerk_howto.html#globs-in-config-autoload-paths">Globs in <code>config.autoload_paths</code></a></li>
+<li><a href="https://guides.rubyonrails.org/classic_to_zeitwerk_howto.html#decorating-classes-and-modules-from-engines">Decorating Classes and Modules from Engines</a></li>
+<li><a href="https://guides.rubyonrails.org/classic_to_zeitwerk_howto.html#spring-and-the-test-environment">Spring and the <code>test</code> Environment</a></li>
+<li><a href="https://guides.rubyonrails.org/classic_to_zeitwerk_howto.html#bootsnap">Bootsnap</a></li>
+</ul>
+</li>
+<li>
+<a href="https://guides.rubyonrails.org/classic_to_zeitwerk_howto.html#check-zeitwerk-compliance-in-the-test-suite">Check Zeitwerk Compliance in the Test Suite</a>
+
+<ul>
+<li><a href="https://guides.rubyonrails.org/classic_to_zeitwerk_howto.html#continuous-integration">Continuous Integration</a></li>
+<li><a href="https://guides.rubyonrails.org/classic_to_zeitwerk_howto.html#bare-test-suites">Bare Test Suites</a></li>
+</ul>
+</li>
+<li><a href="https://guides.rubyonrails.org/classic_to_zeitwerk_howto.html#delete-any-require-calls">Delete any <code>require</code> calls</a></li>
+<li>
+<a href="https://guides.rubyonrails.org/classic_to_zeitwerk_howto.html#new-features-you-can-leverage">New Features You Can Leverage</a>
+
+<ul>
+<li><a href="https://guides.rubyonrails.org/classic_to_zeitwerk_howto.html#delete-require-dependency-calls">Delete <code>require_dependency</code> calls</a></li>
+<li><a href="https://guides.rubyonrails.org/classic_to_zeitwerk_howto.html#qualified-names-in-class-and-module-definitions-are-now-possible">Qualified Names in Class and Module Definitions Are Now Possible</a></li>
+<li><a href="https://guides.rubyonrails.org/classic_to_zeitwerk_howto.html#thread-safety-everywhere">Thread-safety Everywhere</a></li>
+<li><a href="https://guides.rubyonrails.org/classic_to_zeitwerk_howto.html#eager-loading-and-autoloading-are-consistent">Eager Loading and Autoloading are Consistent</a></li>
+</ul>
+</li>
+</ol>
+
+          </div>
+
+    </div>
+  </div>
+
+  <div>
+    <div>
+      <div>
+        <h3><a href="https://guides.rubyonrails.org/classic_to_zeitwerk_howto.html#what-are-classic-and-zeitwerk-modes-questionmark">1 What are <code>classic</code> and <code>zeitwerk</code> Modes?</a></h3><p>From the very beginning, and up to Rails 5, Rails used an autoloader implemented in Active Support. This autoloader is known as <code>classic</code> and is still available in Rails 6.x. Rails 7 does not include this autoloader anymore.</p><p>Starting with Rails 6, Rails ships with a new and better way to autoload, which delegates to the <a href="https://github.com/fxn/zeitwerk">Zeitwerk</a> gem. This is <code>zeitwerk</code> mode. By default, applications loading the 6.0 and 6.1 framework defaults run in <code>zeitwerk</code> mode, and this is the only mode available in Rails 7.</p><h3><a href="https://guides.rubyonrails.org/classic_to_zeitwerk_howto.html#why-switch-from-classic-to-zeitwerk-questionmark">2 Why Switch from <code>classic</code> to <code>zeitwerk</code>?</a></h3><p>The <code>classic</code> autoloader has been extremely useful, but had a number of <a href="https://guides.rubyonrails.org/v6.1/autoloading_and_reloading_constants_classic_mode.html#common-gotchas">issues</a> that made autoloading a bit tricky and confusing at times. Zeitwerk was developed to address this, among other <a href="https://github.com/fxn/zeitwerk#motivation">motivations</a>.</p><p>When upgrading to Rails 6.x, it is highly encouraged to switch to <code>zeitwerk</code> mode because it is a better autoloader, <code>classic</code> mode is deprecated.</p><p>Rails 7 ends the transition period and does not include <code>classic</code> mode.</p><h3><a href="https://guides.rubyonrails.org/classic_to_zeitwerk_howto.html#i-am-scared">3 I am Scared</a></h3><p>Don't be :).</p><p>Zeitwerk was designed to be as compatible with the classic autoloader as possible. If you have a working application autoloading correctly today, chances are the switch will be easy. Many projects, big and small, have reported really smooth switches.</p><p>This guide will help you change the autoloader with confidence.</p><p>If for whatever reason you find a situation you don't know how to resolve, don't hesitate to <a href="https://github.com/rails/rails/issues/new">open an issue in <code>rails/rails</code></a> and tag <a href="https://github.com/fxn"><code>@fxn</code></a>.</p><h3><a href="https://guides.rubyonrails.org/classic_to_zeitwerk_howto.html#how-to-activate-zeitwerk-mode">4 How to Activate <code>zeitwerk</code> Mode</a></h3><h4><a href="https://guides.rubyonrails.org/classic_to_zeitwerk_howto.html#applications-running-rails-5-x-or-less">4.1 Applications running Rails 5.x or Less</a></h4><p>In applications running a Rails version previous to 6.0, <code>zeitwerk</code> mode is not available. You need to be at least in Rails 6.0.</p><h4><a href="https://guides.rubyonrails.org/classic_to_zeitwerk_howto.html#applications-running-rails-6-x">4.2 Applications running Rails 6.x</a></h4><p>In applications running Rails 6.x there are two scenarios.</p><p>If the application is loading the framework defaults of Rails 6.0 or 6.1 and it is running in <code>classic</code> mode, it must be opting out by hand. You have to have something similar to this:</p><div>
+<pre><code style="background-color:transparent;"><span style="color:rgb(108, 108, 101);font-style:italic;"># config/application.rb</span>
+<span>config</span><span>.</span><span style="color:rgb(153, 0, 0);font-weight:bold;">load_defaults</span> <span style="color:rgb(0, 121, 121);">6.0</span>
+<span>config</span><span>.</span><span style="color:rgb(153, 0, 0);font-weight:bold;">autoloader</span> <span style="color:rgb(0, 0, 0);font-weight:bold;">=</span> <span style="color:rgb(153, 0, 115);">:classic</span> <span style="color:rgb(108, 108, 101);font-style:italic;"># DELETE THIS LINE</span>
+</code></pre>
+
+</div>
+<p>As noted, just delete the override, <code>zeitwerk</code> mode is the default.</p><p>On the other hand, if the application is loading old framework defaults you need to enable <code>zeitwerk</code> mode explicitly:</p><div>
+<pre><code style="background-color:transparent;"><span style="color:rgb(108, 108, 101);font-style:italic;"># config/application.rb</span>
+<span>config</span><span>.</span><span style="color:rgb(153, 0, 0);font-weight:bold;">load_defaults</span> <span style="color:rgb(0, 121, 121);">5.2</span>
+<span>config</span><span>.</span><span style="color:rgb(153, 0, 0);font-weight:bold;">autoloader</span> <span style="color:rgb(0, 0, 0);font-weight:bold;">=</span> <span style="color:rgb(153, 0, 115);">:zeitwerk</span>
+</code></pre>
+
+</div>
+<h4><a href="https://guides.rubyonrails.org/classic_to_zeitwerk_howto.html#applications-running-rails-7">4.3 Applications Running Rails 7</a></h4><p>In Rails 7 there is only <code>zeitwerk</code> mode, you do not need to do anything to enable it.</p><p>Indeed, in Rails 7 the setter <code>config.autoloader=</code> does not even exist. If <code>config/application.rb</code> uses it, please delete the line.</p><h3><a href="https://guides.rubyonrails.org/classic_to_zeitwerk_howto.html#how-to-verify-the-application-runs-in-zeitwerk-mode-questionmark">5 How to Verify The Application Runs in <code>zeitwerk</code> Mode?</a></h3><p>To verify the application is running in <code>zeitwerk</code> mode, execute</p><div>
+<pre><code style="background-color:transparent;">bin/rails runner 'p Rails.autoloaders.zeitwerk_enabled?'
+</code></pre>
+
+</div>
+<p>If that prints <code>true</code>, <code>zeitwerk</code> mode is enabled.</p><h3><a href="https://guides.rubyonrails.org/classic_to_zeitwerk_howto.html#does-my-application-comply-with-zeitwerk-conventions-questionmark">6 Does my Application Comply with Zeitwerk Conventions?</a></h3><h4><a href="https://guides.rubyonrails.org/classic_to_zeitwerk_howto.html#config-eager-load-paths">6.1 config.eager_load_paths</a></h4><p>Compliance test runs only for eager loaded files. Therefore, in order to verify Zeitwerk compliance, it is recommended to have all autoload paths in the eager load paths.</p><p>This is already the case by default, but if the project has custom autoload paths configured just like this:</p><div>
+<pre><code style="background-color:transparent;"><span>config</span><span>.</span><span style="color:rgb(153, 0, 0);font-weight:bold;">autoload_paths</span> <span style="color:rgb(0, 0, 0);font-weight:bold;">&lt;&lt;</span> <span style="color:rgb(213, 17, 68);">"</span><span style="color:rgb(213, 17, 68);">#{</span><span style="color:rgb(0, 121, 121);">Rails</span><span>.</span><span style="color:rgb(153, 0, 0);font-weight:bold;">root</span><span style="color:rgb(213, 17, 68);">}</span><span style="color:rgb(213, 17, 68);">/extras"</span>
+</code></pre>
+
+</div>
+<p>those are not eager loaded and won't be verified. Adding them to the eager load paths is easy:</p><div>
+<pre><code style="background-color:transparent;"><span>config</span><span>.</span><span style="color:rgb(153, 0, 0);font-weight:bold;">autoload_paths</span> <span style="color:rgb(0, 0, 0);font-weight:bold;">&lt;&lt;</span> <span style="color:rgb(213, 17, 68);">"</span><span style="color:rgb(213, 17, 68);">#{</span><span style="color:rgb(0, 121, 121);">Rails</span><span>.</span><span style="color:rgb(153, 0, 0);font-weight:bold;">root</span><span style="color:rgb(213, 17, 68);">}</span><span style="color:rgb(213, 17, 68);">/extras"</span>
+<span>config</span><span>.</span><span style="color:rgb(153, 0, 0);font-weight:bold;">eager_load_paths</span> <span style="color:rgb(0, 0, 0);font-weight:bold;">&lt;&lt;</span> <span style="color:rgb(213, 17, 68);">"</span><span style="color:rgb(213, 17, 68);">#{</span><span style="color:rgb(0, 121, 121);">Rails</span><span>.</span><span style="color:rgb(153, 0, 0);font-weight:bold;">root</span><span style="color:rgb(213, 17, 68);">}</span><span style="color:rgb(213, 17, 68);">/extras"</span>
+</code></pre>
+
+</div>
+<h4><a href="https://guides.rubyonrails.org/classic_to_zeitwerk_howto.html#zeitwerk-check">6.2 zeitwerk:check</a></h4><p>Once <code>zeitwerk</code> mode is enabled and the configuration of eager load paths double-checked, please run:</p><div>
+<pre><code style="background-color:transparent;">bin/rails zeitwerk:check
+</code></pre>
+
+</div>
+<p>A successful check looks like this:</p><div>
+<pre><code style="background-color:transparent;">% bin/rails zeitwerk:check
+Hold on, I am eager loading the application.
+All is good!
+</code></pre>
+
+</div>
+<p>There can be additional output depending on the application configuration, but the last "All is good!" is what you are looking for.</p><p>If the double-check explained in the previous section determined actually there have to be some custom autoload paths outside the eager load paths, the task will detect and warn about them. However, if the test suite loads those files successfully, you're good.</p><p>Now, if there's any file that does not define the expected constant, the task will tell you. It does so one file at a time, because if it moved on, the failure loading one file could cascade into other failures unrelated to the check we want to run and the error report would be confusing.</p><p>If there's one constant reported, fix that particular one and run the task again. Repeat until you get "All is good!".</p><p>Take for example:</p><div>
+<pre><code style="background-color:transparent;">% bin/rails zeitwerk:check
+Hold on, I am eager loading the application.
+expected file app/models/vat.rb to define constant Vat
+</code></pre>
+
+</div>
+<p>VAT is an European tax. The file <code>app/models/vat.rb</code> defines <code>VAT</code> but the autoloader expects <code>Vat</code>, why?</p><h4><a href="https://guides.rubyonrails.org/classic_to_zeitwerk_howto.html#acronyms">6.3 Acronyms</a></h4><p>This is the most common kind of discrepancy you may find, it has to do with acronyms. Let's understand why do we get that error message.</p><p>The classic autoloader is able to autoload <code>VAT</code> because its input is the name of the missing constant, <code>VAT</code>, invokes <code>underscore</code> on it, which yields <code>vat</code>, and looks for a file called <code>vat.rb</code>. It works.</p><p>The input of the new autoloader is the file system. Give the file <code>vat.rb</code>, Zeitwerk invokes <code>camelize</code> on <code>vat</code>, which yields <code>Vat</code>, and expects the file to define the constant <code>Vat</code>. That is what the error message says.</p><p>Fixing this is easy, you only need to tell the inflector about this acronym:</p><div>
+<pre><code style="background-color:transparent;"><span style="color:rgb(108, 108, 101);font-style:italic;"># config/initializers/inflections.rb</span>
+<span style="color:rgb(0, 121, 121);">ActiveSupport</span><span style="color:rgb(0, 0, 0);font-weight:bold;">::</span><span style="color:rgb(0, 121, 121);">Inflector</span><span>.</span><span style="color:rgb(153, 0, 0);font-weight:bold;">inflections</span><span>(</span><span style="color:rgb(153, 0, 115);">:en</span><span>)</span> <span style="color:rgb(0, 115, 166);">do</span> <span style="color:rgb(0, 0, 0);font-weight:bold;">|</span><span>inflect</span><span style="color:rgb(0, 0, 0);font-weight:bold;">|</span>
+  <span>inflect</span><span>.</span><span style="color:rgb(153, 0, 0);font-weight:bold;">acronym</span> <span style="color:rgb(213, 17, 68);">"VAT"</span>
+<span style="color:rgb(0, 115, 166);">end</span>
+</code></pre>
+
+</div>
+<p>Doing so affects how Active Support inflects globally. That may be fine, but if you prefer you can also pass overrides to the inflectors used by the autoloaders:</p><div>
+<pre><code style="background-color:transparent;"><span style="color:rgb(108, 108, 101);font-style:italic;"># config/initializers/zeitwerk.rb</span>
+<span style="color:rgb(0, 121, 121);">Rails</span><span>.</span><span style="color:rgb(153, 0, 0);font-weight:bold;">autoloaders</span><span>.</span><span style="color:rgb(153, 0, 0);font-weight:bold;">main</span><span>.</span><span style="color:rgb(153, 0, 0);font-weight:bold;">inflector</span><span>.</span><span style="color:rgb(153, 0, 0);font-weight:bold;">inflect</span><span>(</span><span style="color:rgb(213, 17, 68);">"vat"</span> <span style="color:rgb(0, 0, 0);font-weight:bold;">=&gt;</span> <span style="color:rgb(213, 17, 68);">"VAT"</span><span>)</span>
+</code></pre>
+
+</div>
+<p>With this option you have more control, because only files called exactly <code>vat.rb</code> or directories exactly called <code>vat</code> will be inflected as <code>VAT</code>. A file called <code>vat_rules.rb</code> is not affected by that and can define <code>VatRules</code> just fine. This may be handy if the project has this kind of naming inconsistencies.</p><p>With that in place, the check passes!</p><div>
+<pre><code style="background-color:transparent;">% bin/rails zeitwerk:check
+Hold on, I am eager loading the application.
+All is good!
+</code></pre>
+
+</div>
+<p>Once all is good, it is recommended to keep validating the project in the test suite. The section <a href="https://guides.rubyonrails.org/classic_to_zeitwerk_howto.html#check-zeitwerk-compliance-in-the-test-suite"><em>Check Zeitwerk Compliance in the Test Suite</em></a> explains how to do this.</p><h4><a href="https://guides.rubyonrails.org/classic_to_zeitwerk_howto.html#concerns">6.4 Concerns</a></h4><p>You can autoload and eager load from a standard structure with <code>concerns</code> subdirectories like</p><div>
+<pre><code style="background-color:transparent;">app/models
+app/models/concerns
+</code></pre>
+
+</div>
+<p>By default, <code>app/models/concerns</code> belongs to the autoload paths and therefore it is assumed to be a root directory. So, by default, <code>app/models/concerns/foo.rb</code> should define <code>Foo</code>, not <code>Concerns::Foo</code>.</p><p>If your application uses <code>Concerns</code> as namespace, you have two options:</p>
+<ol>
+<li>Remove the <code>Concerns</code> namespace from those classes and modules and update client code.</li>
+<li>Leave things as they are by removing <code>app/models/concerns</code> from the autoload paths:</li>
+</ol>
+<div>
+<pre><code style="background-color:transparent;">  <span style="color:rgb(108, 108, 101);font-style:italic;"># config/initializers/zeitwerk.rb</span>
+  <span style="color:rgb(0, 121, 121);">ActiveSupport</span><span style="color:rgb(0, 0, 0);font-weight:bold;">::</span><span style="color:rgb(0, 121, 121);">Dependencies</span><span>.</span>
+    <span style="color:rgb(153, 0, 0);font-weight:bold;">autoload_paths</span><span>.</span>
+    <span style="color:rgb(153, 0, 0);font-weight:bold;">delete</span><span>(</span><span style="color:rgb(213, 17, 68);">"</span><span style="color:rgb(213, 17, 68);">#{</span><span style="color:rgb(0, 121, 121);">Rails</span><span>.</span><span style="color:rgb(153, 0, 0);font-weight:bold;">root</span><span style="color:rgb(213, 17, 68);">}</span><span style="color:rgb(213, 17, 68);">/app/models/concerns"</span><span>)</span>
+</code></pre>
+
+</div>
+<h4><a href="https://guides.rubyonrails.org/classic_to_zeitwerk_howto.html#having-app-in-the-autoload-paths">6.5 Having <code>app</code> in the autoload paths</a></h4><p>Some projects want something like <code>app/api/base.rb</code> to define <code>API::Base</code>, and add <code>app</code> to the autoload paths to accomplish that.</p><p>Since Rails adds all subdirectories of <code>app</code> to the autoload paths automatically (with a few exceptions), we have another situation in which there are nested root directories, similar to what happens with <code>app/models/concerns</code>. That setup no longer works as is.</p><p>However, you can keep that structure, just delete <code>app/api</code> from the autoload paths in an initializer:</p><div>
+<pre><code style="background-color:transparent;"><span style="color:rgb(108, 108, 101);font-style:italic;"># config/initializers/zeitwerk.rb</span>
+<span style="color:rgb(0, 121, 121);">ActiveSupport</span><span style="color:rgb(0, 0, 0);font-weight:bold;">::</span><span style="color:rgb(0, 121, 121);">Dependencies</span><span>.</span>
+  <span style="color:rgb(153, 0, 0);font-weight:bold;">autoload_paths</span><span>.</span>
+  <span style="color:rgb(153, 0, 0);font-weight:bold;">delete</span><span>(</span><span style="color:rgb(213, 17, 68);">"</span><span style="color:rgb(213, 17, 68);">#{</span><span style="color:rgb(0, 121, 121);">Rails</span><span>.</span><span style="color:rgb(153, 0, 0);font-weight:bold;">root</span><span style="color:rgb(213, 17, 68);">}</span><span style="color:rgb(213, 17, 68);">/app/api"</span><span>)</span>
+</code></pre>
+
+</div>
+<p>Beware of subdirectories that do not have files to be autoloaded/eager loaded. For example, if the application has <code>app/admin</code> with resources for <a href="https://activeadmin.info/">ActiveAdmin</a>, you need to ignore them. Same for <code>assets</code> and friends:</p><div>
+<pre><code style="background-color:transparent;"><span style="color:rgb(108, 108, 101);font-style:italic;"># config/initializers/zeitwerk.rb</span>
+<span style="color:rgb(0, 121, 121);">Rails</span><span>.</span><span style="color:rgb(153, 0, 0);font-weight:bold;">autoloaders</span><span>.</span><span style="color:rgb(153, 0, 0);font-weight:bold;">main</span><span>.</span><span style="color:rgb(153, 0, 0);font-weight:bold;">ignore</span><span>(</span>
+  <span style="color:rgb(213, 17, 68);">"app/admin"</span><span>,</span>
+  <span style="color:rgb(213, 17, 68);">"app/assets"</span><span>,</span>
+  <span style="color:rgb(213, 17, 68);">"app/javascripts"</span><span>,</span>
+  <span style="color:rgb(213, 17, 68);">"app/views"</span>
+<span>)</span>
+</code></pre>
+
+</div>
+<p>Without that configuration, the application would eager load those trees. Would err on <code>app/admin</code> because its files do not define constants, and would define a <code>Views</code> module, for example, as an unwanted side-effect.</p><p>As you see, having <code>app</code> in the autoload paths is technically possible, but a bit tricky.</p><h4><a href="https://guides.rubyonrails.org/classic_to_zeitwerk_howto.html#autoloaded-constants-and-explicit-namespaces">6.6 Autoloaded Constants and Explicit Namespaces</a></h4><p>If a namespace is defined in a file, as <code>Hotel</code> is here:</p><div>
+<pre><code style="background-color:transparent;">app/models/hotel.rb         # Defines Hotel.
+app/models/hotel/pricing.rb # Defines Hotel::Pricing.
+</code></pre>
+
+</div>
+<p>the <code>Hotel</code> constant has to be set using the <code>class</code> or <code>module</code> keywords. For example:</p><div>
+<pre><code style="background-color:transparent;"><span style="color:rgb(0, 115, 166);">class</span> <span style="color:rgb(68, 85, 136);font-weight:bold;">Hotel</span>
+<span style="color:rgb(0, 115, 166);">end</span>
+</code></pre>
+
+</div>
+<p>is good.</p><p>Alternatives like</p><div>
+<pre><code style="background-color:transparent;"><span style="color:rgb(0, 121, 121);">Hotel</span> <span style="color:rgb(0, 0, 0);font-weight:bold;">=</span> <span style="color:rgb(0, 121, 121);">Class</span><span>.</span><span style="color:rgb(153, 0, 0);font-weight:bold;">new</span>
+</code></pre>
+
+</div>
+<p>or</p><div>
+<pre><code style="background-color:transparent;"><span style="color:rgb(0, 121, 121);">Hotel</span> <span style="color:rgb(0, 0, 0);font-weight:bold;">=</span> <span style="color:rgb(0, 121, 121);">Struct</span><span>.</span><span style="color:rgb(153, 0, 0);font-weight:bold;">new</span>
+</code></pre>
+
+</div>
+<p>won't work, child objects like <code>Hotel::Pricing</code> won't be found.</p><p>This restriction only applies to explicit namespaces. Classes and modules not defining a namespace can be defined using those idioms.</p><h4><a href="https://guides.rubyonrails.org/classic_to_zeitwerk_howto.html#one-file-one-constant-at-the-same-top-level">6.7 One file, one constant (at the same top-level)</a></h4><p>In <code>classic</code> mode you could technically define several constants at the same top-level and have them all reloaded. For example, given</p><div>
+<pre><code style="background-color:transparent;"><span style="color:rgb(108, 108, 101);font-style:italic;"># app/models/foo.rb</span>
+
+<span style="color:rgb(0, 115, 166);">class</span> <span style="color:rgb(68, 85, 136);font-weight:bold;">Foo</span>
+<span style="color:rgb(0, 115, 166);">end</span>
+
+<span style="color:rgb(0, 115, 166);">class</span> <span style="color:rgb(68, 85, 136);font-weight:bold;">Bar</span>
+<span style="color:rgb(0, 115, 166);">end</span>
+</code></pre>
+
+</div>
+<p>while <code>Bar</code> could not be autoloaded, autoloading <code>Foo</code> would mark <code>Bar</code> as autoloaded too.</p><p>This is not the case in <code>zeitwerk</code> mode, you need to move <code>Bar</code> to its own file <code>bar.rb</code>. One file, one top-level constant.</p><p>This affects only to constants at the same top-level as in the example above. Inner classes and modules are fine. For example, consider</p><div>
+<pre><code style="background-color:transparent;"><span style="color:rgb(108, 108, 101);font-style:italic;"># app/models/foo.rb</span>
+
+<span style="color:rgb(0, 115, 166);">class</span> <span style="color:rgb(68, 85, 136);font-weight:bold;">Foo</span>
+  <span style="color:rgb(0, 115, 166);">class</span> <span style="color:rgb(68, 85, 136);font-weight:bold;">InnerClass</span>
+  <span style="color:rgb(0, 115, 166);">end</span>
+<span style="color:rgb(0, 115, 166);">end</span>
+</code></pre>
+
+</div>
+<p>If the application reloads <code>Foo</code>, it will reload <code>Foo::InnerClass</code> too.</p><h4><a href="https://guides.rubyonrails.org/classic_to_zeitwerk_howto.html#globs-in-config-autoload-paths">6.8 Globs in <code>config.autoload_paths</code></a></h4><p>Beware of configurations that use wildcards like</p><div>
+<pre><code style="background-color:transparent;"><span>config</span><span>.</span><span style="color:rgb(153, 0, 0);font-weight:bold;">autoload_paths</span> <span style="color:rgb(0, 0, 0);font-weight:bold;">+=</span> <span style="color:rgb(0, 121, 121);">Dir</span><span>[</span><span style="color:rgb(213, 17, 68);">"</span><span style="color:rgb(213, 17, 68);">#{</span><span>config</span><span>.</span><span style="color:rgb(153, 0, 0);font-weight:bold;">root</span><span style="color:rgb(213, 17, 68);">}</span><span style="color:rgb(213, 17, 68);">/extras/**/"</span><span>]</span>
+</code></pre>
+
+</div>
+<p>Every element of <code>config.autoload_paths</code> should represent the top-level namespace (<code>Object</code>). That won't work.</p><p>To fix this, just remove the wildcards:</p><div>
+<pre><code style="background-color:transparent;"><span>config</span><span>.</span><span style="color:rgb(153, 0, 0);font-weight:bold;">autoload_paths</span> <span style="color:rgb(0, 0, 0);font-weight:bold;">&lt;&lt;</span> <span style="color:rgb(213, 17, 68);">"</span><span style="color:rgb(213, 17, 68);">#{</span><span>config</span><span>.</span><span style="color:rgb(153, 0, 0);font-weight:bold;">root</span><span style="color:rgb(213, 17, 68);">}</span><span style="color:rgb(213, 17, 68);">/extras"</span>
+</code></pre>
+
+</div>
+<h4><a href="https://guides.rubyonrails.org/classic_to_zeitwerk_howto.html#decorating-classes-and-modules-from-engines">6.9 Decorating Classes and Modules from Engines</a></h4><p>If your application decorates classes or modules from an engine, chances are it is doing something like this somewhere:</p><div>
+<pre><code style="background-color:transparent;"><span>config</span><span>.</span><span style="color:rgb(153, 0, 0);font-weight:bold;">to_prepare</span> <span style="color:rgb(0, 115, 166);">do</span>
+  <span style="color:rgb(0, 121, 121);">Dir</span><span>.</span><span style="color:rgb(153, 0, 0);font-weight:bold;">glob</span><span>(</span><span style="color:rgb(213, 17, 68);">"</span><span style="color:rgb(213, 17, 68);">#{</span><span style="color:rgb(0, 121, 121);">Rails</span><span>.</span><span style="color:rgb(153, 0, 0);font-weight:bold;">root</span><span style="color:rgb(213, 17, 68);">}</span><span style="color:rgb(213, 17, 68);">/app/overrides/**/*_override.rb"</span><span>).</span><span style="color:rgb(153, 0, 0);font-weight:bold;">each</span> <span style="color:rgb(0, 115, 166);">do</span> <span style="color:rgb(0, 0, 0);font-weight:bold;">|</span><span>override</span><span style="color:rgb(0, 0, 0);font-weight:bold;">|</span>
+    <span>require_dependency</span> <span>override</span>
+  <span style="color:rgb(0, 115, 166);">end</span>
+<span style="color:rgb(0, 115, 166);">end</span>
+</code></pre>
+
+</div>
+<p>That has to be updated: You need to tell the <code>main</code> autoloader to ignore the directory with the overrides, and you need to load them with <code>load</code> instead. Something like this:</p><div>
+<pre><code style="background-color:transparent;"><span>overrides</span> <span style="color:rgb(0, 0, 0);font-weight:bold;">=</span> <span style="color:rgb(213, 17, 68);">"</span><span style="color:rgb(213, 17, 68);">#{</span><span style="color:rgb(0, 121, 121);">Rails</span><span>.</span><span style="color:rgb(153, 0, 0);font-weight:bold;">root</span><span style="color:rgb(213, 17, 68);">}</span><span style="color:rgb(213, 17, 68);">/app/overrides"</span>
+<span style="color:rgb(0, 121, 121);">Rails</span><span>.</span><span style="color:rgb(153, 0, 0);font-weight:bold;">autoloaders</span><span>.</span><span style="color:rgb(153, 0, 0);font-weight:bold;">main</span><span>.</span><span style="color:rgb(153, 0, 0);font-weight:bold;">ignore</span><span>(</span><span>overrides</span><span>)</span>
+<span>config</span><span>.</span><span style="color:rgb(153, 0, 0);font-weight:bold;">to_prepare</span> <span style="color:rgb(0, 115, 166);">do</span>
+  <span style="color:rgb(0, 121, 121);">Dir</span><span>.</span><span style="color:rgb(153, 0, 0);font-weight:bold;">glob</span><span>(</span><span style="color:rgb(213, 17, 68);">"</span><span style="color:rgb(213, 17, 68);">#{</span><span>overrides</span><span style="color:rgb(213, 17, 68);">}</span><span style="color:rgb(213, 17, 68);">/**/*_override.rb"</span><span>).</span><span style="color:rgb(153, 0, 0);font-weight:bold;">each</span> <span style="color:rgb(0, 115, 166);">do</span> <span style="color:rgb(0, 0, 0);font-weight:bold;">|</span><span>override</span><span style="color:rgb(0, 0, 0);font-weight:bold;">|</span>
+    <span style="color:rgb(0, 116, 161);">load</span> <span>override</span>
+  <span style="color:rgb(0, 115, 166);">end</span>
+<span style="color:rgb(0, 115, 166);">end</span>
+</code></pre>
+
+</div>
+<h4><a href="https://guides.rubyonrails.org/classic_to_zeitwerk_howto.html#spring-and-the-test-environment">6.10 Spring and the <code>test</code> Environment</a></h4><p>Spring reloads the application code if something changes. In the <code>test</code> environment you need to enable reloading for that to work:</p><div>
+<pre><code style="background-color:transparent;"><span style="color:rgb(108, 108, 101);font-style:italic;"># config/environments/test.rb</span>
+<span>config</span><span>.</span><span style="color:rgb(153, 0, 0);font-weight:bold;">cache_classes</span> <span style="color:rgb(0, 0, 0);font-weight:bold;">=</span> <span style="color:rgb(0, 0, 0);font-weight:bold;">false</span>
+</code></pre>
+
+</div>
+<p>Otherwise you'll get this error:</p><div>
+<pre><code style="background-color:transparent;">reloading is disabled because config.cache_classes is true
+</code></pre>
+
+</div>
+<p>This has no performance penalty.</p><h4><a href="https://guides.rubyonrails.org/classic_to_zeitwerk_howto.html#bootsnap">6.11 Bootsnap</a></h4><p>Please make sure to depend on at least Bootsnap 1.4.4.</p><h3><a href="https://guides.rubyonrails.org/classic_to_zeitwerk_howto.html#check-zeitwerk-compliance-in-the-test-suite">7 Check Zeitwerk Compliance in the Test Suite</a></h3><p>The task <code>zeitwerk:check</code> is handy while migrating. Once the project is compliant, it is recommended to automate this check. In order to do so, it is enough to eager load the application, which is all <code>zeitwerk:check</code> does, indeed.</p><h4><a href="https://guides.rubyonrails.org/classic_to_zeitwerk_howto.html#continuous-integration">7.1 Continuous Integration</a></h4><p>If your project has continuous integration in place, it is a good idea to eager load the application when the suite runs there. If the application cannot be eager loaded for whatever reason, you want to know in CI, better than in production, right?</p><p>CIs typically set some environment variable to indicate the test suite is running there. For example, it could be <code>CI</code>:</p><div>
+<pre><code style="background-color:transparent;"><span style="color:rgb(108, 108, 101);font-style:italic;"># config/environments/test.rb</span>
+<span>config</span><span>.</span><span style="color:rgb(153, 0, 0);font-weight:bold;">eager_load</span> <span style="color:rgb(0, 0, 0);font-weight:bold;">=</span> <span style="color:rgb(0, 121, 121);">ENV</span><span>[</span><span style="color:rgb(213, 17, 68);">"CI"</span><span>].</span><span style="color:rgb(153, 0, 0);font-weight:bold;">present?</span>
+</code></pre>
+
+</div>
+<p>Starting with Rails 7, newly generated applications are configured that way by default.</p><h4><a href="https://guides.rubyonrails.org/classic_to_zeitwerk_howto.html#bare-test-suites">7.2 Bare Test Suites</a></h4><p>If your project does not have continuous integration, you can still eager load in the test suite by calling <code>Rails.application.eager_load!</code>:</p><h5><a href="https://guides.rubyonrails.org/classic_to_zeitwerk_howto.html#minitest">7.2.1 minitest</a></h5><div>
+<pre><code style="background-color:transparent;"><span style="color:rgb(0, 116, 161);">require</span> <span style="color:rgb(213, 17, 68);">"test_helper"</span>
+
+<span style="color:rgb(0, 115, 166);">class</span> <span style="color:rgb(68, 85, 136);font-weight:bold;">ZeitwerkComplianceTest</span> <span style="color:rgb(0, 0, 0);font-weight:bold;">&lt;</span> <span style="color:rgb(0, 121, 121);">ActiveSupport</span><span style="color:rgb(0, 0, 0);font-weight:bold;">::</span><span style="color:rgb(0, 121, 121);">TestCase</span>
+  <span style="color:rgb(0, 116, 161);">test</span> <span style="color:rgb(213, 17, 68);">"eager loads all files without errors"</span> <span style="color:rgb(0, 115, 166);">do</span>
+    <span>assert_nothing_raised</span> <span>{</span> <span style="color:rgb(0, 121, 121);">Rails</span><span>.</span><span style="color:rgb(153, 0, 0);font-weight:bold;">application</span><span>.</span><span style="color:rgb(153, 0, 0);font-weight:bold;">eager_load!</span> <span>}</span>
+  <span style="color:rgb(0, 115, 166);">end</span>
+<span style="color:rgb(0, 115, 166);">end</span>
+</code></pre>
+
+</div>
+<h5><a href="https://guides.rubyonrails.org/classic_to_zeitwerk_howto.html#rspec">7.2.2 RSpec</a></h5><div>
+<pre><code style="background-color:transparent;"><span style="color:rgb(0, 116, 161);">require</span> <span style="color:rgb(213, 17, 68);">"rails_helper"</span>
+
+<span style="color:rgb(0, 121, 121);">RSpec</span><span>.</span><span style="color:rgb(153, 0, 0);font-weight:bold;">describe</span> <span style="color:rgb(213, 17, 68);">"Zeitwerk compliance"</span> <span style="color:rgb(0, 115, 166);">do</span>
+  <span>it</span> <span style="color:rgb(213, 17, 68);">"eager loads all files without errors"</span> <span style="color:rgb(0, 115, 166);">do</span>
+    <span>expect</span> <span>{</span> <span style="color:rgb(0, 121, 121);">Rails</span><span>.</span><span style="color:rgb(153, 0, 0);font-weight:bold;">application</span><span>.</span><span style="color:rgb(153, 0, 0);font-weight:bold;">eager_load!</span> <span>}.</span><span style="color:rgb(153, 0, 0);font-weight:bold;">not_to</span> <span>raise_error</span>
+  <span style="color:rgb(0, 115, 166);">end</span>
+<span style="color:rgb(0, 115, 166);">end</span>
+</code></pre>
+
+</div>
+<h3><a href="https://guides.rubyonrails.org/classic_to_zeitwerk_howto.html#delete-any-require-calls">8 Delete any <code>require</code> calls</a></h3><p>In my experience, projects generally do not do this. But I've seen a couple, and have heard of a few others.</p><p>In Rails application you use <code>require</code> exclusively to load code from <code>lib</code> or from 3rd party like gem dependencies or the standard library. <strong>Never load autoloadable application code with <code>require</code></strong>. See why this was a bad idea already in <code>classic</code> <a href="https://guides.rubyonrails.org/v6.1/autoloading_and_reloading_constants_classic_mode.html#autoloading-and-require">here</a>.</p><div>
+<pre><code style="background-color:transparent;"><span style="color:rgb(0, 116, 161);">require</span> <span style="color:rgb(213, 17, 68);">"nokogiri"</span> <span style="color:rgb(108, 108, 101);font-style:italic;"># GOOD</span>
+<span style="color:rgb(0, 116, 161);">require</span> <span style="color:rgb(213, 17, 68);">"net/http"</span> <span style="color:rgb(108, 108, 101);font-style:italic;"># GOOD</span>
+<span style="color:rgb(0, 116, 161);">require</span> <span style="color:rgb(213, 17, 68);">"user"</span>     <span style="color:rgb(108, 108, 101);font-style:italic;"># BAD, DELETE THIS (assuming app/models/user.rb)</span>
+</code></pre>
+
+</div>
+<p>Please delete any <code>require</code> calls of that type.</p><h3><a href="https://guides.rubyonrails.org/classic_to_zeitwerk_howto.html#new-features-you-can-leverage">9 New Features You Can Leverage</a></h3><h4><a href="https://guides.rubyonrails.org/classic_to_zeitwerk_howto.html#delete-require-dependency-calls">9.1 Delete <code>require_dependency</code> calls</a></h4><p>All known use cases of <code>require_dependency</code> have been eliminated with Zeitwerk. You should grep the project and delete them.</p><p>If your application uses Single Table Inheritance, please see the <a href="https://guides.rubyonrails.org/autoloading_and_reloading_constants.html#single-table-inheritance">Single Table Inheritance section</a> of the Autoloading and Reloading Constants (Zeitwerk Mode) guide.</p><h4><a href="https://guides.rubyonrails.org/classic_to_zeitwerk_howto.html#qualified-names-in-class-and-module-definitions-are-now-possible">9.2 Qualified Names in Class and Module Definitions Are Now Possible</a></h4><p>You can now robustly use constant paths in class and module definitions:</p><div>
+<pre><code style="background-color:transparent;"><span style="color:rgb(108, 108, 101);font-style:italic;"># Autoloading in this class body matches Ruby semantics now.</span>
+<span style="color:rgb(0, 115, 166);">class</span> <span style="color:rgb(68, 85, 136);font-weight:bold;">Admin::UsersController</span> <span style="color:rgb(0, 0, 0);font-weight:bold;">&lt;</span> <span style="color:rgb(0, 121, 121);">ApplicationController</span>
+  <span style="color:rgb(108, 108, 101);font-style:italic;"># ...</span>
+<span style="color:rgb(0, 115, 166);">end</span>
+</code></pre>
+
+</div>
+<p>A gotcha to be aware of is that, depending on the order of execution, the classic autoloader could sometimes be able to autoload <code>Foo::Wadus</code> in</p><div>
+<pre><code style="background-color:transparent;"><span style="color:rgb(0, 115, 166);">class</span> <span style="color:rgb(68, 85, 136);font-weight:bold;">Foo::Bar</span>
+  <span style="color:rgb(68, 85, 136);font-weight:bold;">Wadus</span>
+<span style="color:rgb(0, 115, 166);">end</span>
+</code></pre>
+
+</div>
+<p>That does not match Ruby semantics because <code>Foo</code> is not in the nesting, and won't work at all in <code>zeitwerk</code> mode. If you find such corner case you can use the qualified name <code>Foo::Wadus</code>:</p><div>
+<pre><code style="background-color:transparent;"><span style="color:rgb(0, 115, 166);">class</span> <span style="color:rgb(68, 85, 136);font-weight:bold;">Foo::Bar</span>
+  <span style="color:rgb(68, 85, 136);font-weight:bold;">Foo::Wadus</span>
+<span style="color:rgb(0, 115, 166);">end</span>
+</code></pre>
+
+</div>
+<p>or add <code>Foo</code> to the nesting:</p><div>
+<pre><code style="background-color:transparent;"><span style="color:rgb(0, 115, 166);">module</span> <span style="color:rgb(85, 85, 85);">Foo</span>
+  <span style="color:rgb(0, 115, 166);">class</span> <span style="color:rgb(68, 85, 136);font-weight:bold;">Bar</span>
+    <span style="color:rgb(0, 121, 121);">Wadus</span>
+  <span style="color:rgb(0, 115, 166);">end</span>
+<span style="color:rgb(0, 115, 166);">end</span>
+</code></pre>
+
+</div>
+<h4><a href="https://guides.rubyonrails.org/classic_to_zeitwerk_howto.html#thread-safety-everywhere">9.3 Thread-safety Everywhere</a></h4><p>In <code>classic</code> mode, constant autoloading is not thread-safe, though Rails has locks in place for example to make web requests thread-safe.</p><p>Constant autoloading is thread-safe in <code>zeitwerk</code> mode. For example, you can now autoload in multi-threaded scripts executed by the <code>runner</code> command.</p><h4><a href="https://guides.rubyonrails.org/classic_to_zeitwerk_howto.html#eager-loading-and-autoloading-are-consistent">9.4 Eager Loading and Autoloading are Consistent</a></h4><p>In <code>classic</code> mode, if <code>app/models/foo.rb</code> defines <code>Bar</code>, you won't be able to autoload that file, but eager loading will work because it loads files recursively blindly. This can be a source of errors if you test things first eager loading, execution may fail later autoloading.</p><p>In <code>zeitwerk</code> mode both loading modes are consistent, they fail and err in the same files.</p>
+
+        <h3>Feedback</h3>
+        <p>
+          You're encouraged to help improve the quality of this guide.
+        </p>
+        <p>
+          Please contribute if you see any typos or factual errors.
+          To get started, you can read our <a href="https://edgeguides.rubyonrails.org/contributing_to_ruby_on_rails.html#contributing-to-the-rails-documentation">documentation contributions</a> section.
+        </p>
+        <p>
+          You may also find incomplete content or stuff that is not up to date.
+          Please do add any missing documentation for main. Make sure to check
+          <a href="https://edgeguides.rubyonrails.org/">Edge Guides</a> first to verify
+          if the issues are already fixed or not on the main branch.
+          Check the <a href="https://guides.rubyonrails.org/ruby_on_rails_guides_guidelines.html">Ruby on Rails Guides Guidelines</a>
+          for style and conventions.
+        </p>
+        <p>
+          If for whatever reason you spot something to fix but cannot patch it yourself, please
+          <a href="https://github.com/rails/rails/issues">open an issue</a>.
+        </p>
+        <p>And last but not least, any kind of discussion regarding Ruby on Rails
+          documentation is very welcome on the <a href="https://discuss.rubyonrails.org/c/rubyonrails-docs">rubyonrails-docs mailing list</a>.
+        </p>
+      </div>
+    </div>
+  </div>
+
+  
+  <div>
+    <div>
+      <p>This work is licensed under a <a href="https://creativecommons.org/licenses/by-sa/4.0/">Creative Commons Attribution-ShareAlike 4.0 International</a> License</p>
+<p>"Rails", "Ruby on Rails", and the Rails logo are trademarks of David Heinemeier Hansson. All rights reserved.</p>
+
+    </div>
+  </div>
+
+
+</div></div></div>
+</div>
+</div>
+<a class="back-link" href="../articles.html">← 返回笔记列表</a>
+</body>
+</html>

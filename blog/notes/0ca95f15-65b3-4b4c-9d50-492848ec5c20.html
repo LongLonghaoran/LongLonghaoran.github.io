@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="zh-CN" data-theme="light">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>20191031 NodeJs操作Mysql Promise回调地狱 — 技术笔记</title>
+<style>
+:root {
+  --bg: #ffffff;
+  --text: #1a1a1a;
+  --muted: #666;
+  --border: #e0e0e0;
+  --code-bg: #f5f5f5;
+  --link: #0066cc;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #1a1a1a;
+    --text: #e0e0e0;
+    --muted: #999;
+    --border: #333;
+    --code-bg: #2a2a2a;
+    --link: #66bbff;
+  }
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  line-height: 1.7;
+  color: var(--text);
+  background: var(--bg);
+  max-width: 860px;
+  margin: 0 auto;
+  padding: 2rem 1.5rem;
+}
+.note-header {
+  border-bottom: 2px solid var(--border);
+  padding-bottom: 1rem;
+  margin-bottom: 2rem;
+}
+.note-title {
+  font-size: 1.6rem;
+  font-weight: 700;
+  margin-bottom: 0.3rem;
+}
+.note-meta {
+  color: var(--muted);
+  font-size: 0.85rem;
+}
+.note-content {
+  font-size: 0.95rem;
+}
+.note-content h1 { font-size: 1.4rem; margin: 1.2rem 0 0.6rem; }
+.note-content h2 { font-size: 1.2rem; margin: 1rem 0 0.5rem; }
+.note-content h3 { font-size: 1.05rem; margin: 0.8rem 0 0.4rem; }
+.note-content p { margin: 0.5rem 0; }
+.note-content ul, .note-content ol { margin: 0.5rem 0 0.5rem 2rem; }
+.note-content li { margin: 0.2rem 0; }
+.note-content pre {
+  background: var(--code-bg);
+  padding: 1rem;
+  border-radius: 6px;
+  overflow-x: auto;
+  margin: 0.8rem 0;
+  font-size: 0.85rem;
+}
+.note-content code {
+  background: var(--code-bg);
+  padding: 0.1rem 0.3rem;
+  border-radius: 3px;
+  font-size: 0.88em;
+}
+.note-content pre code {
+  background: none;
+  padding: 0;
+}
+.note-content blockquote {
+  border-left: 3px solid var(--border);
+  padding-left: 1rem;
+  color: var(--muted);
+  margin: 0.8rem 0;
+}
+.note-content a { color: var(--link); }
+.note-content img {
+  max-width: 100%;
+  height: auto;
+  border-radius: 6px;
+  margin: 0.5rem 0;
+}
+.note-content table {
+  border-collapse: collapse;
+  width: 100%;
+  margin: 0.8rem 0;
+}
+.note-content th, .note-content td {
+  border: 1px solid var(--border);
+  padding: 0.5rem;
+}
+.note-content th { background: var(--code-bg); }
+.media-placeholder {
+  background: var(--code-bg);
+  padding: 1rem;
+  text-align: center;
+  color: var(--muted);
+  border-radius: 6px;
+  margin: 0.5rem 0;
+  font-size: 0.85rem;
+}
+.encrypt-placeholder {
+  background: #fff3cd;
+  padding: 0.5rem;
+  text-align: center;
+  color: #856404;
+  border-radius: 6px;
+  margin: 0.5rem 0;
+  font-size: 0.85rem;
+}
+.back-link {
+  display: inline-block;
+  margin-top: 2rem;
+  color: var(--link);
+  text-decoration: none;
+  font-size: 0.85rem;
+}
+</style>
+</head>
+<body>
+<div class="note-header">
+  <div class="note-title">20191031 NodeJs操作Mysql Promise回调地狱</div>
+  <div class="note-meta">笔记本：Mysql</div>
+</div>
+<div class="note-content">
+<div><br/></div><div>1.使用mysql包即可</div><div>&nbsp; &nbsp; 我这里安装的是最新的8.0版本的mysql:</div><div style="box-sizing: border-box; padding: 8px; font-family: Monaco, Menlo, Consolas, &quot;Courier New&quot;, monospace; font-size: 12px; color: rgb(51, 51, 51); border-radius: 4px; background-color: rgb(251, 250, 248); border: 1px solid rgba(0, 0, 0, 0.15);-en-codeblock:true;"><div>1.npm install @mysql/xdevapi --save --save-exact</div></div><div style="box-sizing: border-box; padding: 8px; font-family: Monaco, Menlo, Consolas, &quot;Courier New&quot;, monospace; font-size: 12px; color: rgb(51, 51, 51); border-radius: 4px; background-color: rgb(251, 250, 248); border: 1px solid rgba(0, 0, 0, 0.15);-en-codeblock:true;"><div>2.写码连接</div><div>参考官方文档</div></div><div><br/></div><div>2.回调地狱</div><div><span>&nbsp; &nbsp; 1.异步编程的时候会使用到回调函数，比如 readFile ajax等</span><br/></div><div><span><span>&nbsp; &nbsp;&nbsp;<span>&nbsp; &nbsp; 在比如:</span></span><br/></span></div><div style="box-sizing: border-box; padding: 8px; font-family: Monaco, Menlo, Consolas, &quot;Courier New&quot;, monospace; font-size: 12px; color: rgb(51, 51, 51); border-radius: 4px; background-color: rgb(251, 250, 248); border: 1px solid rgba(0, 0, 0, 0.15);-en-codeblock:true;"><div><span>依次读取3个文件，并且输出其中的内容</span></div><div><span>var fs = require(&apos;fs&apos;);</span></div><div><span>fs.readFile(&apos;./data/a.txt&apos;, &apos;utf-8&apos;, function(err, data){</span></div><div><span>&nbsp;&nbsp;&nbsp;&nbsp;if(err){</span></div><div><span>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;// 抛出异常</span></div><div><span>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;// 阻止程序继续执行</span></div><div><span>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;// 把错误消息打印到控制台</span></div><div><span>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;throw err;</span></div><div><span>&nbsp;&nbsp;&nbsp;&nbsp;}</span></div><div><span>&nbsp;&nbsp;&nbsp;&nbsp;console.log(data)</span></div><div><span>});</span></div><div><span>fs.readFile(&apos;./data/b.txt&apos;, &apos;utf-8&apos;, function(err, data){</span></div><div><span>&nbsp;&nbsp;&nbsp;&nbsp;if(err){</span></div><div><span>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;// 抛出异常</span></div><div><span>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;// 阻止程序继续执行</span></div><div><span>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;// 把错误消息打印到控制台</span></div><div><span>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;throw err;</span></div><div><span>&nbsp;&nbsp;&nbsp;&nbsp;}</span></div><div><span>&nbsp;&nbsp;&nbsp;&nbsp;console.log(data)</span></div><div><span>});</span></div><div><span>fs.readFile(&apos;./data/c.txt&apos;, &apos;utf-8&apos;, function(err, data){</span></div><div><span>&nbsp;&nbsp;&nbsp;&nbsp;if(err){</span></div><div><span>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;// 抛出异常</span></div><div><span>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;// 阻止程序继续执行</span></div><div><span>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;// 把错误消息打印到控制台</span></div><div><span>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;throw err;</span></div><div><span>&nbsp;&nbsp;&nbsp;&nbsp;}</span></div><div><span>&nbsp;&nbsp;&nbsp;&nbsp;console.log(data)</span></div><div><span>});</span></div></div><div>那么，这段js脚本的输出结果，并不一定是先 a.txt&nbsp;再 b.txt&nbsp;再 c.txt，&nbsp;这是因为读取文件是异步操作，具体的</div><div>输出结果，应该是取决于文件的大小，这也是符合现实情况的</div><div>但是，我们有时会不希望这样的情况发生,我们希望输出的结果仍然按照代码的顺序来执行</div><div>那么，其中一种方案:</div><div><span>&nbsp; &nbsp; 1.改为同步读取，但是那样就失去了异步操作的意义了(影响服务速度，影响用户体验等等)</span><br/></div><div><span>&nbsp; &nbsp; 2.还</span>有一种解决方案，我们将这些异步操作嵌套执行，也就是当a.txt读取完成再执行b.txt的读取</div><div style="box-sizing: border-box; padding: 8px; font-family: Monaco, Menlo, Consolas, &quot;Courier New&quot;, monospace; font-size: 12px; color: rgb(51, 51, 51); border-radius: 4px; background-color: rgb(251, 250, 248); border: 1px solid rgba(0, 0, 0, 0.15);-en-codeblock:true;"><div>var fs = require(&apos;fs&apos;);</div><div>fs.readFile(&apos;./data/a.txt&apos;, &apos;utf-8&apos;, function(err, data){</div><div>&nbsp;&nbsp;&nbsp;&nbsp;if(err){</div><div>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;// 抛出异常</div><div>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;// 阻止程序继续执行</div><div>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;// 把错误消息打印到控制台</div><div>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;throw err;</div><div>&nbsp;&nbsp;&nbsp;&nbsp;}</div><div><br/></div><div><br/></div><div>&nbsp;&nbsp;&nbsp;&nbsp;fs.readFile(&apos;./data/b.txt&apos;, &apos;utf-8&apos;, function(err, data){</div><div>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;if(err){</div><div>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;// 抛出异常</div><div>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;// 阻止程序继续执行</div><div>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;// 把错误消息打印到控制台</div><div>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;throw err;</div><div>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}</div><div><br/></div><div><br/></div><div>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;fs.readFile(&apos;./data/c.txt&apos;, &apos;utf-8&apos;, function(err, data){</div><div>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;if(err){</div><div>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;// 抛出异常</div><div>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;// 阻止程序继续执行</div><div>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;// 把错误消息打印到控制台</div><div>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;throw err;</div><div>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}</div><div>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;console.log(data)</div><div>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;});</div><div><br/></div><div><br/></div><div>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;console.log(data)</div><div>&nbsp;&nbsp;&nbsp;&nbsp;});</div><div><br/></div><div><br/></div><div>&nbsp;&nbsp;&nbsp;&nbsp;console.log(data)</div><div>});</div></div><div><span>&nbsp;&nbsp; &nbsp;</span>这种方式的缺点很明显，语法丑陋，可读性差，很难维护</div><div><br/></div><div>3.解决回调地狱</div><div><span>&nbsp; &nbsp; 为了解决嵌套造成的回调地狱，在ECMAScript 6&nbsp;中新增了一个api,叫做 Promise</span><br/></div><div>使用Promise:</div><div style="box-sizing: border-box; padding: 8px; font-family: Monaco, Menlo, Consolas, &quot;Courier New&quot;, monospace; font-size: 12px; color: rgb(51, 51, 51); border-radius: 4px; background-color: rgb(251, 250, 248); border: 1px solid rgba(0, 0, 0, 0.15);-en-codeblock:true;"><div>// 在ECMAScript 6中新增了一个API Promise</div><div>// Promise是一个构造函数，浏览器也可以用</div><div>var fs = require(&apos;fs&apos;);</div><div>// 1.创建Promise容器，将异步任务放在其中</div><div>// 容器一旦创建就开始执行里面的代码</div><div>// 2.Promise容器构造函数有2个参数，通过管他们叫做 resolved成功 rejected失败</div><div>// 容器默认状态是pending</div><div>var promise = new Promise(function(resolved, rejected){</div><div>&nbsp;&nbsp;&nbsp;&nbsp;fs.readFile(&apos;./data/a.txt&apos;, &apos;utf8&apos;, function(err, data){</div><div>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;if(err){</div><div>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;// 失败了，承诺容器中的任务失败了</div><div>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;// 把容器的Pending状态改为失败</div><div><br/></div><div><br/></div><div>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;//这里的reject调用就相当于调用了then方法的第二个参数</div><div>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;rejected(err);</div><div>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}else{</div><div>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;// 承诺容器中的任务成功了</div><div>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;// 把容器的Pending状态改为成功 Resolved</div><div><br/></div><div><br/></div><div>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;// 这里的resolved方法调用，实际上就相当于是then方法传递的第一个function参数的调用</div><div>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;resolved(data);</div><div>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}</div><div>&nbsp;&nbsp;&nbsp;&nbsp;});</div><div>});</div><div>// p1就是那个承诺</div><div>// 当 p1 成功了，然后就是(then)做指定的操作</div><div>// then(function(data){}) , then方法 接收的function就相当于容器中的resolved函数,参数也就是</div><div>// resolved方法的参数 data</div><div>promise.then(function(data){</div><div>&nbsp;&nbsp;&nbsp;&nbsp;// 之前resolved的时候传递的是data,所以这里接收的也是data</div><div>&nbsp;&nbsp;&nbsp;&nbsp;console.log(data)</div><div>}, function(err){</div><div>&nbsp;&nbsp;&nbsp;&nbsp;console.log(&apos;读取文件失败了&apos;, err);</div><div>});</div></div><div><span><br/></span></div><div>4.通过链式调用解决多级回调的问题</div><div style="box-sizing: border-box; padding: 8px; font-family: Monaco, Menlo, Consolas, &quot;Courier New&quot;, monospace; font-size: 12px; color: rgb(51, 51, 51); border-radius: 4px; background-color: rgb(251, 250, 248); border: 1px solid rgba(0, 0, 0, 0.15);-en-codeblock:true;"><div>var fs = require(&apos;fs&apos;);<br/></div><div>var p1 = new Promise(function(resolved, rejected){</div><div>&nbsp;&nbsp;&nbsp;&nbsp;fs.readFile(&apos;./data/a.txt&apos;, &apos;utf8&apos;, function(err, data){</div><div>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;if(err){</div><div>&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; rejected(err);<br/></div><div>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}else{</div><div>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;resolved(data);</div><div>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}</div><div>&nbsp;&nbsp;&nbsp;&nbsp;});</div><div>});</div><div>var p2 = new Promise(function(resolved, rejected){</div><div>&nbsp;&nbsp;&nbsp;&nbsp;fs.readFile(&apos;./data/b.txt&apos;, &apos;utf8&apos;, function(err, data){</div><div>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;if(err){</div><div>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;rejected(err);</div><div>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}else{</div><div>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;resolved(data);</div><div>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}</div><div>&nbsp;&nbsp;&nbsp;&nbsp;});</div><div>});</div><div>var p3= new Promise(function(resolved, rejected){</div><div>&nbsp;&nbsp;&nbsp;&nbsp;fs.readFile(&apos;./data/c.txt&apos;, &apos;utf8&apos;, function(err, data){</div><div>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;if(err){</div><div>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;rejected(err);</div><div>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}else{</div><div>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;resolved(data);</div><div>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}</div><div>&nbsp;&nbsp;&nbsp;&nbsp;});</div><div>});</div><div>p1.then(function(data){</div><div>&nbsp;&nbsp;&nbsp;&nbsp;// 之前resolved的时候传递的是data,所以这里接收的也是data</div><div>&nbsp;&nbsp;&nbsp;&nbsp;console.log(data);</div><div><br/></div><div>&nbsp;&nbsp;&nbsp;&nbsp;// 当return一个promise对象的时候，后续的then方法的第一个参数会作为p2的resolved方法</div><div>&nbsp;&nbsp;&nbsp;&nbsp;// 并且，后续的then方法的第一个function参数的参数，也就是对应着p2的resolved中的参数</div><div>&nbsp;&nbsp;&nbsp;&nbsp;return p2;</div><div>}, function(err){</div><div>&nbsp;&nbsp;&nbsp;&nbsp;console.log(&apos;读取文件失败了&apos;, err);</div><div>}).then(function(data){</div><div>&nbsp;&nbsp;&nbsp;&nbsp;// 这里的data即表示p2中的resolved方法接收的参数,也就是p2中读取的文件数据</div><div>&nbsp;&nbsp;&nbsp;&nbsp;console.log(data);</div><div>&nbsp;&nbsp;&nbsp;&nbsp;// 执行完之后，继续返回p3</div><div>&nbsp;&nbsp;&nbsp;&nbsp;return p3;</div><div>}).then(function(data){</div><div>&nbsp;&nbsp;&nbsp;&nbsp;console.log(data);</div><div>});</div><div><br/></div><div><br/></div><div>// 总之,then的方法的第一个方法参数，总是会在该promise成功之后才会调用</div><div>// 所以代码的执行顺序总是会和then的书写顺序是一致的</div></div><div><br/></div><div>5.例子，封装readFile</div><div><div style="box-sizing: border-box; padding: 8px; font-family: Monaco, Menlo, Consolas, &quot;Courier New&quot;, monospace; font-size: 12px; color: rgb(51, 51, 51); border-radius: 4px; background-color: rgb(251, 250, 248); border: 1px solid rgba(0, 0, 0, 0.15);-en-codeblock:true;"><div>var fs = require(&apos;fs&apos;);</div><div>function pReadFile(path){</div><div>&nbsp;&nbsp;&nbsp;&nbsp;var p1 = new Promise(function(resolved, rejected){</div><div>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;fs.readFile(path, &apos;utf8&apos;, function(err, data){</div><div>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;if(err){</div><div>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;rejected(err);</div><div>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}else{</div><div>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;resolved(data);</div><div>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}</div><div>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;});</div><div>&nbsp;&nbsp;&nbsp;&nbsp;});</div><div>&nbsp;&nbsp;&nbsp;&nbsp;return p1;</div><div>}</div><div>pReadFile(&apos;./data/a.txt&apos;)</div><div>&nbsp;&nbsp;&nbsp;&nbsp;.then(function(data){</div><div>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;console.log(data);</div><div>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;return pReadFile(&apos;./data/b.txt&apos;);</div><div>&nbsp;&nbsp;&nbsp;&nbsp;})</div><div>&nbsp;&nbsp;&nbsp;&nbsp;.then(function(data){</div><div>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;console.log(data);</div><div>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;return pReadFile(&apos;./data/c.txt&apos;);</div><div>&nbsp;&nbsp;&nbsp;&nbsp;}).then(function(data){</div><div>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;console.log(data);</div><div>&nbsp;&nbsp;&nbsp;&nbsp;});</div></div><br/></div><div><span><br/></span>6.Promise应用场景:&nbsp;级联的下拉框，根据前面一个输入框(或者一个下拉框)的值，来决定后面一个下拉框中的选项</div><div><span>&nbsp; &nbsp; 比如 users&nbsp;和 jobs</span><br/></div><div><span><span>&nbsp; &nbsp; 自己来实现:</span><br/></span></div><div><span><span>&nbsp;&nbsp; &nbsp;</span><span>&nbsp; &nbsp; 1.数据存储采用mongodb /&nbsp;或者&nbsp;使用 json文件(使用监听json文件)</span><br/></span></div><div><span><span>&nbsp;&nbsp; &nbsp;</span><span>&nbsp; &nbsp; 2.users表结构 {name: String, jobs: [job的id]}</span><br/></span></div><div><span><span>&nbsp;&nbsp; &nbsp;</span><span>&nbsp; &nbsp; 3.jobs表结构 {name: String}</span><br/></span></div><div><span><span>&nbsp;&nbsp; &nbsp;</span><span>&nbsp; &nbsp; 4.采用模板引擎渲染页面</span><br/></span></div><div><span><span>&nbsp;&nbsp; &nbsp;</span><span>&nbsp; &nbsp; 5.采用promise确保第二个下拉框的渲染在第一个输入框/下拉框&nbsp;的数据获取到之后再执行</span><br/></span></div><div><span>&nbsp; &nbsp; 思路:&nbsp;其实只有2层嵌套的话，直接将第二个下拉框的加载嵌套在第一个函数中也不太影响可读性，可以试想一下</span><br/></div><div><span><span>&nbsp; &nbsp;&nbsp;<span>&nbsp;&nbsp; &nbsp;</span><span>&nbsp; &nbsp; ，假如在第二个下拉框选中之后，还要继续获取第三个、第四个甚至第五个下拉框的值，这样子再去嵌套的</span></span><br/></span></div><div><span><span>&nbsp;&nbsp; &nbsp;</span><span>&nbsp;&nbsp; &nbsp;</span><span>&nbsp; &nbsp; 话，你会逐渐明白promise的重要性</span><br/></span></div><div><span><span>&nbsp; &nbsp; 提示:&nbsp;还有一种方法,jquery早就提供了promise类似的链式调用 $.get().then().then()....</span><br/></span></div><div style="box-sizing: border-box; padding: 8px; font-family: Monaco, Menlo, Consolas, &quot;Courier New&quot;, monospace; font-size: 12px; color: rgb(51, 51, 51); border-radius: 4px; background-color: rgb(251, 250, 248); border: 1px solid rgba(0, 0, 0, 0.15);-en-codeblock:true;"><div><span><br/></span></div><div><span><br/></span></div><div><span>&nbsp;&nbsp;pGet(&apos;http://127.0.0.1:3000/users/4&apos;)</span></div><div><span>&nbsp;&nbsp;&nbsp;&nbsp;.then(function (data) {</span></div><div><span>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;console.log(data)</span></div><div><span>&nbsp;&nbsp;&nbsp;&nbsp;})</span></div><div><span><br/></span></div><div><span><br/></span></div><div><span>&nbsp;&nbsp;function pGet(url, callback) {</span></div><div><span>&nbsp;&nbsp;&nbsp;&nbsp;return new Promise(function (resolve, reject) {</span></div><div><span>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;var oReq = new XMLHttpRequest()</span></div><div><span>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;// 当请求加载成功之后要调用指定的函数</span></div><div><span>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;oReq.onload = function () {</span></div><div><span>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;// 我现在需要得到这里的 oReq.responseText</span></div><div><span>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;callback &amp;&amp; callback(JSON.parse(oReq.responseText))</span></div><div><span>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;resolve(JSON.parse(oReq.responseText))</span></div><div><span>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}</span></div><div><span>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;oReq.onerror = function (err) {</span></div><div><span>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;reject(err)</span></div><div><span>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}</span></div><div><span>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;oReq.open(&quot;get&quot;, url, true)</span></div><div><span>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;oReq.send()</span></div><div><span>&nbsp;&nbsp;&nbsp;&nbsp;})</span></div><div><span>&nbsp;&nbsp;}</span></div><div><span><br/></span></div><div><span><br/></span></div><div><span><br/></span></div><div><span><br/></span></div><div><span>&nbsp;&nbsp;// 这个 get 是 callback 方式的 API</span></div><div><span>&nbsp;&nbsp;// 可以使用 Promise 来解决这个问题</span></div><div><span>&nbsp;&nbsp;function get(url, callback) {</span></div><div><span>&nbsp;&nbsp;&nbsp;&nbsp;var oReq = new XMLHttpRequest()</span></div><div><span>&nbsp;&nbsp;&nbsp;&nbsp;// 当请求加载成功之后要调用指定的函数</span></div><div><span>&nbsp;&nbsp;&nbsp;&nbsp;oReq.onload = function () {</span></div><div><span>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;// 我现在需要得到这里的 oReq.responseText</span></div><div><span>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;callback(oReq.responseText)</span></div><div><span>&nbsp;&nbsp;&nbsp;&nbsp;}</span></div><div><span>&nbsp;&nbsp;&nbsp;&nbsp;oReq.open(&quot;get&quot;, url, true)</span></div><div><span>&nbsp;&nbsp;&nbsp;&nbsp;oReq.send()</span></div><div><span>&nbsp;&nbsp;}</span></div></div><div><span><br/></span></div><div><span>7.mongoose从4.13开始也支持 promise&nbsp;链式调用了，详情自己查阅文档</span></div><div><span><span>&nbsp; &nbsp; 比如:</span><br/></span></div><div><span><span>&nbsp;&nbsp; &nbsp;</span><span>&nbsp; &nbsp; User.findOne({name: &apos;longhr&apos;}).then(function(user){ ... } )</span><br/></span></div><div><span><br/></span></div><div><span>8.还可以参考ed6&nbsp;阮一峰的es6标准入门中对promise的讲解</span></div>
+</div>
+<a class="back-link" href="../articles.html">← 返回笔记列表</a>
+</body>
+</html>

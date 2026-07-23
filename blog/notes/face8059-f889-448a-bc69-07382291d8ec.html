@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html lang="zh-CN" data-theme="light">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Ruby Web 服务器的并发模型与性能 - 面向信仰编程 — 技术笔记</title>
+<style>
+:root {
+  --bg: #ffffff;
+  --text: #1a1a1a;
+  --muted: #666;
+  --border: #e0e0e0;
+  --code-bg: #f5f5f5;
+  --link: #0066cc;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #1a1a1a;
+    --text: #e0e0e0;
+    --muted: #999;
+    --border: #333;
+    --code-bg: #2a2a2a;
+    --link: #66bbff;
+  }
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  line-height: 1.7;
+  color: var(--text);
+  background: var(--bg);
+  max-width: 860px;
+  margin: 0 auto;
+  padding: 2rem 1.5rem;
+}
+.note-header {
+  border-bottom: 2px solid var(--border);
+  padding-bottom: 1rem;
+  margin-bottom: 2rem;
+}
+.note-title {
+  font-size: 1.6rem;
+  font-weight: 700;
+  margin-bottom: 0.3rem;
+}
+.note-meta {
+  color: var(--muted);
+  font-size: 0.85rem;
+}
+.note-content {
+  font-size: 0.95rem;
+}
+.note-content h1 { font-size: 1.4rem; margin: 1.2rem 0 0.6rem; }
+.note-content h2 { font-size: 1.2rem; margin: 1rem 0 0.5rem; }
+.note-content h3 { font-size: 1.05rem; margin: 0.8rem 0 0.4rem; }
+.note-content p { margin: 0.5rem 0; }
+.note-content ul, .note-content ol { margin: 0.5rem 0 0.5rem 2rem; }
+.note-content li { margin: 0.2rem 0; }
+.note-content pre {
+  background: var(--code-bg);
+  padding: 1rem;
+  border-radius: 6px;
+  overflow-x: auto;
+  margin: 0.8rem 0;
+  font-size: 0.85rem;
+}
+.note-content code {
+  background: var(--code-bg);
+  padding: 0.1rem 0.3rem;
+  border-radius: 3px;
+  font-size: 0.88em;
+}
+.note-content pre code {
+  background: none;
+  padding: 0;
+}
+.note-content blockquote {
+  border-left: 3px solid var(--border);
+  padding-left: 1rem;
+  color: var(--muted);
+  margin: 0.8rem 0;
+}
+.note-content a { color: var(--link); }
+.note-content img {
+  max-width: 100%;
+  height: auto;
+  border-radius: 6px;
+  margin: 0.5rem 0;
+}
+.note-content table {
+  border-collapse: collapse;
+  width: 100%;
+  margin: 0.8rem 0;
+}
+.note-content th, .note-content td {
+  border: 1px solid var(--border);
+  padding: 0.5rem;
+}
+.note-content th { background: var(--code-bg); }
+.media-placeholder {
+  background: var(--code-bg);
+  padding: 1rem;
+  text-align: center;
+  color: var(--muted);
+  border-radius: 6px;
+  margin: 0.5rem 0;
+  font-size: 0.85rem;
+}
+.encrypt-placeholder {
+  background: #fff3cd;
+  padding: 0.5rem;
+  text-align: center;
+  color: #856404;
+  border-radius: 6px;
+  margin: 0.5rem 0;
+  font-size: 0.85rem;
+}
+.back-link {
+  display: inline-block;
+  margin-top: 2rem;
+  color: var(--link);
+  text-decoration: none;
+  font-size: 0.85rem;
+}
+</style>
+</head>
+<body>
+<div class="note-header">
+  <div class="note-title">Ruby Web 服务器的并发模型与性能 - 面向信仰编程</div>
+  <div class="note-meta">笔记本：RubyOnRails</div>
+</div>
+<div class="note-content">
+<div style="--en-clipped-content:simplified; --en-clipped-source-url:https://draveness.me/ruby-webserver/; --en-clipped-source-title:Ruby Web 服务器的并发模型与性能 - 面向信仰编程;">
+<div><br/></div><div style="min-height: 9387px; font-size: 16px; display: block; min-width: 100%;"> <div style="background-color:transparent;font:inherit;vertical-align:baseline;"><div style="background-color:transparent;font:inherit;vertical-align:baseline;font-family:&quot;PT Serif&quot;;font-size:16px;line-height:1.5em;color:rgb(31, 9, 9);text-align:left;"><div style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;"><div style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;width:36em;z-index:200;padding-left:2em;padding-right:2em;margin-left:auto;margin-right:auto;position:relative;"><div style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;position:relative;margin-left:-25px;margin-right:25px;"><div style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;padding-top:0px;padding-bottom:9em;position:relative;"><div style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;margin-bottom:1.5em;"><div style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;position:relative;margin-bottom:0px;"><div style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;margin-bottom:0px;"><div style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;margin-bottom:0px;"><h1 style="font-family:&quot;PT Serif&quot;;text-align:left;border:0px;font:inherit;vertical-align:baseline;font-size:35px;font-weight:normal;line-height:35px;margin-bottom:20px;padding:0px;margin:0px;">Ruby Web 服务器的并发模型与性能</h1><div style="padding:0px;border:0px;font:inherit;vertical-align:baseline;position:relative;height:1em;line-height:1;text-align:center;margin:0px;padding-top:1.5em;padding-bottom:1.5em;margin-bottom:0px;"><div style="padding:0px;border:0px;font:inherit;vertical-align:baseline;background:-webkit-linear-gradient(0deg, rgb(243, 242, 238) 1%, rgb(31, 9, 9) 50%, rgb(243, 242, 238) 99%);position:absolute;left:-4em;top:50%;z-index:10;width:100%;padding-left:4em;padding-right:4em;height:0.1em;opacity:0.5;margin:0px;margin-bottom:0px;"><span style="font:inherit;position:absolute;left:-4em;top:50%;z-index:10;width:100%;padding-left:4em;padding-right:4em;height:0.1em;margin:0px;opacity:0.5;background:-webkit-linear-gradient(0deg, rgb(243, 242, 238) 1%, rgb(31, 9, 9) 50%, rgb(243, 242, 238) 99%);"></span></div></div></div><span style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;">2017-11-17</span>
+<a href="https://draveness.me/ruby-webserver/undefined" style="color:rgb(6, 85, 136);margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;text-decoration:none;">Rack系列</a>
+<a href="https://draveness.me/ruby-webserver/undefined" style="color:rgb(6, 85, 136);margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;text-decoration:none;">Rack</a>
+<a href="https://draveness.me/ruby-webserver/undefined" style="color:rgb(6, 85, 136);margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;text-decoration:none;">Ruby</a>
+<a href="https://draveness.me/ruby-webserver/undefined" style="color:rgb(6, 85, 136);margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;text-decoration:none;">服务器</a><p style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;margin-bottom:1.5em;">{% include related/rack.md %}</p><p style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;margin-bottom:1.5em;">这是整个 Rack 系列文章的最后一篇了，在之前其实也尝试写过很多系列文章，但是到最后都因为各种原因放弃了，最近由于自己对 Ruby 的 webserver 非常感兴趣，所以看了下社区中常见 webserver 的实现原理，包括 WEBrick、Thin、Unicorn 和 Puma，虽然在 Ruby 社区中也有一些其他的 webserver 有着比较优异的性能，但是在这有限的文章中也没有办法全都介绍一遍。</p><p style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;margin-bottom:1.5em;"></p><div style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;display:block;text-align:center;margin-bottom:1em;margin-top:1em;"><div class="media-placeholder">[图片/附件]</div></en-media></div><p style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;margin-bottom:1.5em;"></p><p style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;margin-bottom:1.5em;">在这篇文章中，作者想对 Ruby 社区中不同 webserver 的实现原理和并发模型进行简单的介绍，总结一下前面几篇文章中的内容。</p><blockquote style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;quotes:none;margin-bottom:1.5em;font-style:italic;border-left:5px solid;margin-left:2em;padding-left:1em;"><span style="font:inherit;quotes:none;font-style:italic;"></span><p style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;margin-bottom:0px;">文中所有的压力测试都是在内存 16GB、8 CPU、2.6 GHz Intel Core i7 的 macOS 上运行的，如果你想要复现这里的测试可能不会得到完全相同的结果。</p><span style="font:inherit;quotes:none;font-style:italic;"></span></blockquote><h2 style="font-family:&quot;PT Serif&quot;;text-align:left;margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;font-weight:bold;font-size:30px;line-height:35px;margin-top:35px;margin-bottom:15px;">WEBrick</h2><p style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;margin-bottom:1.5em;">WEBrick 是 Ruby 社区中非常古老的 Web 服务器，从 2000 年到现在已经有了将近 20 年的历史了，虽然 WEBrick 有着非常多的问题，但是迄今为止 WEBrick 也是开发环境中最常用的 Ruby 服务器；它使用了最为简单、直接的并发模型，运行一个 WEBrick 服务器只会在后台启动一个进程，默认监听来自 9292 端口的请求。</p><p style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;margin-bottom:1.5em;"></p><div style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;display:block;text-align:center;margin-bottom:1em;margin-top:1em;"><div class="media-placeholder">[图片/附件]</div></en-media></div><p style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;margin-bottom:1.5em;"></p><p style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;margin-bottom:1.5em;">当 WEBrick 通过 <code style="font-family:Inconsolata;margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;font-size:0.875em;line-height:1.71429em;">.select</code> 方法监听到来自客户端的请求之后，会为每一个请求创建一个单独 <code style="font-family:Inconsolata;margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;font-size:0.875em;line-height:1.71429em;">Thread</code> 并在新的线程中处理 HTTP 请求。</p><div style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;margin-bottom:1.5em;"><div style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;margin-bottom:0px;"><pre style="background-color:rgb(243, 242, 238);font-family:Inconsolata;margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;width:auto;font-size:0.875em;line-height:1.71429em;"><code style="font-family:Inconsolata;margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;line-height:1.71429em;font-size:1.15em;">run Proc.new { |env| ['200', {'Content-Type' =&gt; 'text/plain'}, ['get rack'd']] }
+</code></pre></div></div><p style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;margin-bottom:1.5em;">如果我们如果创建一个最简单的 Rack 应用，直接返回所有的 HTTP 响应，那么使用下面的命令对 WEBrick 的服务器进行测试会得到如下的结果：</p><div style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;margin-bottom:1.5em;"><div style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;margin-bottom:0px;"><pre style="background-color:rgb(243, 242, 238);font-family:Inconsolata;margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;width:auto;font-size:0.875em;line-height:1.71429em;"><code style="font-family:Inconsolata;margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;line-height:1.71429em;font-size:1.15em;">Concurrency Level:      100
+Time taken for tests:   22.519 seconds
+Complete requests:      10000
+Failed requests:        0
+Total transferred:      2160000 bytes
+HTML transferred:       200000 bytes
+Requests per second:    444.07 [#/sec] (mean)
+Time per request:       225.189 [ms] (mean)
+Time per request:       2.252 [ms] (mean, across all concurrent requests)
+Transfer rate:          93.67 [Kbytes/sec] received
+</code></pre></div></div><p style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;margin-bottom:1.5em;">在处理 ApacheBench 发出的 10000 个 HTTP 请求时，WEBrick 对于每个请求平均消耗了 225.189ms，每秒处理了 444.07 个请求；除此之外，在处理请求的过程中 WEBrick 进程的 CPU 占用率很快达到了 100%，通过这个测试我们就可以看出为什么不应该在生产环境中使用 WEBrick 作为 Ruby 的应用服务器，在业务逻辑和代码更加复杂的情况下，WEBrick 的性能想必也不会达到期望。</p><h2 style="font-family:&quot;PT Serif&quot;;text-align:left;margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;font-weight:bold;font-size:30px;line-height:35px;margin-top:35px;margin-bottom:15px;">Thin</h2><p style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;margin-bottom:1.5em;">在 2006 和 2007 两年，Ruby 社区中发布了两个至今都非常重要的开源项目，其中一个是 Mongrel，它提供了标准的 HTTP 接口，同时多语言的支持也使得 Mongrel 在当时非常流行，另一个项目就是 Rack 了，它在 Web 应用和 Web 服务器之间建立了一套统一的 <a href="https://draveness.me/ruby-webserver/undefined" style="color:rgb(6, 85, 136);margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;text-decoration:none;">标准</a>，规定了两者的协作方式，所有的应用只要遵循 Rack 协议就能够随时替换底层的应用服务器。</p><p style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;margin-bottom:1.5em;"></p><div style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;display:block;text-align:center;margin-bottom:1em;margin-top:1em;"><div class="media-placeholder">[图片/附件]</div></en-media></div><p style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;margin-bottom:1.5em;"></p><p style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;margin-bottom:1.5em;">随后，在 2009 年出现的 Thin 就站在了巨人的肩膀上，同时遵循了 Rack 协议并使用了 Mongrel 中的解析器，而它也是 Ruby 社区中第一个使用 Reactor 模型的 Web 服务器。</p><p style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;margin-bottom:1.5em;"></p><div style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;display:block;text-align:center;margin-bottom:1em;margin-top:1em;"><div class="media-placeholder">[图片/附件]</div></en-media></div><p style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;margin-bottom:1.5em;"></p><p style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;margin-bottom:1.5em;">Thin 使用 Reactor 模型处理客户端的 HTTP 请求，每一个请求都会交由 EventMachine，通过内部对事件的分发，最终执行相应的回调，这种事件驱动的 IO 模型与 node.js 非常相似，使用单进程单线程的并发模型却能够快速处理 HTTP 请求；在这里，我们仍然使用 ApacheBench 以及同样的负载对 Thin 的性能进行简单的测试。</p><div style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;margin-bottom:1.5em;"><div style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;margin-bottom:0px;"><pre style="background-color:rgb(243, 242, 238);font-family:Inconsolata;margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;width:auto;font-size:0.875em;line-height:1.71429em;"><code style="font-family:Inconsolata;margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;line-height:1.71429em;font-size:1.15em;">Concurrency Level:      100
+Time taken for tests:   4.221 seconds
+Complete requests:      10000
+Failed requests:        0
+Total transferred:      880000 bytes
+HTML transferred:       100000 bytes
+Requests per second:    2368.90 [#/sec] (mean)
+Time per request:       42.214 [ms] (mean)
+Time per request:       0.422 [ms] (mean, across all concurrent requests)
+Transfer rate:          203.58 [Kbytes/sec] received
+</code></pre></div></div><p style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;margin-bottom:1.5em;">对于一个相同的 HTTP 请求，Thin 的吞吐量大约是 WEBrick 的四倍，每秒能够处理 2368.90 个请求，同时处理的速度也大幅降低到了 42.214ms；在压力测试的过程中虽然 CPU 占用率有所上升但是在处理的过程中完全没有超过 90%，可以说 Thin 的性能碾压了 WEBrick，这可能也是开发者都不会在生产环境中使用 WEBrick 的最重要原因。</p><p style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;margin-bottom:1.5em;">但是同样作为单进程运行的 Thin，由于没有 master 进程的存在，哪怕当前进程由于各种各样奇怪的原因被操作系统杀掉，我们也不会收到任何的通知，只能手动重启应用服务器。</p><h2 style="font-family:&quot;PT Serif&quot;;text-align:left;margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;font-weight:bold;font-size:30px;line-height:35px;margin-top:35px;margin-bottom:15px;">Unicorn</h2><p style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;margin-bottom:1.5em;">与 Thin 同年发布的 Unicorn 虽然也是 Mongrel 项目的一个 fork，但是使用了完全不同的并发模型，每Unicorn 内部通过多次 <code style="font-family:Inconsolata;margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;font-size:0.875em;line-height:1.71429em;">fork</code> 创建多个 worker 进程，所有的 worker 进程也都由一个 master 进程管理和控制：</p><p style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;margin-bottom:1.5em;"></p><div style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;display:block;text-align:center;margin-bottom:1em;margin-top:1em;"><div class="media-placeholder">[图片/附件]</div></en-media></div><p style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;margin-bottom:1.5em;"></p><p style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;margin-bottom:1.5em;">由于 master 进程的存在，当 worker 进程被意外杀掉后会被 master 进程重启，能够保证持续对外界提供服务，多个进程的 worker 也能够很好地压榨多核 CPU 的性能，尽可能地提高请求的处理速度。</p><p style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;margin-bottom:1.5em;"></p><div style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;display:block;text-align:center;margin-bottom:1em;margin-top:1em;"><div class="media-placeholder">[图片/附件]</div></en-media></div><p style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;margin-bottom:1.5em;"></p><p style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;margin-bottom:1.5em;">一组由 master 管理的 Unicorn worker 会监听绑定的两个 Socket，所有来自客户端的请求都会通过操作系统内部的负载均衡进行调度，将请求分配到不同的 worker 进程上进行处理。</p><p style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;margin-bottom:1.5em;">不过由于 Unicorn 虽然使用了多进程的并发模型，但是每个 worker 进程在处理请求时都是用了阻塞 I/O 的方式，所以如果客户端非常慢就会大大影响 Unicorn 的性能，不过这个问题就可以通过反向代理来 nginx 解决。</p><p style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;margin-bottom:1.5em;"></p><div style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;display:block;text-align:center;margin-bottom:1em;margin-top:1em;"><div class="media-placeholder">[图片/附件]</div></en-media></div><p style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;margin-bottom:1.5em;"></p><p style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;margin-bottom:1.5em;">在配置 Unicorn 的 worker 数时，为了最大化的利用 CPU 资源，往往会将进程数设置为 CPU 的数量，同样我们使用 ApacheBench 以及相同的负载测试一个使用 8 核 CPU 的 Unicorn 服务的处理效率：</p><div style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;margin-bottom:1.5em;"><div style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;margin-bottom:0px;"><pre style="background-color:rgb(243, 242, 238);font-family:Inconsolata;margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;width:auto;font-size:0.875em;line-height:1.71429em;"><code style="font-family:Inconsolata;margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;line-height:1.71429em;font-size:1.15em;">Concurrency Level:      100
+Time taken for tests:   2.401 seconds
+Complete requests:      10000
+Failed requests:        0
+Total transferred:      1110000 bytes
+HTML transferred:       100000 bytes
+Requests per second:    4164.31 [#/sec] (mean)
+Time per request:       24.014 [ms] (mean)
+Time per request:       0.240 [ms] (mean, across all concurrent requests)
+Transfer rate:          451.41 [Kbytes/sec] received
+</code></pre></div></div><p style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;margin-bottom:1.5em;">经过简单的压力测试，当前的一组 Unicorn 服务每秒能够处理 4000 多个请求，每个请求也只消耗了 24ms 的时间，比起使用单进程的 Thin 确实有着比较多的提升，但是并没有数量级的差距。</p><p style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;margin-bottom:1.5em;">除此之外，Unicorn 由于其多进程的实现方式会占用大量的内存，在并行的处理大量请求时你可以看到内存的使用量有比较明显的上升。</p><h2 style="font-family:&quot;PT Serif&quot;;text-align:left;margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;font-weight:bold;font-size:30px;line-height:35px;margin-top:35px;margin-bottom:15px;">Puma</h2><p style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;margin-bottom:1.5em;">距离 Ruby 社区的第一个 webserver WEBrick 发布的 11 年之后的 2011 年，Puma 正式发布了，它与 Thin 和 Unicorn 一样都从 Mongrel 中继承了 HTTP 协议的解析器，不仅如此它还基于 Rack 协议重新对底层进行了实现。</p><p style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;margin-bottom:1.5em;"></p><div style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;display:block;text-align:center;margin-bottom:1em;margin-top:1em;"><div class="media-placeholder">[图片/附件]</div></en-media></div><p style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;margin-bottom:1.5em;"></p><p style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;margin-bottom:1.5em;">与 Unicorn 不同的是，Puma 是用了多进程加多线程模型，它可以同时在 fork 出来的多个 worker 中创建多个线程来处理请求；不仅如此 Puma 还实现了用于提高并发速度的 Reactor 模块和线程池能够在提升吞吐量的同时，降低内存的消耗。</p><p style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;margin-bottom:1.5em;"></p><div style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;display:block;text-align:center;margin-bottom:1em;margin-top:1em;"><div class="media-placeholder">[图片/附件]</div></en-media></div><p style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;margin-bottom:1.5em;"></p><p style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;margin-bottom:1.5em;">但是由于 MRI 的存在，往往都需要使用 JRuby 才能最大化 Puma 服务器的性能，但是即便如此，使用 MRI 的 Puma 的吞吐量也能够轻松达到 Unicorn 的两倍。</p><div style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;margin-bottom:1.5em;"><div style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;margin-bottom:0px;"><pre style="background-color:rgb(243, 242, 238);font-family:Inconsolata;margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;width:auto;font-size:0.875em;line-height:1.71429em;"><code style="font-family:Inconsolata;margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;line-height:1.71429em;font-size:1.15em;">Concurrency Level:      100
+Time taken for tests:   1.057 seconds
+Complete requests:      10000
+Failed requests:        0
+Total transferred:      750000 bytes
+HTML transferred:       100000 bytes
+Requests per second:    9458.08 [#/sec] (mean)
+Time per request:       10.573 [ms] (mean)
+Time per request:       0.106 [ms] (mean, across all concurrent requests)
+Transfer rate:          692.73 [Kbytes/sec] received
+</code></pre></div></div><p style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;margin-bottom:1.5em;">在这里我们创建了 8 个 Puma 的 worker，每个 worker 中都包含 16~32 个用于处理用户请求的线程，每秒中处理的请求数接近 10000，处理时间也仅为 10.573ms，多进程、多线程以及 Reactor 模式的协作确实能够非常明显的增加 Web 服务器的工作性能和吞吐量。</p><p style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;margin-bottom:1.5em;">在 Puma 的 <a href="https://draveness.me/ruby-webserver/undefined" style="color:rgb(6, 85, 136);margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;text-decoration:none;">官方网站</a> 中，有一张不同 Web 服务器内存消耗的对比图：</p><p style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;margin-bottom:1.5em;"></p><div style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;display:block;text-align:center;margin-bottom:1em;margin-top:1em;"><div class="media-placeholder">[图片/附件]</div></en-media></div><p style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;margin-bottom:1.5em;"></p><p style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;margin-bottom:1.5em;">我们可以看到，与 Unicorn 相比 Puma 的内存使用量几乎可以忽略不计，它明显解决了多个 worker 占用大量内存的问题；不过使用了多线程模型的 Puma 需要开发者在应用中保证不同的线程不会出现竞争条件的问题，Unicorn 的多进程模型就不需要开发者思考这样的事情。</p><h2 style="font-family:&quot;PT Serif&quot;;text-align:left;margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;font-weight:bold;font-size:30px;line-height:35px;margin-top:35px;margin-bottom:15px;">对比</h2><p style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;margin-bottom:1.5em;">上述四种不同的 Web 服务器其实有着比较明显的性能差异，在使用同一个最简单的 Web 应用时，不同的服务器表现出了差异巨大的吞吐量：</p><p style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;margin-bottom:1.5em;"></p><div style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;display:block;text-align:center;margin-bottom:1em;margin-top:1em;"><div class="media-placeholder">[图片/附件]</div></en-media></div><p style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;margin-bottom:1.5em;"></p><p style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;margin-bottom:1.5em;">Puma 和 Unicorn 两者之间可能还没有明显的数量级差距，1 倍的吞吐量差距也可能很容易被环境因素抹平了，但是 WEBrick 可以说是绝对无法与其他三者匹敌的。</p><p style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;margin-bottom:1.5em;">上述的不同服务器其实有着截然不同的 I/O 并发模型，因为 MRI 中 GIL 的存在我们很难利用多核 CPU 的计算资源，所以大多数多线程模型在 MRI 上的性能可能只比单线程略好，达不到完全碾压的效果，但是 JRuby 或者 Rubinius 的使用确实能够利用多核 CPU 的计算资源，从而增加多线程模型的并发效率。</p><p style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;margin-bottom:1.5em;"></p><div style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;display:block;text-align:center;margin-bottom:1em;margin-top:1em;"><div class="media-placeholder">[图片/附件]</div></en-media></div><p style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;margin-bottom:1.5em;"></p><p style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;margin-bottom:1.5em;">传统的 I/O 模型就是在每次接收到客户端的请求时 fork 出一个新的进程来处理当前的请求或者在服务器启动时就启动多个进程，每一个进程在同一时间只能处理一个请求，所以这种并发模型的吞吐量有限，在今天已经几乎看不到使用 <strong style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;font-weight:bold;">accept &amp; fork</strong> 这种方式处理请求的服务器了。</p><p style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;margin-bottom:1.5em;">目前最为流行的方式还是混合多种 I/O 模型，同时使用多进程和多线程压榨 CPU 计算资源，例如 Phusion Passenger 或者 Puma 都支持在单进程和多进程、单线程和多线程之前来回切换，配置的不同会创建不同的并发模型，可以说是 Web 服务器中最好的选择了。</p><p style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;margin-bottom:1.5em;">最后要说的 Thin 其实使用了非常不同的 I/O 模型，也就是事件驱动模型，这种模型在 Ruby 社区其实并没有那么热门，主要是因为 Rails 框架以及 Ruby 社区中的大部分项目并没有按照 Reactor 模型的方式进行设计，默认的文件 I/O 也都是阻塞的，而 Ruby 本身也可以利用多进程和多线程的计算资源，没有必要使用事件驱动的方式最大化并发量。</p><p style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;margin-bottom:1.5em;"></p><div style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;display:block;text-align:center;margin-bottom:1em;margin-top:1em;"><div class="media-placeholder">[图片/附件]</div></en-media></div><p style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;margin-bottom:1.5em;"></p><p style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;margin-bottom:1.5em;">Node.js 就完全不同了。Javascript 作为一个所有操作都会阻塞主线程的语言，更加需要事件驱动模型让主线程只负责接受 HTTP 请求，其余的脏活累活都交给线程池来做了，结果的返回都通过回调的形式通知主线程，这样才能提高吞吐量。</p><h2 style="font-family:&quot;PT Serif&quot;;text-align:left;margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;font-weight:bold;font-size:30px;line-height:35px;margin-top:35px;margin-bottom:15px;">总结</h2><p style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;margin-bottom:1.5em;">在这个系列的文章中，我们先后介绍了 Rack 的实现原理以及 Rack 协议，还有四种 webserver 包括 WEBrick、Thin、Unicorn 和 Puma 的实现，除了这四种应用服务器之外，Ruby 社区中还有其他的应用服务器，例如：Rainbows 和 Phusion Passenger，它们都有各自的实现以及优缺点。</p><p style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;margin-bottom:1.5em;">从当前的情况来看，还是更推荐开发者使用 Puma 或者 Phusion Passenger 作为应用的服务器，这样能获得最佳的效果。</p><h2 style="font-family:&quot;PT Serif&quot;;text-align:left;margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;font-weight:bold;font-size:30px;line-height:35px;margin-top:35px;margin-bottom:15px;">相关文章</h2><p style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;margin-bottom:1.5em;">{% include related/rack.md %}</p><h2 style="font-family:&quot;PT Serif&quot;;text-align:left;margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;font-weight:bold;font-size:30px;line-height:35px;margin-top:35px;margin-bottom:15px;">Reference</h2><div style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;display:block;text-align:center;margin-bottom:1em;margin-top:1em;"><div class="media-placeholder">[图片/附件]</div></en-media></div><h3 style="font-family:&quot;PT Serif&quot;;text-align:left;margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;font-size:30px;line-height:35px;margin-top:35px;font-weight:normal;margin-bottom:15px;">转载申请</h3>本作品采用<a href="https://draveness.me/ruby-webserver/undefined" style="color:rgb(6, 85, 136);margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;text-decoration:none;">知识共享署名 4.0 国际许可协议</a>进行许可，转载时请注明原文链接，图片在使用时请保留全部内容，可适当缩放并在引用处附上图片所在的文章链接。<h3 style="font-family:&quot;PT Serif&quot;;text-align:left;margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;font-size:30px;line-height:35px;margin-top:35px;font-weight:normal;margin-bottom:15px;">文章图片</h3>你可以在 <a href="https://draveness.me/ruby-webserver/undefined" style="color:rgb(6, 85, 136);margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;text-decoration:none;">技术文章配图指南</a> 中找到画图的方法和素材。</div></div></div></div></div></div></div></div></div></div>
+</div>
+</div>
+<a class="back-link" href="../articles.html">← 返回笔记列表</a>
+</body>
+</html>

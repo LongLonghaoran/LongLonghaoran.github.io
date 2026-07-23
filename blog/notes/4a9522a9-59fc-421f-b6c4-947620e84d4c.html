@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html lang="zh-CN" data-theme="light">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>动态卷制备 — 技术笔记</title>
+<style>
+:root {
+  --bg: #ffffff;
+  --text: #1a1a1a;
+  --muted: #666;
+  --border: #e0e0e0;
+  --code-bg: #f5f5f5;
+  --link: #0066cc;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #1a1a1a;
+    --text: #e0e0e0;
+    --muted: #999;
+    --border: #333;
+    --code-bg: #2a2a2a;
+    --link: #66bbff;
+  }
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  line-height: 1.7;
+  color: var(--text);
+  background: var(--bg);
+  max-width: 860px;
+  margin: 0 auto;
+  padding: 2rem 1.5rem;
+}
+.note-header {
+  border-bottom: 2px solid var(--border);
+  padding-bottom: 1rem;
+  margin-bottom: 2rem;
+}
+.note-title {
+  font-size: 1.6rem;
+  font-weight: 700;
+  margin-bottom: 0.3rem;
+}
+.note-meta {
+  color: var(--muted);
+  font-size: 0.85rem;
+}
+.note-content {
+  font-size: 0.95rem;
+}
+.note-content h1 { font-size: 1.4rem; margin: 1.2rem 0 0.6rem; }
+.note-content h2 { font-size: 1.2rem; margin: 1rem 0 0.5rem; }
+.note-content h3 { font-size: 1.05rem; margin: 0.8rem 0 0.4rem; }
+.note-content p { margin: 0.5rem 0; }
+.note-content ul, .note-content ol { margin: 0.5rem 0 0.5rem 2rem; }
+.note-content li { margin: 0.2rem 0; }
+.note-content pre {
+  background: var(--code-bg);
+  padding: 1rem;
+  border-radius: 6px;
+  overflow-x: auto;
+  margin: 0.8rem 0;
+  font-size: 0.85rem;
+}
+.note-content code {
+  background: var(--code-bg);
+  padding: 0.1rem 0.3rem;
+  border-radius: 3px;
+  font-size: 0.88em;
+}
+.note-content pre code {
+  background: none;
+  padding: 0;
+}
+.note-content blockquote {
+  border-left: 3px solid var(--border);
+  padding-left: 1rem;
+  color: var(--muted);
+  margin: 0.8rem 0;
+}
+.note-content a { color: var(--link); }
+.note-content img {
+  max-width: 100%;
+  height: auto;
+  border-radius: 6px;
+  margin: 0.5rem 0;
+}
+.note-content table {
+  border-collapse: collapse;
+  width: 100%;
+  margin: 0.8rem 0;
+}
+.note-content th, .note-content td {
+  border: 1px solid var(--border);
+  padding: 0.5rem;
+}
+.note-content th { background: var(--code-bg); }
+.media-placeholder {
+  background: var(--code-bg);
+  padding: 1rem;
+  text-align: center;
+  color: var(--muted);
+  border-radius: 6px;
+  margin: 0.5rem 0;
+  font-size: 0.85rem;
+}
+.encrypt-placeholder {
+  background: #fff3cd;
+  padding: 0.5rem;
+  text-align: center;
+  color: #856404;
+  border-radius: 6px;
+  margin: 0.5rem 0;
+  font-size: 0.85rem;
+}
+.back-link {
+  display: inline-block;
+  margin-top: 2rem;
+  color: var(--link);
+  text-decoration: none;
+  font-size: 0.85rem;
+}
+</style>
+</head>
+<body>
+<div class="note-header">
+  <div class="note-title">动态卷制备</div>
+  <div class="note-meta">笔记本：Kubernetes学习笔记</div>
+</div>
+<div class="note-content">
+<div style="--en-clipped-content:article">
+<div><br/></div><div style="font-size: 16px; display:block; min-width: 100%; position: relative;"> <div style="box-sizing:border-box;font-family:sans-serif;line-height:1.15;text-size-adjust:100%;-webkit-tap-highlight-color:transparent;"><div style="box-sizing:border-box;font-family:&quot;open sans&quot;, -apple-system, BlinkMacSystemFont, &quot;segoe ui&quot;, Roboto, &quot;helvetica neue&quot;, Arial, sans-serif, &quot;apple color emoji&quot;, &quot;segoe ui emoji&quot;, &quot;segoe ui symbol&quot;;font-size:16px;font-weight:400;line-height:1.5;color:rgb(34, 34, 34);text-align:left;background-color:rgb(255, 255, 255);"><div style="box-sizing:border-box;"><div style="box-sizing:border-box;"><div style="box-sizing:border-box;"><div style="box-sizing:border-box;overflow-wrap:break-word;"><span style="box-sizing:border-box;"><div style="box-sizing:border-box;"><h1 style="box-sizing:border-box;margin-top:0px;line-height:1.2;font-size:36px;max-width:80%;margin-bottom:16px;font-weight:700;">动态卷制备</h1><p style="box-sizing:border-box;margin-top:0px;margin-bottom:16px;max-width:80%;font-weight:400;">动态卷制备允许按需创建存储卷。
+如果没有动态制备，集群管理员必须手动地联系他们的云或存储提供商来创建新的存储卷，
+然后在 Kubernetes 集群创建
+<a href="https://kubernetes.io/zh-cn/docs/concepts/storage/persistent-volumes/" style="box-sizing:border-box;text-decoration:none;background-color:transparent;color:rgb(23, 74, 180);"><code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif">PersistentVolume</code> 对象</a>来表示这些卷。
+动态制备功能消除了集群管理员预先配置存储的需要。相反，它在用户创建
+<a href="https://kubernetes.io/zh-cn/docs/concepts/storage/persistent-volumes/" style="box-sizing:border-box;text-decoration:none;background-color:transparent;color:rgb(23, 74, 180);"><code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif">PersistentVolumeClaim</code> 对象</a>时自动制备存储。</p><h2 style="box-sizing:border-box;font-weight:500;line-height:1.2;font-size:32px;max-width:80%;margin-bottom:16px;margin-top:48px;"><span style="font-weight:500;line-height:1.2;font-size:32px;display:block;margin-top:-5rem;height:5rem;visibility:hidden;"> </span>背景<a href="https://kubernetes.io/zh-cn/docs/concepts/storage/dynamic-provisioning/#background" style="box-sizing:border-box;text-decoration:none;background-color:transparent;color:rgb(23, 74, 180);visibility:hidden;"> <img style="box-sizing:border-box;overflow:hidden;vertical-align:middle;" src="data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='currentColor' width='24' height='24' viewBox='0 0 24 24' data-evernote-id='4148' class='js-evernote-checked'%3e%3cpath d='M0 0h24v24H0z' fill='none' data-evernote-id='4149' class='js-evernote-checked'%3e%3c/path%3e%3cpath d='M3.9 12c0-1.71 1.39-3.1 3.1-3.1h4V7H7c-2.76 0-5 2.24-5 5s2.24 5 5 5h4v-1.9H7c-1.71 0-3.1-1.39-3.1-3.1zM8 13h8v-2H8v2zm9-6h-4v1.9h4c1.71 0 3.1 1.39 3.1 3.1s-1.39 3.1-3.1 3.1h-4V17h4c2.76 0 5-2.24 5-5s-2.24-5-5-5z' data-evernote-id='4150' class='js-evernote-checked'%3e%3c/path%3e%3c/svg%3e"/></a></h2><p style="box-sizing:border-box;margin-top:0px;margin-bottom:16px;max-width:80%;font-weight:400;">动态卷制备的实现基于 <code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif">storage.k8s.io</code> API 组中的 <code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif">StorageClass</code> API 对象。
+集群管理员可以根据需要定义多个 <code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif">StorageClass</code> 对象，每个对象指定一个<strong style="box-sizing:border-box;font-weight:700;">卷插件</strong>（又名 <strong style="box-sizing:border-box;font-weight:700;">provisioner</strong>），
+卷插件向卷制备商提供在创建卷时需要的数据卷信息及相关参数。</p><p style="box-sizing:border-box;margin-top:0px;margin-bottom:16px;max-width:80%;font-weight:400;">集群管理员可以在集群中定义和公开多种存储（来自相同或不同的存储系统），每种都具有自定义参数集。
+该设计也确保终端用户不必担心存储制备的复杂性和细微差别，但仍然能够从多个存储选项中进行选择。</p><p style="box-sizing:border-box;margin-top:0px;margin-bottom:16px;max-width:80%;font-weight:400;">点击<a href="https://kubernetes.io/zh-cn/docs/concepts/storage/storage-classes/" style="box-sizing:border-box;text-decoration:none;background-color:transparent;color:rgb(23, 74, 180);">这里</a>查阅有关存储类的更多信息。</p><h2 style="box-sizing:border-box;font-weight:500;line-height:1.2;font-size:32px;max-width:80%;margin-bottom:16px;margin-top:48px;"><span style="font-weight:500;line-height:1.2;font-size:32px;display:block;margin-top:-5rem;height:5rem;visibility:hidden;"> </span>启用动态卷制备<a href="https://kubernetes.io/zh-cn/docs/concepts/storage/dynamic-provisioning/#enabling-dynamic-provisioning" style="box-sizing:border-box;text-decoration:none;background-color:transparent;color:rgb(23, 74, 180);visibility:hidden;"> <img style="box-sizing:border-box;overflow:hidden;vertical-align:middle;" src="data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='currentColor' width='24' height='24' viewBox='0 0 24 24' data-evernote-id='4160' class='js-evernote-checked'%3e%3cpath d='M0 0h24v24H0z' fill='none' data-evernote-id='4161' class='js-evernote-checked'%3e%3c/path%3e%3cpath d='M3.9 12c0-1.71 1.39-3.1 3.1-3.1h4V7H7c-2.76 0-5 2.24-5 5s2.24 5 5 5h4v-1.9H7c-1.71 0-3.1-1.39-3.1-3.1zM8 13h8v-2H8v2zm9-6h-4v1.9h4c1.71 0 3.1 1.39 3.1 3.1s-1.39 3.1-3.1 3.1h-4V17h4c2.76 0 5-2.24 5-5s-2.24-5-5-5z' data-evernote-id='4162' class='js-evernote-checked'%3e%3c/path%3e%3c/svg%3e"/></a></h2><p style="box-sizing:border-box;margin-top:0px;margin-bottom:16px;max-width:80%;font-weight:400;">要启用动态制备功能，集群管理员需要为用户预先创建一个或多个 <code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif">StorageClass</code> 对象。
+<code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif">StorageClass</code> 对象定义当动态制备被调用时，哪一个驱动将被使用和哪些参数将被传递给驱动。
+StorageClass 对象的名字必须是一个合法的
+<a href="https://kubernetes.io/zh-cn/docs/concepts/overview/working-with-objects/names#dns-subdomain-names" style="box-sizing:border-box;text-decoration:none;background-color:transparent;color:rgb(23, 74, 180);">DNS 子域名</a>。
+以下清单创建了一个 <code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif">StorageClass</code> 存储类 "slow"，它提供类似标准磁盘的永久磁盘。</p><div style="box-sizing:border-box;position:relative;display:flex;flex-direction:column;min-width:0px;overflow-wrap:break-word;background-color:rgb(255, 255, 255);background-clip:border-box;border:1px solid rgba(0, 0, 0, 0.125);border-radius:4px;margin:2rem 0px;padding:0px;width:100%;max-width:initial;"><pre style="border-radius:4px;background-color: #fbfaf8;border: 1px solid rgba(0,0,0,.14902);color: #333;font-size: 12px;padding: 8px;font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif;box-sizing: border-box;"><code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span style="box-sizing:border-box;height:1.6em;display:flex;"><span style="box-sizing:border-box;"><span style="box-sizing:border-box;color:green;font-weight:700;">apiVersion</span>:<span style="box-sizing:border-box;color:#bbb;"> </span>storage.k8s.io/v1<span style="box-sizing:border-box;color:#bbb;">
+</span></span></span><span style="box-sizing:border-box;height:1.6em;display:flex;"><span style="box-sizing:border-box;"><span style="box-sizing:border-box;color:#bbb;"></span><span style="box-sizing:border-box;color:green;font-weight:700;">kind</span>:<span style="box-sizing:border-box;color:#bbb;"> </span>StorageClass<span style="box-sizing:border-box;color:#bbb;">
+</span></span></span><span style="box-sizing:border-box;height:1.6em;display:flex;"><span style="box-sizing:border-box;"><span style="box-sizing:border-box;color:#bbb;"></span><span style="box-sizing:border-box;color:green;font-weight:700;">metadata</span>:<span style="box-sizing:border-box;color:#bbb;">
+</span></span></span><span style="box-sizing:border-box;height:1.6em;display:flex;"><span style="box-sizing:border-box;"><span style="box-sizing:border-box;color:#bbb;">  </span><span style="box-sizing:border-box;color:green;font-weight:700;">name</span>:<span style="box-sizing:border-box;color:#bbb;"> </span>slow<span style="box-sizing:border-box;color:#bbb;">
+</span></span></span><span style="box-sizing:border-box;height:1.6em;display:flex;"><span style="box-sizing:border-box;"><span style="box-sizing:border-box;color:#bbb;"></span><span style="box-sizing:border-box;color:green;font-weight:700;">provisioner</span>:<span style="box-sizing:border-box;color:#bbb;"> </span>kubernetes.io/gce-pd<span style="box-sizing:border-box;color:#bbb;">
+</span></span></span><span style="box-sizing:border-box;height:1.6em;display:flex;"><span style="box-sizing:border-box;"><span style="box-sizing:border-box;color:#bbb;"></span><span style="box-sizing:border-box;color:green;font-weight:700;">parameters</span>:<span style="box-sizing:border-box;color:#bbb;">
+</span></span></span><span style="box-sizing:border-box;height:1.6em;display:flex;"><span style="box-sizing:border-box;"><span style="box-sizing:border-box;color:#bbb;">  </span><span style="box-sizing:border-box;color:green;font-weight:700;">type</span>:<span style="box-sizing:border-box;color:#bbb;"> </span>pd-standard<span style="box-sizing:border-box;color:#bbb;">
+</span></span></span></code></pre></div><p style="box-sizing:border-box;margin-top:0px;margin-bottom:16px;max-width:80%;font-weight:400;">以下清单创建了一个 "fast" 存储类，它提供类似 SSD 的永久磁盘。</p><div style="box-sizing:border-box;position:relative;display:flex;flex-direction:column;min-width:0px;overflow-wrap:break-word;background-color:rgb(255, 255, 255);background-clip:border-box;border:1px solid rgba(0, 0, 0, 0.125);border-radius:4px;margin:2rem 0px;padding:0px;width:100%;max-width:initial;"><pre style="border-radius:4px;background-color: #fbfaf8;border: 1px solid rgba(0,0,0,.14902);color: #333;font-size: 12px;padding: 8px;font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif;box-sizing: border-box;"><code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span style="box-sizing:border-box;height:1.6em;display:flex;"><span style="box-sizing:border-box;"><span style="box-sizing:border-box;color:green;font-weight:700;">apiVersion</span>:<span style="box-sizing:border-box;color:#bbb;"> </span>storage.k8s.io/v1<span style="box-sizing:border-box;color:#bbb;">
+</span></span></span><span style="box-sizing:border-box;height:1.6em;display:flex;"><span style="box-sizing:border-box;"><span style="box-sizing:border-box;color:#bbb;"></span><span style="box-sizing:border-box;color:green;font-weight:700;">kind</span>:<span style="box-sizing:border-box;color:#bbb;"> </span>StorageClass<span style="box-sizing:border-box;color:#bbb;">
+</span></span></span><span style="box-sizing:border-box;height:1.6em;display:flex;"><span style="box-sizing:border-box;"><span style="box-sizing:border-box;color:#bbb;"></span><span style="box-sizing:border-box;color:green;font-weight:700;">metadata</span>:<span style="box-sizing:border-box;color:#bbb;">
+</span></span></span><span style="box-sizing:border-box;height:1.6em;display:flex;"><span style="box-sizing:border-box;"><span style="box-sizing:border-box;color:#bbb;">  </span><span style="box-sizing:border-box;color:green;font-weight:700;">name</span>:<span style="box-sizing:border-box;color:#bbb;"> </span>fast<span style="box-sizing:border-box;color:#bbb;">
+</span></span></span><span style="box-sizing:border-box;height:1.6em;display:flex;"><span style="box-sizing:border-box;"><span style="box-sizing:border-box;color:#bbb;"></span><span style="box-sizing:border-box;color:green;font-weight:700;">provisioner</span>:<span style="box-sizing:border-box;color:#bbb;"> </span>kubernetes.io/gce-pd<span style="box-sizing:border-box;color:#bbb;">
+</span></span></span><span style="box-sizing:border-box;height:1.6em;display:flex;"><span style="box-sizing:border-box;"><span style="box-sizing:border-box;color:#bbb;"></span><span style="box-sizing:border-box;color:green;font-weight:700;">parameters</span>:<span style="box-sizing:border-box;color:#bbb;">
+</span></span></span><span style="box-sizing:border-box;height:1.6em;display:flex;"><span style="box-sizing:border-box;"><span style="box-sizing:border-box;color:#bbb;">  </span><span style="box-sizing:border-box;color:green;font-weight:700;">type</span>:<span style="box-sizing:border-box;color:#bbb;"> </span>pd-ssd<span style="box-sizing:border-box;color:#bbb;">
+</span></span></span></code></pre></div><h2 style="box-sizing:border-box;font-weight:500;line-height:1.2;font-size:32px;max-width:80%;margin-bottom:16px;margin-top:48px;"><span style="font-weight:500;line-height:1.2;font-size:32px;display:block;margin-top:-5rem;height:5rem;visibility:hidden;"> </span>使用动态卷制备<a href="https://kubernetes.io/zh-cn/docs/concepts/storage/dynamic-provisioning/#using-dynamic-provisioning" style="box-sizing:border-box;text-decoration:none;background-color:transparent;color:rgb(23, 74, 180);visibility:hidden;"> <img style="box-sizing:border-box;overflow:hidden;vertical-align:middle;" src="data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='currentColor' width='24' height='24' viewBox='0 0 24 24' data-evernote-id='4237' class='js-evernote-checked'%3e%3cpath d='M0 0h24v24H0z' fill='none' data-evernote-id='4238' class='js-evernote-checked'%3e%3c/path%3e%3cpath d='M3.9 12c0-1.71 1.39-3.1 3.1-3.1h4V7H7c-2.76 0-5 2.24-5 5s2.24 5 5 5h4v-1.9H7c-1.71 0-3.1-1.39-3.1-3.1zM8 13h8v-2H8v2zm9-6h-4v1.9h4c1.71 0 3.1 1.39 3.1 3.1s-1.39 3.1-3.1 3.1h-4V17h4c2.76 0 5-2.24 5-5s-2.24-5-5-5z' data-evernote-id='4239' class='js-evernote-checked'%3e%3c/path%3e%3c/svg%3e"/></a></h2><p style="box-sizing:border-box;margin-top:0px;margin-bottom:16px;max-width:80%;font-weight:400;">用户通过在 <code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif">PersistentVolumeClaim</code> 中包含存储类来请求动态制备的存储。
+在 Kubernetes v1.9 之前，这通过 <code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif">volume.beta.kubernetes.io/storage-class</code> 注解实现。
+然而，这个注解自 v1.6 起就不被推荐使用了。
+用户现在能够而且应该使用 <code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif">PersistentVolumeClaim</code> 对象的 <code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif">storageClassName</code> 字段。
+这个字段的值必须能够匹配到集群管理员配置的 <code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif">StorageClass</code> 名称（见<a href="https://kubernetes.io/zh-cn/docs/concepts/storage/dynamic-provisioning/#enabling-dynamic-provisioning" style="box-sizing:border-box;text-decoration:none;background-color:transparent;color:rgb(23, 74, 180);">下面</a>）。</p><p style="box-sizing:border-box;margin-top:0px;margin-bottom:16px;max-width:80%;font-weight:400;">例如，要选择 “fast” 存储类，用户将创建如下的 PersistentVolumeClaim：</p><div style="box-sizing:border-box;position:relative;display:flex;flex-direction:column;min-width:0px;overflow-wrap:break-word;background-color:rgb(255, 255, 255);background-clip:border-box;border:1px solid rgba(0, 0, 0, 0.125);border-radius:4px;margin:2rem 0px;padding:0px;width:100%;max-width:initial;"><pre style="border-radius:4px;background-color: #fbfaf8;border: 1px solid rgba(0,0,0,.14902);color: #333;font-size: 12px;padding: 8px;font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif;box-sizing: border-box;"><code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span style="box-sizing:border-box;height:1.6em;display:flex;"><span style="box-sizing:border-box;"><span style="box-sizing:border-box;color:green;font-weight:700;">apiVersion</span>:<span style="box-sizing:border-box;color:#bbb;"> </span>v1<span style="box-sizing:border-box;color:#bbb;">
+</span></span></span><span style="box-sizing:border-box;height:1.6em;display:flex;"><span style="box-sizing:border-box;"><span style="box-sizing:border-box;color:#bbb;"></span><span style="box-sizing:border-box;color:green;font-weight:700;">kind</span>:<span style="box-sizing:border-box;color:#bbb;"> </span>PersistentVolumeClaim<span style="box-sizing:border-box;color:#bbb;">
+</span></span></span><span style="box-sizing:border-box;height:1.6em;display:flex;"><span style="box-sizing:border-box;"><span style="box-sizing:border-box;color:#bbb;"></span><span style="box-sizing:border-box;color:green;font-weight:700;">metadata</span>:<span style="box-sizing:border-box;color:#bbb;">
+</span></span></span><span style="box-sizing:border-box;height:1.6em;display:flex;"><span style="box-sizing:border-box;"><span style="box-sizing:border-box;color:#bbb;">  </span><span style="box-sizing:border-box;color:green;font-weight:700;">name</span>:<span style="box-sizing:border-box;color:#bbb;"> </span>claim1<span style="box-sizing:border-box;color:#bbb;">
+</span></span></span><span style="box-sizing:border-box;height:1.6em;display:flex;"><span style="box-sizing:border-box;"><span style="box-sizing:border-box;color:#bbb;"></span><span style="box-sizing:border-box;color:green;font-weight:700;">spec</span>:<span style="box-sizing:border-box;color:#bbb;">
+</span></span></span><span style="box-sizing:border-box;height:1.6em;display:flex;"><span style="box-sizing:border-box;"><span style="box-sizing:border-box;color:#bbb;">  </span><span style="box-sizing:border-box;color:green;font-weight:700;">accessModes</span>:<span style="box-sizing:border-box;color:#bbb;">
+</span></span></span><span style="box-sizing:border-box;height:1.6em;display:flex;"><span style="box-sizing:border-box;"><span style="box-sizing:border-box;color:#bbb;">    </span>- ReadWriteOnce<span style="box-sizing:border-box;color:#bbb;">
+</span></span></span><span style="box-sizing:border-box;height:1.6em;display:flex;"><span style="box-sizing:border-box;"><span style="box-sizing:border-box;color:#bbb;">  </span><span style="box-sizing:border-box;color:green;font-weight:700;">storageClassName</span>:<span style="box-sizing:border-box;color:#bbb;"> </span>fast<span style="box-sizing:border-box;color:#bbb;">
+</span></span></span><span style="box-sizing:border-box;height:1.6em;display:flex;"><span style="box-sizing:border-box;"><span style="box-sizing:border-box;color:#bbb;">  </span><span style="box-sizing:border-box;color:green;font-weight:700;">resources</span>:<span style="box-sizing:border-box;color:#bbb;">
+</span></span></span><span style="box-sizing:border-box;height:1.6em;display:flex;"><span style="box-sizing:border-box;"><span style="box-sizing:border-box;color:#bbb;">    </span><span style="box-sizing:border-box;color:green;font-weight:700;">requests</span>:<span style="box-sizing:border-box;color:#bbb;">
+</span></span></span><span style="box-sizing:border-box;height:1.6em;display:flex;"><span style="box-sizing:border-box;"><span style="box-sizing:border-box;color:#bbb;">      </span><span style="box-sizing:border-box;color:green;font-weight:700;">storage</span>:<span style="box-sizing:border-box;color:#bbb;"> </span>30Gi<span style="box-sizing:border-box;color:#bbb;">
+</span></span></span></code></pre></div><p style="box-sizing:border-box;margin-top:0px;margin-bottom:16px;max-width:80%;font-weight:400;">该声明会自动制备一块类似 SSD 的永久磁盘。
+在删除该声明后，这个卷也会被销毁。</p><h2 style="box-sizing:border-box;font-weight:500;line-height:1.2;font-size:32px;max-width:80%;margin-bottom:16px;margin-top:48px;"><span style="font-weight:500;line-height:1.2;font-size:32px;display:block;margin-top:-5rem;height:5rem;visibility:hidden;"> </span>设置默认值的行为<a href="https://kubernetes.io/zh-cn/docs/concepts/storage/dynamic-provisioning/#defaulting-behavior" style="box-sizing:border-box;text-decoration:none;background-color:transparent;color:rgb(23, 74, 180);visibility:hidden;"> <img style="box-sizing:border-box;overflow:hidden;vertical-align:middle;" src="data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='currentColor' width='24' height='24' viewBox='0 0 24 24' data-evernote-id='4298' class='js-evernote-checked'%3e%3cpath d='M0 0h24v24H0z' fill='none' data-evernote-id='4299' class='js-evernote-checked'%3e%3c/path%3e%3cpath d='M3.9 12c0-1.71 1.39-3.1 3.1-3.1h4V7H7c-2.76 0-5 2.24-5 5s2.24 5 5 5h4v-1.9H7c-1.71 0-3.1-1.39-3.1-3.1zM8 13h8v-2H8v2zm9-6h-4v1.9h4c1.71 0 3.1 1.39 3.1 3.1s-1.39 3.1-3.1 3.1h-4V17h4c2.76 0 5-2.24 5-5s-2.24-5-5-5z' data-evernote-id='4300' class='js-evernote-checked'%3e%3c/path%3e%3c/svg%3e"/></a></h2><p style="box-sizing:border-box;margin-top:0px;margin-bottom:16px;max-width:80%;font-weight:400;">可以在集群上启用动态卷制备，以便在未指定存储类的情况下动态设置所有声明。
+集群管理员可以通过以下方式启用此行为：</p><ul style="box-sizing:border-box;margin-top:0px;margin-bottom:16px;max-width:80%;"><li style="box-sizing:border-box;font-weight:400;margin-bottom:4px;">标记一个 <code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif">StorageClass</code> 为 <strong style="box-sizing:border-box;font-weight:700;">默认</strong>；</li><li style="box-sizing:border-box;font-weight:400;margin-bottom:4px;">确保 <a href="https://kubernetes.io/zh-cn/docs/reference/access-authn-authz/admission-controllers/#defaultstorageclass" style="box-sizing:border-box;text-decoration:none;background-color:transparent;color:rgb(23, 74, 180);"><code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif">DefaultStorageClass</code> 准入控制器</a>在
+API 服务器端被启用。</li></ul><p style="box-sizing:border-box;margin-top:0px;margin-bottom:16px;max-width:80%;font-weight:400;">管理员可以通过向其添加
+<a href="https://kubernetes.io/zh-cn/docs/reference/labels-annotations-taints/#storageclass-kubernetes-io-is-default-class" style="box-sizing:border-box;text-decoration:none;background-color:transparent;color:rgb(23, 74, 180);"><code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif">storageclass.kubernetes.io/is-default-class</code> 注解</a>
+来将特定的 <code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif">StorageClass</code> 标记为默认。
+当集群中存在默认的 <code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif">StorageClass</code> 并且用户创建了一个未指定 <code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif">storageClassName</code> 的 <code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif">PersistentVolumeClaim</code> 时，
+<code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif">DefaultStorageClass</code> 准入控制器会自动向其中添加指向默认存储类的 <code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif">storageClassName</code> 字段。</p><p style="box-sizing:border-box;margin-top:0px;margin-bottom:16px;max-width:80%;font-weight:400;">请注意，如果你在集群的多个 StorageClass 设置 <code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif">storageclass.kubernetes.io/is-default-class</code> 注解为 true，
+并之后创建了未指定 <code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif">storageClassName</code> 的 <code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif">PersistentVolumeClaim</code>，
+Kubernetes 会使用最新创建的默认 StorageClass。</p><h2 style="box-sizing:border-box;font-weight:500;line-height:1.2;font-size:32px;max-width:80%;margin-bottom:16px;margin-top:48px;"><span style="font-weight:500;line-height:1.2;font-size:32px;display:block;margin-top:-5rem;height:5rem;visibility:hidden;"> </span>拓扑感知<a href="https://kubernetes.io/zh-cn/docs/concepts/storage/dynamic-provisioning/#topology-awareness" style="box-sizing:border-box;text-decoration:none;background-color:transparent;color:rgb(23, 74, 180);visibility:hidden;"> <img style="box-sizing:border-box;overflow:hidden;vertical-align:middle;" src="data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='currentColor' width='24' height='24' viewBox='0 0 24 24' data-evernote-id='4321' class='js-evernote-checked'%3e%3cpath d='M0 0h24v24H0z' fill='none' data-evernote-id='4322' class='js-evernote-checked'%3e%3c/path%3e%3cpath d='M3.9 12c0-1.71 1.39-3.1 3.1-3.1h4V7H7c-2.76 0-5 2.24-5 5s2.24 5 5 5h4v-1.9H7c-1.71 0-3.1-1.39-3.1-3.1zM8 13h8v-2H8v2zm9-6h-4v1.9h4c1.71 0 3.1 1.39 3.1 3.1s-1.39 3.1-3.1 3.1h-4V17h4c2.76 0 5-2.24 5-5s-2.24-5-5-5z' data-evernote-id='4323' class='js-evernote-checked'%3e%3c/path%3e%3c/svg%3e"/></a></h2><p style="box-sizing:border-box;margin-top:0px;margin-bottom:16px;max-width:80%;font-weight:400;">在<a href="https://kubernetes.io/zh-cn/docs/setup/best-practices/multiple-zones/" style="box-sizing:border-box;text-decoration:none;background-color:transparent;color:rgb(23, 74, 180);">多可用区</a>集群中，Pod 可以被分散到某个区域的多个可用区。
+单可用区存储后端应该被制备到 Pod 被调度到的可用区。
+这可以通过设置<a href="https://kubernetes.io/zh-cn/docs/concepts/storage/storage-classes/#volume-binding-mode" style="box-sizing:border-box;text-decoration:none;background-color:transparent;color:rgb(23, 74, 180);">卷绑定模式</a>来实现。</p></div></span></div></div></div></div></div></div></div>
+</div>
+</div>
+<a class="back-link" href="../articles.html">← 返回笔记列表</a>
+</body>
+</html>

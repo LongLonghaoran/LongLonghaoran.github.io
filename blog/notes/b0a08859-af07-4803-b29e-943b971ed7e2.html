@@ -1,0 +1,420 @@
+<!DOCTYPE html>
+<html lang="zh-CN" data-theme="light">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Pods | Kubernetes — 技术笔记</title>
+<style>
+:root {
+  --bg: #ffffff;
+  --text: #1a1a1a;
+  --muted: #666;
+  --border: #e0e0e0;
+  --code-bg: #f5f5f5;
+  --link: #0066cc;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #1a1a1a;
+    --text: #e0e0e0;
+    --muted: #999;
+    --border: #333;
+    --code-bg: #2a2a2a;
+    --link: #66bbff;
+  }
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  line-height: 1.7;
+  color: var(--text);
+  background: var(--bg);
+  max-width: 860px;
+  margin: 0 auto;
+  padding: 2rem 1.5rem;
+}
+.note-header {
+  border-bottom: 2px solid var(--border);
+  padding-bottom: 1rem;
+  margin-bottom: 2rem;
+}
+.note-title {
+  font-size: 1.6rem;
+  font-weight: 700;
+  margin-bottom: 0.3rem;
+}
+.note-meta {
+  color: var(--muted);
+  font-size: 0.85rem;
+}
+.note-content {
+  font-size: 0.95rem;
+}
+.note-content h1 { font-size: 1.4rem; margin: 1.2rem 0 0.6rem; }
+.note-content h2 { font-size: 1.2rem; margin: 1rem 0 0.5rem; }
+.note-content h3 { font-size: 1.05rem; margin: 0.8rem 0 0.4rem; }
+.note-content p { margin: 0.5rem 0; }
+.note-content ul, .note-content ol { margin: 0.5rem 0 0.5rem 2rem; }
+.note-content li { margin: 0.2rem 0; }
+.note-content pre {
+  background: var(--code-bg);
+  padding: 1rem;
+  border-radius: 6px;
+  overflow-x: auto;
+  margin: 0.8rem 0;
+  font-size: 0.85rem;
+}
+.note-content code {
+  background: var(--code-bg);
+  padding: 0.1rem 0.3rem;
+  border-radius: 3px;
+  font-size: 0.88em;
+}
+.note-content pre code {
+  background: none;
+  padding: 0;
+}
+.note-content blockquote {
+  border-left: 3px solid var(--border);
+  padding-left: 1rem;
+  color: var(--muted);
+  margin: 0.8rem 0;
+}
+.note-content a { color: var(--link); }
+.note-content img {
+  max-width: 100%;
+  height: auto;
+  border-radius: 6px;
+  margin: 0.5rem 0;
+}
+.note-content table {
+  border-collapse: collapse;
+  width: 100%;
+  margin: 0.8rem 0;
+}
+.note-content th, .note-content td {
+  border: 1px solid var(--border);
+  padding: 0.5rem;
+}
+.note-content th { background: var(--code-bg); }
+.media-placeholder {
+  background: var(--code-bg);
+  padding: 1rem;
+  text-align: center;
+  color: var(--muted);
+  border-radius: 6px;
+  margin: 0.5rem 0;
+  font-size: 0.85rem;
+}
+.encrypt-placeholder {
+  background: #fff3cd;
+  padding: 0.5rem;
+  text-align: center;
+  color: #856404;
+  border-radius: 6px;
+  margin: 0.5rem 0;
+  font-size: 0.85rem;
+}
+.back-link {
+  display: inline-block;
+  margin-top: 2rem;
+  color: var(--link);
+  text-decoration: none;
+  font-size: 0.85rem;
+}
+</style>
+</head>
+<body>
+<div class="note-header">
+  <div class="note-title">Pods | Kubernetes</div>
+  <div class="note-meta">笔记本：Kubernetes学习笔记</div>
+</div>
+<div class="note-content">
+<div style="--en-clipped-content:article; --en-clipped-source-url:https://kubernetes.io/zh/docs/concepts/workloads/pods/; --en-clipped-source-title:Pods | Kubernetes;">
+<div><br/></div><div style="min-height: 4899px; font-size: 16px; display:block; min-width: 100%; position: relative;"> <div style="box-sizing:border-box;font-family:sans-serif;line-height:1.15;text-size-adjust:100%;-webkit-tap-highlight-color:transparent;"><div style="box-sizing:border-box;font-family:&quot;open sans&quot;, -apple-system, BlinkMacSystemFont, &quot;segoe ui&quot;, Roboto, &quot;helvetica neue&quot;, Arial, sans-serif, &quot;apple color emoji&quot;, &quot;segoe ui emoji&quot;, &quot;segoe ui symbol&quot;;font-size:16px;font-weight:400;line-height:1.5;color:rgb(34, 34, 34);text-align:left;background-color:rgb(255, 255, 255);"><div style="box-sizing:border-box;"><div style="box-sizing:border-box;"><div style="box-sizing:border-box;"><span style="box-sizing:border-box;"><div style="box-sizing:border-box;">
+		
+		
+			
+				
+			
+		
+		
+			
+  <h1 style="box-sizing:border-box;margin-top:0px;line-height:1.2;font-size:36px;max-width:80%;margin-bottom:16px;font-weight:700;">Pods</h1>
+  
+  
+
+
+
+
+<p style="box-sizing:border-box;margin-top:0px;margin-bottom:16px;max-width:80%;font-weight:400;"><em style="box-sizing:border-box;">Pod</em> 是可以在 Kubernetes 中创建和管理的、最小的可部署的计算单元。</p>
+<p style="box-sizing:border-box;margin-top:0px;margin-bottom:16px;max-width:80%;font-weight:400;"><em style="box-sizing:border-box;">Pod</em> （就像在鲸鱼荚或者豌豆荚中）是一组（一个或多个）
+<a title="" href="https://kubernetes.io/zh/docs/concepts/overview/what-is-kubernetes/#why-containers" target="_blank" style="box-sizing:border-box;background-color:initial;display:inline-block;border-bottom:1px dotted rgb(0, 0, 0);color:rgb(0, 0, 0);text-decoration:none;">容器</a>；
+这些容器共享存储、网络、以及怎样运行这些容器的声明。
+Pod 中的内容总是并置（colocated）的并且一同调度，在共享的上下文中运行。
+Pod 所建模的是特定于应用的“逻辑主机”，其中包含一个或多个应用容器，
+这些容器是相对紧密的耦合在一起的。
+在非云环境中，在相同的物理机或虚拟机上运行的应用类似于
+在同一逻辑主机上运行的云应用。</p>
+
+<p style="box-sizing:border-box;margin-top:0px;margin-bottom:16px;max-width:80%;font-weight:400;">除了应用容器，Pod 还可以包含在 Pod 启动期间运行的
+<a href="https://kubernetes.io/zh/docs/concepts/workloads/pods/init-containers/" style="box-sizing:border-box;text-decoration:none;background-color:initial;color:rgb(24, 78, 177);">Init 容器</a>。
+你也可以在集群中支持<a href="https://kubernetes.io/zh/docs/concepts/workloads/pods/ephemeral-containers/" style="box-sizing:border-box;text-decoration:none;background-color:initial;color:rgb(24, 78, 177);">临时性容器</a>
+的情况下，为调试的目的注入临时性容器。</p>
+
+<h2 style="box-sizing:border-box;font-weight:500;line-height:1.2;font-size:32px;max-width:80%;margin-bottom:16px;margin-top:48px;"><span style="font-weight:500;line-height:1.2;font-size:32px;display:block;margin-top:-5rem;height:5rem;visibility:hidden;"> </span>什么是 Pod？  <a href="https://kubernetes.io/zh/docs/concepts/workloads/pods/#what-is-a-pod" style="box-sizing:border-box;text-decoration:none;background-color:initial;color:rgb(24, 78, 177);visibility:hidden;"> <img style="box-sizing:border-box;overflow:hidden;vertical-align:middle;" src="data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='currentColor' width='24' height='24' viewBox='0 0 24 24' data-evernote-id='1958' class='js-evernote-checked'%3e%3cpath d='M0 0h24v24H0z' fill='none' data-evernote-id='1959' class='js-evernote-checked'%3e%3c/path%3e%3cpath d='M3.9 12c0-1.71 1.39-3.1 3.1-3.1h4V7H7c-2.76 0-5 2.24-5 5s2.24 5 5 5h4v-1.9H7c-1.71 0-3.1-1.39-3.1-3.1zM8 13h8v-2H8v2zm9-6h-4v1.9h4c1.71 0 3.1 1.39 3.1 3.1s-1.39 3.1-3.1 3.1h-4V17h4c2.76 0 5-2.24 5-5s-2.24-5-5-5z' data-evernote-id='1960' class='js-evernote-checked'%3e%3c/path%3e%3c/svg%3e"/></a></h2>
+
+<blockquote style="box-sizing:border-box;margin:0px 0px 1rem;max-width:80%;border-left:6px solid rgb(255, 166, 48);border-width:1px 1px 1px 0.5em;border-style:solid;border-color:rgb(238, 238, 238);border-image:initial;background:rgb(255, 255, 255);margin-top:0.5em;padding:0.4rem 0.4rem 0.4rem 1rem;color:rgb(0, 0, 0);margin-bottom:0.5em;border-radius:calc(0.333333em);border-left-color:rgb(66, 139, 202);">
+  <div style="box-sizing:border-box;"><strong style="box-sizing:border-box;font-weight:700;">说明：</strong> 除了 Docker 之外，Kubernetes 支持
+很多其他<a title="" href="https://kubernetes.io/zh/docs/setup/production-environment/container-runtimes" target="_blank" style="box-sizing:border-box;background-color:initial;display:inline-block;border-bottom:1px dotted rgb(0, 0, 0);color:rgb(0, 0, 0);text-decoration:none;">容器运行时</a>，
+<a href="https://www.docker.com/" style="box-sizing:border-box;text-decoration:none;background-color:initial;color:rgb(24, 78, 177);">Docker</a> 是最有名的运行时，
+使用 Docker 的术语来描述 Pod 会很有帮助。</div>
+</blockquote>
+
+<p style="box-sizing:border-box;margin-top:0px;margin-bottom:16px;max-width:80%;font-weight:400;">Pod 的共享上下文包括一组 Linux 名字空间、控制组（cgroup）和可能一些其他的隔离
+方面，即用来隔离 Docker 容器的技术。
+在 Pod 的上下文中，每个独立的应用可能会进一步实施隔离。</p>
+<p style="box-sizing:border-box;margin-top:0px;margin-bottom:16px;max-width:80%;font-weight:400;">就 Docker 概念的术语而言，Pod 类似于共享名字空间和文件系统卷的一组 Docker
+容器。</p>
+
+<h2 style="box-sizing:border-box;font-weight:500;line-height:1.2;font-size:32px;max-width:80%;margin-bottom:16px;margin-top:48px;"><span style="font-weight:500;line-height:1.2;font-size:32px;display:block;margin-top:-5rem;height:5rem;visibility:hidden;"> </span>使用 Pod  <a href="https://kubernetes.io/zh/docs/concepts/workloads/pods/#using-pods" style="box-sizing:border-box;text-decoration:none;background-color:initial;color:rgb(24, 78, 177);visibility:hidden;"> <img style="box-sizing:border-box;overflow:hidden;vertical-align:middle;" src="data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='currentColor' width='24' height='24' viewBox='0 0 24 24' data-evernote-id='1966' class='js-evernote-checked'%3e%3cpath d='M0 0h24v24H0z' fill='none' data-evernote-id='1967' class='js-evernote-checked'%3e%3c/path%3e%3cpath d='M3.9 12c0-1.71 1.39-3.1 3.1-3.1h4V7H7c-2.76 0-5 2.24-5 5s2.24 5 5 5h4v-1.9H7c-1.71 0-3.1-1.39-3.1-3.1zM8 13h8v-2H8v2zm9-6h-4v1.9h4c1.71 0 3.1 1.39 3.1 3.1s-1.39 3.1-3.1 3.1h-4V17h4c2.76 0 5-2.24 5-5s-2.24-5-5-5z' data-evernote-id='1968' class='js-evernote-checked'%3e%3c/path%3e%3c/svg%3e"/></a></h2>
+<p style="box-sizing:border-box;margin-top:0px;margin-bottom:16px;max-width:80%;font-weight:400;">通常你不需要直接创建 Pod，甚至单实例 Pod。
+相反，你会使用诸如
+<a title="" href="https://kubernetes.io/zh/docs/concepts/workloads/controllers/deployment/" target="_blank" style="box-sizing:border-box;background-color:initial;display:inline-block;border-bottom:1px dotted rgb(0, 0, 0);color:rgb(0, 0, 0);text-decoration:none;">Deployment</a> 或
+<a title="" href="https://kubernetes.io/zh/docs/concepts/workloads/controllers/job/" target="_blank" style="box-sizing:border-box;background-color:initial;display:inline-block;border-bottom:1px dotted rgb(0, 0, 0);color:rgb(0, 0, 0);text-decoration:none;">Job</a> 这类工作负载资源
+来创建 Pod。如果 Pod 需要跟踪状态，
+可以考虑 <a title="" href="https://kubernetes.io/zh/docs/concepts/workloads/controllers/statefulset/" target="_blank" style="box-sizing:border-box;background-color:initial;display:inline-block;border-bottom:1px dotted rgb(0, 0, 0);color:rgb(0, 0, 0);text-decoration:none;">StatefulSet</a>
+资源。</p>
+<p style="box-sizing:border-box;margin-top:0px;margin-bottom:16px;max-width:80%;font-weight:400;">Kubernetes 集群中的 Pod 主要有两种用法：</p>
+
+<ul style="box-sizing:border-box;margin-top:0px;margin-bottom:16px;max-width:80%;">
+<li style="box-sizing:border-box;font-weight:400;margin-bottom:4px;">
+<p style="box-sizing:border-box;margin-top:0px;margin-bottom:16px;font-weight:400;"><strong style="box-sizing:border-box;font-weight:700;">运行单个容器的 Pod</strong>。"每个 Pod 一个容器"模型是最常见的 Kubernetes 用例；
+在这种情况下，可以将 Pod 看作单个容器的包装器，并且 Kubernetes 直接管理 Pod，而不是容器。</p>
+</li>
+<li style="box-sizing:border-box;font-weight:400;margin-bottom:4px;">
+<p style="box-sizing:border-box;margin-top:0px;margin-bottom:16px;font-weight:400;"><strong style="box-sizing:border-box;font-weight:700;">运行多个协同工作的容器的 Pod</strong>。
+Pod 可能封装由多个紧密耦合且需要共享资源的共处容器组成的应用程序。
+这些位于同一位置的容器可能形成单个内聚的服务单元 —— 一个容器将文件从共享卷提供给公众，
+而另一个单独的“边车”（sidecar）容器则刷新或更新这些文件。
+Pod 将这些容器和存储资源打包为一个可管理的实体。</p>
+<blockquote style="box-sizing:border-box;margin:0px 0px 1rem;padding:0.4rem 0.4rem 0.4rem 1rem;border-width:1px 1px 1px 0.5em;border-style:solid;border-color:rgb(238, 238, 238);border-image:initial;background:rgb(255, 255, 255);color:rgb(0, 0, 0);margin-top:0.5em;margin-bottom:0.5em;border-radius:calc(0.333333em);border-left-color:rgb(66, 139, 202);">
+  <div style="box-sizing:border-box;"><strong style="box-sizing:border-box;font-weight:700;">说明：</strong> 将多个并置、同管的容器组织到一个 Pod 中是一种相对高级的使用场景。
+只有在一些场景中，容器之间紧密关联时你才应该使用这种模式。</div>
+</blockquote>
+</li>
+</ul>
+
+<p style="box-sizing:border-box;margin-top:0px;margin-bottom:16px;max-width:80%;font-weight:400;">每个 Pod 都旨在运行给定应用程序的单个实例。如果希望横向扩展应用程序（例如，运行多个实例
+以提供更多的资源），则应该使用多个 Pod，每个实例使用一个 Pod。
+在 Kubernetes 中，这通常被称为 <em style="box-sizing:border-box;">副本（Replication）</em>。
+通常使用一种工作负载资源及其<a title="" href="https://kubernetes.io/zh/docs/concepts/architecture/controller/" target="_blank" style="box-sizing:border-box;background-color:initial;display:inline-block;border-bottom:1px dotted rgb(0, 0, 0);color:rgb(0, 0, 0);text-decoration:none;">控制器</a>
+来创建和管理一组 Pod 副本。</p>
+<p style="box-sizing:border-box;margin-top:0px;margin-bottom:16px;max-width:80%;font-weight:400;">参见 <a href="https://kubernetes.io/zh/docs/concepts/workloads/pods/#pods-and-controllers" style="box-sizing:border-box;text-decoration:none;background-color:initial;color:rgb(24, 78, 177);">Pod 和控制器</a>以了解 Kubernetes
+如何使用工作负载资源及其控制器以实现应用的扩缩和自动修复。</p>
+
+<h3 style="box-sizing:border-box;font-weight:500;line-height:1.2;font-size:24px;margin-top:32px;margin-bottom:16px;"><span style="font-weight:500;line-height:1.2;font-size:24px;display:block;margin-top:-5rem;height:5rem;visibility:hidden;"> </span>Pod 怎样管理多个容器<a href="https://kubernetes.io/zh/docs/concepts/workloads/pods/#pod-%E6%80%8E%E6%A0%B7%E7%AE%A1%E7%90%86%E5%A4%9A%E4%B8%AA%E5%AE%B9%E5%99%A8" style="box-sizing:border-box;text-decoration:none;background-color:initial;color:rgb(24, 78, 177);visibility:hidden;"> <img style="box-sizing:border-box;overflow:hidden;vertical-align:middle;" src="data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='currentColor' width='24' height='24' viewBox='0 0 24 24' data-evernote-id='1984' class='js-evernote-checked'%3e%3cpath d='M0 0h24v24H0z' fill='none' data-evernote-id='1985' class='js-evernote-checked'%3e%3c/path%3e%3cpath d='M3.9 12c0-1.71 1.39-3.1 3.1-3.1h4V7H7c-2.76 0-5 2.24-5 5s2.24 5 5 5h4v-1.9H7c-1.71 0-3.1-1.39-3.1-3.1zM8 13h8v-2H8v2zm9-6h-4v1.9h4c1.71 0 3.1 1.39 3.1 3.1s-1.39 3.1-3.1 3.1h-4V17h4c2.76 0 5-2.24 5-5s-2.24-5-5-5z' data-evernote-id='1986' class='js-evernote-checked'%3e%3c/path%3e%3c/svg%3e"/></a></h3>
+<p style="box-sizing:border-box;margin-top:0px;margin-bottom:16px;max-width:80%;font-weight:400;">Pod 被设计成支持形成内聚服务单元的多个协作过程（形式为容器）。
+Pod 中的容器被自动安排到集群中的同一物理机或虚拟机上，并可以一起进行调度。
+容器之间可以共享资源和依赖、彼此通信、协调何时以及何种方式终止自身。</p>
+
+<p style="box-sizing:border-box;margin-top:0px;margin-bottom:16px;max-width:80%;font-weight:400;">例如，你可能有一个容器，为共享卷中的文件提供 Web 服务器支持，以及一个单独的
+“sidecar（挂斗）”容器负责从远端更新这些文件，如下图所示：</p>
+
+<div style="box-sizing:border-box;display:block;margin:0px 0px 1rem;">
+    <div class="media-placeholder">[图片/附件]</div></en-media> 
+</div>
+
+
+<p style="box-sizing:border-box;margin-top:0px;margin-bottom:16px;max-width:80%;font-weight:400;">有些 Pod 具有 <a title="" href="https://kubernetes.io/zh/docs/reference/glossary/?all=true#term-init-container" target="_blank" style="box-sizing:border-box;background-color:initial;display:inline-block;border-bottom:1px dotted rgb(0, 0, 0);color:rgb(0, 0, 0);text-decoration:none;">Init 容器</a> 和
+<a title="" href="https://kubernetes.io/zh/docs/reference/glossary/?all=true#term-app-container" target="_blank" style="box-sizing:border-box;background-color:initial;display:inline-block;border-bottom:1px dotted rgb(0, 0, 0);color:rgb(0, 0, 0);text-decoration:none;">应用容器</a>。
+Init 容器会在启动应用容器之前运行并完成。</p>
+<p style="box-sizing:border-box;margin-top:0px;margin-bottom:16px;max-width:80%;font-weight:400;">Pod 天生地为其成员容器提供了两种共享资源：<a href="https://kubernetes.io/zh/docs/concepts/workloads/pods/#pod-networking" style="box-sizing:border-box;text-decoration:none;background-color:initial;color:rgb(24, 78, 177);">网络</a>和
+<a href="https://kubernetes.io/zh/docs/concepts/workloads/pods/#pod-storage" style="box-sizing:border-box;text-decoration:none;background-color:initial;color:rgb(24, 78, 177);">存储</a>。</p>
+
+<h2 style="box-sizing:border-box;font-weight:500;line-height:1.2;font-size:32px;max-width:80%;margin-bottom:16px;margin-top:48px;"><span style="font-weight:500;line-height:1.2;font-size:32px;display:block;margin-top:-5rem;height:5rem;visibility:hidden;"> </span>使用 Pod  <a href="https://kubernetes.io/zh/docs/concepts/workloads/pods/#working-with-pods" style="box-sizing:border-box;text-decoration:none;background-color:initial;color:rgb(24, 78, 177);visibility:hidden;"> <img style="box-sizing:border-box;overflow:hidden;vertical-align:middle;" src="data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='currentColor' width='24' height='24' viewBox='0 0 24 24' data-evernote-id='1993' class='js-evernote-checked'%3e%3cpath d='M0 0h24v24H0z' fill='none' data-evernote-id='1994' class='js-evernote-checked'%3e%3c/path%3e%3cpath d='M3.9 12c0-1.71 1.39-3.1 3.1-3.1h4V7H7c-2.76 0-5 2.24-5 5s2.24 5 5 5h4v-1.9H7c-1.71 0-3.1-1.39-3.1-3.1zM8 13h8v-2H8v2zm9-6h-4v1.9h4c1.71 0 3.1 1.39 3.1 3.1s-1.39 3.1-3.1 3.1h-4V17h4c2.76 0 5-2.24 5-5s-2.24-5-5-5z' data-evernote-id='1995' class='js-evernote-checked'%3e%3c/path%3e%3c/svg%3e"/></a></h2>
+<p style="box-sizing:border-box;margin-top:0px;margin-bottom:16px;max-width:80%;font-weight:400;">你很少在 Kubernetes 中直接创建一个个的 Pod，甚至是单实例（Singleton）的 Pod。
+这是因为 Pod 被设计成了相对临时性的、用后即抛的一次性实体。
+当 Pod 由你或者间接地由 <a title="" href="https://kubernetes.io/zh/docs/concepts/architecture/controller/" target="_blank" style="box-sizing:border-box;background-color:initial;display:inline-block;border-bottom:1px dotted rgb(0, 0, 0);color:rgb(0, 0, 0);text-decoration:none;">控制器</a>
+创建时，它被调度在集群中的<a title="" href="https://kubernetes.io/zh/docs/concepts/architecture/nodes/" target="_blank" style="box-sizing:border-box;background-color:initial;display:inline-block;border-bottom:1px dotted rgb(0, 0, 0);color:rgb(0, 0, 0);text-decoration:none;">节点</a>上运行。
+Pod 会保持在该节点上运行，直到 Pod 结束执行、Pod 对象被删除、Pod 因资源不足而被
+<em style="box-sizing:border-box;">驱逐</em> 或者节点失效为止。</p>
+
+<blockquote style="box-sizing:border-box;margin:0px 0px 1rem;max-width:80%;border-left:6px solid rgb(255, 166, 48);border-width:1px 1px 1px 0.5em;border-style:solid;border-color:rgb(238, 238, 238);border-image:initial;background:rgb(255, 255, 255);margin-top:0.5em;padding:0.4rem 0.4rem 0.4rem 1rem;color:rgb(0, 0, 0);margin-bottom:0.5em;border-radius:calc(0.333333em);border-left-color:rgb(66, 139, 202);">
+  <div style="box-sizing:border-box;"><strong style="box-sizing:border-box;font-weight:700;">说明：</strong> 重启 Pod 中的容器不应与重启 Pod 混淆。
+Pod 不是进程，而是容器运行的环境。
+在被删除之前，Pod 会一直存在。</div>
+</blockquote>
+
+<p style="box-sizing:border-box;margin-top:0px;margin-bottom:16px;max-width:80%;font-weight:400;">当你为 Pod 对象创建清单时，要确保所指定的 Pod 名称是合法的
+<a href="https://kubernetes.io/zh/docs/concepts/overview/working-with-objects/names#dns-subdomain-names" style="box-sizing:border-box;text-decoration:none;background-color:initial;color:rgb(24, 78, 177);">DNS 子域名</a>。</p>
+
+<h3 style="box-sizing:border-box;font-weight:500;line-height:1.2;font-size:24px;margin-top:32px;margin-bottom:16px;"><span style="font-weight:500;line-height:1.2;font-size:24px;display:block;margin-top:-5rem;height:5rem;visibility:hidden;"> </span>Pod 和控制器   <a href="https://kubernetes.io/zh/docs/concepts/workloads/pods/#pods-and-controllers" style="box-sizing:border-box;text-decoration:none;background-color:initial;color:rgb(24, 78, 177);visibility:hidden;"> <img style="box-sizing:border-box;overflow:hidden;vertical-align:middle;" src="data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='currentColor' width='24' height='24' viewBox='0 0 24 24' data-evernote-id='2002' class='js-evernote-checked'%3e%3cpath d='M0 0h24v24H0z' fill='none' data-evernote-id='2003' class='js-evernote-checked'%3e%3c/path%3e%3cpath d='M3.9 12c0-1.71 1.39-3.1 3.1-3.1h4V7H7c-2.76 0-5 2.24-5 5s2.24 5 5 5h4v-1.9H7c-1.71 0-3.1-1.39-3.1-3.1zM8 13h8v-2H8v2zm9-6h-4v1.9h4c1.71 0 3.1 1.39 3.1 3.1s-1.39 3.1-3.1 3.1h-4V17h4c2.76 0 5-2.24 5-5s-2.24-5-5-5z' data-evernote-id='2004' class='js-evernote-checked'%3e%3c/path%3e%3c/svg%3e"/></a></h3>
+<p style="box-sizing:border-box;margin-top:0px;margin-bottom:16px;max-width:80%;font-weight:400;">你可以使用工作负载资源来创建和管理多个 Pod。
+资源的控制器能够处理副本的管理、上线，并在 Pod 失效时提供自愈能力。
+例如，如果一个节点失败，控制器注意到该节点上的 Pod 已经停止工作，
+就可以创建替换性的 Pod。调度器会将替身 Pod 调度到一个健康的节点执行。</p>
+<p style="box-sizing:border-box;margin-top:0px;margin-bottom:16px;max-width:80%;font-weight:400;">下面是一些管理一个或者多个 Pod 的工作负载资源的示例：</p>
+<ul style="box-sizing:border-box;margin-top:0px;margin-bottom:16px;max-width:80%;">
+<li style="box-sizing:border-box;font-weight:400;margin-bottom:4px;"><a title="" href="https://kubernetes.io/zh/docs/concepts/workloads/controllers/deployment/" target="_blank" style="box-sizing:border-box;background-color:initial;display:inline-block;border-bottom:1px dotted rgb(0, 0, 0);color:rgb(0, 0, 0);text-decoration:none;">Deployment</a></li>
+<li style="box-sizing:border-box;font-weight:400;margin-bottom:4px;"><a title="" href="https://kubernetes.io/zh/docs/concepts/workloads/controllers/statefulset/" target="_blank" style="box-sizing:border-box;background-color:initial;display:inline-block;border-bottom:1px dotted rgb(0, 0, 0);color:rgb(0, 0, 0);text-decoration:none;">StatefulSet</a></li>
+<li style="box-sizing:border-box;font-weight:400;margin-bottom:4px;"><a title="" href="https://kubernetes.io/zh/docs/concepts/workloads/controllers/daemonset/" target="_blank" style="box-sizing:border-box;background-color:initial;display:inline-block;border-bottom:1px dotted rgb(0, 0, 0);color:rgb(0, 0, 0);text-decoration:none;">DaemonSet</a></li>
+</ul>
+
+<h3 style="box-sizing:border-box;font-weight:500;line-height:1.2;font-size:24px;margin-top:32px;margin-bottom:16px;"><span style="font-weight:500;line-height:1.2;font-size:24px;display:block;margin-top:-5rem;height:5rem;visibility:hidden;"> </span>Pod 模版   <a href="https://kubernetes.io/zh/docs/concepts/workloads/pods/#pod-templates" style="box-sizing:border-box;text-decoration:none;background-color:initial;color:rgb(24, 78, 177);visibility:hidden;"> <img style="box-sizing:border-box;overflow:hidden;vertical-align:middle;" src="data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='currentColor' width='24' height='24' viewBox='0 0 24 24' data-evernote-id='2012' class='js-evernote-checked'%3e%3cpath d='M0 0h24v24H0z' fill='none' data-evernote-id='2013' class='js-evernote-checked'%3e%3c/path%3e%3cpath d='M3.9 12c0-1.71 1.39-3.1 3.1-3.1h4V7H7c-2.76 0-5 2.24-5 5s2.24 5 5 5h4v-1.9H7c-1.71 0-3.1-1.39-3.1-3.1zM8 13h8v-2H8v2zm9-6h-4v1.9h4c1.71 0 3.1 1.39 3.1 3.1s-1.39 3.1-3.1 3.1h-4V17h4c2.76 0 5-2.24 5-5s-2.24-5-5-5z' data-evernote-id='2014' class='js-evernote-checked'%3e%3c/path%3e%3c/svg%3e"/></a></h3>
+<p style="box-sizing:border-box;margin-top:0px;margin-bottom:16px;max-width:80%;font-weight:400;"><a title="" href="https://kubernetes.io/zh/docs/concepts/workloads/" target="_blank" style="box-sizing:border-box;background-color:initial;display:inline-block;border-bottom:1px dotted rgb(0, 0, 0);color:rgb(0, 0, 0);text-decoration:none;">负载</a>资源的控制器通常使用
+<em style="box-sizing:border-box;">Pod 模板（Pod Template）</em> 来替你创建 Pod 并管理它们。</p>
+<p style="box-sizing:border-box;margin-top:0px;margin-bottom:16px;max-width:80%;font-weight:400;">Pod 模板是包含在工作负载对象中的规范，用来创建 Pod。这类负载资源包括
+<a href="https://kubernetes.io/zh/docs/concepts/workloads/controllers/deployment/" style="box-sizing:border-box;text-decoration:none;background-color:initial;color:rgb(24, 78, 177);">Deployment</a>、
+<a href="https://kubernetes.io/zh/docs/concepts/workloads/controllers/job/" style="box-sizing:border-box;text-decoration:none;background-color:initial;color:rgb(24, 78, 177);">Job</a> 和
+<a href="https://kubernetes.io/zh/docs/concepts/workloads/controllers/daemonset/" style="box-sizing:border-box;text-decoration:none;background-color:initial;color:rgb(24, 78, 177);">DaemonSets</a>等。</p>
+
+<p style="box-sizing:border-box;margin-top:0px;margin-bottom:16px;max-width:80%;font-weight:400;">工作负载的控制器会使用负载对象中的 <code style="box-sizing:border-box;font-family:SFMono-Regular, Menlo, Monaco, Consolas, &quot;liberation mono&quot;, &quot;courier new&quot;, monospace;overflow-wrap:break-word;padding:0.2em 0.4em;margin:0px;word-break:normal;background-color:rgba(0, 0, 0, 0.05);border-radius:4px;font-size:85%;color:inherit;">PodTemplate</code> 来生成实际的 Pod。
+<code style="box-sizing:border-box;font-family:SFMono-Regular, Menlo, Monaco, Consolas, &quot;liberation mono&quot;, &quot;courier new&quot;, monospace;overflow-wrap:break-word;padding:0.2em 0.4em;margin:0px;word-break:normal;background-color:rgba(0, 0, 0, 0.05);border-radius:4px;font-size:85%;color:inherit;">PodTemplate</code> 是你用来运行应用时指定的负载资源的目标状态的一部分。</p>
+<p style="box-sizing:border-box;margin-top:0px;margin-bottom:16px;max-width:80%;font-weight:400;">下面的示例是一个简单的 Job 的清单，其中的 <code style="box-sizing:border-box;font-family:SFMono-Regular, Menlo, Monaco, Consolas, &quot;liberation mono&quot;, &quot;courier new&quot;, monospace;overflow-wrap:break-word;padding:0.2em 0.4em;margin:0px;word-break:normal;background-color:rgba(0, 0, 0, 0.05);border-radius:4px;font-size:85%;color:inherit;">template</code> 指示启动一个容器。
+该 Pod 中的容器会打印一条消息之后暂停。</p>
+<div style="box-sizing:border-box;position:relative;display:flex;flex-direction:column;min-width:0px;overflow-wrap:break-word;background-color:rgb(255, 255, 255);background-clip:border-box;border:1px solid rgba(0, 0, 0, 0.125);border-radius:4px;max-width:80%;margin:2rem 0px;padding:0px;"><pre style="box-sizing:border-box;font-family:SFMono-Regular, Menlo, Monaco, Consolas, &quot;liberation mono&quot;, &quot;courier new&quot;, monospace;overflow:auto;display:block;color:rgb(34, 34, 34);font-size:87.5%;overflow-wrap:normal;margin:0px;padding:16px;background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code style="box-sizing:border-box;font-family:SFMono-Regular, Menlo, Monaco, Consolas, &quot;liberation mono&quot;, &quot;courier new&quot;, monospace;overflow-wrap:break-word;color:inherit;padding:0px;margin:0px;white-space:pre;border:0px;font-size:100%;word-break:normal;background-color:inherit;"><span style="box-sizing:border-box;color:#008000;font-weight:bold;">apiVersion</span>:<span style="box-sizing:border-box;color:#bbb;"> </span>batch/v1<span style="box-sizing:border-box;color:#bbb;">
+</span><span style="box-sizing:border-box;color:#bbb;"></span><span style="box-sizing:border-box;color:#008000;font-weight:bold;">kind</span>:<span style="box-sizing:border-box;color:#bbb;"> </span>Job<span style="box-sizing:border-box;color:#bbb;">
+</span><span style="box-sizing:border-box;color:#bbb;"></span><span style="box-sizing:border-box;color:#008000;font-weight:bold;">metadata</span>:<span style="box-sizing:border-box;color:#bbb;">
+</span><span style="box-sizing:border-box;color:#bbb;">  </span><span style="box-sizing:border-box;color:#008000;font-weight:bold;">name</span>:<span style="box-sizing:border-box;color:#bbb;"> </span>hello<span style="box-sizing:border-box;color:#bbb;">
+</span><span style="box-sizing:border-box;color:#bbb;"></span><span style="box-sizing:border-box;color:#008000;font-weight:bold;">spec</span>:<span style="box-sizing:border-box;color:#bbb;">
+</span><span style="box-sizing:border-box;color:#bbb;">  </span><span style="box-sizing:border-box;color:#008000;font-weight:bold;">template</span>:<span style="box-sizing:border-box;color:#bbb;">
+</span><span style="box-sizing:border-box;color:#bbb;">    </span><span style="box-sizing:border-box;color:#080;font-style:italic;"># 这里是 Pod 模版</span><span style="box-sizing:border-box;color:#bbb;">
+</span><span style="box-sizing:border-box;color:#bbb;">    </span><span style="box-sizing:border-box;color:#008000;font-weight:bold;">spec</span>:<span style="box-sizing:border-box;color:#bbb;">
+</span><span style="box-sizing:border-box;color:#bbb;">      </span><span style="box-sizing:border-box;color:#008000;font-weight:bold;">containers</span>:<span style="box-sizing:border-box;color:#bbb;">
+</span><span style="box-sizing:border-box;color:#bbb;">      </span>- <span style="box-sizing:border-box;color:#008000;font-weight:bold;">name</span>:<span style="box-sizing:border-box;color:#bbb;"> </span>hello<span style="box-sizing:border-box;color:#bbb;">
+</span><span style="box-sizing:border-box;color:#bbb;">        </span><span style="box-sizing:border-box;color:#008000;font-weight:bold;">image</span>:<span style="box-sizing:border-box;color:#bbb;"> </span>busybox<span style="box-sizing:border-box;color:#bbb;">
+</span><span style="box-sizing:border-box;color:#bbb;">        </span><span style="box-sizing:border-box;color:#008000;font-weight:bold;">command</span>:<span style="box-sizing:border-box;color:#bbb;"> </span>[<span style="box-sizing:border-box;color:#b44;">'sh'</span>,<span style="box-sizing:border-box;color:#bbb;"> </span><span style="box-sizing:border-box;color:#b44;">'-c'</span>,<span style="box-sizing:border-box;color:#bbb;"> </span><span style="box-sizing:border-box;color:#b44;">'echo "Hello, Kubernetes!" &amp;&amp; sleep 3600'</span>]<span style="box-sizing:border-box;color:#bbb;">
+</span><span style="box-sizing:border-box;color:#bbb;">      </span><span style="box-sizing:border-box;color:#008000;font-weight:bold;">restartPolicy</span>:<span style="box-sizing:border-box;color:#bbb;"> </span>OnFailure<span style="box-sizing:border-box;color:#bbb;">
+</span><span style="box-sizing:border-box;color:#bbb;">    </span><span style="box-sizing:border-box;color:#080;font-style:italic;"># 以上为 Pod 模版</span><span style="box-sizing:border-box;color:#bbb;">
+</span></code></pre></div>
+<p style="box-sizing:border-box;margin-top:0px;margin-bottom:16px;max-width:80%;font-weight:400;">修改 Pod 模版或者切换到新的 Pod 模版都不会对已经存在的 Pod 起作用。
+Pod 不会直接收到模版的更新。相反，
+新的 Pod 会被创建出来，与更改后的 Pod 模版匹配。</p>
+<p style="box-sizing:border-box;margin-top:0px;margin-bottom:16px;max-width:80%;font-weight:400;">例如，Deployment 控制器针对每个 Deployment 对象确保运行中的 Pod 与当前的 Pod
+模版匹配。如果模版被更新，则 Deployment 必须删除现有的 Pod，基于更新后的模版
+创建新的 Pod。每个工作负载资源都实现了自己的规则，用来处理对 Pod 模版的更新。</p>
+
+<p style="box-sizing:border-box;margin-top:0px;margin-bottom:16px;max-width:80%;font-weight:400;">在节点上，<a title="" href="https://kubernetes.io/docs/reference/generated/kubelet" target="_blank" style="box-sizing:border-box;background-color:initial;display:inline-block;border-bottom:1px dotted rgb(0, 0, 0);color:rgb(0, 0, 0);text-decoration:none;">kubelet</a>并不直接监测
+或管理与 Pod 模版相关的细节或模版的更新，这些细节都被抽象出来。
+这种抽象和关注点分离简化了整个系统的语义，并且使得用户可以在不改变现有代码的
+前提下就能扩展集群的行为。</p>
+
+<h2 style="box-sizing:border-box;font-weight:500;line-height:1.2;font-size:32px;max-width:80%;margin-bottom:16px;margin-top:48px;"><span style="font-weight:500;line-height:1.2;font-size:32px;display:block;margin-top:-5rem;height:5rem;visibility:hidden;"> </span>Pod 更新与替换  <a href="https://kubernetes.io/zh/docs/concepts/workloads/pods/#pod-update-and-replacement" style="box-sizing:border-box;text-decoration:none;background-color:initial;color:rgb(24, 78, 177);visibility:hidden;"> <img style="box-sizing:border-box;overflow:hidden;vertical-align:middle;" src="data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='currentColor' width='24' height='24' viewBox='0 0 24 24' data-evernote-id='2083' class='js-evernote-checked'%3e%3cpath d='M0 0h24v24H0z' fill='none' data-evernote-id='2084' class='js-evernote-checked'%3e%3c/path%3e%3cpath d='M3.9 12c0-1.71 1.39-3.1 3.1-3.1h4V7H7c-2.76 0-5 2.24-5 5s2.24 5 5 5h4v-1.9H7c-1.71 0-3.1-1.39-3.1-3.1zM8 13h8v-2H8v2zm9-6h-4v1.9h4c1.71 0 3.1 1.39 3.1 3.1s-1.39 3.1-3.1 3.1h-4V17h4c2.76 0 5-2.24 5-5s-2.24-5-5-5z' data-evernote-id='2085' class='js-evernote-checked'%3e%3c/path%3e%3c/svg%3e"/></a></h2>
+<p style="box-sizing:border-box;margin-top:0px;margin-bottom:16px;max-width:80%;font-weight:400;">正如前面章节所述，当某工作负载的 Pod 模板被改变时，控制器会基于更新的模板
+创建新的 Pod 对象而不是对现有 Pod 执行更新或者修补操作。</p>
+
+<p style="box-sizing:border-box;margin-top:0px;margin-bottom:16px;max-width:80%;font-weight:400;">Kubernetes 并不禁止你直接管理 Pod。对运行中的 Pod 的某些字段执行就地更新操作
+还是可能的。不过，类似
+<a href="https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.21/#patch-pod-v1-core" style="box-sizing:border-box;text-decoration:none;background-color:initial;color:rgb(24, 78, 177);"><code style="box-sizing:border-box;font-family:SFMono-Regular, Menlo, Monaco, Consolas, &quot;liberation mono&quot;, &quot;courier new&quot;, monospace;overflow-wrap:break-word;padding:0.2em 0.4em;margin:0px;word-break:normal;background-color:rgba(0, 0, 0, 0.05);border-radius:4px;font-size:85%;color:inherit;">patch</code></a> 和
+<a href="https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.21/#replace-pod-v1-core" style="box-sizing:border-box;text-decoration:none;background-color:initial;color:rgb(24, 78, 177);"><code style="box-sizing:border-box;font-family:SFMono-Regular, Menlo, Monaco, Consolas, &quot;liberation mono&quot;, &quot;courier new&quot;, monospace;overflow-wrap:break-word;padding:0.2em 0.4em;margin:0px;word-break:normal;background-color:rgba(0, 0, 0, 0.05);border-radius:4px;font-size:85%;color:inherit;">replace</code></a>
+这类更新操作有一些限制：</p>
+
+<ul style="box-sizing:border-box;margin-top:0px;margin-bottom:16px;max-width:80%;">
+<li style="box-sizing:border-box;font-weight:400;margin-bottom:4px;">
+<p style="box-sizing:border-box;margin-top:0px;margin-bottom:16px;font-weight:400;">Pod 的绝大多数元数据都是不可变的。例如，你不可以改变其 <code style="box-sizing:border-box;font-family:SFMono-Regular, Menlo, Monaco, Consolas, &quot;liberation mono&quot;, &quot;courier new&quot;, monospace;overflow-wrap:break-word;padding:0.2em 0.4em;margin:0px;word-break:normal;background-color:rgba(0, 0, 0, 0.05);border-radius:4px;font-size:85%;color:inherit;">namespace</code>、<code style="box-sizing:border-box;font-family:SFMono-Regular, Menlo, Monaco, Consolas, &quot;liberation mono&quot;, &quot;courier new&quot;, monospace;overflow-wrap:break-word;padding:0.2em 0.4em;margin:0px;word-break:normal;background-color:rgba(0, 0, 0, 0.05);border-radius:4px;font-size:85%;color:inherit;">name</code>、
+<code style="box-sizing:border-box;font-family:SFMono-Regular, Menlo, Monaco, Consolas, &quot;liberation mono&quot;, &quot;courier new&quot;, monospace;overflow-wrap:break-word;padding:0.2em 0.4em;margin:0px;word-break:normal;background-color:rgba(0, 0, 0, 0.05);border-radius:4px;font-size:85%;color:inherit;">uid</code> 或者 <code style="box-sizing:border-box;font-family:SFMono-Regular, Menlo, Monaco, Consolas, &quot;liberation mono&quot;, &quot;courier new&quot;, monospace;overflow-wrap:break-word;padding:0.2em 0.4em;margin:0px;word-break:normal;background-color:rgba(0, 0, 0, 0.05);border-radius:4px;font-size:85%;color:inherit;">creationTimestamp</code> 字段；<code style="box-sizing:border-box;font-family:SFMono-Regular, Menlo, Monaco, Consolas, &quot;liberation mono&quot;, &quot;courier new&quot;, monospace;overflow-wrap:break-word;padding:0.2em 0.4em;margin:0px;word-break:normal;background-color:rgba(0, 0, 0, 0.05);border-radius:4px;font-size:85%;color:inherit;">generation</code> 字段是比较特别的，如果更新
+该字段，只能增加字段取值而不能减少。</p>
+</li>
+<li style="box-sizing:border-box;font-weight:400;margin-bottom:4px;">
+<p style="box-sizing:border-box;margin-top:0px;margin-bottom:16px;font-weight:400;">如果 <code style="box-sizing:border-box;font-family:SFMono-Regular, Menlo, Monaco, Consolas, &quot;liberation mono&quot;, &quot;courier new&quot;, monospace;overflow-wrap:break-word;padding:0.2em 0.4em;margin:0px;word-break:normal;background-color:rgba(0, 0, 0, 0.05);border-radius:4px;font-size:85%;color:inherit;">metadata.deletionTimestamp</code> 已经被设置，则不可以向 <code style="box-sizing:border-box;font-family:SFMono-Regular, Menlo, Monaco, Consolas, &quot;liberation mono&quot;, &quot;courier new&quot;, monospace;overflow-wrap:break-word;padding:0.2em 0.4em;margin:0px;word-break:normal;background-color:rgba(0, 0, 0, 0.05);border-radius:4px;font-size:85%;color:inherit;">metadata.finalizers</code>
+列表中添加新的条目。</p>
+</li>
+<li style="box-sizing:border-box;font-weight:400;margin-bottom:4px;">
+<p style="box-sizing:border-box;margin-top:0px;margin-bottom:16px;font-weight:400;">Pod 更新不可以改变除 <code style="box-sizing:border-box;font-family:SFMono-Regular, Menlo, Monaco, Consolas, &quot;liberation mono&quot;, &quot;courier new&quot;, monospace;overflow-wrap:break-word;padding:0.2em 0.4em;margin:0px;word-break:normal;background-color:rgba(0, 0, 0, 0.05);border-radius:4px;font-size:85%;color:inherit;">spec.containers[*].image</code>、<code style="box-sizing:border-box;font-family:SFMono-Regular, Menlo, Monaco, Consolas, &quot;liberation mono&quot;, &quot;courier new&quot;, monospace;overflow-wrap:break-word;padding:0.2em 0.4em;margin:0px;word-break:normal;background-color:rgba(0, 0, 0, 0.05);border-radius:4px;font-size:85%;color:inherit;">spec.initContainers[*].image</code>、
+<code style="box-sizing:border-box;font-family:SFMono-Regular, Menlo, Monaco, Consolas, &quot;liberation mono&quot;, &quot;courier new&quot;, monospace;overflow-wrap:break-word;padding:0.2em 0.4em;margin:0px;word-break:normal;background-color:rgba(0, 0, 0, 0.05);border-radius:4px;font-size:85%;color:inherit;">spec.activeDeadlineSeconds</code> 或 <code style="box-sizing:border-box;font-family:SFMono-Regular, Menlo, Monaco, Consolas, &quot;liberation mono&quot;, &quot;courier new&quot;, monospace;overflow-wrap:break-word;padding:0.2em 0.4em;margin:0px;word-break:normal;background-color:rgba(0, 0, 0, 0.05);border-radius:4px;font-size:85%;color:inherit;">spec.tolerations</code> 之外的字段。
+对于 <code style="box-sizing:border-box;font-family:SFMono-Regular, Menlo, Monaco, Consolas, &quot;liberation mono&quot;, &quot;courier new&quot;, monospace;overflow-wrap:break-word;padding:0.2em 0.4em;margin:0px;word-break:normal;background-color:rgba(0, 0, 0, 0.05);border-radius:4px;font-size:85%;color:inherit;">spec.tolerations</code>，你只被允许添加新的条目到其中。</p>
+</li>
+<li style="box-sizing:border-box;font-weight:400;margin-bottom:4px;">
+<p style="box-sizing:border-box;margin-top:0px;margin-bottom:16px;font-weight:400;">在更新<code style="box-sizing:border-box;font-family:SFMono-Regular, Menlo, Monaco, Consolas, &quot;liberation mono&quot;, &quot;courier new&quot;, monospace;overflow-wrap:break-word;padding:0.2em 0.4em;margin:0px;word-break:normal;background-color:rgba(0, 0, 0, 0.05);border-radius:4px;font-size:85%;color:inherit;">spec.activeDeadlineSeconds</code> 字段时，以下两种更新操作是被允许的：</p>
+<ol style="box-sizing:border-box;margin-top:0px;margin-bottom:0px;">
+<li style="box-sizing:border-box;font-weight:400;margin-bottom:4px;">如果该字段尚未设置，可以将其设置为一个正数；</li>
+<li style="box-sizing:border-box;font-weight:400;margin-bottom:4px;">如果该字段已经设置为一个正数，可以将其设置为一个更小的、非负的整数。</li>
+</ol>
+</li>
+</ul>
+
+<h3 style="box-sizing:border-box;font-weight:500;line-height:1.2;font-size:24px;margin-top:32px;margin-bottom:16px;"><span style="font-weight:500;line-height:1.2;font-size:24px;display:block;margin-top:-5rem;height:5rem;visibility:hidden;"> </span>资源共享和通信   <a href="https://kubernetes.io/zh/docs/concepts/workloads/pods/#resource-sharing-and-communication" style="box-sizing:border-box;text-decoration:none;background-color:initial;color:rgb(24, 78, 177);visibility:hidden;"> <img style="box-sizing:border-box;overflow:hidden;vertical-align:middle;" src="data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='currentColor' width='24' height='24' viewBox='0 0 24 24' data-evernote-id='2116' class='js-evernote-checked'%3e%3cpath d='M0 0h24v24H0z' fill='none' data-evernote-id='2117' class='js-evernote-checked'%3e%3c/path%3e%3cpath d='M3.9 12c0-1.71 1.39-3.1 3.1-3.1h4V7H7c-2.76 0-5 2.24-5 5s2.24 5 5 5h4v-1.9H7c-1.71 0-3.1-1.39-3.1-3.1zM8 13h8v-2H8v2zm9-6h-4v1.9h4c1.71 0 3.1 1.39 3.1 3.1s-1.39 3.1-3.1 3.1h-4V17h4c2.76 0 5-2.24 5-5s-2.24-5-5-5z' data-evernote-id='2118' class='js-evernote-checked'%3e%3c/path%3e%3c/svg%3e"/></a></h3>
+<p style="box-sizing:border-box;margin-top:0px;margin-bottom:16px;max-width:80%;font-weight:400;">Pod 使它的成员容器间能够进行数据共享和通信。</p>
+
+<h3 style="box-sizing:border-box;font-weight:500;line-height:1.2;font-size:24px;margin-top:32px;margin-bottom:16px;"><span style="font-weight:500;line-height:1.2;font-size:24px;display:block;margin-top:-5rem;height:5rem;visibility:hidden;"> </span>Pod 中的存储<a href="https://kubernetes.io/zh/docs/concepts/workloads/pods/#pod-storage" style="box-sizing:border-box;text-decoration:none;background-color:initial;color:rgb(24, 78, 177);visibility:hidden;"> <img style="box-sizing:border-box;overflow:hidden;vertical-align:middle;" src="data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='currentColor' width='24' height='24' viewBox='0 0 24 24' data-evernote-id='2121' class='js-evernote-checked'%3e%3cpath d='M0 0h24v24H0z' fill='none' data-evernote-id='2122' class='js-evernote-checked'%3e%3c/path%3e%3cpath d='M3.9 12c0-1.71 1.39-3.1 3.1-3.1h4V7H7c-2.76 0-5 2.24-5 5s2.24 5 5 5h4v-1.9H7c-1.71 0-3.1-1.39-3.1-3.1zM8 13h8v-2H8v2zm9-6h-4v1.9h4c1.71 0 3.1 1.39 3.1 3.1s-1.39 3.1-3.1 3.1h-4V17h4c2.76 0 5-2.24 5-5s-2.24-5-5-5z' data-evernote-id='2123' class='js-evernote-checked'%3e%3c/path%3e%3c/svg%3e"/></a></h3>
+<p style="box-sizing:border-box;margin-top:0px;margin-bottom:16px;max-width:80%;font-weight:400;">一个 Pod 可以设置一组共享的存储<a title="" href="https://kubernetes.io/zh/docs/concepts/storage/volumes/" target="_blank" style="box-sizing:border-box;background-color:initial;display:inline-block;border-bottom:1px dotted rgb(0, 0, 0);color:rgb(0, 0, 0);text-decoration:none;">卷</a>。
+Pod 中的所有容器都可以访问该共享卷，从而允许这些容器共享数据。
+卷还允许 Pod 中的持久数据保留下来，即使其中的容器需要重新启动。
+有关 Kubernetes 如何在 Pod 中实现共享存储并将其提供给 Pod 的更多信息，
+请参考<a href="https://kubernetes.io/zh/docs/concepts/storage/" style="box-sizing:border-box;text-decoration:none;background-color:initial;color:rgb(24, 78, 177);">卷</a>。</p>
+
+<h3 style="box-sizing:border-box;font-weight:500;line-height:1.2;font-size:24px;margin-top:32px;margin-bottom:16px;"><span style="font-weight:500;line-height:1.2;font-size:24px;display:block;margin-top:-5rem;height:5rem;visibility:hidden;"> </span>Pod 联网   <a href="https://kubernetes.io/zh/docs/concepts/workloads/pods/#pod-networking" style="box-sizing:border-box;text-decoration:none;background-color:initial;color:rgb(24, 78, 177);visibility:hidden;"> <img style="box-sizing:border-box;overflow:hidden;vertical-align:middle;" src="data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='currentColor' width='24' height='24' viewBox='0 0 24 24' data-evernote-id='2126' class='js-evernote-checked'%3e%3cpath d='M0 0h24v24H0z' fill='none' data-evernote-id='2127' class='js-evernote-checked'%3e%3c/path%3e%3cpath d='M3.9 12c0-1.71 1.39-3.1 3.1-3.1h4V7H7c-2.76 0-5 2.24-5 5s2.24 5 5 5h4v-1.9H7c-1.71 0-3.1-1.39-3.1-3.1zM8 13h8v-2H8v2zm9-6h-4v1.9h4c1.71 0 3.1 1.39 3.1 3.1s-1.39 3.1-3.1 3.1h-4V17h4c2.76 0 5-2.24 5-5s-2.24-5-5-5z' data-evernote-id='2128' class='js-evernote-checked'%3e%3c/path%3e%3c/svg%3e"/></a></h3>
+<p style="box-sizing:border-box;margin-top:0px;margin-bottom:16px;max-width:80%;font-weight:400;">每个 Pod 都在每个地址族中获得一个唯一的 IP 地址。
+Pod 中的每个容器共享网络名字空间，包括 IP 地址和网络端口。
+<em style="box-sizing:border-box;">Pod 内</em> 的容器可以使用 <code style="box-sizing:border-box;font-family:SFMono-Regular, Menlo, Monaco, Consolas, &quot;liberation mono&quot;, &quot;courier new&quot;, monospace;overflow-wrap:break-word;padding:0.2em 0.4em;margin:0px;word-break:normal;background-color:rgba(0, 0, 0, 0.05);border-radius:4px;font-size:85%;color:inherit;">localhost</code> 互相通信。
+当 Pod 中的容器与 <em style="box-sizing:border-box;">Pod 之外</em> 的实体通信时，它们必须协调如何使用共享的网络资源
+（例如端口）。</p>
+
+<p style="box-sizing:border-box;margin-top:0px;margin-bottom:16px;max-width:80%;font-weight:400;">在同一个 Pod 内，所有容器共享一个 IP 地址和端口空间，并且可以通过 <code style="box-sizing:border-box;font-family:SFMono-Regular, Menlo, Monaco, Consolas, &quot;liberation mono&quot;, &quot;courier new&quot;, monospace;overflow-wrap:break-word;padding:0.2em 0.4em;margin:0px;word-break:normal;background-color:rgba(0, 0, 0, 0.05);border-radius:4px;font-size:85%;color:inherit;">localhost</code> 发现对方。
+他们也能通过如 SystemV 信号量或 POSIX 共享内存这类标准的进程间通信方式互相通信。
+不同 Pod 中的容器的 IP 地址互不相同，没有
+<a href="https://kubernetes.io/zh/docs/concepts/policy/pod-security-policy/" style="box-sizing:border-box;text-decoration:none;background-color:initial;color:rgb(24, 78, 177);">特殊配置</a> 就不能使用 IPC 进行通信。
+如果某容器希望与运行于其他 Pod 中的容器通信，可以通过 IP 联网的方式实现。</p>
+
+<p style="box-sizing:border-box;margin-top:0px;margin-bottom:16px;max-width:80%;font-weight:400;">Pod 中的容器所看到的系统主机名与为 Pod 配置的 <code style="box-sizing:border-box;font-family:SFMono-Regular, Menlo, Monaco, Consolas, &quot;liberation mono&quot;, &quot;courier new&quot;, monospace;overflow-wrap:break-word;padding:0.2em 0.4em;margin:0px;word-break:normal;background-color:rgba(0, 0, 0, 0.05);border-radius:4px;font-size:85%;color:inherit;">name</code> 属性值相同。
+<a href="https://kubernetes.io/zh/docs/concepts/cluster-administration/networking/" style="box-sizing:border-box;text-decoration:none;background-color:initial;color:rgb(24, 78, 177);">网络</a>部分提供了更多有关此内容的信息。</p>
+
+<h2 style="box-sizing:border-box;font-weight:500;line-height:1.2;font-size:32px;max-width:80%;margin-bottom:16px;margin-top:48px;"><span style="font-weight:500;line-height:1.2;font-size:32px;display:block;margin-top:-5rem;height:5rem;visibility:hidden;"> </span>容器的特权模式    <a href="https://kubernetes.io/zh/docs/concepts/workloads/pods/#privileged-mode-for-containers" style="box-sizing:border-box;text-decoration:none;background-color:initial;color:rgb(24, 78, 177);visibility:hidden;"> <img style="box-sizing:border-box;overflow:hidden;vertical-align:middle;" src="data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='currentColor' width='24' height='24' viewBox='0 0 24 24' data-evernote-id='2138' class='js-evernote-checked'%3e%3cpath d='M0 0h24v24H0z' fill='none' data-evernote-id='2139' class='js-evernote-checked'%3e%3c/path%3e%3cpath d='M3.9 12c0-1.71 1.39-3.1 3.1-3.1h4V7H7c-2.76 0-5 2.24-5 5s2.24 5 5 5h4v-1.9H7c-1.71 0-3.1-1.39-3.1-3.1zM8 13h8v-2H8v2zm9-6h-4v1.9h4c1.71 0 3.1 1.39 3.1 3.1s-1.39 3.1-3.1 3.1h-4V17h4c2.76 0 5-2.24 5-5s-2.24-5-5-5z' data-evernote-id='2140' class='js-evernote-checked'%3e%3c/path%3e%3c/svg%3e"/></a></h2>
+<p style="box-sizing:border-box;margin-top:0px;margin-bottom:16px;max-width:80%;font-weight:400;">Pod 中的任何容器都可以使用容器规约中的
+<a href="https://kubernetes.io/zh/docs/tasks/configure-pod-container/security-context/" style="box-sizing:border-box;text-decoration:none;background-color:initial;color:rgb(24, 78, 177);">安全性上下文</a>中的
+<code style="box-sizing:border-box;font-family:SFMono-Regular, Menlo, Monaco, Consolas, &quot;liberation mono&quot;, &quot;courier new&quot;, monospace;overflow-wrap:break-word;padding:0.2em 0.4em;margin:0px;word-break:normal;background-color:rgba(0, 0, 0, 0.05);border-radius:4px;font-size:85%;color:inherit;">privileged</code> 参数启用特权模式。
+这对于想要使用操作系统管理权能（Capabilities，如操纵网络堆栈和访问设备）
+的容器很有用。
+容器内的进程几乎可以获得与容器外的进程相同的特权。</p>
+
+<blockquote style="box-sizing:border-box;margin:0px 0px 1rem;max-width:80%;border-left:6px solid rgb(255, 166, 48);border-width:1px 1px 1px 0.5em;border-style:solid;border-color:rgb(238, 238, 238);border-image:initial;background:rgb(255, 255, 255);margin-top:0.5em;padding:0.4rem 0.4rem 0.4rem 1rem;color:rgb(0, 0, 0);margin-bottom:0.5em;border-radius:calc(0.333333em);border-left-color:rgb(66, 139, 202);">
+  <div style="box-sizing:border-box;"><strong style="box-sizing:border-box;font-weight:700;">说明：</strong> 你的<a title="" href="https://kubernetes.io/zh/docs/setup/production-environment/container-runtimes" target="_blank" style="box-sizing:border-box;background-color:initial;display:inline-block;border-bottom:1px dotted rgb(0, 0, 0);color:rgb(0, 0, 0);text-decoration:none;">容器运行时</a>必须支持
+特权容器的概念才能使用这一配置。</div>
+</blockquote>
+
+<h2 style="box-sizing:border-box;font-weight:500;line-height:1.2;font-size:32px;max-width:80%;margin-bottom:16px;margin-top:48px;"><span style="font-weight:500;line-height:1.2;font-size:32px;display:block;margin-top:-5rem;height:5rem;visibility:hidden;"> </span>静态 Pod   <a href="https://kubernetes.io/zh/docs/concepts/workloads/pods/#static-pods" style="box-sizing:border-box;text-decoration:none;background-color:initial;color:rgb(24, 78, 177);visibility:hidden;"> <img style="box-sizing:border-box;overflow:hidden;vertical-align:middle;" src="data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='currentColor' width='24' height='24' viewBox='0 0 24 24' data-evernote-id='2146' class='js-evernote-checked'%3e%3cpath d='M0 0h24v24H0z' fill='none' data-evernote-id='2147' class='js-evernote-checked'%3e%3c/path%3e%3cpath d='M3.9 12c0-1.71 1.39-3.1 3.1-3.1h4V7H7c-2.76 0-5 2.24-5 5s2.24 5 5 5h4v-1.9H7c-1.71 0-3.1-1.39-3.1-3.1zM8 13h8v-2H8v2zm9-6h-4v1.9h4c1.71 0 3.1 1.39 3.1 3.1s-1.39 3.1-3.1 3.1h-4V17h4c2.76 0 5-2.24 5-5s-2.24-5-5-5z' data-evernote-id='2148' class='js-evernote-checked'%3e%3c/path%3e%3c/svg%3e"/></a></h2>
+<p style="box-sizing:border-box;margin-top:0px;margin-bottom:16px;max-width:80%;font-weight:400;"><em style="box-sizing:border-box;">静态 Pod（Static Pod）</em> 直接由特定节点上的 <code style="box-sizing:border-box;font-family:SFMono-Regular, Menlo, Monaco, Consolas, &quot;liberation mono&quot;, &quot;courier new&quot;, monospace;overflow-wrap:break-word;padding:0.2em 0.4em;margin:0px;word-break:normal;background-color:rgba(0, 0, 0, 0.05);border-radius:4px;font-size:85%;color:inherit;">kubelet</code> 守护进程管理，
+不需要<a title="" href="https://kubernetes.io/zh/docs/reference/command-line-tools-reference/kube-apiserver/" target="_blank" style="box-sizing:border-box;background-color:initial;display:inline-block;border-bottom:1px dotted rgb(0, 0, 0);color:rgb(0, 0, 0);text-decoration:none;">API 服务器</a>看到它们。
+尽管大多数 Pod 都是通过控制面（例如，<a title="" href="https://kubernetes.io/zh/docs/concepts/workloads/controllers/deployment/" target="_blank" style="box-sizing:border-box;background-color:initial;display:inline-block;border-bottom:1px dotted rgb(0, 0, 0);color:rgb(0, 0, 0);text-decoration:none;">Deployment</a>）
+来管理的，对于静态 Pod 而言，<code style="box-sizing:border-box;font-family:SFMono-Regular, Menlo, Monaco, Consolas, &quot;liberation mono&quot;, &quot;courier new&quot;, monospace;overflow-wrap:break-word;padding:0.2em 0.4em;margin:0px;word-break:normal;background-color:rgba(0, 0, 0, 0.05);border-radius:4px;font-size:85%;color:inherit;">kubelet</code> 直接监控每个 Pod，并在其失效时重启之。</p>
+
+<p style="box-sizing:border-box;margin-top:0px;margin-bottom:16px;max-width:80%;font-weight:400;">静态 Pod 通常绑定到某个节点上的 <a title="" href="https://kubernetes.io/docs/reference/generated/kubelet" target="_blank" style="box-sizing:border-box;background-color:initial;display:inline-block;border-bottom:1px dotted rgb(0, 0, 0);color:rgb(0, 0, 0);text-decoration:none;">kubelet</a>。
+其主要用途是运行自托管的控制面。
+在自托管场景中，使用 <code style="box-sizing:border-box;font-family:SFMono-Regular, Menlo, Monaco, Consolas, &quot;liberation mono&quot;, &quot;courier new&quot;, monospace;overflow-wrap:break-word;padding:0.2em 0.4em;margin:0px;word-break:normal;background-color:rgba(0, 0, 0, 0.05);border-radius:4px;font-size:85%;color:inherit;">kubelet</code> 来管理各个独立的
+<a href="https://kubernetes.io/zh/docs/concepts/overview/components/#control-plane-components" style="box-sizing:border-box;text-decoration:none;background-color:initial;color:rgb(24, 78, 177);">控制面组件</a>。</p>
+<p style="box-sizing:border-box;margin-top:0px;margin-bottom:16px;max-width:80%;font-weight:400;"><code style="box-sizing:border-box;font-family:SFMono-Regular, Menlo, Monaco, Consolas, &quot;liberation mono&quot;, &quot;courier new&quot;, monospace;overflow-wrap:break-word;padding:0.2em 0.4em;margin:0px;word-break:normal;background-color:rgba(0, 0, 0, 0.05);border-radius:4px;font-size:85%;color:inherit;">kubelet</code> 自动尝试为每个静态 Pod 在 Kubernetes API 服务器上创建一个
+<a title="" href="https://kubernetes.io/zh/docs/reference/glossary/?all=true#term-mirror-pod" target="_blank" style="box-sizing:border-box;background-color:initial;display:inline-block;border-bottom:1px dotted rgb(0, 0, 0);color:rgb(0, 0, 0);text-decoration:none;">镜像 Pod</a>。
+这意味着在节点上运行的 Pod 在 API 服务器上是可见的，但不可以通过 API
+服务器来控制。</p>
+<h2 style="box-sizing:border-box;font-weight:500;line-height:1.2;font-size:32px;max-width:80%;margin-bottom:16px;margin-top:48px;"><span style="font-weight:500;line-height:1.2;font-size:32px;display:block;margin-top:-5rem;height:5rem;visibility:hidden;"> </span>接下来<a href="https://kubernetes.io/zh/docs/concepts/workloads/pods/#%E6%8E%A5%E4%B8%8B%E6%9D%A5" style="box-sizing:border-box;text-decoration:none;background-color:initial;color:rgb(24, 78, 177);visibility:hidden;"> <img style="box-sizing:border-box;overflow:hidden;vertical-align:middle;" src="data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='currentColor' width='24' height='24' viewBox='0 0 24 24' data-evernote-id='2158' class='js-evernote-checked'%3e%3cpath d='M0 0h24v24H0z' fill='none' data-evernote-id='2159' class='js-evernote-checked'%3e%3c/path%3e%3cpath d='M3.9 12c0-1.71 1.39-3.1 3.1-3.1h4V7H7c-2.76 0-5 2.24-5 5s2.24 5 5 5h4v-1.9H7c-1.71 0-3.1-1.39-3.1-3.1zM8 13h8v-2H8v2zm9-6h-4v1.9h4c1.71 0 3.1 1.39 3.1 3.1s-1.39 3.1-3.1 3.1h-4V17h4c2.76 0 5-2.24 5-5s-2.24-5-5-5z' data-evernote-id='2160' class='js-evernote-checked'%3e%3c/path%3e%3c/svg%3e"/></a></h2>
+
+<p style="box-sizing:border-box;margin-top:0px;margin-bottom:16px;max-width:80%;font-weight:400;">要了解为什么 Kubernetes 会在其他资源
+（如 <a title="" href="https://kubernetes.io/zh/docs/concepts/workloads/controllers/statefulset/" target="_blank" style="box-sizing:border-box;background-color:initial;display:inline-block;border-bottom:1px dotted rgb(0, 0, 0);color:rgb(0, 0, 0);text-decoration:none;">StatefulSet</a>
+或 <a title="" href="https://kubernetes.io/zh/docs/concepts/workloads/controllers/deployment/" target="_blank" style="box-sizing:border-box;background-color:initial;display:inline-block;border-bottom:1px dotted rgb(0, 0, 0);color:rgb(0, 0, 0);text-decoration:none;">Deployment</a>）
+封装通用的 Pod API，相关的背景信息可以在前人的研究中找到。具体包括：</p>
+<ul style="box-sizing:border-box;margin-top:0px;margin-bottom:16px;max-width:80%;">
+<li style="box-sizing:border-box;font-weight:400;margin-bottom:4px;"><a href="https://aurora.apache.org/documentation/latest/reference/configuration/#job-schema" style="box-sizing:border-box;text-decoration:none;background-color:initial;color:rgb(24, 78, 177);">Aurora</a></li>
+<li style="box-sizing:border-box;font-weight:400;margin-bottom:4px;"><a href="https://research.google.com/pubs/pub43438.html" style="box-sizing:border-box;text-decoration:none;background-color:initial;color:rgb(24, 78, 177);">Borg</a></li>
+<li style="box-sizing:border-box;font-weight:400;margin-bottom:4px;"><a href="https://mesosphere.github.io/marathon/docs/rest-api.html" style="box-sizing:border-box;text-decoration:none;background-color:initial;color:rgb(24, 78, 177);">Marathon</a></li>
+<li style="box-sizing:border-box;font-weight:400;margin-bottom:4px;"><a href="https://research.google/pubs/pub41684/" style="box-sizing:border-box;text-decoration:none;background-color:initial;color:rgb(24, 78, 177);">Omega</a></li>
+<li style="box-sizing:border-box;font-weight:400;margin-bottom:4px;"><a href="https://engineering.fb.com/data-center-engineering/tupperware/" style="box-sizing:border-box;text-decoration:none;background-color:initial;color:rgb(24, 78, 177);">Tupperware</a>.</li>
+</ul>
+
+
+		
+		<div style="box-sizing:border-box;">
+    
+    
+    
+    
+    
+    
+</div>
+
+	</div></span></div></div></div></div></div></div>
+</div>
+</div>
+<a class="back-link" href="../articles.html">← 返回笔记列表</a>
+</body>
+</html>

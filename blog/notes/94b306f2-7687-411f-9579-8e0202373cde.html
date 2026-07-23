@@ -1,0 +1,995 @@
+<!DOCTYPE html>
+<html lang="zh-CN" data-theme="light">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>全局唯一标识分区表 - 维基百科，自由的百科全书 — 技术笔记</title>
+<style>
+:root { --bg:#fff; --text:#1a1a1a; --muted:#666; --border:#e0e0e0; --code-bg:#f5f5f5; --link:#0066cc; }
+@media (prefers-color-scheme: dark) { :root { --bg:#1a1a1a; --text:#e0e0e0; --muted:#999; --border:#333; --code-bg:#2a2a2a; --link:#66bbff; } }
+* { box-sizing:border-box; margin:0; padding:0; }
+body { font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Arial,sans-serif; line-height:1.7; color:var(--text); background:var(--bg); max-width:860px; margin:0 auto; padding:2rem 1.5rem; }
+.note-header { border-bottom:2px solid var(--border); padding-bottom:1rem; margin-bottom:2rem; }
+.note-title { font-size:1.6rem; font-weight:700; margin-bottom:0.3rem; }
+.note-meta { color:var(--muted); font-size:0.85rem; }
+.note-content { font-size:0.95rem; }
+.note-content h1 { font-size:1.4rem; margin:1.2rem 0 0.6rem; }
+.note-content h2 { font-size:1.2rem; margin:1rem 0 0.5rem; }
+.note-content h3 { font-size:1.05rem; margin:0.8rem 0 0.4rem; }
+.note-content p { margin:0.5rem 0; }
+.note-content ul,.note-content ol { margin:0.5rem 0 0.5rem 2rem; }
+.note-content li { margin:0.2rem 0; }
+.note-content pre { background:var(--code-bg); padding:1rem; border-radius:6px; overflow-x:auto; margin:0.8rem 0; font-size:0.85rem; }
+.note-content code { background:var(--code-bg); padding:0.1rem 0.3rem; border-radius:3px; font-size:0.88em; }
+.note-content pre code { background:none; padding:0; }
+.note-content blockquote { border-left:3px solid var(--border); padding-left:1rem; color:var(--muted); margin:0.8rem 0; }
+.note-content a { color:var(--link); }
+.note-content img { max-width:100%; height:auto; border-radius:6px; margin:0.5rem 0; }
+.note-content table { border-collapse:collapse; width:100%; margin:0.8rem 0; }
+.note-content th,.note-content td { border:1px solid var(--border); padding:0.5rem; }
+.note-content th { background:var(--code-bg); }
+.media-placeholder { background:var(--code-bg); padding:1rem; text-align:center; color:var(--muted); border-radius:6px; margin:0.5rem 0; font-size:0.85rem; }
+.encrypt-placeholder { background:#fff3cd; padding:0.5rem; text-align:center; color:#856404; border-radius:6px; margin:0.5rem 0; font-size:0.85rem; }
+.back-link { display:inline-block; margin-top:2rem; color:var(--link); text-decoration:none; font-size:0.85rem; }
+</style>
+</head>
+<body>
+<div class="note-header"><div class="note-title">全局唯一标识分区表 - 维基百科，自由的百科全书</div><div class="note-meta">笔记本：系统安装</div></div>
+<div class="note-content"><div style="--en-clipped-content:article; --en-clipped-source-url:https://zh.wikipedia.org/wiki/GUID%25E7%25A3%2581%25E7%25A2%259F%25E5%2588%2586%25E5%2589%25B2%25E8%25A1%25A8; --en-clipped-source-title:全局唯一标识分区表 - 维基百科，自由的百科全书;">
+<div><br/></div><div style="min-height: 7261px; font-size: 16px; display:block; min-width: 100%; position: relative;"> <div style="font-size:100%;font-family:sans-serif;"><div style="background-color:rgb(246, 246, 246);font-family:sans-serif;"><div style="background-color:rgb(255, 255, 255);color:rgb(32, 33, 34);direction:ltr;border-image:initial;">
+	<a style="text-decoration:none;color:rgb(6, 69, 173);background:none;cursor:pointer;"></a>
+	<div style="z-index:0;line-height:1.6;text-align:center;margin:0px;position:relative;font-size:0.8em;"><div style="margin:0px;"></div><table width="100%" style="font-weight:inherit;font-style:inherit;font-variant:inherit;font-size:100%;background:transparent;min-height:26px;"><tr><td><div style="margin:0px;word-break:break-word;min-height:20.9271px;"><b><a href="https://meta.wikimedia.org/wiki/Meetup/Hong_Kong/coming" title="meta:Meetup/Hong Kong/coming" style="text-decoration:none;background:none;color:rgb(51, 102, 187);">香港维基人线上聚会</a></b>定期在每月首个星期六举行，欢迎报名参与。</div></td><td>[<a href="https://zh.wikipedia.org/wiki/GUID%E7%A3%81%E7%A2%9F%E5%88%86%E5%89%B2%E8%A1%A8#" style="text-decoration:none;color:rgb(6, 69, 173);background:none;">关闭</a>]</td></tr></table></div>
+	<div style="float:right;z-index:0;position:relative;line-height:1.6;font-size:0.938em;">
+	
+	</div>
+	<h1 lang="zh-Hans-CN" style="color:rgb(0, 0, 0);margin:0px;padding-top:0.5em;padding-bottom:0.17em;border-bottom:1px solid rgb(162, 169, 177);font-weight:normal;padding:0px;font-family:&quot;Linux Libertine&quot;, Georgia, Times, serif;line-height:1.3;margin-bottom:0.25em;font-size:1.8em;overflow:visible;"><span style="font-family:Linux Libertine, Georgia, Times, serif;line-height:0;font-size:1.8em;color:rgb(0, 0, 0);font-weight:normal;display:block;height:22px;left:-9999px;margin-bottom:20px;position:absolute;width:105px;"><div class="media-placeholder">[图片/附件]</div></en-media></span>全局唯一标识分区表<span style="font-family:sans-serif;user-select:none;font-size:small;font-weight:normal;margin-left:1em;vertical-align:baseline;line-height:1em;unicode-bidi:isolate;"><span style="font-family:sans-serif;font-size:small;font-weight:normal;line-height:1em;">​</span><span>[</span><a href="https://zh.wikipedia.org/w/index.php?title=GUID%E7%A3%81%E7%A2%9F%E5%88%86%E5%89%B2%E8%A1%A8&amp;action=edit&amp;section=0&amp;summary=/*%20top%20*/%20" title="编辑首段" style="text-decoration:none;color:rgb(6, 69, 173);background:none;white-space:nowrap;">编辑</a><span>]</span></span></h1>
+	<div style="position:relative;z-index:0;line-height:1.6;font-size:0.938em;">
+		<div style="display:inline;">维基百科，自由的百科全书</div>
+		<div lang="zh-Hans-CN" dir="ltr" style="font-size:84%;line-height:1.2em;margin:0px 0px 1.4em 1em;color:rgb(84, 89, 93);width:auto;"></div>
+		<div style="font-size:84%;line-height:1.2em;margin:0px 0px 1.4em 1em;color:rgb(84, 89, 93);width:auto;"></div>
+		
+		<div></div>
+		<a href="https://zh.wikipedia.org/wiki/GUID%E7%A3%81%E7%A2%9F%E5%88%86%E5%89%B2%E8%A1%A8#mw-head" style="text-decoration:none;color:rgb(6, 69, 173);background:none;display:block;clip:rect(1px, 1px, 1px, 1px);width:1px;height:1px;margin:-1px;border:0px;padding:0px;overflow:hidden;position:absolute;">跳到导航</a>
+		<a href="https://zh.wikipedia.org/wiki/GUID%E7%A3%81%E7%A2%9F%E5%88%86%E5%89%B2%E8%A1%A8#searchInput" style="text-decoration:none;color:rgb(6, 69, 173);background:none;display:block;clip:rect(1px, 1px, 1px, 1px);width:1px;height:1px;margin:-1px;border:0px;padding:0px;overflow:hidden;position:absolute;">跳到搜索</a>
+		<div lang="zh-Hans-CN" dir="ltr" style="direction:ltr;"><div><table style="font-weight:inherit;font-style:inherit;font-variant:inherit;font-size:100%;margin:0px 10%;border-width:1px 1px 1px 10px;border-style:solid;border-color:rgb(162, 169, 177) rgb(162, 169, 177) rgb(162, 169, 177) rgb(51, 102, 204);border-image:initial;background:rgb(248, 249, 250);border-left:10px solid rgb(242, 133, 0);"><tbody><tr><td style="border:none;text-align:center;padding:2px 0px 2px 0.5em;"><div style="width:52px;"><a href="https://zh.wikipedia.org/wiki/File:Wiki_letter_w.svg" style="text-decoration:none;color:rgb(6, 69, 173);background:none;"><div class="media-placeholder">[图片/附件]</div></en-media></a></div></td><td style="border:none;width:100%;padding:0.25em 0.5em;"><span>此条目<b><a href="https://zh.wikipedia.org/wiki/Wikipedia:%E6%A0%BC%E5%BC%8F%E6%89%8B%E5%86%8A/%E5%BA%8F%E8%A8%80%E7%AB%A0%E7%AF%80" title="Wikipedia:格式手册/序言章节" style="text-decoration:none;color:rgb(6, 69, 173);background:none;">序言章节</a>没有充分<a href="https://zh.wikipedia.org/wiki/Wikipedia:%E6%91%98%E8%A6%81%E6%A0%BC%E5%BC%8F" title="Wikipedia:摘要格式" style="text-decoration:none;color:rgb(6, 69, 173);background:none;">总结</a>其内容要点</b>。<span></span> <small style="font-size:0.857em;"><i>(<span>2020年3月8日</span>)</i></small><span><br/><small style="font-size:0.857em;">请考虑扩充序言，为条目所有重要方面提供<a href="https://zh.wikipedia.org/wiki/Wikipedia:%E6%A0%BC%E5%BC%8F%E6%89%8B%E5%86%8A/%E5%BA%8F%E8%A8%80%E7%AB%A0%E7%AF%80#%E6%8F%90%E4%BE%9B%E6%98%93%E8%AE%80%E7%9A%84%E7%B8%BD%E8%A6%BD" title="Wikipedia:格式手册/序言章节" style="text-decoration:none;color:rgb(6, 69, 173);background:none;">易懂的概述</a>。请在条目的<a href="https://zh.wikipedia.org/wiki/Talk:GUID%E7%A3%81%E7%A2%9F%E5%88%86%E5%89%B2%E8%A1%A8" title="Talk:GUID磁盘分割表" style="text-decoration:none;color:rgb(6, 69, 173);background:none;">讨论页</a>讨论此问题。</small></span><span></span></span></td></tr></tbody></table>
+
+<p style="margin:0.5em 0px;"><b>全局唯一标识分区表</b>（<b><a href="https://zh.wikipedia.org/wiki/GUID" title="GUID" style="text-decoration:none;color:rgb(6, 69, 173);background:none;">GUID</a> Partition Table</b>，<a href="https://zh.wikipedia.org/wiki/%E7%BC%A9%E5%86%99" title="缩写" style="text-decoration:none;color:rgb(6, 69, 173);background:none;">缩写</a>：<b>GPT</b>）是一个实体<a href="https://zh.wikipedia.org/wiki/%E7%A1%AC%E7%9B%98" title="硬盘" style="text-decoration:none;color:rgb(6, 69, 173);background:none;">硬盘</a>的<a href="https://zh.wikipedia.org/wiki/%E5%88%86%E5%8C%BA%E8%A1%A8" title="分区表" style="text-decoration:none;color:rgb(6, 69, 173);background:none;">分区表</a>的结构布局的标准。它是<a href="https://zh.wikipedia.org/wiki/%E5%8F%AF%E6%89%A9%E5%B1%95%E5%9B%BA%E4%BB%B6%E6%8E%A5%E5%8F%A3" title="可扩展固件接口" style="text-decoration:none;color:rgb(6, 69, 173);background:none;">可扩展固件接口</a>（UEFI）标准（被<a href="https://zh.wikipedia.org/wiki/Intel" title="Intel" style="text-decoration:none;color:rgb(6, 69, 173);background:none;">Intel</a>用于替代个人计算机的<a href="https://zh.wikipedia.org/wiki/BIOS" title="BIOS" style="text-decoration:none;color:rgb(6, 69, 173);background:none;">BIOS</a>）的一部分，被用于替代<a href="https://zh.wikipedia.org/wiki/BIOS" title="BIOS" style="text-decoration:none;color:rgb(6, 69, 173);background:none;">BIOS</a>系统中的一32bits来存储逻辑块地址和大小信息的<a href="https://zh.wikipedia.org/wiki/%E4%B8%BB%E9%96%8B%E6%A9%9F%E7%B4%80%E9%8C%84" title="主引导记录" style="text-decoration:none;color:rgb(6, 69, 173);background:none;">主引导记录</a>（MBR）分区表。对于那些扇区为512字节的磁盘，<a href="https://zh.wikipedia.org/wiki/MBR" title="MBR" style="text-decoration:none;color:rgb(6, 69, 173);background:none;">MBR</a>分区表不支持容量大于2.2<a href="https://zh.wikipedia.org/wiki/Terabyte" title="Terabyte" style="text-decoration:none;color:rgb(6, 69, 173);background:none;">TB</a>（2.2×10<sup style="line-height:1;">12</sup><a href="https://zh.wikipedia.org/wiki/%E5%AD%97%E8%8A%82" title="字节" style="text-decoration:none;color:rgb(6, 69, 173);background:none;">字节</a>）<sup style="line-height:1;unicode-bidi:isolate;white-space:nowrap;font-weight:normal;font-style:normal;"><a href="https://zh.wikipedia.org/wiki/GUID%E7%A3%81%E7%A2%9F%E5%88%86%E5%89%B2%E8%A1%A8#cite_note-UEFIDrivePartitionFAQ-1" style="text-decoration:none;color:rgb(6, 69, 173);background:none;white-space:nowrap;">[1]</a></sup>的<a href="https://zh.wikipedia.org/wiki/%E5%88%86%E5%8C%BA" title="分区" style="text-decoration:none;color:rgb(6, 69, 173);background:none;">分区</a>，然而，一些硬盘制造商（诸如希捷和西部数据）注意到这个局限性，并且将他们的容量较大的磁盘升级到4KB的<a href="https://zh.wikipedia.org/wiki/%E6%89%87%E5%8C%BA" title="扇区" style="text-decoration:none;color:rgb(6, 69, 173);background:none;">扇区</a>，这意味着MBR的有效容量上限提升到16 TiB。  这个看似“正确的”解决方案，在临时地降低人们对改进磁盘分配表的需求的同时，也给市场带来关于在有较大的块（<a href="https://zh.wikipedia.org/w/index.php?title=Block&amp;action=edit&amp;redlink=1" title="Block（页面不存在）" style="text-decoration:none;background:none;color:rgb(186, 0, 0);">block</a>）的设备上从BIOS启动时，如何最佳的划分磁盘分区的困惑。GPT分配64bits给逻辑块地址，因而使得最大分区大小在2<sup style="line-height:1;">64</sup>-1个扇区成为可能。对于每个扇区大小为512字节的磁盘，那意味着可以有9.4<a href="https://zh.wikipedia.org/wiki/ZB" title="ZB" style="text-decoration:none;color:rgb(6, 69, 173);background:none;">ZB</a>（9.4×10<sup style="line-height:1;">21</sup>字节）或8 <a href="https://zh.wikipedia.org/wiki/ZiB" title="ZiB" style="text-decoration:none;color:rgb(6, 69, 173);background:none;">ZiB</a>个512字节（9,444,732,965,739,290,426,880字节或18,446,744,073,709,551,615（2<sup style="line-height:1;">64</sup>-1）个扇区×512（2<sup style="line-height:1;">9</sup>）字节每扇区）<sup style="line-height:1;unicode-bidi:isolate;white-space:nowrap;font-weight:normal;font-style:normal;"><a href="https://zh.wikipedia.org/wiki/GUID%E7%A3%81%E7%A2%9F%E5%88%86%E5%89%B2%E8%A1%A8#cite_note-UEFIDrivePartitionFAQ-1" style="text-decoration:none;color:rgb(6, 69, 173);background:none;white-space:nowrap;">[1]</a></sup><sup style="line-height:1;unicode-bidi:isolate;white-space:nowrap;font-weight:normal;font-style:normal;"><a href="https://zh.wikipedia.org/wiki/GUID%E7%A3%81%E7%A2%9F%E5%88%86%E5%89%B2%E8%A1%A8#cite_note-Redmondmag64bitQuestion-2" style="text-decoration:none;color:rgb(6, 69, 173);background:none;white-space:nowrap;">[2]</a></sup>。
+</p><p style="margin:0.5em 0px;">截止至2010年，大多数操作系统对GPT均有所支持，尽管包括Mac OS X和Windows在内的一些仅支持在EFI基础上自GPT分区启动，见<a href="https://zh.wikipedia.org/wiki/GUID%E7%A3%81%E7%A2%9F%E5%88%86%E5%89%B2%E8%A1%A8#%E6%93%8D%E4%BD%9C%E7%B3%BB%E7%BB%9F%E6%94%AF%E6%8C%81" style="text-decoration:none;color:rgb(6, 69, 173);background:none;">#操作系统支持</a>。
+</p>
+<div style="width:auto;background-color:transparent;margin:0.5em 0px 1.3em 1.4em;clear:right;float:right;"><div style="border:1px solid rgb(200, 204, 209);padding:3px;background-color:rgb(248, 249, 250);font-size:94%;text-align:center;overflow:hidden;width:277px;"><a href="https://zh.wikipedia.org/wiki/File:GUID_Partition_Table_Scheme.svg" style="text-decoration:none;color:rgb(6, 69, 173);background:none;"><div class="media-placeholder">[图片/附件]</div></en-media></a>  <div style="border:0px;line-height:1.4em;padding:3px;font-size:94%;text-align:left;"><div style="margin-right:0px;margin-left:3px;float:right;"><a href="https://zh.wikipedia.org/wiki/File:GUID_Partition_Table_Scheme.svg" title="放大" style="text-decoration:none;color:rgb(6, 69, 173);background:none;display:block;text-indent:15px;white-space:nowrap;overflow:hidden;width:15px;height:11px;user-select:none;background-image:linear-gradient(transparent, transparent), url(https://zh.wikipedia.org/w/resources/src/mediawiki.skinning/images/magnify-clip-ltr.svg?8330e);"></a></div>GPT分区表的结构。此例中，每个逻辑块（LBA）为512字节，每个分区的记录为128字节。负数的LBA地址表示从最后的块开始倒数，−1表示最后一个块。</div></div></div>
+<div style="border:1px solid rgb(162, 169, 177);background-color:rgb(248, 249, 250);font-size:95%;display:table;padding:7px;"><div lang="zh-Hans-CN" dir="ltr" style="text-align:center;direction:ltr;"><h2 style="color:rgb(0, 0, 0);margin:0px;overflow:hidden;border-bottom:1px solid rgb(162, 169, 177);line-height:1.3;margin-bottom:0.25em;margin-top:1em;display:inline;border:0px;padding:0px;font-weight:bold;font-family:sans-serif;font-size:100%;">目录</h2><span style="font-size:94%;"><span style="font-size:94%;"> [</span><span style="cursor:pointer;color:rgb(6, 69, 173);"><span style="cursor:pointer;color:rgb(6, 69, 173);">隐藏</span></span><span style="font-size:94%;">]</span></span></div>
+<ul style="list-style-type:none;list-style-image:none;padding:0px;margin:0.3em 0px;text-align:left;">
+<li style="margin-bottom:0.1em;"><a href="https://zh.wikipedia.org/wiki/GUID%E7%A3%81%E7%A2%9F%E5%88%86%E5%89%B2%E8%A1%A8#%E7%89%B9%E7%82%B9" style="text-decoration:none;color:rgb(6, 69, 173);background:none;"><span style="display:table-cell;text-decoration:inherit;color:rgb(32, 33, 34);padding-left:0px;padding-right:0.5em;">1</span> <span style="display:table-cell;text-decoration:inherit;">特点</span></a></li>
+<li style="margin-bottom:0.1em;"><a href="https://zh.wikipedia.org/wiki/GUID%E7%A3%81%E7%A2%9F%E5%88%86%E5%89%B2%E8%A1%A8#%E4%BC%A0%E7%BB%9FMBR_(LBA_0)" style="text-decoration:none;color:rgb(6, 69, 173);background:none;"><span style="display:table-cell;text-decoration:inherit;color:rgb(32, 33, 34);padding-left:0px;padding-right:0.5em;">2</span> <span style="display:table-cell;text-decoration:inherit;">传统MBR (LBA 0)</span></a></li>
+<li style="margin-bottom:0.1em;"><a href="https://zh.wikipedia.org/wiki/GUID%E7%A3%81%E7%A2%9F%E5%88%86%E5%89%B2%E8%A1%A8#%E5%88%86%E5%8C%BA%E8%A1%A8%E5%A4%B4%EF%BC%88LBA_1%EF%BC%89" style="text-decoration:none;color:rgb(6, 69, 173);background:none;"><span style="display:table-cell;text-decoration:inherit;color:rgb(32, 33, 34);padding-left:0px;padding-right:0.5em;">3</span> <span style="display:table-cell;text-decoration:inherit;">分区表头（LBA 1）</span></a></li>
+<li style="margin-bottom:0.1em;"><a href="https://zh.wikipedia.org/wiki/GUID%E7%A3%81%E7%A2%9F%E5%88%86%E5%89%B2%E8%A1%A8#%E5%88%86%E5%8C%BA%E8%A1%A8%E9%A1%B9%EF%BC%88LBA_2%E2%80%9333%EF%BC%89" style="text-decoration:none;color:rgb(6, 69, 173);background:none;"><span style="display:table-cell;text-decoration:inherit;color:rgb(32, 33, 34);padding-left:0px;padding-right:0.5em;">4</span> <span style="display:table-cell;text-decoration:inherit;">分区表项（LBA 2–33）</span></a></li>
+<li style="margin-bottom:0.1em;"><a href="https://zh.wikipedia.org/wiki/GUID%E7%A3%81%E7%A2%9F%E5%88%86%E5%89%B2%E8%A1%A8#%E6%93%8D%E4%BD%9C%E7%B3%BB%E7%BB%9F%E6%94%AF%E6%8C%81" style="text-decoration:none;color:rgb(6, 69, 173);background:none;"><span style="display:table-cell;text-decoration:inherit;color:rgb(32, 33, 34);padding-left:0px;padding-right:0.5em;">5</span> <span style="display:table-cell;text-decoration:inherit;">操作系统支持</span></a>
+<ul style="list-style-type:none;list-style-image:none;padding:0px;text-align:left;margin:0px 0px 0px 2em;">
+<li style="margin-bottom:0.1em;"><a href="https://zh.wikipedia.org/wiki/GUID%E7%A3%81%E7%A2%9F%E5%88%86%E5%89%B2%E8%A1%A8#%E7%B1%BBUnix%E6%93%8D%E4%BD%9C%E7%B3%BB%E7%BB%9F" style="text-decoration:none;color:rgb(6, 69, 173);background:none;"><span style="display:table-cell;text-decoration:inherit;color:rgb(32, 33, 34);padding-left:0px;padding-right:0.5em;">5.1</span> <span style="display:table-cell;text-decoration:inherit;">类Unix操作系统</span></a></li>
+<li style="margin-bottom:0.1em;"><a href="https://zh.wikipedia.org/wiki/GUID%E7%A3%81%E7%A2%9F%E5%88%86%E5%89%B2%E8%A1%A8#32%E4%BD%8DWindows" style="text-decoration:none;color:rgb(6, 69, 173);background:none;"><span style="display:table-cell;text-decoration:inherit;color:rgb(32, 33, 34);padding-left:0px;padding-right:0.5em;">5.2</span> <span style="display:table-cell;text-decoration:inherit;">32位Windows</span></a></li>
+<li style="margin-bottom:0.1em;"><a href="https://zh.wikipedia.org/wiki/GUID%E7%A3%81%E7%A2%9F%E5%88%86%E5%89%B2%E8%A1%A8#64%E4%BD%8DWindows" style="text-decoration:none;color:rgb(6, 69, 173);background:none;"><span style="display:table-cell;text-decoration:inherit;color:rgb(32, 33, 34);padding-left:0px;padding-right:0.5em;">5.3</span> <span style="display:table-cell;text-decoration:inherit;">64位Windows</span></a></li>
+</ul>
+</li>
+<li style="margin-bottom:0.1em;"><a href="https://zh.wikipedia.org/wiki/GUID%E7%A3%81%E7%A2%9F%E5%88%86%E5%89%B2%E8%A1%A8#%E5%88%86%E5%8C%BA%E7%B1%BB%E5%9E%8BGUID" style="text-decoration:none;color:rgb(6, 69, 173);background:none;"><span style="display:table-cell;text-decoration:inherit;color:rgb(32, 33, 34);padding-left:0px;padding-right:0.5em;">6</span> <span style="display:table-cell;text-decoration:inherit;">分区类型GUID</span></a></li>
+<li style="margin-bottom:0.1em;"><a href="https://zh.wikipedia.org/wiki/GUID%E7%A3%81%E7%A2%9F%E5%88%86%E5%89%B2%E8%A1%A8#MBR%E4%B8%8EGPT%E4%BA%92%E7%9B%B8%E8%BD%AC%E6%8D%A2" style="text-decoration:none;color:rgb(6, 69, 173);background:none;"><span style="display:table-cell;text-decoration:inherit;color:rgb(32, 33, 34);padding-left:0px;padding-right:0.5em;">7</span> <span style="display:table-cell;text-decoration:inherit;">MBR与GPT互相转换</span></a>
+<ul style="list-style-type:none;list-style-image:none;padding:0px;text-align:left;margin:0px 0px 0px 2em;">
+<li style="margin-bottom:0.1em;"><a href="https://zh.wikipedia.org/wiki/GUID%E7%A3%81%E7%A2%9F%E5%88%86%E5%89%B2%E8%A1%A8#Windows%E6%93%8D%E4%BD%9C%E7%B3%BB%E7%BB%9F" style="text-decoration:none;color:rgb(6, 69, 173);background:none;"><span style="display:table-cell;text-decoration:inherit;color:rgb(32, 33, 34);padding-left:0px;padding-right:0.5em;">7.1</span> <span style="display:table-cell;text-decoration:inherit;">Windows操作系统</span></a></li>
+</ul>
+</li>
+<li style="margin-bottom:0.1em;"><a href="https://zh.wikipedia.org/wiki/GUID%E7%A3%81%E7%A2%9F%E5%88%86%E5%89%B2%E8%A1%A8#%E5%8F%82%E8%A7%81" style="text-decoration:none;color:rgb(6, 69, 173);background:none;"><span style="display:table-cell;text-decoration:inherit;color:rgb(32, 33, 34);padding-left:0px;padding-right:0.5em;">8</span> <span style="display:table-cell;text-decoration:inherit;">参见</span></a></li>
+<li style="margin-bottom:0.1em;"><a href="https://zh.wikipedia.org/wiki/GUID%E7%A3%81%E7%A2%9F%E5%88%86%E5%89%B2%E8%A1%A8#%E5%A4%96%E9%83%A8%E9%93%BE%E6%8E%A5" style="text-decoration:none;color:rgb(6, 69, 173);background:none;"><span style="display:table-cell;text-decoration:inherit;color:rgb(32, 33, 34);padding-left:0px;padding-right:0.5em;">9</span> <span style="display:table-cell;text-decoration:inherit;">外部链接</span></a></li>
+<li style="margin-bottom:0.1em;"><a href="https://zh.wikipedia.org/wiki/GUID%E7%A3%81%E7%A2%9F%E5%88%86%E5%89%B2%E8%A1%A8#%E5%A4%87%E6%B3%A8" style="text-decoration:none;color:rgb(6, 69, 173);background:none;"><span style="display:table-cell;text-decoration:inherit;color:rgb(32, 33, 34);padding-left:0px;padding-right:0.5em;">10</span> <span style="display:table-cell;text-decoration:inherit;">备注</span></a></li>
+<li style="margin-bottom:0.1em;"><a href="https://zh.wikipedia.org/wiki/GUID%E7%A3%81%E7%A2%9F%E5%88%86%E5%89%B2%E8%A1%A8#%E5%8F%82%E8%80%83%E8%B5%84%E6%96%99" style="text-decoration:none;color:rgb(6, 69, 173);background:none;"><span style="display:table-cell;text-decoration:inherit;color:rgb(32, 33, 34);padding-left:0px;padding-right:0.5em;">11</span> <span style="display:table-cell;text-decoration:inherit;">参考资料</span></a></li>
+</ul>
+</div>
+
+<h2 style="color:rgb(0, 0, 0);margin:0px;padding-top:0.5em;padding-bottom:0.17em;overflow:hidden;border-bottom:1px solid rgb(162, 169, 177);font-weight:normal;padding:0px;font-family:&quot;Linux Libertine&quot;, Georgia, Times, serif;line-height:1.3;margin-bottom:0.25em;margin-top:1em;font-size:1.5em;"><span></span><span>特点</span><span style="font-family:sans-serif;user-select:none;font-size:small;font-weight:normal;vertical-align:baseline;line-height:1em;unicode-bidi:isolate;margin-left:1em;"><span style="font-family:sans-serif;font-size:small;font-weight:normal;line-height:1em;">​</span><span style="margin-right:0.25em;color:rgb(84, 89, 93);">[</span><a href="https://zh.wikipedia.org/w/index.php?title=GUID%E7%A3%81%E7%A2%9F%E5%88%86%E5%89%B2%E8%A1%A8&amp;action=edit&amp;section=1" title="编辑章节：特点" style="text-decoration:none;color:rgb(6, 69, 173);background:none;white-space:nowrap;">编辑</a><span style="margin-left:0.25em;color:rgb(84, 89, 93);">]</span></span></h2>
+<p style="margin:0.5em 0px;">在MBR硬盘中，分区信息直接存储于<a href="https://zh.wikipedia.org/wiki/%E4%B8%BB%E5%BC%95%E5%AF%BC%E8%AE%B0%E5%BD%95" title="主引导记录" style="text-decoration:none;color:rgb(6, 69, 173);background:none;">主引导记录</a>（MBR）中（主引导记录中还存储着系统的<a href="https://zh.wikipedia.org/wiki/%E5%BC%95%E5%AF%BC%E7%A8%8B%E5%BA%8F" title="引导程序" style="text-decoration:none;color:rgb(6, 69, 173);background:none;">引导程序</a>）。但在GPT硬盘中，分区表的位置信息储存在GPT头中。但出于<a href="https://zh.wikipedia.org/wiki/%E5%85%BC%E5%AE%B9%E6%80%A7" title="兼容性" style="text-decoration:none;color:rgb(6, 69, 173);background:none;">兼容性</a>考虑，硬盘的第一个扇区仍然用作MBR，之后才是GPT头。
+</p><p style="margin:0.5em 0px;">跟现代的MBR一样，GPT也使用<a href="https://zh.wikipedia.org/wiki/%E9%82%8F%E8%BC%AF%E5%8D%80%E5%A1%8A%E4%BD%8D%E5%9D%80" title="逻辑区块地址" style="text-decoration:none;color:rgb(6, 69, 173);background:none;">逻辑区块地址</a>（LBA）取代了早期的<a href="https://zh.wikipedia.org/wiki/%E6%9F%B1%E9%9D%A2-%E7%A3%81%E5%A4%B4-%E6%89%87%E5%8C%BA" title="柱面-磁头-扇区" style="text-decoration:none;color:rgb(6, 69, 173);background:none;">CHS</a>寻址方式。传统MBR信息存储于LBA 0，GPT头存储于LBA 1，接下来才是分区表本身。64位<a href="https://zh.wikipedia.org/wiki/Microsoft_Windows" title="Microsoft Windows" style="text-decoration:none;color:rgb(6, 69, 173);background:none;">Windows</a><a href="https://zh.wikipedia.org/wiki/%E6%93%8D%E4%BD%9C%E7%B3%BB%E7%BB%9F" title="操作系统" style="text-decoration:none;color:rgb(6, 69, 173);background:none;">操作系统</a>使用16,384字节（或32<a href="https://zh.wikipedia.org/wiki/%E6%89%87%E5%8C%BA" title="扇区" style="text-decoration:none;color:rgb(6, 69, 173);background:none;">扇区</a>）作为GPT分区表，接下来的LBA 34是硬盘上第一个分区的开始。
+</p><p style="margin:0.5em 0px;"><a href="https://zh.wikipedia.org/wiki/%E8%8B%B9%E6%9E%9C%E5%85%AC%E5%8F%B8" title="苹果公司" style="text-decoration:none;color:rgb(6, 69, 173);background:none;">苹果公司</a>曾经警告说：<sup style="line-height:1;unicode-bidi:isolate;white-space:nowrap;font-weight:normal;font-style:normal;"><a href="https://zh.wikipedia.org/wiki/GUID%E7%A3%81%E7%A2%9F%E5%88%86%E5%89%B2%E8%A1%A8#cite_note-3" style="text-decoration:none;color:rgb(6, 69, 173);background:none;white-space:nowrap;">[3]</a></sup>“不要假定所有设备的块大小都是512字节。”一些现代的存储设备如<a href="https://zh.wikipedia.org/wiki/%E5%9B%BA%E6%80%81%E7%A1%AC%E7%9B%98" title="固态硬盘" style="text-decoration:none;color:rgb(6, 69, 173);background:none;">固态硬盘</a>可能使用1024字节的块，一些<a href="https://zh.wikipedia.org/wiki/%E7%A3%81%E5%85%89%E7%A2%9F" title="磁光盘" style="text-decoration:none;color:rgb(6, 69, 173);background:none;">磁光盘</a>（MO）可能使用2048字节的扇区（但是磁光盘通常是不进行分区的）。一些硬盘生产商在计划生产4096字节一个扇区的硬盘，但截至2010年初，这种新硬盘使用<a href="https://zh.wikipedia.org/wiki/%E5%9B%BA%E4%BB%B6" title="固件" style="text-decoration:none;color:rgb(6, 69, 173);background:none;">固件</a>对操作系统伪装成512字节一个扇区。<sup style="line-height:1;unicode-bidi:isolate;white-space:nowrap;font-weight:normal;font-style:normal;"><a href="https://zh.wikipedia.org/wiki/GUID%E7%A3%81%E7%A2%9F%E5%88%86%E5%89%B2%E8%A1%A8#cite_note-4" style="text-decoration:none;color:rgb(6, 69, 173);background:none;white-space:nowrap;">[4]</a></sup>
+</p><p style="margin:0.5em 0px;">使用英特尔架构的<a href="https://zh.wikipedia.org/wiki/%E8%8B%B9%E6%9E%9C%E6%9C%BA" title="苹果机" style="text-decoration:none;color:rgb(6, 69, 173);background:none;">苹果机</a>也使用GPT。
+</p><p style="margin:0.5em 0px;">为了减少分区表损坏的风险，GPT在硬盘最后保存了一份分区表的副本。
+</p>
+<h2 style="color:rgb(0, 0, 0);margin:0px;padding-top:0.5em;padding-bottom:0.17em;overflow:hidden;border-bottom:1px solid rgb(162, 169, 177);font-weight:normal;padding:0px;font-family:&quot;Linux Libertine&quot;, Georgia, Times, serif;line-height:1.3;margin-bottom:0.25em;margin-top:1em;font-size:1.5em;"><span></span><span>传统MBR (LBA 0)</span><span style="font-family:sans-serif;user-select:none;font-size:small;font-weight:normal;vertical-align:baseline;line-height:1em;unicode-bidi:isolate;margin-left:1em;"><span style="font-family:sans-serif;font-size:small;font-weight:normal;line-height:1em;">​</span><span style="margin-right:0.25em;color:rgb(84, 89, 93);">[</span><a href="https://zh.wikipedia.org/w/index.php?title=GUID%E7%A3%81%E7%A2%9F%E5%88%86%E5%89%B2%E8%A1%A8&amp;action=edit&amp;section=2" title="编辑章节：传统MBR (LBA 0)" style="text-decoration:none;color:rgb(6, 69, 173);background:none;white-space:nowrap;">编辑</a><span style="margin-left:0.25em;color:rgb(84, 89, 93);">]</span></span></h2>
+<p style="margin:0.5em 0px;">在GPT分区表的最开头，出于兼容性考虑仍然存储了一份传统的MBR，用来防止不支持GPT的硬盘管理工具错误识别并破坏硬盘中的数据，这个MBR也叫做保护MBR。在支持从GPT启动的<a href="https://zh.wikipedia.org/wiki/%E6%93%8D%E4%BD%9C%E7%B3%BB%E7%BB%9F" title="操作系统" style="text-decoration:none;color:rgb(6, 69, 173);background:none;">操作系统</a>中，这里也用于存储第一阶段的启动代码。在这个MBR中，只有一个标识为0xEE的分区，以此来表示这块硬盘使用GPT分区表。不能识别GPT硬盘的操作系统通常会识别出一个未知类型的分区，并且拒绝对硬盘进行操作，除非用户特别要求删除这个分区。这就避免了意外删除分区的危险。另外，能够识别GPT分区表的操作系统会检查保护MBR中的分区表，如果分区类型不是0xEE或者MBR分区表中有多个项，也会拒绝对硬盘进行操作。
+</p><p style="margin:0.5em 0px;">在使用MBR/GPT混合分区表的硬盘中，这部分存储了GPT分区表的一部分分区（通常是前四个分区），可以使不支持从GPT启动的操作系统从这个MBR启动，启动后只能操作MBR分区表中的分区。如<a href="https://zh.wikipedia.org/wiki/Boot_Camp" title="Boot Camp" style="text-decoration:none;color:rgb(6, 69, 173);background:none;">Boot Camp</a>就是使用这种方式启动Windows。
+</p>
+<h2 style="color:rgb(0, 0, 0);margin:0px;padding-top:0.5em;padding-bottom:0.17em;overflow:hidden;border-bottom:1px solid rgb(162, 169, 177);font-weight:normal;padding:0px;font-family:&quot;Linux Libertine&quot;, Georgia, Times, serif;line-height:1.3;margin-bottom:0.25em;margin-top:1em;font-size:1.5em;"><span></span><span>分区表头（LBA 1）</span><span style="font-family:sans-serif;user-select:none;font-size:small;font-weight:normal;vertical-align:baseline;line-height:1em;unicode-bidi:isolate;margin-left:1em;"><span style="font-family:sans-serif;font-size:small;font-weight:normal;line-height:1em;">​</span><span style="margin-right:0.25em;color:rgb(84, 89, 93);">[</span><a href="https://zh.wikipedia.org/w/index.php?title=GUID%E7%A3%81%E7%A2%9F%E5%88%86%E5%89%B2%E8%A1%A8&amp;action=edit&amp;section=3" title="编辑章节：分区表头（LBA 1）" style="text-decoration:none;color:rgb(6, 69, 173);background:none;white-space:nowrap;">编辑</a><span style="margin-left:0.25em;color:rgb(84, 89, 93);">]</span></span></h2>
+<p style="margin:0.5em 0px;">分区表头定义了硬盘的可用空间以及组成分区表的项的大小和数量。在使用64位<a href="https://zh.wikipedia.org/wiki/Windows_Server_2003" title="Windows Server 2003" style="text-decoration:none;color:rgb(6, 69, 173);background:none;">Windows Server 2003</a>的机器上，最多可以创建128个分区，即分区表中保留了128个项，其中每个都是128字节。（EFI标准要求分区表最小要有16,384字节，即128个分区项的大小）
+</p><p style="margin:0.5em 0px;">分区表头还记录了这块硬盘的<a href="https://zh.wikipedia.org/wiki/GUID" title="GUID" style="text-decoration:none;color:rgb(6, 69, 173);background:none;">GUID</a>，记录了分区表头本身的位置和大小（位置总是在LBA 1）以及备份分区表头和分区表的位置和大小（在硬盘的最后）。它还储存着它本身和分区表的<a href="https://zh.wikipedia.org/wiki/CRC32" title="CRC32" style="text-decoration:none;color:rgb(6, 69, 173);background:none;">CRC32</a>校验。固件、引导程序和操作系统在启动时可以根据这个校验值来判断分区表是否出错，如果出错了，可以使用软件从硬盘最后的备份GPT中恢复整个分区表，如果备份GPT也校验错误，硬盘将不可使用。所以GPT硬盘的分区表不可以直接使用16进制编辑器修改。
+</p>
+<table style="font-weight:inherit;font-style:inherit;font-variant:inherit;font-size:100%;background-color:rgb(248, 249, 250);color:rgb(32, 33, 34);margin:1em auto 1em auto;border:1px solid rgb(162, 169, 177);border-collapse:collapse;">
+<caption style="font-size:inherit;font-style:inherit;font-variant:inherit;font-weight:bold;">分区表头的格式
+</caption>
+<tbody><tr>
+<th style="border:1px solid rgb(162, 169, 177);padding:0.2em 0.4em;background-color:rgb(234, 236, 240);text-align:center;">起始字节</th>
+<th style="border:1px solid rgb(162, 169, 177);padding:0.2em 0.4em;background-color:rgb(234, 236, 240);text-align:center;">长度</th>
+<th style="border:1px solid rgb(162, 169, 177);padding:0.2em 0.4em;background-color:rgb(234, 236, 240);text-align:center;">内容
+</th></tr>
+<tr>
+<td align="right" style="border:1px solid rgb(162, 169, 177);padding:0.2em 0.4em;">0</td>
+<td align="right" style="border:1px solid rgb(162, 169, 177);padding:0.2em 0.4em;">8字节</td>
+<td style="border:1px solid rgb(162, 169, 177);padding:0.2em 0.4em;">签名（"EFI PART", 45 46 49 20 50 41 52 54）
+</td></tr>
+<tr>
+<td align="right" style="border:1px solid rgb(162, 169, 177);padding:0.2em 0.4em;">8</td>
+<td align="right" style="border:1px solid rgb(162, 169, 177);padding:0.2em 0.4em;">4字节</td>
+<td style="border:1px solid rgb(162, 169, 177);padding:0.2em 0.4em;">修订（在1.0版中，值是00 00 01 00）
+</td></tr>
+<tr>
+<td align="right" style="border:1px solid rgb(162, 169, 177);padding:0.2em 0.4em;">12</td>
+<td align="right" style="border:1px solid rgb(162, 169, 177);padding:0.2em 0.4em;">4字节</td>
+<td style="border:1px solid rgb(162, 169, 177);padding:0.2em 0.4em;">分区表头的大小（单位是字节，通常是92字节，即5C 00 00 00）
+</td></tr>
+<tr>
+<td align="right" style="border:1px solid rgb(162, 169, 177);padding:0.2em 0.4em;">16</td>
+<td align="right" style="border:1px solid rgb(162, 169, 177);padding:0.2em 0.4em;">4字节</td>
+<td style="border:1px solid rgb(162, 169, 177);padding:0.2em 0.4em;">分区表头（第0－91字节）的<a href="https://zh.wikipedia.org/wiki/CRC32" title="CRC32" style="text-decoration:none;color:rgb(6, 69, 173);background:none;">CRC32</a>校验，在计算时，把这个字段作为0处理，需要计算出分区序列的CRC32校验后再计算本字段
+</td></tr>
+<tr>
+<td align="right" style="border:1px solid rgb(162, 169, 177);padding:0.2em 0.4em;">20</td>
+<td align="right" style="border:1px solid rgb(162, 169, 177);padding:0.2em 0.4em;">4字节</td>
+<td style="border:1px solid rgb(162, 169, 177);padding:0.2em 0.4em;">保留，必须是0
+</td></tr>
+<tr>
+<td align="right" style="border:1px solid rgb(162, 169, 177);padding:0.2em 0.4em;">24</td>
+<td align="right" style="border:1px solid rgb(162, 169, 177);padding:0.2em 0.4em;">8字节</td>
+<td style="border:1px solid rgb(162, 169, 177);padding:0.2em 0.4em;">当前LBA（这个分区表头的位置）
+</td></tr>
+<tr>
+<td align="right" style="border:1px solid rgb(162, 169, 177);padding:0.2em 0.4em;">32</td>
+<td align="right" style="border:1px solid rgb(162, 169, 177);padding:0.2em 0.4em;">8字节</td>
+<td style="border:1px solid rgb(162, 169, 177);padding:0.2em 0.4em;">备份LBA（另一个分区表头的位置）
+</td></tr>
+<tr>
+<td align="right" style="border:1px solid rgb(162, 169, 177);padding:0.2em 0.4em;">40</td>
+<td align="right" style="border:1px solid rgb(162, 169, 177);padding:0.2em 0.4em;">8字节</td>
+<td style="border:1px solid rgb(162, 169, 177);padding:0.2em 0.4em;">第一个可用于分区的LBA（主分区表的最后一个LBA + 1）
+</td></tr>
+<tr>
+<td align="right" style="border:1px solid rgb(162, 169, 177);padding:0.2em 0.4em;">48</td>
+<td align="right" style="border:1px solid rgb(162, 169, 177);padding:0.2em 0.4em;">8字节</td>
+<td style="border:1px solid rgb(162, 169, 177);padding:0.2em 0.4em;">最后一个可用于分区的LBA（备份分区表的第一个LBA − 1）
+</td></tr>
+<tr>
+<td align="right" style="border:1px solid rgb(162, 169, 177);padding:0.2em 0.4em;">56</td>
+<td align="right" style="border:1px solid rgb(162, 169, 177);padding:0.2em 0.4em;">16字节</td>
+<td style="border:1px solid rgb(162, 169, 177);padding:0.2em 0.4em;">硬盘GUID（在<a href="https://zh.wikipedia.org/wiki/%E9%A1%9EUNIX" title="类UNIX" style="text-decoration:none;color:rgb(6, 69, 173);background:none;">类UNIX</a>系统中也叫<a href="https://zh.wikipedia.org/wiki/UUID" title="UUID" style="text-decoration:none;color:rgb(6, 69, 173);background:none;">UUID</a>）
+</td></tr>
+<tr>
+<td align="right" style="border:1px solid rgb(162, 169, 177);padding:0.2em 0.4em;">72</td>
+<td align="right" style="border:1px solid rgb(162, 169, 177);padding:0.2em 0.4em;">8字节</td>
+<td style="border:1px solid rgb(162, 169, 177);padding:0.2em 0.4em;">分区表项的起始LBA（在主分区表中是2）
+</td></tr>
+<tr>
+<td align="right" style="border:1px solid rgb(162, 169, 177);padding:0.2em 0.4em;">80</td>
+<td align="right" style="border:1px solid rgb(162, 169, 177);padding:0.2em 0.4em;">4字节</td>
+<td style="border:1px solid rgb(162, 169, 177);padding:0.2em 0.4em;">分区表项的数量
+</td></tr>
+<tr>
+<td align="right" style="border:1px solid rgb(162, 169, 177);padding:0.2em 0.4em;">84</td>
+<td align="right" style="border:1px solid rgb(162, 169, 177);padding:0.2em 0.4em;">4字节</td>
+<td style="border:1px solid rgb(162, 169, 177);padding:0.2em 0.4em;">一个分区表项的大小（通常是128）
+</td></tr>
+<tr>
+<td align="right" style="border:1px solid rgb(162, 169, 177);padding:0.2em 0.4em;">88</td>
+<td align="right" style="border:1px solid rgb(162, 169, 177);padding:0.2em 0.4em;">4字节</td>
+<td style="border:1px solid rgb(162, 169, 177);padding:0.2em 0.4em;">分区序列的CRC32校验
+</td></tr>
+<tr>
+<td align="right" style="border:1px solid rgb(162, 169, 177);padding:0.2em 0.4em;">92</td>
+<td align="center" style="border:1px solid rgb(162, 169, 177);padding:0.2em 0.4em;">*</td>
+<td style="border:1px solid rgb(162, 169, 177);padding:0.2em 0.4em;">保留，剩余的字节必须是0（对于512字节LBA的硬盘即是420个字节）
+</td></tr></tbody></table>
+<p style="margin:0.5em 0px;">主分区表和备份分区表的头分别位于硬盘的第二个扇区（LBA 1）以及硬盘的最后一个扇区。备份分区表头中的信息是关于备份分区表的。
+</p>
+<h2 style="color:rgb(0, 0, 0);margin:0px;padding-top:0.5em;padding-bottom:0.17em;overflow:hidden;border-bottom:1px solid rgb(162, 169, 177);font-weight:normal;padding:0px;font-family:&quot;Linux Libertine&quot;, Georgia, Times, serif;line-height:1.3;margin-bottom:0.25em;margin-top:1em;font-size:1.5em;"><span></span><span>分区表项（LBA 2–33）</span><span style="font-family:sans-serif;user-select:none;font-size:small;font-weight:normal;vertical-align:baseline;line-height:1em;unicode-bidi:isolate;margin-left:1em;"><span style="font-family:sans-serif;font-size:small;font-weight:normal;line-height:1em;">​</span><span style="margin-right:0.25em;color:rgb(84, 89, 93);">[</span><a href="https://zh.wikipedia.org/w/index.php?title=GUID%E7%A3%81%E7%A2%9F%E5%88%86%E5%89%B2%E8%A1%A8&amp;action=edit&amp;section=4" title="编辑章节：分区表项（LBA 2–33）" style="text-decoration:none;color:rgb(6, 69, 173);background:none;white-space:nowrap;">编辑</a><span style="margin-left:0.25em;color:rgb(84, 89, 93);">]</span></span></h2>
+<p style="margin:0.5em 0px;">GPT分区表使用简单而直接的方式表示分区。一个分区表项的前16字节是分区类型<a href="https://zh.wikipedia.org/wiki/GUID" title="GUID" style="text-decoration:none;color:rgb(6, 69, 173);background:none;">GUID</a>。例如，<a href="https://zh.wikipedia.org/wiki/EFI%E7%B3%BB%E7%BB%9F%E5%88%86%E5%8C%BA" title="EFI系统分区" style="text-decoration:none;color:rgb(6, 69, 173);background:none;">EFI系统分区</a>的GUID类型是<code style="font-family:monospace, monospace;color:rgb(0, 0, 0);background-color:rgb(248, 249, 250);border:1px solid rgb(234, 236, 240);border-radius:2px;padding:1px 4px;">{C12A7328-F81F-11D2-BA4B-00A0C93EC93B}</code>。接下来的16字节是该分区唯一的GUID（这个GUID指的是该分区本身，而之前的GUID指的是该分区的类型）。再接下来是分区起始和末尾的64位LBA编号，以及分区的名字和属性。
+</p>
+<table style="font-weight:inherit;font-style:inherit;font-variant:inherit;font-size:100%;background-color:rgb(248, 249, 250);color:rgb(32, 33, 34);margin:1em auto 1em auto;border:1px solid rgb(162, 169, 177);border-collapse:collapse;">
+<caption style="font-size:inherit;font-style:inherit;font-variant:inherit;font-weight:bold;">GPT分区表项的格式
+</caption>
+<tbody><tr>
+<th style="border:1px solid rgb(162, 169, 177);padding:0.2em 0.4em;background-color:rgb(234, 236, 240);text-align:center;">起始字节</th>
+<th style="border:1px solid rgb(162, 169, 177);padding:0.2em 0.4em;background-color:rgb(234, 236, 240);text-align:center;">长度</th>
+<th style="border:1px solid rgb(162, 169, 177);padding:0.2em 0.4em;background-color:rgb(234, 236, 240);text-align:center;">内容
+</th></tr>
+<tr>
+<td align="right" style="border:1px solid rgb(162, 169, 177);padding:0.2em 0.4em;">0</td>
+<td align="right" style="border:1px solid rgb(162, 169, 177);padding:0.2em 0.4em;">16字节</td>
+<td style="border:1px solid rgb(162, 169, 177);padding:0.2em 0.4em;">分区类型GUID
+</td></tr>
+<tr>
+<td align="right" style="border:1px solid rgb(162, 169, 177);padding:0.2em 0.4em;">16</td>
+<td align="right" style="border:1px solid rgb(162, 169, 177);padding:0.2em 0.4em;">16字节</td>
+<td style="border:1px solid rgb(162, 169, 177);padding:0.2em 0.4em;">分区GUID
+</td></tr>
+<tr>
+<td align="right" style="border:1px solid rgb(162, 169, 177);padding:0.2em 0.4em;">32</td>
+<td align="right" style="border:1px solid rgb(162, 169, 177);padding:0.2em 0.4em;">8字节</td>
+<td style="border:1px solid rgb(162, 169, 177);padding:0.2em 0.4em;">起始LBA（<a href="https://zh.wikipedia.org/wiki/%E5%B0%8F%E7%AB%AF%E5%BA%8F" title="小端序" style="text-decoration:none;color:rgb(6, 69, 173);background:none;">小端序</a>）
+</td></tr>
+<tr>
+<td align="right" style="border:1px solid rgb(162, 169, 177);padding:0.2em 0.4em;">40</td>
+<td align="right" style="border:1px solid rgb(162, 169, 177);padding:0.2em 0.4em;">8字节</td>
+<td style="border:1px solid rgb(162, 169, 177);padding:0.2em 0.4em;">末尾LBA
+</td></tr>
+<tr>
+<td align="right" style="border:1px solid rgb(162, 169, 177);padding:0.2em 0.4em;">48</td>
+<td align="right" style="border:1px solid rgb(162, 169, 177);padding:0.2em 0.4em;">8字节</td>
+<td style="border:1px solid rgb(162, 169, 177);padding:0.2em 0.4em;">属性标签（如：<code style="font-family:monospace, monospace;color:rgb(0, 0, 0);background-color:rgb(248, 249, 250);border:1px solid rgb(234, 236, 240);border-radius:2px;padding:1px 4px;">60</code>表示“只读”）
+</td></tr>
+<tr>
+<td align="right" style="border:1px solid rgb(162, 169, 177);padding:0.2em 0.4em;">56</td>
+<td align="right" style="border:1px solid rgb(162, 169, 177);padding:0.2em 0.4em;">72字节</td>
+<td style="border:1px solid rgb(162, 169, 177);padding:0.2em 0.4em;">分区名（可以包括36个<a href="https://zh.wikipedia.org/wiki/UTF-16" title="UTF-16" style="text-decoration:none;color:rgb(6, 69, 173);background:none;">UTF-16</a>（小端序）字符）
+</td></tr></tbody></table>
+<h2 style="color:rgb(0, 0, 0);margin:0px;padding-top:0.5em;padding-bottom:0.17em;overflow:hidden;border-bottom:1px solid rgb(162, 169, 177);font-weight:normal;padding:0px;font-family:&quot;Linux Libertine&quot;, Georgia, Times, serif;line-height:1.3;margin-bottom:0.25em;margin-top:1em;font-size:1.5em;"><span></span><span>操作系统支持</span><span style="font-family:sans-serif;user-select:none;font-size:small;font-weight:normal;vertical-align:baseline;line-height:1em;unicode-bidi:isolate;margin-left:1em;"><span style="font-family:sans-serif;font-size:small;font-weight:normal;line-height:1em;">​</span><span style="margin-right:0.25em;color:rgb(84, 89, 93);">[</span><a href="https://zh.wikipedia.org/w/index.php?title=GUID%E7%A3%81%E7%A2%9F%E5%88%86%E5%89%B2%E8%A1%A8&amp;action=edit&amp;section=5" title="编辑章节：操作系统支持" style="text-decoration:none;color:rgb(6, 69, 173);background:none;white-space:nowrap;">编辑</a><span style="margin-left:0.25em;color:rgb(84, 89, 93);">]</span></span></h2>
+<div style="font-size:small;padding-left:2em;margin-bottom:0.8em;margin-top:0.8em;">参见：<a href="https://zh.wikipedia.org/wiki/%E7%BB%9F%E4%B8%80%E5%8F%AF%E6%89%A9%E5%B1%95%E5%9B%BA%E4%BB%B6%E6%8E%A5%E5%8F%A3#DISKDEVCOMPAT" title="统一可扩展固件接口" style="text-decoration:none;color:rgb(6, 69, 173);background:none;">UEFI：磁盘设备兼容性</a></div>
+<h3 style="color:rgb(0, 0, 0);margin:0px;padding-top:0.5em;overflow:hidden;margin-top:0.3em;line-height:1.6;margin-bottom:0px;padding-bottom:0px;font-size:1.2em;font-weight:bold;"><span></span><span>类Unix操作系统</span><span style="font-family:sans-serif;user-select:none;font-size:small;font-weight:normal;vertical-align:baseline;line-height:1em;unicode-bidi:isolate;margin-left:1em;"><span style="font-family:sans-serif;font-size:small;font-weight:normal;line-height:1em;">​</span><span style="margin-right:0.25em;color:rgb(84, 89, 93);">[</span><a href="https://zh.wikipedia.org/w/index.php?title=GUID%E7%A3%81%E7%A2%9F%E5%88%86%E5%89%B2%E8%A1%A8&amp;action=edit&amp;section=6" title="编辑章节：类Unix操作系统" style="text-decoration:none;color:rgb(6, 69, 173);background:none;white-space:nowrap;">编辑</a><span style="margin-left:0.25em;color:rgb(84, 89, 93);">]</span></span></h3>
+<table style="font-weight:inherit;font-style:inherit;font-variant:inherit;font-size:100%;background-color:rgb(248, 249, 250);color:rgb(32, 33, 34);margin:1em auto 1em auto;border:1px solid rgb(162, 169, 177);border-collapse:collapse;">
+<tbody><tr>
+<th style="border:1px solid rgb(162, 169, 177);padding:0.2em 0.4em;background-color:rgb(234, 236, 240);text-align:center;">操作系统
+</th>
+<th style="border:1px solid rgb(162, 169, 177);padding:0.2em 0.4em;background-color:rgb(234, 236, 240);text-align:center;">版本
+</th>
+<th style="border:1px solid rgb(162, 169, 177);padding:0.2em 0.4em;background-color:rgb(234, 236, 240);text-align:center;">平台
+</th>
+<th style="border:1px solid rgb(162, 169, 177);padding:0.2em 0.4em;background-color:rgb(234, 236, 240);text-align:center;">读写支持
+</th>
+<th style="border:1px solid rgb(162, 169, 177);padding:0.2em 0.4em;background-color:rgb(234, 236, 240);text-align:center;">启动支持
+</th>
+<th style="border:1px solid rgb(162, 169, 177);padding:0.2em 0.4em;background-color:rgb(234, 236, 240);text-align:center;">备注
+</th></tr>
+<tr>
+<td style="border:1px solid rgb(162, 169, 177);padding:0.2em 0.4em;"><a href="https://zh.wikipedia.org/wiki/FreeBSD" title="FreeBSD" style="text-decoration:none;color:rgb(6, 69, 173);background:none;">FreeBSD</a>
+</td>
+<td style="border:1px solid rgb(162, 169, 177);padding:0.2em 0.4em;">7.0以后
+</td>
+<td style="border:1px solid rgb(162, 169, 177);padding:0.2em 0.4em;"><a href="https://zh.wikipedia.org/wiki/IA-32" title="IA-32" style="text-decoration:none;color:rgb(6, 69, 173);background:none;">IA-32</a>、<a href="https://zh.wikipedia.org/wiki/X86-64" title="X86-64" style="text-decoration:none;color:rgb(6, 69, 173);background:none;">x86-64</a>、<a href="https://zh.wikipedia.org/wiki/ARM%E6%9E%B6%E6%9E%84" title="ARM架构" style="text-decoration:none;color:rgb(6, 69, 173);background:none;">ARM</a>
+</td>
+<td style="border:1px solid rgb(162, 169, 177);padding:0.2em 0.4em;text-align:center;background:#90FF90;">是
+</td>
+<td style="border:1px solid rgb(162, 169, 177);padding:0.2em 0.4em;text-align:center;background:#90FF90;">是
+</td>
+<td style="border:1px solid rgb(162, 169, 177);padding:0.2em 0.4em;">在MBR/GPT混合硬盘中，可以同时使用GPT和MBR分区标识。
+</td></tr>
+<tr>
+<td style="border:1px solid rgb(162, 169, 177);padding:0.2em 0.4em;"><a href="https://zh.wikipedia.org/wiki/Linux" title="Linux" style="text-decoration:none;color:rgb(6, 69, 173);background:none;">Linux</a>
+</td>
+<td style="border:1px solid rgb(162, 169, 177);padding:0.2em 0.4em;">大多数x86架构的<a href="https://zh.wikipedia.org/wiki/Linux%E5%8F%91%E8%A1%8C%E7%89%88" title="Linux发行版" style="text-decoration:none;color:rgb(6, 69, 173);background:none;">Linux发行版</a><br/>
+<p style="margin:0.5em 0px;"><a href="https://zh.wikipedia.org/wiki/Fedora" title="Fedora" style="text-decoration:none;color:rgb(6, 69, 173);background:none;">Fedora</a> 8+、<a href="https://zh.wikipedia.org/wiki/Ubuntu" title="Ubuntu" style="text-decoration:none;color:rgb(6, 69, 173);background:none;">Ubuntu</a> 8.04+<sup style="line-height:1;unicode-bidi:isolate;white-space:nowrap;font-weight:normal;font-style:normal;"><a href="https://zh.wikipedia.org/wiki/GUID%E7%A3%81%E7%A2%9F%E5%88%86%E5%89%B2%E8%A1%A8#cite_note-5" style="text-decoration:none;color:rgb(6, 69, 173);background:none;white-space:nowrap;">[5]</a></sup>
+</p>
+</td>
+<td style="border:1px solid rgb(162, 169, 177);padding:0.2em 0.4em;">IA-32、x86-64
+</td>
+<td style="border:1px solid rgb(162, 169, 177);padding:0.2em 0.4em;text-align:center;background:#90FF90;">是
+</td>
+<td style="border:1px solid rgb(162, 169, 177);padding:0.2em 0.4em;text-align:center;background:#90FF90;">是
+</td>
+<td style="border:1px solid rgb(162, 169, 177);padding:0.2em 0.4em;">诸如gdisk、<a href="https://zh.wikipedia.org/wiki/GNU_Parted" title="GNU Parted" style="text-decoration:none;color:rgb(6, 69, 173);background:none;">GNU Parted</a>、<sup style="line-height:1;unicode-bidi:isolate;white-space:nowrap;font-weight:normal;font-style:normal;"><a href="https://zh.wikipedia.org/wiki/GUID%E7%A3%81%E7%A2%9F%E5%88%86%E5%89%B2%E8%A1%A8#cite_note-6" style="text-decoration:none;color:rgb(6, 69, 173);background:none;white-space:nowrap;">[6]</a></sup><sup style="line-height:1;unicode-bidi:isolate;white-space:nowrap;font-weight:normal;font-style:normal;"><a href="https://zh.wikipedia.org/wiki/GUID%E7%A3%81%E7%A2%9F%E5%88%86%E5%89%B2%E8%A1%A8#cite_note-7" style="text-decoration:none;color:rgb(6, 69, 173);background:none;white-space:nowrap;">[7]</a></sup><a href="https://zh.wikipedia.org/wiki/Util-linux" title="Util-linux" style="text-decoration:none;color:rgb(6, 69, 173);background:none;">util-linux</a> v2.23+ <a href="https://zh.wikipedia.org/w/index.php?title=Fdisk&amp;action=edit&amp;redlink=1" title="Fdisk（页面不存在）" style="text-decoration:none;background:none;color:rgb(186, 0, 0);">fdisk</a>、<sup style="line-height:1;unicode-bidi:isolate;white-space:nowrap;font-weight:normal;font-style:normal;"><a href="https://zh.wikipedia.org/wiki/GUID%E7%A3%81%E7%A2%9F%E5%88%86%E5%89%B2%E8%A1%A8#cite_note-8" style="text-decoration:none;color:rgb(6, 69, 173);background:none;white-space:nowrap;">[8]</a></sup><sup style="line-height:1;unicode-bidi:isolate;white-space:nowrap;font-weight:normal;font-style:normal;"><a href="https://zh.wikipedia.org/wiki/GUID%E7%A3%81%E7%A2%9F%E5%88%86%E5%89%B2%E8%A1%A8#cite_note-9" style="text-decoration:none;color:rgb(6, 69, 173);background:none;white-space:nowrap;">[9]</a></sup><a href="https://zh.wikipedia.org/wiki/SYSLINUX" title="SYSLINUX" style="text-decoration:none;color:rgb(6, 69, 173);background:none;">SYSLINUX</a>、<a href="https://zh.wikipedia.org/wiki/GNU_GRUB" title="GNU GRUB" style="text-decoration:none;color:rgb(6, 69, 173);background:none;">安装补丁后的GRUB 0.96</a>和<a href="https://zh.wikipedia.org/wiki/GNU_GRUB" title="GNU GRUB" style="text-decoration:none;color:rgb(6, 69, 173);background:none;">GRUB 2</a>等新工具均已支持GPT。
+</td></tr>
+<tr>
+<td style="border:1px solid rgb(162, 169, 177);padding:0.2em 0.4em;"><a href="https://zh.wikipedia.org/wiki/MacOS" title="MacOS" style="text-decoration:none;color:rgb(6, 69, 173);background:none;">macOS</a>
+</td>
+<td style="border:1px solid rgb(162, 169, 177);padding:0.2em 0.4em;">10.4.0以后（一些功能要到10.4.6以后）<sup style="line-height:1;unicode-bidi:isolate;white-space:nowrap;font-weight:normal;font-style:normal;"><a href="https://zh.wikipedia.org/wiki/GUID%E7%A3%81%E7%A2%9F%E5%88%86%E5%89%B2%E8%A1%A8#cite_note-10" style="text-decoration:none;color:rgb(6, 69, 173);background:none;white-space:nowrap;">[10]</a></sup>
+</td>
+<td style="border:1px solid rgb(162, 169, 177);padding:0.2em 0.4em;">IA-32、x86-64、<a href="https://zh.wikipedia.org/wiki/PowerPC" title="PowerPC" style="text-decoration:none;color:rgb(6, 69, 173);background:none;">PowerPC</a>
+</td>
+<td style="border:1px solid rgb(162, 169, 177);padding:0.2em 0.4em;text-align:center;background:#90FF90;">是
+</td>
+<td style="border:1px solid rgb(162, 169, 177);padding:0.2em 0.4em;text-align:center;background:#90FF90;">是
+</td>
+<td style="border:1px solid rgb(162, 169, 177);padding:0.2em 0.4em;">只有搭载因特尔芯片的计算机支持GPT启动。
+</td></tr>
+<tr>
+<td style="border:1px solid rgb(162, 169, 177);padding:0.2em 0.4em;"><a href="https://zh.wikipedia.org/wiki/MidnightBSD" title="MidnightBSD" style="text-decoration:none;color:rgb(6, 69, 173);background:none;">MidnightBSD</a>
+</td>
+<td style="border:1px solid rgb(162, 169, 177);padding:0.2em 0.4em;">0.4-CURRENT以后
+</td>
+<td style="border:1px solid rgb(162, 169, 177);padding:0.2em 0.4em;">IA-32、x86-64
+</td>
+<td style="border:1px solid rgb(162, 169, 177);padding:0.2em 0.4em;text-align:center;background:#90FF90;">是
+</td>
+<td style="border:1px solid rgb(162, 169, 177);padding:0.2em 0.4em;background:#FFD;color:black;vertical-align:middle;text-align:center;">需要BIOS支持
+</td>
+<td style="border:1px solid rgb(162, 169, 177);padding:0.2em 0.4em;">在MBR/GPT混合硬盘中，可以同时使用GPT和MBR分区标识。
+</td></tr>
+<tr>
+<td style="border:1px solid rgb(162, 169, 177);padding:0.2em 0.4em;"><a href="https://zh.wikipedia.org/wiki/Solaris" title="Solaris" style="text-decoration:none;color:rgb(6, 69, 173);background:none;">Solaris</a>
+</td>
+<td style="border:1px solid rgb(162, 169, 177);padding:0.2em 0.4em;">Solaris 10以后
+</td>
+<td style="border:1px solid rgb(162, 169, 177);padding:0.2em 0.4em;">IA-32、x86-64、<a href="https://zh.wikipedia.org/wiki/SPARC" title="SPARC" style="text-decoration:none;color:rgb(6, 69, 173);background:none;">SPARC</a>
+</td>
+<td style="border:1px solid rgb(162, 169, 177);padding:0.2em 0.4em;text-align:center;background:#90FF90;">是
+</td>
+<td style="border:1px solid rgb(162, 169, 177);padding:0.2em 0.4em;text-align:center;background:#90FF90;">是
+</td>
+<td style="border:1px solid rgb(162, 169, 177);padding:0.2em 0.4em;"><sup style="line-height:1;unicode-bidi:isolate;white-space:nowrap;font-weight:normal;font-style:normal;"><a href="https://zh.wikipedia.org/wiki/GUID%E7%A3%81%E7%A2%9F%E5%88%86%E5%89%B2%E8%A1%A8#cite_note-11" style="text-decoration:none;color:rgb(6, 69, 173);background:none;white-space:nowrap;">[11]</a></sup>
+</td></tr>
+<tr>
+<td style="border:1px solid rgb(162, 169, 177);padding:0.2em 0.4em;"><a href="https://zh.wikipedia.org/wiki/HP-UX" title="HP-UX" style="text-decoration:none;color:rgb(6, 69, 173);background:none;">HP-UX</a>
+</td>
+<td style="border:1px solid rgb(162, 169, 177);padding:0.2em 0.4em;">HP-UX 11.20以后
+</td>
+<td style="border:1px solid rgb(162, 169, 177);padding:0.2em 0.4em;"><a href="https://zh.wikipedia.org/wiki/IA-64" title="IA-64" style="text-decoration:none;color:rgb(6, 69, 173);background:none;">IA-64</a>
+</td>
+<td style="border:1px solid rgb(162, 169, 177);padding:0.2em 0.4em;text-align:center;background:#90FF90;">是
+</td>
+<td style="border:1px solid rgb(162, 169, 177);padding:0.2em 0.4em;text-align:center;background:#90FF90;">是
+</td>
+<td style="border:1px solid rgb(162, 169, 177);padding:0.2em 0.4em;"><sup style="line-height:1;unicode-bidi:isolate;white-space:nowrap;font-weight:normal;font-style:normal;"><a href="https://zh.wikipedia.org/wiki/GUID%E7%A3%81%E7%A2%9F%E5%88%86%E5%89%B2%E8%A1%A8#cite_note-12" style="text-decoration:none;color:rgb(6, 69, 173);background:none;white-space:nowrap;">[12]</a></sup>
+</td></tr></tbody></table>
+<h3 style="color:rgb(0, 0, 0);margin:0px;padding-top:0.5em;overflow:hidden;margin-top:0.3em;line-height:1.6;margin-bottom:0px;padding-bottom:0px;font-size:1.2em;font-weight:bold;"><span></span><span>32位Windows</span><span style="font-family:sans-serif;user-select:none;font-size:small;font-weight:normal;vertical-align:baseline;line-height:1em;unicode-bidi:isolate;margin-left:1em;"><span style="font-family:sans-serif;font-size:small;font-weight:normal;line-height:1em;">​</span><span style="margin-right:0.25em;color:rgb(84, 89, 93);">[</span><a href="https://zh.wikipedia.org/w/index.php?title=GUID%E7%A3%81%E7%A2%9F%E5%88%86%E5%89%B2%E8%A1%A8&amp;action=edit&amp;section=7" title="编辑章节：32位Windows" style="text-decoration:none;color:rgb(6, 69, 173);background:none;white-space:nowrap;">编辑</a><span style="margin-left:0.25em;color:rgb(84, 89, 93);">]</span></span></h3>
+<table style="font-weight:inherit;font-style:inherit;font-variant:inherit;font-size:100%;background-color:rgb(248, 249, 250);color:rgb(32, 33, 34);margin:1em auto 1em auto;border:1px solid rgb(162, 169, 177);border-collapse:collapse;">
+<caption style="font-size:inherit;font-style:inherit;font-variant:inherit;font-weight:bold;">Microsoft Windows历代32位版本的GPT支持详情<sup style="line-height:1;unicode-bidi:isolate;white-space:nowrap;font-weight:normal;font-style:normal;"><a href="https://zh.wikipedia.org/wiki/GUID%E7%A3%81%E7%A2%9F%E5%88%86%E5%89%B2%E8%A1%A8#cite_note-microsoft-13" style="text-decoration:none;color:rgb(6, 69, 173);background:none;white-space:nowrap;">[13]</a></sup>
+</caption>
+<tbody><tr>
+<th style="border:1px solid rgb(162, 169, 177);padding:0.2em 0.4em;background-color:rgb(234, 236, 240);text-align:center;">系统版本
+</th>
+<th style="border:1px solid rgb(162, 169, 177);padding:0.2em 0.4em;background-color:rgb(234, 236, 240);text-align:center;">发售日期
+</th>
+<th style="border:1px solid rgb(162, 169, 177);padding:0.2em 0.4em;background-color:rgb(234, 236, 240);text-align:center;">平台
+</th>
+<th style="border:1px solid rgb(162, 169, 177);padding:0.2em 0.4em;background-color:rgb(234, 236, 240);text-align:center;">读写支持
+</th>
+<th style="border:1px solid rgb(162, 169, 177);padding:0.2em 0.4em;background-color:rgb(234, 236, 240);text-align:center;">启动支持
+</th>
+<th style="border:1px solid rgb(162, 169, 177);padding:0.2em 0.4em;background-color:rgb(234, 236, 240);text-align:center;">备注
+</th></tr>
+<tr>
+<td style="border:1px solid rgb(162, 169, 177);padding:0.2em 0.4em;"><a href="https://zh.wikipedia.org/wiki/Windows_XP" title="Windows XP" style="text-decoration:none;color:rgb(6, 69, 173);background:none;">Windows XP</a>
+</td>
+<td style="border:1px solid rgb(162, 169, 177);padding:0.2em 0.4em;">2001-10-25
+</td>
+<td style="border:1px solid rgb(162, 169, 177);padding:0.2em 0.4em;"><a href="https://zh.wikipedia.org/wiki/IA-32" title="IA-32" style="text-decoration:none;color:rgb(6, 69, 173);background:none;">IA-32</a>
+</td>
+<td style="border:1px solid rgb(162, 169, 177);padding:0.2em 0.4em;text-align:center;background:#FF9090;">否
+</td>
+<td style="border:1px solid rgb(162, 169, 177);padding:0.2em 0.4em;text-align:center;background:#FF9090;">否
+</td>
+<td style="border:1px solid rgb(162, 169, 177);padding:0.2em 0.4em;">
+</td></tr>
+<tr>
+<td style="border:1px solid rgb(162, 169, 177);padding:0.2em 0.4em;"><a href="https://zh.wikipedia.org/wiki/Windows_Server_2003" title="Windows Server 2003" style="text-decoration:none;color:rgb(6, 69, 173);background:none;">Windows Server 2003</a>
+</td>
+<td style="border:1px solid rgb(162, 169, 177);padding:0.2em 0.4em;">2003-04-24
+</td>
+<td style="border:1px solid rgb(162, 169, 177);padding:0.2em 0.4em;">IA-32
+</td>
+<td style="border:1px solid rgb(162, 169, 177);padding:0.2em 0.4em;text-align:center;background:#FF9090;">否
+</td>
+<td style="border:1px solid rgb(162, 169, 177);padding:0.2em 0.4em;text-align:center;background:#FF9090;">否
+</td>
+<td style="border:1px solid rgb(162, 169, 177);padding:0.2em 0.4em;">
+</td></tr>
+<tr>
+<td style="border:1px solid rgb(162, 169, 177);padding:0.2em 0.4em;"><a href="https://zh.wikipedia.org/wiki/Windows_Server_2003#SP1" title="Windows Server 2003" style="text-decoration:none;color:rgb(6, 69, 173);background:none;">Windows Server 2003 SP1</a>
+</td>
+<td style="border:1px solid rgb(162, 169, 177);padding:0.2em 0.4em;">2005-03-30
+</td>
+<td style="border:1px solid rgb(162, 169, 177);padding:0.2em 0.4em;">IA-32
+</td>
+<td style="border:1px solid rgb(162, 169, 177);padding:0.2em 0.4em;text-align:center;background:#90FF90;">是
+</td>
+<td style="border:1px solid rgb(162, 169, 177);padding:0.2em 0.4em;text-align:center;background:#FF9090;">否
+</td>
+<td style="border:1px solid rgb(162, 169, 177);padding:0.2em 0.4em;">在MBR/GPT混合硬盘中优先使用MBR。
+</td></tr>
+<tr>
+<td style="border:1px solid rgb(162, 169, 177);padding:0.2em 0.4em;"><a href="https://zh.wikipedia.org/wiki/Windows_Vista" title="Windows Vista" style="text-decoration:none;color:rgb(6, 69, 173);background:none;">Windows Vista</a>
+</td>
+<td style="border:1px solid rgb(162, 169, 177);padding:0.2em 0.4em;">2006-07-22
+</td>
+<td style="border:1px solid rgb(162, 169, 177);padding:0.2em 0.4em;">IA-32
+</td>
+<td style="border:1px solid rgb(162, 169, 177);padding:0.2em 0.4em;text-align:center;background:#90FF90;">是
+</td>
+<td style="border:1px solid rgb(162, 169, 177);padding:0.2em 0.4em;text-align:center;background:#FF9090;">否
+</td>
+<td style="border:1px solid rgb(162, 169, 177);padding:0.2em 0.4em;">在MBR/GPT混合硬盘中优先使用MBR。
+</td></tr>
+<tr>
+<td style="border:1px solid rgb(162, 169, 177);padding:0.2em 0.4em;"><a href="https://zh.wikipedia.org/wiki/Windows_Server_2008" title="Windows Server 2008" style="text-decoration:none;color:rgb(6, 69, 173);background:none;">Windows Server 2008</a>
+</td>
+<td style="border:1px solid rgb(162, 169, 177);padding:0.2em 0.4em;">2008-02-27
+</td>
+<td style="border:1px solid rgb(162, 169, 177);padding:0.2em 0.4em;">IA-32
+</td>
+<td style="border:1px solid rgb(162, 169, 177);padding:0.2em 0.4em;text-align:center;background:#90FF90;">是
+</td>
+<td style="border:1px solid rgb(162, 169, 177);padding:0.2em 0.4em;text-align:center;background:#FF9090;">否
+</td>
+<td style="border:1px solid rgb(162, 169, 177);padding:0.2em 0.4em;">在MBR/GPT混合硬盘中优先使用MBR。
+</td></tr>
+<tr>
+<td style="border:1px solid rgb(162, 169, 177);padding:0.2em 0.4em;"><a href="https://zh.wikipedia.org/wiki/Windows_7" title="Windows 7" style="text-decoration:none;color:rgb(6, 69, 173);background:none;">Windows 7</a>
+</td>
+<td style="border:1px solid rgb(162, 169, 177);padding:0.2em 0.4em;">2009-10-22
+</td>
+<td style="border:1px solid rgb(162, 169, 177);padding:0.2em 0.4em;">IA-32
+</td>
+<td style="border:1px solid rgb(162, 169, 177);padding:0.2em 0.4em;text-align:center;background:#90FF90;">是
+</td>
+<td style="border:1px solid rgb(162, 169, 177);padding:0.2em 0.4em;text-align:center;background:#FF9090;">否
+</td>
+<td style="border:1px solid rgb(162, 169, 177);padding:0.2em 0.4em;">在MBR/GPT混合硬盘中优先使用MBR。
+</td></tr>
+<tr>
+<td style="border:1px solid rgb(162, 169, 177);padding:0.2em 0.4em;"><a href="https://zh.wikipedia.org/wiki/Windows_8" title="Windows 8" style="text-decoration:none;color:rgb(6, 69, 173);background:none;">Windows 8</a>
+</td>
+<td style="border:1px solid rgb(162, 169, 177);padding:0.2em 0.4em;">2012-08-01
+</td>
+<td style="border:1px solid rgb(162, 169, 177);padding:0.2em 0.4em;">IA-32
+</td>
+<td style="border:1px solid rgb(162, 169, 177);padding:0.2em 0.4em;text-align:center;background:#90FF90;">是
+</td>
+<td style="border:1px solid rgb(162, 169, 177);padding:0.2em 0.4em;background:#FFD;color:black;vertical-align:middle;text-align:center;">需要<a href="https://zh.wikipedia.org/wiki/UEFI" title="UEFI" style="text-decoration:none;color:rgb(6, 69, 173);background:none;">UEFI</a><sup style="line-height:1;unicode-bidi:isolate;white-space:nowrap;font-weight:normal;font-style:normal;"><a href="https://zh.wikipedia.org/wiki/GUID%E7%A3%81%E7%A2%9F%E5%88%86%E5%89%B2%E8%A1%A8#cite_note-technet.microsoft.com-14" style="text-decoration:none;color:rgb(6, 69, 173);background:none;white-space:nowrap;">[14]</a></sup>
+</td>
+<td style="border:1px solid rgb(162, 169, 177);padding:0.2em 0.4em;">在MBR/GPT混合硬盘中优先使用MBR。
+</td></tr>
+<tr>
+<td style="border:1px solid rgb(162, 169, 177);padding:0.2em 0.4em;"><a href="https://zh.wikipedia.org/wiki/Windows_8.1" title="Windows 8.1" style="text-decoration:none;color:rgb(6, 69, 173);background:none;">Windows 8.1</a>
+</td>
+<td style="border:1px solid rgb(162, 169, 177);padding:0.2em 0.4em;">2013-08-27
+</td>
+<td style="border:1px solid rgb(162, 169, 177);padding:0.2em 0.4em;">IA-32
+</td>
+<td style="border:1px solid rgb(162, 169, 177);padding:0.2em 0.4em;text-align:center;background:#90FF90;">是
+</td>
+<td style="border:1px solid rgb(162, 169, 177);padding:0.2em 0.4em;background:#FFD;color:black;vertical-align:middle;text-align:center;">需要UEFI<sup style="line-height:1;unicode-bidi:isolate;white-space:nowrap;font-weight:normal;font-style:normal;"><a href="https://zh.wikipedia.org/wiki/GUID%E7%A3%81%E7%A2%9F%E5%88%86%E5%89%B2%E8%A1%A8#cite_note-technet.microsoft.com-14" style="text-decoration:none;color:rgb(6, 69, 173);background:none;white-space:nowrap;">[14]</a></sup>
+</td>
+<td style="border:1px solid rgb(162, 169, 177);padding:0.2em 0.4em;">在MBR/GPT混合硬盘中优先使用MBR。
+</td></tr>
+<tr>
+<td style="border:1px solid rgb(162, 169, 177);padding:0.2em 0.4em;"><a href="https://zh.wikipedia.org/wiki/Windows_10" title="Windows 10" style="text-decoration:none;color:rgb(6, 69, 173);background:none;">Windows 10</a>
+</td>
+<td style="border:1px solid rgb(162, 169, 177);padding:0.2em 0.4em;">2015-07-29
+</td>
+<td style="border:1px solid rgb(162, 169, 177);padding:0.2em 0.4em;">IA-32
+</td>
+<td style="border:1px solid rgb(162, 169, 177);padding:0.2em 0.4em;text-align:center;background:#90FF90;">是
+</td>
+<td style="border:1px solid rgb(162, 169, 177);padding:0.2em 0.4em;background:#FFD;color:black;vertical-align:middle;text-align:center;">需要UEFI<sup style="line-height:1;unicode-bidi:isolate;white-space:nowrap;font-weight:normal;font-style:normal;"><a href="https://zh.wikipedia.org/wiki/GUID%E7%A3%81%E7%A2%9F%E5%88%86%E5%89%B2%E8%A1%A8#cite_note-technet.microsoft.com-14" style="text-decoration:none;color:rgb(6, 69, 173);background:none;white-space:nowrap;">[14]</a></sup>
+</td>
+<td style="border:1px solid rgb(162, 169, 177);padding:0.2em 0.4em;">在MBR/GPT混合硬盘中优先使用MBR。
+</td></tr></tbody></table>
+<h3 style="color:rgb(0, 0, 0);margin:0px;padding-top:0.5em;overflow:hidden;margin-top:0.3em;line-height:1.6;margin-bottom:0px;padding-bottom:0px;font-size:1.2em;font-weight:bold;"><span></span><span>64位Windows</span><span style="font-family:sans-serif;user-select:none;font-size:small;font-weight:normal;vertical-align:baseline;line-height:1em;unicode-bidi:isolate;margin-left:1em;"><span style="font-family:sans-serif;font-size:small;font-weight:normal;line-height:1em;">​</span><span style="margin-right:0.25em;color:rgb(84, 89, 93);">[</span><a href="https://zh.wikipedia.org/w/index.php?title=GUID%E7%A3%81%E7%A2%9F%E5%88%86%E5%89%B2%E8%A1%A8&amp;action=edit&amp;section=8" title="编辑章节：64位Windows" style="text-decoration:none;color:rgb(6, 69, 173);background:none;white-space:nowrap;">编辑</a><span style="margin-left:0.25em;color:rgb(84, 89, 93);">]</span></span></h3>
+<table style="font-weight:inherit;font-style:inherit;font-variant:inherit;font-size:100%;background-color:rgb(248, 249, 250);color:rgb(32, 33, 34);margin:1em auto 1em auto;border:1px solid rgb(162, 169, 177);border-collapse:collapse;">
+<caption style="font-size:inherit;font-style:inherit;font-variant:inherit;font-weight:bold;">Microsoft Windows历代64位版本的GPT支持详情<sup style="line-height:1;unicode-bidi:isolate;white-space:nowrap;font-weight:normal;font-style:normal;"><a href="https://zh.wikipedia.org/wiki/GUID%E7%A3%81%E7%A2%9F%E5%88%86%E5%89%B2%E8%A1%A8#cite_note-microsoft-13" style="text-decoration:none;color:rgb(6, 69, 173);background:none;white-space:nowrap;">[13]</a></sup>
+</caption>
+<tbody><tr>
+<th style="border:1px solid rgb(162, 169, 177);padding:0.2em 0.4em;background-color:rgb(234, 236, 240);text-align:center;">系统版本
+</th>
+<th style="border:1px solid rgb(162, 169, 177);padding:0.2em 0.4em;background-color:rgb(234, 236, 240);text-align:center;">发售日期
+</th>
+<th style="border:1px solid rgb(162, 169, 177);padding:0.2em 0.4em;background-color:rgb(234, 236, 240);text-align:center;">平台
+</th>
+<th style="border:1px solid rgb(162, 169, 177);padding:0.2em 0.4em;background-color:rgb(234, 236, 240);text-align:center;">读写支持
+</th>
+<th style="border:1px solid rgb(162, 169, 177);padding:0.2em 0.4em;background-color:rgb(234, 236, 240);text-align:center;">启动支持
+</th>
+<th style="border:1px solid rgb(162, 169, 177);padding:0.2em 0.4em;background-color:rgb(234, 236, 240);text-align:center;">备注
+</th></tr>
+<tr>
+<td style="border:1px solid rgb(162, 169, 177);padding:0.2em 0.4em;"><a href="https://zh.wikipedia.org/wiki/Windows_XP_Professional_x64_Edition" title="Windows XP Professional x64 Edition" style="text-decoration:none;color:rgb(6, 69, 173);background:none;">Windows XP Professional x64 Edition</a><br/><a href="https://zh.wikipedia.org/wiki/Windows_Server_2003" title="Windows Server 2003" style="text-decoration:none;color:rgb(6, 69, 173);background:none;">Windows Server 2003</a>
+</td>
+<td style="border:1px solid rgb(162, 169, 177);padding:0.2em 0.4em;">2005-04-25<sup style="line-height:1;unicode-bidi:isolate;white-space:nowrap;font-weight:normal;font-style:normal;"><a href="https://zh.wikipedia.org/wiki/GUID%E7%A3%81%E7%A2%9F%E5%88%86%E5%89%B2%E8%A1%A8#cite_note-15" style="text-decoration:none;color:rgb(6, 69, 173);background:none;white-space:nowrap;">[15]</a></sup>
+</td>
+<td style="border:1px solid rgb(162, 169, 177);padding:0.2em 0.4em;"><a href="https://zh.wikipedia.org/wiki/X64" title="X64" style="text-decoration:none;color:rgb(6, 69, 173);background:none;">x64</a>
+</td>
+<td style="border:1px solid rgb(162, 169, 177);padding:0.2em 0.4em;text-align:center;background:#90FF90;">是
+</td>
+<td style="border:1px solid rgb(162, 169, 177);padding:0.2em 0.4em;text-align:center;background:#FF9090;">否
+</td>
+<td style="border:1px solid rgb(162, 169, 177);padding:0.2em 0.4em;">在MBR/GPT混合硬盘中优先使用MBR。
+</td></tr>
+<tr>
+<td style="border:1px solid rgb(162, 169, 177);padding:0.2em 0.4em;"><a href="https://zh.wikipedia.org/wiki/Windows_Server_2003" title="Windows Server 2003" style="text-decoration:none;color:rgb(6, 69, 173);background:none;">Windows Server 2003</a>
+</td>
+<td style="border:1px solid rgb(162, 169, 177);padding:0.2em 0.4em;">2005-04-25
+</td>
+<td style="border:1px solid rgb(162, 169, 177);padding:0.2em 0.4em;"><a href="https://zh.wikipedia.org/wiki/IA-64" title="IA-64" style="text-decoration:none;color:rgb(6, 69, 173);background:none;">IA-64</a>
+</td>
+<td style="border:1px solid rgb(162, 169, 177);padding:0.2em 0.4em;text-align:center;background:#90FF90;">是
+</td>
+<td style="border:1px solid rgb(162, 169, 177);padding:0.2em 0.4em;text-align:center;background:#90FF90;">是
+</td>
+<td style="border:1px solid rgb(162, 169, 177);padding:0.2em 0.4em;">在MBR/GPT混合硬盘中优先使用MBR。
+</td></tr>
+<tr>
+<td style="border:1px solid rgb(162, 169, 177);padding:0.2em 0.4em;"><a href="https://zh.wikipedia.org/wiki/Windows_Vista" title="Windows Vista" style="text-decoration:none;color:rgb(6, 69, 173);background:none;">Windows Vista</a>
+</td>
+<td style="border:1px solid rgb(162, 169, 177);padding:0.2em 0.4em;">2006-07-22
+</td>
+<td style="border:1px solid rgb(162, 169, 177);padding:0.2em 0.4em;">x64
+</td>
+<td style="border:1px solid rgb(162, 169, 177);padding:0.2em 0.4em;text-align:center;background:#90FF90;">是
+</td>
+<td style="border:1px solid rgb(162, 169, 177);padding:0.2em 0.4em;background:#FFD;color:black;vertical-align:middle;text-align:center;">需要<a href="https://zh.wikipedia.org/wiki/UEFI" title="UEFI" style="text-decoration:none;color:rgb(6, 69, 173);background:none;">UEFI</a><sup style="line-height:1;unicode-bidi:isolate;white-space:nowrap;font-weight:normal;font-style:normal;"><a href="https://zh.wikipedia.org/wiki/GUID%E7%A3%81%E7%A2%9F%E5%88%86%E5%89%B2%E8%A1%A8#cite_note-16" style="text-decoration:none;color:rgb(6, 69, 173);background:none;white-space:nowrap;">[a]</a></sup>
+</td>
+<td style="border:1px solid rgb(162, 169, 177);padding:0.2em 0.4em;">在MBR/GPT混合硬盘中优先使用MBR。
+</td></tr>
+<tr>
+<td style="border:1px solid rgb(162, 169, 177);padding:0.2em 0.4em;"><a href="https://zh.wikipedia.org/wiki/Windows_Server_2008" title="Windows Server 2008" style="text-decoration:none;color:rgb(6, 69, 173);background:none;">Windows Server 2008</a>
+</td>
+<td style="border:1px solid rgb(162, 169, 177);padding:0.2em 0.4em;">2008-02-27
+</td>
+<td style="border:1px solid rgb(162, 169, 177);padding:0.2em 0.4em;">x64
+</td>
+<td style="border:1px solid rgb(162, 169, 177);padding:0.2em 0.4em;text-align:center;background:#90FF90;">是
+</td>
+<td style="border:1px solid rgb(162, 169, 177);padding:0.2em 0.4em;background:#FFD;color:black;vertical-align:middle;text-align:center;">需要UEFI
+</td>
+<td style="border:1px solid rgb(162, 169, 177);padding:0.2em 0.4em;">在MBR/GPT混合硬盘中优先使用MBR。
+</td></tr>
+<tr>
+<td style="border:1px solid rgb(162, 169, 177);padding:0.2em 0.4em;"><a href="https://zh.wikipedia.org/wiki/Windows_Server_2008" title="Windows Server 2008" style="text-decoration:none;color:rgb(6, 69, 173);background:none;">Windows Server 2008</a>
+</td>
+<td style="border:1px solid rgb(162, 169, 177);padding:0.2em 0.4em;">2008-02-27
+</td>
+<td style="border:1px solid rgb(162, 169, 177);padding:0.2em 0.4em;">IA-64
+</td>
+<td style="border:1px solid rgb(162, 169, 177);padding:0.2em 0.4em;text-align:center;background:#90FF90;">是
+</td>
+<td style="border:1px solid rgb(162, 169, 177);padding:0.2em 0.4em;text-align:center;background:#90FF90;">是
+</td>
+<td style="border:1px solid rgb(162, 169, 177);padding:0.2em 0.4em;">在MBR/GPT混合硬盘中优先使用MBR。
+</td></tr>
+<tr>
+<td style="border:1px solid rgb(162, 169, 177);padding:0.2em 0.4em;"><a href="https://zh.wikipedia.org/wiki/Windows_7" title="Windows 7" style="text-decoration:none;color:rgb(6, 69, 173);background:none;">Windows 7</a>
+</td>
+<td style="border:1px solid rgb(162, 169, 177);padding:0.2em 0.4em;">2009-10-22
+</td>
+<td style="border:1px solid rgb(162, 169, 177);padding:0.2em 0.4em;">x64
+</td>
+<td style="border:1px solid rgb(162, 169, 177);padding:0.2em 0.4em;text-align:center;background:#90FF90;">是
+</td>
+<td style="border:1px solid rgb(162, 169, 177);padding:0.2em 0.4em;background:#FFD;color:black;vertical-align:middle;text-align:center;">需要UEFI<sup style="line-height:1;unicode-bidi:isolate;white-space:nowrap;font-weight:normal;font-style:normal;"><a href="https://zh.wikipedia.org/wiki/GUID%E7%A3%81%E7%A2%9F%E5%88%86%E5%89%B2%E8%A1%A8#cite_note-17" style="text-decoration:none;color:rgb(6, 69, 173);background:none;white-space:nowrap;">[b]</a></sup>
+</td>
+<td style="border:1px solid rgb(162, 169, 177);padding:0.2em 0.4em;">在MBR/GPT混合硬盘中优先使用MBR。
+</td></tr>
+<tr>
+<td style="border:1px solid rgb(162, 169, 177);padding:0.2em 0.4em;"><a href="https://zh.wikipedia.org/wiki/Windows_Server_2008_R2" title="Windows Server 2008 R2" style="text-decoration:none;color:rgb(6, 69, 173);background:none;">Windows Server 2008 R2</a>
+</td>
+<td style="border:1px solid rgb(162, 169, 177);padding:0.2em 0.4em;">2009-10-22
+</td>
+<td style="border:1px solid rgb(162, 169, 177);padding:0.2em 0.4em;">IA-64
+</td>
+<td style="border:1px solid rgb(162, 169, 177);padding:0.2em 0.4em;text-align:center;background:#90FF90;">是
+</td>
+<td style="border:1px solid rgb(162, 169, 177);padding:0.2em 0.4em;text-align:center;background:#90FF90;">是
+</td>
+<td style="border:1px solid rgb(162, 169, 177);padding:0.2em 0.4em;">在MBR/GPT混合硬盘中优先使用MBR。
+</td></tr>
+<tr>
+<td style="border:1px solid rgb(162, 169, 177);padding:0.2em 0.4em;"><a href="https://zh.wikipedia.org/wiki/Windows_8" title="Windows 8" style="text-decoration:none;color:rgb(6, 69, 173);background:none;">Windows 8</a><br/><a href="https://zh.wikipedia.org/wiki/Windows_Server_2012" title="Windows Server 2012" style="text-decoration:none;color:rgb(6, 69, 173);background:none;">Windows Server 2012</a>
+</td>
+<td style="border:1px solid rgb(162, 169, 177);padding:0.2em 0.4em;">2012-08-01
+</td>
+<td style="border:1px solid rgb(162, 169, 177);padding:0.2em 0.4em;">x64
+</td>
+<td style="border:1px solid rgb(162, 169, 177);padding:0.2em 0.4em;text-align:center;background:#90FF90;">是
+</td>
+<td style="border:1px solid rgb(162, 169, 177);padding:0.2em 0.4em;background:#FFD;color:black;vertical-align:middle;text-align:center;">需要UEFI<sup style="line-height:1;unicode-bidi:isolate;white-space:nowrap;font-weight:normal;font-style:normal;"><a href="https://zh.wikipedia.org/wiki/GUID%E7%A3%81%E7%A2%9F%E5%88%86%E5%89%B2%E8%A1%A8#cite_note-technet.microsoft.com-14" style="text-decoration:none;color:rgb(6, 69, 173);background:none;white-space:nowrap;">[14]</a></sup>
+</td>
+<td style="border:1px solid rgb(162, 169, 177);padding:0.2em 0.4em;">在MBR/GPT混合硬盘中优先使用MBR。
+</td></tr>
+<tr>
+<td style="border:1px solid rgb(162, 169, 177);padding:0.2em 0.4em;"><a href="https://zh.wikipedia.org/wiki/Windows_8.1" title="Windows 8.1" style="text-decoration:none;color:rgb(6, 69, 173);background:none;">Windows 8.1</a>
+</td>
+<td style="border:1px solid rgb(162, 169, 177);padding:0.2em 0.4em;">2013-08-27
+</td>
+<td style="border:1px solid rgb(162, 169, 177);padding:0.2em 0.4em;">x64
+</td>
+<td style="border:1px solid rgb(162, 169, 177);padding:0.2em 0.4em;text-align:center;background:#90FF90;">是
+</td>
+<td style="border:1px solid rgb(162, 169, 177);padding:0.2em 0.4em;background:#FFD;color:black;vertical-align:middle;text-align:center;">需要UEFI<sup style="line-height:1;unicode-bidi:isolate;white-space:nowrap;font-weight:normal;font-style:normal;"><a href="https://zh.wikipedia.org/wiki/GUID%E7%A3%81%E7%A2%9F%E5%88%86%E5%89%B2%E8%A1%A8#cite_note-technet.microsoft.com-14" style="text-decoration:none;color:rgb(6, 69, 173);background:none;white-space:nowrap;">[14]</a></sup>
+</td>
+<td style="border:1px solid rgb(162, 169, 177);padding:0.2em 0.4em;">在MBR/GPT混合硬盘中优先使用MBR。
+</td></tr>
+<tr>
+<td style="border:1px solid rgb(162, 169, 177);padding:0.2em 0.4em;"><a href="https://zh.wikipedia.org/wiki/Windows_10" title="Windows 10" style="text-decoration:none;color:rgb(6, 69, 173);background:none;">Windows 10</a>
+</td>
+<td style="border:1px solid rgb(162, 169, 177);padding:0.2em 0.4em;">2015-07-29
+</td>
+<td style="border:1px solid rgb(162, 169, 177);padding:0.2em 0.4em;">x64
+</td>
+<td style="border:1px solid rgb(162, 169, 177);padding:0.2em 0.4em;text-align:center;background:#90FF90;">是
+</td>
+<td style="border:1px solid rgb(162, 169, 177);padding:0.2em 0.4em;background:#FFD;color:black;vertical-align:middle;text-align:center;">需要UEFI<sup style="line-height:1;unicode-bidi:isolate;white-space:nowrap;font-weight:normal;font-style:normal;"><a href="https://zh.wikipedia.org/wiki/GUID%E7%A3%81%E7%A2%9F%E5%88%86%E5%89%B2%E8%A1%A8#cite_note-technet.microsoft.com-14" style="text-decoration:none;color:rgb(6, 69, 173);background:none;white-space:nowrap;">[14]</a></sup>
+</td>
+<td style="border:1px solid rgb(162, 169, 177);padding:0.2em 0.4em;">在MBR/GPT混合硬盘中优先使用MBR。
+</td></tr>
+<tr>
+<td style="border:1px solid rgb(162, 169, 177);padding:0.2em 0.4em;"><a href="https://zh.wikipedia.org/wiki/Windows_Server_2016" title="Windows Server 2016" style="text-decoration:none;color:rgb(6, 69, 173);background:none;">Windows Server 2016</a>
+</td>
+<td style="border:1px solid rgb(162, 169, 177);padding:0.2em 0.4em;">2016-10-12
+</td>
+<td style="border:1px solid rgb(162, 169, 177);padding:0.2em 0.4em;">x64
+</td>
+<td style="border:1px solid rgb(162, 169, 177);padding:0.2em 0.4em;text-align:center;background:#90FF90;">是
+</td>
+<td style="border:1px solid rgb(162, 169, 177);padding:0.2em 0.4em;background:#FFD;color:black;vertical-align:middle;text-align:center;">需要UEFI<sup style="line-height:1;unicode-bidi:isolate;white-space:nowrap;font-weight:normal;font-style:normal;"><a href="https://zh.wikipedia.org/wiki/GUID%E7%A3%81%E7%A2%9F%E5%88%86%E5%89%B2%E8%A1%A8#cite_note-technet.microsoft.com-14" style="text-decoration:none;color:rgb(6, 69, 173);background:none;white-space:nowrap;">[14]</a></sup>
+</td>
+<td style="border:1px solid rgb(162, 169, 177);padding:0.2em 0.4em;">在MBR/GPT混合硬盘中优先使用MBR。
+</td></tr></tbody></table>
+<h2 style="color:rgb(0, 0, 0);margin:0px;padding-top:0.5em;padding-bottom:0.17em;overflow:hidden;border-bottom:1px solid rgb(162, 169, 177);font-weight:normal;padding:0px;font-family:&quot;Linux Libertine&quot;, Georgia, Times, serif;line-height:1.3;margin-bottom:0.25em;margin-top:1em;font-size:1.5em;"><span></span><span>分区类型GUID</span><span style="font-family:sans-serif;user-select:none;font-size:small;font-weight:normal;vertical-align:baseline;line-height:1em;unicode-bidi:isolate;margin-left:1em;"><span style="font-family:sans-serif;font-size:small;font-weight:normal;line-height:1em;">​</span><span style="margin-right:0.25em;color:rgb(84, 89, 93);">[</span><a href="https://zh.wikipedia.org/w/index.php?title=GUID%E7%A3%81%E7%A2%9F%E5%88%86%E5%89%B2%E8%A1%A8&amp;action=edit&amp;section=9" title="编辑章节：分区类型GUID" style="text-decoration:none;color:rgb(6, 69, 173);background:none;white-space:nowrap;">编辑</a><span style="margin-left:0.25em;color:rgb(84, 89, 93);">]</span></span></h2>
+<table style="font-weight:inherit;font-style:inherit;font-variant:inherit;font-size:100%;background-color:rgb(248, 249, 250);color:rgb(32, 33, 34);margin:1em auto 1em auto;border:1px solid rgb(162, 169, 177);border-collapse:collapse;">
+
+<tbody><tr>
+<th bgcolor="#E0F0FF" style="border:1px solid rgb(162, 169, 177);padding:0.2em 0.4em;background-color:rgb(224, 240, 255);text-align:center;">相关操作系统
+</th>
+<th bgcolor="#E0F0FF" style="border:1px solid rgb(162, 169, 177);padding:0.2em 0.4em;background-color:rgb(224, 240, 255);text-align:center;">分区类型
+</th>
+<th bgcolor="#E0F0FF" style="border:1px solid rgb(162, 169, 177);padding:0.2em 0.4em;background-color:rgb(224, 240, 255);text-align:center;"><a href="https://zh.wikipedia.org/wiki/GUID" title="GUID" style="text-decoration:none;color:rgb(6, 69, 173);background:none;">GUID</a><span><sup style="line-height:1;"><a href="https://zh.wikipedia.org/wiki/GUID%E7%A3%81%E7%A2%9F%E5%88%86%E5%89%B2%E8%A1%A8#endnote_guidord" style="text-decoration:none;background:none;background-image:url(https://zh.wikipedia.org/w/skins/Vector/resources/skins.vector.styles/images/external-link-ltr-icon.svg?b4b84);background-position:right center;background-repeat:no-repeat;padding-right:13px;color:rgb(51, 102, 187);">[1]</a></sup></span>
+</th></tr>
+<tr>
+<td bgcolor="#F0F0F0" rowspan="4" style="border:1px solid rgb(162, 169, 177);padding:0.2em 0.4em;background-color:rgb(240, 240, 240);"><i>（None）</i>
+</td>
+<td bgcolor="#F0F0F0" style="border:1px solid rgb(162, 169, 177);padding:0.2em 0.4em;background-color:rgb(240, 240, 240);">未使用
+</td>
+<td bgcolor="#F0F0F0" style="border:1px solid rgb(162, 169, 177);padding:0.2em 0.4em;background-color:rgb(240, 240, 240);"><tt style="font-family:monospace, monospace;">00000000-0000-0000-0000-000000000000</tt>
+</td></tr>
+<tr>
+<td bgcolor="#F0F0F0" style="border:1px solid rgb(162, 169, 177);padding:0.2em 0.4em;background-color:rgb(240, 240, 240);">MBR分区表
+</td>
+<td bgcolor="#F0F0F0" style="border:1px solid rgb(162, 169, 177);padding:0.2em 0.4em;background-color:rgb(240, 240, 240);"><tt style="font-family:monospace, monospace;">024DEE41-33E7-11D3-9D69-0008C781F39F</tt>
+</td></tr>
+<tr>
+<td bgcolor="#F0F0F0" style="border:1px solid rgb(162, 169, 177);padding:0.2em 0.4em;background-color:rgb(240, 240, 240);"><a href="https://zh.wikipedia.org/wiki/EFI%E7%B3%BB%E7%BB%9F%E5%88%86%E5%8C%BA" title="EFI系统分区" style="text-decoration:none;color:rgb(6, 69, 173);background:none;">EFI系统分区</a>
+</td>
+<td bgcolor="#F0F0F0" style="border:1px solid rgb(162, 169, 177);padding:0.2em 0.4em;background-color:rgb(240, 240, 240);"><tt style="font-family:monospace, monospace;">C12A7328-F81F-11D2-BA4B-00A0C93EC93B</tt>
+</td></tr>
+<tr>
+<td bgcolor="#F0F0F0" style="border:1px solid rgb(162, 169, 177);padding:0.2em 0.4em;background-color:rgb(240, 240, 240);"><a href="https://zh.wikipedia.org/w/index.php?title=BIOS%E5%BC%95%E5%AF%BC%E5%88%86%E5%8C%BA&amp;action=edit&amp;redlink=1" title="BIOS引导分区（页面不存在）" style="text-decoration:none;background:none;color:rgb(186, 0, 0);">BIOS引导分区</a>
+</td>
+<td bgcolor="#F0F0F0" style="border:1px solid rgb(162, 169, 177);padding:0.2em 0.4em;background-color:rgb(240, 240, 240);"><tt style="font-family:monospace, monospace;">21686148-6449-6E6F-744E-656564454649</tt>
+</td></tr>
+<tr>
+<td rowspan="6" style="border:1px solid rgb(162, 169, 177);padding:0.2em 0.4em;"><a href="https://zh.wikipedia.org/wiki/Microsoft_Windows" title="Microsoft Windows" style="text-decoration:none;color:rgb(6, 69, 173);background:none;">Windows</a>
+</td>
+<td style="border:1px solid rgb(162, 169, 177);padding:0.2em 0.4em;">微软保留分区
+</td>
+<td style="border:1px solid rgb(162, 169, 177);padding:0.2em 0.4em;"><tt style="font-family:monospace, monospace;">E3C9E316-0B5C-4DB8-817D-F92DF00215AE</tt>
+</td></tr>
+<tr>
+<td style="border:1px solid rgb(162, 169, 177);padding:0.2em 0.4em;">基本数据分区<sup style="line-height:1;unicode-bidi:isolate;white-space:nowrap;font-weight:normal;font-style:normal;"><a href="https://zh.wikipedia.org/wiki/GUID%E7%A3%81%E7%A2%9F%E5%88%86%E5%89%B2%E8%A1%A8#endnote_linwina" style="text-decoration:none;color:rgb(6, 69, 173);background:none;white-space:nowrap;">[2]</a></sup>
+</td>
+<td style="border:1px solid rgb(162, 169, 177);padding:0.2em 0.4em;"><tt style="font-family:monospace, monospace;">EBD0A0A2-B9E5-4433-87C0-68B6B72699C7</tt>
+</td></tr>
+<tr>
+<td style="border:1px solid rgb(162, 169, 177);padding:0.2em 0.4em;"><a href="https://zh.wikipedia.org/w/index.php?title=%E9%80%BB%E8%BE%91%E8%BD%AF%E7%9B%98%E7%AE%A1%E7%90%86%E5%B7%A5%E5%85%B7&amp;action=edit&amp;redlink=1" title="逻辑软盘管理工具（页面不存在）" style="text-decoration:none;background:none;color:rgb(186, 0, 0);">逻辑软盘管理工具</a>元数据分区
+</td>
+<td style="border:1px solid rgb(162, 169, 177);padding:0.2em 0.4em;"><tt style="font-family:monospace, monospace;">5808C8AA-7E8F-42E0-85D2-E1E90434CFB3</tt>
+</td></tr>
+<tr>
+<td style="border:1px solid rgb(162, 169, 177);padding:0.2em 0.4em;">逻辑软盘管理工具数据分区
+</td>
+<td style="border:1px solid rgb(162, 169, 177);padding:0.2em 0.4em;"><tt style="font-family:monospace, monospace;">AF9B60A0-1431-4F62-BC68-3311714A69AD</tt>
+</td></tr>
+<tr>
+<td style="border:1px solid rgb(162, 169, 177);padding:0.2em 0.4em;">Windows恢复环境
+</td>
+<td style="border:1px solid rgb(162, 169, 177);padding:0.2em 0.4em;"><tt style="font-family:monospace, monospace;">DE94BBA4-06D1-4D40-A16A-BFD50179D6AC</tt>
+</td></tr>
+<tr>
+<td style="border:1px solid rgb(162, 169, 177);padding:0.2em 0.4em;"><a href="https://zh.wikipedia.org/w/index.php?title=IBM%E9%80%9A%E7%94%A8%E5%B9%B6%E8%A1%8C%E6%96%87%E4%BB%B6%E7%B3%BB%E7%BB%9F&amp;action=edit&amp;redlink=1" title="IBM通用并行文件系统（页面不存在）" style="text-decoration:none;background:none;color:rgb(186, 0, 0);">IBM通用并行文件系统</a>（GPFS）分区
+</td>
+<td style="border:1px solid rgb(162, 169, 177);padding:0.2em 0.4em;"><tt style="font-family:monospace, monospace;">37AFFC90-EF7D-4e96-91C3-2D7AE055B174</tt>
+</td></tr>
+<tr>
+<td bgcolor="#F0F0F0" rowspan="2" style="border:1px solid rgb(162, 169, 177);padding:0.2em 0.4em;background-color:rgb(240, 240, 240);"><a href="https://zh.wikipedia.org/wiki/HP-UX" title="HP-UX" style="text-decoration:none;color:rgb(6, 69, 173);background:none;">HP-UX</a>
+</td>
+<td bgcolor="#F0F0F0" style="border:1px solid rgb(162, 169, 177);padding:0.2em 0.4em;background-color:rgb(240, 240, 240);">数据分区
+</td>
+<td bgcolor="#F0F0F0" style="border:1px solid rgb(162, 169, 177);padding:0.2em 0.4em;background-color:rgb(240, 240, 240);"><tt style="font-family:monospace, monospace;">75894C1E-3AEB-11D3-B7C1-7B03A0000000</tt>
+</td></tr>
+<tr>
+<td bgcolor="#F0F0F0" style="border:1px solid rgb(162, 169, 177);padding:0.2em 0.4em;background-color:rgb(240, 240, 240);">服务分区
+</td>
+<td bgcolor="#F0F0F0" style="border:1px solid rgb(162, 169, 177);padding:0.2em 0.4em;background-color:rgb(240, 240, 240);"><tt style="font-family:monospace, monospace;">E2A1E728-32E3-11D6-A682-7B03A0000000</tt>
+</td></tr>
+<tr>
+<td rowspan="5" style="border:1px solid rgb(162, 169, 177);padding:0.2em 0.4em;"><a href="https://zh.wikipedia.org/wiki/Linux" title="Linux" style="text-decoration:none;color:rgb(6, 69, 173);background:none;">Linux</a>
+</td>
+<td style="border:1px solid rgb(162, 169, 177);padding:0.2em 0.4em;">数据分区<sup style="line-height:1;unicode-bidi:isolate;white-space:nowrap;font-weight:normal;font-style:normal;"><a href="https://zh.wikipedia.org/wiki/GUID%E7%A3%81%E7%A2%9F%E5%88%86%E5%89%B2%E8%A1%A8#endnote_linwinb" style="text-decoration:none;color:rgb(6, 69, 173);background:none;white-space:nowrap;">[2]</a></sup>
+</td>
+<td style="border:1px solid rgb(162, 169, 177);padding:0.2em 0.4em;"><tt style="font-family:monospace, monospace;">EBD0A0A2-B9E5-4433-87C0-68B6B72699C7</tt>
+</td></tr>
+<tr>
+<td style="border:1px solid rgb(162, 169, 177);padding:0.2em 0.4em;"><a href="https://zh.wikipedia.org/wiki/RAID" title="RAID" style="text-decoration:none;color:rgb(6, 69, 173);background:none;">RAID</a>分区
+</td>
+<td style="border:1px solid rgb(162, 169, 177);padding:0.2em 0.4em;"><tt style="font-family:monospace, monospace;">A19D880F-05FC-4D3B-A006-743F0F84911E</tt>
+</td></tr>
+<tr>
+<td style="border:1px solid rgb(162, 169, 177);padding:0.2em 0.4em;"><a href="https://zh.wikipedia.org/wiki/%E4%BA%A4%E6%8D%A2%E5%88%86%E5%8C%BA" title="交换分区" style="text-decoration:none;color:rgb(6, 69, 173);background:none;">交换分区</a>
+</td>
+<td style="border:1px solid rgb(162, 169, 177);padding:0.2em 0.4em;"><tt style="font-family:monospace, monospace;">0657FD6D-A4AB-43C4-84E5-0933C84B4F4F</tt>
+</td></tr>
+<tr>
+<td style="border:1px solid rgb(162, 169, 177);padding:0.2em 0.4em;"><a href="https://zh.wikipedia.org/wiki/%E9%82%8F%E8%BC%AF%E6%8D%B2%E8%BB%B8%E7%AE%A1%E7%90%86%E5%93%A1" title="逻辑卷管理员" style="text-decoration:none;color:rgb(6, 69, 173);background:none;">逻辑卷管理员</a>（LVM）分区
+</td>
+<td style="border:1px solid rgb(162, 169, 177);padding:0.2em 0.4em;"><tt style="font-family:monospace, monospace;">E6D6D379-F507-44C2-A23C-238F2A3DF928</tt>
+</td></tr>
+<tr>
+<td style="border:1px solid rgb(162, 169, 177);padding:0.2em 0.4em;">保留
+</td>
+<td style="border:1px solid rgb(162, 169, 177);padding:0.2em 0.4em;"><tt style="font-family:monospace, monospace;">8DA63339-0007-60C0-C436-083AC8230908</tt>
+</td></tr>
+<tr>
+<td bgcolor="#F0F0F0" rowspan="6" style="border:1px solid rgb(162, 169, 177);padding:0.2em 0.4em;background-color:rgb(240, 240, 240);"><a href="https://zh.wikipedia.org/wiki/FreeBSD" title="FreeBSD" style="text-decoration:none;color:rgb(6, 69, 173);background:none;">FreeBSD</a>
+</td>
+<td bgcolor="#F0F0F0" style="border:1px solid rgb(162, 169, 177);padding:0.2em 0.4em;background-color:rgb(240, 240, 240);">启动分区
+</td>
+<td bgcolor="#F0F0F0" style="border:1px solid rgb(162, 169, 177);padding:0.2em 0.4em;background-color:rgb(240, 240, 240);"><tt style="font-family:monospace, monospace;">83BD6B9D-7F41-11DC-BE0B-001560B84F0F</tt>
+</td></tr>
+<tr>
+<td bgcolor="#F0F0F0" style="border:1px solid rgb(162, 169, 177);padding:0.2em 0.4em;background-color:rgb(240, 240, 240);">数据分区
+</td>
+<td bgcolor="#F0F0F0" style="border:1px solid rgb(162, 169, 177);padding:0.2em 0.4em;background-color:rgb(240, 240, 240);"><tt style="font-family:monospace, monospace;">516E7CB4-6ECF-11D6-8FF8-00022D09712B</tt>
+</td></tr>
+<tr>
+<td bgcolor="#F0F0F0" style="border:1px solid rgb(162, 169, 177);padding:0.2em 0.4em;background-color:rgb(240, 240, 240);">交换分区
+</td>
+<td bgcolor="#F0F0F0" style="border:1px solid rgb(162, 169, 177);padding:0.2em 0.4em;background-color:rgb(240, 240, 240);"><tt style="font-family:monospace, monospace;">516E7CB5-6ECF-11D6-8FF8-00022D09712B</tt>
+</td></tr>
+<tr>
+<td bgcolor="#F0F0F0" style="border:1px solid rgb(162, 169, 177);padding:0.2em 0.4em;background-color:rgb(240, 240, 240);"><a href="https://zh.wikipedia.org/wiki/UFS" title="UFS" style="text-decoration:none;color:rgb(6, 69, 173);background:none;">UFS</a>分区
+</td>
+<td bgcolor="#F0F0F0" style="border:1px solid rgb(162, 169, 177);padding:0.2em 0.4em;background-color:rgb(240, 240, 240);"><tt style="font-family:monospace, monospace;">516E7CB6-6ECF-11D6-8FF8-00022D09712B</tt>
+</td></tr>
+<tr>
+<td bgcolor="#F0F0F0" style="border:1px solid rgb(162, 169, 177);padding:0.2em 0.4em;background-color:rgb(240, 240, 240);"><span><span><a href="https://zh.wikipedia.org/w/index.php?title=Vinum_volume_manager&amp;action=edit&amp;redlink=1" style="text-decoration:none;background:none;color:rgb(0, 175, 137);">Vinum volume manager</a></span></span>分区
+</td>
+<td bgcolor="#F0F0F0" style="border:1px solid rgb(162, 169, 177);padding:0.2em 0.4em;background-color:rgb(240, 240, 240);"><tt style="font-family:monospace, monospace;">516E7CB8-6ECF-11D6-8FF8-00022D09712B</tt>
+</td></tr>
+<tr>
+<td bgcolor="#F0F0F0" style="border:1px solid rgb(162, 169, 177);padding:0.2em 0.4em;background-color:rgb(240, 240, 240);"><a href="https://zh.wikipedia.org/wiki/ZFS" title="ZFS" style="text-decoration:none;color:rgb(6, 69, 173);background:none;">ZFS</a>分区
+</td>
+<td bgcolor="#F0F0F0" style="border:1px solid rgb(162, 169, 177);padding:0.2em 0.4em;background-color:rgb(240, 240, 240);"><tt style="font-family:monospace, monospace;">516E7CBA-6ECF-11D6-8FF8-00022D09712B</tt>
+</td></tr>
+<tr>
+<td rowspan="14" style="border:1px solid rgb(162, 169, 177);padding:0.2em 0.4em;"><a href="https://zh.wikipedia.org/wiki/MacOS" title="MacOS" style="text-decoration:none;color:rgb(6, 69, 173);background:none;">macOS</a><br/><a href="https://zh.wikipedia.org/wiki/Darwin_(%E4%BD%9C%E6%A5%AD%E7%B3%BB%E7%B5%B1)" title="Darwin (操作系统)" style="text-decoration:none;color:rgb(6, 69, 173);background:none;">Darwin</a>
+</td>
+<td style="border:1px solid rgb(162, 169, 177);padding:0.2em 0.4em;"><a href="https://zh.wikipedia.org/wiki/HFS" title="HFS" style="text-decoration:none;color:rgb(6, 69, 173);background:none;">HFS</a> (HFS+) 分区
+</td>
+<td style="border:1px solid rgb(162, 169, 177);padding:0.2em 0.4em;"><span style="font-family:Menlo, Consolas, &quot;Liberation Mono&quot;, &quot;Courier New&quot;, monospace;">48465300-0000-11AA-AA11-00306543ECAC</span>
+</td></tr>
+<tr>
+<td style="border:1px solid rgb(162, 169, 177);padding:0.2em 0.4em;"><a href="https://zh.wikipedia.org/wiki/%E8%8B%B9%E6%9E%9C%E5%85%AC%E5%8F%B8" title="苹果公司" style="text-decoration:none;color:rgb(6, 69, 173);background:none;">Apple</a> <a href="https://zh.wikipedia.org/wiki/Unix_File_System" title="Unix File System" style="text-decoration:none;color:rgb(6, 69, 173);background:none;">UFS</a> 容器
+</td>
+<td style="border:1px solid rgb(162, 169, 177);padding:0.2em 0.4em;"><span style="font-family:Menlo, Consolas, &quot;Liberation Mono&quot;, &quot;Courier New&quot;, monospace;">55465300-0000-11AA-AA11-00306543ECAC</span>
+</td></tr>
+<tr>
+<td style="border:1px solid rgb(162, 169, 177);padding:0.2em 0.4em;"><a href="https://zh.wikipedia.org/wiki/APFS" title="APFS" style="text-decoration:none;color:rgb(6, 69, 173);background:none;">APFS</a> 卷宗容器<br/>APFS 型 FileVault 卷宗容器
+</td>
+<td style="border:1px solid rgb(162, 169, 177);padding:0.2em 0.4em;"><span style="font-family:Menlo, Consolas, &quot;Liberation Mono&quot;, &quot;Courier New&quot;, monospace;">7C3457EF-0000-11AA-AA11-00306543ECAC</span>
+</td></tr>
+<tr>
+<td style="border:1px solid rgb(162, 169, 177);padding:0.2em 0.4em;"><a href="https://zh.wikipedia.org/wiki/ZFS" title="ZFS" style="text-decoration:none;color:rgb(6, 69, 173);background:none;">ZFS</a><sup style="line-height:1;unicode-bidi:isolate;white-space:nowrap;font-weight:normal;font-style:normal;"><a href="https://zh.wikipedia.org/wiki/GUID%E7%A3%81%E7%A2%9F%E5%88%86%E5%89%B2%E8%A1%A8#cite_note-solmac-18" style="text-decoration:none;color:rgb(6, 69, 173);background:none;white-space:nowrap;">[c]</a></sup>
+</td>
+<td style="border:1px solid rgb(162, 169, 177);padding:0.2em 0.4em;"><span style="font-family:Menlo, Consolas, &quot;Liberation Mono&quot;, &quot;Courier New&quot;, monospace;">6A898CC3-1DD2-11B2-99A6-080020736631</span>
+</td></tr>
+<tr>
+<td style="border:1px solid rgb(162, 169, 177);padding:0.2em 0.4em;">Apple RAID 分区
+</td>
+<td style="border:1px solid rgb(162, 169, 177);padding:0.2em 0.4em;"><span style="font-family:Menlo, Consolas, &quot;Liberation Mono&quot;, &quot;Courier New&quot;, monospace;">52414944-0000-11AA-AA11-00306543ECAC</span>
+</td></tr>
+<tr>
+<td style="border:1px solid rgb(162, 169, 177);padding:0.2em 0.4em;">Apple RAID 离线分区
+</td>
+<td style="border:1px solid rgb(162, 169, 177);padding:0.2em 0.4em;"><span style="font-family:Menlo, Consolas, &quot;Liberation Mono&quot;, &quot;Courier New&quot;, monospace;">52414944-5F4F-11AA-AA11-00306543ECAC</span>
+</td></tr>
+<tr>
+<td style="border:1px solid rgb(162, 169, 177);padding:0.2em 0.4em;">Apple 开机卷宗 (恢复模式)
+</td>
+<td style="border:1px solid rgb(162, 169, 177);padding:0.2em 0.4em;"><span style="font-family:Menlo, Consolas, &quot;Liberation Mono&quot;, &quot;Courier New&quot;, monospace;">426F6F74-0000-11AA-AA11-00306543ECAC</span>
+</td></tr>
+<tr>
+<td style="border:1px solid rgb(162, 169, 177);padding:0.2em 0.4em;">Apple 卷标
+</td>
+<td style="border:1px solid rgb(162, 169, 177);padding:0.2em 0.4em;"><span style="font-family:Menlo, Consolas, &quot;Liberation Mono&quot;, &quot;Courier New&quot;, monospace;">4C616265-6C00-11AA-AA11-00306543ECAC</span>
+</td></tr>
+<tr>
+<td style="border:1px solid rgb(162, 169, 177);padding:0.2em 0.4em;">Apple TV 恢复分区
+</td>
+<td style="border:1px solid rgb(162, 169, 177);padding:0.2em 0.4em;"><span style="font-family:Menlo, Consolas, &quot;Liberation Mono&quot;, &quot;Courier New&quot;, monospace;">5265636F-7665-11AA-AA11-00306543ECAC</span>
+</td></tr>
+<tr>
+<td style="border:1px solid rgb(162, 169, 177);padding:0.2em 0.4em;">Apple Core Storage 卷宗容器 <br/>HFS+ 型 FileVault 卷宗容器
+</td>
+<td style="border:1px solid rgb(162, 169, 177);padding:0.2em 0.4em;"><span style="font-family:Menlo, Consolas, &quot;Liberation Mono&quot;, &quot;Courier New&quot;, monospace;">53746F72-6167-11AA-AA11-00306543ECAC</span>
+</td></tr>
+<tr>
+<td style="border:1px solid rgb(162, 169, 177);padding:0.2em 0.4em;">SoftRAID_Status
+</td>
+<td style="border:1px solid rgb(162, 169, 177);padding:0.2em 0.4em;"><span style="font-family:Menlo, Consolas, &quot;Liberation Mono&quot;, &quot;Courier New&quot;, monospace;">B6FA30DA-92D2-4A9A-96F1-871EC6486200</span>
+</td></tr>
+<tr>
+<td style="border:1px solid rgb(162, 169, 177);padding:0.2em 0.4em;">SoftRAID_Scratch
+</td>
+<td style="border:1px solid rgb(162, 169, 177);padding:0.2em 0.4em;"><span style="font-family:Menlo, Consolas, &quot;Liberation Mono&quot;, &quot;Courier New&quot;, monospace;">2E313465-19B9-463F-8126-8A7993773801</span>
+</td></tr>
+<tr>
+<td style="border:1px solid rgb(162, 169, 177);padding:0.2em 0.4em;">SoftRAID_Volume
+</td>
+<td style="border:1px solid rgb(162, 169, 177);padding:0.2em 0.4em;"><span style="font-family:Menlo, Consolas, &quot;Liberation Mono&quot;, &quot;Courier New&quot;, monospace;">FA709C7E-65B1-4593-BFD5-E71D61DE9B02</span>
+</td></tr>
+<tr>
+<td style="border:1px solid rgb(162, 169, 177);padding:0.2em 0.4em;">SoftRAID_Cache
+</td>
+<td style="border:1px solid rgb(162, 169, 177);padding:0.2em 0.4em;"><span style="font-family:Menlo, Consolas, &quot;Liberation Mono&quot;, &quot;Courier New&quot;, monospace;">BBBA6DF5-F46F-4A89-8F59-8765B2727503</span>
+</td></tr>
+<tr>
+<td bgcolor="#F0F0F0" rowspan="13" style="border:1px solid rgb(162, 169, 177);padding:0.2em 0.4em;background-color:rgb(240, 240, 240);"><a href="https://zh.wikipedia.org/wiki/Solaris" title="Solaris" style="text-decoration:none;color:rgb(6, 69, 173);background:none;">Solaris</a>
+</td>
+<td bgcolor="#F0F0F0" style="border:1px solid rgb(162, 169, 177);padding:0.2em 0.4em;background-color:rgb(240, 240, 240);">启动分区
+</td>
+<td bgcolor="#F0F0F0" style="border:1px solid rgb(162, 169, 177);padding:0.2em 0.4em;background-color:rgb(240, 240, 240);"><tt style="font-family:monospace, monospace;">6A82CB45-1DD2-11B2-99A6-080020736631</tt>
+</td></tr>
+<tr>
+<td bgcolor="#F0F0F0" style="border:1px solid rgb(162, 169, 177);padding:0.2em 0.4em;background-color:rgb(240, 240, 240);">根分区
+</td>
+<td bgcolor="#F0F0F0" style="border:1px solid rgb(162, 169, 177);padding:0.2em 0.4em;background-color:rgb(240, 240, 240);"><tt style="font-family:monospace, monospace;">6A85CF4D-1DD2-11B2-99A6-080020736631</tt>
+</td></tr>
+<tr>
+<td bgcolor="#F0F0F0" style="border:1px solid rgb(162, 169, 177);padding:0.2em 0.4em;background-color:rgb(240, 240, 240);">交换分区
+</td>
+<td bgcolor="#F0F0F0" style="border:1px solid rgb(162, 169, 177);padding:0.2em 0.4em;background-color:rgb(240, 240, 240);"><tt style="font-family:monospace, monospace;">6A87C46F-1DD2-11B2-99A6-080020736631</tt>
+</td></tr>
+<tr>
+<td bgcolor="#F0F0F0" style="border:1px solid rgb(162, 169, 177);padding:0.2em 0.4em;background-color:rgb(240, 240, 240);">备份分区
+</td>
+<td bgcolor="#F0F0F0" style="border:1px solid rgb(162, 169, 177);padding:0.2em 0.4em;background-color:rgb(240, 240, 240);"><tt style="font-family:monospace, monospace;">6A8B642B-1DD2-11B2-99A6-080020736631</tt>
+</td></tr>
+<tr>
+<td bgcolor="#F0F0F0" style="border:1px solid rgb(162, 169, 177);padding:0.2em 0.4em;background-color:rgb(240, 240, 240);">/usr分区<sup style="line-height:1;unicode-bidi:isolate;white-space:nowrap;font-weight:normal;font-style:normal;"><a href="https://zh.wikipedia.org/wiki/GUID%E7%A3%81%E7%A2%9F%E5%88%86%E5%89%B2%E8%A1%A8#endnote_solmacb" style="text-decoration:none;color:rgb(6, 69, 173);background:none;white-space:nowrap;">[3]</a></sup>
+</td>
+<td bgcolor="#F0F0F0" style="border:1px solid rgb(162, 169, 177);padding:0.2em 0.4em;background-color:rgb(240, 240, 240);"><tt style="font-family:monospace, monospace;">6A898CC3-1DD2-11B2-99A6-080020736631</tt>
+</td></tr>
+<tr>
+<td bgcolor="#F0F0F0" style="border:1px solid rgb(162, 169, 177);padding:0.2em 0.4em;background-color:rgb(240, 240, 240);">/var分区
+</td>
+<td bgcolor="#F0F0F0" style="border:1px solid rgb(162, 169, 177);padding:0.2em 0.4em;background-color:rgb(240, 240, 240);"><tt style="font-family:monospace, monospace;">6A8EF2E9-1DD2-11B2-99A6-080020736631</tt>
+</td></tr>
+<tr>
+<td bgcolor="#F0F0F0" style="border:1px solid rgb(162, 169, 177);padding:0.2em 0.4em;background-color:rgb(240, 240, 240);">/home分区
+</td>
+<td bgcolor="#F0F0F0" style="border:1px solid rgb(162, 169, 177);padding:0.2em 0.4em;background-color:rgb(240, 240, 240);"><tt style="font-family:monospace, monospace;">6A90BA39-1DD2-11B2-99A6-080020736631</tt>
+</td></tr>
+<tr>
+<td bgcolor="#F0F0F0" style="border:1px solid rgb(162, 169, 177);padding:0.2em 0.4em;background-color:rgb(240, 240, 240);">备用扇区
+</td>
+<td bgcolor="#F0F0F0" style="border:1px solid rgb(162, 169, 177);padding:0.2em 0.4em;background-color:rgb(240, 240, 240);"><tt style="font-family:monospace, monospace;">6A9283A5-1DD2-11B2-99A6-080020736631</tt>
+</td></tr>
+<tr>
+<td bgcolor="#F0F0F0" rowspan="5" style="border:1px solid rgb(162, 169, 177);padding:0.2em 0.4em;background-color:rgb(240, 240, 240);">保留分区
+</td>
+<td bgcolor="#F0F0F0" style="border:1px solid rgb(162, 169, 177);padding:0.2em 0.4em;background-color:rgb(240, 240, 240);"><tt style="font-family:monospace, monospace;">6A945A3B-1DD2-11B2-99A6-080020736631</tt>
+</td></tr>
+<tr>
+<td bgcolor="#F0F0F0" style="border:1px solid rgb(162, 169, 177);padding:0.2em 0.4em;background-color:rgb(240, 240, 240);"><tt style="font-family:monospace, monospace;">6A9630D1-1DD2-11B2-99A6-080020736631</tt>
+</td></tr>
+<tr>
+<td bgcolor="#F0F0F0" style="border:1px solid rgb(162, 169, 177);padding:0.2em 0.4em;background-color:rgb(240, 240, 240);"><tt style="font-family:monospace, monospace;">6A980767-1DD2-11B2-99A6-080020736631</tt>
+</td></tr>
+<tr>
+<td bgcolor="#F0F0F0" style="border:1px solid rgb(162, 169, 177);padding:0.2em 0.4em;background-color:rgb(240, 240, 240);"><tt style="font-family:monospace, monospace;">6A96237F-1DD2-11B2-99A6-080020736631</tt>
+</td></tr>
+<tr>
+<td bgcolor="#F0F0F0" style="border:1px solid rgb(162, 169, 177);padding:0.2em 0.4em;background-color:rgb(240, 240, 240);"><tt style="font-family:monospace, monospace;">6A8D2AC7-1DD2-11B2-99A6-080020736631</tt>
+</td></tr>
+<tr>
+<td rowspan="6" style="border:1px solid rgb(162, 169, 177);padding:0.2em 0.4em;"><a href="https://zh.wikipedia.org/wiki/NetBSD" title="NetBSD" style="text-decoration:none;color:rgb(6, 69, 173);background:none;">NetBSD</a><sup style="line-height:1;unicode-bidi:isolate;white-space:nowrap;font-weight:normal;font-style:normal;"><a href="https://zh.wikipedia.org/wiki/GUID%E7%A3%81%E7%A2%9F%E5%88%86%E5%89%B2%E8%A1%A8#endnote_netbsd^" style="text-decoration:none;color:rgb(6, 69, 173);background:none;white-space:nowrap;">[4]</a></sup>
+</td>
+<td style="border:1px solid rgb(162, 169, 177);padding:0.2em 0.4em;">交换分区
+</td>
+<td style="border:1px solid rgb(162, 169, 177);padding:0.2em 0.4em;"><tt style="font-family:monospace, monospace;">49F48D32-B10E-11DC-B99B-0019D1879648
+</tt></td></tr>
+<tr>
+<td style="border:1px solid rgb(162, 169, 177);padding:0.2em 0.4em;"><a href="https://zh.wikipedia.org/w/index.php?title=FFS&amp;action=edit&amp;redlink=1" title="FFS（页面不存在）" style="text-decoration:none;background:none;color:rgb(186, 0, 0);">FFS</a>分区
+</td>
+<td style="border:1px solid rgb(162, 169, 177);padding:0.2em 0.4em;"><tt style="font-family:monospace, monospace;">49F48D5A-B10E-11DC-B99B-0019D1879648
+</tt></td></tr>
+<tr>
+<td style="border:1px solid rgb(162, 169, 177);padding:0.2em 0.4em;"><span><span><a href="https://zh.wikipedia.org/w/index.php?title=Log-structured_File_System_(BSD)&amp;action=edit&amp;redlink=1" style="text-decoration:none;background:none;color:rgb(0, 175, 137);">LFS</a></span></span>分区
+</td>
+<td style="border:1px solid rgb(162, 169, 177);padding:0.2em 0.4em;"><tt style="font-family:monospace, monospace;">49F48D82-B10E-11DC-B99B-0019D1879648
+</tt></td></tr>
+<tr>
+<td style="border:1px solid rgb(162, 169, 177);padding:0.2em 0.4em;">RAID分区
+</td>
+<td style="border:1px solid rgb(162, 169, 177);padding:0.2em 0.4em;"><tt style="font-family:monospace, monospace;">49F48DAA-B10E-11DC-B99B-0019D1879648
+</tt></td></tr>
+<tr>
+<td style="border:1px solid rgb(162, 169, 177);padding:0.2em 0.4em;">concatenated分区
+</td>
+<td style="border:1px solid rgb(162, 169, 177);padding:0.2em 0.4em;"><tt style="font-family:monospace, monospace;">2DB519C4-B10F-11DC-B99B-0019D1879648
+</tt></td></tr>
+<tr>
+<td style="border:1px solid rgb(162, 169, 177);padding:0.2em 0.4em;">加密分区
+</td>
+<td style="border:1px solid rgb(162, 169, 177);padding:0.2em 0.4em;"><tt style="font-family:monospace, monospace;">2DB519EC-B10F-11DC-B99B-0019D1879648
+</tt></td></tr></tbody></table>
+<ol style="list-style-image:none;margin:0.3em 0px 0px 3.2em;padding:0px;"><li style="margin-bottom:0.1em;"><span><b><a href="https://zh.wikipedia.org/wiki/GUID%E7%A3%81%E7%A2%9F%E5%88%86%E5%89%B2%E8%A1%A8#ref_guidord" style="text-decoration:none;color:rgb(6, 69, 173);background:none;">^</a></b></span> 本表中的GUID使用<a href="https://zh.wikipedia.org/wiki/%E5%B0%8F%E7%AB%AF%E5%BA%8F" title="小端序" style="text-decoration:none;color:rgb(6, 69, 173);background:none;">小端序</a>表示。例如，EFI系统分区的GUID在这里写成C12A7328-F81F-11D2-BA4B-00A0C93EC93B但实际上它对应的16字节的序列是28 73 2A C1 1F F8 D2 11 BA 4B 00 A0 C9 3E C9 3B——只有前3部分的字节序被交换了。</li>
+<li style="margin-bottom:0.1em;"><span><a href="https://zh.wikipedia.org/wiki/GUID%E7%A3%81%E7%A2%9F%E5%88%86%E5%89%B2%E8%A1%A8#ref_linwina" style="text-decoration:none;color:rgb(6, 69, 173);background:none;"><b><sup style="line-height:1;">a</sup></b></a></span> <span><a href="https://zh.wikipedia.org/wiki/GUID%E7%A3%81%E7%A2%9F%E5%88%86%E5%89%B2%E8%A1%A8#ref_linwinb" style="text-decoration:none;color:rgb(6, 69, 173);background:none;"><b><sup style="line-height:1;">b</sup></b></a></span>  Linux和Windows的数据分区使用相同的GUID。</li>
+<li style="margin-bottom:0.1em;"><span><a href="https://zh.wikipedia.org/wiki/GUID%E7%A3%81%E7%A2%9F%E5%88%86%E5%89%B2%E8%A1%A8#ref_solmaca" style="text-decoration:none;color:rgb(6, 69, 173);background:none;"><b><sup style="line-height:1;">a</sup></b></a></span> <span><a href="https://zh.wikipedia.org/wiki/GUID%E7%A3%81%E7%A2%9F%E5%88%86%E5%89%B2%E8%A1%A8#ref_solmacb" style="text-decoration:none;color:rgb(6, 69, 173);background:none;"><b><sup style="line-height:1;">b</sup></b></a></span>  Solaris系统中<code style="font-family:monospace, monospace;color:rgb(0, 0, 0);background-color:rgb(248, 249, 250);border:1px solid rgb(234, 236, 240);border-radius:2px;padding:1px 4px;">/usr</code>分区的GUID在Mac OS X上被用作普通的<a href="https://zh.wikipedia.org/wiki/ZFS" title="ZFS" style="text-decoration:none;color:rgb(6, 69, 173);background:none;">ZFS</a>分区。</li>
+<li style="margin-bottom:0.1em;"><span><a href="https://zh.wikipedia.org/wiki/GUID%E7%A3%81%E7%A2%9F%E5%88%86%E5%89%B2%E8%A1%A8#ref_netbsd^" style="text-decoration:none;color:rgb(6, 69, 173);background:none;"><b><sup style="line-height:1;">^</sup></b></a></span> 具体定义见<a rel="nofollow" href="http://cvsweb.netbsd.org/bsdweb.cgi/src/sys/sys/disklabel_gpt.h?only_with_tag=MAIN" style="text-decoration:none;background:none;background-image:url(https://zh.wikipedia.org/w/skins/Vector/resources/skins.vector.styles/images/external-link-ltr-icon.svg?b4b84);background-position:right center;background-repeat:no-repeat;padding-right:13px;color:rgb(51, 102, 187);">src/sys/sys/disklabel_gpt.h</a> <a rel="nofollow" href="https://web.archive.org/web/20110702083128/http://cvsweb.netbsd.org/bsdweb.cgi/src/sys/sys/disklabel_gpt.h?only_with_tag=MAIN" style="text-decoration:none;background:none;background-image:url(https://zh.wikipedia.org/w/skins/Vector/resources/skins.vector.styles/images/external-link-ltr-icon.svg?b4b84);background-position:right center;background-repeat:no-repeat;padding-right:13px;color:rgb(51, 102, 187);">页面存档备份</a>，存于<a href="https://zh.wikipedia.org/wiki/%E4%BA%92%E8%81%94%E7%BD%91%E6%A1%A3%E6%A1%88%E9%A6%86" title="互联网档案馆" style="text-decoration:none;color:rgb(6, 69, 173);background:none;">互联网档案馆</a>。NetBSD的GUID在单独定义之前曾经使用过FreeBSD的GUID。</li></ol>
+<h2 style="color:rgb(0, 0, 0);margin:0px;padding-top:0.5em;padding-bottom:0.17em;overflow:hidden;border-bottom:1px solid rgb(162, 169, 177);font-weight:normal;padding:0px;font-family:&quot;Linux Libertine&quot;, Georgia, Times, serif;line-height:1.3;margin-bottom:0.25em;margin-top:1em;font-size:1.5em;"><span></span><span>MBR与GPT互相转换</span><span style="font-family:sans-serif;user-select:none;font-size:small;font-weight:normal;vertical-align:baseline;line-height:1em;unicode-bidi:isolate;margin-left:1em;"><span style="font-family:sans-serif;font-size:small;font-weight:normal;line-height:1em;">​</span><span style="margin-right:0.25em;color:rgb(84, 89, 93);">[</span><a href="https://zh.wikipedia.org/w/index.php?title=GUID%E7%A3%81%E7%A2%9F%E5%88%86%E5%89%B2%E8%A1%A8&amp;action=edit&amp;section=10" title="编辑章节：MBR与GPT互相转换" style="text-decoration:none;color:rgb(6, 69, 173);background:none;white-space:nowrap;">编辑</a><span style="margin-left:0.25em;color:rgb(84, 89, 93);">]</span></span></h2>
+<h3 style="color:rgb(0, 0, 0);margin:0px;padding-top:0.5em;overflow:hidden;margin-top:0.3em;line-height:1.6;margin-bottom:0px;padding-bottom:0px;font-size:1.2em;font-weight:bold;"><span></span><span>Windows操作系统</span><span style="font-family:sans-serif;user-select:none;font-size:small;font-weight:normal;vertical-align:baseline;line-height:1em;unicode-bidi:isolate;margin-left:1em;"><span style="font-family:sans-serif;font-size:small;font-weight:normal;line-height:1em;">​</span><span style="margin-right:0.25em;color:rgb(84, 89, 93);">[</span><a href="https://zh.wikipedia.org/w/index.php?title=GUID%E7%A3%81%E7%A2%9F%E5%88%86%E5%89%B2%E8%A1%A8&amp;action=edit&amp;section=11" title="编辑章节：Windows操作系统" style="text-decoration:none;color:rgb(6, 69, 173);background:none;white-space:nowrap;">编辑</a><span style="margin-left:0.25em;color:rgb(84, 89, 93);">]</span></span></h3>
+<p style="margin:0.5em 0px;">在Win10 1703及更高版本，执行命令“mbr2gpt /convert /disk:盘号 /allowfullos”
+</p><p style="margin:0.5em 0px;">或者使用<a href="https://zh.wikipedia.org/wiki/DiskGenius" title="DiskGenius" style="text-decoration:none;color:rgb(6, 69, 173);background:none;">DiskGenius</a>等软件将MBR转换为GPT。
+</p>
+<h2 style="color:rgb(0, 0, 0);margin:0px;padding-top:0.5em;padding-bottom:0.17em;overflow:hidden;border-bottom:1px solid rgb(162, 169, 177);font-weight:normal;padding:0px;font-family:&quot;Linux Libertine&quot;, Georgia, Times, serif;line-height:1.3;margin-bottom:0.25em;margin-top:1em;font-size:1.5em;"><span></span><span>参见</span><span style="font-family:sans-serif;user-select:none;font-size:small;font-weight:normal;vertical-align:baseline;line-height:1em;unicode-bidi:isolate;margin-left:1em;"><span style="font-family:sans-serif;font-size:small;font-weight:normal;line-height:1em;">​</span><span style="margin-right:0.25em;color:rgb(84, 89, 93);">[</span><a href="https://zh.wikipedia.org/w/index.php?title=GUID%E7%A3%81%E7%A2%9F%E5%88%86%E5%89%B2%E8%A1%A8&amp;action=edit&amp;section=12" title="编辑章节：参见" style="text-decoration:none;color:rgb(6, 69, 173);background:none;white-space:nowrap;">编辑</a><span style="margin-left:0.25em;color:rgb(84, 89, 93);">]</span></span></h2>
+<ul style="list-style-image:url(https://zh.wikipedia.org/w/skins/Vector/resources/skins.vector.styles/images/bullet-icon.svg?d4515);margin:0.3em 0px 0px 1.6em;padding:0px;"><li style="margin-bottom:0.1em;"><a href="https://zh.wikipedia.org/wiki/%E4%B8%BB%E5%BC%95%E5%AF%BC%E8%AE%B0%E5%BD%95" title="主引导记录" style="text-decoration:none;color:rgb(6, 69, 173);background:none;">主引导记录</a></li>
+<li style="margin-bottom:0.1em;"><a href="https://zh.wikipedia.org/wiki/GUID" title="GUID" style="text-decoration:none;color:rgb(6, 69, 173);background:none;">GUID</a></li>
+<li style="margin-bottom:0.1em;"><a href="https://zh.wikipedia.org/wiki/%E7%A1%AC%E7%9B%98%E5%88%86%E5%8C%BA" title="硬盘分区" style="text-decoration:none;color:rgb(6, 69, 173);background:none;">硬盘分区</a></li>
+<li style="margin-bottom:0.1em;"><a href="https://zh.wikipedia.org/wiki/%E5%8F%AF%E6%89%A9%E5%B1%95%E5%9B%BA%E4%BB%B6%E6%8E%A5%E5%8F%A3" title="可扩展固件接口" style="text-decoration:none;color:rgb(6, 69, 173);background:none;">可扩展固件接口</a></li>
+<li style="margin-bottom:0.1em;"><a href="https://zh.wikipedia.org/wiki/BIOS" title="BIOS" style="text-decoration:none;color:rgb(6, 69, 173);background:none;">BIOS</a></li></ul>
+<h2 style="color:rgb(0, 0, 0);margin:0px;padding-top:0.5em;padding-bottom:0.17em;overflow:hidden;border-bottom:1px solid rgb(162, 169, 177);font-weight:normal;padding:0px;font-family:&quot;Linux Libertine&quot;, Georgia, Times, serif;line-height:1.3;margin-bottom:0.25em;margin-top:1em;font-size:1.5em;"><span></span><span>外部链接</span><span style="font-family:sans-serif;user-select:none;font-size:small;font-weight:normal;vertical-align:baseline;line-height:1em;unicode-bidi:isolate;margin-left:1em;"><span style="font-family:sans-serif;font-size:small;font-weight:normal;line-height:1em;">​</span><span style="margin-right:0.25em;color:rgb(84, 89, 93);">[</span><a href="https://zh.wikipedia.org/w/index.php?title=GUID%E7%A3%81%E7%A2%9F%E5%88%86%E5%89%B2%E8%A1%A8&amp;action=edit&amp;section=13" title="编辑章节：外部链接" style="text-decoration:none;color:rgb(6, 69, 173);background:none;white-space:nowrap;">编辑</a><span style="margin-left:0.25em;color:rgb(84, 89, 93);">]</span></span></h2>
+<ul style="list-style-image:url(https://zh.wikipedia.org/w/skins/Vector/resources/skins.vector.styles/images/bullet-icon.svg?d4515);margin:0.3em 0px 0px 1.6em;padding:0px;"><li style="margin-bottom:0.1em;">Microsoft TechNet: <a rel="nofollow" href="https://web.archive.org/web/20080321063028/http://technet2.microsoft.com/windowsserver/en/library/bdeda920-1f08-4683-9ffb-7b4b50df0b5a1033.mspx?mfr=true" style="text-decoration:none;background:none;background-image:url(https://zh.wikipedia.org/w/skins/Vector/resources/skins.vector.styles/images/external-link-ltr-icon.svg?b4b84);background-position:right center;background-repeat:no-repeat;padding-right:13px;color:rgb(51, 102, 187);">Disk Sectors on GPT Disks</a></li>
+<li style="margin-bottom:0.1em;">Microsoft TechNet: <a rel="nofollow" href="http://www.microsoft.com/whdc/device/storage/GPT-on-x64.mspx" style="text-decoration:none;background:none;background-image:url(https://zh.wikipedia.org/w/skins/Vector/resources/skins.vector.styles/images/external-link-ltr-icon.svg?b4b84);background-position:right center;background-repeat:no-repeat;padding-right:13px;color:rgb(51, 102, 187);">Using GPT Drives on x86-64 Systems</a> <a rel="nofollow" href="https://web.archive.org/web/20050706074131/http://www.microsoft.com/whdc/device/storage/GPT-on-x64.mspx" style="text-decoration:none;background:none;background-image:url(https://zh.wikipedia.org/w/skins/Vector/resources/skins.vector.styles/images/external-link-ltr-icon.svg?b4b84);background-position:right center;background-repeat:no-repeat;padding-right:13px;color:rgb(51, 102, 187);">页面存档备份</a>，存于<a href="https://zh.wikipedia.org/wiki/%E4%BA%92%E8%81%94%E7%BD%91%E6%A1%A3%E6%A1%88%E9%A6%86" title="互联网档案馆" style="text-decoration:none;color:rgb(6, 69, 173);background:none;">互联网档案馆</a></li>
+<li style="margin-bottom:0.1em;">Apple Developer Connection: <a rel="nofollow" href="http://developer.apple.com/technotes/tn2006/tn2166.html" style="text-decoration:none;background:none;background-image:url(https://zh.wikipedia.org/w/skins/Vector/resources/skins.vector.styles/images/external-link-ltr-icon.svg?b4b84);background-position:right center;background-repeat:no-repeat;padding-right:13px;color:rgb(51, 102, 187);">Secrets of the GPT</a></li>
+<li style="margin-bottom:0.1em;"><a rel="nofollow" href="http://www.ibm.com/developerworks/linux/library/l-gpt/" style="text-decoration:none;background:none;background-image:url(https://zh.wikipedia.org/w/skins/Vector/resources/skins.vector.styles/images/external-link-ltr-icon.svg?b4b84);background-position:right center;background-repeat:no-repeat;padding-right:13px;color:rgb(51, 102, 187);">Make the most of large drives with GPT and Linux</a></li>
+<li style="margin-bottom:0.1em;">GPT fdisk : <a rel="nofollow" href="http://rodsbooks.com/gdisk/" style="text-decoration:none;background:none;background-image:url(https://zh.wikipedia.org/w/skins/Vector/resources/skins.vector.styles/images/external-link-ltr-icon.svg?b4b84);background-position:right center;background-repeat:no-repeat;padding-right:13px;color:rgb(51, 102, 187);">Information on Hybrid GPT-MBR, Converting MBR and BSD disklabels to GPT and Booting from GPT disks</a></li>
+<li style="margin-bottom:0.1em;">Microsoft : <a rel="nofollow" href="http://www.microsoft.com/whdc/device/storage/GPT_FAQ.mspx" style="text-decoration:none;background:none;background-image:url(https://zh.wikipedia.org/w/skins/Vector/resources/skins.vector.styles/images/external-link-ltr-icon.svg?b4b84);background-position:right center;background-repeat:no-repeat;padding-right:13px;color:rgb(51, 102, 187);">FAQs on Using GPT disks in Windows</a> <a rel="nofollow" href="https://web.archive.org/web/20110219111649/http://www.microsoft.com/whdc/device/storage/GPT_FAQ.mspx" style="text-decoration:none;background:none;background-image:url(https://zh.wikipedia.org/w/skins/Vector/resources/skins.vector.styles/images/external-link-ltr-icon.svg?b4b84);background-position:right center;background-repeat:no-repeat;padding-right:13px;color:rgb(51, 102, 187);">页面存档备份</a>，存于<a href="https://zh.wikipedia.org/wiki/%E4%BA%92%E8%81%94%E7%BD%91%E6%A1%A3%E6%A1%88%E9%A6%86" title="互联网档案馆" style="text-decoration:none;color:rgb(6, 69, 173);background:none;">互联网档案馆</a></li>
+<li style="margin-bottom:0.1em;"><a rel="nofollow" href="https://web.archive.org/web/20091120100508/http://www.insanelymac.com/forum/lofiversion/index.php/t186440.html" style="text-decoration:none;background:none;background-image:url(https://zh.wikipedia.org/w/skins/Vector/resources/skins.vector.styles/images/external-link-ltr-icon.svg?b4b84);background-position:right center;background-repeat:no-repeat;padding-right:13px;color:rgb(51, 102, 187);">A forum post describing steps to modify existing Windows x64 BIOS-MBR based installations to boot from UEFI-GPT</a></li></ul>
+<h2 style="color:rgb(0, 0, 0);margin:0px;padding-top:0.5em;padding-bottom:0.17em;overflow:hidden;border-bottom:1px solid rgb(162, 169, 177);font-weight:normal;padding:0px;font-family:&quot;Linux Libertine&quot;, Georgia, Times, serif;line-height:1.3;margin-bottom:0.25em;margin-top:1em;font-size:1.5em;"><span></span><span>备注</span><span style="font-family:sans-serif;user-select:none;font-size:small;font-weight:normal;vertical-align:baseline;line-height:1em;unicode-bidi:isolate;margin-left:1em;"><span style="font-family:sans-serif;font-size:small;font-weight:normal;line-height:1em;">​</span><span style="margin-right:0.25em;color:rgb(84, 89, 93);">[</span><a href="https://zh.wikipedia.org/w/index.php?title=GUID%E7%A3%81%E7%A2%9F%E5%88%86%E5%89%B2%E8%A1%A8&amp;action=edit&amp;section=14" title="编辑章节：备注" style="text-decoration:none;color:rgb(6, 69, 173);background:none;white-space:nowrap;">编辑</a><span style="margin-left:0.25em;color:rgb(84, 89, 93);">]</span></span></h2>
+<div style="list-style-type:lower-alpha;">
+<ol style="list-style-image:none;margin:0.3em 0px 0px 3.2em;padding:0px;font-size:90%;margin-bottom:0.5em;list-style-type:inherit;">
+<li style="margin-bottom:0.1em;"><span style="user-select:none;"><b><a href="https://zh.wikipedia.org/wiki/GUID%E7%A3%81%E7%A2%9F%E5%88%86%E5%89%B2%E8%A1%A8#cite_ref-16" title="跳转" style="text-decoration:none;color:rgb(6, 69, 173);background:none;">^</a></b></span> <span>仅SP1、SP2</span>
+</li>
+<li style="margin-bottom:0.1em;"><span style="user-select:none;"><b><a href="https://zh.wikipedia.org/wiki/GUID%E7%A3%81%E7%A2%9F%E5%88%86%E5%89%B2%E8%A1%A8#cite_ref-17" title="跳转" style="text-decoration:none;color:rgb(6, 69, 173);background:none;">^</a></b></span> <span>在多硬盘启动环境下，非UEFI引导需要MBR格式的引导程序（启动分区）；系统分区可使用GPT格式。</span>
+</li>
+<li style="margin-bottom:0.1em;"><span style="user-select:none;"><b><a href="https://zh.wikipedia.org/wiki/GUID%E7%A3%81%E7%A2%9F%E5%88%86%E5%89%B2%E8%A1%A8#cite_ref-solmac_18-0" title="跳转" style="text-decoration:none;color:rgb(6, 69, 173);background:none;">^</a></b></span> <span> Solaris 的<code style="font-family:monospace, monospace;color:rgb(0, 0, 0);background-color:rgb(248, 249, 250);border:1px solid rgb(234, 236, 240);border-radius:2px;padding:1px 4px;">/usr</code>的 GUID 也用作 macOS 的 ZFS 通用 GUID。</span>
+</li>
+</ol>
+</div>
+<h2 style="color:rgb(0, 0, 0);margin:0px;padding-top:0.5em;padding-bottom:0.17em;overflow:hidden;border-bottom:1px solid rgb(162, 169, 177);font-weight:normal;padding:0px;font-family:&quot;Linux Libertine&quot;, Georgia, Times, serif;line-height:1.3;margin-bottom:0.25em;margin-top:1em;font-size:1.5em;"><span></span><span>参考资料</span><span style="font-family:sans-serif;user-select:none;font-size:small;font-weight:normal;vertical-align:baseline;line-height:1em;unicode-bidi:isolate;margin-left:1em;"><span style="font-family:sans-serif;font-size:small;font-weight:normal;line-height:1em;">​</span><span style="margin-right:0.25em;color:rgb(84, 89, 93);">[</span><a href="https://zh.wikipedia.org/w/index.php?title=GUID%E7%A3%81%E7%A2%9F%E5%88%86%E5%89%B2%E8%A1%A8&amp;action=edit&amp;section=15" title="编辑章节：参考资料" style="text-decoration:none;color:rgb(6, 69, 173);background:none;white-space:nowrap;">编辑</a><span style="margin-left:0.25em;color:rgb(84, 89, 93);">]</span></span></h2>
+<div style="font-size:90%;margin-bottom:0.5em;margin-top:0.3em;-moz-column-width:35em;-webkit-column-width:35em;column-width:35em;list-style-type:decimal;">
+<ol style="list-style-image:none;margin:0.3em 0px 0px 3.2em;padding:0px;margin-bottom:0.5em;margin-top:0px;font-size:100%;list-style-type:inherit;">
+<li style="margin-bottom:0.1em;break-inside:avoid-column;"><span style="user-select:none;">^ <a href="https://zh.wikipedia.org/wiki/GUID%E7%A3%81%E7%A2%9F%E5%88%86%E5%89%B2%E8%A1%A8#cite_ref-UEFIDrivePartitionFAQ_1-0" style="text-decoration:none;color:rgb(6, 69, 173);background:none;"><span style="user-select:none;top:-99999px;clip:rect(1px, 1px, 1px, 1px);overflow:hidden;position:absolute;padding:0px;border:0px;height:1px;width:1px;">跳转至： </span><sup style="line-height:1;"><b>1.0</b></sup></a> <a href="https://zh.wikipedia.org/wiki/GUID%E7%A3%81%E7%A2%9F%E5%88%86%E5%89%B2%E8%A1%A8#cite_ref-UEFIDrivePartitionFAQ_1-1" style="text-decoration:none;color:rgb(6, 69, 173);background:none;"><sup style="line-height:1;"><b>1.1</b></sup></a></span> <span><cite style="font-style:normal;"><a rel="nofollow" href="https://web.archive.org/web/20130322172831/http://www.uefi.org/learning_center/UEFI_MBR_Limits_v2.pdf" style="text-decoration:none;color:rgb(51, 102, 187);padding-right:16px;background:url(https://upload.wikimedia.org/wikipedia/commons/2/23/Icons-mini-file_acrobat.gif) right center no-repeat;">FAQ: Drive Partition Limits</a> <span style="font-size:85%;">(PDF)</span>. UEFI Forum.  <span> [<span style="white-space:nowrap;">2010-06-09</span>]</span>. （<a rel="nofollow" href="http://www.uefi.org/learning_center/UEFI_MBR_Limits_v2.pdf" style="text-decoration:none;color:rgb(51, 102, 187);padding-right:16px;background:url(https://upload.wikimedia.org/wikipedia/commons/2/23/Icons-mini-file_acrobat.gif) right center no-repeat;">原始内容</a> <span style="font-size:85%;">(pdf)</span>存档于2013-03-22）.</cite><span title="ctx_ver=Z39.88-2004&amp;rfr_id=info%3Asid%2Fzh.wikipedia.org%3AGUID%E7%A3%81%E7%A2%9F%E5%88%86%E5%89%B2%E8%A1%A8&amp;rft.atitle=FAQ%3A+Drive+Partition+Limits&amp;rft.genre=article&amp;rft_id=http%3A%2F%2Fwww.uefi.org%2Flearning_center%2FUEFI_MBR_Limits_v2.pdf&amp;rft_val_fmt=info%3Aofi%2Ffmt%3Akev%3Amtx%3Ajournal"></span></span>
+</li>
+<li style="margin-bottom:0.1em;break-inside:avoid-column;"><span style="user-select:none;"><b><a href="https://zh.wikipedia.org/wiki/GUID%E7%A3%81%E7%A2%9F%E5%88%86%E5%89%B2%E8%A1%A8#cite_ref-Redmondmag64bitQuestion_2-0" title="跳转" style="text-decoration:none;color:rgb(6, 69, 173);background:none;">^</a></b></span> <span><cite style="font-style:normal;">Bill Boswell. <a rel="nofollow" href="http://redmondmag.com/Articles/2002/07/01/The-64Bit-Question.aspx" style="text-decoration:none;background:none;background-image:url(https://zh.wikipedia.org/w/skins/Vector/resources/skins.vector.styles/images/external-link-ltr-icon.svg?b4b84);background-position:right center;background-repeat:no-repeat;padding-right:13px;color:rgb(51, 102, 187);">FAQ: Drive Partition Limits</a>. Redmondmag.com. 2002-07-01 <span> [<span style="white-space:nowrap;">2010-06-09</span>]</span>. （原始内容<a rel="nofollow" href="https://web.archive.org/web/20101001222207/http://redmondmag.com/Articles/2002/07/01/The-64Bit-Question.aspx" style="text-decoration:none;background:none;background-image:url(https://zh.wikipedia.org/w/skins/Vector/resources/skins.vector.styles/images/external-link-ltr-icon.svg?b4b84);background-position:right center;background-repeat:no-repeat;padding-right:13px;color:rgb(51, 102, 187);">存档</a>于2010-10-01）. <q>GPT disks also support very large partitions thanks to a 64-bit Logical Block Address scheme. A logical block corresponds to one sector, or 512 bytes, yielding a maximum theoretical capacity of eight zettabytes,</q></cite><span title="ctx_ver=Z39.88-2004&amp;rfr_id=info%3Asid%2Fzh.wikipedia.org%3AGUID%E7%A3%81%E7%A2%9F%E5%88%86%E5%89%B2%E8%A1%A8&amp;rft.atitle=FAQ%3A+Drive+Partition+Limits&amp;rft.au=Bill+Boswell&amp;rft.date=2002-07-01&amp;rft.genre=article&amp;rft_id=http%3A%2F%2Fredmondmag.com%2FArticles%2F2002%2F07%2F01%2FThe-64Bit-Question.aspx&amp;rft_val_fmt=info%3Aofi%2Ffmt%3Akev%3Amtx%3Ajournal"></span></span>
+</li>
+<li style="margin-bottom:0.1em;break-inside:avoid-column;"><span style="user-select:none;"><b><a href="https://zh.wikipedia.org/wiki/GUID%E7%A3%81%E7%A2%9F%E5%88%86%E5%89%B2%E8%A1%A8#cite_ref-3" title="跳转" style="text-decoration:none;color:rgb(6, 69, 173);background:none;">^</a></b></span> <span><cite style="font-style:normal;"><a rel="nofollow" href="http://developer.apple.com/technotes/tn2006/tn2166.html" style="text-decoration:none;background:none;background-image:url(https://zh.wikipedia.org/w/skins/Vector/resources/skins.vector.styles/images/external-link-ltr-icon.svg?b4b84);background-position:right center;background-repeat:no-repeat;padding-right:13px;color:rgb(51, 102, 187);">Technical Note TN2166: Secrets of the GPT</a>. Apple.</cite><span title="ctx_ver=Z39.88-2004&amp;rfr_id=info%3Asid%2Fzh.wikipedia.org%3AGUID%E7%A3%81%E7%A2%9F%E5%88%86%E5%89%B2%E8%A1%A8&amp;rft.btitle=Technical+Note+TN2166%3A+Secrets+of+the+GPT&amp;rft.genre=unknown&amp;rft.pub=Apple&amp;rft_id=http%3A%2F%2Fdeveloper.apple.com%2Ftechnotes%2Ftn2006%2Ftn2166.html&amp;rft_val_fmt=info%3Aofi%2Ffmt%3Akev%3Amtx%3Abook"></span></span>
+</li>
+<li style="margin-bottom:0.1em;break-inside:avoid-column;"><span style="user-select:none;"><b><a href="https://zh.wikipedia.org/wiki/GUID%E7%A3%81%E7%A2%9F%E5%88%86%E5%89%B2%E8%A1%A8#cite_ref-4" title="跳转" style="text-decoration:none;color:rgb(6, 69, 173);background:none;">^</a></b></span> <span><cite style="font-style:normal;"><a rel="nofollow" href="https://web.archive.org/web/20100323170253/http://www.anandtech.com/storage/showdoc.aspx?i=3691" style="text-decoration:none;background:none;background-image:url(https://zh.wikipedia.org/w/skins/Vector/resources/skins.vector.styles/images/external-link-ltr-icon.svg?b4b84);background-position:right center;background-repeat:no-repeat;padding-right:13px;color:rgb(51, 102, 187);">Western Digital’s Advanced Format: The 4K Sector Transition Begins</a>. Anandtech.  <span> [<span style="white-space:nowrap;">2010-06-25</span>]</span>. （<a rel="nofollow" href="http://anandtech.com/storage/showdoc.aspx?i=3691" style="text-decoration:none;background:none;background-image:url(https://zh.wikipedia.org/w/skins/Vector/resources/skins.vector.styles/images/external-link-ltr-icon.svg?b4b84);background-position:right center;background-repeat:no-repeat;padding-right:13px;color:rgb(51, 102, 187);">原始内容</a>存档于2010-03-23）.</cite><span title="ctx_ver=Z39.88-2004&amp;rfr_id=info%3Asid%2Fzh.wikipedia.org%3AGUID%E7%A3%81%E7%A2%9F%E5%88%86%E5%89%B2%E8%A1%A8&amp;rft.btitle=Western+Digital%99s+Advanced+Format%3A+The+4K+Sector+Transition+Begins&amp;rft.genre=unknown&amp;rft.pub=Anandtech&amp;rft_id=http%3A%2F%2Fanandtech.com%2Fstorage%2Fshowdoc.aspx%3Fi%3D3691&amp;rft_val_fmt=info%3Aofi%2Ffmt%3Akev%3Amtx%3Abook"></span></span>
+</li>
+<li style="margin-bottom:0.1em;break-inside:avoid-column;"><span style="user-select:none;"><b><a href="https://zh.wikipedia.org/wiki/GUID%E7%A3%81%E7%A2%9F%E5%88%86%E5%89%B2%E8%A1%A8#cite_ref-5" title="跳转" style="text-decoration:none;color:rgb(6, 69, 173);background:none;">^</a></b></span> <span><cite style="font-style:normal;"><a rel="nofollow" href="https://help.ubuntu.com/community/MacBook" style="text-decoration:none;background:none;background-image:url(https://zh.wikipedia.org/w/skins/Vector/resources/skins.vector.styles/images/external-link-ltr-icon.svg?b4b84);background-position:right center;background-repeat:no-repeat;padding-right:13px;color:rgb(51, 102, 187);">Ubuntu on MacBook</a>. Ubuntu Community Documentation.</cite><span title="ctx_ver=Z39.88-2004&amp;rfr_id=info%3Asid%2Fzh.wikipedia.org%3AGUID%E7%A3%81%E7%A2%9F%E5%88%86%E5%89%B2%E8%A1%A8&amp;rft.btitle=Ubuntu+on+MacBook&amp;rft.genre=unknown&amp;rft.pub=Ubuntu+Community+Documentation&amp;rft_id=https%3A%2F%2Fhelp.ubuntu.com%2Fcommunity%2FMacBook&amp;rft_val_fmt=info%3Aofi%2Ffmt%3Akev%3Amtx%3Abook"></span></span>
+</li>
+<li style="margin-bottom:0.1em;break-inside:avoid-column;"><span style="user-select:none;"><b><a href="https://zh.wikipedia.org/wiki/GUID%E7%A3%81%E7%A2%9F%E5%88%86%E5%89%B2%E8%A1%A8#cite_ref-6" title="跳转" style="text-decoration:none;color:rgb(6, 69, 173);background:none;">^</a></b></span> <span><cite style="font-style:normal;"><a rel="nofollow" href="https://www.gnu.org/software/parted/faq.shtml#features" style="text-decoration:none;background:none;background-image:url(https://zh.wikipedia.org/w/skins/Vector/resources/skins.vector.styles/images/external-link-ltr-icon.svg?b4b84);background-position:right center;background-repeat:no-repeat;padding-right:13px;color:rgb(51, 102, 187);">GNU Parted FAQ</a>.</cite><span title="ctx_ver=Z39.88-2004&amp;rfr_id=info%3Asid%2Fzh.wikipedia.org%3AGUID%E7%A3%81%E7%A2%9F%E5%88%86%E5%89%B2%E8%A1%A8&amp;rft.btitle=GNU+Parted+FAQ&amp;rft.genre=unknown&amp;rft_id=https%3A%2F%2Fwww.gnu.org%2Fsoftware%2Fparted%2Ffaq.shtml%23features&amp;rft_val_fmt=info%3Aofi%2Ffmt%3Akev%3Amtx%3Abook"></span></span>
+</li>
+<li style="margin-bottom:0.1em;break-inside:avoid-column;"><span style="user-select:none;"><b><a href="https://zh.wikipedia.org/wiki/GUID%E7%A3%81%E7%A2%9F%E5%88%86%E5%89%B2%E8%A1%A8#cite_ref-7" title="跳转" style="text-decoration:none;color:rgb(6, 69, 173);background:none;">^</a></b></span> <span><cite style="font-style:normal;"><a rel="nofollow" href="https://www.gnu.org/software/parted/manual/html_node/mklabel.html" style="text-decoration:none;background:none;background-image:url(https://zh.wikipedia.org/w/skins/Vector/resources/skins.vector.styles/images/external-link-ltr-icon.svg?b4b84);background-position:right center;background-repeat:no-repeat;padding-right:13px;color:rgb(51, 102, 187);">mklabel - GNU Parted Manual</a>.</cite><span title="ctx_ver=Z39.88-2004&amp;rfr_id=info%3Asid%2Fzh.wikipedia.org%3AGUID%E7%A3%81%E7%A2%9F%E5%88%86%E5%89%B2%E8%A1%A8&amp;rft.btitle=mklabel+-+GNU+Parted+Manual&amp;rft.genre=unknown&amp;rft_id=https%3A%2F%2Fwww.gnu.org%2Fsoftware%2Fparted%2Fmanual%2Fhtml_node%2Fmklabel.html&amp;rft_val_fmt=info%3Aofi%2Ffmt%3Akev%3Amtx%3Abook"></span></span>
+</li>
+<li style="margin-bottom:0.1em;break-inside:avoid-column;"><span style="user-select:none;"><b><a href="https://zh.wikipedia.org/wiki/GUID%E7%A3%81%E7%A2%9F%E5%88%86%E5%89%B2%E8%A1%A8#cite_ref-8" title="跳转" style="text-decoration:none;color:rgb(6, 69, 173);background:none;">^</a></b></span> <span><cite style="font-style:normal;"><a rel="nofollow" href="https://git.kernel.org/cgit/utils/util-linux/util-linux.git/commit/?id=766d5156c43b784700d28d1c1141008b2bf35ed7" style="text-decoration:none;background:none;background-image:url(https://zh.wikipedia.org/w/skins/Vector/resources/skins.vector.styles/images/external-link-ltr-icon.svg?b4b84);background-position:right center;background-repeat:no-repeat;padding-right:13px;color:rgb(51, 102, 187);">fdisk: add GPT support</a>. kernel.org. 2013-09-27 <span> [<span style="white-space:nowrap;">2013-10-18</span>]</span>.</cite><span title="ctx_ver=Z39.88-2004&amp;rfr_id=info%3Asid%2Fzh.wikipedia.org%3AGUID%E7%A3%81%E7%A2%9F%E5%88%86%E5%89%B2%E8%A1%A8&amp;rft.btitle=fdisk%3A+add+GPT+support&amp;rft.date=2013-09-27&amp;rft.genre=unknown&amp;rft.pub=kernel.org&amp;rft_id=https%3A%2F%2Fgit.kernel.org%2Fcgit%2Futils%2Futil-linux%2Futil-linux.git%2Fcommit%2F%3Fid%3D766d5156c43b784700d28d1c1141008b2bf35ed7&amp;rft_val_fmt=info%3Aofi%2Ffmt%3Akev%3Amtx%3Abook"></span></span>
+</li>
+<li style="margin-bottom:0.1em;break-inside:avoid-column;"><span style="user-select:none;"><b><a href="https://zh.wikipedia.org/wiki/GUID%E7%A3%81%E7%A2%9F%E5%88%86%E5%89%B2%E8%A1%A8#cite_ref-9" title="跳转" style="text-decoration:none;color:rgb(6, 69, 173);background:none;">^</a></b></span> <span><cite style="font-style:normal;">Davidlohr Bueso. <a rel="nofollow" href="http://blog.stgolabs.net/2012/09/fdisk-updates-and-gpt-support.html" style="text-decoration:none;background:none;background-image:url(https://zh.wikipedia.org/w/skins/Vector/resources/skins.vector.styles/images/external-link-ltr-icon.svg?b4b84);background-position:right center;background-repeat:no-repeat;padding-right:13px;color:rgb(51, 102, 187);">fdisk updates and GPT support</a>. 2013-09-28 <span> [<span style="white-space:nowrap;">2013-10-18</span>]</span>. （原始内容<a rel="nofollow" href="https://web.archive.org/web/20131019225537/http://blog.stgolabs.net/2012/09/fdisk-updates-and-gpt-support.html" style="text-decoration:none;background:none;background-image:url(https://zh.wikipedia.org/w/skins/Vector/resources/skins.vector.styles/images/external-link-ltr-icon.svg?b4b84);background-position:right center;background-repeat:no-repeat;padding-right:13px;color:rgb(51, 102, 187);">存档</a>于2013-10-19）.</cite><span title="ctx_ver=Z39.88-2004&amp;rfr_id=info%3Asid%2Fzh.wikipedia.org%3AGUID%E7%A3%81%E7%A2%9F%E5%88%86%E5%89%B2%E8%A1%A8&amp;rft.au=Davidlohr+Bueso&amp;rft.btitle=fdisk+updates+and+GPT+support&amp;rft.date=2013-09-28&amp;rft.genre=unknown&amp;rft_id=http%3A%2F%2Fblog.stgolabs.net%2F2012%2F09%2Ffdisk-updates-and-gpt-support.html&amp;rft_val_fmt=info%3Aofi%2Ffmt%3Akev%3Amtx%3Abook"></span></span>
+</li>
+<li style="margin-bottom:0.1em;break-inside:avoid-column;"><span style="user-select:none;"><b><a href="https://zh.wikipedia.org/wiki/GUID%E7%A3%81%E7%A2%9F%E5%88%86%E5%89%B2%E8%A1%A8#cite_ref-10" title="跳转" style="text-decoration:none;color:rgb(6, 69, 173);background:none;">^</a></b></span> <span><cite style="font-style:normal;"><a rel="nofollow" href="http://refit.sourceforge.net/myths/" style="text-decoration:none;background:none;background-image:url(https://zh.wikipedia.org/w/skins/Vector/resources/skins.vector.styles/images/external-link-ltr-icon.svg?b4b84);background-position:right center;background-repeat:no-repeat;padding-right:13px;color:rgb(51, 102, 187);">Myths and Facts About Intel Macs</a>. rEFIt.  <span> [<span style="white-space:nowrap;">2010-06-25</span>]</span>. （原始内容<a rel="nofollow" href="https://web.archive.org/web/20190421033618/http://refit.sourceforge.net/myths/" style="text-decoration:none;background:none;background-image:url(https://zh.wikipedia.org/w/skins/Vector/resources/skins.vector.styles/images/external-link-ltr-icon.svg?b4b84);background-position:right center;background-repeat:no-repeat;padding-right:13px;color:rgb(51, 102, 187);">存档</a>于2019-04-21）.</cite><span title="ctx_ver=Z39.88-2004&amp;rfr_id=info%3Asid%2Fzh.wikipedia.org%3AGUID%E7%A3%81%E7%A2%9F%E5%88%86%E5%89%B2%E8%A1%A8&amp;rft.btitle=Myths+and+Facts+About+Intel+Macs&amp;rft.genre=unknown&amp;rft.pub=rEFIt&amp;rft_id=http%3A%2F%2Frefit.sourceforge.net%2Fmyths%2F&amp;rft_val_fmt=info%3Aofi%2Ffmt%3Akev%3Amtx%3Abook"></span></span>
+</li>
+<li style="margin-bottom:0.1em;break-inside:avoid-column;"><span style="user-select:none;"><b><a href="https://zh.wikipedia.org/wiki/GUID%E7%A3%81%E7%A2%9F%E5%88%86%E5%89%B2%E8%A1%A8#cite_ref-11" title="跳转" style="text-decoration:none;color:rgb(6, 69, 173);background:none;">^</a></b></span> <span><cite style="font-style:normal;"><a rel="nofollow" href="http://docs.oracle.com/cd/E19963-01/html/821-1448/ggpco.html" style="text-decoration:none;background:none;background-image:url(https://zh.wikipedia.org/w/skins/Vector/resources/skins.vector.styles/images/external-link-ltr-icon.svg?b4b84);background-position:right center;background-repeat:no-repeat;padding-right:13px;color:rgb(51, 102, 187);">Booting from a ZFS Root File System</a>.</cite><span title="ctx_ver=Z39.88-2004&amp;rfr_id=info%3Asid%2Fzh.wikipedia.org%3AGUID%E7%A3%81%E7%A2%9F%E5%88%86%E5%89%B2%E8%A1%A8&amp;rft.btitle=Booting+from+a+ZFS+Root+File+System&amp;rft.genre=unknown&amp;rft_id=http%3A%2F%2Fdocs.oracle.com%2Fcd%2FE19963-01%2Fhtml%2F821-1448%2Fggpco.html&amp;rft_val_fmt=info%3Aofi%2Ffmt%3Akev%3Amtx%3Abook"></span></span>
+</li>
+<li style="margin-bottom:0.1em;break-inside:avoid-column;"><span style="user-select:none;"><b><a href="https://zh.wikipedia.org/wiki/GUID%E7%A3%81%E7%A2%9F%E5%88%86%E5%89%B2%E8%A1%A8#cite_ref-12" title="跳转" style="text-decoration:none;color:rgb(6, 69, 173);background:none;">^</a></b></span> <span><cite style="font-style:normal;"><a rel="nofollow" href="http://h20000.www2.hp.com/bc/docs/support/SupportManual/c02256075/c02256075.pdf" style="text-decoration:none;color:rgb(51, 102, 187);padding-right:16px;background:url(https://upload.wikimedia.org/wikipedia/commons/2/23/Icons-mini-file_acrobat.gif) right center no-repeat;">idisk(1M)</a> <span style="font-size:85%;">(PDF)</span>. Hewlett-Packard.</cite><span title="ctx_ver=Z39.88-2004&amp;rfr_id=info%3Asid%2Fzh.wikipedia.org%3AGUID%E7%A3%81%E7%A2%9F%E5%88%86%E5%89%B2%E8%A1%A8&amp;rft.btitle=idisk%281M%29&amp;rft.genre=unknown&amp;rft.pub=Hewlett-Packard&amp;rft_id=http%3A%2F%2Fh20000.www2.hp.com%2Fbc%2Fdocs%2Fsupport%2FSupportManual%2Fc02256075%2Fc02256075.pdf&amp;rft_val_fmt=info%3Aofi%2Ffmt%3Akev%3Amtx%3Abook"></span><sup style="line-height:1;"><span style="white-space:nowrap;">[<i><a href="https://zh.wikipedia.org/wiki/Wikipedia:%E5%A4%B1%E6%95%88%E9%93%BE%E6%8E%A5" title="Wikipedia:失效链接" style="text-decoration:none;color:rgb(6, 69, 173);background:none;"><span title="自2018年2月失效">永久失效链接</span></a></i>]</span></sup></span>
+</li>
+<li style="margin-bottom:0.1em;break-inside:avoid-column;"><span style="user-select:none;">^ <a href="https://zh.wikipedia.org/wiki/GUID%E7%A3%81%E7%A2%9F%E5%88%86%E5%89%B2%E8%A1%A8#cite_ref-microsoft_13-0" style="text-decoration:none;color:rgb(6, 69, 173);background:none;"><span style="user-select:none;top:-99999px;clip:rect(1px, 1px, 1px, 1px);overflow:hidden;position:absolute;padding:0px;border:0px;height:1px;width:1px;">跳转至： </span><sup style="line-height:1;"><b>13.0</b></sup></a> <a href="https://zh.wikipedia.org/wiki/GUID%E7%A3%81%E7%A2%9F%E5%88%86%E5%89%B2%E8%A1%A8#cite_ref-microsoft_13-1" style="text-decoration:none;color:rgb(6, 69, 173);background:none;"><sup style="line-height:1;"><b>13.1</b></sup></a></span> <span><cite style="font-style:normal;"><a rel="nofollow" href="https://msdn.microsoft.com/zh-cn/library/windows/hardware/dn640535.aspx" style="text-decoration:none;background:none;background-image:url(https://zh.wikipedia.org/w/skins/Vector/resources/skins.vector.styles/images/external-link-ltr-icon.svg?b4b84);background-position:right center;background-repeat:no-repeat;padding-right:13px;color:rgb(51, 102, 187);">Windows and GPT FAQ</a>. Microsoft.</cite><span title="ctx_ver=Z39.88-2004&amp;rfr_id=info%3Asid%2Fzh.wikipedia.org%3AGUID%E7%A3%81%E7%A2%9F%E5%88%86%E5%89%B2%E8%A1%A8&amp;rft.btitle=Windows+and+GPT+FAQ&amp;rft.genre=unknown&amp;rft.pub=Microsoft&amp;rft_id=https%3A%2F%2Fmsdn.microsoft.com%2Fzh-cn%2Flibrary%2Fwindows%2Fhardware%2Fdn640535.aspx&amp;rft_val_fmt=info%3Aofi%2Ffmt%3Akev%3Amtx%3Abook"></span></span>
+</li>
+<li style="margin-bottom:0.1em;break-inside:avoid-column;"><span style="user-select:none;">^ <a href="https://zh.wikipedia.org/wiki/GUID%E7%A3%81%E7%A2%9F%E5%88%86%E5%89%B2%E8%A1%A8#cite_ref-technet.microsoft.com_14-0" style="text-decoration:none;color:rgb(6, 69, 173);background:none;"><span style="user-select:none;top:-99999px;clip:rect(1px, 1px, 1px, 1px);overflow:hidden;position:absolute;padding:0px;border:0px;height:1px;width:1px;">跳转至： </span><sup style="line-height:1;"><b>14.0</b></sup></a> <a href="https://zh.wikipedia.org/wiki/GUID%E7%A3%81%E7%A2%9F%E5%88%86%E5%89%B2%E8%A1%A8#cite_ref-technet.microsoft.com_14-1" style="text-decoration:none;color:rgb(6, 69, 173);background:none;"><sup style="line-height:1;"><b>14.1</b></sup></a> <a href="https://zh.wikipedia.org/wiki/GUID%E7%A3%81%E7%A2%9F%E5%88%86%E5%89%B2%E8%A1%A8#cite_ref-technet.microsoft.com_14-2" style="text-decoration:none;color:rgb(6, 69, 173);background:none;"><sup style="line-height:1;"><b>14.2</b></sup></a> <a href="https://zh.wikipedia.org/wiki/GUID%E7%A3%81%E7%A2%9F%E5%88%86%E5%89%B2%E8%A1%A8#cite_ref-technet.microsoft.com_14-3" style="text-decoration:none;color:rgb(6, 69, 173);background:none;"><sup style="line-height:1;"><b>14.3</b></sup></a> <a href="https://zh.wikipedia.org/wiki/GUID%E7%A3%81%E7%A2%9F%E5%88%86%E5%89%B2%E8%A1%A8#cite_ref-technet.microsoft.com_14-4" style="text-decoration:none;color:rgb(6, 69, 173);background:none;"><sup style="line-height:1;"><b>14.4</b></sup></a> <a href="https://zh.wikipedia.org/wiki/GUID%E7%A3%81%E7%A2%9F%E5%88%86%E5%89%B2%E8%A1%A8#cite_ref-technet.microsoft.com_14-5" style="text-decoration:none;color:rgb(6, 69, 173);background:none;"><sup style="line-height:1;"><b>14.5</b></sup></a> <a href="https://zh.wikipedia.org/wiki/GUID%E7%A3%81%E7%A2%9F%E5%88%86%E5%89%B2%E8%A1%A8#cite_ref-technet.microsoft.com_14-6" style="text-decoration:none;color:rgb(6, 69, 173);background:none;"><sup style="line-height:1;"><b>14.6</b></sup></a></span> <span><a rel="nofollow" href="https://technet.microsoft.com/zh-cn/library/hh824898.aspx" style="text-decoration:none;background:none;background-image:url(https://zh.wikipedia.org/w/skins/Vector/resources/skins.vector.styles/images/external-link-ltr-icon.svg?b4b84);background-position:right center;background-repeat:no-repeat;padding-right:13px;color:rgb(51, 102, 187);">32位Windows 8支持通过UEFI从GPT硬盘启动。</a></span>
+</li>
+<li style="margin-bottom:0.1em;break-inside:avoid-column;"><span style="user-select:none;"><b><a href="https://zh.wikipedia.org/wiki/GUID%E7%A3%81%E7%A2%9F%E5%88%86%E5%89%B2%E8%A1%A8#cite_ref-15" title="跳转" style="text-decoration:none;color:rgb(6, 69, 173);background:none;">^</a></b></span> <span><cite style="font-style:normal;"><a rel="nofollow" href="https://web.archive.org/web/20101110033856/http://www.microsoft.com/presspass/press/2005/apr05/04-25Winx64LaunchPR.mspx" style="text-decoration:none;background:none;background-image:url(https://zh.wikipedia.org/w/skins/Vector/resources/skins.vector.styles/images/external-link-ltr-icon.svg?b4b84);background-position:right center;background-repeat:no-repeat;padding-right:13px;color:rgb(51, 102, 187);">Microsoft raises the speed limit with the availability of 64-bit editions of Windows Server 2003 and Windows XP Professional</a>.  <span> [<span style="white-space:nowrap;">2017-09-22</span>]</span>. （<a rel="nofollow" href="http://www.microsoft.com/presspass/press/2005/apr05/04-25Winx64LaunchPR.mspx" style="text-decoration:none;background:none;background-image:url(https://zh.wikipedia.org/w/skins/Vector/resources/skins.vector.styles/images/external-link-ltr-icon.svg?b4b84);background-position:right center;background-repeat:no-repeat;padding-right:13px;color:rgb(51, 102, 187);">原始内容</a>存档于2010-11-10）.</cite><span title="ctx_ver=Z39.88-2004&amp;rfr_id=info%3Asid%2Fzh.wikipedia.org%3AGUID%E7%A3%81%E7%A2%9F%E5%88%86%E5%89%B2%E8%A1%A8&amp;rft.btitle=Microsoft+raises+the+speed+limit+with+the+availability+of+64-bit+editions+of+Windows+Server+2003+and+Windows+XP+Professional&amp;rft.genre=unknown&amp;rft_id=http%3A%2F%2Fwww.microsoft.com%2Fpresspass%2Fpress%2F2005%2Fapr05%2F04-25Winx64LaunchPR.mspx&amp;rft_val_fmt=info%3Aofi%2Ffmt%3Akev%3Amtx%3Abook"></span></span>
+</li>
+</ol></div>
+
+
+
+
+</div>
+</div>
+		<div style="border:1px solid rgb(162, 169, 177);background-color:rgb(248, 249, 250);padding:5px;margin-top:1em;clear:both;text-align:left;"><div><a href="https://zh.wikipedia.org/wiki/Special:%E9%A1%B5%E9%9D%A2%E5%88%86%E7%B1%BB" title="Special:页面分类" style="text-decoration:none;color:rgb(6, 69, 173);background:none;">分类</a>：<ul style="list-style-image:url(https://zh.wikipedia.org/w/skins/Vector/resources/skins.vector.styles/images/bullet-icon.svg?d4515);display:inline;list-style:none none;margin:0px;padding:0px;"><li style="display:inline-block;line-height:1.25em;margin:0.125em 0px;padding:0px 0.5em;padding-left:0.25em;border-left:0px;"><a href="https://zh.wikipedia.org/wiki/Category:BIOS" title="Category:BIOS" style="text-decoration:none;color:rgb(6, 69, 173);background:none;">BIOS</a></li></ul></div></div>
+	<span style="font-size:0.938em;line-height:1.6;clear:both;display:block;"></span></div>
+</div></div></div></div>
+</div></div>
+<a class="back-link" href="../articles.html">← 返回笔记列表</a>
+</body></html>

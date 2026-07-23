@@ -1,0 +1,744 @@
+<!DOCTYPE html>
+<html lang="zh-CN" data-theme="light">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Systemed systemctl 创建服务 详解 - Zery - 博客园 — 技术笔记</title>
+<style>
+:root {
+  --bg: #ffffff;
+  --text: #1a1a1a;
+  --muted: #666;
+  --border: #e0e0e0;
+  --code-bg: #f5f5f5;
+  --link: #0066cc;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #1a1a1a;
+    --text: #e0e0e0;
+    --muted: #999;
+    --border: #333;
+    --code-bg: #2a2a2a;
+    --link: #66bbff;
+  }
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  line-height: 1.7;
+  color: var(--text);
+  background: var(--bg);
+  max-width: 860px;
+  margin: 0 auto;
+  padding: 2rem 1.5rem;
+}
+.note-header {
+  border-bottom: 2px solid var(--border);
+  padding-bottom: 1rem;
+  margin-bottom: 2rem;
+}
+.note-title {
+  font-size: 1.6rem;
+  font-weight: 700;
+  margin-bottom: 0.3rem;
+}
+.note-meta {
+  color: var(--muted);
+  font-size: 0.85rem;
+}
+.note-content {
+  font-size: 0.95rem;
+}
+.note-content h1 { font-size: 1.4rem; margin: 1.2rem 0 0.6rem; }
+.note-content h2 { font-size: 1.2rem; margin: 1rem 0 0.5rem; }
+.note-content h3 { font-size: 1.05rem; margin: 0.8rem 0 0.4rem; }
+.note-content p { margin: 0.5rem 0; }
+.note-content ul, .note-content ol { margin: 0.5rem 0 0.5rem 2rem; }
+.note-content li { margin: 0.2rem 0; }
+.note-content pre {
+  background: var(--code-bg);
+  padding: 1rem;
+  border-radius: 6px;
+  overflow-x: auto;
+  margin: 0.8rem 0;
+  font-size: 0.85rem;
+}
+.note-content code {
+  background: var(--code-bg);
+  padding: 0.1rem 0.3rem;
+  border-radius: 3px;
+  font-size: 0.88em;
+}
+.note-content pre code {
+  background: none;
+  padding: 0;
+}
+.note-content blockquote {
+  border-left: 3px solid var(--border);
+  padding-left: 1rem;
+  color: var(--muted);
+  margin: 0.8rem 0;
+}
+.note-content a { color: var(--link); }
+.note-content img {
+  max-width: 100%;
+  height: auto;
+  border-radius: 6px;
+  margin: 0.5rem 0;
+}
+.note-content table {
+  border-collapse: collapse;
+  width: 100%;
+  margin: 0.8rem 0;
+}
+.note-content th, .note-content td {
+  border: 1px solid var(--border);
+  padding: 0.5rem;
+}
+.note-content th { background: var(--code-bg); }
+.media-placeholder {
+  background: var(--code-bg);
+  padding: 1rem;
+  text-align: center;
+  color: var(--muted);
+  border-radius: 6px;
+  margin: 0.5rem 0;
+  font-size: 0.85rem;
+}
+.encrypt-placeholder {
+  background: #fff3cd;
+  padding: 0.5rem;
+  text-align: center;
+  color: #856404;
+  border-radius: 6px;
+  margin: 0.5rem 0;
+  font-size: 0.85rem;
+}
+.back-link {
+  display: inline-block;
+  margin-top: 2rem;
+  color: var(--link);
+  text-decoration: none;
+  font-size: 0.85rem;
+}
+</style>
+</head>
+<body>
+<div class="note-header">
+  <div class="note-title">Systemed systemctl 创建服务 详解 - Zery - 博客园</div>
+  <div class="note-meta">笔记本：Linux</div>
+</div>
+<div class="note-content">
+<div style="--en-clipped-content:article">
+<div><br/></div><div style="font-size: 16px; display:block; min-width: 100%; position: relative;"> <div style="--olcb-folder-code-block-max-height:80vh;--cnb-code-bg:rgb(245, 245, 245);--cnb-code-font-size:12px;--cnb-code-color:rgb(68, 68, 68);"><div style="tab-size:4;background:rgb(240, 238, 245);color:rgb(125, 139, 141);line-height:25px;font-family:&quot;PingFang SC&quot;, &quot;Microsoft YaHei&quot;, &quot;Helvetica Neue&quot;, Helvetica, Arial, sans-serif;text-size-adjust:none;font-size:14px;"><div><div><div style="background:none;overflow:visible;text-overflow:ellipsis;word-break:break-all;"><div><div><div style="background:rgb(255, 255, 255);overflow:hidden;"><div>
+            <h1 style="margin:0px;padding:0px;margin-bottom:20px;line-height:1.8;color:rgb(51, 51, 51);font-size:28px;font-weight:400;">
+                
+<a href="https://www.cnblogs.com/zery/p/7087051.html" style="margin:0px;padding:0px;text-decoration:none;color:rgb(51, 51, 51);">
+    <span style="margin:0px;padding:0px;vertical-align:middle;">Systemed systemctl 创建服务 详解</span>
+    
+
+
+
+</a>
+
+            </h1>
+            <div style="margin:0px;padding:0px;clear:both;"></div>
+            <div style="margin:0px;padding:0px;">
+                    
+<div style="margin:0px;padding:0px;margin-bottom:20px;word-break:break-word;line-height:1.8;color:rgb(51, 51, 51);">
+<div style="margin:0px;padding:0px;">
+<p style="padding:0px;margin:10px auto;text-indent:0px;">原文：http://www.ruanyifeng.com/blog/2016/03/systemd-tutorial-commands.html</p>
+<p style="padding:0px;margin:10px auto;text-indent:0px;"> </p>
+<h2 style="font-size:2.88em;font-weight:500;line-height:1.5;margin:1.5em 0 0.2em;padding:0 0 0.2em;list-style-type:none;border-style:none none solid;border-bottom-width:1px;border-bottom-color:rgba(211, 211, 211, 1);letter-spacing:-0.03em;font-family:Georgia, serif;word-spacing:2px;">一、由来</h2>
+<p style="padding:0px;margin:10px auto;text-indent:0px;"> </p>
+<p style="padding:0px;margin:10px auto;text-indent:0px;margin-top:1em;margin-bottom:0;margin-left:0.8em;padding-top:0;padding-bottom:0;list-style-type:none;border:none;color:rgba(17, 17, 17, 1);font-size:1.6em;line-height:28.7999992370605px;font-family:Georgia, serif;letter-spacing:-0.100000001490116px;word-spacing:2px;">历史上，<a href="http://www.ruanyifeng.com/blog/2013/08/linux_boot_process.html" target="_blank" rel="noopener" style="margin:0;padding:0;color:rgba(17, 34, 51, 1);text-decoration:underline;list-style-type:none;border:none;">Linux 的启动</a>一直采用<a href="https://en.wikipedia.org/wiki/Init" target="_blank" rel="noopener" style="margin:0;padding:0;color:rgba(17, 34, 51, 1);text-decoration:underline;list-style-type:none;border:none;"><code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif">init</code></a>进程。</p>
+<p style="padding:0px;margin:10px auto;text-indent:0px;margin-top:1em;margin-bottom:0;margin-left:0.8em;padding-top:0;padding-bottom:0;list-style-type:none;border:none;color:rgba(17, 17, 17, 1);font-size:1.6em;line-height:28.7999992370605px;font-family:Georgia, serif;letter-spacing:-0.100000001490116px;word-spacing:2px;">下面的命令用来启动服务。</p>
+<blockquote style="background-image:none;border:0.3em solid rgba(224, 223, 204, 1);padding:1em;border-left:5px solid rgb(221, 221, 221);border-right:none;border-top:none;border-bottom:none;margin:2em;color:rgba(17, 17, 17, 1);border-image:initial;padding-left:10px;list-style-type:none;background-color:rgba(245, 242, 240, 1);font-family:Consolas, Monaco, &quot;Andale Mono&quot;, monospace;overflow:auto;font-size:10px;letter-spacing:-0.100000001490116px;word-spacing:2px;">
+<pre style="border-radius:4px;background-color: #fbfaf8;border: 1px solid rgba(0,0,0,.14902);color: #333;font-size: 12px;padding: 8px;font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif;box-sizing: border-box;"><code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif">
+$ sudo /etc/init.d/apache2 start
+<span style="margin:0px;padding:0px;color:rgb(0, 128, 0);"># 或者</span>
+$ service apache2 start
+</code></pre>
+</blockquote>
+<p style="padding:0px;margin:10px auto;text-indent:0px;margin-top:1em;margin-bottom:0;margin-left:0.8em;padding-top:0;padding-bottom:0;list-style-type:none;border:none;color:rgba(17, 17, 17, 1);font-size:1.6em;line-height:28.7999992370605px;font-family:Georgia, serif;letter-spacing:-0.100000001490116px;word-spacing:2px;">这种方法有两个缺点。</p>
+<p style="padding:0px;margin:10px auto;text-indent:0px;margin-top:1em;margin-bottom:0;margin-left:0.8em;padding-top:0;padding-bottom:0;list-style-type:none;border:none;color:rgba(17, 17, 17, 1);font-size:1.6em;line-height:28.7999992370605px;font-family:Georgia, serif;letter-spacing:-0.100000001490116px;word-spacing:2px;">一是启动时间长。<code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif">init</code>进程是串行启动，只有前一个进程启动完，才会启动下一个进程。</p>
+<p style="padding:0px;margin:10px auto;text-indent:0px;margin-top:1em;margin-bottom:0;margin-left:0.8em;padding-top:0;padding-bottom:0;list-style-type:none;border:none;color:rgba(17, 17, 17, 1);font-size:1.6em;line-height:28.7999992370605px;font-family:Georgia, serif;letter-spacing:-0.100000001490116px;word-spacing:2px;">二是启动脚本复杂。<code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif">init</code>进程只是执行启动脚本，不管其他事情。脚本需要自己处理各种情况，这往往使得脚本变得很长。</p>
+<h2 style="font-size:2.88em;font-weight:500;line-height:1.5;margin:1.5em 0 0.2em;padding:0 0 0.2em;list-style-type:none;border-style:none none solid;border-bottom-width:1px;border-bottom-color:rgba(211, 211, 211, 1);letter-spacing:-0.03em;font-family:Georgia, serif;word-spacing:2px;">二、Systemd 概述</h2>
+<p style="padding:0px;margin:10px auto;text-indent:0px;margin-top:1em;margin-bottom:0;margin-left:0.8em;padding-top:0;padding-bottom:0;list-style-type:none;border:none;color:rgba(17, 17, 17, 1);font-size:1.6em;line-height:28.7999992370605px;font-family:Georgia, serif;letter-spacing:-0.100000001490116px;word-spacing:2px;">Systemd 就是为了解决这些问题而诞生的。它的设计目标是，为系统的启动和管理提供一套完整的解决方案。</p>
+<p style="padding:0px;margin:10px auto;text-indent:0px;margin-top:1em;margin-bottom:0;margin-left:0.8em;padding-top:0;padding-bottom:0;list-style-type:none;border:none;color:rgba(17, 17, 17, 1);font-size:1.6em;line-height:28.7999992370605px;font-family:Georgia, serif;letter-spacing:-0.100000001490116px;word-spacing:2px;">根据 Linux 惯例，字母<code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif">d</code>是守护进程（daemon）的缩写。 Systemd 这个名字的含义，就是它要守护整个系统。</p>
+<p style="padding:0px;margin:10px auto;text-indent:0px;margin-top:1em;margin-bottom:0;margin-left:0.8em;padding-top:0;padding-bottom:0;list-style-type:none;border:none;color:rgba(17, 17, 17, 1);font-size:1.6em;line-height:28.7999992370605px;font-family:Georgia, serif;letter-spacing:-0.100000001490116px;word-spacing:2px;">（上图为 Systemd 作者 <a href="https://en.wikipedia.org/wiki/Lennart_Poettering" target="_blank" rel="noopener" style="margin:0;padding:0;color:rgba(17, 34, 51, 1);text-decoration:underline;list-style-type:none;border:none;">Lennart Poettering</a>）</p>
+<p style="padding:0px;margin:10px auto;text-indent:0px;margin-top:1em;margin-bottom:0;margin-left:0.8em;padding-top:0;padding-bottom:0;list-style-type:none;border:none;color:rgba(17, 17, 17, 1);font-size:1.6em;line-height:28.7999992370605px;font-family:Georgia, serif;letter-spacing:-0.100000001490116px;word-spacing:2px;">使用了 Systemd，就不需要再用<code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif">init</code>了。Systemd 取代了<code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif">initd</code>，成为系统的第一个进程（PID 等于 1），其他进程都是它的子进程。</p>
+<blockquote style="background-image:none;border:0.3em solid rgba(224, 223, 204, 1);padding:1em;border-left:5px solid rgb(221, 221, 221);border-right:none;border-top:none;border-bottom:none;margin:2em;color:rgba(17, 17, 17, 1);border-image:initial;padding-left:10px;list-style-type:none;background-color:rgba(245, 242, 240, 1);font-family:Consolas, Monaco, &quot;Andale Mono&quot;, monospace;overflow:auto;font-size:10px;letter-spacing:-0.100000001490116px;word-spacing:2px;">
+<pre style="border-radius:4px;background-color: #fbfaf8;border: 1px solid rgba(0,0,0,.14902);color: #333;font-size: 12px;padding: 8px;font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif;box-sizing: border-box;"><code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif">
+$ systemctl --version
+</code></pre>
+</blockquote>
+<p style="padding:0px;margin:10px auto;text-indent:0px;margin-top:1em;margin-bottom:0;margin-left:0.8em;padding-top:0;padding-bottom:0;list-style-type:none;border:none;color:rgba(17, 17, 17, 1);font-size:1.6em;line-height:28.7999992370605px;font-family:Georgia, serif;letter-spacing:-0.100000001490116px;word-spacing:2px;">上面的命令查看 Systemd 的版本。</p>
+<p style="padding:0px;margin:10px auto;text-indent:0px;margin-top:1em;margin-bottom:0;margin-left:0.8em;padding-top:0;padding-bottom:0;list-style-type:none;border:none;color:rgba(17, 17, 17, 1);font-size:1.6em;line-height:28.7999992370605px;font-family:Georgia, serif;letter-spacing:-0.100000001490116px;word-spacing:2px;">Systemd 的优点是功能强大，使用方便，缺点是体系庞大，非常复杂。事实上，现在还有很多人反对使用 Systemd，理由就是它过于复杂，与操作系统的其他部分强耦合，违反"keep simple, keep stupid"的<a href="http://www.ruanyifeng.com/blog/2009/06/unix_philosophy.html" target="_blank" rel="noopener" style="margin:0;padding:0;color:rgba(17, 34, 51, 1);text-decoration:underline;list-style-type:none;border:none;">Unix 哲学</a>。</p>
+<p style="padding:0px;margin:10px auto;text-indent:0px;margin-top:1em;margin-bottom:0;margin-left:0.8em;padding-top:0;padding-bottom:0;list-style-type:none;border:none;color:rgba(17, 17, 17, 1);font-size:1.6em;line-height:28.7999992370605px;font-family:Georgia, serif;letter-spacing:-0.100000001490116px;word-spacing:2px;"><img title="" width="720" height="405" src="https://www.ruanyifeng.com/blogimg/asset/2016/bg2016030703.png" style="border:0.3em solid rgba(224, 223, 204, 1);cursor:zoom-in;display:block;height:auto;max-width:100%;margin:0;padding:0;transition:transform 300ms cubic-bezier(0.2, 0, 0.2, 1) 0s;list-style-type:none;"/></p>
+<p style="padding:0px;margin:10px auto;text-indent:0px;margin-top:1em;margin-bottom:0;margin-left:0.8em;padding-top:0;padding-bottom:0;list-style-type:none;border:none;color:rgba(17, 17, 17, 1);font-size:1.6em;line-height:28.7999992370605px;font-family:Georgia, serif;letter-spacing:-0.100000001490116px;word-spacing:2px;">（上图为 Systemd 架构图）</p>
+<h2 style="font-size:2.88em;font-weight:500;line-height:1.5;margin:1.5em 0 0.2em;padding:0 0 0.2em;list-style-type:none;border-style:none none solid;border-bottom-width:1px;border-bottom-color:rgba(211, 211, 211, 1);letter-spacing:-0.03em;font-family:Georgia, serif;word-spacing:2px;">三、系统管理</h2>
+<p style="padding:0px;margin:10px auto;text-indent:0px;margin-top:1em;margin-bottom:0;margin-left:0.8em;padding-top:0;padding-bottom:0;list-style-type:none;border:none;color:rgba(17, 17, 17, 1);font-size:1.6em;line-height:28.7999992370605px;font-family:Georgia, serif;letter-spacing:-0.100000001490116px;word-spacing:2px;">Systemd 并不是一个命令，而是一组命令，涉及到系统管理的方方面面。</p>
+<h3 style="font-size:1.87em;font-weight:500;line-height:1.5;margin:1.5em 0 0.2em;padding:0 0 0.2em;color:rgb(255, 255, 255);background-color:rgb(22, 159, 230);text-shadow:rgb(64, 64, 64) 2px 2px 3px;list-style-type:none;border-style:none none solid;border-bottom-width:1px;border-bottom-color:rgba(211, 211, 211, 1);letter-spacing:-0.03em;font-family:Georgia, serif;word-spacing:2px;">3.1 systemctl</h3>
+<p style="padding:0px;margin:10px auto;text-indent:0px;margin-top:1em;margin-bottom:0;margin-left:0.8em;padding-top:0;padding-bottom:0;list-style-type:none;border:none;color:rgba(17, 17, 17, 1);font-size:1.6em;line-height:28.7999992370605px;font-family:Georgia, serif;letter-spacing:-0.100000001490116px;word-spacing:2px;"><code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif">systemctl</code>是 Systemd 的主命令，用于管理系统。</p>
+<blockquote style="background-image:none;border:0.3em solid rgba(224, 223, 204, 1);padding:1em;border-left:5px solid rgb(221, 221, 221);border-right:none;border-top:none;border-bottom:none;margin:2em;color:rgba(17, 17, 17, 1);border-image:initial;padding-left:10px;list-style-type:none;background-color:rgba(245, 242, 240, 1);font-family:Consolas, Monaco, &quot;Andale Mono&quot;, monospace;overflow:auto;font-size:10px;letter-spacing:-0.100000001490116px;word-spacing:2px;">
+<pre style="border-radius:4px;background-color: #fbfaf8;border: 1px solid rgba(0,0,0,.14902);color: #333;font-size: 12px;padding: 8px;font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif;box-sizing: border-box;"><code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif">
+<span style="margin:0px;padding:0px;color:rgb(0, 128, 0);"># 重启系统</span>
+$ sudo systemctl reboot
+
+<span style="margin:0px;padding:0px;color:rgb(0, 128, 0);"># 关闭系统，切断电源</span>
+$ sudo systemctl poweroff
+
+<span style="margin:0px;padding:0px;color:rgb(0, 128, 0);"># CPU停止工作</span>
+$ sudo systemctl halt
+
+<span style="margin:0px;padding:0px;color:rgb(0, 128, 0);"># 暂停系统</span>
+$ sudo systemctl <span style="margin:0px;padding:0px;color:rgb(0, 0, 255);">suspend</span>
+
+<span style="margin:0px;padding:0px;color:rgb(0, 128, 0);"># 让系统进入冬眠状态</span>
+$ sudo systemctl hibernate
+
+<span style="margin:0px;padding:0px;color:rgb(0, 128, 0);"># 让系统进入交互式休眠状态</span>
+$ sudo systemctl hybrid-sleep
+
+<span style="margin:0px;padding:0px;color:rgb(0, 128, 0);"># 启动进入救援状态（单用户状态）</span>
+$ sudo systemctl rescue
+</code></pre>
+</blockquote>
+<h3 style="font-size:1.87em;font-weight:500;line-height:1.5;margin:1.5em 0 0.2em;padding:0 0 0.2em;color:rgb(255, 255, 255);background-color:rgb(22, 159, 230);text-shadow:rgb(64, 64, 64) 2px 2px 3px;list-style-type:none;border-style:none none solid;border-bottom-width:1px;border-bottom-color:rgba(211, 211, 211, 1);letter-spacing:-0.03em;font-family:Georgia, serif;word-spacing:2px;">3.2 systemd-analyze</h3>
+<p style="padding:0px;margin:10px auto;text-indent:0px;margin-top:1em;margin-bottom:0;margin-left:0.8em;padding-top:0;padding-bottom:0;list-style-type:none;border:none;color:rgba(17, 17, 17, 1);font-size:1.6em;line-height:28.7999992370605px;font-family:Georgia, serif;letter-spacing:-0.100000001490116px;word-spacing:2px;"><code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif">systemd-analyze</code>命令用于查看启动耗时。</p>
+<blockquote style="background-image:none;border:0.3em solid rgba(224, 223, 204, 1);padding:1em;border-left:5px solid rgb(221, 221, 221);border-right:none;border-top:none;border-bottom:none;margin:2em;color:rgba(17, 17, 17, 1);border-image:initial;padding-left:10px;list-style-type:none;background-color:rgba(245, 242, 240, 1);font-family:Consolas, Monaco, &quot;Andale Mono&quot;, monospace;overflow:auto;font-size:10px;letter-spacing:-0.100000001490116px;word-spacing:2px;">
+<pre style="border-radius:4px;background-color: #fbfaf8;border: 1px solid rgba(0,0,0,.14902);color: #333;font-size: 12px;padding: 8px;font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif;box-sizing: border-box;"><code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif">
+<span style="margin:0px;padding:0px;color:rgb(0, 128, 0);"># 查看启动耗时</span>
+$ systemd-analyze                                                                                       
+
+<span style="margin:0px;padding:0px;color:rgb(0, 128, 0);"># 查看每个服务的启动耗时</span>
+$ systemd-analyze blame
+
+<span style="margin:0px;padding:0px;color:rgb(0, 128, 0);"># 显示瀑布状的启动过程流</span>
+$ systemd-analyze critical-chain
+
+<span style="margin:0px;padding:0px;color:rgb(0, 128, 0);"># 显示指定服务的启动流</span>
+$ systemd-analyze critical-chain atd.service
+</code></pre>
+</blockquote>
+<h3 style="font-size:1.87em;font-weight:500;line-height:1.5;margin:1.5em 0 0.2em;padding:0 0 0.2em;color:rgb(255, 255, 255);background-color:rgb(22, 159, 230);text-shadow:rgb(64, 64, 64) 2px 2px 3px;list-style-type:none;border-style:none none solid;border-bottom-width:1px;border-bottom-color:rgba(211, 211, 211, 1);letter-spacing:-0.03em;font-family:Georgia, serif;word-spacing:2px;">3.3 hostnamectl</h3>
+<p style="padding:0px;margin:10px auto;text-indent:0px;margin-top:1em;margin-bottom:0;margin-left:0.8em;padding-top:0;padding-bottom:0;list-style-type:none;border:none;color:rgba(17, 17, 17, 1);font-size:1.6em;line-height:28.7999992370605px;font-family:Georgia, serif;letter-spacing:-0.100000001490116px;word-spacing:2px;"><code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif">hostnamectl</code>命令用于查看当前主机的信息。</p>
+<blockquote style="background-image:none;border:0.3em solid rgba(224, 223, 204, 1);padding:1em;border-left:5px solid rgb(221, 221, 221);border-right:none;border-top:none;border-bottom:none;margin:2em;color:rgba(17, 17, 17, 1);border-image:initial;padding-left:10px;list-style-type:none;background-color:rgba(245, 242, 240, 1);font-family:Consolas, Monaco, &quot;Andale Mono&quot;, monospace;overflow:auto;font-size:10px;letter-spacing:-0.100000001490116px;word-spacing:2px;">
+<pre style="border-radius:4px;background-color: #fbfaf8;border: 1px solid rgba(0,0,0,.14902);color: #333;font-size: 12px;padding: 8px;font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif;box-sizing: border-box;"><code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif">
+<span style="margin:0px;padding:0px;color:rgb(0, 128, 0);"># 显示当前主机的信息</span>
+$ hostnamectl
+
+<span style="margin:0px;padding:0px;color:rgb(0, 128, 0);"># 设置主机名。</span>
+$ sudo hostnamectl set-hostname rhel7
+</code></pre>
+</blockquote>
+<h3 style="font-size:1.87em;font-weight:500;line-height:1.5;margin:1.5em 0 0.2em;padding:0 0 0.2em;color:rgb(255, 255, 255);background-color:rgb(22, 159, 230);text-shadow:rgb(64, 64, 64) 2px 2px 3px;list-style-type:none;border-style:none none solid;border-bottom-width:1px;border-bottom-color:rgba(211, 211, 211, 1);letter-spacing:-0.03em;font-family:Georgia, serif;word-spacing:2px;">3.4 localectl</h3>
+<p style="padding:0px;margin:10px auto;text-indent:0px;margin-top:1em;margin-bottom:0;margin-left:0.8em;padding-top:0;padding-bottom:0;list-style-type:none;border:none;color:rgba(17, 17, 17, 1);font-size:1.6em;line-height:28.7999992370605px;font-family:Georgia, serif;letter-spacing:-0.100000001490116px;word-spacing:2px;"><code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif">localectl</code>命令用于查看本地化设置。</p>
+<blockquote style="background-image:none;border:0.3em solid rgba(224, 223, 204, 1);padding:1em;border-left:5px solid rgb(221, 221, 221);border-right:none;border-top:none;border-bottom:none;margin:2em;color:rgba(17, 17, 17, 1);border-image:initial;padding-left:10px;list-style-type:none;background-color:rgba(245, 242, 240, 1);font-family:Consolas, Monaco, &quot;Andale Mono&quot;, monospace;overflow:auto;font-size:10px;letter-spacing:-0.100000001490116px;word-spacing:2px;">
+<pre style="border-radius:4px;background-color: #fbfaf8;border: 1px solid rgba(0,0,0,.14902);color: #333;font-size: 12px;padding: 8px;font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif;box-sizing: border-box;"><code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif">
+<span style="margin:0px;padding:0px;color:rgb(0, 128, 0);"># 查看本地化设置</span>
+$ localectl
+
+<span style="margin:0px;padding:0px;color:rgb(0, 128, 0);"># 设置本地化参数。</span>
+$ sudo localectl set-locale LANG=en_GB.utf8
+$ sudo localectl set-keymap en_GB
+</code></pre>
+</blockquote>
+<h3 style="font-size:1.87em;font-weight:500;line-height:1.5;margin:1.5em 0 0.2em;padding:0 0 0.2em;color:rgb(255, 255, 255);background-color:rgb(22, 159, 230);text-shadow:rgb(64, 64, 64) 2px 2px 3px;list-style-type:none;border-style:none none solid;border-bottom-width:1px;border-bottom-color:rgba(211, 211, 211, 1);letter-spacing:-0.03em;font-family:Georgia, serif;word-spacing:2px;">3.5 timedatectl</h3>
+<p style="padding:0px;margin:10px auto;text-indent:0px;margin-top:1em;margin-bottom:0;margin-left:0.8em;padding-top:0;padding-bottom:0;list-style-type:none;border:none;color:rgba(17, 17, 17, 1);font-size:1.6em;line-height:28.7999992370605px;font-family:Georgia, serif;letter-spacing:-0.100000001490116px;word-spacing:2px;"><code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif">timedatectl</code>命令用于查看当前时区设置。</p>
+<blockquote style="background-image:none;border:0.3em solid rgba(224, 223, 204, 1);padding:1em;border-left:5px solid rgb(221, 221, 221);border-right:none;border-top:none;border-bottom:none;margin:2em;color:rgba(17, 17, 17, 1);border-image:initial;padding-left:10px;list-style-type:none;background-color:rgba(245, 242, 240, 1);font-family:Consolas, Monaco, &quot;Andale Mono&quot;, monospace;overflow:auto;font-size:10px;letter-spacing:-0.100000001490116px;word-spacing:2px;">
+<pre style="border-radius:4px;background-color: #fbfaf8;border: 1px solid rgba(0,0,0,.14902);color: #333;font-size: 12px;padding: 8px;font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif;box-sizing: border-box;"><code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif">
+<span style="margin:0px;padding:0px;color:rgb(0, 128, 0);"># 查看当前时区设置</span>
+$ timedatectl
+
+<span style="margin:0px;padding:0px;color:rgb(0, 128, 0);"># 显示所有可用的时区</span>
+$ timedatectl list-timezones                                                                                   
+
+<span style="margin:0px;padding:0px;color:rgb(0, 128, 0);"># 设置当前时区</span>
+$ sudo timedatectl set-timezone America/New_York
+$ sudo timedatectl set-time YYYY-MM-DD
+$ sudo timedatectl set-time HH:MM:SS
+</code></pre>
+</blockquote>
+<h3 style="font-size:1.87em;font-weight:500;line-height:1.5;margin:1.5em 0 0.2em;padding:0 0 0.2em;color:rgb(255, 255, 255);background-color:rgb(22, 159, 230);text-shadow:rgb(64, 64, 64) 2px 2px 3px;list-style-type:none;border-style:none none solid;border-bottom-width:1px;border-bottom-color:rgba(211, 211, 211, 1);letter-spacing:-0.03em;font-family:Georgia, serif;word-spacing:2px;">3.6 loginctl</h3>
+<p style="padding:0px;margin:10px auto;text-indent:0px;margin-top:1em;margin-bottom:0;margin-left:0.8em;padding-top:0;padding-bottom:0;list-style-type:none;border:none;color:rgba(17, 17, 17, 1);font-size:1.6em;line-height:28.7999992370605px;font-family:Georgia, serif;letter-spacing:-0.100000001490116px;word-spacing:2px;"><code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif">loginctl</code>命令用于查看当前登录的用户。</p>
+<blockquote style="background-image:none;border:0.3em solid rgba(224, 223, 204, 1);padding:1em;border-left:5px solid rgb(221, 221, 221);border-right:none;border-top:none;border-bottom:none;margin:2em;color:rgba(17, 17, 17, 1);border-image:initial;padding-left:10px;list-style-type:none;background-color:rgba(245, 242, 240, 1);font-family:Consolas, Monaco, &quot;Andale Mono&quot;, monospace;overflow:auto;font-size:10px;letter-spacing:-0.100000001490116px;word-spacing:2px;">
+<pre style="border-radius:4px;background-color: #fbfaf8;border: 1px solid rgba(0,0,0,.14902);color: #333;font-size: 12px;padding: 8px;font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif;box-sizing: border-box;"><code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif">
+<span style="margin:0px;padding:0px;color:rgb(0, 128, 0);"># 列出当前session</span>
+$ loginctl list-sessions
+
+<span style="margin:0px;padding:0px;color:rgb(0, 128, 0);"># 列出当前登录用户</span>
+$ loginctl list-users
+
+<span style="margin:0px;padding:0px;color:rgb(0, 128, 0);"># 列出显示指定用户的信息</span>
+$ loginctl show-user ruanyf
+</code></pre>
+</blockquote>
+<h2 style="font-size:2.88em;font-weight:500;line-height:1.5;margin:1.5em 0 0.2em;padding:0 0 0.2em;list-style-type:none;border-style:none none solid;border-bottom-width:1px;border-bottom-color:rgba(211, 211, 211, 1);letter-spacing:-0.03em;font-family:Georgia, serif;word-spacing:2px;">四、Unit</h2>
+<h3 style="font-size:1.87em;font-weight:500;line-height:1.5;margin:1.5em 0 0.2em;padding:0 0 0.2em;color:rgb(255, 255, 255);background-color:rgb(22, 159, 230);text-shadow:rgb(64, 64, 64) 2px 2px 3px;list-style-type:none;border-style:none none solid;border-bottom-width:1px;border-bottom-color:rgba(211, 211, 211, 1);letter-spacing:-0.03em;font-family:Georgia, serif;word-spacing:2px;">4.1 含义</h3>
+<p style="padding:0px;margin:10px auto;text-indent:0px;margin-top:1em;margin-bottom:0;margin-left:0.8em;padding-top:0;padding-bottom:0;list-style-type:none;border:none;color:rgba(17, 17, 17, 1);font-size:1.6em;line-height:28.7999992370605px;font-family:Georgia, serif;letter-spacing:-0.100000001490116px;word-spacing:2px;">Systemd 可以管理所有系统资源。不同的资源统称为 Unit（单位）。</p>
+<p style="padding:0px;margin:10px auto;text-indent:0px;margin-top:1em;margin-bottom:0;margin-left:0.8em;padding-top:0;padding-bottom:0;list-style-type:none;border:none;color:rgba(17, 17, 17, 1);font-size:1.6em;line-height:28.7999992370605px;font-family:Georgia, serif;letter-spacing:-0.100000001490116px;word-spacing:2px;">Unit 一共分成12种。</p>
+<blockquote style="background-image:none;border:0.3em solid rgba(224, 223, 204, 1);padding:1em;border-left:5px solid rgb(221, 221, 221);border-right:none;border-top:none;border-bottom:none;margin:2em;color:rgba(17, 17, 17, 1);border-image:initial;padding-left:10px;list-style-type:none;background-color:rgba(245, 242, 240, 1);font-family:Consolas, Monaco, &quot;Andale Mono&quot;, monospace;overflow:auto;font-size:10px;letter-spacing:-0.100000001490116px;word-spacing:2px;">
+<ul style="margin:0 0 0 4em;padding:0;list-style-type:none;border:none;">
+<li style="list-style-type:square;margin:0;padding:0;text-align:left;border:none;font-size:1.6em;line-height:35.2000007629395px;">Service unit：系统服务</li>
+<li style="list-style-type:square;margin:0;padding:0;text-align:left;border:none;font-size:1.6em;line-height:35.2000007629395px;">Target unit：多个 Unit 构成的一个组</li>
+<li style="list-style-type:square;margin:0;padding:0;text-align:left;border:none;font-size:1.6em;line-height:35.2000007629395px;">Device Unit：硬件设备</li>
+<li style="list-style-type:square;margin:0;padding:0;text-align:left;border:none;font-size:1.6em;line-height:35.2000007629395px;">Mount Unit：文件系统的挂载点</li>
+<li style="list-style-type:square;margin:0;padding:0;text-align:left;border:none;font-size:1.6em;line-height:35.2000007629395px;">Automount Unit：自动挂载点</li>
+<li style="list-style-type:square;margin:0;padding:0;text-align:left;border:none;font-size:1.6em;line-height:35.2000007629395px;">Path Unit：文件或路径</li>
+<li style="list-style-type:square;margin:0;padding:0;text-align:left;border:none;font-size:1.6em;line-height:35.2000007629395px;">Scope Unit：不是由 Systemd 启动的外部进程</li>
+<li style="list-style-type:square;margin:0;padding:0;text-align:left;border:none;font-size:1.6em;line-height:35.2000007629395px;">Slice Unit：进程组</li>
+<li style="list-style-type:square;margin:0;padding:0;text-align:left;border:none;font-size:1.6em;line-height:35.2000007629395px;">Snapshot Unit：Systemd 快照，可以切回某个快照</li>
+<li style="list-style-type:square;margin:0;padding:0;text-align:left;border:none;font-size:1.6em;line-height:35.2000007629395px;">Socket Unit：进程间通信的 socket</li>
+<li style="list-style-type:square;margin:0;padding:0;text-align:left;border:none;font-size:1.6em;line-height:35.2000007629395px;">Swap Unit：swap 文件</li>
+<li style="list-style-type:square;margin:0;padding:0;text-align:left;border:none;font-size:1.6em;line-height:35.2000007629395px;">Timer Unit：定时器</li>
+</ul>
+</blockquote>
+<p style="padding:0px;margin:10px auto;text-indent:0px;margin-top:1em;margin-bottom:0;margin-left:0.8em;padding-top:0;padding-bottom:0;list-style-type:none;border:none;color:rgba(17, 17, 17, 1);font-size:1.6em;line-height:28.7999992370605px;font-family:Georgia, serif;letter-spacing:-0.100000001490116px;word-spacing:2px;"><code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif">systemctl list-units</code>命令可以查看当前系统的所有 Unit 。</p>
+<blockquote style="background-image:none;border:0.3em solid rgba(224, 223, 204, 1);padding:1em;border-left:5px solid rgb(221, 221, 221);border-right:none;border-top:none;border-bottom:none;margin:2em;color:rgba(17, 17, 17, 1);border-image:initial;padding-left:10px;list-style-type:none;background-color:rgba(245, 242, 240, 1);font-family:Consolas, Monaco, &quot;Andale Mono&quot;, monospace;overflow:auto;font-size:10px;letter-spacing:-0.100000001490116px;word-spacing:2px;">
+<pre style="border-radius:4px;background-color: #fbfaf8;border: 1px solid rgba(0,0,0,.14902);color: #333;font-size: 12px;padding: 8px;font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif;box-sizing: border-box;"><code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif">
+<span style="margin:0px;padding:0px;color:rgb(0, 128, 0);"># 列出正在运行的 Unit</span>
+$ systemctl list-units
+
+<span style="margin:0px;padding:0px;color:rgb(0, 128, 0);"># 列出所有Unit，包括没有找到配置文件的或者启动失败的</span>
+$ systemctl list-units --all
+
+<span style="margin:0px;padding:0px;color:rgb(0, 128, 0);"># 列出所有没有运行的 Unit</span>
+$ systemctl list-units --all --state=inactive
+
+<span style="margin:0px;padding:0px;color:rgb(0, 128, 0);"># 列出所有加载失败的 Unit</span>
+$ systemctl list-units --failed
+
+<span style="margin:0px;padding:0px;color:rgb(0, 128, 0);"># 列出所有正在运行的、类型为 service 的 Unit</span>
+$ systemctl list-units --<span style="margin:0px;padding:0px;color:rgb(0, 0, 255);">type</span>=service
+</code></pre>
+</blockquote>
+<h3 style="font-size:1.87em;font-weight:500;line-height:1.5;margin:1.5em 0 0.2em;padding:0 0 0.2em;color:rgb(255, 255, 255);background-color:rgb(22, 159, 230);text-shadow:rgb(64, 64, 64) 2px 2px 3px;list-style-type:none;border-style:none none solid;border-bottom-width:1px;border-bottom-color:rgba(211, 211, 211, 1);letter-spacing:-0.03em;font-family:Georgia, serif;word-spacing:2px;">4.2 Unit 的状态</h3>
+<p style="padding:0px;margin:10px auto;text-indent:0px;margin-top:1em;margin-bottom:0;margin-left:0.8em;padding-top:0;padding-bottom:0;list-style-type:none;border:none;color:rgba(17, 17, 17, 1);font-size:1.6em;line-height:28.7999992370605px;font-family:Georgia, serif;letter-spacing:-0.100000001490116px;word-spacing:2px;"><code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif">systemctl status</code>命令用于查看系统状态和单个 Unit 的状态。</p>
+<blockquote style="background-image:none;border:0.3em solid rgba(224, 223, 204, 1);padding:1em;border-left:5px solid rgb(221, 221, 221);border-right:none;border-top:none;border-bottom:none;margin:2em;color:rgba(17, 17, 17, 1);border-image:initial;padding-left:10px;list-style-type:none;background-color:rgba(245, 242, 240, 1);font-family:Consolas, Monaco, &quot;Andale Mono&quot;, monospace;overflow:auto;font-size:10px;letter-spacing:-0.100000001490116px;word-spacing:2px;">
+<pre style="border-radius:4px;background-color: #fbfaf8;border: 1px solid rgba(0,0,0,.14902);color: #333;font-size: 12px;padding: 8px;font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif;box-sizing: border-box;"><code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif">
+<span style="margin:0px;padding:0px;color:rgb(0, 128, 0);"># 显示系统状态</span>
+$ systemctl status
+
+<span style="margin:0px;padding:0px;color:rgb(0, 128, 0);"># 显示单个 Unit 的状态</span>
+$ sysystemctl status bluetooth.service
+
+<span style="margin:0px;padding:0px;color:rgb(0, 128, 0);"># 显示远程主机的某个 Unit 的状态</span>
+$ systemctl -H root@rhel7.example.com status httpd.service
+</code></pre>
+</blockquote>
+<p style="padding:0px;margin:10px auto;text-indent:0px;margin-top:1em;margin-bottom:0;margin-left:0.8em;padding-top:0;padding-bottom:0;list-style-type:none;border:none;color:rgba(17, 17, 17, 1);font-size:1.6em;line-height:28.7999992370605px;font-family:Georgia, serif;letter-spacing:-0.100000001490116px;word-spacing:2px;">除了<code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif">status</code>命令，<code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif">systemctl</code>还提供了三个查询状态的简单方法，主要供脚本内部的判断语句使用。</p>
+<blockquote style="background-image:none;border:0.3em solid rgba(224, 223, 204, 1);padding:1em;border-left:5px solid rgb(221, 221, 221);border-right:none;border-top:none;border-bottom:none;margin:2em;color:rgba(17, 17, 17, 1);border-image:initial;padding-left:10px;list-style-type:none;background-color:rgba(245, 242, 240, 1);font-family:Consolas, Monaco, &quot;Andale Mono&quot;, monospace;overflow:auto;font-size:10px;letter-spacing:-0.100000001490116px;word-spacing:2px;">
+<pre style="border-radius:4px;background-color: #fbfaf8;border: 1px solid rgba(0,0,0,.14902);color: #333;font-size: 12px;padding: 8px;font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif;box-sizing: border-box;"><code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif">
+<span style="margin:0px;padding:0px;color:rgb(0, 128, 0);"># 显示某个 Unit 是否正在运行</span>
+$ systemctl is-active application.service
+
+<span style="margin:0px;padding:0px;color:rgb(0, 128, 0);"># 显示某个 Unit 是否处于启动失败状态</span>
+$ systemctl is-failed application.service
+
+<span style="margin:0px;padding:0px;color:rgb(0, 128, 0);"># 显示某个 Unit 服务是否建立了启动链接</span>
+$ systemctl is-enabled application.service
+</code></pre>
+</blockquote>
+<h3 style="font-size:1.87em;font-weight:500;line-height:1.5;margin:1.5em 0 0.2em;padding:0 0 0.2em;color:rgb(255, 255, 255);background-color:rgb(22, 159, 230);text-shadow:rgb(64, 64, 64) 2px 2px 3px;list-style-type:none;border-style:none none solid;border-bottom-width:1px;border-bottom-color:rgba(211, 211, 211, 1);letter-spacing:-0.03em;font-family:Georgia, serif;word-spacing:2px;">4.3 Unit 管理</h3>
+<p style="padding:0px;margin:10px auto;text-indent:0px;margin-top:1em;margin-bottom:0;margin-left:0.8em;padding-top:0;padding-bottom:0;list-style-type:none;border:none;color:rgba(17, 17, 17, 1);font-size:1.6em;line-height:28.7999992370605px;font-family:Georgia, serif;letter-spacing:-0.100000001490116px;word-spacing:2px;">对于用户来说，最常用的是下面这些命令，用于启动和停止 Unit（主要是 service）。</p>
+<blockquote style="background-image:none;border:0.3em solid rgba(224, 223, 204, 1);padding:1em;border-left:5px solid rgb(221, 221, 221);border-right:none;border-top:none;border-bottom:none;margin:2em;color:rgba(17, 17, 17, 1);border-image:initial;padding-left:10px;list-style-type:none;background-color:rgba(245, 242, 240, 1);font-family:Consolas, Monaco, &quot;Andale Mono&quot;, monospace;overflow:auto;font-size:10px;letter-spacing:-0.100000001490116px;word-spacing:2px;">
+<pre style="border-radius:4px;background-color: #fbfaf8;border: 1px solid rgba(0,0,0,.14902);color: #333;font-size: 12px;padding: 8px;font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif;box-sizing: border-box;"><code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif">
+<span style="margin:0px;padding:0px;color:rgb(0, 128, 0);"># 立即启动一个服务</span>
+$ sudo systemctl start apache.service
+
+<span style="margin:0px;padding:0px;color:rgb(0, 128, 0);"># 立即停止一个服务</span>
+$ sudo systemctl stop apache.service
+
+<span style="margin:0px;padding:0px;color:rgb(0, 128, 0);"># 重启一个服务</span>
+$ sudo systemctl restart apache.service
+
+<span style="margin:0px;padding:0px;color:rgb(0, 128, 0);"># 杀死一个服务的所有子进程</span>
+$ sudo systemctl <span style="margin:0px;padding:0px;color:rgb(0, 0, 255);">kill</span> apache.service
+
+<span style="margin:0px;padding:0px;color:rgb(0, 128, 0);"># 重新加载一个服务的配置文件</span>
+$ sudo systemctl reload apache.service
+
+<span style="margin:0px;padding:0px;color:rgb(0, 128, 0);"># 重载所有修改过的配置文件</span>
+$ sudo systemctl daemon-reload
+
+<span style="margin:0px;padding:0px;color:rgb(0, 128, 0);"># 显示某个 Unit 的所有底层参数</span>
+$ systemctl show httpd.service
+
+<span style="margin:0px;padding:0px;color:rgb(0, 128, 0);"># 显示某个 Unit 的指定属性的值</span>
+$ systemctl show -p CPUShares httpd.service
+
+<span style="margin:0px;padding:0px;color:rgb(0, 128, 0);"># 设置某个 Unit 的指定属性</span>
+$ sudo systemctl set-property httpd.service CPUShares=500
+</code></pre>
+</blockquote>
+<h3 style="font-size:1.87em;font-weight:500;line-height:1.5;margin:1.5em 0 0.2em;padding:0 0 0.2em;color:rgb(255, 255, 255);background-color:rgb(22, 159, 230);text-shadow:rgb(64, 64, 64) 2px 2px 3px;list-style-type:none;border-style:none none solid;border-bottom-width:1px;border-bottom-color:rgba(211, 211, 211, 1);letter-spacing:-0.03em;font-family:Georgia, serif;word-spacing:2px;">4.4 依赖关系</h3>
+<p style="padding:0px;margin:10px auto;text-indent:0px;margin-top:1em;margin-bottom:0;margin-left:0.8em;padding-top:0;padding-bottom:0;list-style-type:none;border:none;color:rgba(17, 17, 17, 1);font-size:1.6em;line-height:28.7999992370605px;font-family:Georgia, serif;letter-spacing:-0.100000001490116px;word-spacing:2px;">Unit 之间存在依赖关系：A 依赖于 B，就意味着 Systemd 在启动 A 的时候，同时会去启动 B。</p>
+<p style="padding:0px;margin:10px auto;text-indent:0px;margin-top:1em;margin-bottom:0;margin-left:0.8em;padding-top:0;padding-bottom:0;list-style-type:none;border:none;color:rgba(17, 17, 17, 1);font-size:1.6em;line-height:28.7999992370605px;font-family:Georgia, serif;letter-spacing:-0.100000001490116px;word-spacing:2px;"><code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif">systemctl list-dependencies</code>命令列出一个 Unit 的所有依赖。</p>
+<blockquote style="background-image:none;border:0.3em solid rgba(224, 223, 204, 1);padding:1em;border-left:5px solid rgb(221, 221, 221);border-right:none;border-top:none;border-bottom:none;margin:2em;color:rgba(17, 17, 17, 1);border-image:initial;padding-left:10px;list-style-type:none;background-color:rgba(245, 242, 240, 1);font-family:Consolas, Monaco, &quot;Andale Mono&quot;, monospace;overflow:auto;font-size:10px;letter-spacing:-0.100000001490116px;word-spacing:2px;">
+<pre style="border-radius:4px;background-color: #fbfaf8;border: 1px solid rgba(0,0,0,.14902);color: #333;font-size: 12px;padding: 8px;font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif;box-sizing: border-box;"><code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif">
+$ systemctl list-dependencies nginx.service
+</code></pre>
+</blockquote>
+<p style="padding:0px;margin:10px auto;text-indent:0px;margin-top:1em;margin-bottom:0;margin-left:0.8em;padding-top:0;padding-bottom:0;list-style-type:none;border:none;color:rgba(17, 17, 17, 1);font-size:1.6em;line-height:28.7999992370605px;font-family:Georgia, serif;letter-spacing:-0.100000001490116px;word-spacing:2px;">上面命令的输出结果之中，有些依赖是 Target 类型（详见下文），默认不会展开显示。如果要展开 Target，就需要使用<code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif">--all</code>参数。</p>
+<blockquote style="background-image:none;border:0.3em solid rgba(224, 223, 204, 1);padding:1em;border-left:5px solid rgb(221, 221, 221);border-right:none;border-top:none;border-bottom:none;margin:2em;color:rgba(17, 17, 17, 1);border-image:initial;padding-left:10px;list-style-type:none;background-color:rgba(245, 242, 240, 1);font-family:Consolas, Monaco, &quot;Andale Mono&quot;, monospace;overflow:auto;font-size:10px;letter-spacing:-0.100000001490116px;word-spacing:2px;">
+<pre style="border-radius:4px;background-color: #fbfaf8;border: 1px solid rgba(0,0,0,.14902);color: #333;font-size: 12px;padding: 8px;font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif;box-sizing: border-box;"><code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif">
+$ systemctl list-dependencies --all nginx.service
+</code></pre>
+</blockquote>
+<h2 style="font-size:2.88em;font-weight:500;line-height:1.5;margin:1.5em 0 0.2em;padding:0 0 0.2em;list-style-type:none;border-style:none none solid;border-bottom-width:1px;border-bottom-color:rgba(211, 211, 211, 1);letter-spacing:-0.03em;font-family:Georgia, serif;word-spacing:2px;">五、Unit 的配置文件</h2>
+<h3 style="font-size:1.87em;font-weight:500;line-height:1.5;margin:1.5em 0 0.2em;padding:0 0 0.2em;color:rgb(255, 255, 255);background-color:rgb(22, 159, 230);text-shadow:rgb(64, 64, 64) 2px 2px 3px;list-style-type:none;border-style:none none solid;border-bottom-width:1px;border-bottom-color:rgba(211, 211, 211, 1);letter-spacing:-0.03em;font-family:Georgia, serif;word-spacing:2px;">5.1 概述</h3>
+<p style="padding:0px;margin:10px auto;text-indent:0px;margin-top:1em;margin-bottom:0;margin-left:0.8em;padding-top:0;padding-bottom:0;list-style-type:none;border:none;color:rgba(17, 17, 17, 1);font-size:1.6em;line-height:28.7999992370605px;font-family:Georgia, serif;letter-spacing:-0.100000001490116px;word-spacing:2px;">每一个 Unit 都有一个配置文件，告诉 Systemd 怎么启动这个 Unit 。</p>
+<p style="padding:0px;margin:10px auto;text-indent:0px;margin-top:1em;margin-bottom:0;margin-left:0.8em;padding-top:0;padding-bottom:0;list-style-type:none;border:none;color:rgba(17, 17, 17, 1);font-size:1.6em;line-height:28.7999992370605px;font-family:Georgia, serif;letter-spacing:-0.100000001490116px;word-spacing:2px;">Systemd 默认从目录<code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif">/etc/systemd/system/</code>读取配置文件。但是，里面存放的大部分文件都是符号链接，指向目录<code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif">/usr/lib/systemd/system/</code>，真正的配置文件存放在那个目录。</p>
+<p style="padding:0px;margin:10px auto;text-indent:0px;margin-top:1em;margin-bottom:0;margin-left:0.8em;padding-top:0;padding-bottom:0;list-style-type:none;border:none;color:rgba(17, 17, 17, 1);font-size:1.6em;line-height:28.7999992370605px;font-family:Georgia, serif;letter-spacing:-0.100000001490116px;word-spacing:2px;"><code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif">systemctl enable</code>命令用于在上面两个目录之间，建立符号链接关系。</p>
+<blockquote style="background-image:none;border:0.3em solid rgba(224, 223, 204, 1);padding:1em;border-left:5px solid rgb(221, 221, 221);border-right:none;border-top:none;border-bottom:none;margin:2em;color:rgba(17, 17, 17, 1);border-image:initial;padding-left:10px;list-style-type:none;background-color:rgba(245, 242, 240, 1);font-family:Consolas, Monaco, &quot;Andale Mono&quot;, monospace;overflow:auto;font-size:10px;letter-spacing:-0.100000001490116px;word-spacing:2px;">
+<pre style="border-radius:4px;background-color: #fbfaf8;border: 1px solid rgba(0,0,0,.14902);color: #333;font-size: 12px;padding: 8px;font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif;box-sizing: border-box;"><code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif">
+$ sudo systemctl <span style="margin:0px;padding:0px;color:rgb(0, 0, 255);">enable</span> clamd@scan.service
+<span style="margin:0px;padding:0px;color:rgb(0, 128, 0);"># 等同于</span>
+$ sudo <span style="margin:0px;padding:0px;color:rgb(0, 0, 255);">ln</span> -s <span style="margin:0px;padding:0px;color:rgb(163, 21, 21);">'/usr/lib/systemd/system/clamd@scan.service'</span> <span style="margin:0px;padding:0px;color:rgb(163, 21, 21);">'/etc/systemd/system/multi-user.target.wants/clamd@scan.service'</span>
+</code></pre>
+</blockquote>
+<p style="padding:0px;margin:10px auto;text-indent:0px;margin-top:1em;margin-bottom:0;margin-left:0.8em;padding-top:0;padding-bottom:0;list-style-type:none;border:none;color:rgba(17, 17, 17, 1);font-size:1.6em;line-height:28.7999992370605px;font-family:Georgia, serif;letter-spacing:-0.100000001490116px;word-spacing:2px;">如果配置文件里面设置了开机启动，<code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif">systemctl enable</code>命令相当于激活开机启动。</p>
+<p style="padding:0px;margin:10px auto;text-indent:0px;margin-top:1em;margin-bottom:0;margin-left:0.8em;padding-top:0;padding-bottom:0;list-style-type:none;border:none;color:rgba(17, 17, 17, 1);font-size:1.6em;line-height:28.7999992370605px;font-family:Georgia, serif;letter-spacing:-0.100000001490116px;word-spacing:2px;">与之对应的，<code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif">systemctl disable</code>命令用于在两个目录之间，撤销符号链接关系，相当于撤销开机启动。</p>
+<blockquote style="background-image:none;border:0.3em solid rgba(224, 223, 204, 1);padding:1em;border-left:5px solid rgb(221, 221, 221);border-right:none;border-top:none;border-bottom:none;margin:2em;color:rgba(17, 17, 17, 1);border-image:initial;padding-left:10px;list-style-type:none;background-color:rgba(245, 242, 240, 1);font-family:Consolas, Monaco, &quot;Andale Mono&quot;, monospace;overflow:auto;font-size:10px;letter-spacing:-0.100000001490116px;word-spacing:2px;">
+<pre style="border-radius:4px;background-color: #fbfaf8;border: 1px solid rgba(0,0,0,.14902);color: #333;font-size: 12px;padding: 8px;font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif;box-sizing: border-box;"><code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif">
+$ sudo systemctl <span style="margin:0px;padding:0px;color:rgb(0, 0, 255);">disable</span> clamd@scan.service
+</code></pre>
+</blockquote>
+<p style="padding:0px;margin:10px auto;text-indent:0px;margin-top:1em;margin-bottom:0;margin-left:0.8em;padding-top:0;padding-bottom:0;list-style-type:none;border:none;color:rgba(17, 17, 17, 1);font-size:1.6em;line-height:28.7999992370605px;font-family:Georgia, serif;letter-spacing:-0.100000001490116px;word-spacing:2px;">配置文件的后缀名，就是该 Unit 的种类，比如<code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif">sshd.socket</code>。如果省略，Systemd 默认后缀名为<code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif">.service</code>，所以<code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif">sshd</code>会被理解成<code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif">sshd.service</code>。</p>
+<h3 style="font-size:1.87em;font-weight:500;line-height:1.5;margin:1.5em 0 0.2em;padding:0 0 0.2em;color:rgb(255, 255, 255);background-color:rgb(22, 159, 230);text-shadow:rgb(64, 64, 64) 2px 2px 3px;list-style-type:none;border-style:none none solid;border-bottom-width:1px;border-bottom-color:rgba(211, 211, 211, 1);letter-spacing:-0.03em;font-family:Georgia, serif;word-spacing:2px;">5.2 配置文件的状态</h3>
+<p style="padding:0px;margin:10px auto;text-indent:0px;margin-top:1em;margin-bottom:0;margin-left:0.8em;padding-top:0;padding-bottom:0;list-style-type:none;border:none;color:rgba(17, 17, 17, 1);font-size:1.6em;line-height:28.7999992370605px;font-family:Georgia, serif;letter-spacing:-0.100000001490116px;word-spacing:2px;"><code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif">systemctl list-unit-files</code>命令用于列出所有配置文件。</p>
+<blockquote style="background-image:none;border:0.3em solid rgba(224, 223, 204, 1);padding:1em;border-left:5px solid rgb(221, 221, 221);border-right:none;border-top:none;border-bottom:none;margin:2em;color:rgba(17, 17, 17, 1);border-image:initial;padding-left:10px;list-style-type:none;background-color:rgba(245, 242, 240, 1);font-family:Consolas, Monaco, &quot;Andale Mono&quot;, monospace;overflow:auto;font-size:10px;letter-spacing:-0.100000001490116px;word-spacing:2px;">
+<pre style="border-radius:4px;background-color: #fbfaf8;border: 1px solid rgba(0,0,0,.14902);color: #333;font-size: 12px;padding: 8px;font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif;box-sizing: border-box;"><code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif">
+<span style="margin:0px;padding:0px;color:rgb(0, 128, 0);"># 列出所有配置文件</span>
+$ systemctl list-unit-files
+
+<span style="margin:0px;padding:0px;color:rgb(0, 128, 0);"># 列出指定类型的配置文件</span>
+$ systemctl list-unit-files --<span style="margin:0px;padding:0px;color:rgb(0, 0, 255);">type</span>=service
+</code></pre>
+</blockquote>
+<p style="padding:0px;margin:10px auto;text-indent:0px;margin-top:1em;margin-bottom:0;margin-left:0.8em;padding-top:0;padding-bottom:0;list-style-type:none;border:none;color:rgba(17, 17, 17, 1);font-size:1.6em;line-height:28.7999992370605px;font-family:Georgia, serif;letter-spacing:-0.100000001490116px;word-spacing:2px;">这个命令会输出一个列表。</p>
+<blockquote style="background-image:none;border:0.3em solid rgba(224, 223, 204, 1);padding:1em;border-left:5px solid rgb(221, 221, 221);border-right:none;border-top:none;border-bottom:none;margin:2em;color:rgba(17, 17, 17, 1);border-image:initial;padding-left:10px;list-style-type:none;background-color:rgba(245, 242, 240, 1);font-family:Consolas, Monaco, &quot;Andale Mono&quot;, monospace;overflow:auto;font-size:10px;letter-spacing:-0.100000001490116px;word-spacing:2px;">
+<pre style="border-radius:4px;background-color: #fbfaf8;border: 1px solid rgba(0,0,0,.14902);color: #333;font-size: 12px;padding: 8px;font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif;box-sizing: border-box;"><code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif">
+$ systemctl list-unit-files
+
+UNIT FILE              STATE
+chronyd.service        enabled
+clamd@.service         static
+clamd@scan.service     disabled
+</code></pre>
+</blockquote>
+<p style="padding:0px;margin:10px auto;text-indent:0px;margin-top:1em;margin-bottom:0;margin-left:0.8em;padding-top:0;padding-bottom:0;list-style-type:none;border:none;color:rgba(17, 17, 17, 1);font-size:1.6em;line-height:28.7999992370605px;font-family:Georgia, serif;letter-spacing:-0.100000001490116px;word-spacing:2px;">这个列表显示每个配置文件的状态，一共有四种。</p>
+<blockquote style="background-image:none;border:0.3em solid rgba(224, 223, 204, 1);padding:1em;border-left:5px solid rgb(221, 221, 221);border-right:none;border-top:none;border-bottom:none;margin:2em;color:rgba(17, 17, 17, 1);border-image:initial;padding-left:10px;list-style-type:none;background-color:rgba(245, 242, 240, 1);font-family:Consolas, Monaco, &quot;Andale Mono&quot;, monospace;overflow:auto;font-size:10px;letter-spacing:-0.100000001490116px;word-spacing:2px;">
+<ul style="margin:0 0 0 4em;padding:0;list-style-type:none;border:none;">
+<li style="list-style-type:square;margin:0;padding:0;text-align:left;border:none;font-size:1.6em;line-height:35.2000007629395px;">enabled：已建立启动链接</li>
+<li style="list-style-type:square;margin:0;padding:0;text-align:left;border:none;font-size:1.6em;line-height:35.2000007629395px;">disabled：没建立启动链接</li>
+<li style="list-style-type:square;margin:0;padding:0;text-align:left;border:none;font-size:1.6em;line-height:35.2000007629395px;">static：该配置文件没有<code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif">[Install]</code>部分（无法执行），只能作为其他配置文件的依赖</li>
+<li style="list-style-type:square;margin:0;padding:0;text-align:left;border:none;font-size:1.6em;line-height:35.2000007629395px;">masked：该配置文件被禁止建立启动链接</li>
+</ul>
+</blockquote>
+<p style="padding:0px;margin:10px auto;text-indent:0px;margin-top:1em;margin-bottom:0;margin-left:0.8em;padding-top:0;padding-bottom:0;list-style-type:none;border:none;color:rgba(17, 17, 17, 1);font-size:1.6em;line-height:28.7999992370605px;font-family:Georgia, serif;letter-spacing:-0.100000001490116px;word-spacing:2px;">注意，从配置文件的状态无法看出，该 Unit 是否正在运行。这必须执行前面提到的<code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif">systemctl status</code>命令。</p>
+<blockquote style="background-image:none;border:0.3em solid rgba(224, 223, 204, 1);padding:1em;border-left:5px solid rgb(221, 221, 221);border-right:none;border-top:none;border-bottom:none;margin:2em;color:rgba(17, 17, 17, 1);border-image:initial;padding-left:10px;list-style-type:none;background-color:rgba(245, 242, 240, 1);font-family:Consolas, Monaco, &quot;Andale Mono&quot;, monospace;overflow:auto;font-size:10px;letter-spacing:-0.100000001490116px;word-spacing:2px;">
+<pre style="border-radius:4px;background-color: #fbfaf8;border: 1px solid rgba(0,0,0,.14902);color: #333;font-size: 12px;padding: 8px;font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif;box-sizing: border-box;"><code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif">
+$ systemctl status bluetooth.service
+</code></pre>
+</blockquote>
+<p style="padding:0px;margin:10px auto;text-indent:0px;margin-top:1em;margin-bottom:0;margin-left:0.8em;padding-top:0;padding-bottom:0;list-style-type:none;border:none;color:rgba(17, 17, 17, 1);font-size:1.6em;line-height:28.7999992370605px;font-family:Georgia, serif;letter-spacing:-0.100000001490116px;word-spacing:2px;">一旦修改配置文件，就要让 SystemD 重新加载配置文件，然后重新启动，否则修改不会生效。</p>
+<blockquote style="background-image:none;border:0.3em solid rgba(224, 223, 204, 1);padding:1em;border-left:5px solid rgb(221, 221, 221);border-right:none;border-top:none;border-bottom:none;margin:2em;color:rgba(17, 17, 17, 1);border-image:initial;padding-left:10px;list-style-type:none;background-color:rgba(245, 242, 240, 1);font-family:Consolas, Monaco, &quot;Andale Mono&quot;, monospace;overflow:auto;font-size:10px;letter-spacing:-0.100000001490116px;word-spacing:2px;">
+<pre style="border-radius:4px;background-color: #fbfaf8;border: 1px solid rgba(0,0,0,.14902);color: #333;font-size: 12px;padding: 8px;font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif;box-sizing: border-box;"><code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif">
+$ sudo systemctl daemon-reload
+$ sudo systemctl restart httpd.service
+</code></pre>
+</blockquote>
+<h3 style="font-size:1.87em;font-weight:500;line-height:1.5;margin:1.5em 0 0.2em;padding:0 0 0.2em;color:rgb(255, 255, 255);background-color:rgb(22, 159, 230);text-shadow:rgb(64, 64, 64) 2px 2px 3px;list-style-type:none;border-style:none none solid;border-bottom-width:1px;border-bottom-color:rgba(211, 211, 211, 1);letter-spacing:-0.03em;font-family:Georgia, serif;word-spacing:2px;">5.3 配置文件的格式</h3>
+<p style="padding:0px;margin:10px auto;text-indent:0px;margin-top:1em;margin-bottom:0;margin-left:0.8em;padding-top:0;padding-bottom:0;list-style-type:none;border:none;color:rgba(17, 17, 17, 1);font-size:1.6em;line-height:28.7999992370605px;font-family:Georgia, serif;letter-spacing:-0.100000001490116px;word-spacing:2px;">配置文件就是普通的文本文件，可以用文本编辑器打开。</p>
+<p style="padding:0px;margin:10px auto;text-indent:0px;margin-top:1em;margin-bottom:0;margin-left:0.8em;padding-top:0;padding-bottom:0;list-style-type:none;border:none;color:rgba(17, 17, 17, 1);font-size:1.6em;line-height:28.7999992370605px;font-family:Georgia, serif;letter-spacing:-0.100000001490116px;word-spacing:2px;"><code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif">systemctl cat</code>命令可以查看配置文件的内容。</p>
+<blockquote style="background-image:none;border:0.3em solid rgba(224, 223, 204, 1);padding:1em;border-left:5px solid rgb(221, 221, 221);border-right:none;border-top:none;border-bottom:none;margin:2em;color:rgba(17, 17, 17, 1);border-image:initial;padding-left:10px;list-style-type:none;background-color:rgba(245, 242, 240, 1);font-family:Consolas, Monaco, &quot;Andale Mono&quot;, monospace;overflow:auto;font-size:10px;letter-spacing:-0.100000001490116px;word-spacing:2px;">
+<pre style="border-radius:4px;background-color: #fbfaf8;border: 1px solid rgba(0,0,0,.14902);color: #333;font-size: 12px;padding: 8px;font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif;box-sizing: border-box;"><code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif">
+$ systemctl <span style="margin:0px;padding:0px;color:rgb(0, 0, 255);">cat</span> atd.service
+
+[Unit]
+Description=ATD daemon
+
+[Service]
+Type=forking
+ExecStart=/usr/bin/atd
+
+[Install]
+WantedBy=multi-user.target
+</code></pre>
+</blockquote>
+<p style="padding:0px;margin:10px auto;text-indent:0px;margin-top:1em;margin-bottom:0;margin-left:0.8em;padding-top:0;padding-bottom:0;list-style-type:none;border:none;color:rgba(17, 17, 17, 1);font-size:1.6em;line-height:28.7999992370605px;font-family:Georgia, serif;letter-spacing:-0.100000001490116px;word-spacing:2px;">从上面的输出可以看到，配置文件分成几个区块。每个区块的第一行，是用方括号表示的区别名，比如<code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif">[Unit]</code>。注意，配置文件的区块名和字段名，都是大小写敏感的。</p>
+<p style="padding:0px;margin:10px auto;text-indent:0px;margin-top:1em;margin-bottom:0;margin-left:0.8em;padding-top:0;padding-bottom:0;list-style-type:none;border:none;color:rgba(17, 17, 17, 1);font-size:1.6em;line-height:28.7999992370605px;font-family:Georgia, serif;letter-spacing:-0.100000001490116px;word-spacing:2px;">每个区块内部是一些等号连接的键值对。</p>
+<blockquote style="background-image:none;border:0.3em solid rgba(224, 223, 204, 1);padding:1em;border-left:5px solid rgb(221, 221, 221);border-right:none;border-top:none;border-bottom:none;margin:2em;color:rgba(17, 17, 17, 1);border-image:initial;padding-left:10px;list-style-type:none;background-color:rgba(245, 242, 240, 1);font-family:Consolas, Monaco, &quot;Andale Mono&quot;, monospace;overflow:auto;font-size:10px;letter-spacing:-0.100000001490116px;word-spacing:2px;">
+<pre style="border-radius:4px;background-color: #fbfaf8;border: 1px solid rgba(0,0,0,.14902);color: #333;font-size: 12px;padding: 8px;font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif;box-sizing: border-box;"><code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif">
+[Section]
+Directive1=value
+Directive2=value
+
+. . .
+</code></pre>
+</blockquote>
+<p style="padding:0px;margin:10px auto;text-indent:0px;margin-top:1em;margin-bottom:0;margin-left:0.8em;padding-top:0;padding-bottom:0;list-style-type:none;border:none;color:rgba(17, 17, 17, 1);font-size:1.6em;line-height:28.7999992370605px;font-family:Georgia, serif;letter-spacing:-0.100000001490116px;word-spacing:2px;">注意，键值对的等号两侧不能有空格。</p>
+<h3 style="font-size:1.87em;font-weight:500;line-height:1.5;margin:1.5em 0 0.2em;padding:0 0 0.2em;color:rgb(255, 255, 255);background-color:rgb(22, 159, 230);text-shadow:rgb(64, 64, 64) 2px 2px 3px;list-style-type:none;border-style:none none solid;border-bottom-width:1px;border-bottom-color:rgba(211, 211, 211, 1);letter-spacing:-0.03em;font-family:Georgia, serif;word-spacing:2px;">5.4 配置文件的区块</h3>
+<p style="padding:0px;margin:10px auto;text-indent:0px;margin-top:1em;margin-bottom:0;margin-left:0.8em;padding-top:0;padding-bottom:0;list-style-type:none;border:none;color:rgba(17, 17, 17, 1);font-size:1.6em;line-height:28.7999992370605px;font-family:Georgia, serif;letter-spacing:-0.100000001490116px;word-spacing:2px;"><code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif">[Unit]</code>区块通常是配置文件的第一个区块，用来定义 Unit 的元数据，以及配置与其他 Unit 的关系。它的主要字段如下。</p>
+<blockquote style="background-image:none;border:0.3em solid rgba(224, 223, 204, 1);padding:1em;border-left:5px solid rgb(221, 221, 221);border-right:none;border-top:none;border-bottom:none;margin:2em;color:rgba(17, 17, 17, 1);border-image:initial;padding-left:10px;list-style-type:none;background-color:rgba(245, 242, 240, 1);font-family:Consolas, Monaco, &quot;Andale Mono&quot;, monospace;overflow:auto;font-size:10px;letter-spacing:-0.100000001490116px;word-spacing:2px;">
+<ul style="margin:0 0 0 4em;padding:0;list-style-type:none;border:none;">
+<li style="list-style-type:square;margin:0;padding:0;text-align:left;border:none;font-size:1.6em;line-height:35.2000007629395px;"><code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif">Description</code>：简短描述</li>
+<li style="list-style-type:square;margin:0;padding:0;text-align:left;border:none;font-size:1.6em;line-height:35.2000007629395px;"><code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif">Documentation</code>：文档地址</li>
+<li style="list-style-type:square;margin:0;padding:0;text-align:left;border:none;font-size:1.6em;line-height:35.2000007629395px;"><code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif">Requires</code>：当前 Unit 依赖的其他 Unit，如果它们没有运行，当前 Unit 会启动失败</li>
+<li style="list-style-type:square;margin:0;padding:0;text-align:left;border:none;font-size:1.6em;line-height:35.2000007629395px;"><code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif">Wants</code>：与当前 Unit 配合的其他 Unit，如果它们没有运行，当前 Unit 不会启动失败</li>
+<li style="list-style-type:square;margin:0;padding:0;text-align:left;border:none;font-size:1.6em;line-height:35.2000007629395px;"><code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif">BindsTo</code>：与<code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif">Requires</code>类似，它指定的 Unit 如果退出，会导致当前 Unit 停止运行</li>
+<li style="list-style-type:square;margin:0;padding:0;text-align:left;border:none;font-size:1.6em;line-height:35.2000007629395px;"><code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif">Before</code>：如果该字段指定的 Unit 也要启动，那么必须在当前 Unit 之后启动</li>
+<li style="list-style-type:square;margin:0;padding:0;text-align:left;border:none;font-size:1.6em;line-height:35.2000007629395px;"><code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif">After</code>：如果该字段指定的 Unit 也要启动，那么必须在当前 Unit 之前启动</li>
+<li style="list-style-type:square;margin:0;padding:0;text-align:left;border:none;font-size:1.6em;line-height:35.2000007629395px;"><code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif">Conflicts</code>：这里指定的 Unit 不能与当前 Unit 同时运行</li>
+<li style="list-style-type:square;margin:0;padding:0;text-align:left;border:none;font-size:1.6em;line-height:35.2000007629395px;"><code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif">Condition...</code>：当前 Unit 运行必须满足的条件，否则不会运行</li>
+<li style="list-style-type:square;margin:0;padding:0;text-align:left;border:none;font-size:1.6em;line-height:35.2000007629395px;"><code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif">Assert...</code>：当前 Unit 运行必须满足的条件，否则会报启动失败</li>
+</ul>
+</blockquote>
+<p style="padding:0px;margin:10px auto;text-indent:0px;margin-top:1em;margin-bottom:0;margin-left:0.8em;padding-top:0;padding-bottom:0;list-style-type:none;border:none;color:rgba(17, 17, 17, 1);font-size:1.6em;line-height:28.7999992370605px;font-family:Georgia, serif;letter-spacing:-0.100000001490116px;word-spacing:2px;"><code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif">[Install]</code>通常是配置文件的最后一个区块，用来定义如何启动，以及是否开机启动。它的主要字段如下。</p>
+<blockquote style="background-image:none;border:0.3em solid rgba(224, 223, 204, 1);padding:1em;border-left:5px solid rgb(221, 221, 221);border-right:none;border-top:none;border-bottom:none;margin:2em;color:rgba(17, 17, 17, 1);border-image:initial;padding-left:10px;list-style-type:none;background-color:rgba(245, 242, 240, 1);font-family:Consolas, Monaco, &quot;Andale Mono&quot;, monospace;overflow:auto;font-size:10px;letter-spacing:-0.100000001490116px;word-spacing:2px;">
+<ul style="margin:0 0 0 4em;padding:0;list-style-type:none;border:none;">
+<li style="list-style-type:square;margin:0;padding:0;text-align:left;border:none;font-size:1.6em;line-height:35.2000007629395px;"><code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif">WantedBy</code>：它的值是一个或多个 Target，当前 Unit 激活时（enable）符号链接会放入<code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif">/etc/systemd/system</code>目录下面以 Target 名 + <code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif">.wants</code>后缀构成的子目录中</li>
+<li style="list-style-type:square;margin:0;padding:0;text-align:left;border:none;font-size:1.6em;line-height:35.2000007629395px;"><code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif">RequiredBy</code>：它的值是一个或多个 Target，当前 Unit 激活时，符号链接会放入<code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif">/etc/systemd/system</code>目录下面以 Target 名 + <code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif">.required</code>后缀构成的子目录中</li>
+<li style="list-style-type:square;margin:0;padding:0;text-align:left;border:none;font-size:1.6em;line-height:35.2000007629395px;"><code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif">Alias</code>：当前 Unit 可用于启动的别名</li>
+<li style="list-style-type:square;margin:0;padding:0;text-align:left;border:none;font-size:1.6em;line-height:35.2000007629395px;"><code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif">Also</code>：当前 Unit 激活（enable）时，会被同时激活的其他 Unit</li>
+</ul>
+</blockquote>
+<p style="padding:0px;margin:10px auto;text-indent:0px;margin-top:1em;margin-bottom:0;margin-left:0.8em;padding-top:0;padding-bottom:0;list-style-type:none;border:none;color:rgba(17, 17, 17, 1);font-size:1.6em;line-height:28.7999992370605px;font-family:Georgia, serif;letter-spacing:-0.100000001490116px;word-spacing:2px;"><code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif">[Service]</code>区块用来 Service 的配置，只有 Service 类型的 Unit 才有这个区块。它的主要字段如下。</p>
+<blockquote style="background-image:none;border:0.3em solid rgba(224, 223, 204, 1);padding:1em;border-left:5px solid rgb(221, 221, 221);border-right:none;border-top:none;border-bottom:none;margin:2em;color:rgba(17, 17, 17, 1);border-image:initial;padding-left:10px;list-style-type:none;background-color:rgba(245, 242, 240, 1);font-family:Consolas, Monaco, &quot;Andale Mono&quot;, monospace;overflow:auto;font-size:10px;letter-spacing:-0.100000001490116px;word-spacing:2px;">
+<ul style="margin:0 0 0 4em;padding:0;list-style-type:none;border:none;">
+<li style="list-style-type:square;margin:0;padding:0;text-align:left;border:none;font-size:1.6em;line-height:35.2000007629395px;"><code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif">Type</code>：定义启动时的进程行为。它有以下几种值。</li>
+<li style="list-style-type:square;margin:0;padding:0;text-align:left;border:none;font-size:1.6em;line-height:35.2000007629395px;"><code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif">Type=simple</code>：默认值，执行<code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif">ExecStart</code>指定的命令，启动主进程</li>
+<li style="list-style-type:square;margin:0;padding:0;text-align:left;border:none;font-size:1.6em;line-height:35.2000007629395px;"><code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif">Type=forking</code>：以 fork 方式从父进程创建子进程，创建后父进程会立即退出</li>
+<li style="list-style-type:square;margin:0;padding:0;text-align:left;border:none;font-size:1.6em;line-height:35.2000007629395px;"><code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif">Type=oneshot</code>：一次性进程，Systemd 会等当前服务退出，再继续往下执行</li>
+<li style="list-style-type:square;margin:0;padding:0;text-align:left;border:none;font-size:1.6em;line-height:35.2000007629395px;"><code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif">Type=dbus</code>：当前服务通过D-Bus启动</li>
+<li style="list-style-type:square;margin:0;padding:0;text-align:left;border:none;font-size:1.6em;line-height:35.2000007629395px;"><code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif">Type=notify</code>：当前服务启动完毕，会通知<code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif">Systemd</code>，再继续往下执行</li>
+<li style="list-style-type:square;margin:0;padding:0;text-align:left;border:none;font-size:1.6em;line-height:35.2000007629395px;"><code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif">Type=idle</code>：若有其他任务执行完毕，当前服务才会运行</li>
+<li style="list-style-type:square;margin:0;padding:0;text-align:left;border:none;font-size:1.6em;line-height:35.2000007629395px;"><code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif">ExecStart</code>：启动当前服务的命令</li>
+<li style="list-style-type:square;margin:0;padding:0;text-align:left;border:none;font-size:1.6em;line-height:35.2000007629395px;"><code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif">ExecStartPre</code>：启动当前服务之前执行的命令</li>
+<li style="list-style-type:square;margin:0;padding:0;text-align:left;border:none;font-size:1.6em;line-height:35.2000007629395px;"><code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif">ExecStartPost</code>：启动当前服务之后执行的命令</li>
+<li style="list-style-type:square;margin:0;padding:0;text-align:left;border:none;font-size:1.6em;line-height:35.2000007629395px;"><code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif">ExecReload</code>：重启当前服务时执行的命令</li>
+<li style="list-style-type:square;margin:0;padding:0;text-align:left;border:none;font-size:1.6em;line-height:35.2000007629395px;"><code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif">ExecStop</code>：停止当前服务时执行的命令</li>
+<li style="list-style-type:square;margin:0;padding:0;text-align:left;border:none;font-size:1.6em;line-height:35.2000007629395px;"><code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif">ExecStopPost</code>：停止当其服务之后执行的命令</li>
+<li style="list-style-type:square;margin:0;padding:0;text-align:left;border:none;font-size:1.6em;line-height:35.2000007629395px;"><code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif">RestartSec</code>：自动重启当前服务间隔的秒数</li>
+<li style="list-style-type:square;margin:0;padding:0;text-align:left;border:none;font-size:1.6em;line-height:35.2000007629395px;"><code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif">Restart</code>：定义何种情况 Systemd 会自动重启当前服务，可能的值包括<code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif">always</code>（总是重启）、<code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif">on-success</code>、<code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif">on-failure</code>、<code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif">on-abnormal</code>、<code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif">on-abort</code>、<code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif">on-watchdog</code></li>
+<li style="list-style-type:square;margin:0;padding:0;text-align:left;border:none;font-size:1.6em;line-height:35.2000007629395px;"><code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif">TimeoutSec</code>：定义 Systemd 停止当前服务之前等待的秒数</li>
+<li style="list-style-type:square;margin:0;padding:0;text-align:left;border:none;font-size:1.6em;line-height:35.2000007629395px;"><code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif">Environment</code>：指定环境变量</li>
+</ul>
+</blockquote>
+<p style="padding:0px;margin:10px auto;text-indent:0px;margin-top:1em;margin-bottom:0;margin-left:0.8em;padding-top:0;padding-bottom:0;list-style-type:none;border:none;color:rgba(17, 17, 17, 1);font-size:1.6em;line-height:28.7999992370605px;font-family:Georgia, serif;letter-spacing:-0.100000001490116px;word-spacing:2px;">Unit 配置文件的完整字段清单，请参考<a href="https://www.freedesktop.org/software/systemd/man/systemd.unit.html" target="_blank" rel="noopener" style="margin:0;padding:0;color:rgba(17, 34, 51, 1);text-decoration:underline;list-style-type:none;border:none;">官方文档</a>。</p>
+<h2 style="font-size:2.88em;font-weight:500;line-height:1.5;margin:1.5em 0 0.2em;padding:0 0 0.2em;list-style-type:none;border-style:none none solid;border-bottom-width:1px;border-bottom-color:rgba(211, 211, 211, 1);letter-spacing:-0.03em;font-family:Georgia, serif;word-spacing:2px;">六、Target</h2>
+<p style="padding:0px;margin:10px auto;text-indent:0px;margin-top:1em;margin-bottom:0;margin-left:0.8em;padding-top:0;padding-bottom:0;list-style-type:none;border:none;color:rgba(17, 17, 17, 1);font-size:1.6em;line-height:28.7999992370605px;font-family:Georgia, serif;letter-spacing:-0.100000001490116px;word-spacing:2px;">启动计算机的时候，需要启动大量的 Unit。如果每一次启动，都要一一写明本次启动需要哪些 Unit，显然非常不方便。Systemd 的解决方案就是 Target。</p>
+<p style="padding:0px;margin:10px auto;text-indent:0px;margin-top:1em;margin-bottom:0;margin-left:0.8em;padding-top:0;padding-bottom:0;list-style-type:none;border:none;color:rgba(17, 17, 17, 1);font-size:1.6em;line-height:28.7999992370605px;font-family:Georgia, serif;letter-spacing:-0.100000001490116px;word-spacing:2px;">简单说，Target 就是一个 Unit 组，包含许多相关的 Unit 。启动某个 Target 的时候，Systemd 就会启动里面所有的 Unit。从这个意义上说，Target 这个概念类似于"状态点"，启动某个 Target 就好比启动到某种状态。</p>
+<p style="padding:0px;margin:10px auto;text-indent:0px;margin-top:1em;margin-bottom:0;margin-left:0.8em;padding-top:0;padding-bottom:0;list-style-type:none;border:none;color:rgba(17, 17, 17, 1);font-size:1.6em;line-height:28.7999992370605px;font-family:Georgia, serif;letter-spacing:-0.100000001490116px;word-spacing:2px;">传统的<code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif">init</code>启动模式里面，有 RunLevel 的概念，跟 Target 的作用很类似。不同的是，RunLevel 是互斥的，不可能多个 RunLevel 同时启动，但是多个 Target 可以同时启动。</p>
+<blockquote style="background-image:none;border:0.3em solid rgba(224, 223, 204, 1);padding:1em;border-left:5px solid rgb(221, 221, 221);border-right:none;border-top:none;border-bottom:none;margin:2em;color:rgba(17, 17, 17, 1);border-image:initial;padding-left:10px;list-style-type:none;background-color:rgba(245, 242, 240, 1);font-family:Consolas, Monaco, &quot;Andale Mono&quot;, monospace;overflow:auto;font-size:10px;letter-spacing:-0.100000001490116px;word-spacing:2px;">
+<pre style="border-radius:4px;background-color: #fbfaf8;border: 1px solid rgba(0,0,0,.14902);color: #333;font-size: 12px;padding: 8px;font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif;box-sizing: border-box;"><code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif">
+<span style="margin:0px;padding:0px;color:rgb(0, 128, 0);"># 查看当前系统的所有 Target</span>
+$ systemctl list-unit-files --<span style="margin:0px;padding:0px;color:rgb(0, 0, 255);">type</span>=target
+
+<span style="margin:0px;padding:0px;color:rgb(0, 128, 0);"># 查看一个 Target 包含的所有 Unit</span>
+$ systemctl list-dependencies multi-user.target
+
+<span style="margin:0px;padding:0px;color:rgb(0, 128, 0);"># 查看启动时的默认 Target</span>
+$ systemctl get-default
+
+<span style="margin:0px;padding:0px;color:rgb(0, 128, 0);"># 设置启动时的默认 Target</span>
+$ sudo systemctl set-default multi-user.target
+
+<span style="margin:0px;padding:0px;color:rgb(0, 128, 0);"># 切换 Target 时，默认不关闭前一个 Target 启动的进程，</span>
+<span style="margin:0px;padding:0px;color:rgb(0, 128, 0);"># systemctl isolate 命令改变这种行为，</span>
+<span style="margin:0px;padding:0px;color:rgb(0, 128, 0);"># 关闭前一个 Target 里面所有不属于后一个 Target 的进程</span>
+$ sudo systemctl isolate multi-user.target
+</code></pre>
+</blockquote>
+<p style="padding:0px;margin:10px auto;text-indent:0px;margin-top:1em;margin-bottom:0;margin-left:0.8em;padding-top:0;padding-bottom:0;list-style-type:none;border:none;color:rgba(17, 17, 17, 1);font-size:1.6em;line-height:28.7999992370605px;font-family:Georgia, serif;letter-spacing:-0.100000001490116px;word-spacing:2px;">Target 与 传统 RunLevel 的对应关系如下。</p>
+<blockquote style="background-image:none;border:0.3em solid rgba(224, 223, 204, 1);padding:1em;border-left:5px solid rgb(221, 221, 221);border-right:none;border-top:none;border-bottom:none;margin:2em;color:rgba(17, 17, 17, 1);border-image:initial;padding-left:10px;list-style-type:none;background-color:rgba(245, 242, 240, 1);font-family:Consolas, Monaco, &quot;Andale Mono&quot;, monospace;overflow:auto;font-size:10px;letter-spacing:-0.100000001490116px;word-spacing:2px;">
+<pre style="border-radius:4px;background-color: #fbfaf8;border: 1px solid rgba(0,0,0,.14902);color: #333;font-size: 12px;padding: 8px;font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif;box-sizing: border-box;"><code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif">
+Traditional runlevel      New target name     Symbolically linked to...
+
+Runlevel 0           |    runlevel0.target -&gt; poweroff.target
+Runlevel 1           |    runlevel1.target -&gt; rescue.target
+Runlevel 2           |    runlevel2.target -&gt; multi-user.target
+Runlevel 3           |    runlevel3.target -&gt; multi-user.target
+Runlevel 4           |    runlevel4.target -&gt; multi-user.target
+Runlevel 5           |    runlevel5.target -&gt; graphical.target
+Runlevel 6           |    runlevel6.target -&gt; reboot.target
+</code></pre>
+</blockquote>
+<p style="padding:0px;margin:10px auto;text-indent:0px;margin-top:1em;margin-bottom:0;margin-left:0.8em;padding-top:0;padding-bottom:0;list-style-type:none;border:none;color:rgba(17, 17, 17, 1);font-size:1.6em;line-height:28.7999992370605px;font-family:Georgia, serif;letter-spacing:-0.100000001490116px;word-spacing:2px;">它与<code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif">init</code>进程的主要差别如下。</p>
+<blockquote style="background-image:none;border:0.3em solid rgba(224, 223, 204, 1);padding:1em;border-left:5px solid rgb(221, 221, 221);border-right:none;border-top:none;border-bottom:none;margin:2em;color:rgba(17, 17, 17, 1);border-image:initial;padding-left:10px;list-style-type:none;background-color:rgba(245, 242, 240, 1);font-family:Consolas, Monaco, &quot;Andale Mono&quot;, monospace;overflow:auto;font-size:10px;letter-spacing:-0.100000001490116px;word-spacing:2px;">
+<p style="text-indent:0px;color:rgb(119, 119, 119);margin:0px;padding:0px;margin-top:1em;margin-bottom:0;margin-left:0.8em;padding-top:0;padding-bottom:0;list-style-type:none;border:none;font-size:1.6em;line-height:28.7999992370605px;"><span style="margin:0px;padding:0px;font-weight:800;">（1）默认的 RunLevel</span>（在<code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif">/etc/inittab</code>文件设置）现在被默认的 Target 取代，位置是<code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif">/etc/systemd/system/default.target</code>，通常符号链接到<code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif">graphical.target</code>（图形界面）或者<code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif">multi-user.target</code>（多用户命令行）。</p>
+<p style="text-indent:0px;color:rgb(119, 119, 119);margin:0px;padding:0px;margin-top:1em;margin-bottom:0;margin-left:0.8em;padding-top:0;padding-bottom:0;list-style-type:none;border:none;font-size:1.6em;line-height:28.7999992370605px;"><span style="margin:0px;padding:0px;font-weight:800;">（2）启动脚本的位置</span>，以前是<code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif">/etc/init.d</code>目录，符号链接到不同的 RunLevel 目录 （比如<code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif">/etc/rc3.d</code>、<code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif">/etc/rc5.d</code>等），现在则存放在<code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif">/lib/systemd/system</code>和<code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif">/etc/systemd/system</code>目录。</p>
+<p style="text-indent:0px;color:rgb(119, 119, 119);margin:0px;padding:0px;margin-top:1em;margin-bottom:0;margin-left:0.8em;padding-top:0;padding-bottom:0;list-style-type:none;border:none;font-size:1.6em;line-height:28.7999992370605px;"><span style="margin:0px;padding:0px;font-weight:800;">（3）配置文件的位置</span>，以前<code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif">init</code>进程的配置文件是<code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif">/etc/inittab</code>，各种服务的配置文件存放在<code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif">/etc/sysconfig</code>目录。现在的配置文件主要存放在<code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif">/lib/systemd</code>目录，在<code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif">/etc/systemd</code>目录里面的修改可以覆盖原始设置。</p>
+</blockquote>
+<h2 style="font-size:2.88em;font-weight:500;line-height:1.5;margin:1.5em 0 0.2em;padding:0 0 0.2em;list-style-type:none;border-style:none none solid;border-bottom-width:1px;border-bottom-color:rgba(211, 211, 211, 1);letter-spacing:-0.03em;font-family:Georgia, serif;word-spacing:2px;">七、日志管理</h2>
+<p style="padding:0px;margin:10px auto;text-indent:0px;margin-top:1em;margin-bottom:0;margin-left:0.8em;padding-top:0;padding-bottom:0;list-style-type:none;border:none;color:rgba(17, 17, 17, 1);font-size:1.6em;line-height:28.7999992370605px;font-family:Georgia, serif;letter-spacing:-0.100000001490116px;word-spacing:2px;">Systemd 统一管理所有 Unit 的启动日志。带来的好处就是，可以只用<code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif">journalctl</code>一个命令，查看所有日志（内核日志和应用日志）。日志的配置文件是<code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif">/etc/systemd/journald.conf</code>。</p>
+<p style="padding:0px;margin:10px auto;text-indent:0px;margin-top:1em;margin-bottom:0;margin-left:0.8em;padding-top:0;padding-bottom:0;list-style-type:none;border:none;color:rgba(17, 17, 17, 1);font-size:1.6em;line-height:28.7999992370605px;font-family:Georgia, serif;letter-spacing:-0.100000001490116px;word-spacing:2px;"><code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif">journalctl</code>功能强大，用法非常多。</p>
+<blockquote style="background-image:none;border:0.3em solid rgba(224, 223, 204, 1);padding:1em;border-left:5px solid rgb(221, 221, 221);border-right:none;border-top:none;border-bottom:none;margin:2em;color:rgba(17, 17, 17, 1);border-image:initial;padding-left:10px;list-style-type:none;background-color:rgba(245, 242, 240, 1);font-family:Consolas, Monaco, &quot;Andale Mono&quot;, monospace;overflow:auto;font-size:10px;letter-spacing:-0.100000001490116px;word-spacing:2px;">
+<pre style="border-radius:4px;background-color: #fbfaf8;border: 1px solid rgba(0,0,0,.14902);color: #333;font-size: 12px;padding: 8px;font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif;box-sizing: border-box;"><code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif">
+<span style="margin:0px;padding:0px;color:rgb(0, 128, 0);"># 查看所有日志（默认情况下 ，只保存本次启动的日志）</span>
+$ sudo journalctl
+
+<span style="margin:0px;padding:0px;color:rgb(0, 128, 0);"># 查看内核日志（不显示应用日志）</span>
+$ sudo journalctl -k
+
+<span style="margin:0px;padding:0px;color:rgb(0, 128, 0);"># 查看系统本次启动的日志</span>
+$ sudo journalctl -b
+$ sudo journalctl -b -0
+
+<span style="margin:0px;padding:0px;color:rgb(0, 128, 0);"># 查看上一次启动的日志（需更改设置）</span>
+$ sudo journalctl -b -1
+
+<span style="margin:0px;padding:0px;color:rgb(0, 128, 0);"># 查看指定时间的日志</span>
+$ sudo journalctl --since=<span style="margin:0px;padding:0px;color:rgb(163, 21, 21);">"2012-10-30 18:17:16"</span>
+$ sudo journalctl --since <span style="margin:0px;padding:0px;color:rgb(163, 21, 21);">"20 min ago"</span>
+$ sudo journalctl --since yesterday
+$ sudo journalctl --since <span style="margin:0px;padding:0px;color:rgb(163, 21, 21);">"2015-01-10"</span> --until <span style="margin:0px;padding:0px;color:rgb(163, 21, 21);">"2015-01-11 03:00"</span>
+$ sudo journalctl --since 09:00 --until <span style="margin:0px;padding:0px;color:rgb(163, 21, 21);">"1 hour ago"</span>
+
+<span style="margin:0px;padding:0px;color:rgb(0, 128, 0);"># 显示尾部的最新10行日志</span>
+$ sudo journalctl -n
+
+<span style="margin:0px;padding:0px;color:rgb(0, 128, 0);"># 显示尾部指定行数的日志</span>
+$ sudo journalctl -n 20
+
+<span style="margin:0px;padding:0px;color:rgb(0, 128, 0);"># 实时滚动显示最新日志</span>
+$ sudo journalctl -f
+
+<span style="margin:0px;padding:0px;color:rgb(0, 128, 0);"># 查看指定服务的日志</span>
+$ sudo journalctl /usr/lib/systemd/systemd
+
+<span style="margin:0px;padding:0px;color:rgb(0, 128, 0);"># 查看指定进程的日志</span>
+$ sudo journalctl _PID=1
+
+<span style="margin:0px;padding:0px;color:rgb(0, 128, 0);"># 查看某个路径的脚本的日志</span>
+$ sudo journalctl /usr/bin/bash
+
+<span style="margin:0px;padding:0px;color:rgb(0, 128, 0);"># 查看指定用户的日志</span>
+$ sudo journalctl _UID=33 --since today
+
+<span style="margin:0px;padding:0px;color:rgb(0, 128, 0);"># 查看某个 Unit 的日志</span>
+$ sudo journalctl -u nginx.service
+$ sudo journalctl -u nginx.service --since today
+
+<span style="margin:0px;padding:0px;color:rgb(0, 128, 0);"># 实时滚动显示某个 Unit 的最新日志</span>
+$ sudo journalctl -u nginx.service -f
+
+<span style="margin:0px;padding:0px;color:rgb(0, 128, 0);"># 合并显示多个 Unit 的日志</span>
+$ journalctl -u nginx.service -u php-fpm.service --since today
+
+<span style="margin:0px;padding:0px;color:rgb(0, 128, 0);"># 查看指定优先级（及其以上级别）的日志，共有8级</span>
+<span style="margin:0px;padding:0px;color:rgb(0, 128, 0);"># 0: emerg</span>
+<span style="margin:0px;padding:0px;color:rgb(0, 128, 0);"># 1: alert</span>
+<span style="margin:0px;padding:0px;color:rgb(0, 128, 0);"># 2: crit</span>
+<span style="margin:0px;padding:0px;color:rgb(0, 128, 0);"># 3: err</span>
+<span style="margin:0px;padding:0px;color:rgb(0, 128, 0);"># 4: warning</span>
+<span style="margin:0px;padding:0px;color:rgb(0, 128, 0);"># 5: notice</span>
+<span style="margin:0px;padding:0px;color:rgb(0, 128, 0);"># 6: info</span>
+<span style="margin:0px;padding:0px;color:rgb(0, 128, 0);"># 7: debug</span>
+$ sudo journalctl -p err -b
+
+<span style="margin:0px;padding:0px;color:rgb(0, 128, 0);"># 日志默认分页输出，--no-pager 改为正常的标准输出</span>
+$ sudo journalctl --no-pager
+
+<span style="margin:0px;padding:0px;color:rgb(0, 128, 0);"># 以 JSON 格式（单行）输出</span>
+$ sudo journalctl -b -u nginx.service -o json
+
+<span style="margin:0px;padding:0px;color:rgb(0, 128, 0);"># 以 JSON 格式（多行）输出，可读性更好</span>
+$ sudo journalctl -b -u nginx.serviceqq
+ -o json-pretty
+
+<span style="margin:0px;padding:0px;color:rgb(0, 128, 0);"># 显示日志占据的硬盘空间</span>
+$ sudo journalctl --disk-usage
+
+<span style="margin:0px;padding:0px;color:rgb(0, 128, 0);"># 指定日志文件占据的最大空间</span>
+$ sudo journalctl --vacuum-size=1G
+
+<span style="margin:0px;padding:0px;color:rgb(0, 128, 0);"># 指定日志文件保存多久</span>
+$ sudo journalctl --vacuum-time=1years
+</code></pre>
+<div style="margin:0px;padding:0px;"><code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><br style="margin:0px;padding:0px;"/>
+</code></div>
+
+
+</blockquote>
+
+
+<br style="margin:0px;padding:0px;"/>
+
+                      </div>
+</div>
+<div style="margin:0px;padding:0px;clear:both;"></div>
+<div style="margin:0px;padding:0px;margin-top:20px;">
+
+
+<div style="margin:0px;padding:0px;margin-bottom:10px;">
+    分类: 
+            <a href="https://www.cnblogs.com/zery/category/791693.html" target="_blank" style="margin:0px;padding:0px;color:rgb(0, 0, 0);text-decoration:none;margin-left:10px;">Linux</a>
+</div>
+
+    <div style="margin:0px;padding:0px;">
+<div style="margin:0px;margin-bottom:10px;margin-top:10px;border:1px dashed rgb(192, 192, 192);font-size:12px;text-align:center;padding:10px 0px;width:100%;">
+        <a href="#" style="margin:0px;background:url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAAkCAYAAABIdFAMAAAAGXRFWHRTb2Z0d2FyZQBBZG9iZSBJbWFnZVJlYWR5ccllPAAAAHhJREFUeNo8zjsOxCAMBFB/KEAUFFR0Cbng3nQPw68ArZdAlOZppPFIBhH5EAB8b+Tlt9MYQ6i1BuqFaq1CKSVcxZ2Acs6406KUgpt5/LCKuVgz5BDCSb13ZO99ZOdcZGvt4mJjzMVKqcha68iIePB86GAiOv8CDADlIUQBs7MD3wAAAABJRU5ErkJggg%3D%3D) repeat-x;display:inline-block;font-weight:bold;cursor:pointer;margin-right:10px;border-radius:10px;box-shadow:rgba(0, 0, 0, 0.5) 0px 1px 3px;text-shadow:rgba(0, 0, 0, 0.25) 0px -1px 1px;vertical-align:middle;padding:3px 8px;text-decoration:none;background-color:rgb(45, 174, 191);border:none;color:rgb(255, 255, 255);">好文要顶</a>
+        <a href="#" style="margin:0px;background:url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAAkCAYAAABIdFAMAAAAGXRFWHRTb2Z0d2FyZQBBZG9iZSBJbWFnZVJlYWR5ccllPAAAAHhJREFUeNo8zjsOxCAMBFB/KEAUFFR0Cbng3nQPw68ArZdAlOZppPFIBhH5EAB8b+Tlt9MYQ6i1BuqFaq1CKSVcxZ2Acs6406KUgpt5/LCKuVgz5BDCSb13ZO99ZOdcZGvt4mJjzMVKqcha68iIePB86GAiOv8CDADlIUQBs7MD3wAAAABJRU5ErkJggg%3D%3D) repeat-x;display:inline-block;font-weight:bold;cursor:pointer;margin-right:10px;border-radius:10px;box-shadow:rgba(0, 0, 0, 0.5) 0px 1px 3px;text-shadow:rgba(0, 0, 0, 0.25) 0px -1px 1px;vertical-align:middle;padding:3px 8px;text-decoration:none;background-color:rgb(227, 49, 0);border:none;color:rgb(255, 255, 255);">关注我</a>
+    <a href="#" style="margin:0px;background:url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAAkCAYAAABIdFAMAAAAGXRFWHRTb2Z0d2FyZQBBZG9iZSBJbWFnZVJlYWR5ccllPAAAAHhJREFUeNo8zjsOxCAMBFB/KEAUFFR0Cbng3nQPw68ArZdAlOZppPFIBhH5EAB8b+Tlt9MYQ6i1BuqFaq1CKSVcxZ2Acs6406KUgpt5/LCKuVgz5BDCSb13ZO99ZOdcZGvt4mJjzMVKqcha68iIePB86GAiOv8CDADlIUQBs7MD3wAAAABJRU5ErkJggg%3D%3D) repeat-x;display:inline-block;font-weight:bold;cursor:pointer;margin-right:10px;border-radius:10px;box-shadow:rgba(0, 0, 0, 0.5) 0px 1px 3px;text-shadow:rgba(0, 0, 0, 0.25) 0px -1px 1px;vertical-align:middle;padding:3px 8px;text-decoration:none;background-color:rgb(255, 181, 21);border:none;color:rgb(255, 255, 255);">收藏该文</a>
+    <a href="#" title="分享至微信" style="margin:0px;display:inline-block;font-weight:bold;cursor:pointer;margin-right:10px;border-radius:10px;vertical-align:middle;text-decoration:none;background:none;box-shadow:none;text-shadow:none;padding:3px 2px;border:none;color:rgb(255, 255, 255);"><div class="media-placeholder">[图片/附件]</div></en-media></a>
+</div>
+<div style="margin:0px;padding:0px;float:left;width:280px;margin-top:0px;margin-bottom:10px;color:rgb(0, 0, 0);margin-left:0px;font-size:12px;">
+    <div style="margin:0px;padding:0px;float:left;line-height:18px;">
+            <a href="https://home.cnblogs.com/u/zery/" target="_blank" style="margin:0px;padding:0px;color:rgb(0, 0, 0);text-decoration:none;"><img src="https://pic.cnblogs.com/face/366784/20130905143458.png" width="48" height="48" style="max-width:100%;height:auto;margin:0px;padding:0px;vertical-align:top;float:left;margin-right:5px;padding-top:5px;padding-left:2px;border:0px;"/></a>
+        <div style="margin:0px;padding:0px;float:left;line-height:18px;">
+            <a href="https://home.cnblogs.com/u/zery/" style="margin:0px;padding:0px;color:rgb(0, 0, 0);text-decoration:none;">Zery</a>
+            <br style="margin:0px;padding:0px;"/>
+            <a href="https://home.cnblogs.com/u/zery/followers/" style="margin:0px;padding:0px;color:rgb(0, 0, 0);text-decoration:none;">粉丝 - <span style="margin:0px;padding:0px;">751</span></a>
+            <a href="https://home.cnblogs.com/u/zery/followees/" style="margin:0px;padding:0px;color:rgb(0, 0, 0);text-decoration:none;">关注 - <span style="margin:0px;padding:0px;">90</span></a><br style="margin:0px;padding:0px;"/>
+        </div>
+    </div>
+    <div style="margin:0px;padding:0px;clear:both;"></div>
+    <div style="margin:0px;padding:0px;"></div>
+    <div style="margin:0px;padding:0px;">
+                <a href="#" style="margin:0px;padding:0px;color:rgb(0, 0, 0);text-decoration:none;">+加关注</a>
+    </div>
+</div>
+<div style="margin:0px;padding:0px;float:right;margin-bottom:10px;margin-right:30px;font-size:12px;width:125px;text-align:center;margin-top:10px;">
+    <div style="margin:0px;padding:0px;float:left;width:46px;height:52px;background:url(https://common.cnblogs.com/images/upup.gif) no-repeat;text-align:center;cursor:pointer;margin-top:2px;padding-top:5px;">
+        <span style="margin:0px;padding:0px;font-size:14px;color:rgb(7, 93, 179);font-family:Verdana;line-height:1.5em;">3</span>
+    </div>
+    <div style="margin:0px;padding:0px;float:right;margin-left:20px;width:46px;height:52px;background:url(https://common.cnblogs.com/images/downdown.gif) no-repeat;text-align:center;cursor:pointer;margin-top:2px;padding-top:5px;">
+        <span style="margin:0px;padding:0px;font-size:14px;color:rgb(7, 93, 179);font-family:Verdana;line-height:1.5em;">0</span>
+    </div>
+    <div style="margin:0px;padding:0px;clear:both;"></div>
+    <div style="margin:0px;padding:0px;margin-top:5px;margin-left:0px;font-size:12px;color:rgb(128, 128, 128);">
+    </div>
+</div>
+
+
+</div>
+    <div style="margin:0px;padding:0px;clear:both;"></div>
+    <div style="padding:0px;line-height:200%;font-size:14px;margin:10px 0px;">
+
+    <a href="https://www.cnblogs.com/zery/p/7086889.html" style="margin:0px;padding:0px;color:rgb(51, 51, 51);text-decoration:none;">« </a> 上一篇：    <a href="https://www.cnblogs.com/zery/p/7086889.html" title="发布于 2017-06-27 19:57" style="margin:0px;padding:0px;text-decoration:none;color:rgb(51, 51, 51);">Cenos7 添加service,开机启动</a>
+    <br style="margin:0px;padding:0px;"/>
+    <a href="https://www.cnblogs.com/zery/p/7086954.html" style="margin:0px;padding:0px;color:rgb(51, 51, 51);text-decoration:none;">» </a> 下一篇：    <a href="https://www.cnblogs.com/zery/p/7086954.html" title="发布于 2017-07-04 17:33" style="margin:0px;padding:0px;text-decoration:none;color:rgb(51, 51, 51);">Centos7  Journald 指令</a>
+
+</div>
+</div>
+            </div>
+            <div style="padding:0px;clear:both;float:none;text-align:left;margin:10px 0px;color:rgb(119, 119, 119);line-height:200%;font-size:14px;">posted @ 
+<span style="margin:0px;padding:0px;">2017-06-27 20:42</span> 
+<a href="https://www.cnblogs.com/zery/" style="margin:0px;padding:0px;text-decoration:none;color:rgb(163, 163, 163);">Zery</a> 
+阅读(<span style="margin:0px;padding:0px;">9645</span>) 
+评论(<span style="margin:0px;padding:0px;">1</span>) 
+<a href="https://i.cnblogs.com/EditPosts.aspx?postid=7087051" rel="nofollow" style="margin:0px;padding:0px;text-decoration:none;color:rgb(163, 163, 163);">编辑</a> 
+<a href="#" style="margin:0px;padding:0px;text-decoration:none;color:rgb(163, 163, 163);">收藏</a> 
+<a href="#" style="margin:0px;padding:0px;text-decoration:none;color:rgb(163, 163, 163);">举报</a>
+</div>
+        </div></div></div></div></div></div></div></div></div></div>
+</div>
+</div>
+<a class="back-link" href="../articles.html">← 返回笔记列表</a>
+</body>
+</html>

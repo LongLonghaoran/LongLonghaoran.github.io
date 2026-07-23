@@ -1,0 +1,228 @@
+<!DOCTYPE html>
+<html lang="zh-CN" data-theme="light">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>怎么给运行中的docker容器添加新的端口_lucky的专栏-CSDN博客_docker 添加端口 — 技术笔记</title>
+<style>
+:root {
+  --bg: #ffffff;
+  --text: #1a1a1a;
+  --muted: #666;
+  --border: #e0e0e0;
+  --code-bg: #f5f5f5;
+  --link: #0066cc;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #1a1a1a;
+    --text: #e0e0e0;
+    --muted: #999;
+    --border: #333;
+    --code-bg: #2a2a2a;
+    --link: #66bbff;
+  }
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  line-height: 1.7;
+  color: var(--text);
+  background: var(--bg);
+  max-width: 860px;
+  margin: 0 auto;
+  padding: 2rem 1.5rem;
+}
+.note-header {
+  border-bottom: 2px solid var(--border);
+  padding-bottom: 1rem;
+  margin-bottom: 2rem;
+}
+.note-title {
+  font-size: 1.6rem;
+  font-weight: 700;
+  margin-bottom: 0.3rem;
+}
+.note-meta {
+  color: var(--muted);
+  font-size: 0.85rem;
+}
+.note-content {
+  font-size: 0.95rem;
+}
+.note-content h1 { font-size: 1.4rem; margin: 1.2rem 0 0.6rem; }
+.note-content h2 { font-size: 1.2rem; margin: 1rem 0 0.5rem; }
+.note-content h3 { font-size: 1.05rem; margin: 0.8rem 0 0.4rem; }
+.note-content p { margin: 0.5rem 0; }
+.note-content ul, .note-content ol { margin: 0.5rem 0 0.5rem 2rem; }
+.note-content li { margin: 0.2rem 0; }
+.note-content pre {
+  background: var(--code-bg);
+  padding: 1rem;
+  border-radius: 6px;
+  overflow-x: auto;
+  margin: 0.8rem 0;
+  font-size: 0.85rem;
+}
+.note-content code {
+  background: var(--code-bg);
+  padding: 0.1rem 0.3rem;
+  border-radius: 3px;
+  font-size: 0.88em;
+}
+.note-content pre code {
+  background: none;
+  padding: 0;
+}
+.note-content blockquote {
+  border-left: 3px solid var(--border);
+  padding-left: 1rem;
+  color: var(--muted);
+  margin: 0.8rem 0;
+}
+.note-content a { color: var(--link); }
+.note-content img {
+  max-width: 100%;
+  height: auto;
+  border-radius: 6px;
+  margin: 0.5rem 0;
+}
+.note-content table {
+  border-collapse: collapse;
+  width: 100%;
+  margin: 0.8rem 0;
+}
+.note-content th, .note-content td {
+  border: 1px solid var(--border);
+  padding: 0.5rem;
+}
+.note-content th { background: var(--code-bg); }
+.media-placeholder {
+  background: var(--code-bg);
+  padding: 1rem;
+  text-align: center;
+  color: var(--muted);
+  border-radius: 6px;
+  margin: 0.5rem 0;
+  font-size: 0.85rem;
+}
+.encrypt-placeholder {
+  background: #fff3cd;
+  padding: 0.5rem;
+  text-align: center;
+  color: #856404;
+  border-radius: 6px;
+  margin: 0.5rem 0;
+  font-size: 0.85rem;
+}
+.back-link {
+  display: inline-block;
+  margin-top: 2rem;
+  color: var(--link);
+  text-decoration: none;
+  font-size: 0.85rem;
+}
+</style>
+</head>
+<body>
+<div class="note-header">
+  <div class="note-title">怎么给运行中的docker容器添加新的端口_lucky的专栏-CSDN博客_docker 添加端口</div>
+  <div class="note-meta">笔记本：docker</div>
+</div>
+<div class="note-content">
+<div style="--en-clipped-content:article; --en-clipped-source-url:https://blog.csdn.net/ssllkkyyaa/article/details/82421720; --en-clipped-source-title:怎么给运行中的docker容器添加新的端口_lucky的专栏-CSDN博客_docker 添加端口;">
+<div><br/></div><div style="min-height: 1496px; font-size: 16px; display:block; min-width: 100%; position: relative;"> <div style="outline:0px;box-sizing:inherit;"><div style="font-weight:normal;outline:0px;box-sizing:inherit;color:rgb(51, 51, 51);background-color:rgb(245, 246, 247);line-height:1.57143;font-size:14px;font-family:&quot;SF Pro Display&quot;, Roboto, Noto, Arial, &quot;PingFang SC&quot;, &quot;Hiragino Sans GB&quot;, &quot;Microsoft YaHei&quot;, sans-serif;"><div style="font-weight:normal;outline:0px;box-sizing:inherit;-webkit-box-pack:center;justify-content:center;"><div style="font-weight:normal;outline:0px;box-sizing:border-box;"><span style="box-sizing:inherit;outline:0px;"><div style="font-weight:normal;outline:0px;box-sizing:inherit;background:rgb(255, 255, 255);">
+        <div style="font-weight:normal;outline:0px;box-sizing:inherit;margin:0px;padding:0px;border-bottom:1px solid rgb(245, 246, 247);padding-top:8px;z-index:9;background-color:rgb(255, 255, 255);">
+        <div style="font-weight:normal;outline:0px;box-sizing:inherit;margin:0px;padding:0px;">
+            <div style="font-weight:normal;outline:0px;box-sizing:inherit;margin:0px;padding:0px;margin-bottom:8px;">
+                <h1 style="font-family:&quot;PingFang SC&quot;, &quot;Microsoft YaHei&quot;, SimHei, Arial, SimSun;outline:0px;box-sizing:inherit;padding:0px;overflow-wrap:break-word;color:rgb(34, 34, 38);word-break:break-all;font-weight:600;font-size:28px;margin:0px;">怎么给运行中的docker容器添加新的端口</h1>
+            </div>
+            <div style="font-weight:normal;outline:0px;box-sizing:inherit;margin:0px;padding:0px;position:relative;background:rgb(248, 248, 248);border-radius:4px;">
+                <div style="font-weight:normal;outline:0px;box-sizing:inherit;margin:0px;padding:0px;color:rgb(153, 154, 170);width:88%;display:flex;">
+                    <div class="media-placeholder">[图片/附件]</div></en-media>
+                    <div style="font-weight:normal;outline:0px;box-sizing:inherit;margin:0px;padding:0px;">
+                    <a href="https://blog.csdn.net/ssllkkyyaa" target="_blank" rel="noopener" style="margin:0px;padding:0px;font-weight:normal;box-sizing:inherit;outline:0px;cursor:pointer;text-decoration:none;vertical-align:top;line-height:32px;color:rgb(85, 86, 102);margin-right:20px;">SoLucky2017</a>
+                    <span style="margin:0px;padding:0px;font-weight:normal;outline:0px;box-sizing:inherit;vertical-align:top;margin-right:12px;line-height:32px;position:relative;">2018-09-05 12:39:05</span>
+                    <div class="media-placeholder">[图片/附件]</div></en-media>
+                    <span style="margin:0px;padding:0px;font-weight:normal;outline:0px;box-sizing:inherit;vertical-align:top;margin-right:12px;line-height:32px;">14024</span>
+                    <a style="margin:0px;padding:0px;font-weight:normal;box-sizing:inherit;outline:0px;cursor:pointer;text-decoration:none;font-size:14px;vertical-align:top;line-height:32px;margin-right:12px;color:rgb(153, 154, 170);display:inline-block;">
+                        <div class="media-placeholder">[图片/附件]</div></en-media>
+                        
+                        <span style="margin:0px;padding:0px;font-weight:normal;outline:0px;box-sizing:inherit;vertical-align:top;line-height:32px;margin-right:0px;">收藏</span>
+                        <span style="margin:0px;padding:0px;font-weight:normal;outline:0px;box-sizing:inherit;vertical-align:top;line-height:32px;margin-right:0px;">
+                            4
+                        </span>
+                    </a>
+                    </div>
+                </div>
+                <div style="font-weight:normal;outline:0px;box-sizing:inherit;margin:0px;padding:0px;padding-left:48px;display:flex;">
+                    <div style="font-weight:normal;outline:0px;box-sizing:inherit;margin:0px;padding:0px;font-size:14px;line-height:24px;margin-bottom:4px;margin-right:8px;">
+                            <span style="margin:0px;padding:0px;font-weight:normal;outline:0px;box-sizing:inherit;display:inline-block;color:rgb(153, 154, 170);">分类专栏：</span>
+                                <a href="https://blog.csdn.net/ssllkkyyaa/category_2684753.html" target="_blank" rel="noopener" style="margin:0px;font-weight:normal;outline:0px;cursor:pointer;text-decoration:none;margin-right:8px;font-size:12px;background-color:rgb(255, 255, 255);border:1px solid rgb(234, 234, 239);height:24px;line-height:17px;border-radius:2px;display:inline-block;padding:3px 6px;color:rgb(80, 148, 213);box-sizing:border-box;">linux shel</a>
+                    </div>
+                </div>
+                
+                <div style="font-weight:normal;outline:0px;box-sizing:inherit;margin:0px;padding:0px;position:absolute;top:0px;right:8px;line-height:32px;">
+                </div>
+            </div>
+        </div>
+    </div>
+        <div style="font-weight:normal;outline:0px;box-sizing:inherit;margin:0px;padding:0px;background-color:rgb(255, 255, 255);">
+            <div style="font-weight:normal;outline:0px;box-sizing:inherit;margin:0px;padding:16px 0px;">
+                <div style="font-weight:normal;outline:0px;margin:0px;display:flex;position:relative;flex-wrap:nowrap;height:56px;background:rgb(255, 255, 255);border-radius:2px;border:1px solid rgb(240, 240, 240);width:100%;transition:margin-top 0.2s ease-in-out 0s;padding:9px 16px;box-sizing:border-box;margin-top:0px;z-index:3;box-shadow:none;">
+                    <div style="font-weight:normal;outline:0px;box-sizing:inherit;margin:0px;padding:0px;overflow:hidden;width:100%;display:flex;flex-wrap:nowrap;-webkit-box-align:center;align-items:center;">
+                        <a href="https://blog.csdn.net/ssllkkyyaa/category_2684753.html" target="_blank" title="linux shel" style="margin:0px;padding:0px;font-weight:normal;box-sizing:inherit;outline:0px;cursor:pointer;text-decoration:none;color:rgb(79, 79, 79);overflow:hidden;display:flex;flex-wrap:nowrap;-webkit-box-align:center;align-items:center;">
+                            <div class="media-placeholder">[图片/附件]</div></en-media>
+                            <span style="margin:0px;padding:0px;outline:0px;box-sizing:inherit;font-size:16px;color:rgb(34, 34, 38);line-height:22px;margin-left:10px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;vertical-align:middle;font-weight:500;">linux shel</span>
+                        </a>
+                        <span style="margin:0px;padding:0px;font-weight:normal;outline:0px;box-sizing:inherit;margin-left:8px;font-size:14px;line-height:20px;min-width:100px;color:rgb(153, 154, 170);">专栏收录该内容</span>
+                    </div>
+                    <div style="font-weight:normal;outline:0px;box-sizing:inherit;margin:0px;padding:0px;min-width:360px;font-size:14px;color:rgb(153, 154, 170);line-height:40px;">
+                        <span style="margin:0px;padding:0px;font-weight:normal;outline:0px;box-sizing:inherit;float:right;margin-right:32px;">18 篇文章</span>
+                        <span style="margin:0px;padding:0px;font-weight:normal;outline:0px;box-sizing:inherit;float:right;margin-right:32px;">0 订阅</span>
+                    </div>
+                    <div style="font-weight:normal;outline:0px;box-sizing:inherit;margin:0px;padding:4px 0px;">
+                            <a style="margin:0px;padding:0px;font-weight:normal;box-sizing:inherit;outline:0px;cursor:pointer;text-decoration:none;display:block;width:80px;height:28px;font-size:12px;color:rgb(85, 86, 102);background:rgb(255, 255, 255);border-radius:16px;border:1px solid rgb(204, 204, 216);text-align:center;line-height:28px;">订阅专栏</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    <div style="box-sizing:inherit;outline:0px;display:block;position:relative;padding-top:16px;">
+        <div style="font-weight:normal;outline:0px;box-sizing:inherit;margin:0px;padding:0px;overflow-wrap:break-word;">
+        
+                <div style="font-weight:normal;outline:0px;box-sizing:inherit;margin:0px;padding:0px;overflow-wrap:break-word;font-family:-apple-system, &quot;SF UI Text&quot;, Arial, &quot;PingFang SC&quot;, &quot;Hiragino Sans GB&quot;, &quot;Microsoft YaHei&quot;, &quot;WenQuanYi Micro Hei&quot;, sans-serif, SimHei, SimSun;position:relative;min-height:70px;font-size:16px;">
+                    <p style="outline:0px;padding:0px;overflow-wrap:break-word;color:rgb(77, 77, 77);overflow:auto hidden;margin:0px 0px 16px;font-weight:400;box-sizing:border-box;font-size:16px;line-height:26px;"><a href="https://blog.csdn.net/zuoshenglo/article/details/78402772" style="margin:0px;padding:0px;font-weight:normal;outline:0px;cursor:pointer;overflow-wrap:break-word;box-sizing:border-box;text-decoration:none;color:rgb(78, 161, 219);">https://blog.csdn.net/zuoshenglo/article/details/78402772</a></p> 
+<p style="outline:0px;padding:0px;overflow-wrap:break-word;color:rgb(77, 77, 77);overflow:auto hidden;margin:0px 0px 16px;font-weight:400;box-sizing:border-box;font-size:16px;line-height:26px;"> </p> 
+<p style="outline:0px;padding:0px;overflow-wrap:break-word;color:rgb(77, 77, 77);overflow:auto hidden;margin:0px 0px 16px;font-weight:400;box-sizing:border-box;font-size:16px;line-height:26px;">简单的说，2种。</p> 
+<p style="outline:0px;padding:0px;overflow-wrap:break-word;color:rgb(77, 77, 77);overflow:auto hidden;margin:0px 0px 16px;font-weight:400;box-sizing:border-box;font-size:16px;line-height:26px;">iptables 端口转发，commit 容器为一个images，重新运行一个新的容器</p> 
+<p style="outline:0px;padding:0px;overflow-wrap:break-word;color:rgb(77, 77, 77);overflow:auto hidden;margin:0px 0px 16px;font-weight:400;box-sizing:border-box;font-size:16px;line-height:26px;"> </p> 
+<p style="outline:0px;padding:0px;overflow-wrap:break-word;color:rgb(77, 77, 77);overflow:auto hidden;margin:0px 0px 16px;font-weight:400;box-sizing:border-box;font-size:16px;line-height:26px;">DOCKER 给运行中的容器添加映射端口</p> 
+<p style="outline:0px;padding:0px;overflow-wrap:break-word;color:rgb(77, 77, 77);overflow:auto hidden;margin:0px 0px 16px;font-weight:400;box-sizing:border-box;font-size:16px;line-height:26px;">方法1</p> 
+<p style="outline:0px;padding:0px;overflow-wrap:break-word;color:rgb(77, 77, 77);overflow:auto hidden;margin:0px 0px 16px;font-weight:400;box-sizing:border-box;font-size:16px;line-height:26px;">1、获得容器IP</p> 
+<blockquote style="outline:0px;box-sizing:border-box;display:block;border-left:8px solid rgb(221, 223, 228);background:rgb(238, 240, 244);overflow:auto;word-break:normal;overflow-wrap:normal;padding:16px 16px 0px;margin:0px 0px 24px;"><span style=""></span> 
+ <p style="outline:0px;padding:0px;overflow-wrap:break-word;overflow:auto hidden;margin:0px 0px 16px;box-sizing:border-box;margin-bottom:16px;font-weight:400;color:rgb(79, 79, 79);font-size:16px;line-height:26px;">将<code style="outline:0px;overflow-wrap:break-word;box-sizing:border-box;border-radius:4px;">container_name</code> 换成实际环境中的容器名</p> 
+<span style=""></span></blockquote> 
+<pre style="font-weight:normal;outline:0px;position:relative;box-sizing:border-box;white-space:pre-wrap;overflow-x:auto;margin:0px 0px 24px;padding:8px;overflow-wrap:break-word;font-family:Consolas, Inconsolata, Courier, monospace;font-size:14px;line-height:22px;color:rgb(0, 0, 0);"><code style="outline:0px;box-sizing:border-box;font-family:&quot;Source Code Pro&quot;, &quot;DejaVu Sans Mono&quot;, &quot;Ubuntu Mono&quot;, &quot;Anonymous Pro&quot;, &quot;Droid Sans Mono&quot;, Menlo, Monaco, Consolas, Inconsolata, Courier, monospace, &quot;PingFang SC&quot;, &quot;Microsoft YaHei&quot;, sans-serif;line-height:22px;white-space:pre;tab-size:4;color:rgb(56, 58, 66);background:rgb(250, 250, 250);overflow-wrap:normal;border-radius:4px;display:block;overflow-x:auto;padding:0.5em;font-size:14px;">docker inspect <span style="margin:0px;padding:0px;font-weight:normal;outline:0px;box-sizing:border-box;overflow-wrap:break-word;color:rgb(80, 161, 79);font-family:&quot;Source Code Pro&quot;, &quot;DejaVu Sans Mono&quot;, &quot;Ubuntu Mono&quot;, &quot;Anonymous Pro&quot;, &quot;Droid Sans Mono&quot;, Menlo, Monaco, Consolas, Inconsolata, Courier, monospace, &quot;PingFang SC&quot;, &quot;Microsoft YaHei&quot;, sans-serif;font-size:14px;">`container_name`</span> | <span style="margin:0px;padding:0px;font-weight:normal;outline:0px;box-sizing:border-box;overflow-wrap:break-word;color:rgb(166, 38, 164);font-family:&quot;Source Code Pro&quot;, &quot;DejaVu Sans Mono&quot;, &quot;Ubuntu Mono&quot;, &quot;Anonymous Pro&quot;, &quot;Droid Sans Mono&quot;, Menlo, Monaco, Consolas, Inconsolata, Courier, monospace, &quot;PingFang SC&quot;, &quot;Microsoft YaHei&quot;, sans-serif;font-size:14px;">grep</span> IPAddress</code></pre> 
+<ul style="font-weight:normal;outline:0px;list-style:none;overflow-wrap:break-word;box-sizing:border-box;font-size:16px;margin:0px 0px 24px;padding:0px;"><li style="font-weight:normal;list-style:none;outline:0px;padding:0px;overflow-wrap:break-word;box-sizing:border-box;list-style-type:disc;margin:8px 0px 0px 32px;">1</li></ul>
+<p style="outline:0px;padding:0px;overflow-wrap:break-word;color:rgb(77, 77, 77);overflow:auto hidden;margin:0px 0px 16px;font-weight:400;box-sizing:border-box;font-size:16px;line-height:26px;">2、 iptable转发端口</p> 
+<blockquote style="outline:0px;box-sizing:border-box;display:block;border-left:8px solid rgb(221, 223, 228);background:rgb(238, 240, 244);overflow:auto;word-break:normal;overflow-wrap:normal;padding:16px 16px 0px;margin:0px 0px 24px;"><span style=""></span> 
+ <p style="outline:0px;padding:0px;overflow-wrap:break-word;overflow:auto hidden;margin:0px 0px 16px;box-sizing:border-box;margin-bottom:16px;font-weight:400;color:rgb(79, 79, 79);font-size:16px;line-height:26px;">将容器的8000端口映射到docker主机的8001端口</p> 
+<span style=""></span></blockquote> 
+<pre style="font-weight:normal;outline:0px;position:relative;box-sizing:border-box;white-space:pre-wrap;overflow-x:auto;margin:0px 0px 24px;padding:8px;overflow-wrap:break-word;font-family:Consolas, Inconsolata, Courier, monospace;font-size:14px;line-height:22px;color:rgb(0, 0, 0);"><code style="outline:0px;box-sizing:border-box;font-family:&quot;Source Code Pro&quot;, &quot;DejaVu Sans Mono&quot;, &quot;Ubuntu Mono&quot;, &quot;Anonymous Pro&quot;, &quot;Droid Sans Mono&quot;, Menlo, Monaco, Consolas, Inconsolata, Courier, monospace, &quot;PingFang SC&quot;, &quot;Microsoft YaHei&quot;, sans-serif;line-height:22px;white-space:pre;tab-size:4;color:rgb(56, 58, 66);background:rgb(250, 250, 250);overflow-wrap:normal;border-radius:4px;display:block;overflow-x:auto;padding:0.5em;font-size:14px;"><span style="margin:0px;padding:0px;font-weight:normal;outline:0px;box-sizing:border-box;overflow-wrap:break-word;color:rgb(80, 161, 79);font-family:&quot;Source Code Pro&quot;, &quot;DejaVu Sans Mono&quot;, &quot;Ubuntu Mono&quot;, &quot;Anonymous Pro&quot;, &quot;Droid Sans Mono&quot;, Menlo, Monaco, Consolas, Inconsolata, Courier, monospace, &quot;PingFang SC&quot;, &quot;Microsoft YaHei&quot;, sans-serif;font-size:14px;">iptables</span> <span style="margin:0px;padding:0px;font-weight:normal;outline:0px;box-sizing:border-box;overflow-wrap:break-word;color:rgb(80, 161, 79);font-family:&quot;Source Code Pro&quot;, &quot;DejaVu Sans Mono&quot;, &quot;Ubuntu Mono&quot;, &quot;Anonymous Pro&quot;, &quot;Droid Sans Mono&quot;, Menlo, Monaco, Consolas, Inconsolata, Courier, monospace, &quot;PingFang SC&quot;, &quot;Microsoft YaHei&quot;, sans-serif;font-size:14px;">-t</span> <span style="margin:0px;padding:0px;font-weight:normal;outline:0px;box-sizing:border-box;overflow-wrap:break-word;color:rgb(80, 161, 79);font-family:&quot;Source Code Pro&quot;, &quot;DejaVu Sans Mono&quot;, &quot;Ubuntu Mono&quot;, &quot;Anonymous Pro&quot;, &quot;Droid Sans Mono&quot;, Menlo, Monaco, Consolas, Inconsolata, Courier, monospace, &quot;PingFang SC&quot;, &quot;Microsoft YaHei&quot;, sans-serif;font-size:14px;">nat</span> <span style="margin:0px;padding:0px;font-weight:normal;outline:0px;box-sizing:border-box;overflow-wrap:break-word;color:rgb(80, 161, 79);font-family:&quot;Source Code Pro&quot;, &quot;DejaVu Sans Mono&quot;, &quot;Ubuntu Mono&quot;, &quot;Anonymous Pro&quot;, &quot;Droid Sans Mono&quot;, Menlo, Monaco, Consolas, Inconsolata, Courier, monospace, &quot;PingFang SC&quot;, &quot;Microsoft YaHei&quot;, sans-serif;font-size:14px;">-A</span>  <span style="margin:0px;padding:0px;font-weight:normal;outline:0px;box-sizing:border-box;overflow-wrap:break-word;color:rgb(80, 161, 79);font-family:&quot;Source Code Pro&quot;, &quot;DejaVu Sans Mono&quot;, &quot;Ubuntu Mono&quot;, &quot;Anonymous Pro&quot;, &quot;Droid Sans Mono&quot;, Menlo, Monaco, Consolas, Inconsolata, Courier, monospace, &quot;PingFang SC&quot;, &quot;Microsoft YaHei&quot;, sans-serif;font-size:14px;">DOCKER</span> <span style="margin:0px;padding:0px;font-weight:normal;outline:0px;box-sizing:border-box;overflow-wrap:break-word;color:rgb(80, 161, 79);font-family:&quot;Source Code Pro&quot;, &quot;DejaVu Sans Mono&quot;, &quot;Ubuntu Mono&quot;, &quot;Anonymous Pro&quot;, &quot;Droid Sans Mono&quot;, Menlo, Monaco, Consolas, Inconsolata, Courier, monospace, &quot;PingFang SC&quot;, &quot;Microsoft YaHei&quot;, sans-serif;font-size:14px;">-p</span> <span style="margin:0px;padding:0px;font-weight:normal;outline:0px;box-sizing:border-box;overflow-wrap:break-word;color:rgb(80, 161, 79);font-family:&quot;Source Code Pro&quot;, &quot;DejaVu Sans Mono&quot;, &quot;Ubuntu Mono&quot;, &quot;Anonymous Pro&quot;, &quot;Droid Sans Mono&quot;, Menlo, Monaco, Consolas, Inconsolata, Courier, monospace, &quot;PingFang SC&quot;, &quot;Microsoft YaHei&quot;, sans-serif;font-size:14px;">tcp</span> <span style="margin:0px;padding:0px;font-weight:normal;outline:0px;box-sizing:border-box;overflow-wrap:break-word;color:rgb(80, 161, 79);font-family:&quot;Source Code Pro&quot;, &quot;DejaVu Sans Mono&quot;, &quot;Ubuntu Mono&quot;, &quot;Anonymous Pro&quot;, &quot;Droid Sans Mono&quot;, Menlo, Monaco, Consolas, Inconsolata, Courier, monospace, &quot;PingFang SC&quot;, &quot;Microsoft YaHei&quot;, sans-serif;font-size:14px;">--dport</span> <span style="margin:0px;padding:0px;font-weight:normal;outline:0px;box-sizing:border-box;overflow-wrap:break-word;color:rgb(152, 104, 1);font-family:&quot;Source Code Pro&quot;, &quot;DejaVu Sans Mono&quot;, &quot;Ubuntu Mono&quot;, &quot;Anonymous Pro&quot;, &quot;Droid Sans Mono&quot;, Menlo, Monaco, Consolas, Inconsolata, Courier, monospace, &quot;PingFang SC&quot;, &quot;Microsoft YaHei&quot;, sans-serif;font-size:14px;">8001</span> <span style="margin:0px;padding:0px;font-weight:normal;outline:0px;box-sizing:border-box;overflow-wrap:break-word;color:rgb(80, 161, 79);font-family:&quot;Source Code Pro&quot;, &quot;DejaVu Sans Mono&quot;, &quot;Ubuntu Mono&quot;, &quot;Anonymous Pro&quot;, &quot;Droid Sans Mono&quot;, Menlo, Monaco, Consolas, Inconsolata, Courier, monospace, &quot;PingFang SC&quot;, &quot;Microsoft YaHei&quot;, sans-serif;font-size:14px;">-j</span> <span style="margin:0px;padding:0px;font-weight:normal;outline:0px;box-sizing:border-box;overflow-wrap:break-word;color:rgb(80, 161, 79);font-family:&quot;Source Code Pro&quot;, &quot;DejaVu Sans Mono&quot;, &quot;Ubuntu Mono&quot;, &quot;Anonymous Pro&quot;, &quot;Droid Sans Mono&quot;, Menlo, Monaco, Consolas, Inconsolata, Courier, monospace, &quot;PingFang SC&quot;, &quot;Microsoft YaHei&quot;, sans-serif;font-size:14px;">DNAT</span> <span style="margin:0px;padding:0px;font-weight:normal;outline:0px;box-sizing:border-box;overflow-wrap:break-word;color:rgb(80, 161, 79);font-family:&quot;Source Code Pro&quot;, &quot;DejaVu Sans Mono&quot;, &quot;Ubuntu Mono&quot;, &quot;Anonymous Pro&quot;, &quot;Droid Sans Mono&quot;, Menlo, Monaco, Consolas, Inconsolata, Courier, monospace, &quot;PingFang SC&quot;, &quot;Microsoft YaHei&quot;, sans-serif;font-size:14px;">--to-destination</span> <span style="margin:0px;padding:0px;font-weight:normal;outline:0px;box-sizing:border-box;overflow-wrap:break-word;color:rgb(152, 104, 1);font-family:&quot;Source Code Pro&quot;, &quot;DejaVu Sans Mono&quot;, &quot;Ubuntu Mono&quot;, &quot;Anonymous Pro&quot;, &quot;Droid Sans Mono&quot;, Menlo, Monaco, Consolas, Inconsolata, Courier, monospace, &quot;PingFang SC&quot;, &quot;Microsoft YaHei&quot;, sans-serif;font-size:14px;">172.17</span><span style="margin:0px;padding:0px;font-weight:normal;outline:0px;box-sizing:border-box;overflow-wrap:break-word;color:rgb(152, 104, 1);font-family:&quot;Source Code Pro&quot;, &quot;DejaVu Sans Mono&quot;, &quot;Ubuntu Mono&quot;, &quot;Anonymous Pro&quot;, &quot;Droid Sans Mono&quot;, Menlo, Monaco, Consolas, Inconsolata, Courier, monospace, &quot;PingFang SC&quot;, &quot;Microsoft YaHei&quot;, sans-serif;font-size:14px;">.0</span><span style="margin:0px;padding:0px;font-weight:normal;outline:0px;box-sizing:border-box;overflow-wrap:break-word;color:rgb(152, 104, 1);font-family:&quot;Source Code Pro&quot;, &quot;DejaVu Sans Mono&quot;, &quot;Ubuntu Mono&quot;, &quot;Anonymous Pro&quot;, &quot;Droid Sans Mono&quot;, Menlo, Monaco, Consolas, Inconsolata, Courier, monospace, &quot;PingFang SC&quot;, &quot;Microsoft YaHei&quot;, sans-serif;font-size:14px;">.19</span><span style="margin:0px;padding:0px;font-weight:normal;outline:0px;box-sizing:border-box;overflow-wrap:break-word;color:rgb(80, 161, 79);font-family:&quot;Source Code Pro&quot;, &quot;DejaVu Sans Mono&quot;, &quot;Ubuntu Mono&quot;, &quot;Anonymous Pro&quot;, &quot;Droid Sans Mono&quot;, Menlo, Monaco, Consolas, Inconsolata, Courier, monospace, &quot;PingFang SC&quot;, &quot;Microsoft YaHei&quot;, sans-serif;font-size:14px;">:8000</span>
+</code></pre> 
+<ul style="font-weight:normal;outline:0px;list-style:none;overflow-wrap:break-word;box-sizing:border-box;font-size:16px;margin:0px 0px 24px;padding:0px;"><li style="font-weight:normal;list-style:none;outline:0px;padding:0px;overflow-wrap:break-word;box-sizing:border-box;list-style-type:disc;margin:8px 0px 0px 32px;">[root@lixl appinstall]# iptables -t nat -A  DOCKER -p tcp --dport 18001 -j DNAT --to-destination 172.17.0.1:2181<br style="outline:0px;overflow-wrap:break-word;box-sizing:border-box;"/> [root@lixl appinstall]# iptables -t nat -A  DOCKER -p tcp --dport 18003 -j DNAT --to-destination 172.17.0.3:2181<br style="outline:0px;overflow-wrap:break-word;box-sizing:border-box;"/> [root@lixl appinstall]# iptables -t nat -A  DOCKER -p tcp --dport 18006 -j DNAT --to-destination 172.17.0.6:2181</li></ul>
+<p style="outline:0px;padding:0px;overflow-wrap:break-word;color:rgb(77, 77, 77);overflow:auto hidden;margin:0px 0px 16px;font-weight:400;box-sizing:border-box;font-size:16px;line-height:26px;">方法2</p> 
+<p style="outline:0px;padding:0px;overflow-wrap:break-word;color:rgb(77, 77, 77);overflow:auto hidden;margin:0px 0px 16px;font-weight:400;box-sizing:border-box;font-size:16px;line-height:26px;">1.提交一个运行中的容器为镜像</p> 
+<pre style="font-weight:normal;outline:0px;position:relative;box-sizing:border-box;white-space:pre-wrap;overflow-x:auto;margin:0px 0px 24px;padding:8px;overflow-wrap:break-word;font-family:Consolas, Inconsolata, Courier, monospace;font-size:14px;line-height:22px;color:rgb(0, 0, 0);"><code style="outline:0px;box-sizing:border-box;font-family:&quot;Source Code Pro&quot;, &quot;DejaVu Sans Mono&quot;, &quot;Ubuntu Mono&quot;, &quot;Anonymous Pro&quot;, &quot;Droid Sans Mono&quot;, Menlo, Monaco, Consolas, Inconsolata, Courier, monospace, &quot;PingFang SC&quot;, &quot;Microsoft YaHei&quot;, sans-serif;line-height:22px;white-space:pre;tab-size:4;color:rgb(56, 58, 66);background:rgb(250, 250, 250);overflow-wrap:normal;border-radius:4px;display:block;overflow-x:auto;padding:0.5em;font-size:14px;">docker <span style="margin:0px;padding:0px;font-weight:normal;outline:0px;box-sizing:border-box;overflow-wrap:break-word;color:rgb(166, 38, 164);font-family:&quot;Source Code Pro&quot;, &quot;DejaVu Sans Mono&quot;, &quot;Ubuntu Mono&quot;, &quot;Anonymous Pro&quot;, &quot;Droid Sans Mono&quot;, Menlo, Monaco, Consolas, Inconsolata, Courier, monospace, &quot;PingFang SC&quot;, &quot;Microsoft YaHei&quot;, sans-serif;font-size:14px;">commit</span> containerid foo/live</code></pre> 
+<ul style="font-weight:normal;outline:0px;list-style:none;overflow-wrap:break-word;box-sizing:border-box;font-size:16px;margin:0px 0px 24px;padding:0px;"><li style="font-weight:normal;list-style:none;outline:0px;padding:0px;overflow-wrap:break-word;box-sizing:border-box;list-style-type:disc;margin:8px 0px 0px 32px;">1</li></ul>
+<p style="outline:0px;padding:0px;overflow-wrap:break-word;color:rgb(77, 77, 77);overflow:auto hidden;margin:0px 0px 16px;font-weight:400;box-sizing:border-box;font-size:16px;line-height:26px;">2.运行镜像并添加端口</p> 
+<pre style="font-weight:normal;outline:0px;position:relative;box-sizing:border-box;white-space:pre-wrap;overflow-x:auto;margin:0px 0px 24px;padding:8px;overflow-wrap:break-word;font-family:Consolas, Inconsolata, Courier, monospace;font-size:14px;line-height:22px;color:rgb(0, 0, 0);"><code style="outline:0px;box-sizing:border-box;font-family:&quot;Source Code Pro&quot;, &quot;DejaVu Sans Mono&quot;, &quot;Ubuntu Mono&quot;, &quot;Anonymous Pro&quot;, &quot;Droid Sans Mono&quot;, Menlo, Monaco, Consolas, Inconsolata, Courier, monospace, &quot;PingFang SC&quot;, &quot;Microsoft YaHei&quot;, sans-serif;line-height:22px;white-space:pre;tab-size:4;color:rgb(56, 58, 66);background:rgb(250, 250, 250);overflow-wrap:normal;border-radius:4px;display:block;overflow-x:auto;padding:0.5em;font-size:14px;"><span style="margin:0px;padding:0px;font-weight:normal;outline:0px;box-sizing:border-box;overflow-wrap:break-word;color:rgb(80, 161, 79);font-family:&quot;Source Code Pro&quot;, &quot;DejaVu Sans Mono&quot;, &quot;Ubuntu Mono&quot;, &quot;Anonymous Pro&quot;, &quot;Droid Sans Mono&quot;, Menlo, Monaco, Consolas, Inconsolata, Courier, monospace, &quot;PingFang SC&quot;, &quot;Microsoft YaHei&quot;, sans-serif;font-size:14px;">docker</span> run -d -p <span style="margin:0px;padding:0px;font-weight:normal;outline:0px;box-sizing:border-box;overflow-wrap:break-word;color:rgb(152, 104, 1);font-family:&quot;Source Code Pro&quot;, &quot;DejaVu Sans Mono&quot;, &quot;Ubuntu Mono&quot;, &quot;Anonymous Pro&quot;, &quot;Droid Sans Mono&quot;, Menlo, Monaco, Consolas, Inconsolata, Courier, monospace, &quot;PingFang SC&quot;, &quot;Microsoft YaHei&quot;, sans-serif;font-size:14px;">8000</span>:<span style="margin:0px;padding:0px;font-weight:normal;outline:0px;box-sizing:border-box;overflow-wrap:break-word;color:rgb(152, 104, 1);font-family:&quot;Source Code Pro&quot;, &quot;DejaVu Sans Mono&quot;, &quot;Ubuntu Mono&quot;, &quot;Anonymous Pro&quot;, &quot;Droid Sans Mono&quot;, Menlo, Monaco, Consolas, Inconsolata, Courier, monospace, &quot;PingFang SC&quot;, &quot;Microsoft YaHei&quot;, sans-serif;font-size:14px;">80</span>  foo/live /bin/bash</code></pre>
+                </div><div style="font-weight:normal;outline:0px;box-sizing:inherit;margin:0px;padding:0px;overflow-wrap:break-word;"><div style="font-weight:normal;outline:0px;box-sizing:inherit;margin:0px;padding:0px;overflow-wrap:break-word;"></div></div>
+        <span style="font-weight:normal;height:0px;visibility:hidden;display:block;clear:both;"></span></div>
+    </div>
+</div></span></div></div></div></div></div>
+</div>
+</div>
+<a class="back-link" href="../articles.html">← 返回笔记列表</a>
+</body>
+</html>

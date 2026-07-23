@@ -1,0 +1,312 @@
+<!DOCTYPE html>
+<html lang="zh-CN" data-theme="light">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>python 类型注解 - wztshine - 博客园 — 技术笔记</title>
+<style>
+:root { --bg:#fff; --text:#1a1a1a; --muted:#666; --border:#e0e0e0; --code-bg:#f5f5f5; --link:#0066cc; }
+@media (prefers-color-scheme: dark) { :root { --bg:#1a1a1a; --text:#e0e0e0; --muted:#999; --border:#333; --code-bg:#2a2a2a; --link:#66bbff; } }
+* { box-sizing:border-box; margin:0; padding:0; }
+body { font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Arial,sans-serif; line-height:1.7; color:var(--text); background:var(--bg); max-width:860px; margin:0 auto; padding:2rem 1.5rem; }
+.note-header { border-bottom:2px solid var(--border); padding-bottom:1rem; margin-bottom:2rem; }
+.note-title { font-size:1.6rem; font-weight:700; margin-bottom:0.3rem; }
+.note-meta { color:var(--muted); font-size:0.85rem; }
+.note-content { font-size:0.95rem; }
+.note-content h1 { font-size:1.4rem; margin:1.2rem 0 0.6rem; }
+.note-content h2 { font-size:1.2rem; margin:1rem 0 0.5rem; }
+.note-content h3 { font-size:1.05rem; margin:0.8rem 0 0.4rem; }
+.note-content p { margin:0.5rem 0; }
+.note-content ul,.note-content ol { margin:0.5rem 0 0.5rem 2rem; }
+.note-content li { margin:0.2rem 0; }
+.note-content pre { background:var(--code-bg); padding:1rem; border-radius:6px; overflow-x:auto; margin:0.8rem 0; font-size:0.85rem; }
+.note-content code { background:var(--code-bg); padding:0.1rem 0.3rem; border-radius:3px; font-size:0.88em; }
+.note-content pre code { background:none; padding:0; }
+.note-content blockquote { border-left:3px solid var(--border); padding-left:1rem; color:var(--muted); margin:0.8rem 0; }
+.note-content a { color:var(--link); }
+.note-content img { max-width:100%; height:auto; border-radius:6px; margin:0.5rem 0; }
+.note-content table { border-collapse:collapse; width:100%; margin:0.8rem 0; }
+.note-content th,.note-content td { border:1px solid var(--border); padding:0.5rem; }
+.note-content th { background:var(--code-bg); }
+.media-placeholder { background:var(--code-bg); padding:1rem; text-align:center; color:var(--muted); border-radius:6px; margin:0.5rem 0; font-size:0.85rem; }
+.encrypt-placeholder { background:#fff3cd; padding:0.5rem; text-align:center; color:#856404; border-radius:6px; margin:0.5rem 0; font-size:0.85rem; }
+.back-link { display:inline-block; margin-top:2rem; color:var(--link); text-decoration:none; font-size:0.85rem; }
+</style>
+</head>
+<body>
+<div class="note-header"><div class="note-title">python 类型注解 - wztshine - 博客园</div><div class="note-meta">笔记本：python</div></div>
+<div class="note-content"><div style="--en-clipped-content:article">
+<div><br/></div><div style="font-size: 16px; display:block; min-width: 100%; position: relative;"> <div style="--olcb-folder-code-block-max-height:80vh;--cnb-code-bg:rgb(245, 245, 245);--cnb-code-font-size:12px;--cnb-code-color:rgb(68, 68, 68);"><div style="tab-size:4;color:rgb(0, 0, 0);font-family:&quot;PingFang SC&quot;, &quot;Microsoft YaHei&quot;, &quot;Helvetica Neue&quot;, Helvetica, Arial, sans-serif;background:50% 5% / cover rgb(255, 255, 255);text-size-adjust:none;font-size:14px;"><div style="background-color:rgba(245, 245, 245, 0.5);box-shadow:rgba(0, 0, 0, 0.3) 0px 2px 6px;min-width:unset;"><div style="text-align:left;overflow:hidden;min-width:auto;"><div style="text-overflow:ellipsis;overflow:hidden;word-break:break-all;"><div><div><div style="text-overflow:ellipsis;overflow:hidden;word-break:break-all;border-radius:7px;box-shadow:rgb(167, 168, 173) 1px 1px 2px;background:rgba(255, 255, 255, 0.5);"><div><div style="line-height:1.8;color:rgb(0, 0, 0);"><div style="word-break:break-word;">
+<h1 style="color:rgb(0, 0, 0);font-family:微软雅黑, 宋体, 黑体, Arial;border-left:5px solid rgb(255, 193, 37);font-size:20px;font-weight:bold;line-height:34px;padding:8px 0px 5px 7px;margin:18px 0px;">python 类型提示</h1>
+<p style="padding:0px;text-indent:0px;margin:10px auto;">本文参考自：<a href="https://www.cnblogs.com/poloyy/p/15170297.html" target="_blank" rel="noopener" style="margin:0px;padding:0px;color:rgb(0, 0, 0);text-decoration:underline;">https://www.cnblogs.com/poloyy/p/15170297.html</a></p>
+<p style="padding:0px;text-indent:0px;margin:10px auto;">写在前面：Python 运行时不强制执行函数和变量类型注解，但这些注解可用于类型检查器、IDE、静态检查器等第三方工具。（换句话说，本文下面所说的类型，都是供代码检查器，IDE提示用的，并不是说你设置了类型，就真的变成像 java 那样的强类型定义语言了）</p>
+<h2 style="color:rgb(0, 0, 0);font-family:微软雅黑, 宋体, 黑体, Arial;border-left:5px solid rgb(255, 193, 37);font-size:17px;font-weight:bold;line-height:25px;padding:8px 0px 5px 7px;margin:18px 0px;">简单入门</h2>
+<p style="padding:0px;text-indent:0px;margin:10px auto;">python 是一门动态语言，因此在你拿到一个变量之前，你无法知道一个变量到底是什么类型的，因此当你传递一个变量给一个函数，尽管你内心知道这个参数会是某个特定的类型，但是 IDE 不知道它会是什么类型，因此它不会给你任何的代码提示。</p>
+<p style="padding:0px;text-indent:0px;margin:10px auto;">因此，Python 3.5、3.6 新增了两个特性 PEP 484 和 PEP 526，帮助 IDE 为我们提供更智能的提示（并不会影响语言本身），简单的写法：</p>
+<pre style="border-radius:4px;background-color: #fbfaf8;border: 1px solid rgba(0,0,0,.14902);color: #333;font-size: 12px;padding: 8px;font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif;box-sizing: border-box;"><code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span style="margin:0px;padding:0px;color:rgb(0, 128, 0);"># 声明变量时使用</span>
+num: <span style="margin:0px;padding:0px;color:rgb(0, 0, 255);">int</span> = <span style="margin:0px;padding:0px;color:rgb(136, 0, 0);">1</span>
+str1: <span style="margin:0px;padding:0px;color:rgb(0, 0, 255);">str</span>
+    
+
+<span style="margin:0px;padding:0px;color:rgb(0, 128, 0);"># 函数参数也可以使用</span>
+<span style="margin:0px;padding:0px;color:rgb(0, 0, 255);">def</span> <span style="margin:0px;padding:0px;color:rgb(163, 21, 21);">test</span>(<span style="margin:0px;padding:0px;">num: <span style="margin:0px;padding:0px;color:rgb(0, 0, 255);">int</span> = <span style="margin:0px;padding:0px;color:rgb(136, 0, 0);">1</span></span>):
+    <span style="margin:0px;padding:0px;color:rgb(0, 0, 255);">return</span> num
+</code></pre>
+<blockquote style="border:2px solid rgb(239, 239, 239);border-left:3px solid rgb(226, 223, 223);border-right:none;border-top:none;border-bottom:none;margin:10px 0px;padding:5px 10px;background:url(https://www.cnblogs.com/skins/darkgreentrip/images/comment.gif) 25px 0px no-repeat;line-height:1.6;color:rgb(51, 51, 51);background-image:none;">
+<p style="padding:0px;text-indent:0px;margin:10px auto;">在定义一个变量时，直接在后面 <code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif">: 类型</code> 就可以给这个变量指定一个类型，后面可以继续写赋值语句 <code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif">= 1</code>，不写赋值语句也不会出错</p>
+</blockquote>
+<h3 style="color:rgb(0, 0, 0);font-family:微软雅黑, 宋体, 黑体, Arial;border-left:5px solid rgb(255, 193, 37);font-size:16px;font-weight:bold;line-height:17px;padding:5px 0px 5px 5px;margin:12px 0px;">指定函数返回值类型</h3>
+<pre style="border-radius:4px;background-color: #fbfaf8;border: 1px solid rgba(0,0,0,.14902);color: #333;font-size: 12px;padding: 8px;font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif;box-sizing: border-box;"><code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span style="margin:0px;padding:0px;color:rgb(0, 0, 255);">def</span> <span style="margin:0px;padding:0px;color:rgb(163, 21, 21);">test</span>(<span style="margin:0px;padding:0px;">num: <span style="margin:0px;padding:0px;color:rgb(0, 0, 255);">int</span> = <span style="margin:0px;padding:0px;color:rgb(136, 0, 0);">1</span></span>) -&gt; <span style="margin:0px;padding:0px;color:rgb(0, 0, 255);">int</span>:  <span style="margin:0px;padding:0px;color:rgb(0, 128, 0);"># -&gt; 可以指明函数的返回值类型</span>
+    <span style="margin:0px;padding:0px;color:rgb(0, 0, 255);">return</span> num
+
+
+<span style="margin:0px;padding:0px;color:rgb(0, 0, 255);">def</span> <span style="margin:0px;padding:0px;color:rgb(163, 21, 21);">test</span>(<span style="margin:0px;padding:0px;">num: <span style="margin:0px;padding:0px;color:rgb(0, 0, 255);">int</span> = <span style="margin:0px;padding:0px;color:rgb(136, 0, 0);">1</span></span>) -&gt; <span style="margin:0px;padding:0px;color:rgb(163, 21, 21);">None</span>:  <span style="margin:0px;padding:0px;color:rgb(0, 128, 0);"># -&gt; 可以指明函数的返回值类型</span>
+    <span style="margin:0px;padding:0px;color:rgb(0, 0, 255);">return</span> <span style="margin:0px;padding:0px;color:rgb(163, 21, 21);">None</span>
+</code></pre>
+<blockquote style="border:2px solid rgb(239, 239, 239);border-left:3px solid rgb(226, 223, 223);border-right:none;border-top:none;border-bottom:none;margin:10px 0px;padding:5px 10px;background:url(https://www.cnblogs.com/skins/darkgreentrip/images/comment.gif) 25px 0px no-repeat;line-height:1.6;color:rgb(51, 51, 51);background-image:none;">
+<p style="padding:0px;text-indent:0px;margin:10px auto;">在函数的冒号之前， <code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif">-&gt;</code> 可以指定函数的返回值类型<br style="margin:0px;padding:0px;"/>
+注意，None 是一种类型提示特例</p>
+</blockquote>
+<h3 style="color:rgb(0, 0, 0);font-family:微软雅黑, 宋体, 黑体, Arial;border-left:5px solid rgb(255, 193, 37);font-size:16px;font-weight:bold;line-height:17px;padding:5px 0px 5px 5px;margin:12px 0px;">查看函数注解</h3>
+<p style="padding:0px;text-indent:0px;margin:10px auto;">我们可以通过 <code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif">__annotations__</code> 查看一个函数的注解</p>
+<pre style="border-radius:4px;background-color: #fbfaf8;border: 1px solid rgba(0,0,0,.14902);color: #333;font-size: 12px;padding: 8px;font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif;box-sizing: border-box;"><code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span style="margin:0px;padding:0px;color:rgb(0, 0, 255);">def</span> <span style="margin:0px;padding:0px;color:rgb(163, 21, 21);">test</span>(<span style="margin:0px;padding:0px;">a: <span style="margin:0px;padding:0px;color:rgb(0, 0, 255);">str</span>, b: <span style="margin:0px;padding:0px;color:rgb(0, 0, 255);">int</span> = <span style="margin:0px;padding:0px;color:rgb(136, 0, 0);">2</span></span>) -&gt; <span style="margin:0px;padding:0px;color:rgb(163, 21, 21);">None</span>:
+    <span style="margin:0px;padding:0px;color:rgb(0, 0, 255);">pass</span>
+
+<span style="margin:0px;padding:0px;color:rgb(0, 0, 255);">print</span>(test.__annotations__)
+</code></pre>
+<blockquote style="border:2px solid rgb(239, 239, 239);border-left:3px solid rgb(226, 223, 223);border-right:none;border-top:none;border-bottom:none;margin:10px 0px;padding:5px 10px;background:url(https://www.cnblogs.com/skins/darkgreentrip/images/comment.gif) 25px 0px no-repeat;line-height:1.6;color:rgb(51, 51, 51);background-image:none;">
+<p style="padding:0px;text-indent:0px;margin:10px auto;">打印结果： <code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif">{'a': &lt;class 'str'&gt;, 'b': &lt;class 'int'&gt;, 'return': None}</code></p>
+</blockquote>
+<h2 style="color:rgb(0, 0, 0);font-family:微软雅黑, 宋体, 黑体, Arial;border-left:5px solid rgb(255, 193, 37);font-size:17px;font-weight:bold;line-height:25px;padding:8px 0px 5px 7px;margin:18px 0px;">常用类型</h2>
+<ul style="margin:0px;padding:0px;word-break:break-all;padding-left:0px;list-style-type:disc;margin-left:30px;">
+<li style="margin:0px;padding:0px;list-style-type:disc;margin-bottom:1em;list-style:inherit;">
+<p style="padding:0px;text-indent:0px;margin:10px auto;">int, long, float: 整型,长整形,浮点型;</p>
+</li>
+<li style="margin:0px;padding:0px;list-style-type:disc;margin-bottom:1em;list-style:inherit;">
+<p style="padding:0px;text-indent:0px;margin:10px auto;">bool, str: 布尔型，字符串类型；</p>
+</li>
+<li style="margin:0px;padding:0px;list-style-type:disc;margin-bottom:1em;list-style:inherit;">
+<p style="padding:0px;text-indent:0px;margin:10px auto;">list, tuple, dict, set: 列表，元组，字典, 集合;</p>
+</li>
+<li style="margin:0px;padding:0px;list-style-type:disc;margin-bottom:1em;list-style:inherit;">
+<p style="padding:0px;text-indent:0px;margin:10px auto;">Iterable,Iterator: 可迭代类型，迭代器类型；</p>
+</li>
+<li style="margin:0px;padding:0px;list-style-type:disc;margin-bottom:1em;list-style:inherit;">
+<p style="padding:0px;text-indent:0px;margin:10px auto;">Generator: 生成器类型；</p>
+</li>
+</ul>
+<blockquote style="border:2px solid rgb(239, 239, 239);border-left:3px solid rgb(226, 223, 223);border-right:none;border-top:none;border-bottom:none;margin:10px 0px;padding:5px 10px;background:url(https://www.cnblogs.com/skins/darkgreentrip/images/comment.gif) 25px 0px no-repeat;line-height:1.6;color:rgb(51, 51, 51);background-image:none;">
+<p style="padding:0px;text-indent:0px;margin:10px auto;">python3.9以后可以直接使用 list, dict, set, tuple 等类型，3.9 以前可能需要 <code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif">from typing import List, Dict, Set, Tuple</code></p>
+<p style="padding:0px;text-indent:0px;margin:10px auto;">py3.9 需要从 <code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif">from collections.abc import Iterable, Generator, Iterator</code>，3.9以前需要：<code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif">from typing import Iterable, Generator, Iterator</code></p>
+</blockquote>
+<h3 style="color:rgb(0, 0, 0);font-family:微软雅黑, 宋体, 黑体, Arial;border-left:5px solid rgb(255, 193, 37);font-size:16px;font-weight:bold;line-height:17px;padding:5px 0px 5px 5px;margin:12px 0px;">list，set</h3>
+<p style="padding:0px;text-indent:0px;margin:10px auto;">list，set 类型提示，只可以给它们的内部元素指定<strong style="margin:0px;padding:0px;">一种类型</strong>，否则会报错：</p>
+<pre style="border-radius:4px;background-color: #fbfaf8;border: 1px solid rgba(0,0,0,.14902);color: #333;font-size: 12px;padding: 8px;font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif;box-sizing: border-box;"><code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif">a: <span style="margin:0px;padding:0px;color:rgb(0, 0, 255);">list</span>[<span style="margin:0px;padding:0px;color:rgb(0, 0, 255);">int</span>] = []  <span style="margin:0px;padding:0px;color:rgb(0, 128, 0);"># list[类型] ，list内部只能指定一种类型</span>
+
+a.append(<span style="margin:0px;padding:0px;color:rgb(136, 0, 0);">1</span>)
+a.append(<span style="margin:0px;padding:0px;color:rgb(163, 21, 21);">'2'</span>)  <span style="margin:0px;padding:0px;color:rgb(0, 128, 0);"># 尽管指定了 int 类型，但是可以添加 str 类型的元素。</span>
+
+<span style="margin:0px;padding:0px;color:rgb(0, 128, 0);"># ---------------  同理： set[] ----------------------------</span>
+
+b: <span style="margin:0px;padding:0px;color:rgb(0, 0, 255);">set</span>[<span style="margin:0px;padding:0px;color:rgb(0, 0, 255);">int</span>] = {<span style="margin:0px;padding:0px;color:rgb(136, 0, 0);">1</span>}
+</code></pre>
+<blockquote style="border:2px solid rgb(239, 239, 239);border-left:3px solid rgb(226, 223, 223);border-right:none;border-top:none;border-bottom:none;margin:10px 0px;padding:5px 10px;background:url(https://www.cnblogs.com/skins/darkgreentrip/images/comment.gif) 25px 0px no-repeat;line-height:1.6;color:rgb(51, 51, 51);background-image:none;">
+<p style="padding:0px;text-indent:0px;margin:10px auto;">我们之前说过，类型提示只是进行提示用的，并不会真的校验我们给它的赋值。</p>
+<p style="padding:0px;text-indent:0px;margin:10px auto;">list，set后面跟的是中括号： <code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif">[]</code></p>
+</blockquote>
+<h3 style="color:rgb(0, 0, 0);font-family:微软雅黑, 宋体, 黑体, Arial;border-left:5px solid rgb(255, 193, 37);font-size:16px;font-weight:bold;line-height:17px;padding:5px 0px 5px 5px;margin:12px 0px;">tuple</h3>
+<p style="padding:0px;text-indent:0px;margin:10px auto;">tuple 可以指定多种类型。</p>
+<pre style="border-radius:4px;background-color: #fbfaf8;border: 1px solid rgba(0,0,0,.14902);color: #333;font-size: 12px;padding: 8px;font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif;box-sizing: border-box;"><code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif">c: <span style="margin:0px;padding:0px;color:rgb(0, 0, 255);">tuple</span>[<span style="margin:0px;padding:0px;color:rgb(0, 0, 255);">int</span>, <span style="margin:0px;padding:0px;color:rgb(0, 0, 255);">str</span>] = (<span style="margin:0px;padding:0px;color:rgb(136, 0, 0);">1</span>, <span style="margin:0px;padding:0px;color:rgb(163, 21, 21);">'2'</span>)  <span style="margin:0px;padding:0px;color:rgb(0, 128, 0);"># 元组的第一个元素是 int 类型，第二个元素是 str 类型</span>
+</code></pre>
+<p style="padding:0px;text-indent:0px;margin:10px auto;">如果想给 tuple 指定一种类型，但是你 tuple 的长度大于1，需要加上 <code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif">...</code></p>
+<pre style="border-radius:4px;background-color: #fbfaf8;border: 1px solid rgba(0,0,0,.14902);color: #333;font-size: 12px;padding: 8px;font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif;box-sizing: border-box;"><code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif">c: <span style="margin:0px;padding:0px;color:rgb(0, 0, 255);">tuple</span>[<span style="margin:0px;padding:0px;color:rgb(0, 0, 255);">int</span>, ...] = (<span style="margin:0px;padding:0px;color:rgb(136, 0, 0);">1</span>, <span style="margin:0px;padding:0px;color:rgb(136, 0, 0);">2</span>, <span style="margin:0px;padding:0px;color:rgb(136, 0, 0);">3</span>, <span style="margin:0px;padding:0px;color:rgb(136, 0, 0);">4</span>)  <span style="margin:0px;padding:0px;color:rgb(0, 128, 0);"># 代表无论元组有多少元素，都是 int 类型</span>
+</code></pre>
+<h3 style="color:rgb(0, 0, 0);font-family:微软雅黑, 宋体, 黑体, Arial;border-left:5px solid rgb(255, 193, 37);font-size:16px;font-weight:bold;line-height:17px;padding:5px 0px 5px 5px;margin:12px 0px;">dict</h3>
+<p style="padding:0px;text-indent:0px;margin:10px auto;">dict 可以指定两种类型：分别代表键，值的类型：</p>
+<pre style="border-radius:4px;background-color: #fbfaf8;border: 1px solid rgba(0,0,0,.14902);color: #333;font-size: 12px;padding: 8px;font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif;box-sizing: border-box;"><code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif">d: <span style="margin:0px;padding:0px;color:rgb(0, 0, 255);">dict</span>[<span style="margin:0px;padding:0px;color:rgb(0, 0, 255);">str</span>, <span style="margin:0px;padding:0px;color:rgb(0, 0, 255);">int</span>] = {<span style="margin:0px;padding:0px;color:rgb(163, 21, 21);">'1'</span>: <span style="margin:0px;padding:0px;color:rgb(136, 0, 0);">1</span>}
+</code></pre>
+<h3 style="color:rgb(0, 0, 0);font-family:微软雅黑, 宋体, 黑体, Arial;border-left:5px solid rgb(255, 193, 37);font-size:16px;font-weight:bold;line-height:17px;padding:5px 0px 5px 5px;margin:12px 0px;">嵌套类型</h3>
+<p style="padding:0px;text-indent:0px;margin:10px auto;">各个类型之间也可以嵌套：</p>
+<pre style="border-radius:4px;background-color: #fbfaf8;border: 1px solid rgba(0,0,0,.14902);color: #333;font-size: 12px;padding: 8px;font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif;box-sizing: border-box;"><code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif">e: <span style="margin:0px;padding:0px;color:rgb(0, 0, 255);">dict</span>[<span style="margin:0px;padding:0px;color:rgb(0, 0, 255);">str</span>, <span style="margin:0px;padding:0px;color:rgb(0, 0, 255);">list</span>[<span style="margin:0px;padding:0px;color:rgb(0, 0, 255);">int</span>]] = {<span style="margin:0px;padding:0px;color:rgb(163, 21, 21);">'1'</span>: [<span style="margin:0px;padding:0px;color:rgb(136, 0, 0);">1</span>,<span style="margin:0px;padding:0px;color:rgb(136, 0, 0);">2</span>]}
+</code></pre>
+<h3 style="color:rgb(0, 0, 0);font-family:微软雅黑, 宋体, 黑体, Arial;border-left:5px solid rgb(255, 193, 37);font-size:16px;font-weight:bold;line-height:17px;padding:5px 0px 5px 5px;margin:12px 0px;">类型的别名</h3>
+<p style="padding:0px;text-indent:0px;margin:10px auto;">其实类型的重命名，应该属于python的用法，不是类型提示的特殊语法：</p>
+<pre style="border-radius:4px;background-color: #fbfaf8;border: 1px solid rgba(0,0,0,.14902);color: #333;font-size: 12px;padding: 8px;font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif;box-sizing: border-box;"><code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif">My_type = <span style="margin:0px;padding:0px;color:rgb(0, 0, 255);">dict</span>[<span style="margin:0px;padding:0px;color:rgb(0, 0, 255);">str</span>, <span style="margin:0px;padding:0px;color:rgb(0, 0, 255);">list</span>[<span style="margin:0px;padding:0px;color:rgb(0, 0, 255);">int</span>]]  <span style="margin:0px;padding:0px;color:rgb(0, 128, 0);"># 给类型重命名</span>
+e:  My_type = {<span style="margin:0px;padding:0px;color:rgb(163, 21, 21);">'1'</span>: [<span style="margin:0px;padding:0px;color:rgb(136, 0, 0);">1</span>,<span style="margin:0px;padding:0px;color:rgb(136, 0, 0);">2</span>]}
+</code></pre>
+<h3 style="color:rgb(0, 0, 0);font-family:微软雅黑, 宋体, 黑体, Arial;border-left:5px solid rgb(255, 193, 37);font-size:16px;font-weight:bold;line-height:17px;padding:5px 0px 5px 5px;margin:12px 0px;">TypeAlias 别名</h3>
+<p style="padding:0px;text-indent:0px;margin:10px auto;">和上面别名一样，只不过显式的说明，这个一个别名。</p>
+<pre style="border-radius:4px;background-color: #fbfaf8;border: 1px solid rgba(0,0,0,.14902);color: #333;font-size: 12px;padding: 8px;font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif;box-sizing: border-box;"><code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span style="margin:0px;padding:0px;color:rgb(0, 0, 255);">from</span> typing <span style="margin:0px;padding:0px;color:rgb(0, 0, 255);">import</span> TypeAlias
+
+Factors: TypeAlias = <span style="margin:0px;padding:0px;color:rgb(0, 0, 255);">list</span>[<span style="margin:0px;padding:0px;color:rgb(0, 0, 255);">int</span>]  <span style="margin:0px;padding:0px;color:rgb(0, 128, 0);"># 相当于 Factors = list[int]</span>
+    
+x: Factors = [<span style="margin:0px;padding:0px;color:rgb(136, 0, 0);">1</span>,<span style="margin:0px;padding:0px;color:rgb(136, 0, 0);">2</span>,<span style="margin:0px;padding:0px;color:rgb(136, 0, 0);">3</span>]
+</code></pre>
+<h3 style="color:rgb(0, 0, 0);font-family:微软雅黑, 宋体, 黑体, Arial;border-left:5px solid rgb(255, 193, 37);font-size:16px;font-weight:bold;line-height:17px;padding:5px 0px 5px 5px;margin:12px 0px;">自定义类型：NewType</h3>
+<p style="padding:0px;text-indent:0px;margin:10px auto;">和重命名有点类似，但是自定义类型相当于创建了某个类型的子类</p>
+<pre style="border-radius:4px;background-color: #fbfaf8;border: 1px solid rgba(0,0,0,.14902);color: #333;font-size: 12px;padding: 8px;font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif;box-sizing: border-box;"><code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif">UserId = NewType(<span style="margin:0px;padding:0px;color:rgb(163, 21, 21);">'UserId'</span>, <span style="margin:0px;padding:0px;color:rgb(0, 0, 255);">int</span>)  <span style="margin:0px;padding:0px;color:rgb(0, 128, 0);"># 创建一个新类型(类型名字，类型)</span>
+
+num: UserId = UserId(<span style="margin:0px;padding:0px;color:rgb(163, 21, 21);">'1'</span>)
+<span style="margin:0px;padding:0px;color:rgb(0, 0, 255);">print</span>(num, <span style="margin:0px;padding:0px;color:rgb(0, 0, 255);">type</span>(num))  <span style="margin:0px;padding:0px;color:rgb(0, 128, 0);"># 1 &lt;class 'str'&gt;</span>
+</code></pre>
+<blockquote style="border:2px solid rgb(239, 239, 239);border-left:3px solid rgb(226, 223, 223);border-right:none;border-top:none;border-bottom:none;margin:10px 0px;padding:5px 10px;background:url(https://www.cnblogs.com/skins/darkgreentrip/images/comment.gif) 25px 0px no-repeat;line-height:1.6;color:rgb(51, 51, 51);background-image:none;">
+<p style="padding:0px;text-indent:0px;margin:10px auto;">可以看出，真实的数据类型还是 <code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif">str </code>, 说明了类型提示并不会对真实的代码产生影响，只是IDE类型提示时会显示该填入某种类型。</p>
+</blockquote>
+<h3 style="color:rgb(0, 0, 0);font-family:微软雅黑, 宋体, 黑体, Arial;border-left:5px solid rgb(255, 193, 37);font-size:16px;font-weight:bold;line-height:17px;padding:5px 0px 5px 5px;margin:12px 0px;">Literal</h3>
+<p style="padding:0px;text-indent:0px;margin:10px auto;">字面量类型，只接受指定的内容。</p>
+<pre style="border-radius:4px;background-color: #fbfaf8;border: 1px solid rgba(0,0,0,.14902);color: #333;font-size: 12px;padding: 8px;font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif;box-sizing: border-box;"><code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span style="margin:0px;padding:0px;color:rgb(0, 0, 255);">from</span> typing <span style="margin:0px;padding:0px;color:rgb(0, 0, 255);">import</span> <span style="margin:0px;padding:0px;color:rgb(163, 21, 21);">Literal</span>
+
+M = <span style="margin:0px;padding:0px;color:rgb(163, 21, 21);">Literal</span>[<span style="margin:0px;padding:0px;color:rgb(163, 21, 21);">'r'</span>,<span style="margin:0px;padding:0px;color:rgb(163, 21, 21);">'w'</span>,<span style="margin:0px;padding:0px;color:rgb(163, 21, 21);">'rb'</span>]  <span style="margin:0px;padding:0px;color:rgb(0, 128, 0);"># 用户输入别的内容，会进行代码提示</span>
+
+<span style="margin:0px;padding:0px;color:rgb(0, 0, 255);">def</span> <span style="margin:0px;padding:0px;color:rgb(163, 21, 21);">test</span>(<span style="margin:0px;padding:0px;">mode: M</span>):
+    <span style="margin:0px;padding:0px;color:rgb(0, 0, 255);">pass</span>
+
+test(<span style="margin:0px;padding:0px;color:rgb(163, 21, 21);">'xb'</span>)  <span style="margin:0px;padding:0px;color:rgb(0, 128, 0);"># Expected type 'Literal['r', 'w', 'rb']', got 'Literal['xb']' instead </span>
+</code></pre>
+<h3 style="color:rgb(0, 0, 0);font-family:微软雅黑, 宋体, 黑体, Arial;border-left:5px solid rgb(255, 193, 37);font-size:16px;font-weight:bold;line-height:17px;padding:5px 0px 5px 5px;margin:12px 0px;">Optional</h3>
+<p style="padding:0px;text-indent:0px;margin:10px auto;">这个类型代表的是当前参数是一个可选参数，只能接受一种类型，<code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif">Optional[X] </code> 等同于 <code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif">X | None</code> (或者<code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif">Union[X, None]</code>)，也就说是，它默认包含了 None：</p>
+<pre style="border-radius:4px;background-color: #fbfaf8;border: 1px solid rgba(0,0,0,.14902);color: #333;font-size: 12px;padding: 8px;font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif;box-sizing: border-box;"><code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span style="margin:0px;padding:0px;color:rgb(0, 0, 255);">from</span> typing <span style="margin:0px;padding:0px;color:rgb(0, 0, 255);">import</span> <span style="margin:0px;padding:0px;color:rgb(163, 21, 21);">Optional</span>
+
+<span style="margin:0px;padding:0px;color:rgb(0, 0, 255);">def</span> <span style="margin:0px;padding:0px;color:rgb(163, 21, 21);">test</span>(<span style="margin:0px;padding:0px;">x: <span style="margin:0px;padding:0px;color:rgb(163, 21, 21);">Optional</span>[<span style="margin:0px;padding:0px;color:rgb(0, 0, 255);">int</span>]=<span style="margin:0px;padding:0px;color:rgb(136, 0, 0);">1</span></span>):
+    <span style="margin:0px;padding:0px;color:rgb(0, 0, 255);">return</span> x
+</code></pre>
+<h3 style="color:rgb(0, 0, 0);font-family:微软雅黑, 宋体, 黑体, Arial;border-left:5px solid rgb(255, 193, 37);font-size:16px;font-weight:bold;line-height:17px;padding:5px 0px 5px 5px;margin:12px 0px;">Callable</h3>
+<p style="padding:0px;text-indent:0px;margin:10px auto;"><code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif">Callable[[Arg1Type, Arg2Type], ReturnType]</code> 可以用来提示一个可调用函数：</p>
+<pre style="border-radius:4px;background-color: #fbfaf8;border: 1px solid rgba(0,0,0,.14902);color: #333;font-size: 12px;padding: 8px;font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif;box-sizing: border-box;"><code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span style="margin:0px;padding:0px;color:rgb(0, 0, 255);">from</span> typing <span style="margin:0px;padding:0px;color:rgb(0, 0, 255);">import</span> <span style="margin:0px;padding:0px;color:rgb(163, 21, 21);">Callable</span>
+
+<span style="margin:0px;padding:0px;color:rgb(0, 0, 255);">def</span> <span style="margin:0px;padding:0px;color:rgb(163, 21, 21);">test</span>(<span style="margin:0px;padding:0px;">a: <span style="margin:0px;padding:0px;color:rgb(0, 0, 255);">int</span>, b: <span style="margin:0px;padding:0px;color:rgb(0, 0, 255);">int</span></span>) -&gt; <span style="margin:0px;padding:0px;color:rgb(0, 0, 255);">int</span>:  <span style="margin:0px;padding:0px;color:rgb(0, 128, 0);"># 第一个函数，接受两个 int 参数，返回 int</span>
+    <span style="margin:0px;padding:0px;color:rgb(0, 0, 255);">return</span> a+b
+
+<span style="margin:0px;padding:0px;color:rgb(0, 0, 255);">def</span> <span style="margin:0px;padding:0px;color:rgb(163, 21, 21);">test2</span>(<span style="margin:0px;padding:0px;">func: <span style="margin:0px;padding:0px;color:rgb(163, 21, 21);">Callable</span>[[<span style="margin:0px;padding:0px;color:rgb(0, 0, 255);">int</span>, <span style="margin:0px;padding:0px;color:rgb(0, 0, 255);">int</span>], <span style="margin:0px;padding:0px;color:rgb(0, 0, 255);">int</span>]</span>):  <span style="margin:0px;padding:0px;color:rgb(0, 128, 0);"># 第二个函数，类型是可调用对象：这个可调用对象的参数是 2 个int, 返回值是一个 int</span>
+    <span style="margin:0px;padding:0px;color:rgb(0, 0, 255);">return</span> func(<span style="margin:0px;padding:0px;color:rgb(136, 0, 0);">1</span>, <span style="margin:0px;padding:0px;color:rgb(136, 0, 0);">2</span>)
+
+test2(test)
+</code></pre>
+<blockquote style="border:2px solid rgb(239, 239, 239);border-left:3px solid rgb(226, 223, 223);border-right:none;border-top:none;border-bottom:none;margin:10px 0px;padding:5px 10px;background:url(https://www.cnblogs.com/skins/darkgreentrip/images/comment.gif) 25px 0px no-repeat;line-height:1.6;color:rgb(51, 51, 51);background-image:none;">
+<p style="padding:0px;text-indent:0px;margin:10px auto;">Callable 接受两个值，第一个值是包含可调用对象的所有参数类型的列表。第二个值是可调用对象的返回值类型。</p>
+<p style="padding:0px;text-indent:0px;margin:10px auto;">如果调用对象没有参数，或者有放多参数，可以这样写：</p>
+<p style="padding:0px;text-indent:0px;margin:10px auto;"><code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif">Callable[[], int]</code> 无参数，返回 int</p>
+<p style="padding:0px;text-indent:0px;margin:10px auto;"><code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif">Callable[..., int]</code> 不限定参数，返回 int</p>
+</blockquote>
+<h3 style="color:rgb(0, 0, 0);font-family:微软雅黑, 宋体, 黑体, Arial;border-left:5px solid rgb(255, 193, 37);font-size:16px;font-weight:bold;line-height:17px;padding:5px 0px 5px 5px;margin:12px 0px;">ClassVar 类变量</h3>
+<p style="padding:0px;text-indent:0px;margin:10px auto;">声明类变量的类型</p>
+<pre style="border-radius:4px;background-color: #fbfaf8;border: 1px solid rgba(0,0,0,.14902);color: #333;font-size: 12px;padding: 8px;font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif;box-sizing: border-box;"><code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span style="margin:0px;padding:0px;color:rgb(0, 0, 255);">class</span> <span style="margin:0px;padding:0px;color:rgb(163, 21, 21);">Starship</span>:
+    stats: ClassVar[<span style="margin:0px;padding:0px;color:rgb(0, 0, 255);">dict</span>[<span style="margin:0px;padding:0px;color:rgb(0, 0, 255);">str</span>, <span style="margin:0px;padding:0px;color:rgb(0, 0, 255);">int</span>]] = {} <span style="margin:0px;padding:0px;color:rgb(0, 128, 0);"># class variable</span>
+    damage: <span style="margin:0px;padding:0px;color:rgb(0, 0, 255);">int</span> = <span style="margin:0px;padding:0px;color:rgb(136, 0, 0);">10</span>                     <span style="margin:0px;padding:0px;color:rgb(0, 128, 0);"># instance variable</span>
+</code></pre>
+<h2 style="color:rgb(0, 0, 0);font-family:微软雅黑, 宋体, 黑体, Arial;border-left:5px solid rgb(255, 193, 37);font-size:17px;font-weight:bold;line-height:25px;padding:8px 0px 5px 7px;margin:18px 0px;">泛型 Generic</h2>
+<pre style="border-radius:4px;background-color: #fbfaf8;border: 1px solid rgba(0,0,0,.14902);color: #333;font-size: 12px;padding: 8px;font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif;box-sizing: border-box;"><code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span style="margin:0px;padding:0px;color:rgb(0, 0, 255);">from</span> typing <span style="margin:0px;padding:0px;color:rgb(0, 0, 255);">import</span> TypeVar, <span style="margin:0px;padding:0px;color:rgb(163, 21, 21);">Generic</span>
+
+T = TypeVar(<span style="margin:0px;padding:0px;color:rgb(163, 21, 21);">'T'</span>)  <span style="margin:0px;padding:0px;color:rgb(0, 128, 0);"># "T" 代表任意类型</span>
+
+
+<span style="margin:0px;padding:0px;color:rgb(0, 128, 0);"># A 继承自 Generic[T] ，所以这个类带有类型</span>
+<span style="margin:0px;padding:0px;color:rgb(0, 0, 255);">class</span> <span style="margin:0px;padding:0px;color:rgb(163, 21, 21);">A</span>(<span style="margin:0px;padding:0px;color:rgb(163, 21, 21);">Generic</span>[T]):
+    <span style="margin:0px;padding:0px;color:rgb(0, 0, 255);">def</span> <span style="margin:0px;padding:0px;color:rgb(163, 21, 21);">__init__</span>(<span style="margin:0px;padding:0px;">self, value: T</span>):  <span style="margin:0px;padding:0px;color:rgb(0, 128, 0);"># 初始化值：T 类型</span>
+        self.value = value
+
+    <span style="margin:0px;padding:0px;color:rgb(0, 0, 255);">def</span> <span style="margin:0px;padding:0px;color:rgb(163, 21, 21);">get_value</span>(<span style="margin:0px;padding:0px;">self</span>) -&gt; T:  <span style="margin:0px;padding:0px;color:rgb(0, 128, 0);"># 返回 T 类型</span>
+        <span style="margin:0px;padding:0px;color:rgb(0, 0, 255);">return</span> self.value
+
+    <span style="margin:0px;padding:0px;color:rgb(0, 0, 255);">def</span> <span style="margin:0px;padding:0px;color:rgb(163, 21, 21);">set_value</span>(<span style="margin:0px;padding:0px;">self, value: T</span>):  <span style="margin:0px;padding:0px;color:rgb(0, 128, 0);"># 设置的值：T 类型</span>
+        self.value = value
+
+
+<span style="margin:0px;padding:0px;color:rgb(0, 0, 255);">def</span> <span style="margin:0px;padding:0px;color:rgb(163, 21, 21);">test</span>(<span style="margin:0px;padding:0px;">a: A[<span style="margin:0px;padding:0px;color:rgb(0, 0, 255);">int</span>]</span>):  <span style="margin:0px;padding:0px;color:rgb(0, 128, 0);"># 注意：test 函数接受的参数，需是 A[int] 类型</span>
+    <span style="margin:0px;padding:0px;color:rgb(0, 0, 255);">print</span>(a.value)
+    a.set_value(<span style="margin:0px;padding:0px;color:rgb(163, 21, 21);">'str1'</span>)  <span style="margin:0px;padding:0px;color:rgb(0, 128, 0);"># 这里会提示：Expected type 'int' (matched generic type 'T'), got 'str' instead</span>
+    <span style="margin:0px;padding:0px;color:rgb(0, 0, 255);">print</span>(a.get_value())
+
+
+a = A[<span style="margin:0px;padding:0px;color:rgb(0, 0, 255);">str</span>](<span style="margin:0px;padding:0px;color:rgb(163, 21, 21);">'str1'</span>)  <span style="margin:0px;padding:0px;color:rgb(0, 128, 0);"># 实例化一个 str 类型的 A 对象</span>
+<span style="margin:0px;padding:0px;color:rgb(0, 128, 0);"># b = A[int](2)  # 也可以实例化一个 int 类型的 A 对象</span>
+test(a)  <span style="margin:0px;padding:0px;color:rgb(0, 128, 0);"># 将 str 类型的 A 对象，传递给 test，但是注意：test 接受的类型是 A[int]</span>
+
+</code></pre>
+<blockquote style="border:2px solid rgb(239, 239, 239);border-left:3px solid rgb(226, 223, 223);border-right:none;border-top:none;border-bottom:none;margin:10px 0px;padding:5px 10px;background:url(https://www.cnblogs.com/skins/darkgreentrip/images/comment.gif) 25px 0px no-repeat;line-height:1.6;color:rgb(51, 51, 51);background-image:none;">
+<p style="padding:0px;text-indent:0px;margin:10px auto;">上面的例子中，A 类继承了 <code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif">Generic[T]</code> ，代表了 A 类是一个<strong style="margin:0px;padding:0px;">有类型的类</strong>。我们在实例化它时，可以<strong style="margin:0px;padding:0px;">随意</strong>指定它的类型：<code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif">A[int](2)</code> ,但是一旦我们指定了某个类型，这个类中所有的 <code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif">T</code>类型 都会和实例化时的类型一致：<code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif">int</code></p>
+<p style="padding:0px;text-indent:0px;margin:10px auto;">因此在 <code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif">test(a: A[int])</code> 函数中，我们指定了要接受 <code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif">A[int]</code> 类型的参数。而我们传递的却是 <code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif">A[str]("str1")</code> 对象。所以调用 <code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif">a.set_value("str1")</code> 时，IDE 会提示类型不正确（但是代码能跑通，还是之前说的，它仅仅是做类型提示，不会真的影响赋值操作）</p>
+</blockquote>
+<h2 style="color:rgb(0, 0, 0);font-family:微软雅黑, 宋体, 黑体, Arial;border-left:5px solid rgb(255, 193, 37);font-size:17px;font-weight:bold;line-height:25px;padding:8px 0px 5px 7px;margin:18px 0px;">多类型</h2>
+<h3 style="color:rgb(0, 0, 0);font-family:微软雅黑, 宋体, 黑体, Arial;border-left:5px solid rgb(255, 193, 37);font-size:16px;font-weight:bold;line-height:17px;padding:5px 0px 5px 5px;margin:12px 0px;">Any</h3>
+<p style="padding:0px;text-indent:0px;margin:10px auto;">任意类型</p>
+<pre style="border-radius:4px;background-color: #fbfaf8;border: 1px solid rgba(0,0,0,.14902);color: #333;font-size: 12px;padding: 8px;font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif;box-sizing: border-box;"><code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span style="margin:0px;padding:0px;color:rgb(0, 0, 255);">from</span> typing <span style="margin:0px;padding:0px;color:rgb(0, 0, 255);">import</span> <span style="margin:0px;padding:0px;color:rgb(163, 21, 21);">Any</span>
+
+a: <span style="margin:0px;padding:0px;color:rgb(163, 21, 21);">Any</span> = <span style="margin:0px;padding:0px;color:rgb(163, 21, 21);">None</span>
+a = []          <span style="margin:0px;padding:0px;color:rgb(0, 128, 0);"># OK</span>
+a = <span style="margin:0px;padding:0px;color:rgb(136, 0, 0);">2</span>           <span style="margin:0px;padding:0px;color:rgb(0, 128, 0);"># OK</span>
+</code></pre>
+<h3 style="color:rgb(0, 0, 0);font-family:微软雅黑, 宋体, 黑体, Arial;border-left:5px solid rgb(255, 193, 37);font-size:16px;font-weight:bold;line-height:17px;padding:5px 0px 5px 5px;margin:12px 0px;">TypeVar</h3>
+<p style="padding:0px;text-indent:0px;margin:10px auto;">TypeVar 可以指定多种类型，或者任意类型</p>
+<p style="padding:0px;text-indent:0px;margin:10px auto;"><strong style="margin:0px;padding:0px;">任意类型</strong></p>
+<pre style="border-radius:4px;background-color: #fbfaf8;border: 1px solid rgba(0,0,0,.14902);color: #333;font-size: 12px;padding: 8px;font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif;box-sizing: border-box;"><code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span style="margin:0px;padding:0px;color:rgb(0, 0, 255);">from</span> typing <span style="margin:0px;padding:0px;color:rgb(0, 0, 255);">import</span> TypeVar, <span style="margin:0px;padding:0px;color:rgb(0, 0, 255);">list</span>
+
+T = TypeVar(<span style="margin:0px;padding:0px;color:rgb(163, 21, 21);">"T"</span>)  <span style="margin:0px;padding:0px;color:rgb(0, 128, 0);"># T 代表了任意类型</span>
+
+x: T = <span style="margin:0px;padding:0px;color:rgb(136, 0, 0);">2</span>
+y: T = <span style="margin:0px;padding:0px;color:rgb(163, 21, 21);">'abc'</span>
+</code></pre>
+<p style="padding:0px;text-indent:0px;margin:10px auto;"><strong style="margin:0px;padding:0px;">指定类型</strong></p>
+<pre style="border-radius:4px;background-color: #fbfaf8;border: 1px solid rgba(0,0,0,.14902);color: #333;font-size: 12px;padding: 8px;font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif;box-sizing: border-box;"><code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span style="margin:0px;padding:0px;color:rgb(0, 0, 255);">from</span> typing <span style="margin:0px;padding:0px;color:rgb(0, 0, 255);">import</span> TypeVar, <span style="margin:0px;padding:0px;color:rgb(0, 0, 255);">list</span>
+
+
+My = TypeVar(<span style="margin:0px;padding:0px;color:rgb(163, 21, 21);">'My'</span>, <span style="margin:0px;padding:0px;color:rgb(0, 0, 255);">int</span>, <span style="margin:0px;padding:0px;color:rgb(0, 0, 255);">str</span>, <span style="margin:0px;padding:0px;color:rgb(0, 0, 255);">list</span>[<span style="margin:0px;padding:0px;color:rgb(0, 0, 255);">int</span>])  <span style="margin:0px;padding:0px;color:rgb(0, 128, 0);"># 自定义一个类型，可以是 int 或 str 或 list[int] 之一</span>
+
+xx: My = <span style="margin:0px;padding:0px;color:rgb(163, 21, 21);">'ss'</span>
+yy: My = [<span style="margin:0px;padding:0px;color:rgb(136, 0, 0);">1</span>]
+</code></pre>
+<blockquote style="border:2px solid rgb(239, 239, 239);border-left:3px solid rgb(226, 223, 223);border-right:none;border-top:none;border-bottom:none;margin:10px 0px;padding:5px 10px;background:url(https://www.cnblogs.com/skins/darkgreentrip/images/comment.gif) 25px 0px no-repeat;line-height:1.6;color:rgb(51, 51, 51);background-image:none;">
+<p style="padding:0px;text-indent:0px;margin:10px auto;">注意这里的 <code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif">TypeVar()</code> ，后面用的是 <code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif">()</code> ，不是 <code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif">[]</code></p>
+</blockquote>
+<h3 style="color:rgb(0, 0, 0);font-family:微软雅黑, 宋体, 黑体, Arial;border-left:5px solid rgb(255, 193, 37);font-size:16px;font-weight:bold;line-height:17px;padding:5px 0px 5px 5px;margin:12px 0px;">Union</h3>
+<p style="padding:0px;text-indent:0px;margin:10px auto;">Union 也可以指定多种类型。</p>
+<pre style="border-radius:4px;background-color: #fbfaf8;border: 1px solid rgba(0,0,0,.14902);color: #333;font-size: 12px;padding: 8px;font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif;box-sizing: border-box;"><code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span style="margin:0px;padding:0px;color:rgb(0, 0, 255);">from</span> typing <span style="margin:0px;padding:0px;color:rgb(0, 0, 255);">import</span> TypeVar, <span style="margin:0px;padding:0px;color:rgb(0, 0, 255);">list</span>, <span style="margin:0px;padding:0px;color:rgb(163, 21, 21);">Union</span>
+
+x:<span style="margin:0px;padding:0px;color:rgb(163, 21, 21);">Union</span>[<span style="margin:0px;padding:0px;color:rgb(0, 0, 255);">int</span>, <span style="margin:0px;padding:0px;color:rgb(0, 0, 255);">str</span>] = <span style="margin:0px;padding:0px;color:rgb(163, 21, 21);">'1'</span>  <span style="margin:0px;padding:0px;color:rgb(0, 128, 0);"># 可以是 int 或 str 类型</span>
+</code></pre>
+<p style="padding:0px;text-indent:0px;margin:10px auto;">Union 是不分顺序的，并且如果有多个重复的类型，会自动去重：</p>
+<pre style="border-radius:4px;background-color: #fbfaf8;border: 1px solid rgba(0,0,0,.14902);color: #333;font-size: 12px;padding: 8px;font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif;box-sizing: border-box;"><code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span style="margin:0px;padding:0px;color:rgb(0, 0, 255);">print</span>(
+    <span style="margin:0px;padding:0px;color:rgb(163, 21, 21);">Union</span>[<span style="margin:0px;padding:0px;color:rgb(0, 0, 255);">int</span>, <span style="margin:0px;padding:0px;color:rgb(0, 0, 255);">str</span>, <span style="margin:0px;padding:0px;color:rgb(0, 0, 255);">int</span>, <span style="margin:0px;padding:0px;color:rgb(163, 21, 21);">Union</span>[<span style="margin:0px;padding:0px;color:rgb(0, 0, 255);">int</span>, <span style="margin:0px;padding:0px;color:rgb(0, 0, 255);">list</span>[<span style="margin:0px;padding:0px;color:rgb(0, 0, 255);">int</span>]]] == <span style="margin:0px;padding:0px;color:rgb(163, 21, 21);">Union</span>[<span style="margin:0px;padding:0px;color:rgb(0, 0, 255);">list</span>[<span style="margin:0px;padding:0px;color:rgb(0, 0, 255);">int</span>], <span style="margin:0px;padding:0px;color:rgb(0, 0, 255);">int</span>, <span style="margin:0px;padding:0px;color:rgb(0, 0, 255);">str</span>]
+)
+
+<span style="margin:0px;padding:0px;color:rgb(0, 128, 0);"># True</span>
+</code></pre>
+<blockquote style="border:2px solid rgb(239, 239, 239);border-left:3px solid rgb(226, 223, 223);border-right:none;border-top:none;border-bottom:none;margin:10px 0px;padding:5px 10px;background:url(https://www.cnblogs.com/skins/darkgreentrip/images/comment.gif) 25px 0px no-repeat;line-height:1.6;color:rgb(51, 51, 51);background-image:none;">
+<p style="padding:0px;text-indent:0px;margin:10px auto;">这个例子中，重复的 <code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif">int</code> 会自动去重，并且里面类型的顺序也不重要。等式前面的Union中还嵌套了一个 <code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif">Union[int, list[int]]</code> ，也会被提取出来</p>
+</blockquote>
+<p style="padding:0px;text-indent:0px;margin:10px auto;">Python 3.10 版本添加了 <code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif">|</code> 可以用来简化 Union 的操作：</p>
+<pre style="border-radius:4px;background-color: #fbfaf8;border: 1px solid rgba(0,0,0,.14902);color: #333;font-size: 12px;padding: 8px;font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif;box-sizing: border-box;"><code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif">x: <span style="margin:0px;padding:0px;color:rgb(0, 0, 255);">int</span> | <span style="margin:0px;padding:0px;color:rgb(0, 0, 255);">str</span>  <span style="margin:0px;padding:0px;color:rgb(0, 128, 0);"># 等同于 x: Union[int, str]</span>
+</code></pre>
+<p style="padding:0px;text-indent:0px;margin:10px auto;"><code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif">|</code> 也可以用于 <code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif">isinstance, issubclass</code> 等函数中：</p>
+<pre style="border-radius:4px;background-color: #fbfaf8;border: 1px solid rgba(0,0,0,.14902);color: #333;font-size: 12px;padding: 8px;font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif;box-sizing: border-box;"><code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span style="margin:0px;padding:0px;color:rgb(0, 0, 255);">isinstance</span>(<span style="margin:0px;padding:0px;color:rgb(136, 0, 0);">1</span>, <span style="margin:0px;padding:0px;color:rgb(0, 0, 255);">int</span> | <span style="margin:0px;padding:0px;color:rgb(0, 0, 255);">str</span>)  <span style="margin:0px;padding:0px;color:rgb(0, 128, 0);"># True</span>
+</code></pre>
+<h3 style="color:rgb(0, 0, 0);font-family:微软雅黑, 宋体, 黑体, Arial;border-left:5px solid rgb(255, 193, 37);font-size:16px;font-weight:bold;line-height:17px;padding:5px 0px 5px 5px;margin:12px 0px;">@overload</h3>
+<p style="padding:0px;text-indent:0px;margin:10px auto;">有一些函数经常使用 <code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif">@overload</code> 装饰器，这其实也是类型提示的一种：</p>
+<pre style="border-radius:4px;background-color: #fbfaf8;border: 1px solid rgba(0,0,0,.14902);color: #333;font-size: 12px;padding: 8px;font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif;box-sizing: border-box;"><code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span style="margin:0px;padding:0px;color:rgb(0, 0, 255);">from</span> typing <span style="margin:0px;padding:0px;color:rgb(0, 0, 255);">import</span> overload
+
+
+<span style="margin:0px;padding:0px;color:rgb(43, 145, 175);">@overload</span>
+<span style="margin:0px;padding:0px;color:rgb(0, 0, 255);">def</span> <span style="margin:0px;padding:0px;color:rgb(163, 21, 21);">test</span>(<span style="margin:0px;padding:0px;">a: <span style="margin:0px;padding:0px;color:rgb(0, 0, 255);">int</span></span>):  <span style="margin:0px;padding:0px;color:rgb(0, 128, 0);"># 仅用来进行参数的类型检查，说明它支持 int 类型，不用实现函数（即不写函数内容）</span>
+	...
+
+
+<span style="margin:0px;padding:0px;color:rgb(43, 145, 175);">@overload</span>
+<span style="margin:0px;padding:0px;color:rgb(0, 0, 255);">def</span> <span style="margin:0px;padding:0px;color:rgb(163, 21, 21);">test</span>(<span style="margin:0px;padding:0px;">a: <span style="margin:0px;padding:0px;color:rgb(0, 0, 255);">str</span></span>):  <span style="margin:0px;padding:0px;color:rgb(0, 128, 0);"># 仅用来类型检查，说明支持 str</span>
+	...
+
+
+<span style="margin:0px;padding:0px;color:rgb(0, 0, 255);">def</span> <span style="margin:0px;padding:0px;color:rgb(163, 21, 21);">test</span>(<span style="margin:0px;padding:0px;">a</span>):  <span style="margin:0px;padding:0px;color:rgb(0, 128, 0);"># 很重要，必须写一个不使用 @overload 的正常的函数。这个函数才是真正被调用的函数。</span>
+	<span style="margin:0px;padding:0px;color:rgb(0, 0, 255);">print</span>(<span style="margin:0px;padding:0px;color:rgb(0, 0, 255);">type</span>(a))
+
+
+test(<span style="margin:0px;padding:0px;color:rgb(136, 0, 0);">2</span>)
+</code></pre>
+<blockquote style="border:2px solid rgb(239, 239, 239);border-left:3px solid rgb(226, 223, 223);border-right:none;border-top:none;border-bottom:none;margin:10px 0px;padding:5px 10px;background:url(https://www.cnblogs.com/skins/darkgreentrip/images/comment.gif) 25px 0px no-repeat;line-height:1.6;color:rgb(51, 51, 51);background-image:none;">
+<p style="padding:0px;text-indent:0px;margin:10px auto;"><code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif">@overload</code> 装饰器可以修饰支持多个不同参数类型组合的函数或方法。后续<strong style="margin:0px;padding:0px;">必须紧跟一个非 @overload 装饰定义的同样的函数</strong>。@overload-装饰定义仅是为了协助类型检查器， 因为该装饰器会被非 @overload-装饰定义覆盖</p>
+</blockquote>
+<p style="padding:0px;text-indent:0px;margin:10px auto;">也就是说，你可以写一堆同名函数，这些函数可以接收不同类型的参数，用 <code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif">overload</code> 来装饰这些同名函数，并且最后一定要写一个正常的、不用<code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif">overload</code> 装饰的同名函数。这样代码提示就会知道这个函数可以接收哪些类型的参数。</p>
+
+</div></div></div></div></div></div></div></div></div></div></div></div>
+</div></div>
+<a class="back-link" href="../articles.html">← 返回笔记列表</a>
+</body></html>

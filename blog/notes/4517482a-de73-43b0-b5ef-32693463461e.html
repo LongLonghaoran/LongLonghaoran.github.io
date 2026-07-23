@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="zh-CN" data-theme="light">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>命令行模拟https的方法: OpenSSL学习（二十）：基础-指令s_client（方便查看与server交互的详细信息，我主要用于ssl证书双向认证）（好文章！）_HD243608836的博客-CSDN博客_openssl s_client — 技术笔记</title>
+<style>
+:root { --bg:#fff; --text:#1a1a1a; --muted:#666; --border:#e0e0e0; --code-bg:#f5f5f5; --link:#0066cc; }
+@media (prefers-color-scheme: dark) { :root { --bg:#1a1a1a; --text:#e0e0e0; --muted:#999; --border:#333; --code-bg:#2a2a2a; --link:#66bbff; } }
+* { box-sizing:border-box; margin:0; padding:0; }
+body { font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Arial,sans-serif; line-height:1.7; color:var(--text); background:var(--bg); max-width:860px; margin:0 auto; padding:2rem 1.5rem; }
+.note-header { border-bottom:2px solid var(--border); padding-bottom:1rem; margin-bottom:2rem; }
+.note-title { font-size:1.6rem; font-weight:700; margin-bottom:0.3rem; }
+.note-meta { color:var(--muted); font-size:0.85rem; }
+.note-content { font-size:0.95rem; }
+.note-content h1 { font-size:1.4rem; margin:1.2rem 0 0.6rem; }
+.note-content h2 { font-size:1.2rem; margin:1rem 0 0.5rem; }
+.note-content h3 { font-size:1.05rem; margin:0.8rem 0 0.4rem; }
+.note-content p { margin:0.5rem 0; }
+.note-content ul,.note-content ol { margin:0.5rem 0 0.5rem 2rem; }
+.note-content li { margin:0.2rem 0; }
+.note-content pre { background:var(--code-bg); padding:1rem; border-radius:6px; overflow-x:auto; margin:0.8rem 0; font-size:0.85rem; }
+.note-content code { background:var(--code-bg); padding:0.1rem 0.3rem; border-radius:3px; font-size:0.88em; }
+.note-content pre code { background:none; padding:0; }
+.note-content blockquote { border-left:3px solid var(--border); padding-left:1rem; color:var(--muted); margin:0.8rem 0; }
+.note-content a { color:var(--link); }
+.note-content img { max-width:100%; height:auto; border-radius:6px; margin:0.5rem 0; }
+.note-content table { border-collapse:collapse; width:100%; margin:0.8rem 0; }
+.note-content th,.note-content td { border:1px solid var(--border); padding:0.5rem; }
+.note-content th { background:var(--code-bg); }
+.media-placeholder { background:var(--code-bg); padding:1rem; text-align:center; color:var(--muted); border-radius:6px; margin:0.5rem 0; font-size:0.85rem; }
+.encrypt-placeholder { background:#fff3cd; padding:0.5rem; text-align:center; color:#856404; border-radius:6px; margin:0.5rem 0; font-size:0.85rem; }
+.back-link { display:inline-block; margin-top:2rem; color:var(--link); text-decoration:none; font-size:0.85rem; }
+</style>
+</head>
+<body>
+<div class="note-header"><div class="note-title">命令行模拟https的方法: OpenSSL学习（二十）：基础-指令s_client（方便查看与server交互的详细信息，我主要用于ssl证书双向认证）（好文章！）_HD243608836的博客-CSDN博客_openssl s_client</div><div class="note-meta">笔记本：关于加密、解密、签名</div></div>
+<div class="note-content"><div style="--en-clipped-content:simplified; --en-clipped-source-url:https://blog.csdn.net/HD243608836/article/details/118554987; --en-clipped-source-title:命令行模拟https的方法: OpenSSL学习（二十）：基础-指令s_client（方便查看与server交互的详细信息，我主要用于ssl证书双向认证）（好文章！）_HD243608836的博客-CSDN博客_openssl s_client;">
+<div><br/></div><div style="min-height: 3716px; font-size: 16px; display: block; min-width: 100%; position: relative;"> <div style="background-color:transparent;font:inherit;vertical-align:baseline;"><div style="background-color:transparent;font:inherit;vertical-align:baseline;font-family:&quot;PT Serif&quot;;font-size:16px;line-height:1.5em;color:rgb(31, 9, 9);text-align:left;"><div style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;"><div style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;width:36em;z-index:200;padding-left:2em;padding-right:2em;margin-left:auto;margin-right:auto;position:relative;"><div style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;position:relative;margin-left:-25px;margin-right:25px;"><div style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;padding-top:0px;padding-bottom:9em;position:relative;"><div style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;margin-bottom:1.5em;"><div style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;position:relative;margin-bottom:0px;"><div style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;margin-bottom:0px;"><div style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;margin-bottom:0px;"><h1 style="font-family:&quot;PT Serif&quot;;text-align:left;border:0px;font:inherit;vertical-align:baseline;font-size:35px;font-weight:normal;line-height:35px;margin-bottom:20px;padding:0px;margin:0px;">OpenSSL学习（二十）：基础-指令s_client（方便查看与server交互的详细信息，我主要用于ssl证书双向认证）（好文章！）</h1><div style="padding:0px;border:0px;font:inherit;vertical-align:baseline;position:relative;height:1em;line-height:1;text-align:center;margin:0px;padding-top:1.5em;padding-bottom:1.5em;margin-bottom:0px;"><div style="padding:0px;border:0px;font:inherit;vertical-align:baseline;background:-webkit-linear-gradient(0deg, rgb(243, 242, 238) 1%, rgb(31, 9, 9) 50%, rgb(243, 242, 238) 99%);position:absolute;left:-4em;top:50%;z-index:10;width:100%;padding-left:4em;padding-right:4em;height:0.1em;opacity:0.5;margin:0px;margin-bottom:0px;"><span style="font:inherit;position:absolute;left:-4em;top:50%;z-index:10;width:100%;padding-left:4em;padding-right:4em;height:0.1em;margin:0px;opacity:0.5;background:-webkit-linear-gradient(0deg, rgb(243, 242, 238) 1%, rgb(31, 9, 9) 50%, rgb(243, 242, 238) 99%);"></span></div></div></div>
+    
+        <div style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;margin-bottom:1.5em;">
+            <div style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;margin-bottom:0px;">
+                <div style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;margin-bottom:1.5em;">
+                    
+                    <div style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;margin-bottom:1.5em;">
+                        <span style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;">15 篇文章</span>
+                        <span style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;">0 订阅</span>
+                    </div>
+                    <div style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;margin-bottom:0px;">
+                            <a style="color:rgb(6, 85, 136);margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;text-decoration:none;">订阅专栏</a>
+                    </div>
+                </div>
+                <div style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;margin-bottom:1.5em;">
+                    
+                    <div style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;margin-bottom:1.5em;">
+                        <span style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;">55 篇文章</span>
+                        <span style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;">0 订阅</span>
+                    </div>
+                    <div style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;margin-bottom:0px;">
+                            <a style="color:rgb(6, 85, 136);margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;text-decoration:none;">订阅专栏</a>
+                    </div>
+                </div>
+                <div style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;margin-bottom:0px;">
+                    
+                    <div style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;margin-bottom:1.5em;">
+                        <span style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;">195 篇文章</span>
+                        <span style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;">10 订阅</span>
+                    </div>
+                    <div style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;margin-bottom:0px;">
+                            <a style="color:rgb(6, 85, 136);margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;text-decoration:none;">订阅专栏</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    
+        
+        
+                
+                    <h1 style="font-family:&quot;PT Serif&quot;;text-align:left;margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;font-size:35px;font-weight:normal;line-height:35px;margin-bottom:20px;"><strong style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;font-weight:bold;">用法：  </strong></h1> 
+<p style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;margin-bottom:1.5em;"><strong style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;font-weight:bold;">     <br/>     openssl s_client [-connect host:port&gt;;] [-verify depth] [-cert filename]  <br/><br/>[-key filename] [-CApath directory] [-CAfile filename] [-reconnect]  <br/><br/>[-pause] [-showcerts] [-debug] [-nbio_test] [-state] [-nbio] [-crlf]  <br/><br/>[-ign_eof] [-quiet] [-ssl2] [-ssl3] [-tls1] [-no_ssl2] [-no_ssl3]  <br/><br/>[-no_tls1] [-bugs] [-cipher cipherlist]  <br/><br/></strong></p> 
+<h1 style="font-family:&quot;PT Serif&quot;;text-align:left;margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;font-size:35px;font-weight:normal;line-height:35px;margin-bottom:20px;"><strong style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;font-weight:bold;">描述：  </strong></h1> 
+<blockquote style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;quotes:none;margin-bottom:1.5em;font-style:italic;border-left:5px solid;margin-left:2em;padding-left:1em;"><span style="font:inherit;quotes:none;font-style:italic;"></span> 
+ <p style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;margin-bottom:1.5em;"><strong style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;font-weight:bold;">        用于模拟一个普通的SSL/TLS client, 对于调试和诊断SSL server很有用。 </strong> </p> 
+ <p style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;margin-bottom:0px;"><strong style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;font-weight:bold;">        我在实践上主要用于验证“ssl证书双向认证”。</strong>     </p> 
+<span style="font:inherit;quotes:none;font-style:italic;"></span></blockquote> 
+<h3 style="font-family:&quot;PT Serif&quot;;text-align:left;margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;font-size:30px;line-height:35px;margin-top:35px;font-weight:normal;margin-bottom:15px;"><br/> OPTIONS  </h3> 
+<p style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;margin-bottom:1.5em;"><strong style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;font-weight:bold;">    -connect host:port  </strong><br/>     这个不用解释了吧， 连接的ip:port.  <br/><strong style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;font-weight:bold;">    -cert certname  </strong><br/>     使用的证书文件。如果server不要求要证书，这个可以省略。  <br/><strong style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;font-weight:bold;">    -key keyfile  </strong><br/>     使用的私有密钥文件  <br/><strong style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;font-weight:bold;">    -verify depth  </strong><br/>     指定验证深度。记得CA也是分层次的吧？如果对方的证书的签名CA不是Root CA,那么你可以再去验证给该CA的证书签名的CA， 一直到Root CA. 目前的验证操作即使这条CA链上的某一个证书验证有问题也不会影响对更深层的CA的身份的验证。所以整个CA链上的问题都可以检查出来。当然CA的验证出问题并不会直接造成连接马上断开，好的应用程序可以让你根据验证结果决定下一步怎么走。  <br/><strong style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;font-weight:bold;">    -CApath directory  </strong><br/>     一个目录。里面全是CA的验证资料，该目录必须是"哈希结构". verify指令里会详细说明。在建立client的证书链的时候也有用到这个指令。  <br/><strong style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;font-weight:bold;">    -CAfile file  </strong><br/>     某文件，里面是所有你信任的CA的证书的内容。当你要建立client的证书链的时候也需要用到这个文件。  <br/><strong style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;font-weight:bold;">    -reconnect  </strong><br/>     使用同样的session-id连接同一个server五次，用来测试server的session缓冲功能是否有问题。  <br/><strong style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;font-weight:bold;">    -pause  </strong><br/>     每次读写操作后都挺顿一秒。  <br/><strong style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;font-weight:bold;">    -showcerts  </strong><br/>     显示整条server的证书的CA的证书链。否则只显示server的证书。  <br/><strong style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;font-weight:bold;">    -prexit  </strong><br/>     当程序退出的时候打印session的信息。即使连接失败，也会打印出调试信息。一般如果连接成功的话，调试信息将只被打出来一次。本option比较有用，因为在一次<a href="https://so.csdn.net/so/search?q=SSL&amp;spm=1001.2101.3001.7020" style="color:rgb(6, 85, 136);margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;text-decoration:none;">SSL</a>连接中，cipher也可能改变，或者连接可能失败。要注意的是：有时候打印出来的东西并不一定准确。(这样也行？？eric, 言重了.)  <br/><strong style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;font-weight:bold;">    -state  </strong><br/>     打印SSL session的状态， ssl也是一个协议，当然有状态。  <br/><strong style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;font-weight:bold;">    -debug  </strong><br/>     打印所有的调试信息。  <br/><strong style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;font-weight:bold;">    -nbio_test  </strong><br/>     检查非阻塞socket的I/O运行情况。  <br/><strong style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;font-weight:bold;">    -nbio  </strong><br/>     使用非阻塞socket  <br/><strong style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;font-weight:bold;">    -crlf  </strong><br/>     回把你在终端输入的换行回车转化成/r/n送出去。  <br/><strong style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;font-weight:bold;">    -ign_eof  </strong><br/>    当输入文件到达文件尾的时候并不断开连接。  <br/>    <strong style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;font-weight:bold;">-quiet  </strong><br/>    不打印出session和证书的信息。同时会打开-ign_eof这个option.  <br/>   <strong style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;font-weight:bold;"> -ssl2, -ssl3, -tls1, -no_ssl2, -no_ssl3, -no_tls1  </strong><br/>    选择用什么版本的协议。很容易理解，不用多解释了吧。  <br/>    注意，有些很古老的server就是不能处理TLS1, 所以这个时候要关掉TLS1.n.  <br/>    <strong style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;font-weight:bold;">-bugs  </strong><br/>    SSL/TLS有几处众所周知的bug, set了这个option使出错的可能性缩小。  <br/>   <strong style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;font-weight:bold;"> -cipher cipherlist  </strong><br/>    由我们自己来决定选用什么cipher，尽管是由server来决定使用什么cipher,但它一般都会采用我们送过去的cipher列表里的第一个cipher.  <br/>     有哪些cipher可用？指令cipher对这个解释的更清楚。  <br/>     一旦和某个SSL server建立连接之后，所有从server得到的数据都会被打印出来，所有你在终端上输入的东西也会被送给server. 这是人机交互式的。这时候不能set -quiet和 -ign_eof这俩个option。<strong style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;font-weight:bold;">如果输入的某行开头字母是R,那么在这里session会renegociate, 如果输入的某行开头是Q, 那么连接会被断开。你完成整个输入之后连接也会被断开。  </strong>英文原文：If a connection is established with an SSL server then any data received from the server is displayed and any key presses will be sent to the server. When used interactively (which means neither -quiet nor -ign_eof have been given), the session will be renegociated if the line begins with an R, and if the line begins with a Q or if end of file is reached, the connection will be closed down.  <br/>     本指令主要是来debug一个SSL server的。如果想连接某个SSL HTTP server,输入下一条指令：  <br/>    <a href="https://so.csdn.net/so/search?q=openssl&amp;spm=1001.2101.3001.7020" style="color:rgb(6, 85, 136);margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;text-decoration:none;">openssl</a> s_client -connect servername:443  </p> 
+<blockquote style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;quotes:none;margin-bottom:1.5em;font-style:italic;border-left:5px solid;margin-left:2em;padding-left:1em;"><span style="font:inherit;quotes:none;font-style:italic;"></span> 
+ <p style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;margin-bottom:0px;">如果连接成功，你可以用HTTP的指令，比如"GET /"什么的去获得网页了。  <br/><strong style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;font-weight:bold;">如果握手失败，原因可能有以下几种： </strong> <br/>     1. server需要验证你的证书，但你没有证书  <br/>     2.如果肯定不是原因1, 那么就慢慢一个一个set以下几个option  <br/>     -bugs, -ssl2, -ssl3, -tls1, -no_ssl2, -no_ssl3, -no_tls1  <br/>     这可能是因为对方的server处理SSL有bug.  <br/>     有的时候，client会报错：没有证书可以使用，或者供选择的证书列表是空的。这一般是因为Server没有把给你签名的CA的名字列进它自己认为可以信任的CA列表,你可以用检查一下server的信任CA列表。有的http server只在 client给出了一个URL之后才验证client的证书，这中情况下要set -prexit这个option, 并且送给server一个页面请求。  <br/>     即使使用-cert指明使用的证书，如果server不要求验证client的证书，那么该证书也不会被验证。所以不要以为在命令行里加了-cert 的参数又连接成功就代表你的证书没有问题。  <br/>     如果验证server的证书没有问题，就可以set -showcerts来看看server的证书的CA链了。  <br/>     其实这个工具并不好用， 自己写一个client的会方便很多。  </p> 
+<span style="font:inherit;quotes:none;font-style:italic;"></span></blockquote> 
+<h1 style="font-family:&quot;PT Serif&quot;;text-align:left;margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;font-size:35px;font-weight:normal;line-height:35px;margin-bottom:20px;"><br/> 举例时间：</h1> 
+<p style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;margin-bottom:1.5em;">     注意，中间的pop3协议的指令是我通过终端输入的。其他都是程序输出的对话过程。具体的每行意义不用解释了。 </p> 
+<blockquote style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;quotes:none;margin-bottom:1.5em;font-style:italic;border-left:5px solid;margin-left:2em;padding-left:1em;"><span style="font:inherit;quotes:none;font-style:italic;"></span> 
+ <p style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;margin-bottom:0px;">openssl s_client -key server.key -verify 1 -showcerts -prexit -state   <br/>     -crlf -connect 127.0.0.1:5995  </p> 
+<span style="font:inherit;quotes:none;font-style:italic;"></span></blockquote> 
+<p style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;margin-bottom:1.5em;"> 返回信息如下：</p> 
+ 
+<p style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;margin-bottom:0px;">转载自，对原文有补充：<a href="https://blog.csdn.net/weixin_33981932/article/details/91742795" style="color:rgb(6, 85, 136);margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;text-decoration:none;">https://blog.csdn.net/weixin_33981932/article/details/91742795</a><br/><a href="https://my.oschina.net/acmfly/blog/72234" style="color:rgb(6, 85, 136);margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;text-decoration:none;">https://my.oschina.net/acmfly/blog/72234</a></p>
+                </div></div></div></div></div></div></div></div></div></div>
+</div></div>
+<a class="back-link" href="../articles.html">← 返回笔记列表</a>
+</body></html>

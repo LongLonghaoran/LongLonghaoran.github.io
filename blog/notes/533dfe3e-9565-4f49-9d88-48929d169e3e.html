@@ -1,0 +1,447 @@
+<!DOCTYPE html>
+<html lang="zh-CN" data-theme="light">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Alluxio在B站AI训练场景的应用 – Alluxio官网 | 分布式超大规模数据编排系统 — 技术笔记</title>
+<style>
+:root {
+  --bg: #ffffff;
+  --text: #1a1a1a;
+  --muted: #666;
+  --border: #e0e0e0;
+  --code-bg: #f5f5f5;
+  --link: #0066cc;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #1a1a1a;
+    --text: #e0e0e0;
+    --muted: #999;
+    --border: #333;
+    --code-bg: #2a2a2a;
+    --link: #66bbff;
+  }
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  line-height: 1.7;
+  color: var(--text);
+  background: var(--bg);
+  max-width: 860px;
+  margin: 0 auto;
+  padding: 2rem 1.5rem;
+}
+.note-header {
+  border-bottom: 2px solid var(--border);
+  padding-bottom: 1rem;
+  margin-bottom: 2rem;
+}
+.note-title {
+  font-size: 1.6rem;
+  font-weight: 700;
+  margin-bottom: 0.3rem;
+}
+.note-meta {
+  color: var(--muted);
+  font-size: 0.85rem;
+}
+.note-content {
+  font-size: 0.95rem;
+}
+.note-content h1 { font-size: 1.4rem; margin: 1.2rem 0 0.6rem; }
+.note-content h2 { font-size: 1.2rem; margin: 1rem 0 0.5rem; }
+.note-content h3 { font-size: 1.05rem; margin: 0.8rem 0 0.4rem; }
+.note-content p { margin: 0.5rem 0; }
+.note-content ul, .note-content ol { margin: 0.5rem 0 0.5rem 2rem; }
+.note-content li { margin: 0.2rem 0; }
+.note-content pre {
+  background: var(--code-bg);
+  padding: 1rem;
+  border-radius: 6px;
+  overflow-x: auto;
+  margin: 0.8rem 0;
+  font-size: 0.85rem;
+}
+.note-content code {
+  background: var(--code-bg);
+  padding: 0.1rem 0.3rem;
+  border-radius: 3px;
+  font-size: 0.88em;
+}
+.note-content pre code {
+  background: none;
+  padding: 0;
+}
+.note-content blockquote {
+  border-left: 3px solid var(--border);
+  padding-left: 1rem;
+  color: var(--muted);
+  margin: 0.8rem 0;
+}
+.note-content a { color: var(--link); }
+.note-content img {
+  max-width: 100%;
+  height: auto;
+  border-radius: 6px;
+  margin: 0.5rem 0;
+}
+.note-content table {
+  border-collapse: collapse;
+  width: 100%;
+  margin: 0.8rem 0;
+}
+.note-content th, .note-content td {
+  border: 1px solid var(--border);
+  padding: 0.5rem;
+}
+.note-content th { background: var(--code-bg); }
+.media-placeholder {
+  background: var(--code-bg);
+  padding: 1rem;
+  text-align: center;
+  color: var(--muted);
+  border-radius: 6px;
+  margin: 0.5rem 0;
+  font-size: 0.85rem;
+}
+.encrypt-placeholder {
+  background: #fff3cd;
+  padding: 0.5rem;
+  text-align: center;
+  color: #856404;
+  border-radius: 6px;
+  margin: 0.5rem 0;
+  font-size: 0.85rem;
+}
+.back-link {
+  display: inline-block;
+  margin-top: 2rem;
+  color: var(--link);
+  text-decoration: none;
+  font-size: 0.85rem;
+}
+</style>
+</head>
+<body>
+<div class="note-header">
+  <div class="note-title">Alluxio在B站AI训练场景的应用 – Alluxio官网 | 分布式超大规模数据编排系统</div>
+  <div class="note-meta">笔记本：AI</div>
+</div>
+<div class="note-content">
+<div style="--en-clipped-content:article"><div style="font-size: 16px; display:flex; min-width: 100%; position: relative;"> <div style="line-height:1.15;text-size-adjust:100%;box-sizing:border-box;font-size:12.6px;"><div style="box-sizing:border-box;font-size:12.6px;font-weight:400;color:rgb(51, 51, 51);background-color:rgb(255, 255, 255);-webkit-font-smoothing:antialiased;font-family:SYHT, sans-serif;line-height:2em;"><div style="box-sizing:border-box;"><div style="box-sizing:border-box;"><div style="box-sizing:border-box;"><div style="box-sizing:border-box;"><div style="box-sizing:border-box;flex-wrap:wrap;align-content:flex-start;display:flex;"><span style="box-sizing:border-box;"></span>
+						<div style="box-sizing:border-box;flex-basis:auto;flex-grow:0;flex-shrink:1;order:0;align-self:auto;position:relative;width:100%;margin-block-end:20px;flex-direction:row;flex-wrap:nowrap;justify-content:normal;align-items:normal;align-content:normal;gap:normal;margin-bottom:0px;"><span style="box-sizing:border-box;"></span>
+				<div style="box-sizing:border-box;transition:background 0.3s, border 0.3s, border-radius 0.3s, box-shadow 0.3s, transform 0.4s;"><span style="box-sizing:border-box;"></span>
+			<div style="box-sizing:border-box;"><span style="box-sizing:border-box;"></span><ul style="border:0px;outline:0px;font-size:100%;vertical-align:baseline;background:transparent;box-sizing:border-box;padding:0px;margin:0px;display:flex;flex-wrap:wrap;list-style:none;justify-content:flex-start;"><span style="font-size:100%;list-style:none;box-sizing:border-box;"></span><li style="margin-top:0px;margin-bottom:0px;border:0px;outline:0px;font-size:100%;vertical-align:baseline;background:transparent;box-sizing:border-box;flex:0 0 auto;list-style-type:none;"><span style="font-size:100%;list-style-type:none;box-sizing:border-box;"></span><a href="https://www.alluxio.com.cn/" style="background-color:transparent;box-sizing:border-box;box-shadow:none;display:inline-block;text-decoration:none;color:rgb(153, 153, 153);font-size:14px;"><span style="color:rgb(153, 153, 153);font-size:14px;box-sizing:border-box;"></span><span style="box-sizing:border-box;margin-right:5px;"><span style="box-sizing:border-box;"></span> <i style="box-sizing:border-box;speak:none;font-style:normal;font-weight:400;font-variant:normal;text-transform:none;line-height:1;-webkit-font-smoothing:antialiased;font-family:elementskit;"><span style="font-style:normal;font-weight:400;font-variant:normal;text-transform:none;line-height:1;font-family:elementskit;box-sizing:border-box;speak:none;-webkit-font-smoothing:antialiased;"></span><span style="font-style:normal;font-weight:400;font-variant:normal;text-transform:none;line-height:1;font-family:elementskit;box-sizing:border-box;"></span></i> <span style="box-sizing:border-box;"></span></span>Alluxio官网 | 分布式超大规模数据编排系统<span style="color:rgb(153, 153, 153);font-size:14px;box-sizing:border-box;"></span></a><span style="font-size:100%;list-style-type:none;box-sizing:border-box;"></span></li>
+<li style="margin-top:0px;margin-bottom:0px;border:0px;outline:0px;font-size:100%;vertical-align:baseline;background:transparent;box-sizing:border-box;flex:0 0 auto;list-style-type:none;"><span style="font-size:100%;list-style-type:none;box-sizing:border-box;margin:0px 20px;display:inline-block;color:rgb(153, 153, 153);">/</span><a href="https://www.alluxio.com.cn/category/%e8%a7%a3%e5%86%b3%e6%96%b9%e6%a1%88/" style="background-color:transparent;box-sizing:border-box;box-shadow:none;display:inline-block;text-decoration:none;color:rgb(153, 153, 153);font-size:14px;"><span style="color:rgb(153, 153, 153);font-size:14px;box-sizing:border-box;"></span>解决方案<span style="color:rgb(153, 153, 153);font-size:14px;box-sizing:border-box;"></span></a> <a href="https://www.alluxio.com.cn/category/%e8%a7%a3%e5%86%b3%e6%96%b9%e6%a1%88/ai-ml/" style="background-color:transparent;box-sizing:border-box;box-shadow:none;display:inline-block;text-decoration:none;color:rgb(153, 153, 153);font-size:14px;"><span style="color:rgb(153, 153, 153);font-size:14px;box-sizing:border-box;"></span>AI/ML<span style="color:rgb(153, 153, 153);font-size:14px;box-sizing:border-box;"></span></a> <span style="font-size:100%;list-style-type:none;box-sizing:border-box;"></span></li>
+<li style="margin-top:0px;margin-bottom:0px;border:0px;outline:0px;font-size:100%;vertical-align:baseline;background:transparent;box-sizing:border-box;flex:0 0 auto;list-style-type:none;"><span style="font-size:100%;list-style-type:none;box-sizing:border-box;margin:0px 20px;display:inline-block;color:rgb(153, 153, 153);">/</span><span style="box-sizing:border-box;display:inline-block;text-decoration:none;color:rgb(153, 153, 153);font-size:14px;"><span style="font-size:14px;color:rgb(153, 153, 153);box-sizing:border-box;"></span> Alluxio在B站AI训练场景的应用<span style="font-size:14px;color:rgb(153, 153, 153);box-sizing:border-box;"></span></span><span style="font-size:100%;list-style-type:none;box-sizing:border-box;"></span></li>
+<span style="font-size:100%;list-style:none;box-sizing:border-box;"></span></ul><span style="box-sizing:border-box;"></span></div>		<span style="box-sizing:border-box;"></span></div>
+				<span style="box-sizing:border-box;"></span></div>
+				<div style="box-sizing:border-box;flex-basis:auto;flex-grow:0;flex-shrink:1;order:0;align-self:auto;display:block;position:relative;width:100%;margin-block-end:20px;flex-direction:row;flex-wrap:nowrap;justify-content:normal;align-items:normal;align-content:normal;gap:normal;margin-bottom:0px;"><span style="box-sizing:border-box;"></span>
+				<div style="box-sizing:border-box;transition:background 0.3s, border 0.3s, border-radius 0.3s, box-shadow 0.3s, transform 0.4s;margin:20px 0px;"><span style="box-sizing:border-box;"></span>
+			<h1 style="box-sizing:border-box;padding:0px;margin:0px;color:var( --e-global-color-primary );letter-spacing:1px;font-family:Syht, sans-serif;font-weight:600;font-size:24px;line-height:1.4em;"><span style="font-family:Syht, sans-serif;font-weight:600;line-height:1.4em;color:var( --e-global-color-primary );font-size:24px;letter-spacing:1px;box-sizing:border-box;"></span>Alluxio在B站AI训练场景的应用<span style="font-family:Syht, sans-serif;font-weight:600;line-height:1.4em;color:var( --e-global-color-primary );font-size:24px;letter-spacing:1px;box-sizing:border-box;"></span></h1>		<span style="box-sizing:border-box;"></span></div>
+				<span style="box-sizing:border-box;"></span></div>
+				<div style="box-sizing:border-box;flex-basis:auto;flex-grow:0;flex-shrink:1;order:0;align-self:auto;position:relative;width:100%;margin-block-end:20px;flex-direction:row;flex-wrap:nowrap;justify-content:normal;align-items:normal;align-content:normal;gap:normal;margin-bottom:0px;"><span style="box-sizing:border-box;"></span>
+				<div style="box-sizing:border-box;transition:background 0.3s, border 0.3s, border-radius 0.3s, box-shadow 0.3s, transform 0.4s;"><span style="box-sizing:border-box;"></span>
+					<ul style="border:0px;outline:0px;font-size:100%;vertical-align:baseline;background:transparent;box-sizing:border-box;display:flex;flex-wrap:wrap;list-style-type:none;margin:0px;margin-right:-8px;margin-left:-8px;padding:0px;"><span style="font-size:100%;list-style-type:none;box-sizing:border-box;"></span>
+								<li style="border:0px;outline:0px;vertical-align:baseline;background:transparent;box-sizing:border-box;line-height:var( --e-global-typography-text-line-height );margin:0px;padding:0px;position:relative;display:flex;align-items:center;word-break:break-word;font-family:Syht, sans-serif;font-weight:400;margin-right:8px;margin-left:8px;font-size:14px;"><span style="font-size:14px;font-family:Syht, sans-serif;font-weight:400;line-height:var( --e-global-typography-text-line-height );box-sizing:border-box;"></span>
+						<a href="https://www.alluxio.com.cn/2024/08/05/" style="background-color:transparent;box-sizing:border-box;box-shadow:none;text-decoration:none;color:var( --e-global-color-accent );display:flex;font-size:inherit;align-items:center;"><span style="color:var( --e-global-color-accent );font-size:inherit;box-sizing:border-box;"></span>
+											<span style="box-sizing:border-box;display:flex;position:relative;top:0px;width:14px;"><span style="box-sizing:border-box;"></span>
+								<i style="box-sizing:border-box;speak:none;font-style:normal;font-weight:400;font-variant:normal;text-transform:none;line-height:1;-webkit-font-smoothing:antialiased;width:1.25em;color:rgb(102, 102, 102);font-size:14px;font-family:elementskit;"><span style="color:rgb(102, 102, 102);font-size:14px;font-style:normal;font-weight:400;font-variant:normal;text-transform:none;line-height:1;font-family:elementskit;box-sizing:border-box;speak:none;-webkit-font-smoothing:antialiased;"></span><span style="color:rgb(102, 102, 102);font-size:14px;font-style:normal;font-weight:400;font-variant:normal;text-transform:none;line-height:1;font-family:elementskit;box-sizing:border-box;"></span></i>							<span style="box-sizing:border-box;"></span></span>
+									<span style="box-sizing:border-box;align-self:center;padding-left:5px;display:inline-block;color:rgb(102, 102, 102);"><span style="color:rgb(102, 102, 102);box-sizing:border-box;"></span>
+										2024-08-05					<span style="color:rgb(102, 102, 102);box-sizing:border-box;"></span></span>
+									<span style="color:var( --e-global-color-accent );font-size:inherit;box-sizing:border-box;"></span></a>
+				<span style="font-size:14px;font-family:Syht, sans-serif;font-weight:400;line-height:var( --e-global-typography-text-line-height );box-sizing:border-box;width:100%;left:0px;position:absolute;height:100%;border-width:0px 0px 0px 1px;border-top-color:initial;border-bottom-color:initial;border-right-color:initial;border-style:solid;right:0px;bottom:0px;"></span></li>
+				<span style="font-size:100%;list-style-type:none;box-sizing:border-box;"></span></ul>
+				<span style="box-sizing:border-box;"></span></div>
+				<span style="box-sizing:border-box;"></span></div>
+				<div style="box-sizing:border-box;flex-basis:auto;flex-grow:0;flex-shrink:1;order:0;align-self:auto;position:relative;color:var( --e-global-color-text );width:100%;margin-block-end:20px;font-family:Syht, sans-serif;font-size:16px;font-weight:400;line-height:1.6em;flex-direction:row;flex-wrap:nowrap;justify-content:normal;align-items:normal;align-content:normal;gap:normal;margin-bottom:0px;"><span style="color:var( --e-global-color-text );font-family:Syht, sans-serif;font-size:16px;font-weight:400;line-height:1.6em;box-sizing:border-box;"></span>
+				<div style="box-sizing:border-box;transition:background 0.3s, border 0.3s, border-radius 0.3s, box-shadow 0.3s, transform 0.4s;margin:50px 0px 0px;"><span style="box-sizing:border-box;"></span>
+			<div style="box-sizing:border-box;"><span style="box-sizing:border-box;"></span>
+<div style="box-sizing:border-box;"><span style="box-sizing:border-box;"></span>分享嘉宾：刘礼铭  bilibili人工智能资深工程师<span style="box-sizing:border-box;"></span></div>
+<div style="box-sizing:border-box;"><span style="box-sizing:border-box;"></span><span style="box-sizing:border-box;"></span></div>
+<p style="margin-top:0px;margin-bottom:11.34px;box-sizing:border-box;"><span style="box-sizing:border-box;"></span> <span style="box-sizing:border-box;"></span></p>
+<h3 style="margin-top:6.3px;margin-bottom:12.6px;font-weight:500;line-height:1.2;color:inherit;box-sizing:border-box;font-family:SYHT, sans-serif;font-size:24px;"><span style="font-family:SYHT, sans-serif;font-weight:500;line-height:1.2;color:inherit;font-size:24px;box-sizing:border-box;"></span>一、B站AI的训练场景<span style="font-family:SYHT, sans-serif;font-weight:500;line-height:1.2;color:inherit;font-size:24px;box-sizing:border-box;"></span></h3>
+<span style="box-sizing:border-box;"></span></div>
+<p style="margin-top:0px;margin-bottom:11.34px;box-sizing:border-box;"><span style="box-sizing:border-box;"></span> <span style="box-sizing:border-box;"></span></p>
+<div style="box-sizing:border-box;"><span style="box-sizing:border-box;"></span>
+<h4 style="margin-top:6.3px;margin-bottom:12.6px;font-weight:500;line-height:1.2;color:inherit;box-sizing:border-box;font-family:SYHT, sans-serif;font-size:20px;"><span style="font-family:SYHT, sans-serif;font-weight:500;line-height:1.2;color:inherit;font-size:20px;box-sizing:border-box;"></span><span style="box-sizing:border-box;"><span style="box-sizing:border-box;"></span>机器学习平台介绍<span style="box-sizing:border-box;"></span></span><span style="font-family:SYHT, sans-serif;font-weight:500;line-height:1.2;color:inherit;font-size:20px;box-sizing:border-box;"></span></h4>
+<span style="box-sizing:border-box;"></span></div>
+<div style="box-sizing:border-box;"><span style="box-sizing:border-box;"></span>
+<div style="box-sizing:border-box;"><span style="box-sizing:border-box;"></span><span style="box-sizing:border-box;"><span style="box-sizing:border-box;"></span>首先，简单介绍一下B站 AI 的训练场景，整个机器学习平台的架构如下图所示：<span style="box-sizing:border-box;"></span></span><span style="box-sizing:border-box;"></span></div>
+<p style="margin-top:0px;margin-bottom:11.34px;box-sizing:border-box;"><span style="box-sizing:border-box;"></span> <span style="box-sizing:border-box;"></span></p>
+<div style="box-sizing:border-box;"><span style="box-sizing:border-box;"></span><span style="box-sizing:border-box;"></span></div>
+<div style="box-sizing:border-box;"><span style="box-sizing:border-box;"></span><div class="media-placeholder">[图片/附件]</div></en-media><span style="box-sizing:border-box;"></span></div>
+<p style="margin-top:0px;margin-bottom:11.34px;box-sizing:border-box;"><span style="box-sizing:border-box;"></span> <span style="box-sizing:border-box;"></span></p>
+<div style="box-sizing:border-box;"><span style="box-sizing:border-box;"></span><span style="box-sizing:border-box;"></span></div>
+<span style="box-sizing:border-box;"></span></div>
+<div style="box-sizing:border-box;"><span style="box-sizing:border-box;"></span>
+<div style="box-sizing:border-box;"><span style="box-sizing:border-box;"></span><span style="box-sizing:border-box;"><span style="box-sizing:border-box;"></span>它具备了一个常规机器学习平台的能力，比如交互式建模、数据集管理、模型训练、模型部署等基础能力，用户也会有一些精确的数据集、业务团队以及资源运营相关的能力，同时对机器学习框架（比如业界流行的 TensorFlow、PyTorch、DeepSeed 以及自研的一些框架等）都需要兼容。同时，为了加速整个训练的收益，我们与 Alluxio 进行了很多合作，搭建了一个在 AI 训练场景的训练集群，调度器主要是 Volcano，是现在机器学习平台常用的。<span style="box-sizing:border-box;"></span></span><span style="box-sizing:border-box;"></span></div>
+<span style="box-sizing:border-box;"></span></div>
+<div style="box-sizing:border-box;"><span style="box-sizing:border-box;"></span>
+<div style="box-sizing:border-box;"><span style="box-sizing:border-box;"></span><span style="box-sizing:border-box;"><span style="box-sizing:border-box;"></span> <span style="box-sizing:border-box;"></span></span><span style="box-sizing:border-box;"></span></div>
+<span style="box-sizing:border-box;"></span></div>
+<div style="box-sizing:border-box;"><span style="box-sizing:border-box;"></span>
+<h4 style="margin-top:6.3px;margin-bottom:12.6px;font-weight:500;line-height:1.2;color:inherit;box-sizing:border-box;font-family:SYHT, sans-serif;font-size:20px;"><span style="font-family:SYHT, sans-serif;font-weight:500;line-height:1.2;color:inherit;font-size:20px;box-sizing:border-box;"></span><span style="box-sizing:border-box;"><span style="box-sizing:border-box;"></span>已有存储方案介绍<span style="box-sizing:border-box;"></span></span><span style="font-family:SYHT, sans-serif;font-weight:500;line-height:1.2;color:inherit;font-size:20px;box-sizing:border-box;"></span></h4>
+<span style="box-sizing:border-box;"></span></div>
+<div style="box-sizing:border-box;"><span style="box-sizing:border-box;"></span>
+<div style="box-sizing:border-box;"><span style="box-sizing:border-box;"></span><span style="box-sizing:border-box;"><span style="box-sizing:border-box;"></span>下图是我们搭建 Alluxio 之前的存储方案， HDFS 主要针对大数据的分析场景，B站自研的 OSS 存储叫 BOSS，还有一些 NAS 存储的系统，当然每个存储系统都有自己的优缺点，这里也简单的做了个对比。<span style="box-sizing:border-box;"></span></span><span style="box-sizing:border-box;"></span></div>
+<p style="margin-top:0px;margin-bottom:11.34px;box-sizing:border-box;"><span style="box-sizing:border-box;"></span> 
+<span style="box-sizing:border-box;"></span></p><span style="box-sizing:border-box;"></span></div>
+<div style="box-sizing:border-box;"><span style="box-sizing:border-box;"></span><img src="https://pica.zhimg.com/80/v2-e34de016926f45d19fdf35877d1e331c_1440w.webp" width="841" height="551" style="display:block;margin-left:auto;margin-right:auto;clear:both;box-sizing:border-box;border:none;border-radius:0px;box-shadow:none;height:auto;max-width:100%;"><span style="box-sizing:border-box;"></span><span style="box-sizing:border-box;"></span></img><span style="box-sizing:border-box;"></span></div>
+<p style="margin-top:0px;margin-bottom:11.34px;box-sizing:border-box;"><span style="box-sizing:border-box;"></span> <span style="box-sizing:border-box;"></span></p>
+<div style="box-sizing:border-box;"><span style="box-sizing:border-box;"></span>
+<div style="box-sizing:border-box;"><span style="box-sizing:border-box;"></span><span style="box-sizing:border-box;"><span style="box-sizing:border-box;"></span> <span style="box-sizing:border-box;"></span></span><span style="box-sizing:border-box;"></span></div>
+<span style="box-sizing:border-box;"></span></div>
+<div style="box-sizing:border-box;"><span style="box-sizing:border-box;"></span>
+<div style="box-sizing:border-box;"><span style="box-sizing:border-box;"></span><span style="box-sizing:border-box;"></span></div>
+<h4 style="margin-top:6.3px;margin-bottom:12.6px;font-weight:500;line-height:1.2;color:inherit;box-sizing:border-box;font-family:SYHT, sans-serif;font-size:20px;"><span style="font-family:SYHT, sans-serif;font-weight:500;line-height:1.2;color:inherit;font-size:20px;box-sizing:border-box;"></span><span style="box-sizing:border-box;"><span style="box-sizing:border-box;"></span>AI 训练场景介绍<span style="box-sizing:border-box;"></span></span><span style="font-family:SYHT, sans-serif;font-weight:500;line-height:1.2;color:inherit;font-size:20px;box-sizing:border-box;"></span></h4>
+<span style="box-sizing:border-box;"></span></div>
+<div style="box-sizing:border-box;"><span style="box-sizing:border-box;"></span>
+<p style="margin-top:0px;margin-bottom:11.34px;box-sizing:border-box;"><span style="box-sizing:border-box;"></span><strong style="font-weight:bolder;box-sizing:border-box;"><span style="font-weight:bolder;box-sizing:border-box;"></span>1. 搜推<span style="font-weight:bolder;box-sizing:border-box;"></span></strong><span style="box-sizing:border-box;"></span></p>
+<span style="box-sizing:border-box;"></span></div>
+<div style="box-sizing:border-box;"><span style="box-sizing:border-box;"></span>
+<div style="box-sizing:border-box;"><span style="box-sizing:border-box;"></span><span style="box-sizing:border-box;"><span style="box-sizing:border-box;"></span>一个是搜推，比如商业、广告、流量推荐，这种场景就是很明显的大数据存储的场景，跟 HDFS 这一套就非常的亲和。<span style="box-sizing:border-box;"></span></span><span style="box-sizing:border-box;"></span></div>
+<p style="margin-top:0px;margin-bottom:11.34px;box-sizing:border-box;"><span style="box-sizing:border-box;"></span> <span style="box-sizing:border-box;"></span></p>
+<div style="box-sizing:border-box;"><span style="box-sizing:border-box;"></span><div class="media-placeholder">[图片/附件]</div></en-media><span style="box-sizing:border-box;"></span></div>
+<span style="box-sizing:border-box;"></span></div>
+<div style="box-sizing:border-box;"><span style="box-sizing:border-box;"></span>
+<div style="box-sizing:border-box;"><span style="box-sizing:border-box;"></span><span style="box-sizing:border-box;"><span style="box-sizing:border-box;"></span> <span style="box-sizing:border-box;"></span></span><span style="box-sizing:border-box;"></span></div>
+<span style="box-sizing:border-box;"></span></div>
+<div style="box-sizing:border-box;"><span style="box-sizing:border-box;"></span>
+<p style="margin-top:0px;margin-bottom:11.34px;box-sizing:border-box;"><span style="box-sizing:border-box;"></span><strong style="font-weight:bolder;box-sizing:border-box;"><span style="font-weight:bolder;box-sizing:border-box;"></span>2. CV/ 大模型场景<span style="font-weight:bolder;box-sizing:border-box;"></span></strong><span style="box-sizing:border-box;"></span></p>
+<span style="box-sizing:border-box;"></span></div>
+<div style="box-sizing:border-box;"><span style="box-sizing:border-box;"></span>
+<div style="box-sizing:border-box;"><span style="box-sizing:border-box;"></span><span style="box-sizing:border-box;"><span style="box-sizing:border-box;"></span>这个场景也是目前我们使用 Alluxio 的一个主要业务场景，这里有一个特点，单数据集的规模很大，比如我们最近在用的一个数据集，已经达到了 PB 级，文件数量大概在亿级别，基本都是小文件。CV 训练以图片、音频等为主，基本都是100KB、1M大小，数据比较多样，有图片、视频、音频、文本等。<span style="box-sizing:border-box;"></span></span><span style="box-sizing:border-box;"></span></div>
+<p style="margin-top:0px;margin-bottom:11.34px;box-sizing:border-box;"><span style="box-sizing:border-box;"></span> <span style="box-sizing:border-box;"></span></p>
+<div style="box-sizing:border-box;"><span style="box-sizing:border-box;"></span><div class="media-placeholder">[图片/附件]</div></en-media><span style="box-sizing:border-box;"></span></div>
+<p style="margin-top:0px;margin-bottom:11.34px;box-sizing:border-box;"><span style="box-sizing:border-box;"></span> <span style="box-sizing:border-box;"></span></p>
+<div style="box-sizing:border-box;"><span style="box-sizing:border-box;"></span><div class="media-placeholder">[图片/附件]</div></en-media><span style="box-sizing:border-box;"></span></div>
+<p style="margin-top:0px;margin-bottom:11.34px;box-sizing:border-box;"><span style="box-sizing:border-box;"></span> <span style="box-sizing:border-box;"></span></p>
+<span style="box-sizing:border-box;"></span></div>
+<p style="margin-top:0px;margin-bottom:11.34px;box-sizing:border-box;"><span style="box-sizing:border-box;"></span><div class="media-placeholder">[图片/附件]</div></en-media><span style="box-sizing:border-box;"></span></p>
+<div style="box-sizing:border-box;"><span style="box-sizing:border-box;"></span>
+<div style="box-sizing:border-box;"><span style="box-sizing:border-box;"></span><span style="box-sizing:border-box;"><span style="box-sizing:border-box;"></span> <span style="box-sizing:border-box;"></span></span><span style="box-sizing:border-box;"></span></div>
+<span style="box-sizing:border-box;"></span></div>
+<h3 style="margin-top:6.3px;margin-bottom:12.6px;font-weight:500;line-height:1.2;color:inherit;box-sizing:border-box;font-family:SYHT, sans-serif;font-size:24px;"><span style="font-family:SYHT, sans-serif;font-weight:500;line-height:1.2;color:inherit;font-size:24px;box-sizing:border-box;"></span><span style="box-sizing:border-box;"><span style="box-sizing:border-box;"></span>AI 训练存储痛点<span style="box-sizing:border-box;"></span></span><span style="font-family:SYHT, sans-serif;font-weight:500;line-height:1.2;color:inherit;font-size:24px;box-sizing:border-box;"></span></h3>
+<div style="box-sizing:border-box;"><span style="box-sizing:border-box;"></span>
+<div style="box-sizing:border-box;"><span style="box-sizing:border-box;"></span><span style="box-sizing:border-box;"><span style="box-sizing:border-box;"></span>我们在训练过程中发现了几个存储方面的痛点：<span style="box-sizing:border-box;"></span></span><span style="box-sizing:border-box;"></span></div>
+<span style="box-sizing:border-box;"></span></div>
+<p style="margin-top:0px;margin-bottom:11.34px;box-sizing:border-box;"><span style="box-sizing:border-box;"></span> <span style="box-sizing:border-box;"></span></p>
+<div style="box-sizing:border-box;"><span style="box-sizing:border-box;"></span>
+<p style="margin-top:0px;margin-bottom:11.34px;box-sizing:border-box;"><span style="box-sizing:border-box;"></span><strong style="font-weight:bolder;box-sizing:border-box;"><span style="font-weight:bolder;box-sizing:border-box;"></span>1. 存储容量：<span style="font-weight:bolder;box-sizing:border-box;"></span></strong><span style="box-sizing:border-box;"></span></p>
+<span style="box-sizing:border-box;"></span></div>
+<ul style="margin-top:0px;margin-bottom:0px;border:0px;outline:0px;font-size:100%;vertical-align:baseline;background:transparent;box-sizing:border-box;"><span style="font-size:100%;box-sizing:border-box;"></span>
+<li style="margin-top:0px;margin-bottom:0px;border:0px;outline:0px;font-size:100%;vertical-align:baseline;background:transparent;box-sizing:border-box;"><span style="font-size:100%;box-sizing:border-box;"></span>
+<div style="box-sizing:border-box;"><span style="box-sizing:border-box;"></span><span style="box-sizing:border-box;"><span style="box-sizing:border-box;"></span>因为现在随着大模型的引入，数据量会越来越大，对数据容量的要求会越来越高，像我们现在大数据集，可能会达到上百T；<span style="box-sizing:border-box;"></span></span><span style="box-sizing:border-box;"></span></div>
+<span style="font-size:100%;box-sizing:border-box;"></span></li>
+<li style="margin-top:0px;margin-bottom:0px;border:0px;outline:0px;font-size:100%;vertical-align:baseline;background:transparent;box-sizing:border-box;"><span style="font-size:100%;box-sizing:border-box;"></span>
+<div style="box-sizing:border-box;"><span style="box-sizing:border-box;"></span><span style="box-sizing:border-box;"><span style="box-sizing:border-box;"></span>这是一个快速增长的过程，而且特别是最近的 Sora 带火了 TTV 这种场景，所以视频的规模会非常大，存储系统需要具备高扩展性以应对不断增加的数据需求。<span style="box-sizing:border-box;"></span></span><span style="box-sizing:border-box;"></span></div>
+<span style="font-size:100%;box-sizing:border-box;"></span></li>
+<span style="font-size:100%;box-sizing:border-box;"></span></ul>
+<div style="box-sizing:border-box;"><span style="box-sizing:border-box;"></span>
+<div style="box-sizing:border-box;"><span style="box-sizing:border-box;"></span><strong style="font-weight:bolder;box-sizing:border-box;"><span style="font-weight:bolder;box-sizing:border-box;"></span> 2. 性能瓶颈：<span style="font-weight:bolder;box-sizing:border-box;"></span></strong><span style="box-sizing:border-box;"></span></div>
+<span style="box-sizing:border-box;"></span></div>
+<ul style="margin-top:0px;margin-bottom:0px;border:0px;outline:0px;font-size:100%;vertical-align:baseline;background:transparent;box-sizing:border-box;"><span style="font-size:100%;box-sizing:border-box;"></span>
+<li style="margin-top:0px;margin-bottom:0px;border:0px;outline:0px;font-size:100%;vertical-align:baseline;background:transparent;box-sizing:border-box;"><span style="font-size:100%;box-sizing:border-box;"></span>
+<div style="box-sizing:border-box;"><span style="box-sizing:border-box;"></span><span style="box-sizing:border-box;"><span style="box-sizing:border-box;"></span>高吞吐：AI 训练需要频繁读取和写入数据，存储系统需要支持高吞吐量以保证数据加载速度；<span style="box-sizing:border-box;"></span></span><span style="box-sizing:border-box;"></span></div>
+<span style="font-size:100%;box-sizing:border-box;"></span></li>
+<li style="margin-top:0px;margin-bottom:0px;border:0px;outline:0px;font-size:100%;vertical-align:baseline;background:transparent;box-sizing:border-box;"><span style="font-size:100%;box-sizing:border-box;"></span>
+<div style="box-sizing:border-box;"><span style="box-sizing:border-box;"></span><span style="box-sizing:border-box;"><span style="box-sizing:border-box;"></span>低延迟：数据读取的延迟应尽可能低，否则会影响训练效率，导致 GPU/NPU 等计算资源的浪费。 <span style="box-sizing:border-box;"></span></span><span style="box-sizing:border-box;"></span></div>
+<span style="font-size:100%;box-sizing:border-box;"></span></li>
+<span style="font-size:100%;box-sizing:border-box;"></span></ul>
+<div style="box-sizing:border-box;"><span style="box-sizing:border-box;"></span>
+<div style="box-sizing:border-box;"><span style="box-sizing:border-box;"></span><span style="box-sizing:border-box;"><span style="box-sizing:border-box;"></span>正如大家所熟知的，现在买卡非常难，如果 GPU 由于 IO 导致利用率低，那肯定是不划算的；<span style="box-sizing:border-box;"></span></span><span style="box-sizing:border-box;"></span></div>
+<span style="box-sizing:border-box;"></span></div>
+<div style="box-sizing:border-box;"><span style="box-sizing:border-box;"></span>
+<div style="box-sizing:border-box;"><span style="box-sizing:border-box;"></span><span style="box-sizing:border-box;"><span style="box-sizing:border-box;"></span> <span style="box-sizing:border-box;"></span></span><span style="box-sizing:border-box;"></span></div>
+<div style="box-sizing:border-box;"><span style="box-sizing:border-box;"></span><strong style="font-weight:bolder;box-sizing:border-box;"><span style="font-weight:bolder;box-sizing:border-box;"></span>3. 成本、安全：<span style="font-weight:bolder;box-sizing:border-box;"></span></strong><span style="box-sizing:border-box;"></span></div>
+<span style="box-sizing:border-box;"></span></div>
+<ul style="margin-top:0px;margin-bottom:0px;border:0px;outline:0px;font-size:100%;vertical-align:baseline;background:transparent;box-sizing:border-box;"><span style="font-size:100%;box-sizing:border-box;"></span>
+<li style="margin-top:0px;margin-bottom:0px;border:0px;outline:0px;font-size:100%;vertical-align:baseline;background:transparent;box-sizing:border-box;"><span style="font-size:100%;box-sizing:border-box;"></span>
+<div style="box-sizing:border-box;"><span style="box-sizing:border-box;"></span><span style="box-sizing:border-box;"><span style="box-sizing:border-box;"></span>高成本：存储大量数据尤其是高分辨率图像和视频数据，存储成本很高，需要平衡性能和成<span style="box-sizing:border-box;"></span></span><span style="box-sizing:border-box;"></span></div>
+<span style="font-size:100%;box-sizing:border-box;"></span></li>
+<li style="margin-top:0px;margin-bottom:0px;border:0px;outline:0px;font-size:100%;vertical-align:baseline;background:transparent;box-sizing:border-box;"><span style="font-size:100%;box-sizing:border-box;"></span>
+<div style="box-sizing:border-box;"><span style="box-sizing:border-box;"></span><span style="box-sizing:border-box;"><span style="box-sizing:border-box;"></span>访问控制：需要对数据访问进行细粒度的权限管理，确保数据安全。 <span style="box-sizing:border-box;"></span></span><span style="box-sizing:border-box;"></span></div>
+<span style="font-size:100%;box-sizing:border-box;"></span></li>
+<span style="font-size:100%;box-sizing:border-box;"></span></ul>
+<p style="margin-top:0px;margin-bottom:11.34px;box-sizing:border-box;"><span style="box-sizing:border-box;"></span> <span style="box-sizing:border-box;"></span></p>
+<div style="box-sizing:border-box;"><span style="box-sizing:border-box;"></span>
+<h3 style="margin-top:6.3px;margin-bottom:12.6px;font-weight:500;line-height:1.2;color:inherit;box-sizing:border-box;font-family:SYHT, sans-serif;font-size:24px;"><span style="font-family:SYHT, sans-serif;font-weight:500;line-height:1.2;color:inherit;font-size:24px;box-sizing:border-box;"></span><span style="box-sizing:border-box;"><span style="box-sizing:border-box;"></span>基于 Alluxio 的训练存储架构<span style="box-sizing:border-box;"></span></span><span style="font-family:SYHT, sans-serif;font-weight:500;line-height:1.2;color:inherit;font-size:24px;box-sizing:border-box;"></span></h3>
+<div style="box-sizing:border-box;"><span style="box-sizing:border-box;"></span><span style="box-sizing:border-box;"></span></div>
+<span style="box-sizing:border-box;"></span></div>
+<div style="box-sizing:border-box;"><span style="box-sizing:border-box;"></span><div class="media-placeholder">[图片/附件]</div></en-media><span style="box-sizing:border-box;"></span></div>
+<div style="box-sizing:border-box;"><span style="box-sizing:border-box;"></span>
+<div style="box-sizing:border-box;"><span style="box-sizing:border-box;"></span><span style="box-sizing:border-box;"></span></div>
+<div style="box-sizing:border-box;"><span style="box-sizing:border-box;"></span><span style="box-sizing:border-box;"><span style="box-sizing:border-box;"></span>为了解决这些痛点，我们在调研之后，采用了 Alluxio 的方案，主要有三大吸引点：<span style="box-sizing:border-box;"></span></span><span style="box-sizing:border-box;"></span></div>
+<span style="box-sizing:border-box;"></span></div>
+<div style="box-sizing:border-box;"><span style="box-sizing:border-box;"></span>
+<ol style="margin-top:0px;margin-bottom:0px;border:0px;outline:0px;font-size:100%;vertical-align:baseline;background:transparent;box-sizing:border-box;"><span style="font-size:100%;box-sizing:border-box;"></span>
+<li style="margin-top:0px;margin-bottom:0px;border:0px;outline:0px;font-size:100%;vertical-align:baseline;background:transparent;box-sizing:border-box;"><span style="font-size:100%;box-sizing:border-box;"></span><span style="box-sizing:border-box;"><span style="box-sizing:border-box;"></span>统一命名空间：<span style="box-sizing:border-box;"></span></span><span style="box-sizing:border-box;"><span style="box-sizing:border-box;"></span>将不同存储系统（如 HDFS、BOSS、云存储）抽象为一个统一文件系统接口，对用户来说不用感知底层的 HDFS，只需要挂 Fuse；<span style="box-sizing:border-box;"></span></span><span style="font-size:100%;box-sizing:border-box;"></span></li>
+<li style="margin-top:0px;margin-bottom:0px;border:0px;outline:0px;font-size:100%;vertical-align:baseline;background:transparent;box-sizing:border-box;"><span style="font-size:100%;box-sizing:border-box;"></span>内存或 NVMe 缓存：<span style="box-sizing:border-box;"><span style="box-sizing:border-box;"></span>结合内存和 NVMe 存储缓存，提升访问速度，降低 I/O 延迟，用的比较多的是 NVMe 的场景，大量 GPU 都会高配这种 NVMe；<span style="box-sizing:border-box;"></span></span><span style="font-size:100%;box-sizing:border-box;"></span></li>
+<li style="margin-top:0px;margin-bottom:0px;border:0px;outline:0px;font-size:100%;vertical-align:baseline;background:transparent;box-sizing:border-box;"><span style="font-size:100%;box-sizing:border-box;"></span>多存储后端：<span style="box-sizing:border-box;"><span style="box-sizing:border-box;"></span>兼容 HDFS、对象存储等多种存储后端，扩展性强。<span style="box-sizing:border-box;"></span></span><span style="font-size:100%;box-sizing:border-box;"></span></li>
+<span style="font-size:100%;box-sizing:border-box;"></span></ol>
+<span style="box-sizing:border-box;"></span></div>
+<div style="box-sizing:border-box;"><span style="box-sizing:border-box;"></span>
+<div style="box-sizing:border-box;"><span style="box-sizing:border-box;"></span><span style="box-sizing:border-box;"><span style="box-sizing:border-box;"></span> <span style="box-sizing:border-box;"></span></span><span style="box-sizing:border-box;"></span></div>
+<span style="box-sizing:border-box;"></span></div>
+<div style="box-sizing:border-box;"><span style="box-sizing:border-box;"></span>
+<h3 style="margin-top:6.3px;margin-bottom:12.6px;font-weight:500;line-height:1.2;color:inherit;box-sizing:border-box;font-family:SYHT, sans-serif;font-size:24px;"><span style="font-family:SYHT, sans-serif;font-weight:500;line-height:1.2;color:inherit;font-size:24px;box-sizing:border-box;"></span><span style="box-sizing:border-box;"><span style="box-sizing:border-box;"></span>二、Alluxio 在 AI 训练场景的应用<span style="box-sizing:border-box;"></span></span><span style="font-family:SYHT, sans-serif;font-weight:500;line-height:1.2;color:inherit;font-size:24px;box-sizing:border-box;"></span></h3>
+<span style="box-sizing:border-box;"></span></div>
+<div style="box-sizing:border-box;"><span style="box-sizing:border-box;"></span>
+<h4 style="margin-top:6.3px;margin-bottom:12.6px;font-weight:500;line-height:1.2;color:inherit;box-sizing:border-box;font-family:SYHT, sans-serif;font-size:20px;"><span style="font-family:SYHT, sans-serif;font-weight:500;line-height:1.2;color:inherit;font-size:20px;box-sizing:border-box;"></span><span style="box-sizing:border-box;"><span style="box-sizing:border-box;"></span>为什么选择 Alluxio ？<span style="box-sizing:border-box;"></span></span><span style="font-family:SYHT, sans-serif;font-weight:500;line-height:1.2;color:inherit;font-size:20px;box-sizing:border-box;"></span></h4>
+<span style="box-sizing:border-box;"></span></div>
+<div style="box-sizing:border-box;"><span style="box-sizing:border-box;"></span>
+<div style="box-sizing:border-box;"><span style="box-sizing:border-box;"></span><span style="box-sizing:border-box;"><span style="box-sizing:border-box;"></span>这里先介绍一下 Alluxio 的主要优势：<span style="box-sizing:border-box;"></span></span><span style="box-sizing:border-box;"></span></div>
+<span style="box-sizing:border-box;"></span></div>
+<div style="box-sizing:border-box;"><span style="box-sizing:border-box;"></span>
+<ul style="margin-top:0px;margin-bottom:0px;border:0px;outline:0px;font-size:100%;vertical-align:baseline;background:transparent;box-sizing:border-box;"><span style="font-size:100%;box-sizing:border-box;"></span>
+<li style="margin-top:0px;margin-bottom:0px;border:0px;outline:0px;font-size:100%;vertical-align:baseline;background:transparent;box-sizing:border-box;"><span style="font-size:100%;box-sizing:border-box;"></span><span style="box-sizing:border-box;"><span style="box-sizing:border-box;"></span>性能高：<span style="box-sizing:border-box;"></span></span><span style="box-sizing:border-box;"><span style="box-sizing:border-box;"></span>低延迟高吞吐的数据缓存能力，对于 AI 训练尤其重要；<span style="box-sizing:border-box;"></span></span><span style="font-size:100%;box-sizing:border-box;"></span></li>
+<li style="margin-top:0px;margin-bottom:0px;border:0px;outline:0px;font-size:100%;vertical-align:baseline;background:transparent;box-sizing:border-box;"><span style="font-size:100%;box-sizing:border-box;"></span>兼容性强：<span style="box-sizing:border-box;"><span style="box-sizing:border-box;"></span>支持 S3/HDFS 后端，提供了广泛的数据源兼容性；兼容 POSIX 协议；<span style="box-sizing:border-box;"></span></span><span style="font-size:100%;box-sizing:border-box;"></span></li>
+<li style="margin-top:0px;margin-bottom:0px;border:0px;outline:0px;font-size:100%;vertical-align:baseline;background:transparent;box-sizing:border-box;"><span style="font-size:100%;box-sizing:border-box;"></span>运维成本低：<span style="box-sizing:border-box;"><span style="box-sizing:border-box;"></span>运维成本在大规模数据存储和处理环境中尤为重要，有助于减少整体运维投入；<span style="box-sizing:border-box;"></span></span><span style="font-size:100%;box-sizing:border-box;"></span></li>
+<li style="margin-top:0px;margin-bottom:0px;border:0px;outline:0px;font-size:100%;vertical-align:baseline;background:transparent;box-sizing:border-box;"><span style="font-size:100%;box-sizing:border-box;"></span>大规模数据处理：<span style="box-sizing:border-box;"><span style="box-sizing:border-box;"></span>Alluxio 支持亿级的数据量规模，能满足 AI 训练需求。<span style="box-sizing:border-box;"></span></span><span style="font-size:100%;box-sizing:border-box;"></span></li>
+<span style="font-size:100%;box-sizing:border-box;"></span></ul>
+<span style="box-sizing:border-box;"></span></div>
+<div style="box-sizing:border-box;"><span style="box-sizing:border-box;"></span><span style="box-sizing:border-box;"></span></div>
+<div style="box-sizing:border-box;"><span style="box-sizing:border-box;"></span><div class="media-placeholder">[图片/附件]</div></en-media><span style="box-sizing:border-box;"></span></div>
+<div style="box-sizing:border-box;"><span style="box-sizing:border-box;"></span>
+<div style="box-sizing:border-box;"><span style="box-sizing:border-box;"></span><span style="box-sizing:border-box;"><span style="box-sizing:border-box;"></span>在做技术选型的时候，我们也对业界常用的几个系统做了调研和分析，基于B站的体量，我们没有人力单独为 AI 做存储的维护，所以第一个优先考虑的就是成本，需要投入更低的成本、更低的运维，支持更强的性能。在调研过程中 Alluxio各方面表现优势明显，最终我们选择了 Alluxio。<span style="box-sizing:border-box;"></span></span><span style="box-sizing:border-box;"></span></div>
+<span style="box-sizing:border-box;"></span></div>
+<div style="box-sizing:border-box;"><span style="box-sizing:border-box;"></span>
+<div style="box-sizing:border-box;"><span style="box-sizing:border-box;"></span><span style="box-sizing:border-box;"><span style="box-sizing:border-box;"></span> <span style="box-sizing:border-box;"></span></span><span style="box-sizing:border-box;"></span></div>
+<span style="box-sizing:border-box;"></span></div>
+<div style="box-sizing:border-box;"><span style="box-sizing:border-box;"></span>
+<h3 style="margin-top:6.3px;margin-bottom:12.6px;font-weight:500;line-height:1.2;color:inherit;box-sizing:border-box;font-family:SYHT, sans-serif;font-size:24px;"><span style="font-family:SYHT, sans-serif;font-weight:500;line-height:1.2;color:inherit;font-size:24px;box-sizing:border-box;"></span><span style="box-sizing:border-box;"><span style="box-sizing:border-box;"></span>单集群 or 多集群？<span style="box-sizing:border-box;"></span></span><span style="font-family:SYHT, sans-serif;font-weight:500;line-height:1.2;color:inherit;font-size:24px;box-sizing:border-box;"></span></h3>
+<span style="box-sizing:border-box;"></span></div>
+<div style="box-sizing:border-box;"><span style="box-sizing:border-box;"></span>
+<div style="box-sizing:border-box;"><span style="box-sizing:border-box;"></span><span style="box-sizing:border-box;"><span style="box-sizing:border-box;"></span>在部署的时候 Alluxio 采用的是一种多 Master、多 Worker 的方式。但B站在大数据集场景是一种单集群部署的模式，优势是：一个集群可以集中管理、运维成本比较低，可以实现资源的高效利用；缺点是现在社区版2.9.4的元数据存储在 Master ，很容易碰到天花板，扩展性比较有限，如果我们单个集群出现了问题，对业务的影响是比较大的，所以在 AI 场景我们最终采用的是多集群部署的方案。<span style="box-sizing:border-box;"></span></span><span style="box-sizing:border-box;"></span></div>
+<div style="box-sizing:border-box;"><span style="box-sizing:border-box;"></span><span style="box-sizing:border-box;"></span></div>
+<div style="box-sizing:border-box;"><span style="box-sizing:border-box;"></span><img src="https://pica.zhimg.com/80/v2-0b35ad4ff47a29ab6066d4540451bf30_1440w.webp" width="737" height="929" style="display:block;margin-left:auto;margin-right:auto;clear:both;box-sizing:border-box;border:none;border-radius:0px;box-shadow:none;height:auto;max-width:100%;"><span style="box-sizing:border-box;"></span><span style="box-sizing:border-box;"></span></img><span style="box-sizing:border-box;"></span></div>
+<p style="margin-top:0px;margin-bottom:11.34px;box-sizing:border-box;"><span style="box-sizing:border-box;"></span> <span style="box-sizing:border-box;"></span></p>
+<div style="box-sizing:border-box;"><span style="box-sizing:border-box;"></span><span style="box-sizing:border-box;"></span></div>
+<span style="box-sizing:border-box;"></span></div>
+<div style="box-sizing:border-box;"><span style="box-sizing:border-box;"></span>
+<div style="box-sizing:border-box;"><span style="box-sizing:border-box;"></span><span style="box-sizing:border-box;"><span style="box-sizing:border-box;"></span>基于整个集群的存储规模，集群的划分会按照业务或者是数据集，好处是某个业务或者数据集需要更强的能力，我们则会投入更多的资源，而对于那些不怎么重要的业务，或者是低优先级的业务，则需要把它隔离开，从而不至于让低优先级的业务影响到高优先级的业务，这是我们最终采用的方式。<span style="box-sizing:border-box;"></span></span><span style="box-sizing:border-box;"></span></div>
+<div style="box-sizing:border-box;"><span style="box-sizing:border-box;"></span><span style="box-sizing:border-box;"></span></div>
+<span style="box-sizing:border-box;"></span></div>
+<div style="box-sizing:border-box;"><span style="box-sizing:border-box;"></span>
+<div style="box-sizing:border-box;"><span style="box-sizing:border-box;"></span><span style="box-sizing:border-box;"><span style="box-sizing:border-box;"></span>通过多集群的方式，在部署运维方面会增加更多的成本，那么如何解决这个问题？<span style="box-sizing:border-box;"></span></span><span style="box-sizing:border-box;"></span></div>
+<div style="box-sizing:border-box;"><span style="box-sizing:border-box;"></span><span style="box-sizing:border-box;"></span></div>
+<span style="box-sizing:border-box;"></span></div>
+<p style="margin-top:0px;margin-bottom:11.34px;box-sizing:border-box;"><span style="box-sizing:border-box;"></span> <span style="box-sizing:border-box;"></span></p>
+<div style="box-sizing:border-box;"><span style="box-sizing:border-box;"></span>
+<h3 style="margin-top:6.3px;margin-bottom:12.6px;font-weight:500;line-height:1.2;color:inherit;box-sizing:border-box;font-family:SYHT, sans-serif;font-size:24px;"><span style="font-family:SYHT, sans-serif;font-weight:500;line-height:1.2;color:inherit;font-size:24px;box-sizing:border-box;"></span><span style="box-sizing:border-box;"><span style="box-sizing:border-box;"></span>基于 Fluid 的云原生多集群部署方案<span style="box-sizing:border-box;"></span></span><span style="font-family:SYHT, sans-serif;font-weight:500;line-height:1.2;color:inherit;font-size:24px;box-sizing:border-box;"></span></h3>
+<div style="box-sizing:border-box;"><span style="box-sizing:border-box;"></span><div class="media-placeholder">[图片/附件]</div></en-media><span style="box-sizing:border-box;"></span></div>
+<span style="box-sizing:border-box;"></span></div>
+<div style="box-sizing:border-box;"><span style="box-sizing:border-box;"></span>
+<div style="box-sizing:border-box;"><span style="box-sizing:border-box;"></span><span style="box-sizing:border-box;"><span style="box-sizing:border-box;"></span>这里我们引入了 Fluid。Alluxio 是对底层存储的抽象，Fluid 又是对 Alluxio 这一层 Runtime 的抽象。通过 Fluid 之后，我们可以更好的在 K8s 上，更自动化的部署多集群的方案，目前我们应该有百机规模的集群。<span style="box-sizing:border-box;"></span></span><span style="box-sizing:border-box;"></span></div>
+<span style="box-sizing:border-box;"></span></div>
+<div style="box-sizing:border-box;"><span style="box-sizing:border-box;"></span>
+<div style="box-sizing:border-box;"><span style="box-sizing:border-box;"></span><span style="box-sizing:border-box;"><span style="box-sizing:border-box;"></span> <span style="box-sizing:border-box;"></span></span><span style="box-sizing:border-box;"></span></div>
+<span style="box-sizing:border-box;"></span></div>
+<div style="box-sizing:border-box;"><span style="box-sizing:border-box;"></span>
+<h4 style="margin-top:6.3px;margin-bottom:12.6px;font-weight:500;line-height:1.2;color:inherit;box-sizing:border-box;font-family:SYHT, sans-serif;font-size:20px;"><span style="font-family:SYHT, sans-serif;font-weight:500;line-height:1.2;color:inherit;font-size:20px;box-sizing:border-box;"></span><span style="box-sizing:border-box;"><span style="box-sizing:border-box;"></span>调度优化<span style="box-sizing:border-box;"></span></span><span style="font-family:SYHT, sans-serif;font-weight:500;line-height:1.2;color:inherit;font-size:20px;box-sizing:border-box;"></span></h4>
+<div style="box-sizing:border-box;"><span style="box-sizing:border-box;"></span><div class="media-placeholder">[图片/附件]</div></en-media><span style="box-sizing:border-box;"></span></div>
+<div style="box-sizing:border-box;"><span style="box-sizing:border-box;"></span><div class="media-placeholder">[图片/附件]</div></en-media><span style="box-sizing:border-box;"></span></div>
+<span style="box-sizing:border-box;"></span></div>
+<div style="box-sizing:border-box;"><span style="box-sizing:border-box;"></span>
+<div style="box-sizing:border-box;"><span style="box-sizing:border-box;"></span><span style="box-sizing:border-box;"><span style="box-sizing:border-box;"></span>另一个问题是，我们在实际应用中使用的是 volcano 调度器，主要是 binpack 为主，binpack 的策略是尽可能的把单台机器塞满，对我们这种 IO 密集型的业务，如果把所有的节点都调度到单台机器上，很容易造成单点故障，给 IO 造成瓶颈，另外也会带来网络拥塞、资源利用不均等问题。<span style="box-sizing:border-box;"></span></span><span style="box-sizing:border-box;"></span></div>
+<span style="box-sizing:border-box;"></span></div>
+<div style="box-sizing:border-box;"><span style="box-sizing:border-box;"></span>
+<div style="box-sizing:border-box;"><span style="box-sizing:border-box;"></span><span style="box-sizing:border-box;"><span style="box-sizing:border-box;"></span> <span style="box-sizing:border-box;"></span></span><span style="box-sizing:border-box;"></span></div>
+<span style="box-sizing:border-box;"></span></div>
+<div style="box-sizing:border-box;"><span style="box-sizing:border-box;"></span>
+<div style="box-sizing:border-box;"><span style="box-sizing:border-box;"></span><span style="box-sizing:border-box;"><span style="box-sizing:border-box;"></span>解决办法：我们结合了业务特点以及本身的缓存加速场景，采用的是拓扑感知的调度策略。首先，会尽可能的让 Alluxio 的节点分散到我们集群的每台机器上，尽可能的把 IO 打散。其次，在任务调度的时候，我们也会去感知 Alluxio 的拓扑分布，尽可能做到任务与 Alluxio 节点的亲和，这样亲和之后相当于在读本地硬盘。<span style="box-sizing:border-box;"></span></span><span style="box-sizing:border-box;"></span></div>
+<span style="box-sizing:border-box;"></span></div>
+<div style="box-sizing:border-box;"><span style="box-sizing:border-box;"></span>
+<div style="box-sizing:border-box;"><span style="box-sizing:border-box;"></span><span style="box-sizing:border-box;"><span style="box-sizing:border-box;"></span> <span style="box-sizing:border-box;"></span></span><span style="box-sizing:border-box;"></span></div>
+<span style="box-sizing:border-box;"></span></div>
+<div style="box-sizing:border-box;"><span style="box-sizing:border-box;"></span>
+<h4 style="margin-top:6.3px;margin-bottom:12.6px;font-weight:500;line-height:1.2;color:inherit;box-sizing:border-box;font-family:SYHT, sans-serif;font-size:20px;"><span style="font-family:SYHT, sans-serif;font-weight:500;line-height:1.2;color:inherit;font-size:20px;box-sizing:border-box;"></span><span style="box-sizing:border-box;"><span style="box-sizing:border-box;"></span>元数据同步加速<span style="box-sizing:border-box;"></span></span><span style="font-family:SYHT, sans-serif;font-weight:500;line-height:1.2;color:inherit;font-size:20px;box-sizing:border-box;"></span></h4>
+<div style="box-sizing:border-box;"><span style="box-sizing:border-box;"></span><div class="media-placeholder">[图片/附件]</div></en-media><span style="box-sizing:border-box;"></span></div>
+<span style="box-sizing:border-box;"></span></div>
+<div style="box-sizing:border-box;"><span style="box-sizing:border-box;"></span>
+<p style="margin-top:0px;margin-bottom:11.34px;box-sizing:border-box;"><span style="box-sizing:border-box;"></span><span style="box-sizing:border-box;"><span style="box-sizing:border-box;"></span><strong style="font-weight:bolder;box-sizing:border-box;"><span style="font-weight:bolder;box-sizing:border-box;"></span>元数据同步的必要性:<span style="font-weight:bolder;box-sizing:border-box;"></span></strong> <span style="box-sizing:border-box;"></span></span><span style="box-sizing:border-box;"></span></p>
+<ul style="margin-top:0px;margin-bottom:0px;border:0px;outline:0px;font-size:100%;vertical-align:baseline;background:transparent;box-sizing:border-box;"><span style="font-size:100%;box-sizing:border-box;"></span>
+<li style="margin-top:0px;margin-bottom:0px;border:0px;outline:0px;font-size:100%;vertical-align:baseline;background:transparent;box-sizing:border-box;"><span style="font-size:100%;box-sizing:border-box;"></span>元数据同步在 Alluxio 中至关重要，因为它确保 Alluxio 文件系统与底层存储系统中的数据保持一致<span style="font-size:100%;box-sizing:border-box;"></span></li>
+<span style="font-size:100%;box-sizing:border-box;"></span></ul>
+<span style="box-sizing:border-box;"></span></div>
+<div style="box-sizing:border-box;"><span style="box-sizing:border-box;"></span>
+<div style="box-sizing:border-box;"><span style="box-sizing:border-box;"></span><span style="box-sizing:border-box;"><span style="box-sizing:border-box;"></span>这个问题我们也同样遇到过。当数据量大了之后，如果我们按照官方的元数据同步方法，对整个集群的稳定性和性能都会有很大的影响，所以我们最终采取了一种按需同步的方法。因为我们已经把集群暴露给用户，他可以直接操作他的集群，知道什么时候数据是更新的，由他来决定；另外，如果是那种亿级别的数据集要做 Meta 同步，至少是小时级别，这个肯定是不可接受的，所以我们也在要求用户最小化他的同步单元，尽可能的减少无效的同步计算。<span style="box-sizing:border-box;"></span></span><span style="box-sizing:border-box;"></span></div>
+<span style="box-sizing:border-box;"></span></div>
+<div style="box-sizing:border-box;"><span style="box-sizing:border-box;"></span>
+<div style="box-sizing:border-box;"><span style="box-sizing:border-box;"></span><span style="box-sizing:border-box;"><span style="box-sizing:border-box;"></span> <span style="box-sizing:border-box;"></span></span><span style="box-sizing:border-box;"></span></div>
+<span style="box-sizing:border-box;"></span></div>
+<div style="box-sizing:border-box;"><span style="box-sizing:border-box;"></span>
+<p style="margin-top:0px;margin-bottom:11.34px;box-sizing:border-box;"><span style="box-sizing:border-box;"></span><strong style="font-weight:bolder;box-sizing:border-box;"><span style="font-weight:bolder;box-sizing:border-box;"></span>具体同步方式:<span style="font-weight:bolder;box-sizing:border-box;"></span></strong><span style="box-sizing:border-box;"></span></p>
+<span style="box-sizing:border-box;"></span></div>
+<div style="box-sizing:border-box;"><span style="box-sizing:border-box;"></span>
+<ul style="margin-top:0px;margin-bottom:0px;border:0px;outline:0px;font-size:100%;vertical-align:baseline;background:transparent;box-sizing:border-box;"><span style="font-size:100%;box-sizing:border-box;"></span>
+<li style="margin-top:0px;margin-bottom:0px;border:0px;outline:0px;font-size:100%;vertical-align:baseline;background:transparent;box-sizing:border-box;"><span style="font-size:100%;box-sizing:border-box;"></span><span style="box-sizing:border-box;"><span style="box-sizing:border-box;"></span>基于时间的自动同步：设置alluxio.user.file.metadata.sync.interval 属性 来定时同步；<span style="box-sizing:border-box;"></span></span><span style="font-size:100%;box-sizing:border-box;"></span></li>
+<li style="margin-top:0px;margin-bottom:0px;border:0px;outline:0px;font-size:100%;vertical-align:baseline;background:transparent;box-sizing:border-box;"><span style="font-size:100%;box-sizing:border-box;"></span>手动同步：使用 loadMetadata 命令或 API 手动触发同步。<span style="font-size:100%;box-sizing:border-box;"></span></li>
+<span style="font-size:100%;box-sizing:border-box;"></span></ul>
+<span style="box-sizing:border-box;"></span></div>
+<div style="box-sizing:border-box;"><span style="box-sizing:border-box;"></span>
+<div style="box-sizing:border-box;"><span style="box-sizing:border-box;"></span><div class="media-placeholder">[图片/附件]</div></en-media><span style="box-sizing:border-box;"></span></div>
+<span style="box-sizing:border-box;"></span></div>
+<div style="box-sizing:border-box;"><span style="box-sizing:border-box;"></span>
+<div style="box-sizing:border-box;"><span style="box-sizing:border-box;"></span><span style="box-sizing:border-box;"><span style="box-sizing:border-box;"></span> <span style="box-sizing:border-box;"></span></span><span style="box-sizing:border-box;"></span></div>
+<span style="box-sizing:border-box;"></span></div>
+<div style="box-sizing:border-box;"><span style="box-sizing:border-box;"></span>
+<h4 style="margin-top:6.3px;margin-bottom:12.6px;font-weight:500;line-height:1.2;color:inherit;box-sizing:border-box;font-family:SYHT, sans-serif;font-size:20px;"><span style="font-family:SYHT, sans-serif;font-weight:500;line-height:1.2;color:inherit;font-size:20px;box-sizing:border-box;"></span><span style="box-sizing:border-box;"><span style="box-sizing:border-box;"></span>加速方式：<span style="box-sizing:border-box;"></span></span><span style="font-family:SYHT, sans-serif;font-weight:500;line-height:1.2;color:inherit;font-size:20px;box-sizing:border-box;"></span></h4>
+<span style="box-sizing:border-box;"></span></div>
+<div style="box-sizing:border-box;"><span style="box-sizing:border-box;"></span>
+<ul style="margin-top:0px;margin-bottom:0px;border:0px;outline:0px;font-size:100%;vertical-align:baseline;background:transparent;box-sizing:border-box;"><span style="font-size:100%;box-sizing:border-box;"></span>
+<li style="margin-top:0px;margin-bottom:0px;border:0px;outline:0px;font-size:100%;vertical-align:baseline;background:transparent;box-sizing:border-box;"><span style="font-size:100%;box-sizing:border-box;"></span><span style="box-sizing:border-box;"><span style="box-sizing:border-box;"></span>按需同步：只在需要时触发；<span style="box-sizing:border-box;"></span></span><span style="font-size:100%;box-sizing:border-box;"></span></li>
+<li style="margin-top:0px;margin-bottom:0px;border:0px;outline:0px;font-size:100%;vertical-align:baseline;background:transparent;box-sizing:border-box;"><span style="font-size:100%;box-sizing:border-box;"></span>最小范围同步：最小范围同步，减少无效同步计算。<span style="font-size:100%;box-sizing:border-box;"></span></li>
+<span style="font-size:100%;box-sizing:border-box;"></span></ul>
+<span style="box-sizing:border-box;"></span></div>
+<p style="margin-top:0px;margin-bottom:11.34px;box-sizing:border-box;"><span style="box-sizing:border-box;"></span> <span style="box-sizing:border-box;"></span></p>
+<div style="box-sizing:border-box;"><span style="box-sizing:border-box;"></span>
+<h4 style="margin-top:6.3px;margin-bottom:12.6px;font-weight:500;line-height:1.2;color:inherit;box-sizing:border-box;font-family:SYHT, sans-serif;font-size:20px;"><span style="font-family:SYHT, sans-serif;font-weight:500;line-height:1.2;color:inherit;font-size:20px;box-sizing:border-box;"></span><span style="box-sizing:border-box;"><span style="box-sizing:border-box;"></span>超大规模小文件优化<span style="box-sizing:border-box;"></span></span><span style="font-family:SYHT, sans-serif;font-weight:500;line-height:1.2;color:inherit;font-size:20px;box-sizing:border-box;"></span></h4>
+<div style="box-sizing:border-box;"><span style="box-sizing:border-box;"></span><img src="https://pica.zhimg.com/80/v2-ab7d552d337c30f8978c4868c34dabef_1440w.webp" width="841" height="484" style="display:block;margin-left:auto;margin-right:auto;clear:both;box-sizing:border-box;border:none;border-radius:0px;box-shadow:none;height:auto;max-width:100%;"><span style="box-sizing:border-box;"></span><span style="box-sizing:border-box;"></span></img><span style="box-sizing:border-box;"></span></div>
+<p style="margin-top:0px;margin-bottom:11.34px;box-sizing:border-box;"><span style="box-sizing:border-box;"></span> 
+<span style="box-sizing:border-box;"></span></p><span style="box-sizing:border-box;"></span></div>
+<div style="box-sizing:border-box;"><span style="box-sizing:border-box;"></span>
+<div style="box-sizing:border-box;"><span style="box-sizing:border-box;"></span><span style="box-sizing:border-box;"></span></div>
+<div style="box-sizing:border-box;"><span style="box-sizing:border-box;"></span><span style="box-sizing:border-box;"><span style="box-sizing:border-box;"></span>我们很多场景的数据都是以小数据为主，如果只是简单的把数据给到 Alluxio，然后什么都不做，这样就会有两个问题，一个是 Meta 会很多，本身我们采用的就是 Master 的架构，整个集群对 Master 的压力会很大；另一个就是用户会无组织的去用，因为他根本就不知道该做哪些组织才有利于数据的 IO。这块我们主要是做了数据合并，也是我们在训练场景用的比较多的一种方式，把一个图片做成一个 chunk，chunk 里边再做一个下浮，我们可以做到指数级的降低文件的 Meta 信息，并对整个训练的效果都不会有太大的影响。<span style="box-sizing:border-box;"></span></span><span style="box-sizing:border-box;"></span></div>
+<span style="box-sizing:border-box;"></span></div>
+<div style="box-sizing:border-box;"><span style="box-sizing:border-box;"></span>
+<div style="box-sizing:border-box;"><span style="box-sizing:border-box;"></span><span style="box-sizing:border-box;"><span style="box-sizing:border-box;"></span> <span style="box-sizing:border-box;"></span></span><span style="box-sizing:border-box;"></span></div>
+<span style="box-sizing:border-box;"></span></div>
+<div style="box-sizing:border-box;"><span style="box-sizing:border-box;"></span>
+<h4 style="margin-top:6.3px;margin-bottom:12.6px;font-weight:500;line-height:1.2;color:inherit;box-sizing:border-box;font-family:SYHT, sans-serif;font-size:20px;"><span style="font-family:SYHT, sans-serif;font-weight:500;line-height:1.2;color:inherit;font-size:20px;box-sizing:border-box;"></span><span style="box-sizing:border-box;"><span style="box-sizing:border-box;"></span>Alluxio 带来的效益<span style="box-sizing:border-box;"></span></span><span style="font-family:SYHT, sans-serif;font-weight:500;line-height:1.2;color:inherit;font-size:20px;box-sizing:border-box;"></span></h4>
+<div style="box-sizing:border-box;"><span style="box-sizing:border-box;"></span><div class="media-placeholder">[图片/附件]</div></en-media><span style="box-sizing:border-box;"></span></div>
+<p style="margin-top:0px;margin-bottom:11.34px;box-sizing:border-box;"><span style="box-sizing:border-box;"></span> 
+<span style="box-sizing:border-box;"></span></p><span style="box-sizing:border-box;"></span></div>
+<div style="box-sizing:border-box;"><span style="box-sizing:border-box;"></span>
+<div style="box-sizing:border-box;"><span style="box-sizing:border-box;"></span><span style="box-sizing:border-box;"></span></div>
+<div style="box-sizing:border-box;"><span style="box-sizing:border-box;"></span><span style="box-sizing:border-box;"><span style="box-sizing:border-box;"></span>在我们实际应用过程中测下来，亿级别的单节点性能基本能达到 IOPS 在 3000+ 以上，整个业务包括我们的审核、大模型，都在用这一套，我们现在已经缓存的数据集大概在几百T规模左右。<span style="box-sizing:border-box;"></span></span><span style="box-sizing:border-box;"></span></div>
+<span style="box-sizing:border-box;"></span></div>
+<div style="box-sizing:border-box;"><span style="box-sizing:border-box;"></span>
+<div style="box-sizing:border-box;"><span style="box-sizing:border-box;"></span><span style="box-sizing:border-box;"><span style="box-sizing:border-box;"></span> <span style="box-sizing:border-box;"></span></span><span style="box-sizing:border-box;"></span></div>
+<span style="box-sizing:border-box;"></span></div>
+<div style="box-sizing:border-box;"><span style="box-sizing:border-box;"></span>
+<h3 style="margin-top:6.3px;margin-bottom:12.6px;font-weight:500;line-height:1.2;color:inherit;box-sizing:border-box;font-family:SYHT, sans-serif;font-size:24px;"><span style="font-family:SYHT, sans-serif;font-weight:500;line-height:1.2;color:inherit;font-size:24px;box-sizing:border-box;"></span><span style="box-sizing:border-box;"><span style="box-sizing:border-box;"></span>三、未来规划<span style="box-sizing:border-box;"></span></span><span style="font-family:SYHT, sans-serif;font-weight:500;line-height:1.2;color:inherit;font-size:24px;box-sizing:border-box;"></span></h3>
+<span style="box-sizing:border-box;"></span></div>
+<div style="box-sizing:border-box;"><span style="box-sizing:border-box;"></span>
+<div style="box-sizing:border-box;"><span style="box-sizing:border-box;"></span><span style="box-sizing:border-box;"><span style="box-sizing:border-box;"></span>Alluxio 之前介绍过知乎的推理场景，这个场景B站也有比较大的痛点，所以我们也在尝试探索更多的可能。另外就是现在 Master 元数据管理是一个很痛的点，在这种场景下 Alluxio 最新的 Dora 框架可以带来多大的收益，也是需要我们进一步去调研的，同时，因为我们是一个机器学习平台，应用场景非常单一，我们也在跟B站的存储专业团队做一个更大规模、更通用的 Alluxio 解决方案，这是我们现在在做的，也是后续打算去推的。<span style="box-sizing:border-box;"></span></span><span style="box-sizing:border-box;"></span></div>
+<span style="box-sizing:border-box;"></span></div>
+		<span style="box-sizing:border-box;"></span></div>
+				<span style="color:var( --e-global-color-text );font-family:Syht, sans-serif;font-size:16px;font-weight:400;line-height:1.6em;box-sizing:border-box;"></span></div>
+				<div style="box-sizing:border-box;flex-basis:auto;flex-grow:0;flex-shrink:1;order:0;align-self:auto;position:relative;width:100%;flex-direction:row;flex-wrap:nowrap;justify-content:normal;align-items:normal;align-content:normal;gap:normal;"><span style="box-sizing:border-box;"></span>
+				<div style="box-sizing:border-box;transition:background 0.3s, border 0.3s, border-radius 0.3s, box-shadow 0.3s, transform 0.4s;margin:30px 0px 0px;"><span style="box-sizing:border-box;"></span>
+					<div style="box-sizing:border-box;overflow:hidden;display:flex;"><span style="box-sizing:border-box;"></span>
+			<div style="box-sizing:border-box;width:calc(50% - 0.5px);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;"><span style="white-space:nowrap;box-sizing:border-box;"></span>
+				<a href="https://www.alluxio.com.cn/accelerating-machine-learning-in-the-cloud-alluxio-practice-in-red/" rel="prev" style="background-color:transparent;box-sizing:border-box;box-shadow:none;text-decoration:none;color:var( --e-global-color-accent );display:flex;align-items:center;max-width:100%;"><span style="color:var( --e-global-color-accent );box-sizing:border-box;"></span><span style="box-sizing:border-box;color:rgb(213, 216, 220);font-size:30px;padding-right:15px;"><span style="color:rgb(213, 216, 220);font-size:30px;box-sizing:border-box;"></span><img style="display:inline-block;font-size:inherit;height:1em;vertical-align:-0.125em;box-sizing:border-box;width:0.625em;overflow:visible;" src="data:image/svg+xml,%3csvg class='svg-inline--fa fa-chevron-left fa-w-10 js-evernote-checked' aria-hidden='true' focusable='false' data-prefix='fa' data-icon='chevron-left' role='img' xmlns='http://www.w3.org/2000/svg' viewBox='0 0 320 512' data-fa-i2svg='' data-evernote-id='5'%3e%3cpath fill='currentColor' d='M34.52 239.03L228.87 44.69c9.37-9.37 24.57-9.37 33.94 0l22.67 22.67c9.36 9.36 9.37 24.52.04 33.9L131.49 256l154.02 154.75c9.34 9.38 9.32 24.54-.04 33.9l-22.67 22.67c-9.37 9.37-24.57 9.37-33.94 0L34.52 272.97c-9.37-9.37-9.37-24.57 0-33.94z' data-evernote-id='994' class='js-evernote-checked'%3e%3c/path%3e%3c/svg%3e"/><span style="position:absolute;top:-10000em;width:1px;height:1px;margin:-1px;padding:0px;overflow:hidden;clip:rect(0px, 0px, 0px, 0px);border:0px;box-sizing:border-box;"><span style="box-sizing:border-box;"></span>Prev<span style="box-sizing:border-box;"></span></span><span style="color:rgb(213, 216, 220);font-size:30px;box-sizing:border-box;"></span></span><span style="box-sizing:border-box;overflow:hidden;display:flex;flex-direction:column;"><span style="box-sizing:border-box;"></span><span style="box-sizing:border-box;color:var( --e-global-color-text );text-transform:uppercase;font-size:0.8em;overflow:hidden;text-overflow:ellipsis;font-family:Syht, sans-serif;font-weight:600;"><span style="color:var( --e-global-color-text );font-family:Syht, sans-serif;font-size:0.8em;font-weight:600;text-transform:uppercase;box-sizing:border-box;"></span>上一篇<span style="color:var( --e-global-color-text );font-family:Syht, sans-serif;font-size:0.8em;font-weight:600;text-transform:uppercase;box-sizing:border-box;"></span></span><span style="box-sizing:border-box;color:var( --e-global-color-secondary );font-weight:var( --e-global-typography-secondary-font-weight );font-size:0.7em;overflow:hidden;text-overflow:ellipsis;font-family:Syht, sans-serif;"><span style="color:var( --e-global-color-secondary );font-family:Syht, sans-serif;font-size:0.7em;font-weight:var( --e-global-typography-secondary-font-weight );box-sizing:border-box;"></span>加速云端机器学习-Alluxio在小红书的实践<span style="color:var( --e-global-color-secondary );font-family:Syht, sans-serif;font-size:0.7em;font-weight:var( --e-global-typography-secondary-font-weight );box-sizing:border-box;"></span></span><span style="box-sizing:border-box;"></span></span><span style="color:var( --e-global-color-accent );box-sizing:border-box;"></span></a>			<span style="white-space:nowrap;box-sizing:border-box;"></span></div>
+						<div style="box-sizing:border-box;width:calc(50% - 0.5px);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;text-align:right;"><span style="white-space:nowrap;text-align:right;box-sizing:border-box;"></span>
+							<span style="white-space:nowrap;text-align:right;box-sizing:border-box;"></span></div>
+		<span style="box-sizing:border-box;"></span></div>
+				<span style="box-sizing:border-box;"></span></div>
+				<span style="box-sizing:border-box;"></span></div>
+					<span style="box-sizing:border-box;"></span></div></div></div></div></div></div></div></div></div>
+</div>
+<a class="back-link" href="../articles.html">← 返回笔记列表</a>
+</body>
+</html>

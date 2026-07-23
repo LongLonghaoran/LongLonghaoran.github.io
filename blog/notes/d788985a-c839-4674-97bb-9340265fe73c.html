@@ -1,0 +1,387 @@
+<!DOCTYPE html>
+<html lang="zh-CN" data-theme="light">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>inode - 维基百科，自由的百科全书 — 技术笔记</title>
+<style>
+:root {
+  --bg: #ffffff;
+  --text: #1a1a1a;
+  --muted: #666;
+  --border: #e0e0e0;
+  --code-bg: #f5f5f5;
+  --link: #0066cc;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #1a1a1a;
+    --text: #e0e0e0;
+    --muted: #999;
+    --border: #333;
+    --code-bg: #2a2a2a;
+    --link: #66bbff;
+  }
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  line-height: 1.7;
+  color: var(--text);
+  background: var(--bg);
+  max-width: 860px;
+  margin: 0 auto;
+  padding: 2rem 1.5rem;
+}
+.note-header {
+  border-bottom: 2px solid var(--border);
+  padding-bottom: 1rem;
+  margin-bottom: 2rem;
+}
+.note-title {
+  font-size: 1.6rem;
+  font-weight: 700;
+  margin-bottom: 0.3rem;
+}
+.note-meta {
+  color: var(--muted);
+  font-size: 0.85rem;
+}
+.note-content {
+  font-size: 0.95rem;
+}
+.note-content h1 { font-size: 1.4rem; margin: 1.2rem 0 0.6rem; }
+.note-content h2 { font-size: 1.2rem; margin: 1rem 0 0.5rem; }
+.note-content h3 { font-size: 1.05rem; margin: 0.8rem 0 0.4rem; }
+.note-content p { margin: 0.5rem 0; }
+.note-content ul, .note-content ol { margin: 0.5rem 0 0.5rem 2rem; }
+.note-content li { margin: 0.2rem 0; }
+.note-content pre {
+  background: var(--code-bg);
+  padding: 1rem;
+  border-radius: 6px;
+  overflow-x: auto;
+  margin: 0.8rem 0;
+  font-size: 0.85rem;
+}
+.note-content code {
+  background: var(--code-bg);
+  padding: 0.1rem 0.3rem;
+  border-radius: 3px;
+  font-size: 0.88em;
+}
+.note-content pre code {
+  background: none;
+  padding: 0;
+}
+.note-content blockquote {
+  border-left: 3px solid var(--border);
+  padding-left: 1rem;
+  color: var(--muted);
+  margin: 0.8rem 0;
+}
+.note-content a { color: var(--link); }
+.note-content img {
+  max-width: 100%;
+  height: auto;
+  border-radius: 6px;
+  margin: 0.5rem 0;
+}
+.note-content table {
+  border-collapse: collapse;
+  width: 100%;
+  margin: 0.8rem 0;
+}
+.note-content th, .note-content td {
+  border: 1px solid var(--border);
+  padding: 0.5rem;
+}
+.note-content th { background: var(--code-bg); }
+.media-placeholder {
+  background: var(--code-bg);
+  padding: 1rem;
+  text-align: center;
+  color: var(--muted);
+  border-radius: 6px;
+  margin: 0.5rem 0;
+  font-size: 0.85rem;
+}
+.encrypt-placeholder {
+  background: #fff3cd;
+  padding: 0.5rem;
+  text-align: center;
+  color: #856404;
+  border-radius: 6px;
+  margin: 0.5rem 0;
+  font-size: 0.85rem;
+}
+.back-link {
+  display: inline-block;
+  margin-top: 2rem;
+  color: var(--link);
+  text-decoration: none;
+  font-size: 0.85rem;
+}
+</style>
+</head>
+<body>
+<div class="note-header">
+  <div class="note-title">inode - 维基百科，自由的百科全书</div>
+  <div class="note-meta">笔记本：Linux</div>
+</div>
+<div class="note-content">
+<div style="--en-clipped-content:article">
+<div><br/></div><div style="font-size: 16px; display:block; min-width: 100%; position: relative;"> <div style="scroll-padding-top:75px;touch-action:manipulation;font-size:100%;font-family:sans-serif;"><div style="background-color:rgb(248, 249, 250);color:rgb(32, 33, 34);font-family:sans-serif;"><div style="min-width:31.25em;box-sizing:border-box;background-color:rgb(255, 255, 255);"><div style="column-gap:24px;"><div><span style="direction:ltr;grid-template:&quot;titlebar-cx .&quot; min-content &quot;titlebar columnEnd&quot; min-content &quot;toolbar columnEnd&quot; min-content &quot;content columnEnd&quot; 1fr / minmax(0px, 59.25rem) min-content;display:grid;">
+				<div style="box-shadow:none;position:relative;display:flex;flex-wrap:nowrap;justify-content:flex-end;align-items:center;grid-area:titlebar;">
+					
+					<h1 lang="zh-Hans-CN" dir="ltr" style="color:rgb(0, 0, 0);margin:0px;overflow:hidden;border-bottom:0px none rgb(162, 169, 177);font-weight:normal;font-family:&quot;Linux Libertine&quot;, Georgia, Times, &quot;Source Serif Pro&quot;, serif;line-height:1.375;font-size:1.8em;overflow-wrap:break-word;margin-bottom:0px;flex-grow:1;padding:0px;border:0px;border-bottom-color:rgb(162, 169, 177);">inode<span style="user-select:none;font-size:small;font-weight:normal;margin-left:1em;vertical-align:baseline;line-height:0;font-family:sans-serif;unicode-bidi:isolate;"><span style="font-size:small;font-weight:normal;line-height:0;font-family:sans-serif;">​</span><span style="margin-right:0.25em;color:rgb(85, 85, 85);">[</span><a href="https://zh.wikipedia.org/w/index.php?title=Inode&amp;action=edit&amp;section=0&amp;summary=/*%20top%20*/%20" title="编辑首段" style="text-decoration:none;color:rgb(51, 102, 204);background:none;white-space:nowrap;"><span>编辑</span></a><span style="margin-left:0.25em;color:rgb(85, 85, 85);">]</span></span></h1>
+							
+<div lang="zh-Hans-CN" dir="ltr" style="position:relative;float:right;box-sizing:border-box;flex-shrink:0;margin-right:-12px;">
+	
+	<span style="justify-content:center;gap:4px;box-sizing:border-box;min-width:32px;min-height:32px;max-width:448px;margin:0px;border-width:1px;border-style:solid;border-radius:2px;padding-right:11px;padding-left:11px;font-family:inherit;font-size:inherit;font-weight:700;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;text-transform:none;transition-property:background-color, color, border-color, box-shadow;transition-duration:0.1s;text-decoration:none;user-select:none;opacity:1;background-color:rgba(0, 0, 0, 0);border-color:rgba(0, 0, 0, 0);display:inline-flex;align-items:center;color:rgb(51, 102, 204);"><span style="min-width:20px;min-height:20px;width:20px;height:20px;display:inline-block;vertical-align:text-bottom;font-size:14px;background-position:center center;background-repeat:no-repeat;background-size:max(1.25rem, 20px);mask-size:max(1.25rem, 20px);mask-repeat:no-repeat;mask-position:center center;background-image:url(https://zh.wikipedia.org/w/load.php?modules=skins.vector.icons&amp;amp;image=language&amp;amp;variant=progressive&amp;amp;format=original&amp;amp;lang=zh-cn&amp;amp;skin=vector-2022&amp;amp;version=w72na);margin-right:6px;"></span>
+
+<span style="font-size:0.875em;">21种语言</span>
+	<span style="font-family:inherit;font-size:inherit;font-weight:700;white-space:nowrap;text-transform:none;color:rgb(51, 102, 204);background:url(https://zh.wikipedia.org/w/skins/Vector/resources/skins.vector.styles/images/arrow-down.svg?f88ee) 100% 50% no-repeat;width:0.75rem;height:0.75rem;margin-left:7px;background-image:url(https://zh.wikipedia.org/w/skins/Vector/resources/skins.vector.styles/images/arrow-down-progressive.svg?5cd6d);opacity:1;"></span></span>
+	
+</div>
+<span style="clear:both;display:block;position:absolute;bottom:0px;left:0px;right:0px;height:1px;background-color:var(--border-color-base,#a2a9b1);"></span></div>
+				<div style="grid-area:toolbar;">
+					<div style="display:flex;font-size:14px;box-shadow:rgb(200, 204, 209) 0px 1px 0px 0px;margin-bottom:1px;">
+						<div style="display:flex;margin-left:-8px;flex-grow:1;">
+							<div>
+								
+<div lang="zh-Hans-CN" dir="ltr" style="float:left;">
+	<div>
+		
+		<ul style="padding:0px;list-style-image:url(https://zh.wikipedia.org/w/skins/Vector/resources/skins.vector.styles/images/bullet-icon.svg?d4515);list-style:none;margin:0px;">
+			
+			<li style="white-space:nowrap;float:left;margin-bottom:0px;margin:0px 8px;"><a href="https://zh.wikipedia.org/wiki/Inode" title="浏览条目正文[ctrl-option-c]" style="text-decoration:none;background:none;display:inline-flex;position:relative;cursor:pointer;font-weight:normal;color:rgb(32, 33, 34);border-bottom:2px solid;padding:12px 0px 7px;margin-bottom:-1px;"><span>条目</span></a></li><li style="white-space:nowrap;float:left;margin-bottom:0px;margin:0px 8px;"><a href="https://zh.wikipedia.org/w/index.php?title=Talk:Inode&amp;action=edit&amp;redlink=1&amp;section=new" rel="discussion" title="关于此页面的讨论（页面不存在）[ctrl-option-t]" style="text-decoration:none;background:none;display:inline-flex;position:relative;cursor:pointer;font-weight:normal;border-bottom:2px solid rgba(0, 0, 0, 0);color:rgb(215, 51, 51);padding:12px 0px 7px;margin-bottom:-1px;"><span>讨论</span></a></li>
+		<li style="white-space:nowrap;float:left;margin-bottom:0px;margin:0px 8px;"><a href="https://zh.wikipedia.org/zh-cn/Inode#" style="text-decoration:none;background:none;color:rgb(51, 102, 204);display:inline-flex;position:relative;cursor:pointer;font-weight:normal;border-bottom:2px solid rgba(0, 0, 0, 0);padding:12px 0px 7px;margin-bottom:-1px;"><div><span style="padding:1px 3px;background:rgb(211, 227, 244);color:rgb(0, 0, 0);height:85%;">汉</span><span style="padding:1px 3px;background:rgb(233, 233, 233);color:rgb(67, 67, 67);height:85%;">漢</span></div></a></li></ul>
+		
+	</div>
+</div>
+
+								
+<div lang="zh-Hans-CN" dir="ltr" style="position:relative;margin:0px 8px;float:left;margin-bottom:0px;">
+	
+	<span style="justify-content:center;gap:4px;box-sizing:border-box;min-width:32px;min-height:32px;max-width:448px;margin:0px;border-width:1px;border-style:solid;border-radius:2px;padding-right:11px;padding-left:11px;font-family:inherit;overflow:hidden;text-overflow:ellipsis;text-transform:none;transition-property:background-color, color, border-color, box-shadow;transition-duration:0.1s;text-decoration:none;white-space:nowrap;color:rgb(32, 33, 34);position:relative;cursor:pointer;border:0px;padding:12px 0px 7px;margin-bottom:-1px;font-weight:normal;font-size:inherit;background-color:rgba(0, 0, 0, 0);border-color:rgba(0, 0, 0, 0);align-items:center;display:inline-flex;"><span>大陆简体</span>
+	<span style="white-space:nowrap;cursor:pointer;font-weight:normal;font-size:inherit;font-family:inherit;text-transform:none;color:rgb(32, 33, 34);background:url(https://zh.wikipedia.org/w/skins/Vector/resources/skins.vector.styles/images/arrow-down.svg?f88ee) 100% 50% no-repeat;width:0.75rem;height:0.75rem;margin-left:7px;"></span></span>
+	<div style="position:absolute;top:100%;left:-1px;opacity:0;height:0px;visibility:hidden;overflow:hidden auto;z-index:50;background-color:rgb(255, 255, 255);padding:16px;font-size:14px;box-shadow:rgba(0, 0, 0, 0.2) 0px 2px 6px -1px;transition-property:opacity;transition-duration:100ms;width:max-content;max-width:200px;max-height:75vh;">
+
+
+					
+<div lang="zh-Hans-CN" dir="ltr">
+	<div>
+		
+		<ul style="padding:0px;list-style-image:url(https://zh.wikipedia.org/w/skins/Vector/resources/skins.vector.styles/images/bullet-icon.svg?d4515);list-style:none;margin:0px;">
+			
+			<li style="margin-bottom:0.1em;padding:0px;"><a href="https://zh.wikipedia.org/zh-cn/Inode" lang="zh-Hans-CN" hreflang="zh-Hans-CN" style="text-decoration:none;background:none;display:flex;align-items:center;padding:6px 0px;color:rgb(51, 102, 204);"><span>大陆简体</span></a></li><li style="margin-bottom:0.1em;padding:0px;"><a href="https://zh.wikipedia.org/zh-hk/Inode" lang="zh-Hant-HK" hreflang="zh-Hant-HK" style="text-decoration:none;background:none;display:flex;align-items:center;padding:6px 0px;color:rgb(51, 102, 204);"><span>香港繁體</span></a></li><li style="margin-bottom:0.1em;padding:0px;"><a href="https://zh.wikipedia.org/zh-mo/Inode" lang="zh-Hant-MO" hreflang="zh-Hant-MO" style="text-decoration:none;background:none;display:flex;align-items:center;padding:6px 0px;color:rgb(51, 102, 204);"><span>澳門繁體</span></a></li><li style="margin-bottom:0.1em;padding:0px;"><a href="https://zh.wikipedia.org/zh-my/Inode" lang="zh-Hans-MY" hreflang="zh-Hans-MY" style="text-decoration:none;background:none;display:flex;align-items:center;padding:6px 0px;color:rgb(51, 102, 204);"><span>大马简体</span></a></li><li style="margin-bottom:0.1em;padding:0px;"><a href="https://zh.wikipedia.org/zh-sg/Inode" lang="zh-Hans-SG" hreflang="zh-Hans-SG" style="text-decoration:none;background:none;display:flex;align-items:center;padding:6px 0px;color:rgb(51, 102, 204);"><span>新加坡简体</span></a></li><li style="margin-bottom:0.1em;padding:0px;"><a href="https://zh.wikipedia.org/zh-tw/Inode" lang="zh-Hant-TW" hreflang="zh-Hant-TW" style="text-decoration:none;background:none;display:flex;align-items:center;padding:6px 0px;color:rgb(51, 102, 204);"><span>臺灣正體</span></a></li>
+		</ul>
+		
+	</div>
+</div>
+
+				
+	</div>
+</div>
+
+							</div>
+						</div>
+						<div style="display:flex;margin-right:-8px;">
+							<div>
+								
+<div lang="zh-Hans-CN" dir="ltr" style="float:left;display:block;">
+	<div>
+		
+		<ul style="padding:0px;list-style-image:url(https://zh.wikipedia.org/w/skins/Vector/resources/skins.vector.styles/images/bullet-icon.svg?d4515);list-style:none;margin:0px;">
+			
+			<li style="white-space:nowrap;float:left;margin-bottom:0px;margin:0px 8px;"><a href="https://zh.wikipedia.org/wiki/Inode" style="text-decoration:none;background:none;display:inline-flex;position:relative;cursor:pointer;font-weight:normal;color:rgb(32, 33, 34);border-bottom:2px solid;padding:12px 0px 7px;margin-bottom:-1px;"><span>阅读</span></a></li><li style="white-space:nowrap;float:left;margin-bottom:0px;margin:0px 8px;"><a href="https://zh.wikipedia.org/w/index.php?title=Inode&amp;action=edit" title="编辑本页[ctrl-option-e]" style="text-decoration:none;background:none;color:rgb(51, 102, 204);display:inline-flex;position:relative;cursor:pointer;font-weight:normal;border-bottom:2px solid rgba(0, 0, 0, 0);padding:12px 0px 7px;margin-bottom:-1px;"><span>编辑</span></a></li><li style="white-space:nowrap;float:left;margin-bottom:0px;margin:0px 8px;"><a href="https://zh.wikipedia.org/w/index.php?title=Inode&amp;action=history" title="本页面的早前版本。[ctrl-option-h]" style="text-decoration:none;background:none;color:rgb(51, 102, 204);display:inline-flex;position:relative;cursor:pointer;font-weight:normal;border-bottom:2px solid rgba(0, 0, 0, 0);padding:12px 0px 7px;margin-bottom:-1px;"><span>查看历史</span></a></li>
+		</ul>
+		
+	</div>
+</div>
+
+							</div>
+				
+							<div>
+								
+<div lang="zh-Hans-CN" dir="ltr" style="position:relative;margin:0px 8px;float:left;margin-bottom:0px;">
+	
+	<span style="justify-content:center;gap:4px;box-sizing:border-box;min-width:32px;min-height:32px;max-width:448px;margin:0px;border-width:1px;border-style:solid;border-radius:2px;padding-right:11px;padding-left:11px;font-family:inherit;overflow:hidden;text-overflow:ellipsis;text-transform:none;transition-property:background-color, color, border-color, box-shadow;transition-duration:0.1s;text-decoration:none;white-space:nowrap;color:rgb(32, 33, 34);position:relative;cursor:pointer;border:0px;padding:12px 0px 7px;margin-bottom:-1px;font-weight:normal;font-size:inherit;background-color:rgba(0, 0, 0, 0);border-color:rgba(0, 0, 0, 0);align-items:center;display:inline-flex;"><span>工具</span>
+	<span style="white-space:nowrap;cursor:pointer;font-weight:normal;font-size:inherit;font-family:inherit;text-transform:none;color:rgb(32, 33, 34);background:url(https://zh.wikipedia.org/w/skins/Vector/resources/skins.vector.styles/images/arrow-down.svg?f88ee) 100% 50% no-repeat;width:0.75rem;height:0.75rem;margin-left:7px;"></span></span>
+	<div style="position:absolute;top:100%;opacity:0;height:0px;visibility:hidden;overflow:hidden auto;z-index:50;background-color:rgb(255, 255, 255);padding:16px;font-size:14px;box-shadow:rgba(0, 0, 0, 0.2) 0px 2px 6px -1px;transition-property:opacity;transition-duration:100ms;width:max-content;max-width:200px;max-height:75vh;right:0px;left:auto;">
+
+
+									<div>
+						
+<div style="font-size:14px;">
+	<div style="padding-bottom:6px;margin-bottom:6px;border-bottom:1px solid rgb(234, 236, 240);line-height:1.6;">
+	<div style="display:inline-block;vertical-align:middle;font-size:14px;padding:0px;border:0px;font-weight:bold;margin:0px 0.5rem 0px 0px;">工具</div>
+	
+	
+</div>
+
+	
+
+
+<div lang="zh-Hans-CN" dir="ltr">
+	<div style="color:rgb(84, 89, 93);font-weight:normal;cursor:default;padding:6px 0px;margin:6px 0px;border-bottom:1px solid rgb(234, 236, 240);">
+		常规
+	</div>
+	<div>
+		
+		<ul style="padding:0px;list-style-image:url(https://zh.wikipedia.org/w/skins/Vector/resources/skins.vector.styles/images/bullet-icon.svg?d4515);list-style:none;margin:0px;">
+			
+			<li style="margin-bottom:0.1em;padding:0px;"><a href="https://zh.wikipedia.org/wiki/Special:%E9%93%BE%E5%85%A5%E9%A1%B5%E9%9D%A2/Inode" title="列出所有与本页相链的页面[ctrl-option-j]" style="text-decoration:none;background:none;display:flex;align-items:center;padding:6px 0px;color:rgb(51, 102, 204);"><span>链入页面</span></a></li><li style="margin-bottom:0.1em;padding:0px;"><a href="https://zh.wikipedia.org/wiki/Special:%E9%93%BE%E5%87%BA%E6%9B%B4%E6%94%B9/Inode" rel="nofollow" title="页面链出所有页面的更改[ctrl-option-k]" style="text-decoration:none;background:none;display:flex;align-items:center;padding:6px 0px;color:rgb(51, 102, 204);"><span>相关更改</span></a></li><li style="margin-bottom:0.1em;padding:0px;"><a href="https://zh.wikipedia.org/wiki/Project:%E4%B8%8A%E4%BC%A0" title="上传图像或多媒体文件[ctrl-option-u]" style="text-decoration:none;background:none;display:flex;align-items:center;padding:6px 0px;color:rgb(51, 102, 204);"><span>上传文件</span></a></li><li style="margin-bottom:0.1em;padding:0px;"><a href="https://zh.wikipedia.org/wiki/Special:%E7%89%B9%E6%AE%8A%E9%A1%B5%E9%9D%A2" title="全部特殊页面的列表[ctrl-option-q]" style="text-decoration:none;background:none;display:flex;align-items:center;padding:6px 0px;color:rgb(51, 102, 204);"><span>特殊页面</span></a></li><li style="margin-bottom:0.1em;padding:0px;"><a href="https://zh.wikipedia.org/w/index.php?title=Inode&amp;oldid=79395464" title="此页面该修订版本的固定链接" style="text-decoration:none;background:none;display:flex;align-items:center;padding:6px 0px;color:rgb(51, 102, 204);"><span>固定链接</span></a></li><li style="margin-bottom:0.1em;padding:0px;"><a href="https://zh.wikipedia.org/w/index.php?title=Inode&amp;action=info" title="关于此页面的更多信息" style="text-decoration:none;background:none;display:flex;align-items:center;padding:6px 0px;color:rgb(51, 102, 204);"><span>页面信息</span></a></li><li style="margin-bottom:0.1em;padding:0px;"><a href="https://zh.wikipedia.org/w/index.php?title=Special:%E5%BC%95%E7%94%A8%E6%AD%A4%E9%A1%B5%E9%9D%A2&amp;page=Inode&amp;id=79395464&amp;wpFormIdentifier=titleform" title="关于如何引用本页的信息" style="text-decoration:none;background:none;display:flex;align-items:center;padding:6px 0px;color:rgb(51, 102, 204);"><span>引用本页</span></a></li><li style="margin-bottom:0.1em;padding:0px;"><a href="https://zh.wikipedia.org/w/index.php?title=Special:URL%E7%BC%A9%E7%9F%AD%E7%A8%8B%E5%BA%8F&amp;url=https%3A%2F%2Fzh.wikipedia.org%2Fzh-cn%2FInode" style="text-decoration:none;background:none;display:flex;align-items:center;padding:6px 0px;color:rgb(51, 102, 204);"><span>获取短URL</span></a></li><li style="margin-bottom:0.1em;padding:0px;"><a href="https://zh.wikipedia.org/w/index.php?title=Special:QrCode&amp;url=https%3A%2F%2Fzh.wikipedia.org%2Fzh-cn%2FInode" style="text-decoration:none;background:none;display:flex;align-items:center;padding:6px 0px;color:rgb(51, 102, 204);"><span>下载二维码</span></a></li><li style="margin-bottom:0.1em;padding:0px;"><a href="https://www.wikidata.org/wiki/Special:EntityPage/Q306170" title="链接到连接的数据仓库项目[ctrl-option-g]" style="text-decoration:none;background:none;display:flex;align-items:center;padding:6px 0px;color:rgb(51, 102, 204);"><span>维基数据项目</span></a></li>
+		<li style="margin-bottom:0.1em;padding:0px;"><a href="https://www.wikidata.org/wiki/Special:EntityPage/Q306170#sitelinks-wikipedia" title="编辑跨语言链接" style="text-decoration:none;background:none;display:flex;align-items:center;padding:6px 0px;color:rgb(51, 102, 204);"><span>编辑跨语言链接</span></a></li></ul>
+		
+	</div>
+</div>
+
+<div lang="zh-Hans-CN" dir="ltr">
+	<div style="color:rgb(84, 89, 93);font-weight:normal;cursor:default;padding:6px 0px;margin:6px 0px;border-bottom:1px solid rgb(234, 236, 240);">
+		打印/导出
+	</div>
+	<div>
+		
+		<ul style="padding:0px;list-style-image:url(https://zh.wikipedia.org/w/skins/Vector/resources/skins.vector.styles/images/bullet-icon.svg?d4515);list-style:none;margin:0px;">
+			
+			<li style="margin-bottom:0.1em;padding:0px;"><a href="https://zh.wikipedia.org/w/index.php?title=Special:DownloadAsPdf&amp;page=Inode&amp;action=show-download-screen" style="text-decoration:none;background:none;display:flex;align-items:center;padding:6px 0px;color:rgb(51, 102, 204);"><span>下载为PDF</span></a></li><li style="margin-bottom:0.1em;padding:0px;"><a href="#" rel="alternate" title="本页面的可打印版本[ctrl-option-p]" style="text-decoration:none;background:none;display:flex;align-items:center;padding:6px 0px;color:rgb(51, 102, 204);"><span>可打印版</span></a></li>
+		</ul>
+		
+	</div>
+</div>
+
+<div lang="zh-Hans-CN" dir="ltr">
+	<div style="color:rgb(84, 89, 93);font-weight:normal;cursor:default;padding:6px 0px;margin:6px 0px;border-bottom:1px solid rgb(234, 236, 240);">
+		在其他项目中
+	</div>
+	<div>
+		
+		<ul style="padding:0px;list-style-image:url(https://zh.wikipedia.org/w/skins/Vector/resources/skins.vector.styles/images/bullet-icon.svg?d4515);list-style:none;margin:0px;">
+			
+			<li style="margin-bottom:0.1em;padding:0px;"><a href="https://commons.wikimedia.org/wiki/Category:Inode" hreflang="en" style="text-decoration:none;background:none;display:flex;align-items:center;padding:6px 0px;color:rgb(51, 102, 204);"><span>维基共享资源</span></a></li>
+		</ul>
+		
+	</div>
+</div>
+
+</div>
+
+									</div>
+				
+	</div>
+</div>
+
+							</div>
+						</div>
+					</div>
+				</div>
+				<div style="margin-top:44.8px;border-top:1px solid transparent;grid-area:columnEnd;overflow-anchor:none;">
+					<div style="overflow:hidden auto;position:sticky;top:24px;contain:paint;box-sizing:border-box;max-height:calc(-48px + 100vh);">
+						
+						
+					<span style="display:block;position:sticky;bottom:0px;left:0px;right:0px;height:16px;background-repeat:no-repeat;pointer-events:none;"></span></div>
+				</div>
+				<div style="position:relative;z-index:0;font-size:14px;line-height:22px;grid-area:content;">
+					<div style="overflow:hidden;">
+							<div style="z-index:1;font-size:0.875em;line-height:1.6;position:relative;float:right;display:flex;column-gap:8px;flex-wrap:wrap;margin-top:8px;">
+		
+		</div>
+
+						<div style="margin-top:8px;font-size:14px;display:block;">维基百科，自由的百科全书</div>
+					</div>
+					<div lang="zh-Hans-CN" dir="ltr" style="font-size:14px;color:rgb(84, 89, 93);width:auto;margin:8px 0px 0px;"><div lang="zh-Hans-CN" dir="ltr"></div></div>
+					
+					
+					<div style="font-size:15.008px;margin-top:16px;"><div lang="zh-Hans-CN" dir="ltr"><table style="font-weight:inherit;font-style:inherit;font-variant:inherit;font-size:100%;margin:0px 10%;border-width:1px 1px 1px 10px;border-style:solid;border-color:rgb(162, 169, 177) rgb(162, 169, 177) rgb(162, 169, 177) rgb(51, 102, 204);border-image:initial;background:rgb(248, 249, 250);border-left:10px solid rgb(242, 133, 0);"><tbody><tr><td style="border:none;text-align:center;padding:2px 0px 2px 0.5em;"><div style="width:52px;"><span><a href="https://zh.wikipedia.org/wiki/File:Tango-nosources.svg" style="text-decoration:none;color:rgb(51, 102, 204);background:none;overflow-wrap:break-word;"><div class="media-placeholder">[图片/附件]</div></en-media></a></span></div></td><td style="border:none;width:100%;padding:0.25em 0.5em;"><span>此条目<b>需要补充更多<a href="https://zh.wikipedia.org/wiki/Wikipedia:%E5%88%97%E6%98%8E%E6%9D%A5%E6%BA%90" title="Wikipedia:列明来源" style="text-decoration:none;color:rgb(51, 102, 204);background:none;overflow-wrap:break-word;">来源</a></b>。<span></span> <small style="font-size:0.857em;"><i>(<span>2018年8月9日</span>)</i></small><span><br/><small style="font-size:0.857em;">请协助补充多方面<a href="https://zh.wikipedia.org/wiki/Wikipedia:%E5%8F%AF%E9%9D%A0%E6%9D%A5%E6%BA%90" title="Wikipedia:可靠来源" style="text-decoration:none;color:rgb(51, 102, 204);background:none;overflow-wrap:break-word;">可靠来源</a>以<a href="https://zh.wikipedia.org/w/index.php?title=Inode&amp;action=edit" style="text-decoration:none;overflow-wrap:break-word;color:rgb(51, 102, 204);background-image:url(https://zh.wikipedia.org/w/skins/Vector/resources/skins.vector.styles/images/link-external-small-ltr-progressive.svg?fb64d);background-position:right center;background-repeat:no-repeat;background-size:0.857em;padding-right:1em;padding:0px;background:none;">改善这篇条目</a>，<a href="https://zh.wikipedia.org/wiki/Wikipedia:%E5%8F%AF%E4%BE%9B%E6%9F%A5%E8%AF%81" title="Wikipedia:可供查证" style="text-decoration:none;color:rgb(51, 102, 204);background:none;overflow-wrap:break-word;">无法查证</a>的内容可能会因为<a href="https://zh.wikipedia.org/wiki/Template:Fact" title="Template:Fact" style="text-decoration:none;color:rgb(51, 102, 204);background:none;overflow-wrap:break-word;">异议提出</a>而被移除。<br/>致使用者：请搜索一下条目的标题（来源搜索：<span><a rel="nofollow" href="https://www.google.com/search?&amp;as_eq=wikipedia&amp;q=%22Inode%22" style="text-decoration:none;overflow-wrap:break-word;color:rgb(51, 102, 204);background-image:url(https://zh.wikipedia.org/w/skins/Vector/resources/skins.vector.styles/images/link-external-small-ltr-progressive.svg?fb64d);background-position:right center;background-repeat:no-repeat;background-size:0.857em;padding-right:1em;padding:0px;background:none;">"Inode"</a> — <a rel="nofollow" href="https://www.google.com/search?q=%22Inode%22" style="text-decoration:none;overflow-wrap:break-word;color:rgb(51, 102, 204);background-image:url(https://zh.wikipedia.org/w/skins/Vector/resources/skins.vector.styles/images/link-external-small-ltr-progressive.svg?fb64d);background-position:right center;background-repeat:no-repeat;background-size:0.857em;padding-right:1em;padding:0px;background:none;">网页</a>、<a rel="nofollow" href="https://www.google.com/search?tbm=nws&amp;q=&amp;as_src=-newswire+-wire+-presswire+-PR+-press+-release+-wikipedia&amp;q=%22Inode%22" style="text-decoration:none;overflow-wrap:break-word;color:rgb(51, 102, 204);background-image:url(https://zh.wikipedia.org/w/skins/Vector/resources/skins.vector.styles/images/link-external-small-ltr-progressive.svg?fb64d);background-position:right center;background-repeat:no-repeat;background-size:0.857em;padding-right:1em;padding:0px;background:none;">新闻</a>、<a rel="nofollow" href="https://books.google.com/books?&amp;as_brr=0&amp;as_pub=-icon&amp;q=%22Inode%22" style="text-decoration:none;overflow-wrap:break-word;color:rgb(51, 102, 204);background-image:url(https://zh.wikipedia.org/w/skins/Vector/resources/skins.vector.styles/images/link-external-small-ltr-progressive.svg?fb64d);background-position:right center;background-repeat:no-repeat;background-size:0.857em;padding-right:1em;padding:0px;background:none;">书籍</a>、<a rel="nofollow" href="https://scholar.google.com/scholar?&amp;q=%22Inode%22" style="text-decoration:none;overflow-wrap:break-word;color:rgb(51, 102, 204);background-image:url(https://zh.wikipedia.org/w/skins/Vector/resources/skins.vector.styles/images/link-external-small-ltr-progressive.svg?fb64d);background-position:right center;background-repeat:no-repeat;background-size:0.857em;padding-right:1em;padding:0px;background:none;">学术</a>、<a rel="nofollow" href="https://www.google.com/search?tbm=isch&amp;safe=off&amp;q=%22Inode%22" style="text-decoration:none;overflow-wrap:break-word;color:rgb(51, 102, 204);background-image:url(https://zh.wikipedia.org/w/skins/Vector/resources/skins.vector.styles/images/link-external-small-ltr-progressive.svg?fb64d);background-position:right center;background-repeat:no-repeat;background-size:0.857em;padding-right:1em;padding:0px;background:none;">图像</a></span>），以检查网络上是否存在该主题的更多可靠来源（<a href="https://zh.wikipedia.org/wiki/Wikipedia:%E5%8F%AF%E9%9D%A0%E6%9D%A5%E6%BA%90" title="Wikipedia:可靠来源" style="text-decoration:none;color:rgb(51, 102, 204);background:none;overflow-wrap:break-word;">判定指引</a>）。</small></span><span></span></span></td></tr></tbody></table>
+
+
+<p style="padding-bottom:0.5em;margin:0.5em 0px 0px;"><b>inode</b> (index node）是指在许多“类<a href="https://zh.wikipedia.org/wiki/Unix" title="Unix" style="text-decoration:none;color:rgb(51, 102, 204);background:none;overflow-wrap:break-word;">Unix</a><a href="https://zh.wikipedia.org/wiki/%E6%96%87%E4%BB%B6%E7%B3%BB%E7%BB%9F" title="文件系统" style="text-decoration:none;color:rgb(51, 102, 204);background:none;overflow-wrap:break-word;">文件系统</a>”中的一种<a href="https://zh.wikipedia.org/wiki/%E6%95%B0%E6%8D%AE%E7%BB%93%E6%9E%84" title="数据结构" style="text-decoration:none;color:rgb(51, 102, 204);background:none;overflow-wrap:break-word;">数据结构</a>，用于描述<a href="https://zh.wikipedia.org/wiki/%E6%96%87%E4%BB%B6%E7%B3%BB%E7%BB%9F" title="文件系统" style="text-decoration:none;color:rgb(51, 102, 204);background:none;overflow-wrap:break-word;">文件系统</a>对象（包括<a href="https://zh.wikipedia.org/wiki/%E8%AE%A1%E7%AE%97%E6%9C%BA%E6%96%87%E4%BB%B6" title="计算机文件" style="text-decoration:none;color:rgb(51, 102, 204);background:none;overflow-wrap:break-word;">文件</a>、<a href="https://zh.wikipedia.org/wiki/%E7%9B%AE%E5%BD%95_(%E6%96%87%E4%BB%B6%E7%B3%BB%E7%BB%9F)" title="目录 (文件系统)" style="text-decoration:none;color:rgb(51, 102, 204);background:none;overflow-wrap:break-word;">目录</a>、<a href="https://zh.wikipedia.org/wiki/%E8%AE%BE%E5%A4%87%E6%96%87%E4%BB%B6" title="设备文件" style="text-decoration:none;color:rgb(51, 102, 204);background:none;overflow-wrap:break-word;">设备文件</a>、<a href="https://zh.wikipedia.org/wiki/Unix%E5%9F%9F%E5%A5%97%E6%8E%A5%E5%AD%97" title="Unix域套接字" style="text-decoration:none;color:rgb(51, 102, 204);background:none;overflow-wrap:break-word;">socket</a>、<a href="https://zh.wikipedia.org/wiki/%E7%AE%A1%E9%81%93_(Unix)" title="管道 (Unix)" style="text-decoration:none;color:rgb(51, 102, 204);background:none;overflow-wrap:break-word;">管道</a>等）。每个inode保存了<a href="https://zh.wikipedia.org/wiki/%E6%96%87%E4%BB%B6%E7%B3%BB%E7%BB%9F" title="文件系统" style="text-decoration:none;color:rgb(51, 102, 204);background:none;overflow-wrap:break-word;">文件系统</a>对象数据的属性和磁盘块位置<sup style="line-height:1;unicode-bidi:isolate;white-space:nowrap;font-weight:normal;font-style:normal;"><a href="https://zh.wikipedia.org/zh-cn/Inode#cite_note-1" style="text-decoration:none;color:rgb(51, 102, 204);background:none;overflow-wrap:break-word;white-space:nowrap;">[1]</a></sup>。<a href="https://zh.wikipedia.org/wiki/%E6%96%87%E4%BB%B6%E7%B3%BB%E7%BB%9F" title="文件系统" style="text-decoration:none;color:rgb(51, 102, 204);background:none;overflow-wrap:break-word;">文件系统</a>对象属性包含了各种<a href="https://zh.wikipedia.org/wiki/%E5%85%83%E6%95%B0%E6%8D%AE" title="元数据" style="text-decoration:none;color:rgb(51, 102, 204);background:none;overflow-wrap:break-word;">元数据</a>（如：最后修改时间<sup style="line-height:1;unicode-bidi:isolate;white-space:nowrap;font-weight:normal;font-style:normal;"><a href="https://zh.wikipedia.org/zh-cn/Inode#cite_note-2" style="text-decoration:none;color:rgb(51, 102, 204);background:none;overflow-wrap:break-word;white-space:nowrap;">[2]</a></sup>） ，也包含用户组（owner）和权限数据<sup style="line-height:1;unicode-bidi:isolate;white-space:nowrap;font-weight:normal;font-style:normal;"><a href="https://zh.wikipedia.org/zh-cn/Inode#cite_note-3" style="text-decoration:none;color:rgb(51, 102, 204);background:none;overflow-wrap:break-word;white-space:nowrap;">[3]</a></sup>。
+</p>
+
+<h2 style="color:rgb(0, 0, 0);padding-top:0.5em;padding-bottom:0.17em;overflow:hidden;border-bottom:1px solid rgb(162, 169, 177);font-weight:normal;font-family:&quot;Linux Libertine&quot;, Georgia, Times, &quot;Source Serif Pro&quot;, serif;line-height:1.375;font-size:1.5em;margin:0.25em 0px;"><span></span><span>命名</span><span style="user-select:none;font-size:small;font-weight:normal;vertical-align:baseline;line-height:0;font-family:sans-serif;unicode-bidi:isolate;margin-right:0px;margin-left:1em;"><span style="font-size:small;font-weight:normal;line-height:0;font-family:sans-serif;">​</span><span style="margin-right:0.25em;color:rgb(84, 89, 93);">[</span><a href="https://zh.wikipedia.org/w/index.php?title=Inode&amp;action=edit&amp;section=1" title="编辑章节：命名" style="text-decoration:none;color:rgb(51, 102, 204);background:none;overflow-wrap:break-word;white-space:nowrap;"><span>编辑</span></a><span style="margin-left:0.25em;color:rgb(84, 89, 93);">]</span></span></h2>
+<p style="padding-bottom:0.5em;margin:0.5em 0px 0px;">Unix先驱<a href="https://zh.wikipedia.org/wiki/%E4%B8%B9%E5%B0%BC%E6%96%AF%C2%B7%E9%87%8C%E5%A5%87" title="丹尼斯·里奇" style="text-decoration:none;color:rgb(51, 102, 204);background:none;overflow-wrap:break-word;">丹尼斯·里奇</a>说<sup style="line-height:1;unicode-bidi:isolate;white-space:nowrap;font-weight:normal;font-style:normal;"><a href="https://zh.wikipedia.org/zh-cn/Inode#cite_note-4" style="text-decoration:none;color:rgb(51, 102, 204);background:none;overflow-wrap:break-word;white-space:nowrap;">[4]</a></sup>，inode这个命名的来源可能是文件系统的存储组织为一个扁平数组，分层目录信息使用一个数作为文件系统这个扁平数组的索引值（index）。
+</p>
+<h2 style="color:rgb(0, 0, 0);padding-top:0.5em;padding-bottom:0.17em;overflow:hidden;border-bottom:1px solid rgb(162, 169, 177);font-weight:normal;font-family:&quot;Linux Libertine&quot;, Georgia, Times, &quot;Source Serif Pro&quot;, serif;line-height:1.375;font-size:1.5em;margin:0.25em 0px;"><span></span><span>细节</span><span style="user-select:none;font-size:small;font-weight:normal;vertical-align:baseline;line-height:0;font-family:sans-serif;unicode-bidi:isolate;margin-right:0px;margin-left:1em;"><span style="font-size:small;font-weight:normal;line-height:0;font-family:sans-serif;">​</span><span style="margin-right:0.25em;color:rgb(84, 89, 93);">[</span><a href="https://zh.wikipedia.org/w/index.php?title=Inode&amp;action=edit&amp;section=2" title="编辑章节：细节" style="text-decoration:none;color:rgb(51, 102, 204);background:none;overflow-wrap:break-word;white-space:nowrap;"><span>编辑</span></a><span style="margin-left:0.25em;color:rgb(84, 89, 93);">]</span></span></h2>
+<div style="display:table;text-align:center;border-collapse:collapse;line-height:0;border-bottom:0px;background-color:rgb(248, 249, 250);margin:0.5em 0px 1.3em 1.4em;clear:right;float:right;"><a href="https://zh.wikipedia.org/wiki/File:File_table_and_inode_table.svg" style="text-decoration:none;color:rgb(51, 102, 204);background:none;overflow-wrap:break-word;border:0px;display:block;position:relative;"><div class="media-placeholder">[图片/附件]</div></en-media><span style="color:rgb(51, 102, 204);width:15px;height:11px;position:absolute;bottom:-11px;right:6px;background-image:url(https://zh.wikipedia.org/w/resources/src/mediawiki.skinning/images/magnify-clip-ltr.svg?8330e);left:auto;"></span></a><div style="display:table-caption;caption-side:bottom;line-height:1.4em;word-break:break-word;padding:0px 6px 6px;border-top:0px;background-color:rgb(248, 249, 250);font-size:88.4%;text-align:left;"><span style="caption-side:bottom;line-height:1.4em;text-align:left;font-size:88.4%;width:15px;height:11px;margin:0px 0px 0px 3px;float:right;"></span>Unix上的<a href="https://zh.wikipedia.org/wiki/%E6%96%87%E4%BB%B6%E6%8F%8F%E8%BF%B0%E7%AC%A6" title="文件描述符" style="text-decoration:none;color:rgb(51, 102, 204);background:none;overflow-wrap:break-word;">文件描述符</a>、文件表与inode表 <sup style="line-height:1;unicode-bidi:isolate;white-space:nowrap;font-weight:normal;font-style:normal;"><a href="https://zh.wikipedia.org/zh-cn/Inode#cite_note-5" style="text-decoration:none;color:rgb(51, 102, 204);background:none;overflow-wrap:break-word;white-space:nowrap;">[5]</a></sup></div></div>
+<p style="padding-bottom:0.5em;margin:0.5em 0px 0px;">文件系统创建（格式化）时，就把存储区域分为两大连续的存储区域。一个用来保存文件系统对象的元信息数据，这是由inode组成的表，每个inode默认是256字节或者128字节。另一个用来保存“文件系统对象”的内容数据，划分为512字节的扇区，以及由8个扇区组成的4K字节的块。块是读写时的基本单位。一个文件系统的inode的总数一般情况下是固定的。这限制了该文件系统所能存储的文件系统对象的总数目。典型的实现下，所有inode占用了文件系统1%左右的存储容量。
+</p><p style="padding-bottom:0.5em;margin:0.5em 0px 0px;">文件系统中每个“文件系统对象”对应一个“inode”数据，并用一个整数值来辨识。这个整数常被称为<b>inode号码</b>（“i-number”或“inode number”）。由于文件系统的inode表的存储位置、总条目数量都是固定的，因此可以用inode号码去索引查找inode表。
+</p><p style="padding-bottom:0.5em;margin:0.5em 0px 0px;">Inode存储了文件系统对象的一些元信息，如所有者、访问权限（读、写、执行）、类型（是文件还是目录）、内容修改时间、inode修改时间、上次访问时间、对应的文件系统存储块的地址，等等。知道了1个文件的inode号码，就可以在inode元数据中查出文件内容数据的存储地址。 
+</p><p style="padding-bottom:0.5em;margin:0.5em 0px 0px;">文件名与目录名是“文件系统对象”便于使用的别名。一个文件系统对象可以有多个别名，但只能有一个inode，并用这个inode来索引文件系统对象的存储位置。
+</p>
+<ul style="list-style-image:url(https://zh.wikipedia.org/w/skins/Vector/resources/skins.vector.styles/images/bullet-icon.svg?d4515);margin:0.3em 0px 0px 1.6em;padding:0px;margin-top:0px;"><li style="margin-bottom:0.1em;">inode不包含文件名或目录名的字符串，只包含文件或目录的“元信息”。</li>
+<li style="margin-bottom:0.1em;">Unix的文件系统的目录也是一种文件。打开目录，实际上就是读取“目录文件”。目录文件的结构是一系列<b>目录项</b>（dirent）的列表。每个目录项，由两部分组成：所包含文件或目录的名字，以及该文件或目录名对应的inode号码。</li>
+<li style="margin-bottom:0.1em;">文件系统中的一个文件是指存放在其所属目录的“目录文件”中的一个目录项，其所对应的inode的类别为“文件”；文件系统中的一个目录是指存放在其“父目录文件”中的一个目录项，其所对应的inode的类别为“目录”。可见，多个“文件”可以对应同一个inode；多个“目录”可以对应同一个inode。</li>
+<li style="margin-bottom:0.1em;">文件系统中如果两个文件或者两个目录具有相同的inode号码，那么就称它们是“硬链接”关系。实际上都是这个inode的别名。换句话说，一个inode对应的所有文件（或目录）中的每一个，都对应着文件系统某个“目录文件”中唯一的一个目录项。</li>
+<li style="margin-bottom:0.1em;">创建一个目录时，实际做了3件事：在其“父目录文件”中增加一个条目；分配一个inode；再分配一个存储块，用来保存当前被创建目录包含的文件与子目录。被创建的“目录文件”中自动生成两个子目录的条目，名称分别是：“.”和“..”。前者与该目录具有相同的inode号码，因此是该目录的一个“硬链接”。后者的inode号码就是该目录的父目录的inode号码。所以，任何一个目录的"硬链接"总数，总是等于它的子目录总数（含隐藏目录）加2。即每个“子目录文件”中的“..”条目，加上它自身的“目录文件”中的“.”条目，再加上“父目录文件”中的对应该目录的条目。</li>
+<li style="margin-bottom:0.1em;">通过文件名打开文件，实际上是分成三步实现：首先，操作系统找到这个文件名对应的inode号码；其次，通过inode号码，获取inode信息；最后，根据inode信息，找到文件数据所在的block，读出数据。</li></ul>
+<p style="padding-bottom:0.5em;margin:0.5em 0px 0px;"><a href="https://zh.wikipedia.org/wiki/Linux" title="Linux" style="text-decoration:none;color:rgb(51, 102, 204);background:none;overflow-wrap:break-word;">Linux</a>系统使用<code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif">struct inode</code>作为数据结构名称。<a href="https://zh.wikipedia.org/wiki/BSD" title="BSD" style="text-decoration:none;color:rgb(51, 102, 204);background:none;overflow-wrap:break-word;">BSD</a>派生的系统，使用<code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif">vnode</code>名称，其中<b>v</b>表示“virtual file system”。
+</p>
+<h2 style="color:rgb(0, 0, 0);padding-top:0.5em;padding-bottom:0.17em;overflow:hidden;border-bottom:1px solid rgb(162, 169, 177);font-weight:normal;font-family:&quot;Linux Libertine&quot;, Georgia, Times, &quot;Source Serif Pro&quot;, serif;line-height:1.375;font-size:1.5em;margin:0.25em 0px;"><span>POSIX inode</span><span style="user-select:none;font-size:small;font-weight:normal;vertical-align:baseline;line-height:0;font-family:sans-serif;unicode-bidi:isolate;margin-right:0px;margin-left:1em;"><span style="font-size:small;font-weight:normal;line-height:0;font-family:sans-serif;">​</span><span style="margin-right:0.25em;color:rgb(84, 89, 93);">[</span><a href="https://zh.wikipedia.org/w/index.php?title=Inode&amp;action=edit&amp;section=3" title="编辑章节：POSIX inode" style="text-decoration:none;color:rgb(51, 102, 204);background:none;overflow-wrap:break-word;white-space:nowrap;"><span>编辑</span></a><span style="margin-left:0.25em;color:rgb(84, 89, 93);">]</span></span></h2>
+<p style="padding-bottom:0.5em;margin:0.5em 0px 0px;"><a href="https://zh.wikipedia.org/wiki/POSIX" title="POSIX" style="text-decoration:none;color:rgb(51, 102, 204);background:none;overflow-wrap:break-word;">POSIX</a> 标准强制规范的文件系统的行为受到传统 <a href="https://zh.wikipedia.org/wiki/UNIX" title="UNIX" style="text-decoration:none;color:rgb(51, 102, 204);background:none;overflow-wrap:break-word;">UNIX</a> 文件系统的深刻影响。可以用短语“文件序列号”来形容inode，定义为<i>文件系统范围</i>的唯一文件标识符。<sup style="line-height:1;unicode-bidi:isolate;white-space:nowrap;font-weight:normal;font-style:normal;"><a href="https://zh.wikipedia.org/zh-cn/Inode#cite_note-6" style="text-decoration:none;color:rgb(51, 102, 204);background:none;overflow-wrap:break-word;white-space:nowrap;">[6]</a></sup>上述的文件序列号和包含此文件的设备ID一起，在整个系统上对应唯一的文件。<sup style="line-height:1;unicode-bidi:isolate;white-space:nowrap;font-weight:normal;font-style:normal;"><a href="https://zh.wikipedia.org/zh-cn/Inode#cite_note-stat-7" style="text-decoration:none;color:rgb(51, 102, 204);background:none;overflow-wrap:break-word;white-space:nowrap;">[7]</a></sup>
+</p><p style="padding-bottom:0.5em;margin:0.5em 0px 0px;">在POSIX系统上，可使用<code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><a href="https://zh.wikipedia.org/wiki/Stat_(Unix)" title="Stat (Unix)" style="text-decoration:none;color:rgb(51, 102, 204);background:none;overflow-wrap:break-word;">stat</a></code>系统调用获取文件的下列属性：<sup style="line-height:1;unicode-bidi:isolate;white-space:nowrap;font-weight:normal;font-style:normal;"><a href="https://zh.wikipedia.org/zh-cn/Inode#cite_note-stat-7" style="text-decoration:none;color:rgb(51, 102, 204);background:none;overflow-wrap:break-word;white-space:nowrap;">[7]</a></sup> 
+</p>
+<ul style="list-style-image:url(https://zh.wikipedia.org/w/skins/Vector/resources/skins.vector.styles/images/bullet-icon.svg?d4515);margin:0.3em 0px 0px 1.6em;padding:0px;margin-top:0px;"><li style="margin-bottom:0.1em;">以<a href="https://zh.wikipedia.org/wiki/%E5%AD%97%E8%8A%82" title="字节" style="text-decoration:none;color:rgb(51, 102, 204);background:none;overflow-wrap:break-word;">字节</a>为单位表示的文件大小。</li>
+<li style="margin-bottom:0.1em;">设备ID，标识容纳该文件的设备。</li>
+<li style="margin-bottom:0.1em;">文件所有者的User ID。</li>
+<li style="margin-bottom:0.1em;">文件的Group ID</li>
+<li style="margin-bottom:0.1em;">文件的模式（mode），确定了文件的类型，以及它的所有者、它的group、其它用户访问此文件的权限。</li>
+<li style="margin-bottom:0.1em;">额外的系统与用户标志（flag），用来保护该文件。</li>
+<li style="margin-bottom:0.1em;">3个<a href="https://zh.wikipedia.org/wiki/%E6%99%82%E9%96%93%E6%88%B3" title="时间戳" style="text-decoration:none;color:rgb(51, 102, 204);background:none;overflow-wrap:break-word;">时间戳</a>，记录了inode自身被修改（<tt style="font-family:monospace, monospace;">ctime</tt>, <i>inode change time</i>）、文件内容被修改（<tt style="font-family:monospace, monospace;">mtime</tt>, <i>modification time</i>）、最后一次访问（<tt style="font-family:monospace, monospace;">atime</tt>, <i>access time</i>）的时间。</li>
+<li style="margin-bottom:0.1em;">1个链接数，表示有多少个<a href="https://zh.wikipedia.org/wiki/%E7%A1%AC%E9%93%BE%E6%8E%A5" title="硬链接" style="text-decoration:none;color:rgb(51, 102, 204);background:none;overflow-wrap:break-word;">硬链接</a>指向此inode。</li>
+<li style="margin-bottom:0.1em;">到<a href="https://zh.wikipedia.org/wiki/%E6%96%87%E4%BB%B6%E7%B3%BB%E7%BB%9F" title="文件系统" style="text-decoration:none;color:rgb(51, 102, 204);background:none;overflow-wrap:break-word;">文件系统</a>存储位置的指针。通常是1K字节或者2K字节的存储容量为基本单位。</li></ul>
+<p style="padding-bottom:0.5em;margin:0.5em 0px 0px;">可以查询一个文件的inode号码及一些元信息。 
+</p>
+<h2 style="color:rgb(0, 0, 0);padding-top:0.5em;padding-bottom:0.17em;overflow:hidden;border-bottom:1px solid rgb(162, 169, 177);font-weight:normal;font-family:&quot;Linux Libertine&quot;, Georgia, Times, &quot;Source Serif Pro&quot;, serif;line-height:1.375;font-size:1.5em;margin:0.25em 0px;"><span></span><span>推论</span><span style="user-select:none;font-size:small;font-weight:normal;vertical-align:baseline;line-height:0;font-family:sans-serif;unicode-bidi:isolate;margin-right:0px;margin-left:1em;"><span style="font-size:small;font-weight:normal;line-height:0;font-family:sans-serif;">​</span><span style="margin-right:0.25em;color:rgb(84, 89, 93);">[</span><a href="https://zh.wikipedia.org/w/index.php?title=Inode&amp;action=edit&amp;section=4" title="编辑章节：推论" style="text-decoration:none;color:rgb(51, 102, 204);background:none;overflow-wrap:break-word;white-space:nowrap;"><span>编辑</span></a><span style="margin-left:0.25em;color:rgb(84, 89, 93);">]</span></span></h2>
+<ul style="list-style-image:url(https://zh.wikipedia.org/w/skins/Vector/resources/skins.vector.styles/images/bullet-icon.svg?d4515);margin:0.3em 0px 0px 1.6em;padding:0px;margin-top:0px;"><li style="margin-bottom:0.1em;">一个文件系统对象可以有多个名字，这些具有硬链接关系的文件系统对象名字具有相同的inode号码，彼此是平等的。即首个被创建的文件并没有特殊的地位。这与<a href="https://zh.wikipedia.org/wiki/%E7%AC%A6%E5%8F%B7%E9%93%BE%E6%8E%A5" title="符号链接" style="text-decoration:none;color:rgb(51, 102, 204);background:none;overflow-wrap:break-word;">符号链接</a>不同。一个符号链接文件有自己的inode，符号链接文件的内容是它所指向的文件的名字。因此删除符号链接所指向的文件，将导致这个符号链接文件在访问时报错。</li>
+<li style="margin-bottom:0.1em;">删除一个文件或目录，实际上是把它的inode的链接数减1。这并不影响指向此inode的别的硬链接。</li>
+<li style="margin-bottom:0.1em;">一个inode如果没有硬链接，此时inode的链接数为0，文件系统将回收该inode所指向的存储块，并回收该inode自身。</li>
+<li style="margin-bottom:0.1em;">从一个inode，通常是无法确定是用哪个文件名查到此inode号码的。打开一个文件后，操作系统实际上就抛掉了文件名，只保留了inode号码来访问文件的内容。库函数<tt style="font-family:monospace, monospace;">getcwd()</tt>用来查询当前工作目录的绝对路径名。其实现是从当前工作目录的inode逐级查找其上级目录的inode，最后拼出整个绝对路径的名字。</li>
+<li style="margin-bottom:0.1em;">历史上，对目录的硬链接是可能的。这可以使目录结构成为一个<a href="https://zh.wikipedia.org/wiki/%E6%9C%89%E5%90%91%E5%9B%BE" title="有向图" style="text-decoration:none;color:rgb(51, 102, 204);background:none;overflow-wrap:break-word;">有向图</a>，而不是通常的目录树的<a href="https://zh.wikipedia.org/wiki/%E6%9C%89%E5%90%91%E6%97%A0%E7%8E%AF%E5%9B%BE" title="有向无环图" style="text-decoration:none;color:rgb(51, 102, 204);background:none;overflow-wrap:break-word;">有向无环图</a>。一个目录甚至可以是自身的父目录。现代文件系统一般禁止这些混淆状态，只有根目录保持了特例：根目录是自身的父目录。这项限制最著名的一个例外可在Mac OS X（10.5或更高版本）上找到：它允许超级用户建立目录的硬链接。<sup style="line-height:1;unicode-bidi:isolate;white-space:nowrap;font-weight:normal;font-style:normal;"><a href="https://zh.wikipedia.org/zh-cn/Inode#cite_note-8" style="text-decoration:none;color:rgb(51, 102, 204);background:none;overflow-wrap:break-word;white-space:nowrap;">[8]</a></sup></li>
+<li style="margin-bottom:0.1em;">一个文件或目录在文件系统内部移动时，其inode号码不变。文件系统<a href="https://zh.wikipedia.org/wiki/%E7%A3%81%E7%9B%98%E7%A2%8E%E7%89%87" title="磁盘碎片" style="text-decoration:none;color:rgb(51, 102, 204);background:none;overflow-wrap:break-word;">碎片整理</a>可能会改变一个文件的物理存储位置，但其inode号码不变。非UNIX的<a href="https://zh.wikipedia.org/wiki/FAT" title="FAT" style="text-decoration:none;color:rgb(51, 102, 204);background:none;overflow-wrap:break-word;">FAT</a>及其派生的文件系统是无法实现inode不变这一特点。</li>
+<li style="margin-bottom:0.1em;">inode文件系统中安装新库十分容易。当一些进程正在使用一个库时，其它进程可以替换该库文件名字的inode号码指向新创建的inode，随后对该库的访问都被自动引导到新inode所指向的新的库文件的内容。这减少了替换库时重启系统的需要。而旧的inode的链接数已经为0，在使用旧库的进程结束后，旧的inode与旧库文件会被系统自动回收。</li>
+<li style="margin-bottom:0.1em;">一些文件系统，由于inode表在文件系统创建时就已经确定并且不能再动态增加，新增的文件数量可能会用尽inode。这导致文件系统还有空闲的存储空间，但已经没有空闲的inode可供使用了。例如，一个电子邮件服务器可能会被大量的小文件用尽所有inode，但是却没有填满文件存储空间。部分文件系统，如<a href="https://zh.wikipedia.org/wiki/JFS_(%E6%96%87%E4%BB%B6%E7%B3%BB%E7%BB%9F)" title="JFS (文件系统)" style="text-decoration:none;color:rgb(51, 102, 204);background:none;overflow-wrap:break-word;">JFS</a>和<a href="https://zh.wikipedia.org/wiki/XFS" title="XFS" style="text-decoration:none;color:rgb(51, 102, 204);background:none;overflow-wrap:break-word;">XFS</a>，能够动态地增加inode，因此不会用尽inode。</li></ul>
+<h2 style="color:rgb(0, 0, 0);padding-top:0.5em;padding-bottom:0.17em;overflow:hidden;border-bottom:1px solid rgb(162, 169, 177);font-weight:normal;font-family:&quot;Linux Libertine&quot;, Georgia, Times, &quot;Source Serif Pro&quot;, serif;line-height:1.375;font-size:1.5em;margin:0.25em 0px;"><span></span><span>实际考虑</span><span style="user-select:none;font-size:small;font-weight:normal;vertical-align:baseline;line-height:0;font-family:sans-serif;unicode-bidi:isolate;margin-right:0px;margin-left:1em;"><span style="font-size:small;font-weight:normal;line-height:0;font-family:sans-serif;">​</span><span style="margin-right:0.25em;color:rgb(84, 89, 93);">[</span><a href="https://zh.wikipedia.org/w/index.php?title=Inode&amp;action=edit&amp;section=5" title="编辑章节：实际考虑" style="text-decoration:none;color:rgb(51, 102, 204);background:none;overflow-wrap:break-word;white-space:nowrap;"><span>编辑</span></a><span style="margin-left:0.25em;color:rgb(84, 89, 93);">]</span></span></h2>
+<p style="padding-bottom:0.5em;margin:0.5em 0px 0px;">系统管理员使用的很多程序往往用inode号码来替代文件名来访问文件系统。例如磁盘完整性检查程序<code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><a href="https://zh.wikipedia.org/wiki/Fsck" title="Fsck" style="text-decoration:none;color:rgb(51, 102, 204);background:none;overflow-wrap:break-word;">fsck</a></code>或<code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><a href="https://zh.wikipedia.org/w/index.php?title=Pfiles&amp;action=edit&amp;redlink=1" title="Pfiles（页面不存在）" style="text-decoration:none;background:none;color:rgb(215, 51, 51);overflow-wrap:break-word;">pfiles</a></code>。因此，inode号码与文件全路径名的互查是需要的。可以用<code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><a href="https://zh.wikipedia.org/wiki/Find" title="Find" style="text-decoration:none;color:rgb(51, 102, 204);background:none;overflow-wrap:break-word;">find</a></code>带参数选项<code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif">-inum</code>，<code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><a href="https://zh.wikipedia.org/wiki/Ls" title="Ls" style="text-decoration:none;color:rgb(51, 102, 204);background:none;overflow-wrap:break-word;">ls</a></code>带参数选项(<code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif">-i</code>做到。
+</p>
+<h2 style="color:rgb(0, 0, 0);padding-top:0.5em;padding-bottom:0.17em;overflow:hidden;border-bottom:1px solid rgb(162, 169, 177);font-weight:normal;font-family:&quot;Linux Libertine&quot;, Georgia, Times, &quot;Source Serif Pro&quot;, serif;line-height:1.375;font-size:1.5em;margin:0.25em 0px;"><span></span><span>参考文献</span><span style="user-select:none;font-size:small;font-weight:normal;vertical-align:baseline;line-height:0;font-family:sans-serif;unicode-bidi:isolate;margin-right:0px;margin-left:1em;"><span style="font-size:small;font-weight:normal;line-height:0;font-family:sans-serif;">​</span><span style="margin-right:0.25em;color:rgb(84, 89, 93);">[</span><a href="https://zh.wikipedia.org/w/index.php?title=Inode&amp;action=edit&amp;section=6" title="编辑章节：参考文献" style="text-decoration:none;color:rgb(51, 102, 204);background:none;overflow-wrap:break-word;white-space:nowrap;"><span>编辑</span></a><span style="margin-left:0.25em;color:rgb(84, 89, 93);">]</span></span></h2>
+<div style="font-size:90%;margin-bottom:0.5em;list-style-type:decimal;">
+<ol style="list-style-image:none;margin:0.3em 0px 0px 3.2em;padding:0px;margin-top:0px;margin-bottom:0.5em;font-size:100%;list-style-type:inherit;">
+<li style="margin-bottom:0.1em;"><span style="user-select:none;"><b><a href="https://zh.wikipedia.org/zh-cn/Inode#cite_ref-1" title="跳转" style="text-decoration:none;color:rgb(51, 102, 204);background:none;overflow-wrap:break-word;">^</a></b></span> <span><cite style="font-style:normal;">Tanenbaum, Andrew S. Modern Operating Systems 3rd. : 279.</cite><span title="ctx_ver=Z39.88-2004&amp;rfr_id=info%3Asid%2Fzh.wikipedia.org%3AInode&amp;rft.aufirst=Andrew+S.&amp;rft.aulast=Tanenbaum&amp;rft.btitle=Modern+Operating+Systems&amp;rft.edition=3rd&amp;rft.genre=book&amp;rft.pages=279&amp;rft_val_fmt=info%3Aofi%2Ffmt%3Akev%3Amtx%3Abook"></span></span>
+</li>
+<li style="margin-bottom:0.1em;"><span style="user-select:none;"><b><a href="https://zh.wikipedia.org/zh-cn/Inode#cite_ref-2" title="跳转" style="text-decoration:none;color:rgb(51, 102, 204);background:none;overflow-wrap:break-word;">^</a></b></span> <span><cite style="font-style:normal;">JVSANTEN. <a rel="nofollow" href="http://www.linux-faqs.info/general/difference-between-mtime-ctime-and-atime" style="text-decoration:none;background:none;overflow-wrap:break-word;color:rgb(51, 102, 204);background-image:url(https://zh.wikipedia.org/w/skins/Vector/resources/skins.vector.styles/images/link-external-small-ltr-progressive.svg?fb64d);background-position:right center;background-repeat:no-repeat;background-size:0.857em;padding-right:1em;">Difference between mtime, ctime and atime - Linux Howtos and FAQs</a>. Linux Howtos and FAQs.  <span> [<span style="white-space:nowrap;">2020-01-20</span>]</span>. （原始内容<a rel="nofollow" href="https://web.archive.org/web/20200921072040/http://www.linux-faqs.info/general/difference-between-mtime-ctime-and-atime" style="text-decoration:none;background:none;overflow-wrap:break-word;color:rgb(51, 102, 204);background-image:url(https://zh.wikipedia.org/w/skins/Vector/resources/skins.vector.styles/images/link-external-small-ltr-progressive.svg?fb64d);background-position:right center;background-repeat:no-repeat;background-size:0.857em;padding-right:1em;">存档</a>于2020-09-21）.</cite><span title="ctx_ver=Z39.88-2004&amp;rfr_id=info%3Asid%2Fzh.wikipedia.org%3AInode&amp;rft.atitle=Difference+between+mtime%2C+ctime+and+atime+-+Linux+Howtos+and+FAQs&amp;rft.au=JVSANTEN&amp;rft.genre=unknown&amp;rft.jtitle=Linux+Howtos+and+FAQs&amp;rft_id=http%3A%2F%2Fwww.linux-faqs.info%2Fgeneral%2Fdifference-between-mtime-ctime-and-atime&amp;rft_val_fmt=info%3Aofi%2Ffmt%3Akev%3Amtx%3Ajournal"></span></span>
+</li>
+<li style="margin-bottom:0.1em;"><span style="user-select:none;"><b><a href="https://zh.wikipedia.org/zh-cn/Inode#cite_ref-3" title="跳转" style="text-decoration:none;color:rgb(51, 102, 204);background:none;overflow-wrap:break-word;">^</a></b></span> <span><cite style="font-style:normal;"><a rel="nofollow" href="http://www.ibm.com/developerworks/library/l-virtual-filesystem-switch" style="text-decoration:none;background:none;overflow-wrap:break-word;color:rgb(51, 102, 204);background-image:url(https://zh.wikipedia.org/w/skins/Vector/resources/skins.vector.styles/images/link-external-small-ltr-progressive.svg?fb64d);background-position:right center;background-repeat:no-repeat;background-size:0.857em;padding-right:1em;">Anatomy of the Linux virtual file system switch</a>. ibm.com.  <span> [<span style="white-space:nowrap;">2020-01-20</span>]</span>. （原始内容<a rel="nofollow" href="https://web.archive.org/web/20181002141747/https://www.ibm.com/developerworks/library/l-virtual-filesystem-switch/" style="text-decoration:none;background:none;overflow-wrap:break-word;color:rgb(51, 102, 204);background-image:url(https://zh.wikipedia.org/w/skins/Vector/resources/skins.vector.styles/images/link-external-small-ltr-progressive.svg?fb64d);background-position:right center;background-repeat:no-repeat;background-size:0.857em;padding-right:1em;">存档</a>于2018-10-02）.</cite><span title="ctx_ver=Z39.88-2004&amp;rfr_id=info%3Asid%2Fzh.wikipedia.org%3AInode&amp;rft.atitle=Anatomy+of+the+Linux+virtual+file+system+switch&amp;rft.genre=unknown&amp;rft.jtitle=ibm.com&amp;rft_id=http%3A%2F%2Fwww.ibm.com%2Fdeveloperworks%2Flibrary%2Fl-virtual-filesystem-switch&amp;rft_val_fmt=info%3Aofi%2Ffmt%3Akev%3Amtx%3Ajournal"></span></span>
+</li>
+<li style="margin-bottom:0.1em;"><span style="user-select:none;"><b><a href="https://zh.wikipedia.org/zh-cn/Inode#cite_ref-4" title="跳转" style="text-decoration:none;color:rgb(51, 102, 204);background:none;overflow-wrap:break-word;">^</a></b></span> <span><a rel="nofollow" href="http://lkml.indiana.edu/hypermail/linux/kernel/0207.2/1182.html" style="text-decoration:none;background:none;overflow-wrap:break-word;color:rgb(51, 102, 204);background-image:url(https://zh.wikipedia.org/w/skins/Vector/resources/skins.vector.styles/images/link-external-small-ltr-progressive.svg?fb64d);background-position:right center;background-repeat:no-repeat;background-size:0.857em;padding-right:1em;">Linux Kernel list archive</a> （<a rel="nofollow" href="https://web.archive.org/web/20110807034228/http://lkml.indiana.edu/hypermail/linux/kernel/0207.2/1182.html" style="text-decoration:none;background:none;overflow-wrap:break-word;color:rgb(51, 102, 204);background-image:url(https://zh.wikipedia.org/w/skins/Vector/resources/skins.vector.styles/images/link-external-small-ltr-progressive.svg?fb64d);background-position:right center;background-repeat:no-repeat;background-size:0.857em;padding-right:1em;">页面存档备份</a>，存于<a href="https://zh.wikipedia.org/wiki/%E4%BA%92%E8%81%94%E7%BD%91%E6%A1%A3%E6%A1%88%E9%A6%86" title="互联网档案馆" style="text-decoration:none;color:rgb(51, 102, 204);background:none;overflow-wrap:break-word;">互联网档案馆</a>）. Retrieved on 2011-01-12.</span>
+</li>
+<li style="margin-bottom:0.1em;"><span style="user-select:none;"><b><a href="https://zh.wikipedia.org/zh-cn/Inode#cite_ref-5" title="跳转" style="text-decoration:none;color:rgb(51, 102, 204);background:none;overflow-wrap:break-word;">^</a></b></span> <span><cite style="font-style:normal;">Bach, Maurice J. <a rel="nofollow" href="https://archive.org/details/designunixoperat00bach" style="text-decoration:none;background:none;overflow-wrap:break-word;color:rgb(51, 102, 204);background-image:url(https://zh.wikipedia.org/w/skins/Vector/resources/skins.vector.styles/images/link-external-small-ltr-progressive.svg?fb64d);background-position:right center;background-repeat:no-repeat;background-size:0.857em;padding-right:1em;">The Design of the UNIX Operating System</a>. Prentice Hall. 1986: <a rel="nofollow" href="https://archive.org/details/designunixoperat00bach/page/n108" style="text-decoration:none;background:none;overflow-wrap:break-word;color:rgb(51, 102, 204);background-image:url(https://zh.wikipedia.org/w/skins/Vector/resources/skins.vector.styles/images/link-external-small-ltr-progressive.svg?fb64d);background-position:right center;background-repeat:no-repeat;background-size:0.857em;padding-right:1em;">94</a>. <a rel="nofollow" href="https://ui.adsabs.harvard.edu/abs/1986duos.book.....B" style="text-decoration:none;background:none;overflow-wrap:break-word;color:rgb(51, 102, 204);background-image:url(https://zh.wikipedia.org/w/skins/Vector/resources/skins.vector.styles/images/link-external-small-ltr-progressive.svg?fb64d);background-position:right center;background-repeat:no-repeat;background-size:0.857em;padding-right:1em;"><span title="Bibcode">Bibcode:1986duos.book.....B</span></a>.</cite><span title="ctx_ver=Z39.88-2004&amp;rfr_id=info%3Asid%2Fzh.wikipedia.org%3AInode&amp;rft.aufirst=Maurice+J.&amp;rft.aulast=Bach&amp;rft.btitle=The+Design+of+the+UNIX+Operating+System&amp;rft.date=1986&amp;rft.genre=book&amp;rft.pages=94&amp;rft.pub=Prentice+Hall&amp;rft_id=https%3A%2F%2Farchive.org%2Fdetails%2Fdesignunixoperat00bach&amp;rft_id=info%3Abibcode%2F1986duos.book.....B&amp;rft_val_fmt=info%3Aofi%2Ffmt%3Akev%3Amtx%3Abook"></span></span>
+</li>
+<li style="margin-bottom:0.1em;"><span style="user-select:none;"><b><a href="https://zh.wikipedia.org/zh-cn/Inode#cite_ref-6" title="跳转" style="text-decoration:none;color:rgb(51, 102, 204);background:none;overflow-wrap:break-word;">^</a></b></span> <span><cite style="font-style:normal;"><a rel="nofollow" href="https://web.archive.org/web/20130429195728/http://pubs.opengroup.org/onlinepubs/9699919799/basedefs/V1_chap03.html#tag_03_176" style="text-decoration:none;background:none;overflow-wrap:break-word;color:rgb(51, 102, 204);background-image:url(https://zh.wikipedia.org/w/skins/Vector/resources/skins.vector.styles/images/link-external-small-ltr-progressive.svg?fb64d);background-position:right center;background-repeat:no-repeat;background-size:0.857em;padding-right:1em;">Definitions - 3.176 File Serial Number</a>. <a href="https://zh.wikipedia.org/wiki/The_Open_Group" title="The Open Group" style="text-decoration:none;color:rgb(51, 102, 204);background:none;overflow-wrap:break-word;">The Open Group</a>.  <span> [<span style="white-space:nowrap;">10 January</span> 2018]</span>. （<a rel="nofollow" href="http://pubs.opengroup.org/onlinepubs/9699919799/basedefs/V1_chap03.html#tag_03_176" style="text-decoration:none;background:none;overflow-wrap:break-word;color:rgb(51, 102, 204);background-image:url(https://zh.wikipedia.org/w/skins/Vector/resources/skins.vector.styles/images/link-external-small-ltr-progressive.svg?fb64d);background-position:right center;background-repeat:no-repeat;background-size:0.857em;padding-right:1em;">原始内容</a>存档于2013-04-29）.</cite><span title="ctx_ver=Z39.88-2004&amp;rfr_id=info%3Asid%2Fzh.wikipedia.org%3AInode&amp;rft.atitle=Definitions+-+3.176+File+Serial+Number&amp;rft.genre=unknown&amp;rft.jtitle=The+Open+Group&amp;rft_id=http%3A%2F%2Fpubs.opengroup.org%2Fonlinepubs%2F9699919799%2Fbasedefs%2FV1_chap03.html%23tag_03_176&amp;rft_val_fmt=info%3Aofi%2Ffmt%3Akev%3Amtx%3Ajournal"></span></span>
+</li>
+<li style="margin-bottom:0.1em;"><span style="user-select:none;">^ <a href="https://zh.wikipedia.org/zh-cn/Inode#cite_ref-stat_7-0" style="text-decoration:none;color:rgb(51, 102, 204);background:none;overflow-wrap:break-word;"><span style="user-select:none;top:-99999px;clip:rect(1px, 1px, 1px, 1px);overflow:hidden;position:absolute;padding:0px;border:0px;height:1px;width:1px;">跳转到： </span><sup style="line-height:1;"><b>7.0</b></sup></a> <a href="https://zh.wikipedia.org/zh-cn/Inode#cite_ref-stat_7-1" style="text-decoration:none;color:rgb(51, 102, 204);background:none;overflow-wrap:break-word;"><sup style="line-height:1;"><b>7.1</b></sup></a></span> <span><cite style="font-style:normal;"><a rel="nofollow" href="https://web.archive.org/web/20220130102055/https://pubs.opengroup.org/onlinepubs/009695399/basedefs/sys/stat.h.html" style="text-decoration:none;background:none;overflow-wrap:break-word;color:rgb(51, 102, 204);background-image:url(https://zh.wikipedia.org/w/skins/Vector/resources/skins.vector.styles/images/link-external-small-ltr-progressive.svg?fb64d);background-position:right center;background-repeat:no-repeat;background-size:0.857em;padding-right:1em;">&lt;sys/stat.h&gt;</a>. <a href="https://zh.wikipedia.org/wiki/The_Open_Group" title="The Open Group" style="text-decoration:none;color:rgb(51, 102, 204);background:none;overflow-wrap:break-word;">The Open Group</a>.  <span> [<span style="white-space:nowrap;">15 January</span> 2018]</span>. （<a rel="nofollow" href="http://pubs.opengroup.org/onlinepubs/009695399/basedefs/sys/stat.h.html" style="text-decoration:none;background:none;overflow-wrap:break-word;color:rgb(51, 102, 204);background-image:url(https://zh.wikipedia.org/w/skins/Vector/resources/skins.vector.styles/images/link-external-small-ltr-progressive.svg?fb64d);background-position:right center;background-repeat:no-repeat;background-size:0.857em;padding-right:1em;">原始内容</a>存档于2022-01-30）.</cite><span title="ctx_ver=Z39.88-2004&amp;rfr_id=info%3Asid%2Fzh.wikipedia.org%3AInode&amp;rft.atitle=%3Csys%2Fstat.h%3E&amp;rft.genre=unknown&amp;rft.jtitle=The+Open+Group&amp;rft_id=http%3A%2F%2Fpubs.opengroup.org%2Fonlinepubs%2F009695399%2Fbasedefs%2Fsys%2Fstat.h.html&amp;rft_val_fmt=info%3Aofi%2Ffmt%3Akev%3Amtx%3Ajournal"></span></span>
+</li>
+<li style="margin-bottom:0.1em;"><span style="user-select:none;"><b><a href="https://zh.wikipedia.org/zh-cn/Inode#cite_ref-8" title="跳转" style="text-decoration:none;color:rgb(51, 102, 204);background:none;overflow-wrap:break-word;">^</a></b></span> <span><cite style="font-style:normal;"><a rel="nofollow" href="https://stackoverflow.com/questions/80875/what-is-the-unix-command-to-create-a-hardlink-to-a-directory-in-os-x" style="text-decoration:none;background:none;overflow-wrap:break-word;color:rgb(51, 102, 204);background-image:url(https://zh.wikipedia.org/w/skins/Vector/resources/skins.vector.styles/images/link-external-small-ltr-progressive.svg?fb64d);background-position:right center;background-repeat:no-repeat;background-size:0.857em;padding-right:1em;">What is the Unix command to create a hardlink to a directory in OS X?</a>. <a href="https://zh.wikipedia.org/wiki/Stack_Overflow" title="Stack Overflow" style="text-decoration:none;color:rgb(51, 102, 204);background:none;overflow-wrap:break-word;">Stack Overflow</a>. 16 Jan 2011 <span> [<span style="white-space:nowrap;">5 Jan</span> 2020]</span>. （原始内容<a rel="nofollow" href="https://web.archive.org/web/20200105174407/https://stackoverflow.com/questions/80875/what-is-the-unix-command-to-create-a-hardlink-to-a-directory-in-os-x" style="text-decoration:none;background:none;overflow-wrap:break-word;color:rgb(51, 102, 204);background-image:url(https://zh.wikipedia.org/w/skins/Vector/resources/skins.vector.styles/images/link-external-small-ltr-progressive.svg?fb64d);background-position:right center;background-repeat:no-repeat;background-size:0.857em;padding-right:1em;">存档</a>于5 January 2020）.</cite><span title="ctx_ver=Z39.88-2004&amp;rfr_id=info%3Asid%2Fzh.wikipedia.org%3AInode&amp;rft.atitle=What+is+the+Unix+command+to+create+a+hardlink+to+a+directory+in+OS+X%3F&amp;rft.date=2011-01-16&amp;rft.genre=unknown&amp;rft.jtitle=Stack+Overflow&amp;rft_id=https%3A%2F%2Fstackoverflow.com%2Fquestions%2F80875%2Fwhat-is-the-unix-command-to-create-a-hardlink-to-a-directory-in-os-x&amp;rft_val_fmt=info%3Aofi%2Ffmt%3Akev%3Amtx%3Ajournal"></span></span>
+</li>
+</ol></div>
+<h2 style="color:rgb(0, 0, 0);padding-top:0.5em;padding-bottom:0.17em;overflow:hidden;border-bottom:1px solid rgb(162, 169, 177);font-weight:normal;font-family:&quot;Linux Libertine&quot;, Georgia, Times, &quot;Source Serif Pro&quot;, serif;line-height:1.375;font-size:1.5em;margin:0.25em 0px;"><span></span><span>外部链接</span><span style="user-select:none;font-size:small;font-weight:normal;vertical-align:baseline;line-height:0;font-family:sans-serif;unicode-bidi:isolate;margin-right:0px;margin-left:1em;"><span style="font-size:small;font-weight:normal;line-height:0;font-family:sans-serif;">​</span><span style="margin-right:0.25em;color:rgb(84, 89, 93);">[</span><a href="https://zh.wikipedia.org/w/index.php?title=Inode&amp;action=edit&amp;section=7" title="编辑章节：外部链接" style="text-decoration:none;color:rgb(51, 102, 204);background:none;overflow-wrap:break-word;white-space:nowrap;"><span>编辑</span></a><span style="margin-left:0.25em;color:rgb(84, 89, 93);">]</span></span></h2>
+<ul style="list-style-image:url(https://zh.wikipedia.org/w/skins/Vector/resources/skins.vector.styles/images/bullet-icon.svg?d4515);margin:0.3em 0px 0px 1.6em;padding:0px;margin-top:0px;"><li style="margin-bottom:0.1em;"><a rel="nofollow" href="http://www.ibm.com/developerworks/linux/library/l-linux-filesystem/" style="text-decoration:none;background:none;overflow-wrap:break-word;color:rgb(51, 102, 204);background-image:url(https://zh.wikipedia.org/w/skins/Vector/resources/skins.vector.styles/images/link-external-small-ltr-progressive.svg?fb64d);background-position:right center;background-repeat:no-repeat;background-size:0.857em;padding-right:1em;">Anatomy Of The Linux File System</a>（<a rel="nofollow" href="https://web.archive.org/web/20160211033517/http://www.ibm.com/developerworks/linux/library/l-linux-filesystem/" style="text-decoration:none;background:none;overflow-wrap:break-word;color:rgb(51, 102, 204);background-image:url(https://zh.wikipedia.org/w/skins/Vector/resources/skins.vector.styles/images/link-external-small-ltr-progressive.svg?fb64d);background-position:right center;background-repeat:no-repeat;background-size:0.857em;padding-right:1em;">页面存档备份</a>，存于<a href="https://zh.wikipedia.org/wiki/%E4%BA%92%E8%81%94%E7%BD%91%E6%A1%A3%E6%A1%88%E9%A6%86" title="互联网档案馆" style="text-decoration:none;color:rgb(51, 102, 204);background:none;overflow-wrap:break-word;">互联网档案馆</a>）</li>
+<li style="margin-bottom:0.1em;"><a rel="nofollow" href="http://www.linfo.org/inode.html" style="text-decoration:none;background:none;overflow-wrap:break-word;color:rgb(51, 102, 204);background-image:url(https://zh.wikipedia.org/w/skins/Vector/resources/skins.vector.styles/images/link-external-small-ltr-progressive.svg?fb64d);background-position:right center;background-repeat:no-repeat;background-size:0.857em;padding-right:1em;">Inode definition</a> （<a rel="nofollow" href="https://web.archive.org/web/20200727100213/http://www.linfo.org/inode.html" style="text-decoration:none;background:none;overflow-wrap:break-word;color:rgb(51, 102, 204);background-image:url(https://zh.wikipedia.org/w/skins/Vector/resources/skins.vector.styles/images/link-external-small-ltr-progressive.svg?fb64d);background-position:right center;background-repeat:no-repeat;background-size:0.857em;padding-right:1em;">页面存档备份</a>，存于<a href="https://zh.wikipedia.org/wiki/%E4%BA%92%E8%81%94%E7%BD%91%E6%A1%A3%E6%A1%88%E9%A6%86" title="互联网档案馆" style="text-decoration:none;color:rgb(51, 102, 204);background:none;overflow-wrap:break-word;">互联网档案馆</a>）</li>
+<li style="margin-bottom:0.1em;"><a rel="nofollow" href="http://linuxgazette.net/105/pitcher.html" style="text-decoration:none;background:none;overflow-wrap:break-word;color:rgb(51, 102, 204);background-image:url(https://zh.wikipedia.org/w/skins/Vector/resources/skins.vector.styles/images/link-external-small-ltr-progressive.svg?fb64d);background-position:right center;background-repeat:no-repeat;background-size:0.857em;padding-right:1em;">Great and Clear Explanation on Inodes, Symlinks, Hardlinks</a> （<a rel="nofollow" href="https://web.archive.org/web/20201112032435/http://linuxgazette.net/105/pitcher.html" style="text-decoration:none;background:none;overflow-wrap:break-word;color:rgb(51, 102, 204);background-image:url(https://zh.wikipedia.org/w/skins/Vector/resources/skins.vector.styles/images/link-external-small-ltr-progressive.svg?fb64d);background-position:right center;background-repeat:no-repeat;background-size:0.857em;padding-right:1em;">页面存档备份</a>，存于<a href="https://zh.wikipedia.org/wiki/%E4%BA%92%E8%81%94%E7%BD%91%E6%A1%A3%E6%A1%88%E9%A6%86" title="互联网档案馆" style="text-decoration:none;color:rgb(51, 102, 204);background:none;overflow-wrap:break-word;">互联网档案馆</a>）</li>
+<li style="margin-bottom:0.1em;"><a rel="nofollow" href="http://www.ruanyifeng.com/blog/2011/12/inode.html" style="text-decoration:none;background:none;overflow-wrap:break-word;color:rgb(51, 102, 204);background-image:url(https://zh.wikipedia.org/w/skins/Vector/resources/skins.vector.styles/images/link-external-small-ltr-progressive.svg?fb64d);background-position:right center;background-repeat:no-repeat;background-size:0.857em;padding-right:1em;">理解inode</a> （<a rel="nofollow" href="https://web.archive.org/web/20201022182124/http://www.ruanyifeng.com/blog/2011/12/inode.html" style="text-decoration:none;background:none;overflow-wrap:break-word;color:rgb(51, 102, 204);background-image:url(https://zh.wikipedia.org/w/skins/Vector/resources/skins.vector.styles/images/link-external-small-ltr-progressive.svg?fb64d);background-position:right center;background-repeat:no-repeat;background-size:0.857em;padding-right:1em;">页面存档备份</a>，存于<a href="https://zh.wikipedia.org/wiki/%E4%BA%92%E8%81%94%E7%BD%91%E6%A1%A3%E6%A1%88%E9%A6%86" title="互联网档案馆" style="text-decoration:none;color:rgb(51, 102, 204);background:none;overflow-wrap:break-word;">互联网档案馆</a>）</li>
+<li style="margin-bottom:0.1em;"><a rel="nofollow" href="http://www.opsers.org/base/one-day-the-little-learning-linux-inode-detailed.html" style="text-decoration:none;background:none;overflow-wrap:break-word;color:rgb(51, 102, 204);background-image:url(https://zh.wikipedia.org/w/skins/Vector/resources/skins.vector.styles/images/link-external-small-ltr-progressive.svg?fb64d);background-position:right center;background-repeat:no-repeat;background-size:0.857em;padding-right:1em;">一天一点学习Linux之inode详解</a> （<a rel="nofollow" href="https://web.archive.org/web/20200928145010/http://www.opsers.org/base/one-day-the-little-learning-linux-inode-detailed.html" style="text-decoration:none;background:none;overflow-wrap:break-word;color:rgb(51, 102, 204);background-image:url(https://zh.wikipedia.org/w/skins/Vector/resources/skins.vector.styles/images/link-external-small-ltr-progressive.svg?fb64d);background-position:right center;background-repeat:no-repeat;background-size:0.857em;padding-right:1em;">页面存档备份</a>，存于<a href="https://zh.wikipedia.org/wiki/%E4%BA%92%E8%81%94%E7%BD%91%E6%A1%A3%E6%A1%88%E9%A6%86" title="互联网档案馆" style="text-decoration:none;color:rgb(51, 102, 204);background:none;overflow-wrap:break-word;">互联网档案馆</a>）</li></ul>
+
+
+
+
+</div>
+<span style="font-size:15.008px;clear:both;display:block;"></span></div>
+					<div style="background-color:rgb(248, 249, 250);margin-top:1em;border:1px solid rgb(162, 169, 177);padding:5px;clear:both;text-align:left;"><div><a href="https://zh.wikipedia.org/wiki/Special:%E9%A1%B5%E9%9D%A2%E5%88%86%E7%B1%BB" title="Special:页面分类" style="text-decoration:none;color:rgb(51, 102, 204);background:none;">分类</a>：​<ul style="list-style-image:url(https://zh.wikipedia.org/w/skins/Vector/resources/skins.vector.styles/images/bullet-icon.svg?d4515);display:inline;list-style:none;margin:0px;padding:0px;margin-top:0px;"><li style="margin-bottom:0.1em;display:inline-block;line-height:1.25em;margin:0.125em 0px;padding:0px 0.5em;padding-left:0.25em;border-left:0px;"><a href="https://zh.wikipedia.org/wiki/Category:%E6%96%87%E4%BB%B6%E7%B3%BB%E7%BB%9F" title="Category:文件系统" style="text-decoration:none;color:rgb(51, 102, 204);background:none;">文件系统</a></li><li style="margin-bottom:0.1em;display:inline-block;line-height:1.25em;margin:0.125em 0px;border-left:1px solid rgb(162, 169, 177);padding:0px 0.5em;"><a href="https://zh.wikipedia.org/wiki/Category:Unix" title="Category:Unix" style="text-decoration:none;color:rgb(51, 102, 204);background:none;">Unix</a></li></ul></div></div>
+				</div>
+			</span></div></div></div></div></div></div>
+</div>
+</div>
+<a class="back-link" href="../articles.html">← 返回笔记列表</a>
+</body>
+</html>

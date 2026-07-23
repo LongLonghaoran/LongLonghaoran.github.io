@@ -1,0 +1,495 @@
+<!DOCTYPE html>
+<html lang="zh-CN" data-theme="light">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CIFAR-10 Tutorial — 技术笔记</title>
+<style>
+:root {
+  --bg: #ffffff;
+  --text: #1a1a1a;
+  --muted: #666;
+  --border: #e0e0e0;
+  --code-bg: #f5f5f5;
+  --link: #0066cc;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #1a1a1a;
+    --text: #e0e0e0;
+    --muted: #999;
+    --border: #333;
+    --code-bg: #2a2a2a;
+    --link: #66bbff;
+  }
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  line-height: 1.7;
+  color: var(--text);
+  background: var(--bg);
+  max-width: 860px;
+  margin: 0 auto;
+  padding: 2rem 1.5rem;
+}
+.note-header {
+  border-bottom: 2px solid var(--border);
+  padding-bottom: 1rem;
+  margin-bottom: 2rem;
+}
+.note-title {
+  font-size: 1.6rem;
+  font-weight: 700;
+  margin-bottom: 0.3rem;
+}
+.note-meta {
+  color: var(--muted);
+  font-size: 0.85rem;
+}
+.note-content {
+  font-size: 0.95rem;
+}
+.note-content h1 { font-size: 1.4rem; margin: 1.2rem 0 0.6rem; }
+.note-content h2 { font-size: 1.2rem; margin: 1rem 0 0.5rem; }
+.note-content h3 { font-size: 1.05rem; margin: 0.8rem 0 0.4rem; }
+.note-content p { margin: 0.5rem 0; }
+.note-content ul, .note-content ol { margin: 0.5rem 0 0.5rem 2rem; }
+.note-content li { margin: 0.2rem 0; }
+.note-content pre {
+  background: var(--code-bg);
+  padding: 1rem;
+  border-radius: 6px;
+  overflow-x: auto;
+  margin: 0.8rem 0;
+  font-size: 0.85rem;
+}
+.note-content code {
+  background: var(--code-bg);
+  padding: 0.1rem 0.3rem;
+  border-radius: 3px;
+  font-size: 0.88em;
+}
+.note-content pre code {
+  background: none;
+  padding: 0;
+}
+.note-content blockquote {
+  border-left: 3px solid var(--border);
+  padding-left: 1rem;
+  color: var(--muted);
+  margin: 0.8rem 0;
+}
+.note-content a { color: var(--link); }
+.note-content img {
+  max-width: 100%;
+  height: auto;
+  border-radius: 6px;
+  margin: 0.5rem 0;
+}
+.note-content table {
+  border-collapse: collapse;
+  width: 100%;
+  margin: 0.8rem 0;
+}
+.note-content th, .note-content td {
+  border: 1px solid var(--border);
+  padding: 0.5rem;
+}
+.note-content th { background: var(--code-bg); }
+.media-placeholder {
+  background: var(--code-bg);
+  padding: 1rem;
+  text-align: center;
+  color: var(--muted);
+  border-radius: 6px;
+  margin: 0.5rem 0;
+  font-size: 0.85rem;
+}
+.encrypt-placeholder {
+  background: #fff3cd;
+  padding: 0.5rem;
+  text-align: center;
+  color: #856404;
+  border-radius: 6px;
+  margin: 0.5rem 0;
+  font-size: 0.85rem;
+}
+.back-link {
+  display: inline-block;
+  margin-top: 2rem;
+  color: var(--link);
+  text-decoration: none;
+  font-size: 0.85rem;
+}
+</style>
+</head>
+<body>
+<div class="note-header">
+  <div class="note-title">CIFAR-10 Tutorial</div>
+  <div class="note-meta">笔记本：AI</div>
+</div>
+<div class="note-content">
+<div style="--en-clipped-content:article">
+<div><br/></div><div style="font-size: 16px; display:block; min-width: 100%; position: relative;"> <div style="background-color:rgb(255, 255, 255);text-size-adjust:100%;box-sizing:border-box;font-size:20px;"><div style="box-sizing:border-box;color:rgb(34, 40, 49);font-family:-apple-system, BlinkMacSystemFont, Roboto, &quot;Segoe UI&quot;, &quot;Helvetica Neue&quot;, &quot;Lucida Grande&quot;, Arial, sans-serif;line-height:1.5;-webkit-box-orient:vertical;-webkit-box-direction:normal;"><div style="box-sizing:border-box;"><div style="box-sizing:border-box;animation:0.3s ease 0.15s 1 normal both running intro;"><div style="box-sizing:border-box;"><div style="box-sizing:border-box;">
+      
+        <div style="box-sizing:border-box;display:block;transition:all 0.2s ease-in-out 0s;">
+          <h1 style="box-sizing:border-box;margin:2em 0px 0.5em;font-family:-apple-system, BlinkMacSystemFont, Roboto, &quot;Segoe UI&quot;, &quot;Helvetica Neue&quot;, &quot;Lucida Grande&quot;, Arial, sans-serif;font-weight:bold;font-size:1.563em;transition:all 0.2s ease-in-out 0s;line-height:1.5;margin-top:0px;">CIFAR-10 Tutorial
+</h1>
+          
+        </div>
+      
+
+      <div style="box-sizing:border-box;display:block;max-width:1280px;">
+        
+          <div style="box-sizing:border-box;display:block;margin-bottom:1em;right:0px;width:200px;margin-right:-300px;padding-left:1em;z-index:10;float:right;clear:both;position:sticky;top:2em;">
+            <div style="box-sizing:border-box;display:block;font-family:-apple-system, BlinkMacSystemFont, Roboto, &quot;Segoe UI&quot;, &quot;Helvetica Neue&quot;, &quot;Lucida Grande&quot;, Arial, sans-serif;color:rgb(122, 130, 136);background-color:rgb(255, 255, 255);border:1px solid rgb(206, 207, 209);border-radius:4px;box-shadow:rgba(0, 0, 0, 0.125) 0px 1px 1px;">
+              <div style="box-sizing:border-box;display:block;transition:all 0.2s ease-in-out 0s;"><h4 style="box-sizing:border-box;line-height:1.2;padding:0.5rem 0.75rem;margin:0px;font-family:-apple-system, BlinkMacSystemFont, Roboto, &quot;Segoe UI&quot;, &quot;Helvetica Neue&quot;, &quot;Lucida Grande&quot;, Arial, sans-serif;font-weight:bold;font-size:0.75em;color:rgb(255, 255, 255);background:rgb(0, 146, 202);border-top-left-radius:4px;border-top-right-radius:4px;"><i style="box-sizing:border-box;transition:all 0.2s ease-in-out 0s;-webkit-font-smoothing:antialiased;display:inline-block;font-style:normal;font-variant:normal;text-rendering:auto;line-height:1;font-family:&quot;Font Awesome 5 Free&quot;;font-weight:900;"><span style="font-style:normal;font-variant:normal;line-height:1;font-family:Font Awesome 5 Free;font-weight:900;"></span></i> Contents</h4></div>
+              <ul style="box-sizing:border-box;orphans:3;widows:3;width:100%;list-style:none;margin:0px;padding:0px;font-size:0.6875em;">
+  <li style="box-sizing:border-box;list-style:none;margin-bottom:0px;font-size:1em;line-height:1.77778;"><a href="https://www.deepspeed.ai/tutorials/cifar-10/#running-original-cifar-10" style="box-sizing:border-box;text-decoration:none;transition:all 0.2s ease-in-out 0s;display:block;padding:0.25rem 0.75rem;font-weight:bold;line-height:1.5;border-bottom:1px solid rgb(206, 207, 209);color:rgb(57, 62, 70);">Running Original CIFAR-10</a></li>
+  <li style="box-sizing:border-box;list-style:none;margin-bottom:0px;font-size:1em;line-height:1.77778;"><a href="https://www.deepspeed.ai/tutorials/cifar-10/#enabling-deepspeed" style="box-sizing:border-box;text-decoration:none;transition:all 0.2s ease-in-out 0s;display:block;padding:0.25rem 0.75rem;font-weight:bold;line-height:1.5;border-bottom:1px solid rgb(206, 207, 209);color:rgb(57, 62, 70);">Enabling DeepSpeed</a>
+    <ul style="box-sizing:border-box;orphans:3;widows:3;margin:0px;padding:0px;margin-top:0px;">
+      <li style="box-sizing:border-box;list-style:none;margin-bottom:0px;font-size:1em;line-height:1.77778;"><a href="https://www.deepspeed.ai/tutorials/cifar-10/#argument-parsing" style="box-sizing:border-box;text-decoration:none;transition:all 0.2s ease-in-out 0s;display:block;padding:0.25rem 0.75rem;line-height:1.5;border-bottom:1px solid rgb(206, 207, 209);color:rgb(57, 62, 70);padding-left:25px;font-weight:normal;">Argument Parsing</a></li>
+      <li style="box-sizing:border-box;list-style:none;margin-bottom:0px;font-size:1em;line-height:1.77778;"><a href="https://www.deepspeed.ai/tutorials/cifar-10/#initialization" style="box-sizing:border-box;text-decoration:none;transition:all 0.2s ease-in-out 0s;display:block;padding:0.25rem 0.75rem;line-height:1.5;border-bottom:1px solid rgb(206, 207, 209);color:rgb(57, 62, 70);padding-left:25px;font-weight:normal;">Initialization</a></li>
+      <li style="box-sizing:border-box;list-style:none;margin-bottom:0px;font-size:1em;line-height:1.77778;"><a href="https://www.deepspeed.ai/tutorials/cifar-10/#training-api" style="box-sizing:border-box;text-decoration:none;transition:all 0.2s ease-in-out 0s;display:block;padding:0.25rem 0.75rem;line-height:1.5;border-bottom:1px solid rgb(206, 207, 209);color:rgb(57, 62, 70);padding-left:25px;font-weight:normal;">Training API</a></li>
+      <li style="box-sizing:border-box;list-style:none;margin-bottom:0px;font-size:1em;line-height:1.77778;"><a href="https://www.deepspeed.ai/tutorials/cifar-10/#configuration" style="box-sizing:border-box;text-decoration:none;transition:all 0.2s ease-in-out 0s;display:block;padding:0.25rem 0.75rem;line-height:1.5;border-bottom:1px solid rgb(206, 207, 209);color:rgb(57, 62, 70);padding-left:25px;font-weight:normal;">Configuration</a></li>
+      <li style="box-sizing:border-box;list-style:none;margin-bottom:0px;font-size:1em;line-height:1.77778;"><a href="https://www.deepspeed.ai/tutorials/cifar-10/#run-cifar-10-model-with-deepspeed-enabled" style="box-sizing:border-box;text-decoration:none;transition:all 0.2s ease-in-out 0s;display:block;padding:0.25rem 0.75rem;line-height:1.5;border-bottom:1px solid rgb(206, 207, 209);color:rgb(57, 62, 70);padding-left:25px;font-weight:normal;">Run CIFAR-10 Model with DeepSpeed Enabled</a></li>
+    </ul>
+  </li>
+</ul>
+
+            </div>
+          <span style="clear:both;display:table;"></span></div>
+        
+        <p style="box-sizing:border-box;orphans:3;widows:3;transition:all 0.2s ease-in-out 0s;font-size:1em;line-height:1.77778;margin:0px 0px 1.3em;">If you haven’t already, we advise you to first read through the
+<a href="https://www.deepspeed.ai/getting-started/" style="box-sizing:border-box;color:rgb(57, 62, 70);transition:all 0.2s ease-in-out 0s;">Getting Started</a> guide before stepping through this
+tutorial.</p>
+
+<p style="box-sizing:border-box;orphans:3;widows:3;transition:all 0.2s ease-in-out 0s;font-size:1em;line-height:1.77778;margin:0px 0px 1.3em;">In this tutorial we will be adding DeepSpeed to the CIFAR-10 model, which is a small image classification model.</p>
+
+<p style="box-sizing:border-box;orphans:3;widows:3;transition:all 0.2s ease-in-out 0s;font-size:1em;line-height:1.77778;margin:0px 0px 1.3em;">First we will go over how to run the original CIFAR-10 model. Then we will proceed step-by-step in enabling this model to run with DeepSpeed.</p>
+
+<h2 style="box-sizing:border-box;margin:2em 0px 0.5em;line-height:1.2;font-family:-apple-system, BlinkMacSystemFont, Roboto, &quot;Segoe UI&quot;, &quot;Helvetica Neue&quot;, &quot;Lucida Grande&quot;, Arial, sans-serif;font-weight:bold;font-size:1.25em;transition:all 0.2s ease-in-out 0s;padding-bottom:0.5em;border-bottom:1px solid rgb(206, 207, 209);">Running Original CIFAR-10<a href="https://www.deepspeed.ai/tutorials/cifar-10/#running-original-cifar-10" title="Permalink" style="box-sizing:border-box;color:rgb(57, 62, 70);position:relative;left:0.5em;opacity:0;font-size:0.8em;transition:opacity 0.2s ease-in-out 0.1s;"><span style="box-sizing:border-box;transition:all 0.2s ease-in-out 0s;border:0px;clip:rect(0px, 0px, 0px, 0px);height:1px;margin:-1px;overflow:hidden;padding:0px;position:absolute;width:1px;">Permalink</span><i style="box-sizing:border-box;transition:all 0.2s ease-in-out 0s;-webkit-font-smoothing:antialiased;display:inline-block;font-style:normal;font-variant:normal;text-rendering:auto;line-height:1;font-family:&quot;Font Awesome 5 Free&quot;;font-weight:900;"><span style="font-style:normal;font-variant:normal;line-height:1;font-family:Font Awesome 5 Free;font-weight:900;"></span></i></a></h2>
+
+<p style="box-sizing:border-box;orphans:3;widows:3;transition:all 0.2s ease-in-out 0s;font-size:1em;line-height:1.77778;margin:0px 0px 1.3em;">Original model code from the <a href="https://github.com/pytorch/tutorials/blob/main/beginner_source/blitz/cifar10_tutorial.py" style="box-sizing:border-box;color:rgb(57, 62, 70);transition:all 0.2s ease-in-out 0s;">CIFAR-10 Tutorial</a>, We’ve copied this repo under <a href="https://github.com/microsoft/DeepSpeedExamples/tree/master/training/cifar" style="box-sizing:border-box;color:rgb(57, 62, 70);transition:all 0.2s ease-in-out 0s;">DeepSpeedExamples/training/cifar/</a> and made it available as a submodule. To download, execute:</p>
+
+<div style="box-sizing:border-box;position:relative;margin-bottom:1em;background:rgb(38, 50, 56);color:rgb(238, 255, 255);font-family:Monaco, Consolas, &quot;Lucida Console&quot;, monospace;font-size:0.75em;line-height:1.8;border-radius:4px;"><div style="box-sizing:border-box;transition:all 0.2s ease-in-out 0s;"><pre style="border-radius:4px;background-color: #fbfaf8;border: 1px solid rgba(0,0,0,.14902);color: #333;font-size: 12px;padding: 8px;font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif;box-sizing: border-box;"><code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif">git submodule update <span style="box-sizing:border-box;transition:all 0.2s ease-in-out 0s;color:rgb(137, 221, 255);">--init</span> <span style="box-sizing:border-box;transition:all 0.2s ease-in-out 0s;color:rgb(137, 221, 255);">--recursive</span>
+</code></pre></div></div>
+
+<p style="box-sizing:border-box;orphans:3;widows:3;transition:all 0.2s ease-in-out 0s;font-size:1em;line-height:1.77778;margin:0px 0px 1.3em;">To install the requirements for the CIFAR-10 model:</p>
+<div style="box-sizing:border-box;position:relative;margin-bottom:1em;background:rgb(38, 50, 56);color:rgb(238, 255, 255);font-family:Monaco, Consolas, &quot;Lucida Console&quot;, monospace;font-size:0.75em;line-height:1.8;border-radius:4px;"><div style="box-sizing:border-box;transition:all 0.2s ease-in-out 0s;"><pre style="border-radius:4px;background-color: #fbfaf8;border: 1px solid rgba(0,0,0,.14902);color: #333;font-size: 12px;padding: 8px;font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif;box-sizing: border-box;"><code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span style="box-sizing:border-box;transition:all 0.2s ease-in-out 0s;color:rgb(238, 255, 255);">cd </span>DeepSpeedExamples/cifar
+pip <span style="box-sizing:border-box;transition:all 0.2s ease-in-out 0s;color:rgb(238, 255, 255);">install</span> <span style="box-sizing:border-box;transition:all 0.2s ease-in-out 0s;color:rgb(137, 221, 255);">-r</span> requirements.txt
+</code></pre></div></div>
+
+<p style="box-sizing:border-box;orphans:3;widows:3;transition:all 0.2s ease-in-out 0s;font-size:1em;line-height:1.77778;margin:0px 0px 1.3em;">Run <code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span style="font-family:Monaco, Consolas, Lucida Console, monospace;font-size:0.8em;letter-spacing:-0.2em;"> </span>python cifar10_tutorial.py<span style="font-family:Monaco, Consolas, Lucida Console, monospace;font-size:0.8em;letter-spacing:-0.2em;"> </span></code>, it downloads the training data set at first run.</p>
+<div style="box-sizing:border-box;position:relative;margin-bottom:1em;background:rgb(38, 50, 56);color:rgb(238, 255, 255);font-family:Monaco, Consolas, &quot;Lucida Console&quot;, monospace;font-size:0.75em;line-height:1.8;border-radius:4px;"><div style="box-sizing:border-box;transition:all 0.2s ease-in-out 0s;"><pre style="border-radius:4px;background-color: #fbfaf8;border: 1px solid rgba(0,0,0,.14902);color: #333;font-size: 12px;padding: 8px;font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif;box-sizing: border-box;"><code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif">Downloading https://www.cs.toronto.edu/~kriz/cifar-10-python.tar.gz to ./data/cifar-10-python.tar.gz
+170500096it [00:02, 61124868.24it/s]
+Extracting ./data/cifar-10-python.tar.gz to ./data
+Files already downloaded and verified
+  cat  frog  frog  frog
+[1,  2000] loss: 2.170
+[1,  4000] loss: 1.879
+[1,  6000] loss: 1.690
+[1,  8000] loss: 1.591
+[1, 10000] loss: 1.545
+[1, 12000] loss: 1.467
+[2,  2000] loss: 1.377
+[2,  4000] loss: 1.374
+[2,  6000] loss: 1.363
+[2,  8000] loss: 1.322
+[2, 10000] loss: 1.295
+[2, 12000] loss: 1.287
+Finished Training
+GroundTruth:    cat  ship  ship plane
+Predicted:    cat  ship plane plane
+Accuracy of the network on the 10000 test images: 53 %
+Accuracy of plane : 69 %
+Accuracy of   car : 59 %
+Accuracy of  bird : 56 %
+Accuracy of   cat : 36 %
+Accuracy of  deer : 37 %
+Accuracy of   dog : 26 %
+Accuracy of  frog : 70 %
+Accuracy of horse : 61 %
+Accuracy of  ship : 51 %
+Accuracy of truck : 63 %
+cuda:0
+</code></pre></div></div>
+
+<h2 style="box-sizing:border-box;margin:2em 0px 0.5em;line-height:1.2;font-family:-apple-system, BlinkMacSystemFont, Roboto, &quot;Segoe UI&quot;, &quot;Helvetica Neue&quot;, &quot;Lucida Grande&quot;, Arial, sans-serif;font-weight:bold;font-size:1.25em;transition:all 0.2s ease-in-out 0s;padding-bottom:0.5em;border-bottom:1px solid rgb(206, 207, 209);">Enabling DeepSpeed<a href="https://www.deepspeed.ai/tutorials/cifar-10/#enabling-deepspeed" title="Permalink" style="box-sizing:border-box;color:rgb(57, 62, 70);position:relative;left:0.5em;opacity:0;font-size:0.8em;transition:opacity 0.2s ease-in-out 0.1s;"><span style="box-sizing:border-box;transition:all 0.2s ease-in-out 0s;border:0px;clip:rect(0px, 0px, 0px, 0px);height:1px;margin:-1px;overflow:hidden;padding:0px;position:absolute;width:1px;">Permalink</span><i style="box-sizing:border-box;transition:all 0.2s ease-in-out 0s;-webkit-font-smoothing:antialiased;display:inline-block;font-style:normal;font-variant:normal;text-rendering:auto;line-height:1;font-family:&quot;Font Awesome 5 Free&quot;;font-weight:900;"><span style="font-style:normal;font-variant:normal;line-height:1;font-family:Font Awesome 5 Free;font-weight:900;"></span></i></a></h2>
+
+<h3 style="box-sizing:border-box;margin:2em 0px 0.5em;line-height:1.2;font-family:-apple-system, BlinkMacSystemFont, Roboto, &quot;Segoe UI&quot;, &quot;Helvetica Neue&quot;, &quot;Lucida Grande&quot;, Arial, sans-serif;font-weight:bold;font-size:1.125em;">Argument Parsing<a href="https://www.deepspeed.ai/tutorials/cifar-10/#argument-parsing" title="Permalink" style="box-sizing:border-box;color:rgb(57, 62, 70);position:relative;left:0.5em;opacity:0;font-size:0.8em;transition:opacity 0.2s ease-in-out 0.1s;"><span style="box-sizing:border-box;transition:all 0.2s ease-in-out 0s;border:0px;clip:rect(0px, 0px, 0px, 0px);height:1px;margin:-1px;overflow:hidden;padding:0px;position:absolute;width:1px;">Permalink</span><i style="box-sizing:border-box;transition:all 0.2s ease-in-out 0s;-webkit-font-smoothing:antialiased;display:inline-block;font-style:normal;font-variant:normal;text-rendering:auto;line-height:1;font-family:&quot;Font Awesome 5 Free&quot;;font-weight:900;"><span style="font-style:normal;font-variant:normal;line-height:1;font-family:Font Awesome 5 Free;font-weight:900;"></span></i></a></h3>
+
+<p style="box-sizing:border-box;orphans:3;widows:3;transition:all 0.2s ease-in-out 0s;font-size:1em;line-height:1.77778;margin:0px 0px 1.3em;">The first step to apply DeepSpeed is adding DeepSpeed arguments to CIFAR-10 model, using <code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span style="font-family:Monaco, Consolas, Lucida Console, monospace;font-size:0.8em;letter-spacing:-0.2em;"> </span>deepspeed.add_config_arguments()<span style="font-family:Monaco, Consolas, Lucida Console, monospace;font-size:0.8em;letter-spacing:-0.2em;"> </span></code> function as below.</p>
+
+<div style="box-sizing:border-box;position:relative;margin-bottom:1em;background:rgb(38, 50, 56);color:rgb(238, 255, 255);font-family:Monaco, Consolas, &quot;Lucida Console&quot;, monospace;font-size:0.75em;line-height:1.8;border-radius:4px;"><div style="box-sizing:border-box;transition:all 0.2s ease-in-out 0s;"><pre style="border-radius:4px;background-color: #fbfaf8;border: 1px solid rgba(0,0,0,.14902);color: #333;font-size: 12px;padding: 8px;font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif;box-sizing: border-box;"><code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"> <span style="box-sizing:border-box;transition:all 0.2s ease-in-out 0s;color:rgb(137, 221, 255);">import</span> <span style="box-sizing:border-box;transition:all 0.2s ease-in-out 0s;color:rgb(255, 203, 107);">argparse</span>
+ <span style="box-sizing:border-box;transition:all 0.2s ease-in-out 0s;color:rgb(137, 221, 255);">import</span> <span style="box-sizing:border-box;transition:all 0.2s ease-in-out 0s;color:rgb(255, 203, 107);">deepspeed</span>
+
+ <span style="box-sizing:border-box;transition:all 0.2s ease-in-out 0s;color:rgb(199, 146, 234);">def</span> <span style="box-sizing:border-box;transition:all 0.2s ease-in-out 0s;color:rgb(130, 170, 255);">add_argument</span><span style="box-sizing:border-box;transition:all 0.2s ease-in-out 0s;color:rgb(238, 255, 255);">():</span>
+
+     <span style="box-sizing:border-box;transition:all 0.2s ease-in-out 0s;color:rgb(238, 255, 255);">parser</span><span style="box-sizing:border-box;transition:all 0.2s ease-in-out 0s;color:rgb(137, 221, 255);">=</span><span style="box-sizing:border-box;transition:all 0.2s ease-in-out 0s;color:rgb(238, 255, 255);">argparse</span><span style="box-sizing:border-box;transition:all 0.2s ease-in-out 0s;color:rgb(238, 255, 255);">.</span><span style="box-sizing:border-box;transition:all 0.2s ease-in-out 0s;color:rgb(238, 255, 255);">ArgumentParser</span><span style="box-sizing:border-box;transition:all 0.2s ease-in-out 0s;color:rgb(238, 255, 255);">(</span><span style="box-sizing:border-box;transition:all 0.2s ease-in-out 0s;color:rgb(238, 255, 255);">description</span><span style="box-sizing:border-box;transition:all 0.2s ease-in-out 0s;color:rgb(137, 221, 255);">=</span><span style="box-sizing:border-box;transition:all 0.2s ease-in-out 0s;color:rgb(195, 232, 141);">'CIFAR'</span><span style="box-sizing:border-box;transition:all 0.2s ease-in-out 0s;color:rgb(238, 255, 255);">)</span>
+
+     <span style="box-sizing:border-box;transition:all 0.2s ease-in-out 0s;color:rgb(178, 204, 214);"># Data.
+</span>     <span style="box-sizing:border-box;transition:all 0.2s ease-in-out 0s;color:rgb(178, 204, 214);"># Cuda.
+</span>     <span style="box-sizing:border-box;transition:all 0.2s ease-in-out 0s;color:rgb(238, 255, 255);">parser</span><span style="box-sizing:border-box;transition:all 0.2s ease-in-out 0s;color:rgb(238, 255, 255);">.</span><span style="box-sizing:border-box;transition:all 0.2s ease-in-out 0s;color:rgb(238, 255, 255);">add_argument</span><span style="box-sizing:border-box;transition:all 0.2s ease-in-out 0s;color:rgb(238, 255, 255);">(</span><span style="box-sizing:border-box;transition:all 0.2s ease-in-out 0s;color:rgb(195, 232, 141);">'--with_cuda'</span><span style="box-sizing:border-box;transition:all 0.2s ease-in-out 0s;color:rgb(238, 255, 255);">,</span> <span style="box-sizing:border-box;transition:all 0.2s ease-in-out 0s;color:rgb(238, 255, 255);">default</span><span style="box-sizing:border-box;transition:all 0.2s ease-in-out 0s;color:rgb(137, 221, 255);">=</span><span style="box-sizing:border-box;transition:all 0.2s ease-in-out 0s;color:rgb(238, 255, 255);">False</span><span style="box-sizing:border-box;transition:all 0.2s ease-in-out 0s;color:rgb(238, 255, 255);">,</span> <span style="box-sizing:border-box;transition:all 0.2s ease-in-out 0s;color:rgb(238, 255, 255);">action</span><span style="box-sizing:border-box;transition:all 0.2s ease-in-out 0s;color:rgb(137, 221, 255);">=</span><span style="box-sizing:border-box;transition:all 0.2s ease-in-out 0s;color:rgb(195, 232, 141);">'store_true'</span><span style="box-sizing:border-box;transition:all 0.2s ease-in-out 0s;color:rgb(238, 255, 255);">,</span>
+                         <span style="box-sizing:border-box;transition:all 0.2s ease-in-out 0s;color:rgb(238, 255, 255);">help</span><span style="box-sizing:border-box;transition:all 0.2s ease-in-out 0s;color:rgb(137, 221, 255);">=</span><span style="box-sizing:border-box;transition:all 0.2s ease-in-out 0s;color:rgb(195, 232, 141);">'use CPU in case there</span><span style="box-sizing:border-box;transition:all 0.2s ease-in-out 0s;color:rgb(247, 140, 108);">\'</span><span style="box-sizing:border-box;transition:all 0.2s ease-in-out 0s;color:rgb(195, 232, 141);">s no GPU support'</span><span style="box-sizing:border-box;transition:all 0.2s ease-in-out 0s;color:rgb(238, 255, 255);">)</span>
+     <span style="box-sizing:border-box;transition:all 0.2s ease-in-out 0s;color:rgb(238, 255, 255);">parser</span><span style="box-sizing:border-box;transition:all 0.2s ease-in-out 0s;color:rgb(238, 255, 255);">.</span><span style="box-sizing:border-box;transition:all 0.2s ease-in-out 0s;color:rgb(238, 255, 255);">add_argument</span><span style="box-sizing:border-box;transition:all 0.2s ease-in-out 0s;color:rgb(238, 255, 255);">(</span><span style="box-sizing:border-box;transition:all 0.2s ease-in-out 0s;color:rgb(195, 232, 141);">'--use_ema'</span><span style="box-sizing:border-box;transition:all 0.2s ease-in-out 0s;color:rgb(238, 255, 255);">,</span> <span style="box-sizing:border-box;transition:all 0.2s ease-in-out 0s;color:rgb(238, 255, 255);">default</span><span style="box-sizing:border-box;transition:all 0.2s ease-in-out 0s;color:rgb(137, 221, 255);">=</span><span style="box-sizing:border-box;transition:all 0.2s ease-in-out 0s;color:rgb(238, 255, 255);">False</span><span style="box-sizing:border-box;transition:all 0.2s ease-in-out 0s;color:rgb(238, 255, 255);">,</span> <span style="box-sizing:border-box;transition:all 0.2s ease-in-out 0s;color:rgb(238, 255, 255);">action</span><span style="box-sizing:border-box;transition:all 0.2s ease-in-out 0s;color:rgb(137, 221, 255);">=</span><span style="box-sizing:border-box;transition:all 0.2s ease-in-out 0s;color:rgb(195, 232, 141);">'store_true'</span><span style="box-sizing:border-box;transition:all 0.2s ease-in-out 0s;color:rgb(238, 255, 255);">,</span>
+                         <span style="box-sizing:border-box;transition:all 0.2s ease-in-out 0s;color:rgb(238, 255, 255);">help</span><span style="box-sizing:border-box;transition:all 0.2s ease-in-out 0s;color:rgb(137, 221, 255);">=</span><span style="box-sizing:border-box;transition:all 0.2s ease-in-out 0s;color:rgb(195, 232, 141);">'whether use exponential moving average'</span><span style="box-sizing:border-box;transition:all 0.2s ease-in-out 0s;color:rgb(238, 255, 255);">)</span>
+
+     <span style="box-sizing:border-box;transition:all 0.2s ease-in-out 0s;color:rgb(178, 204, 214);"># Train.
+</span>     <span style="box-sizing:border-box;transition:all 0.2s ease-in-out 0s;color:rgb(238, 255, 255);">parser</span><span style="box-sizing:border-box;transition:all 0.2s ease-in-out 0s;color:rgb(238, 255, 255);">.</span><span style="box-sizing:border-box;transition:all 0.2s ease-in-out 0s;color:rgb(238, 255, 255);">add_argument</span><span style="box-sizing:border-box;transition:all 0.2s ease-in-out 0s;color:rgb(238, 255, 255);">(</span><span style="box-sizing:border-box;transition:all 0.2s ease-in-out 0s;color:rgb(195, 232, 141);">'-b'</span><span style="box-sizing:border-box;transition:all 0.2s ease-in-out 0s;color:rgb(238, 255, 255);">,</span> <span style="box-sizing:border-box;transition:all 0.2s ease-in-out 0s;color:rgb(195, 232, 141);">'--batch_size'</span><span style="box-sizing:border-box;transition:all 0.2s ease-in-out 0s;color:rgb(238, 255, 255);">,</span> <span style="box-sizing:border-box;transition:all 0.2s ease-in-out 0s;color:rgb(238, 255, 255);">default</span><span style="box-sizing:border-box;transition:all 0.2s ease-in-out 0s;color:rgb(137, 221, 255);">=</span><span style="box-sizing:border-box;transition:all 0.2s ease-in-out 0s;color:rgb(247, 140, 108);">32</span><span style="box-sizing:border-box;transition:all 0.2s ease-in-out 0s;color:rgb(238, 255, 255);">,</span> <span style="box-sizing:border-box;transition:all 0.2s ease-in-out 0s;color:rgb(238, 255, 255);">type</span><span style="box-sizing:border-box;transition:all 0.2s ease-in-out 0s;color:rgb(137, 221, 255);">=</span><span style="box-sizing:border-box;transition:all 0.2s ease-in-out 0s;color:rgb(238, 255, 255);">int</span><span style="box-sizing:border-box;transition:all 0.2s ease-in-out 0s;color:rgb(238, 255, 255);">,</span>
+                         <span style="box-sizing:border-box;transition:all 0.2s ease-in-out 0s;color:rgb(238, 255, 255);">help</span><span style="box-sizing:border-box;transition:all 0.2s ease-in-out 0s;color:rgb(137, 221, 255);">=</span><span style="box-sizing:border-box;transition:all 0.2s ease-in-out 0s;color:rgb(195, 232, 141);">'mini-batch size (default: 32)'</span><span style="box-sizing:border-box;transition:all 0.2s ease-in-out 0s;color:rgb(238, 255, 255);">)</span>
+     <span style="box-sizing:border-box;transition:all 0.2s ease-in-out 0s;color:rgb(238, 255, 255);">parser</span><span style="box-sizing:border-box;transition:all 0.2s ease-in-out 0s;color:rgb(238, 255, 255);">.</span><span style="box-sizing:border-box;transition:all 0.2s ease-in-out 0s;color:rgb(238, 255, 255);">add_argument</span><span style="box-sizing:border-box;transition:all 0.2s ease-in-out 0s;color:rgb(238, 255, 255);">(</span><span style="box-sizing:border-box;transition:all 0.2s ease-in-out 0s;color:rgb(195, 232, 141);">'-e'</span><span style="box-sizing:border-box;transition:all 0.2s ease-in-out 0s;color:rgb(238, 255, 255);">,</span> <span style="box-sizing:border-box;transition:all 0.2s ease-in-out 0s;color:rgb(195, 232, 141);">'--epochs'</span><span style="box-sizing:border-box;transition:all 0.2s ease-in-out 0s;color:rgb(238, 255, 255);">,</span> <span style="box-sizing:border-box;transition:all 0.2s ease-in-out 0s;color:rgb(238, 255, 255);">default</span><span style="box-sizing:border-box;transition:all 0.2s ease-in-out 0s;color:rgb(137, 221, 255);">=</span><span style="box-sizing:border-box;transition:all 0.2s ease-in-out 0s;color:rgb(247, 140, 108);">30</span><span style="box-sizing:border-box;transition:all 0.2s ease-in-out 0s;color:rgb(238, 255, 255);">,</span> <span style="box-sizing:border-box;transition:all 0.2s ease-in-out 0s;color:rgb(238, 255, 255);">type</span><span style="box-sizing:border-box;transition:all 0.2s ease-in-out 0s;color:rgb(137, 221, 255);">=</span><span style="box-sizing:border-box;transition:all 0.2s ease-in-out 0s;color:rgb(238, 255, 255);">int</span><span style="box-sizing:border-box;transition:all 0.2s ease-in-out 0s;color:rgb(238, 255, 255);">,</span>
+                         <span style="box-sizing:border-box;transition:all 0.2s ease-in-out 0s;color:rgb(238, 255, 255);">help</span><span style="box-sizing:border-box;transition:all 0.2s ease-in-out 0s;color:rgb(137, 221, 255);">=</span><span style="box-sizing:border-box;transition:all 0.2s ease-in-out 0s;color:rgb(195, 232, 141);">'number of total epochs (default: 30)'</span><span style="box-sizing:border-box;transition:all 0.2s ease-in-out 0s;color:rgb(238, 255, 255);">)</span>
+     <span style="box-sizing:border-box;transition:all 0.2s ease-in-out 0s;color:rgb(238, 255, 255);">parser</span><span style="box-sizing:border-box;transition:all 0.2s ease-in-out 0s;color:rgb(238, 255, 255);">.</span><span style="box-sizing:border-box;transition:all 0.2s ease-in-out 0s;color:rgb(238, 255, 255);">add_argument</span><span style="box-sizing:border-box;transition:all 0.2s ease-in-out 0s;color:rgb(238, 255, 255);">(</span><span style="box-sizing:border-box;transition:all 0.2s ease-in-out 0s;color:rgb(195, 232, 141);">'--local_rank'</span><span style="box-sizing:border-box;transition:all 0.2s ease-in-out 0s;color:rgb(238, 255, 255);">,</span> <span style="box-sizing:border-box;transition:all 0.2s ease-in-out 0s;color:rgb(238, 255, 255);">type</span><span style="box-sizing:border-box;transition:all 0.2s ease-in-out 0s;color:rgb(137, 221, 255);">=</span><span style="box-sizing:border-box;transition:all 0.2s ease-in-out 0s;color:rgb(238, 255, 255);">int</span><span style="box-sizing:border-box;transition:all 0.2s ease-in-out 0s;color:rgb(238, 255, 255);">,</span> <span style="box-sizing:border-box;transition:all 0.2s ease-in-out 0s;color:rgb(238, 255, 255);">default</span><span style="box-sizing:border-box;transition:all 0.2s ease-in-out 0s;color:rgb(137, 221, 255);">=-</span><span style="box-sizing:border-box;transition:all 0.2s ease-in-out 0s;color:rgb(247, 140, 108);">1</span><span style="box-sizing:border-box;transition:all 0.2s ease-in-out 0s;color:rgb(238, 255, 255);">,</span>
+                        <span style="box-sizing:border-box;transition:all 0.2s ease-in-out 0s;color:rgb(238, 255, 255);">help</span><span style="box-sizing:border-box;transition:all 0.2s ease-in-out 0s;color:rgb(137, 221, 255);">=</span><span style="box-sizing:border-box;transition:all 0.2s ease-in-out 0s;color:rgb(195, 232, 141);">'local rank passed from distributed launcher'</span><span style="box-sizing:border-box;transition:all 0.2s ease-in-out 0s;color:rgb(238, 255, 255);">)</span>
+
+     <span style="box-sizing:border-box;transition:all 0.2s ease-in-out 0s;color:rgb(178, 204, 214);"># Include DeepSpeed configuration arguments.
+</span>     <span style="box-sizing:border-box;transition:all 0.2s ease-in-out 0s;color:rgb(238, 255, 255);">parser</span> <span style="box-sizing:border-box;transition:all 0.2s ease-in-out 0s;color:rgb(137, 221, 255);">=</span> <span style="box-sizing:border-box;transition:all 0.2s ease-in-out 0s;color:rgb(238, 255, 255);">deepspeed</span><span style="box-sizing:border-box;transition:all 0.2s ease-in-out 0s;color:rgb(238, 255, 255);">.</span><span style="box-sizing:border-box;transition:all 0.2s ease-in-out 0s;color:rgb(238, 255, 255);">add_config_arguments</span><span style="box-sizing:border-box;transition:all 0.2s ease-in-out 0s;color:rgb(238, 255, 255);">(</span><span style="box-sizing:border-box;transition:all 0.2s ease-in-out 0s;color:rgb(238, 255, 255);">parser</span><span style="box-sizing:border-box;transition:all 0.2s ease-in-out 0s;color:rgb(238, 255, 255);">)</span>
+
+     <span style="box-sizing:border-box;transition:all 0.2s ease-in-out 0s;color:rgb(238, 255, 255);">args</span><span style="box-sizing:border-box;transition:all 0.2s ease-in-out 0s;color:rgb(137, 221, 255);">=</span><span style="box-sizing:border-box;transition:all 0.2s ease-in-out 0s;color:rgb(238, 255, 255);">parser</span><span style="box-sizing:border-box;transition:all 0.2s ease-in-out 0s;color:rgb(238, 255, 255);">.</span><span style="box-sizing:border-box;transition:all 0.2s ease-in-out 0s;color:rgb(238, 255, 255);">parse_args</span><span style="box-sizing:border-box;transition:all 0.2s ease-in-out 0s;color:rgb(238, 255, 255);">()</span>
+
+     <span style="box-sizing:border-box;transition:all 0.2s ease-in-out 0s;color:rgb(199, 146, 234);">return</span> <span style="box-sizing:border-box;transition:all 0.2s ease-in-out 0s;color:rgb(238, 255, 255);">args</span>
+</code></pre></div></div>
+
+<h3 style="box-sizing:border-box;margin:2em 0px 0.5em;line-height:1.2;font-family:-apple-system, BlinkMacSystemFont, Roboto, &quot;Segoe UI&quot;, &quot;Helvetica Neue&quot;, &quot;Lucida Grande&quot;, Arial, sans-serif;font-weight:bold;font-size:1.125em;">Initialization<a href="https://www.deepspeed.ai/tutorials/cifar-10/#initialization" title="Permalink" style="box-sizing:border-box;color:rgb(57, 62, 70);position:relative;left:0.5em;opacity:0;font-size:0.8em;transition:opacity 0.2s ease-in-out 0.1s;"><span style="box-sizing:border-box;transition:all 0.2s ease-in-out 0s;border:0px;clip:rect(0px, 0px, 0px, 0px);height:1px;margin:-1px;overflow:hidden;padding:0px;position:absolute;width:1px;">Permalink</span><i style="box-sizing:border-box;transition:all 0.2s ease-in-out 0s;-webkit-font-smoothing:antialiased;display:inline-block;font-style:normal;font-variant:normal;text-rendering:auto;line-height:1;font-family:&quot;Font Awesome 5 Free&quot;;font-weight:900;"><span style="font-style:normal;font-variant:normal;line-height:1;font-family:Font Awesome 5 Free;font-weight:900;"></span></i></a></h3>
+
+<p style="box-sizing:border-box;orphans:3;widows:3;transition:all 0.2s ease-in-out 0s;font-size:1em;line-height:1.77778;margin:0px 0px 1.3em;">We create <code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span style="font-family:Monaco, Consolas, Lucida Console, monospace;font-size:0.8em;letter-spacing:-0.2em;"> </span>model_engine<span style="font-family:Monaco, Consolas, Lucida Console, monospace;font-size:0.8em;letter-spacing:-0.2em;"> </span></code>, <code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span style="font-family:Monaco, Consolas, Lucida Console, monospace;font-size:0.8em;letter-spacing:-0.2em;"> </span>optimizer<span style="font-family:Monaco, Consolas, Lucida Console, monospace;font-size:0.8em;letter-spacing:-0.2em;"> </span></code> and <code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span style="font-family:Monaco, Consolas, Lucida Console, monospace;font-size:0.8em;letter-spacing:-0.2em;"> </span>trainloader<span style="font-family:Monaco, Consolas, Lucida Console, monospace;font-size:0.8em;letter-spacing:-0.2em;"> </span></code> with the help of <code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span style="font-family:Monaco, Consolas, Lucida Console, monospace;font-size:0.8em;letter-spacing:-0.2em;"> </span>deepspeed.initialize<span style="font-family:Monaco, Consolas, Lucida Console, monospace;font-size:0.8em;letter-spacing:-0.2em;"> </span></code>, which is defined as following:</p>
+
+<div style="box-sizing:border-box;position:relative;margin-bottom:1em;background:rgb(38, 50, 56);color:rgb(238, 255, 255);font-family:Monaco, Consolas, &quot;Lucida Console&quot;, monospace;font-size:0.75em;line-height:1.8;border-radius:4px;"><div style="box-sizing:border-box;transition:all 0.2s ease-in-out 0s;"><pre style="border-radius:4px;background-color: #fbfaf8;border: 1px solid rgba(0,0,0,.14902);color: #333;font-size: 12px;padding: 8px;font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif;box-sizing: border-box;"><code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span style="box-sizing:border-box;transition:all 0.2s ease-in-out 0s;color:rgb(199, 146, 234);">def</span> <span style="box-sizing:border-box;transition:all 0.2s ease-in-out 0s;color:rgb(130, 170, 255);">initialize</span><span style="box-sizing:border-box;transition:all 0.2s ease-in-out 0s;color:rgb(238, 255, 255);">(</span><span style="box-sizing:border-box;transition:all 0.2s ease-in-out 0s;color:rgb(238, 255, 255);">args</span><span style="box-sizing:border-box;transition:all 0.2s ease-in-out 0s;color:rgb(238, 255, 255);">,</span>
+               <span style="box-sizing:border-box;transition:all 0.2s ease-in-out 0s;color:rgb(238, 255, 255);">model</span><span style="box-sizing:border-box;transition:all 0.2s ease-in-out 0s;color:rgb(238, 255, 255);">,</span>
+               <span style="box-sizing:border-box;transition:all 0.2s ease-in-out 0s;color:rgb(238, 255, 255);">optimizer</span><span style="box-sizing:border-box;transition:all 0.2s ease-in-out 0s;color:rgb(137, 221, 255);">=</span><span style="box-sizing:border-box;transition:all 0.2s ease-in-out 0s;color:rgb(238, 255, 255);">None</span><span style="box-sizing:border-box;transition:all 0.2s ease-in-out 0s;color:rgb(238, 255, 255);">,</span>
+               <span style="box-sizing:border-box;transition:all 0.2s ease-in-out 0s;color:rgb(238, 255, 255);">model_params</span><span style="box-sizing:border-box;transition:all 0.2s ease-in-out 0s;color:rgb(137, 221, 255);">=</span><span style="box-sizing:border-box;transition:all 0.2s ease-in-out 0s;color:rgb(238, 255, 255);">None</span><span style="box-sizing:border-box;transition:all 0.2s ease-in-out 0s;color:rgb(238, 255, 255);">,</span>
+               <span style="box-sizing:border-box;transition:all 0.2s ease-in-out 0s;color:rgb(238, 255, 255);">training_data</span><span style="box-sizing:border-box;transition:all 0.2s ease-in-out 0s;color:rgb(137, 221, 255);">=</span><span style="box-sizing:border-box;transition:all 0.2s ease-in-out 0s;color:rgb(238, 255, 255);">None</span><span style="box-sizing:border-box;transition:all 0.2s ease-in-out 0s;color:rgb(238, 255, 255);">,</span>
+               <span style="box-sizing:border-box;transition:all 0.2s ease-in-out 0s;color:rgb(238, 255, 255);">lr_scheduler</span><span style="box-sizing:border-box;transition:all 0.2s ease-in-out 0s;color:rgb(137, 221, 255);">=</span><span style="box-sizing:border-box;transition:all 0.2s ease-in-out 0s;color:rgb(238, 255, 255);">None</span><span style="box-sizing:border-box;transition:all 0.2s ease-in-out 0s;color:rgb(238, 255, 255);">,</span>
+               <span style="box-sizing:border-box;transition:all 0.2s ease-in-out 0s;color:rgb(238, 255, 255);">mpu</span><span style="box-sizing:border-box;transition:all 0.2s ease-in-out 0s;color:rgb(137, 221, 255);">=</span><span style="box-sizing:border-box;transition:all 0.2s ease-in-out 0s;color:rgb(238, 255, 255);">None</span><span style="box-sizing:border-box;transition:all 0.2s ease-in-out 0s;color:rgb(238, 255, 255);">,</span>
+               <span style="box-sizing:border-box;transition:all 0.2s ease-in-out 0s;color:rgb(238, 255, 255);">dist_init_required</span><span style="box-sizing:border-box;transition:all 0.2s ease-in-out 0s;color:rgb(137, 221, 255);">=</span><span style="box-sizing:border-box;transition:all 0.2s ease-in-out 0s;color:rgb(238, 255, 255);">True</span><span style="box-sizing:border-box;transition:all 0.2s ease-in-out 0s;color:rgb(238, 255, 255);">,</span>
+               <span style="box-sizing:border-box;transition:all 0.2s ease-in-out 0s;color:rgb(238, 255, 255);">collate_fn</span><span style="box-sizing:border-box;transition:all 0.2s ease-in-out 0s;color:rgb(137, 221, 255);">=</span><span style="box-sizing:border-box;transition:all 0.2s ease-in-out 0s;color:rgb(238, 255, 255);">None</span><span style="box-sizing:border-box;transition:all 0.2s ease-in-out 0s;color:rgb(238, 255, 255);">):</span>
+</code></pre></div></div>
+
+<p style="box-sizing:border-box;orphans:3;widows:3;transition:all 0.2s ease-in-out 0s;font-size:1em;line-height:1.77778;margin:0px 0px 1.3em;">Here we initialize DeepSpeed with the CIFAR-10 model (<code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span style="font-family:Monaco, Consolas, Lucida Console, monospace;font-size:0.8em;letter-spacing:-0.2em;"> </span>net<span style="font-family:Monaco, Consolas, Lucida Console, monospace;font-size:0.8em;letter-spacing:-0.2em;"> </span></code>), <code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span style="font-family:Monaco, Consolas, Lucida Console, monospace;font-size:0.8em;letter-spacing:-0.2em;"> </span>args<span style="font-family:Monaco, Consolas, Lucida Console, monospace;font-size:0.8em;letter-spacing:-0.2em;"> </span></code>, <code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span style="font-family:Monaco, Consolas, Lucida Console, monospace;font-size:0.8em;letter-spacing:-0.2em;"> </span>parameters<span style="font-family:Monaco, Consolas, Lucida Console, monospace;font-size:0.8em;letter-spacing:-0.2em;"> </span></code> and <code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span style="font-family:Monaco, Consolas, Lucida Console, monospace;font-size:0.8em;letter-spacing:-0.2em;"> </span>trainset<span style="font-family:Monaco, Consolas, Lucida Console, monospace;font-size:0.8em;letter-spacing:-0.2em;"> </span></code>:</p>
+
+<div style="box-sizing:border-box;position:relative;margin-bottom:1em;background:rgb(38, 50, 56);color:rgb(238, 255, 255);font-family:Monaco, Consolas, &quot;Lucida Console&quot;, monospace;font-size:0.75em;line-height:1.8;border-radius:4px;"><div style="box-sizing:border-box;transition:all 0.2s ease-in-out 0s;"><pre style="border-radius:4px;background-color: #fbfaf8;border: 1px solid rgba(0,0,0,.14902);color: #333;font-size: 12px;padding: 8px;font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif;box-sizing: border-box;"><code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"> <span style="box-sizing:border-box;transition:all 0.2s ease-in-out 0s;color:rgb(238, 255, 255);">parameters</span> <span style="box-sizing:border-box;transition:all 0.2s ease-in-out 0s;color:rgb(137, 221, 255);">=</span> <span style="box-sizing:border-box;transition:all 0.2s ease-in-out 0s;color:rgb(238, 255, 255);">filter</span><span style="box-sizing:border-box;transition:all 0.2s ease-in-out 0s;color:rgb(238, 255, 255);">(</span><span style="box-sizing:border-box;transition:all 0.2s ease-in-out 0s;color:rgb(199, 146, 234);">lambda</span> <span style="box-sizing:border-box;transition:all 0.2s ease-in-out 0s;color:rgb(238, 255, 255);">p</span><span style="box-sizing:border-box;transition:all 0.2s ease-in-out 0s;color:rgb(238, 255, 255);">:</span> <span style="box-sizing:border-box;transition:all 0.2s ease-in-out 0s;color:rgb(238, 255, 255);">p</span><span style="box-sizing:border-box;transition:all 0.2s ease-in-out 0s;color:rgb(238, 255, 255);">.</span><span style="box-sizing:border-box;transition:all 0.2s ease-in-out 0s;color:rgb(238, 255, 255);">requires_grad</span><span style="box-sizing:border-box;transition:all 0.2s ease-in-out 0s;color:rgb(238, 255, 255);">,</span> <span style="box-sizing:border-box;transition:all 0.2s ease-in-out 0s;color:rgb(238, 255, 255);">net</span><span style="box-sizing:border-box;transition:all 0.2s ease-in-out 0s;color:rgb(238, 255, 255);">.</span><span style="box-sizing:border-box;transition:all 0.2s ease-in-out 0s;color:rgb(238, 255, 255);">parameters</span><span style="box-sizing:border-box;transition:all 0.2s ease-in-out 0s;color:rgb(238, 255, 255);">())</span>
+ <span style="box-sizing:border-box;transition:all 0.2s ease-in-out 0s;color:rgb(238, 255, 255);">args</span><span style="box-sizing:border-box;transition:all 0.2s ease-in-out 0s;color:rgb(137, 221, 255);">=</span><span style="box-sizing:border-box;transition:all 0.2s ease-in-out 0s;color:rgb(238, 255, 255);">add_argument</span><span style="box-sizing:border-box;transition:all 0.2s ease-in-out 0s;color:rgb(238, 255, 255);">()</span>
+
+ <span style="box-sizing:border-box;transition:all 0.2s ease-in-out 0s;color:rgb(178, 204, 214);"># Initialize DeepSpeed to use the following features
+</span> <span style="box-sizing:border-box;transition:all 0.2s ease-in-out 0s;color:rgb(178, 204, 214);"># 1) Distributed model.
+</span> <span style="box-sizing:border-box;transition:all 0.2s ease-in-out 0s;color:rgb(178, 204, 214);"># 2) Distributed data loader.
+</span> <span style="box-sizing:border-box;transition:all 0.2s ease-in-out 0s;color:rgb(178, 204, 214);"># 3) DeepSpeed optimizer.
+</span> <span style="box-sizing:border-box;transition:all 0.2s ease-in-out 0s;color:rgb(238, 255, 255);">model_engine</span><span style="box-sizing:border-box;transition:all 0.2s ease-in-out 0s;color:rgb(238, 255, 255);">,</span> <span style="box-sizing:border-box;transition:all 0.2s ease-in-out 0s;color:rgb(238, 255, 255);">optimizer</span><span style="box-sizing:border-box;transition:all 0.2s ease-in-out 0s;color:rgb(238, 255, 255);">,</span> <span style="box-sizing:border-box;transition:all 0.2s ease-in-out 0s;color:rgb(238, 255, 255);">trainloader</span><span style="box-sizing:border-box;transition:all 0.2s ease-in-out 0s;color:rgb(238, 255, 255);">,</span> <span style="box-sizing:border-box;transition:all 0.2s ease-in-out 0s;color:rgb(238, 255, 255);">_</span> <span style="box-sizing:border-box;transition:all 0.2s ease-in-out 0s;color:rgb(137, 221, 255);">=</span> <span style="box-sizing:border-box;transition:all 0.2s ease-in-out 0s;color:rgb(238, 255, 255);">deepspeed</span><span style="box-sizing:border-box;transition:all 0.2s ease-in-out 0s;color:rgb(238, 255, 255);">.</span><span style="box-sizing:border-box;transition:all 0.2s ease-in-out 0s;color:rgb(238, 255, 255);">initialize</span><span style="box-sizing:border-box;transition:all 0.2s ease-in-out 0s;color:rgb(238, 255, 255);">(</span><span style="box-sizing:border-box;transition:all 0.2s ease-in-out 0s;color:rgb(238, 255, 255);">args</span><span style="box-sizing:border-box;transition:all 0.2s ease-in-out 0s;color:rgb(137, 221, 255);">=</span><span style="box-sizing:border-box;transition:all 0.2s ease-in-out 0s;color:rgb(238, 255, 255);">args</span><span style="box-sizing:border-box;transition:all 0.2s ease-in-out 0s;color:rgb(238, 255, 255);">,</span> <span style="box-sizing:border-box;transition:all 0.2s ease-in-out 0s;color:rgb(238, 255, 255);">model</span><span style="box-sizing:border-box;transition:all 0.2s ease-in-out 0s;color:rgb(137, 221, 255);">=</span><span style="box-sizing:border-box;transition:all 0.2s ease-in-out 0s;color:rgb(238, 255, 255);">net</span><span style="box-sizing:border-box;transition:all 0.2s ease-in-out 0s;color:rgb(238, 255, 255);">,</span> <span style="box-sizing:border-box;transition:all 0.2s ease-in-out 0s;color:rgb(238, 255, 255);">model_parameters</span><span style="box-sizing:border-box;transition:all 0.2s ease-in-out 0s;color:rgb(137, 221, 255);">=</span><span style="box-sizing:border-box;transition:all 0.2s ease-in-out 0s;color:rgb(238, 255, 255);">parameters</span><span style="box-sizing:border-box;transition:all 0.2s ease-in-out 0s;color:rgb(238, 255, 255);">,</span> <span style="box-sizing:border-box;transition:all 0.2s ease-in-out 0s;color:rgb(238, 255, 255);">training_data</span><span style="box-sizing:border-box;transition:all 0.2s ease-in-out 0s;color:rgb(137, 221, 255);">=</span><span style="box-sizing:border-box;transition:all 0.2s ease-in-out 0s;color:rgb(238, 255, 255);">trainset</span><span style="box-sizing:border-box;transition:all 0.2s ease-in-out 0s;color:rgb(238, 255, 255);">)</span>
+
+</code></pre></div></div>
+
+<p style="box-sizing:border-box;orphans:3;widows:3;transition:all 0.2s ease-in-out 0s;font-size:1em;line-height:1.77778;margin:0px 0px 1.3em;">After initializing DeepSpeed, the original <code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span style="font-family:Monaco, Consolas, Lucida Console, monospace;font-size:0.8em;letter-spacing:-0.2em;"> </span>device<span style="font-family:Monaco, Consolas, Lucida Console, monospace;font-size:0.8em;letter-spacing:-0.2em;"> </span></code> and <code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span style="font-family:Monaco, Consolas, Lucida Console, monospace;font-size:0.8em;letter-spacing:-0.2em;"> </span>optimizer<span style="font-family:Monaco, Consolas, Lucida Console, monospace;font-size:0.8em;letter-spacing:-0.2em;"> </span></code> are removed:</p>
+
+<div style="box-sizing:border-box;position:relative;margin-bottom:1em;background:rgb(38, 50, 56);color:rgb(238, 255, 255);font-family:Monaco, Consolas, &quot;Lucida Console&quot;, monospace;font-size:0.75em;line-height:1.8;border-radius:4px;"><div style="box-sizing:border-box;transition:all 0.2s ease-in-out 0s;"><pre style="border-radius:4px;background-color: #fbfaf8;border: 1px solid rgba(0,0,0,.14902);color: #333;font-size: 12px;padding: 8px;font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif;box-sizing: border-box;"><code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"> <span style="box-sizing:border-box;transition:all 0.2s ease-in-out 0s;color:rgb(178, 204, 214);">#from deepspeed.accelerator import get_accelerator
+</span> <span style="box-sizing:border-box;transition:all 0.2s ease-in-out 0s;color:rgb(178, 204, 214);">#device = torch.device(get_accelerator().device_name(0) if get_accelerator().is_available() else "cpu")
+</span> <span style="box-sizing:border-box;transition:all 0.2s ease-in-out 0s;color:rgb(178, 204, 214);">#net.to(device)
+</span>
+ <span style="box-sizing:border-box;transition:all 0.2s ease-in-out 0s;color:rgb(178, 204, 214);">#optimizer = optim.SGD(net.parameters(), lr=0.001, momentum=0.9)
+</span></code></pre></div></div>
+
+<h3 style="box-sizing:border-box;margin:2em 0px 0.5em;line-height:1.2;font-family:-apple-system, BlinkMacSystemFont, Roboto, &quot;Segoe UI&quot;, &quot;Helvetica Neue&quot;, &quot;Lucida Grande&quot;, Arial, sans-serif;font-weight:bold;font-size:1.125em;">Training API<a href="https://www.deepspeed.ai/tutorials/cifar-10/#training-api" title="Permalink" style="box-sizing:border-box;color:rgb(57, 62, 70);position:relative;left:0.5em;opacity:0;font-size:0.8em;transition:opacity 0.2s ease-in-out 0.1s;"><span style="box-sizing:border-box;transition:all 0.2s ease-in-out 0s;border:0px;clip:rect(0px, 0px, 0px, 0px);height:1px;margin:-1px;overflow:hidden;padding:0px;position:absolute;width:1px;">Permalink</span><i style="box-sizing:border-box;transition:all 0.2s ease-in-out 0s;-webkit-font-smoothing:antialiased;display:inline-block;font-style:normal;font-variant:normal;text-rendering:auto;line-height:1;font-family:&quot;Font Awesome 5 Free&quot;;font-weight:900;"><span style="font-style:normal;font-variant:normal;line-height:1;font-family:Font Awesome 5 Free;font-weight:900;"></span></i></a></h3>
+
+<p style="box-sizing:border-box;orphans:3;widows:3;transition:all 0.2s ease-in-out 0s;font-size:1em;line-height:1.77778;margin:0px 0px 1.3em;">The <code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span style="font-family:Monaco, Consolas, Lucida Console, monospace;font-size:0.8em;letter-spacing:-0.2em;"> </span>model<span style="font-family:Monaco, Consolas, Lucida Console, monospace;font-size:0.8em;letter-spacing:-0.2em;"> </span></code> returned by <code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span style="font-family:Monaco, Consolas, Lucida Console, monospace;font-size:0.8em;letter-spacing:-0.2em;"> </span>deepspeed.initialize<span style="font-family:Monaco, Consolas, Lucida Console, monospace;font-size:0.8em;letter-spacing:-0.2em;"> </span></code> is the <em style="box-sizing:border-box;transition:all 0.2s ease-in-out 0s;">DeepSpeed Model Engine</em> that we will use to train the model using the forward, backward and step API.</p>
+
+<div style="box-sizing:border-box;position:relative;margin-bottom:1em;background:rgb(38, 50, 56);color:rgb(238, 255, 255);font-family:Monaco, Consolas, &quot;Lucida Console&quot;, monospace;font-size:0.75em;line-height:1.8;border-radius:4px;"><div style="box-sizing:border-box;transition:all 0.2s ease-in-out 0s;"><pre style="border-radius:4px;background-color: #fbfaf8;border: 1px solid rgba(0,0,0,.14902);color: #333;font-size: 12px;padding: 8px;font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif;box-sizing: border-box;"><code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif">     <span style="box-sizing:border-box;transition:all 0.2s ease-in-out 0s;color:rgb(199, 146, 234);">for</span> <span style="box-sizing:border-box;transition:all 0.2s ease-in-out 0s;color:rgb(238, 255, 255);">i</span><span style="box-sizing:border-box;transition:all 0.2s ease-in-out 0s;color:rgb(238, 255, 255);">,</span> <span style="box-sizing:border-box;transition:all 0.2s ease-in-out 0s;color:rgb(238, 255, 255);">data</span> <span style="box-sizing:border-box;transition:all 0.2s ease-in-out 0s;color:rgb(137, 221, 255);">in</span> <span style="box-sizing:border-box;transition:all 0.2s ease-in-out 0s;color:rgb(238, 255, 255);">enumerate</span><span style="box-sizing:border-box;transition:all 0.2s ease-in-out 0s;color:rgb(238, 255, 255);">(</span><span style="box-sizing:border-box;transition:all 0.2s ease-in-out 0s;color:rgb(238, 255, 255);">trainloader</span><span style="box-sizing:border-box;transition:all 0.2s ease-in-out 0s;color:rgb(238, 255, 255);">):</span>
+         <span style="box-sizing:border-box;transition:all 0.2s ease-in-out 0s;color:rgb(178, 204, 214);"># Get the inputs; data is a list of [inputs, labels].
+</span>         <span style="box-sizing:border-box;transition:all 0.2s ease-in-out 0s;color:rgb(238, 255, 255);">inputs</span> <span style="box-sizing:border-box;transition:all 0.2s ease-in-out 0s;color:rgb(137, 221, 255);">=</span> <span style="box-sizing:border-box;transition:all 0.2s ease-in-out 0s;color:rgb(238, 255, 255);">data</span><span style="box-sizing:border-box;transition:all 0.2s ease-in-out 0s;color:rgb(238, 255, 255);">[</span><span style="box-sizing:border-box;transition:all 0.2s ease-in-out 0s;color:rgb(247, 140, 108);">0</span><span style="box-sizing:border-box;transition:all 0.2s ease-in-out 0s;color:rgb(238, 255, 255);">].</span><span style="box-sizing:border-box;transition:all 0.2s ease-in-out 0s;color:rgb(238, 255, 255);">to</span><span style="box-sizing:border-box;transition:all 0.2s ease-in-out 0s;color:rgb(238, 255, 255);">(</span><span style="box-sizing:border-box;transition:all 0.2s ease-in-out 0s;color:rgb(238, 255, 255);">model_engine</span><span style="box-sizing:border-box;transition:all 0.2s ease-in-out 0s;color:rgb(238, 255, 255);">.</span><span style="box-sizing:border-box;transition:all 0.2s ease-in-out 0s;color:rgb(238, 255, 255);">device</span><span style="box-sizing:border-box;transition:all 0.2s ease-in-out 0s;color:rgb(238, 255, 255);">)</span>
+         <span style="box-sizing:border-box;transition:all 0.2s ease-in-out 0s;color:rgb(238, 255, 255);">labels</span> <span style="box-sizing:border-box;transition:all 0.2s ease-in-out 0s;color:rgb(137, 221, 255);">=</span> <span style="box-sizing:border-box;transition:all 0.2s ease-in-out 0s;color:rgb(238, 255, 255);">data</span><span style="box-sizing:border-box;transition:all 0.2s ease-in-out 0s;color:rgb(238, 255, 255);">[</span><span style="box-sizing:border-box;transition:all 0.2s ease-in-out 0s;color:rgb(247, 140, 108);">1</span><span style="box-sizing:border-box;transition:all 0.2s ease-in-out 0s;color:rgb(238, 255, 255);">].</span><span style="box-sizing:border-box;transition:all 0.2s ease-in-out 0s;color:rgb(238, 255, 255);">to</span><span style="box-sizing:border-box;transition:all 0.2s ease-in-out 0s;color:rgb(238, 255, 255);">(</span><span style="box-sizing:border-box;transition:all 0.2s ease-in-out 0s;color:rgb(238, 255, 255);">model_engine</span><span style="box-sizing:border-box;transition:all 0.2s ease-in-out 0s;color:rgb(238, 255, 255);">.</span><span style="box-sizing:border-box;transition:all 0.2s ease-in-out 0s;color:rgb(238, 255, 255);">device</span><span style="box-sizing:border-box;transition:all 0.2s ease-in-out 0s;color:rgb(238, 255, 255);">)</span>
+
+         <span style="box-sizing:border-box;transition:all 0.2s ease-in-out 0s;color:rgb(238, 255, 255);">outputs</span> <span style="box-sizing:border-box;transition:all 0.2s ease-in-out 0s;color:rgb(137, 221, 255);">=</span> <span style="box-sizing:border-box;transition:all 0.2s ease-in-out 0s;color:rgb(238, 255, 255);">model_engine</span><span style="box-sizing:border-box;transition:all 0.2s ease-in-out 0s;color:rgb(238, 255, 255);">(</span><span style="box-sizing:border-box;transition:all 0.2s ease-in-out 0s;color:rgb(238, 255, 255);">inputs</span><span style="box-sizing:border-box;transition:all 0.2s ease-in-out 0s;color:rgb(238, 255, 255);">)</span>
+         <span style="box-sizing:border-box;transition:all 0.2s ease-in-out 0s;color:rgb(238, 255, 255);">loss</span> <span style="box-sizing:border-box;transition:all 0.2s ease-in-out 0s;color:rgb(137, 221, 255);">=</span> <span style="box-sizing:border-box;transition:all 0.2s ease-in-out 0s;color:rgb(238, 255, 255);">criterion</span><span style="box-sizing:border-box;transition:all 0.2s ease-in-out 0s;color:rgb(238, 255, 255);">(</span><span style="box-sizing:border-box;transition:all 0.2s ease-in-out 0s;color:rgb(238, 255, 255);">outputs</span><span style="box-sizing:border-box;transition:all 0.2s ease-in-out 0s;color:rgb(238, 255, 255);">,</span> <span style="box-sizing:border-box;transition:all 0.2s ease-in-out 0s;color:rgb(238, 255, 255);">labels</span><span style="box-sizing:border-box;transition:all 0.2s ease-in-out 0s;color:rgb(238, 255, 255);">)</span>
+
+         <span style="box-sizing:border-box;transition:all 0.2s ease-in-out 0s;color:rgb(238, 255, 255);">model_engine</span><span style="box-sizing:border-box;transition:all 0.2s ease-in-out 0s;color:rgb(238, 255, 255);">.</span><span style="box-sizing:border-box;transition:all 0.2s ease-in-out 0s;color:rgb(238, 255, 255);">backward</span><span style="box-sizing:border-box;transition:all 0.2s ease-in-out 0s;color:rgb(238, 255, 255);">(</span><span style="box-sizing:border-box;transition:all 0.2s ease-in-out 0s;color:rgb(238, 255, 255);">loss</span><span style="box-sizing:border-box;transition:all 0.2s ease-in-out 0s;color:rgb(238, 255, 255);">)</span>
+         <span style="box-sizing:border-box;transition:all 0.2s ease-in-out 0s;color:rgb(238, 255, 255);">model_engine</span><span style="box-sizing:border-box;transition:all 0.2s ease-in-out 0s;color:rgb(238, 255, 255);">.</span><span style="box-sizing:border-box;transition:all 0.2s ease-in-out 0s;color:rgb(238, 255, 255);">step</span><span style="box-sizing:border-box;transition:all 0.2s ease-in-out 0s;color:rgb(238, 255, 255);">()</span>
+</code></pre></div></div>
+
+<p style="box-sizing:border-box;orphans:3;widows:3;transition:all 0.2s ease-in-out 0s;font-size:1em;line-height:1.77778;margin:0px 0px 1.3em;">Zeroing the gradients is handled automatically by DeepSpeed after the weights have been updated using a mini-batch.</p>
+
+<h3 style="box-sizing:border-box;margin:2em 0px 0.5em;line-height:1.2;font-family:-apple-system, BlinkMacSystemFont, Roboto, &quot;Segoe UI&quot;, &quot;Helvetica Neue&quot;, &quot;Lucida Grande&quot;, Arial, sans-serif;font-weight:bold;font-size:1.125em;">Configuration<a href="https://www.deepspeed.ai/tutorials/cifar-10/#configuration" title="Permalink" style="box-sizing:border-box;color:rgb(57, 62, 70);position:relative;left:0.5em;opacity:0;font-size:0.8em;transition:opacity 0.2s ease-in-out 0.1s;"><span style="box-sizing:border-box;transition:all 0.2s ease-in-out 0s;border:0px;clip:rect(0px, 0px, 0px, 0px);height:1px;margin:-1px;overflow:hidden;padding:0px;position:absolute;width:1px;">Permalink</span><i style="box-sizing:border-box;transition:all 0.2s ease-in-out 0s;-webkit-font-smoothing:antialiased;display:inline-block;font-style:normal;font-variant:normal;text-rendering:auto;line-height:1;font-family:&quot;Font Awesome 5 Free&quot;;font-weight:900;"><span style="font-style:normal;font-variant:normal;line-height:1;font-family:Font Awesome 5 Free;font-weight:900;"></span></i></a></h3>
+
+<p style="box-sizing:border-box;orphans:3;widows:3;transition:all 0.2s ease-in-out 0s;font-size:1em;line-height:1.77778;margin:0px 0px 1.3em;">The next step to use DeepSpeed is to create a configuration JSON file (ds_config.json). This file provides DeepSpeed specific parameters defined by the user, e.g., batch size, optimizer, scheduler and other parameters.</p>
+
+<div style="box-sizing:border-box;position:relative;margin-bottom:1em;background:rgb(38, 50, 56);color:rgb(238, 255, 255);font-family:Monaco, Consolas, &quot;Lucida Console&quot;, monospace;font-size:0.75em;line-height:1.8;border-radius:4px;"><div style="box-sizing:border-box;transition:all 0.2s ease-in-out 0s;"><pre style="border-radius:4px;background-color: #fbfaf8;border: 1px solid rgba(0,0,0,.14902);color: #333;font-size: 12px;padding: 8px;font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif;box-sizing: border-box;"><code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span style="box-sizing:border-box;transition:all 0.2s ease-in-out 0s;color:rgb(238, 255, 255);"> </span><span style="box-sizing:border-box;transition:all 0.2s ease-in-out 0s;color:rgb(238, 255, 255);">{</span><span style="box-sizing:border-box;transition:all 0.2s ease-in-out 0s;color:rgb(238, 255, 255);">
+   </span><span style="box-sizing:border-box;transition:all 0.2s ease-in-out 0s;color:rgb(238, 255, 255);">"train_batch_size"</span><span style="box-sizing:border-box;transition:all 0.2s ease-in-out 0s;color:rgb(238, 255, 255);">:</span><span style="box-sizing:border-box;transition:all 0.2s ease-in-out 0s;color:rgb(238, 255, 255);"> </span><span style="box-sizing:border-box;transition:all 0.2s ease-in-out 0s;color:rgb(247, 140, 108);">4</span><span style="box-sizing:border-box;transition:all 0.2s ease-in-out 0s;color:rgb(238, 255, 255);">,</span><span style="box-sizing:border-box;transition:all 0.2s ease-in-out 0s;color:rgb(238, 255, 255);">
+   </span><span style="box-sizing:border-box;transition:all 0.2s ease-in-out 0s;color:rgb(238, 255, 255);">"steps_per_print"</span><span style="box-sizing:border-box;transition:all 0.2s ease-in-out 0s;color:rgb(238, 255, 255);">:</span><span style="box-sizing:border-box;transition:all 0.2s ease-in-out 0s;color:rgb(238, 255, 255);"> </span><span style="box-sizing:border-box;transition:all 0.2s ease-in-out 0s;color:rgb(247, 140, 108);">2000</span><span style="box-sizing:border-box;transition:all 0.2s ease-in-out 0s;color:rgb(238, 255, 255);">,</span><span style="box-sizing:border-box;transition:all 0.2s ease-in-out 0s;color:rgb(238, 255, 255);">
+   </span><span style="box-sizing:border-box;transition:all 0.2s ease-in-out 0s;color:rgb(238, 255, 255);">"optimizer"</span><span style="box-sizing:border-box;transition:all 0.2s ease-in-out 0s;color:rgb(238, 255, 255);">:</span><span style="box-sizing:border-box;transition:all 0.2s ease-in-out 0s;color:rgb(238, 255, 255);"> </span><span style="box-sizing:border-box;transition:all 0.2s ease-in-out 0s;color:rgb(238, 255, 255);">{</span><span style="box-sizing:border-box;transition:all 0.2s ease-in-out 0s;color:rgb(238, 255, 255);">
+     </span><span style="box-sizing:border-box;transition:all 0.2s ease-in-out 0s;color:rgb(238, 255, 255);">"type"</span><span style="box-sizing:border-box;transition:all 0.2s ease-in-out 0s;color:rgb(238, 255, 255);">:</span><span style="box-sizing:border-box;transition:all 0.2s ease-in-out 0s;color:rgb(238, 255, 255);"> </span><span style="box-sizing:border-box;transition:all 0.2s ease-in-out 0s;color:rgb(195, 232, 141);">"Adam"</span><span style="box-sizing:border-box;transition:all 0.2s ease-in-out 0s;color:rgb(238, 255, 255);">,</span><span style="box-sizing:border-box;transition:all 0.2s ease-in-out 0s;color:rgb(238, 255, 255);">
+     </span><span style="box-sizing:border-box;transition:all 0.2s ease-in-out 0s;color:rgb(238, 255, 255);">"params"</span><span style="box-sizing:border-box;transition:all 0.2s ease-in-out 0s;color:rgb(238, 255, 255);">:</span><span style="box-sizing:border-box;transition:all 0.2s ease-in-out 0s;color:rgb(238, 255, 255);"> </span><span style="box-sizing:border-box;transition:all 0.2s ease-in-out 0s;color:rgb(238, 255, 255);">{</span><span style="box-sizing:border-box;transition:all 0.2s ease-in-out 0s;color:rgb(238, 255, 255);">
+       </span><span style="box-sizing:border-box;transition:all 0.2s ease-in-out 0s;color:rgb(238, 255, 255);">"lr"</span><span style="box-sizing:border-box;transition:all 0.2s ease-in-out 0s;color:rgb(238, 255, 255);">:</span><span style="box-sizing:border-box;transition:all 0.2s ease-in-out 0s;color:rgb(238, 255, 255);"> </span><span style="box-sizing:border-box;transition:all 0.2s ease-in-out 0s;color:rgb(247, 140, 108);">0.001</span><span style="box-sizing:border-box;transition:all 0.2s ease-in-out 0s;color:rgb(238, 255, 255);">,</span><span style="box-sizing:border-box;transition:all 0.2s ease-in-out 0s;color:rgb(238, 255, 255);">
+       </span><span style="box-sizing:border-box;transition:all 0.2s ease-in-out 0s;color:rgb(238, 255, 255);">"betas"</span><span style="box-sizing:border-box;transition:all 0.2s ease-in-out 0s;color:rgb(238, 255, 255);">:</span><span style="box-sizing:border-box;transition:all 0.2s ease-in-out 0s;color:rgb(238, 255, 255);"> </span><span style="box-sizing:border-box;transition:all 0.2s ease-in-out 0s;color:rgb(238, 255, 255);">[</span><span style="box-sizing:border-box;transition:all 0.2s ease-in-out 0s;color:rgb(238, 255, 255);">
+         </span><span style="box-sizing:border-box;transition:all 0.2s ease-in-out 0s;color:rgb(247, 140, 108);">0.8</span><span style="box-sizing:border-box;transition:all 0.2s ease-in-out 0s;color:rgb(238, 255, 255);">,</span><span style="box-sizing:border-box;transition:all 0.2s ease-in-out 0s;color:rgb(238, 255, 255);">
+         </span><span style="box-sizing:border-box;transition:all 0.2s ease-in-out 0s;color:rgb(247, 140, 108);">0.999</span><span style="box-sizing:border-box;transition:all 0.2s ease-in-out 0s;color:rgb(238, 255, 255);">
+       </span><span style="box-sizing:border-box;transition:all 0.2s ease-in-out 0s;color:rgb(238, 255, 255);">],</span><span style="box-sizing:border-box;transition:all 0.2s ease-in-out 0s;color:rgb(238, 255, 255);">
+       </span><span style="box-sizing:border-box;transition:all 0.2s ease-in-out 0s;color:rgb(238, 255, 255);">"eps"</span><span style="box-sizing:border-box;transition:all 0.2s ease-in-out 0s;color:rgb(238, 255, 255);">:</span><span style="box-sizing:border-box;transition:all 0.2s ease-in-out 0s;color:rgb(238, 255, 255);"> </span><span style="box-sizing:border-box;transition:all 0.2s ease-in-out 0s;color:rgb(247, 140, 108);">1e-8</span><span style="box-sizing:border-box;transition:all 0.2s ease-in-out 0s;color:rgb(238, 255, 255);">,</span><span style="box-sizing:border-box;transition:all 0.2s ease-in-out 0s;color:rgb(238, 255, 255);">
+       </span><span style="box-sizing:border-box;transition:all 0.2s ease-in-out 0s;color:rgb(238, 255, 255);">"weight_decay"</span><span style="box-sizing:border-box;transition:all 0.2s ease-in-out 0s;color:rgb(238, 255, 255);">:</span><span style="box-sizing:border-box;transition:all 0.2s ease-in-out 0s;color:rgb(238, 255, 255);"> </span><span style="box-sizing:border-box;transition:all 0.2s ease-in-out 0s;color:rgb(247, 140, 108);">3e-7</span><span style="box-sizing:border-box;transition:all 0.2s ease-in-out 0s;color:rgb(238, 255, 255);">
+     </span><span style="box-sizing:border-box;transition:all 0.2s ease-in-out 0s;color:rgb(238, 255, 255);">}</span><span style="box-sizing:border-box;transition:all 0.2s ease-in-out 0s;color:rgb(238, 255, 255);">
+   </span><span style="box-sizing:border-box;transition:all 0.2s ease-in-out 0s;color:rgb(238, 255, 255);">},</span><span style="box-sizing:border-box;transition:all 0.2s ease-in-out 0s;color:rgb(238, 255, 255);">
+   </span><span style="box-sizing:border-box;transition:all 0.2s ease-in-out 0s;color:rgb(238, 255, 255);">"scheduler"</span><span style="box-sizing:border-box;transition:all 0.2s ease-in-out 0s;color:rgb(238, 255, 255);">:</span><span style="box-sizing:border-box;transition:all 0.2s ease-in-out 0s;color:rgb(238, 255, 255);"> </span><span style="box-sizing:border-box;transition:all 0.2s ease-in-out 0s;color:rgb(238, 255, 255);">{</span><span style="box-sizing:border-box;transition:all 0.2s ease-in-out 0s;color:rgb(238, 255, 255);">
+     </span><span style="box-sizing:border-box;transition:all 0.2s ease-in-out 0s;color:rgb(238, 255, 255);">"type"</span><span style="box-sizing:border-box;transition:all 0.2s ease-in-out 0s;color:rgb(238, 255, 255);">:</span><span style="box-sizing:border-box;transition:all 0.2s ease-in-out 0s;color:rgb(238, 255, 255);"> </span><span style="box-sizing:border-box;transition:all 0.2s ease-in-out 0s;color:rgb(195, 232, 141);">"WarmupLR"</span><span style="box-sizing:border-box;transition:all 0.2s ease-in-out 0s;color:rgb(238, 255, 255);">,</span><span style="box-sizing:border-box;transition:all 0.2s ease-in-out 0s;color:rgb(238, 255, 255);">
+     </span><span style="box-sizing:border-box;transition:all 0.2s ease-in-out 0s;color:rgb(238, 255, 255);">"params"</span><span style="box-sizing:border-box;transition:all 0.2s ease-in-out 0s;color:rgb(238, 255, 255);">:</span><span style="box-sizing:border-box;transition:all 0.2s ease-in-out 0s;color:rgb(238, 255, 255);"> </span><span style="box-sizing:border-box;transition:all 0.2s ease-in-out 0s;color:rgb(238, 255, 255);">{</span><span style="box-sizing:border-box;transition:all 0.2s ease-in-out 0s;color:rgb(238, 255, 255);">
+       </span><span style="box-sizing:border-box;transition:all 0.2s ease-in-out 0s;color:rgb(238, 255, 255);">"warmup_min_lr"</span><span style="box-sizing:border-box;transition:all 0.2s ease-in-out 0s;color:rgb(238, 255, 255);">:</span><span style="box-sizing:border-box;transition:all 0.2s ease-in-out 0s;color:rgb(238, 255, 255);"> </span><span style="box-sizing:border-box;transition:all 0.2s ease-in-out 0s;color:rgb(247, 140, 108);">0</span><span style="box-sizing:border-box;transition:all 0.2s ease-in-out 0s;color:rgb(238, 255, 255);">,</span><span style="box-sizing:border-box;transition:all 0.2s ease-in-out 0s;color:rgb(238, 255, 255);">
+       </span><span style="box-sizing:border-box;transition:all 0.2s ease-in-out 0s;color:rgb(238, 255, 255);">"warmup_max_lr"</span><span style="box-sizing:border-box;transition:all 0.2s ease-in-out 0s;color:rgb(238, 255, 255);">:</span><span style="box-sizing:border-box;transition:all 0.2s ease-in-out 0s;color:rgb(238, 255, 255);"> </span><span style="box-sizing:border-box;transition:all 0.2s ease-in-out 0s;color:rgb(247, 140, 108);">0.001</span><span style="box-sizing:border-box;transition:all 0.2s ease-in-out 0s;color:rgb(238, 255, 255);">,</span><span style="box-sizing:border-box;transition:all 0.2s ease-in-out 0s;color:rgb(238, 255, 255);">
+       </span><span style="box-sizing:border-box;transition:all 0.2s ease-in-out 0s;color:rgb(238, 255, 255);">"warmup_num_steps"</span><span style="box-sizing:border-box;transition:all 0.2s ease-in-out 0s;color:rgb(238, 255, 255);">:</span><span style="box-sizing:border-box;transition:all 0.2s ease-in-out 0s;color:rgb(238, 255, 255);"> </span><span style="box-sizing:border-box;transition:all 0.2s ease-in-out 0s;color:rgb(247, 140, 108);">1000</span><span style="box-sizing:border-box;transition:all 0.2s ease-in-out 0s;color:rgb(238, 255, 255);">
+     </span><span style="box-sizing:border-box;transition:all 0.2s ease-in-out 0s;color:rgb(238, 255, 255);">}</span><span style="box-sizing:border-box;transition:all 0.2s ease-in-out 0s;color:rgb(238, 255, 255);">
+   </span><span style="box-sizing:border-box;transition:all 0.2s ease-in-out 0s;color:rgb(238, 255, 255);">},</span><span style="box-sizing:border-box;transition:all 0.2s ease-in-out 0s;color:rgb(238, 255, 255);">
+   </span><span style="box-sizing:border-box;transition:all 0.2s ease-in-out 0s;color:rgb(238, 255, 255);">"wall_clock_breakdown"</span><span style="box-sizing:border-box;transition:all 0.2s ease-in-out 0s;color:rgb(238, 255, 255);">:</span><span style="box-sizing:border-box;transition:all 0.2s ease-in-out 0s;color:rgb(238, 255, 255);"> </span><span style="box-sizing:border-box;transition:all 0.2s ease-in-out 0s;color:rgb(199, 146, 234);">false</span><span style="box-sizing:border-box;transition:all 0.2s ease-in-out 0s;color:rgb(238, 255, 255);">
+ </span><span style="box-sizing:border-box;transition:all 0.2s ease-in-out 0s;color:rgb(238, 255, 255);">}</span><span style="box-sizing:border-box;transition:all 0.2s ease-in-out 0s;color:rgb(238, 255, 255);">
+</span></code></pre></div></div>
+
+<h3 style="box-sizing:border-box;margin:2em 0px 0.5em;line-height:1.2;font-family:-apple-system, BlinkMacSystemFont, Roboto, &quot;Segoe UI&quot;, &quot;Helvetica Neue&quot;, &quot;Lucida Grande&quot;, Arial, sans-serif;font-weight:bold;font-size:1.125em;">Run CIFAR-10 Model with DeepSpeed Enabled<a href="https://www.deepspeed.ai/tutorials/cifar-10/#run-cifar-10-model-with-deepspeed-enabled" title="Permalink" style="box-sizing:border-box;color:rgb(57, 62, 70);position:relative;left:0.5em;opacity:0;font-size:0.8em;transition:opacity 0.2s ease-in-out 0.1s;"><span style="box-sizing:border-box;transition:all 0.2s ease-in-out 0s;border:0px;clip:rect(0px, 0px, 0px, 0px);height:1px;margin:-1px;overflow:hidden;padding:0px;position:absolute;width:1px;">Permalink</span><i style="box-sizing:border-box;transition:all 0.2s ease-in-out 0s;-webkit-font-smoothing:antialiased;display:inline-block;font-style:normal;font-variant:normal;text-rendering:auto;line-height:1;font-family:&quot;Font Awesome 5 Free&quot;;font-weight:900;"><span style="font-style:normal;font-variant:normal;line-height:1;font-family:Font Awesome 5 Free;font-weight:900;"></span></i></a></h3>
+
+<p style="box-sizing:border-box;orphans:3;widows:3;transition:all 0.2s ease-in-out 0s;font-size:1em;line-height:1.77778;margin:0px 0px 1.3em;">To start training the CIFAR-10 model with DeepSpeed applied, execute the following command, it will use all detected GPUs by default.</p>
+
+<div style="box-sizing:border-box;position:relative;margin-bottom:1em;background:rgb(38, 50, 56);color:rgb(238, 255, 255);font-family:Monaco, Consolas, &quot;Lucida Console&quot;, monospace;font-size:0.75em;line-height:1.8;border-radius:4px;"><div style="box-sizing:border-box;transition:all 0.2s ease-in-out 0s;"><pre style="border-radius:4px;background-color: #fbfaf8;border: 1px solid rgba(0,0,0,.14902);color: #333;font-size: 12px;padding: 8px;font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif;box-sizing: border-box;"><code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif">deepspeed cifar10_deepspeed.py <span style="box-sizing:border-box;transition:all 0.2s ease-in-out 0s;color:rgb(137, 221, 255);">--deepspeed_config</span> ds_config.json
+</code></pre></div></div>
+
+<p style="box-sizing:border-box;orphans:3;widows:3;transition:all 0.2s ease-in-out 0s;font-size:1em;line-height:1.77778;margin:0px 0px 1.3em;">DeepSpeed usually prints more training details for the user to monitor, including training settings, performance statistics and loss trends.</p>
+<div style="box-sizing:border-box;position:relative;margin-bottom:1em;background:rgb(38, 50, 56);color:rgb(238, 255, 255);font-family:Monaco, Consolas, &quot;Lucida Console&quot;, monospace;font-size:0.75em;line-height:1.8;border-radius:4px;"><div style="box-sizing:border-box;transition:all 0.2s ease-in-out 0s;"><pre style="border-radius:4px;background-color: #fbfaf8;border: 1px solid rgba(0,0,0,.14902);color: #333;font-size: 12px;padding: 8px;font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif;box-sizing: border-box;"><code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif">deepspeed.pt cifar10_deepspeed.py --deepspeed_config ds_config.json
+Warning: Permanently added '[192.168.0.22]:42227' (ECDSA) to the list of known hosts.
+cmd=['pdsh', '-w', 'worker-0', 'export NCCL_VERSION=2.4.2; ', 'cd /data/users/deepscale/test/ds_v2/examples/cifar;', '/usr/bin/python', '-u', '-m', 'deepspeed.pt.deepspeed_launch', '--world_info=eyJ3b3JrZXItMCI6IFswXX0=', '--node_rank=%n', '--master_addr=192.168.0.22', '--master_port=29500', 'cifar10_deepspeed.py', '--deepspeed', '--deepspeed_config', 'ds_config.json']
+worker-0: Warning: Permanently added '[192.168.0.22]:42227' (ECDSA) to the list of known hosts.
+worker-0: 0 NCCL_VERSION 2.4.2
+worker-0: WORLD INFO DICT: {'worker-0': [0]}
+worker-0: nnodes=1, num_local_procs=1, node_rank=0
+worker-0: global_rank_mapping=defaultdict(&lt;class 'list'&gt;, {'worker-0': [0]})
+worker-0: dist_world_size=1
+worker-0: Setting CUDA_VISIBLE_DEVICES=0
+worker-0: Files already downloaded and verified
+worker-0: Files already downloaded and verified
+worker-0:  bird   car horse  ship
+worker-0: DeepSpeed info: version=2.1, git-hash=fa937e7, git-branch=master
+worker-0: [INFO 2020-02-06 19:53:49] Set device to local rank 0 within node.
+worker-0: 1 1
+worker-0: [INFO 2020-02-06 19:53:56] Using DeepSpeed Optimizer param name adam as basic optimizer
+worker-0: [INFO 2020-02-06 19:53:56] DeepSpeed Basic Optimizer = FusedAdam (
+worker-0: Parameter Group 0
+worker-0:     betas: [0.8, 0.999]
+worker-0:     bias_correction: True
+worker-0:     eps: 1e-08
+worker-0:     lr: 0.001
+worker-0:     max_grad_norm: 0.0
+worker-0:     weight_decay: 3e-07
+worker-0: )
+worker-0: [INFO 2020-02-06 19:53:56] DeepSpeed using configured LR scheduler = WarmupLR
+worker-0: [INFO 2020-02-06 19:53:56] DeepSpeed LR Scheduler = &lt;deepspeed.pt.deepspeed_lr_schedules.WarmupLR object at 0x7f64c4c09c18&gt;
+worker-0: [INFO 2020-02-06 19:53:56] rank:0 step=0, skipped=0, lr=[0.001], mom=[[0.8, 0.999]]
+worker-0: DeepSpeedLight configuration:
+worker-0:   allgather_size ............... 500000000
+worker-0:   allreduce_always_fp32 ........ False
+worker-0:   disable_allgather ............ False
+worker-0:   dump_state ................... False
+worker-0:   dynamic_loss_scale_args ...... None
+worker-0:   fp16_enabled ................. False
+worker-0:   global_rank .................. 0
+worker-0:   gradient_accumulation_steps .. 1
+worker-0:   gradient_clipping ............ 0.0
+worker-0:   initial_dynamic_scale ........ 4294967296
+worker-0:   loss_scale ................... 0
+worker-0:   optimizer_name ............... adam
+worker-0:   optimizer_params ............. {'lr': 0.001, 'betas': [0.8, 0.999], 'eps': 1e-08, 'weight_decay': 3e-07}
+worker-0:   prescale_gradients ........... False
+worker-0:   scheduler_name ............... WarmupLR
+worker-0:   scheduler_params ............. {'warmup_min_lr': 0, 'warmup_max_lr': 0.001, 'warmup_num_steps': 1000}
+worker-0:   sparse_gradients_enabled ..... False
+worker-0:   steps_per_print .............. 2000
+worker-0:   tensorboard_enabled .......... False
+worker-0:   tensorboard_job_name ......... DeepSpeedJobName
+worker-0:   tensorboard_output_path ......
+worker-0:   train_batch_size ............. 4
+worker-0:   train_micro_batch_size_per_gpu  4
+worker-0:   wall_clock_breakdown ......... False
+worker-0:   world_size ................... 1
+worker-0:   zero_enabled ................. False
+worker-0:   json = {
+worker-0:     "optimizer":{
+worker-0:         "params":{
+worker-0:             "betas":[
+worker-0:                 0.8,
+worker-0:                 0.999
+worker-0:             ],
+worker-0:             "eps":1e-08,
+worker-0:             "lr":0.001,
+worker-0:             "weight_decay":3e-07
+worker-0:         },
+worker-0:         "type":"Adam"
+worker-0:     },
+worker-0:     "scheduler":{
+worker-0:         "params":{
+worker-0:             "warmup_max_lr":0.001,
+worker-0:             "warmup_min_lr":0,
+worker-0:             "warmup_num_steps":1000
+worker-0:         },
+worker-0:         "type":"WarmupLR"
+worker-0:     },
+worker-0:     "steps_per_print":2000,
+worker-0:     "train_batch_size":4,
+worker-0:     "wall_clock_breakdown":false
+worker-0: }
+worker-0: [INFO 2020-02-06 19:53:56] 0/50, SamplesPerSec=1292.6411179579866
+worker-0: [INFO 2020-02-06 19:53:56] 0/100, SamplesPerSec=1303.6726433398537
+worker-0: [INFO 2020-02-06 19:53:56] 0/150, SamplesPerSec=1304.4251022567403
+
+......
+
+worker-0: [2, 12000] loss: 1.247
+worker-0: [INFO 2020-02-06 20:35:23] 0/24550, SamplesPerSec=1284.4954513975558
+worker-0: [INFO 2020-02-06 20:35:23] 0/24600, SamplesPerSec=1284.384033658866
+worker-0: [INFO 2020-02-06 20:35:23] 0/24650, SamplesPerSec=1284.4433482972925
+worker-0: [INFO 2020-02-06 20:35:23] 0/24700, SamplesPerSec=1284.4664449792422
+worker-0: [INFO 2020-02-06 20:35:23] 0/24750, SamplesPerSec=1284.4950124403447
+worker-0: [INFO 2020-02-06 20:35:23] 0/24800, SamplesPerSec=1284.4756105952233
+worker-0: [INFO 2020-02-06 20:35:24] 0/24850, SamplesPerSec=1284.5251526215386
+worker-0: [INFO 2020-02-06 20:35:24] 0/24900, SamplesPerSec=1284.531217073863
+worker-0: [INFO 2020-02-06 20:35:24] 0/24950, SamplesPerSec=1284.5125323220368
+worker-0: [INFO 2020-02-06 20:35:24] 0/25000, SamplesPerSec=1284.5698818883018
+worker-0: Finished Training
+worker-0: GroundTruth:    cat  ship  ship plane
+worker-0: Predicted:    cat   car   car plane
+worker-0: Accuracy of the network on the 10000 test images: 57 %
+worker-0: Accuracy of plane : 61 %
+worker-0: Accuracy of   car : 74 %
+worker-0: Accuracy of  bird : 49 %
+worker-0: Accuracy of   cat : 36 %
+worker-0: Accuracy of  deer : 44 %
+worker-0: Accuracy of   dog : 52 %
+worker-0: Accuracy of  frog : 67 %
+worker-0: Accuracy of horse : 58 %
+worker-0: Accuracy of  ship : 70 %
+worker-0: Accuracy of truck : 59 %
+</code></pre></div></div>
+
+        
+      </div>
+
+      <div style="box-sizing:border-box;display:block;margin-top:2em;color:rgb(57, 62, 70);font-family:-apple-system, BlinkMacSystemFont, Roboto, &quot;Segoe UI&quot;, &quot;Helvetica Neue&quot;, &quot;Lucida Grande&quot;, Arial, sans-serif;font-size:0.75em;position:relative;float:left;margin-left:0px;margin-right:10%;width:100%;clear:both;">
+        
+        
+
+
+
+        
+          <p style="box-sizing:border-box;orphans:3;widows:3;transition:all 0.2s ease-in-out 0s;margin:0px;"><strong style="box-sizing:border-box;transition:all 0.2s ease-in-out 0s;"><i style="box-sizing:border-box;transition:all 0.2s ease-in-out 0s;-webkit-font-smoothing:antialiased;display:inline-block;font-style:normal;font-variant:normal;text-rendering:auto;line-height:1;text-align:center;width:1.25em;font-family:&quot;Font Awesome 5 Free&quot;;font-weight:900;"><span style="font-style:normal;font-variant:normal;line-height:1;text-align:center;font-family:Font Awesome 5 Free;font-weight:900;"></span></i> Updated:</strong> <span style="box-sizing:border-box;">July 23, 2024</span></p>
+        
+      </div>
+
+      
+
+      
+  <div style="box-sizing:border-box;display:block;clear:both;float:left;width:100%;border-top:1px solid rgb(206, 207, 209);margin-top:2em;padding-top:2em;">
+    
+      <a href="https://www.deepspeed.ai/tutorials/bert-pretraining/" title="BERT Pre-training" style="box-sizing:border-box;transition:all 0.2s ease-in-out 0s;display:block;padding:1em 2em;float:left;width:50%;font-family:-apple-system, BlinkMacSystemFont, Roboto, &quot;Segoe UI&quot;, &quot;Helvetica Neue&quot;, &quot;Lucida Grande&quot;, Arial, sans-serif;font-size:1em;font-weight:bold;text-align:center;border:1px solid rgb(155, 155, 157);border-radius:4px;color:rgb(57, 62, 70);text-decoration:none;border-top-right-radius:0px;border-bottom-right-radius:0px;">Previous</a>
+    
+    
+      <a href="https://www.deepspeed.ai/tutorials/comms-logging/" title="Communication Logging" style="box-sizing:border-box;transition:all 0.2s ease-in-out 0s;display:block;padding:1em 2em;float:left;width:50%;font-family:-apple-system, BlinkMacSystemFont, Roboto, &quot;Segoe UI&quot;, &quot;Helvetica Neue&quot;, &quot;Lucida Grande&quot;, Arial, sans-serif;font-size:1em;font-weight:bold;text-align:center;border:1px solid rgb(155, 155, 157);border-radius:4px;color:rgb(57, 62, 70);text-decoration:none;margin-left:-1px;border-top-left-radius:0px;border-bottom-left-radius:0px;">Next</a>
+    
+  <span style="clear:both;display:table;"></span></div>
+
+
+    </div></div></div></div></div></div></div>
+</div>
+</div>
+<a class="back-link" href="../articles.html">← 返回笔记列表</a>
+</body>
+</html>

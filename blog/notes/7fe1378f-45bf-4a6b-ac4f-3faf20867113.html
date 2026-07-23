@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="zh-CN" data-theme="light">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>puppet6主从机快速实践 — 技术笔记</title>
+<style>
+:root {
+  --bg: #ffffff;
+  --text: #1a1a1a;
+  --muted: #666;
+  --border: #e0e0e0;
+  --code-bg: #f5f5f5;
+  --link: #0066cc;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #1a1a1a;
+    --text: #e0e0e0;
+    --muted: #999;
+    --border: #333;
+    --code-bg: #2a2a2a;
+    --link: #66bbff;
+  }
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  line-height: 1.7;
+  color: var(--text);
+  background: var(--bg);
+  max-width: 860px;
+  margin: 0 auto;
+  padding: 2rem 1.5rem;
+}
+.note-header {
+  border-bottom: 2px solid var(--border);
+  padding-bottom: 1rem;
+  margin-bottom: 2rem;
+}
+.note-title {
+  font-size: 1.6rem;
+  font-weight: 700;
+  margin-bottom: 0.3rem;
+}
+.note-meta {
+  color: var(--muted);
+  font-size: 0.85rem;
+}
+.note-content {
+  font-size: 0.95rem;
+}
+.note-content h1 { font-size: 1.4rem; margin: 1.2rem 0 0.6rem; }
+.note-content h2 { font-size: 1.2rem; margin: 1rem 0 0.5rem; }
+.note-content h3 { font-size: 1.05rem; margin: 0.8rem 0 0.4rem; }
+.note-content p { margin: 0.5rem 0; }
+.note-content ul, .note-content ol { margin: 0.5rem 0 0.5rem 2rem; }
+.note-content li { margin: 0.2rem 0; }
+.note-content pre {
+  background: var(--code-bg);
+  padding: 1rem;
+  border-radius: 6px;
+  overflow-x: auto;
+  margin: 0.8rem 0;
+  font-size: 0.85rem;
+}
+.note-content code {
+  background: var(--code-bg);
+  padding: 0.1rem 0.3rem;
+  border-radius: 3px;
+  font-size: 0.88em;
+}
+.note-content pre code {
+  background: none;
+  padding: 0;
+}
+.note-content blockquote {
+  border-left: 3px solid var(--border);
+  padding-left: 1rem;
+  color: var(--muted);
+  margin: 0.8rem 0;
+}
+.note-content a { color: var(--link); }
+.note-content img {
+  max-width: 100%;
+  height: auto;
+  border-radius: 6px;
+  margin: 0.5rem 0;
+}
+.note-content table {
+  border-collapse: collapse;
+  width: 100%;
+  margin: 0.8rem 0;
+}
+.note-content th, .note-content td {
+  border: 1px solid var(--border);
+  padding: 0.5rem;
+}
+.note-content th { background: var(--code-bg); }
+.media-placeholder {
+  background: var(--code-bg);
+  padding: 1rem;
+  text-align: center;
+  color: var(--muted);
+  border-radius: 6px;
+  margin: 0.5rem 0;
+  font-size: 0.85rem;
+}
+.encrypt-placeholder {
+  background: #fff3cd;
+  padding: 0.5rem;
+  text-align: center;
+  color: #856404;
+  border-radius: 6px;
+  margin: 0.5rem 0;
+  font-size: 0.85rem;
+}
+.back-link {
+  display: inline-block;
+  margin-top: 2rem;
+  color: var(--link);
+  text-decoration: none;
+  font-size: 0.85rem;
+}
+</style>
+</head>
+<body>
+<div class="note-header">
+  <div class="note-title">puppet6主从机快速实践</div>
+  <div class="note-meta">笔记本：Puppet</div>
+</div>
+<div class="note-content">
+<div>0.配置域名解析，需要保证客户端和服务端之间仅通过名称就能够互相访问</div><div><span>    服务端和客户端配置相同的域名解析，将服务端和客户端的名称都配置好，puppet客户端在与服务端通讯的时候，默认会使用puppet这个主机名，所以我们这里直接配置puppet对应的ip地址即可</span></div><div><span><span>    </span>vi /etc/hosts</span><br /></div><div><span><span>    <span>    主服务端的ip地址 puppet</span></span><br /></span></div><div><span><span><span><br /></span></span></span></div><div>1.主服务机器</div><ol><li><div> sudo rpm -Uvh <a href="https://yum.puppet.com/puppet6-release-el-7.noarch.rpm">https://yum.puppet.com/puppet6-release-el-7.noarch.rpm</a></div></li><li><div>yum install puppetserver</div></li><li><div>systemctl start puppetserver</div></li><li><div>systemctl status puppetserver 查看puppetserver启动状态</div></li></ol><div>2.agent客户端</div><ol><li><div> sudo rpm -Uvh <a href="https://yum.puppet.com/puppet6-release-el-7.noarch.rpm">https://yum.puppet.com/puppet6-release-el-7.noarch.rpm</a></div></li><li><div>yum install puppet-agent</div></li><li><div>sudo /opt/puppetlabs/bin/puppet resource service puppet ensure=running enable=true</div></li><li><div>puppet config set server 你设置的主服务的主机名+域名(默认是puppet)</div></li></ol><div>        </div><div><br /></div><div>3.签发ssl证书</div><div><span>    在客户端执行 puppet ssl bootstrap</span><br /></div><div><span><span>    在服务端执行 puppet ca sign —all 对所有发送到服务端的csr请求进行签名</span><br /></span></div><div><span><span><span>    再次在客户端执行 puppet ssl bootstrap</span><br /></span></span></div><div><span><span><span><br /></span></span></span></div><div><span><span><span>4.测试建立文件</span></span></span></div><div><span><span><span><span>    在主服务端编辑manifest文件:</span><br /></span></span></span></div><div><span><span><span><span><span>    <span>    vi </span></span></span></span></span></span>/etc/puppetlabs/code/environments/production/manifests/site.pp</div><div><span>    <span>    输入以下内容，该配置表示在客户端上建立一个文本文件:</span></span><br /></div><div><span><span><span>    <span>    <span>    </span></span></span></span></span># 在从机上创建文件</div><div>file { '/tmp/puppet-test.txt':</div><div>  ensure =&gt; file,</div><div>  content =&gt; 'This is a test file',    # 文件内容</div><div>}</div><div><br /></div><div><span>    在客户端执行: puppet apply -t</span><br /></div><div><span><span>    检查客户端上该文件是否创建成功</span><br /></span></div>
+</div>
+<a class="back-link" href="../articles.html">← 返回笔记列表</a>
+</body>
+</html>

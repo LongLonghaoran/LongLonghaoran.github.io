@@ -1,0 +1,216 @@
+<!DOCTYPE html>
+<html lang="zh-CN" data-theme="light">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Life of a Packet — Cilium 1.14.5 documentation — 技术笔记</title>
+<style>
+:root {
+  --bg: #ffffff;
+  --text: #1a1a1a;
+  --muted: #666;
+  --border: #e0e0e0;
+  --code-bg: #f5f5f5;
+  --link: #0066cc;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #1a1a1a;
+    --text: #e0e0e0;
+    --muted: #999;
+    --border: #333;
+    --code-bg: #2a2a2a;
+    --link: #66bbff;
+  }
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  line-height: 1.7;
+  color: var(--text);
+  background: var(--bg);
+  max-width: 860px;
+  margin: 0 auto;
+  padding: 2rem 1.5rem;
+}
+.note-header {
+  border-bottom: 2px solid var(--border);
+  padding-bottom: 1rem;
+  margin-bottom: 2rem;
+}
+.note-title {
+  font-size: 1.6rem;
+  font-weight: 700;
+  margin-bottom: 0.3rem;
+}
+.note-meta {
+  color: var(--muted);
+  font-size: 0.85rem;
+}
+.note-content {
+  font-size: 0.95rem;
+}
+.note-content h1 { font-size: 1.4rem; margin: 1.2rem 0 0.6rem; }
+.note-content h2 { font-size: 1.2rem; margin: 1rem 0 0.5rem; }
+.note-content h3 { font-size: 1.05rem; margin: 0.8rem 0 0.4rem; }
+.note-content p { margin: 0.5rem 0; }
+.note-content ul, .note-content ol { margin: 0.5rem 0 0.5rem 2rem; }
+.note-content li { margin: 0.2rem 0; }
+.note-content pre {
+  background: var(--code-bg);
+  padding: 1rem;
+  border-radius: 6px;
+  overflow-x: auto;
+  margin: 0.8rem 0;
+  font-size: 0.85rem;
+}
+.note-content code {
+  background: var(--code-bg);
+  padding: 0.1rem 0.3rem;
+  border-radius: 3px;
+  font-size: 0.88em;
+}
+.note-content pre code {
+  background: none;
+  padding: 0;
+}
+.note-content blockquote {
+  border-left: 3px solid var(--border);
+  padding-left: 1rem;
+  color: var(--muted);
+  margin: 0.8rem 0;
+}
+.note-content a { color: var(--link); }
+.note-content img {
+  max-width: 100%;
+  height: auto;
+  border-radius: 6px;
+  margin: 0.5rem 0;
+}
+.note-content table {
+  border-collapse: collapse;
+  width: 100%;
+  margin: 0.8rem 0;
+}
+.note-content th, .note-content td {
+  border: 1px solid var(--border);
+  padding: 0.5rem;
+}
+.note-content th { background: var(--code-bg); }
+.media-placeholder {
+  background: var(--code-bg);
+  padding: 1rem;
+  text-align: center;
+  color: var(--muted);
+  border-radius: 6px;
+  margin: 0.5rem 0;
+  font-size: 0.85rem;
+}
+.encrypt-placeholder {
+  background: #fff3cd;
+  padding: 0.5rem;
+  text-align: center;
+  color: #856404;
+  border-radius: 6px;
+  margin: 0.5rem 0;
+  font-size: 0.85rem;
+}
+.back-link {
+  display: inline-block;
+  margin-top: 2rem;
+  color: var(--link);
+  text-decoration: none;
+  font-size: 0.85rem;
+}
+</style>
+</head>
+<body>
+<div class="note-header">
+  <div class="note-title">Life of a Packet — Cilium 1.14.5 documentation</div>
+  <div class="note-meta">笔记本：ebpf</div>
+</div>
+<div class="note-content">
+<div style="--en-clipped-content:article">
+<div><br/></div><div style="font-size: 16px; display:block; min-width: 100%; position: relative;"> <div style="box-sizing:border-box;text-size-adjust:100%;font-family:Verdana, sans-serif;line-height:1.5;font-size:15px;overflow-x:hidden;"><div style="overflow-x:hidden;font-weight:400;color:rgb(0, 0, 0);box-sizing:inherit;font-size:15px;line-height:1.5;font-family:Verdana, sans-serif;background:rgb(255, 255, 255);"><div style="box-sizing:inherit;"><div style="box-sizing:inherit;background:rgb(255, 255, 255);"><div style="box-sizing:inherit;background:rgb(255, 255, 255);"><div style="box-sizing:inherit;">
+          <div style="box-sizing:inherit;">
+  <ul style="margin:0px;padding:0px;list-style:none none;box-sizing:inherit;"><span style="list-style:none none;display:table;"></span>
+      <li style="list-style:none;box-sizing:inherit;display:inline-block;padding-top:5px;"><a href="https://docs.cilium.io/en/stable/" style="text-decoration:none;cursor:pointer;box-sizing:inherit;background-color:transparent;color:inherit;display:inline-block;font-style:normal;font-variant:normal;font-kerning:auto;font-optical-sizing:auto;font-feature-settings:normal;font-variation-settings:normal;font-weight:normal;font-stretch:normal;line-height:1;font-size:inherit;text-rendering:auto;-webkit-font-smoothing:antialiased;font-family:inherit;"><span style="font-style:normal;font-variant:normal;font-weight:400;line-height:1;font-family:FontAwesome;font-size:inherit;color:inherit;cursor:pointer;-webkit-font-smoothing:antialiased;display:inline-block;text-decoration:inherit;"></span></a></li>
+          <li style="list-style:none;box-sizing:inherit;display:inline-block;padding-top:5px;"><span style="list-style:none;color:rgb(187, 187, 187);font-size:13px;padding:0px 6px 0px 3px;">/</span><a href="https://docs.cilium.io/en/stable/network/ebpf/" style="text-decoration:none;cursor:pointer;box-sizing:inherit;background-color:transparent;color:inherit;">eBPF Datapath</a></li>
+      <li style="list-style:none;box-sizing:inherit;display:inline-block;padding-top:5px;"><span style="list-style:none;color:rgb(187, 187, 187);font-size:13px;padding:0px 6px 0px 3px;">/</span>Life of a Packet</li>
+
+  <span style="list-style:none none;display:table;clear:both;"></span></ul>
+  <hr style="display:block;padding:0px;overflow:visible;box-sizing:content-box;height:0px;border-width:1px 0px 0px;border-right-style:initial;border-bottom-style:initial;border-left-style:initial;border-right-color:initial;border-bottom-color:initial;border-left-color:initial;border-image:initial;border-top-style:solid;border-top-color:rgb(238, 238, 238);margin:20px 0px;"/>
+</div>
+          <div style="box-sizing:inherit;">
+           <div style="box-sizing:inherit;">
+             
+  <div style="box-sizing:inherit;display:block;">
+<h1 style="box-sizing:inherit;font-size:36px;margin:10px 0px;font-weight:400;font-family:&quot;Segoe UI&quot;, Arial, sans-serif;margin-bottom:24px;">Life of a Packet<a href="https://docs.cilium.io/en/stable/network/ebpf/lifeofapacket/#life-of-a-packet" title="Permalink to this heading" style="text-decoration:none;cursor:pointer;box-sizing:inherit;background-color:transparent;color:inherit;display:inline-block;font-style:normal;font-variant:normal;font-kerning:auto;font-optical-sizing:auto;font-feature-settings:normal;font-variation-settings:normal;font-weight:normal;font-stretch:normal;line-height:1;text-rendering:auto;-webkit-font-smoothing:antialiased;opacity:0;margin-left:0.5em;font-family:FontAwesome;font-size:14px;"><span style="font-style:normal;font-variant:normal;font-weight:400;line-height:1;font-family:FontAwesome;font-size:14px;color:inherit;cursor:pointer;-webkit-font-smoothing:antialiased;display:inline-block;text-decoration:inherit;"></span></a></h1>
+<p style="line-height:24px;font-size:16px;margin:0px 0px 24px;box-sizing:inherit;">This documentation page overviews the life of a packet from an eBPF datapath perspective
+by explaining three different scenarios.</p>
+<div style="box-sizing:inherit;-webkit-font-smoothing:antialiased;padding:12px;line-height:24px;margin-bottom:24px;background:rgb(255, 237, 204);clear:both;border-radius:2px;"><span style="line-height:24px;-webkit-font-smoothing:antialiased;"></span>
+<p style="box-sizing:inherit;font-style:normal;font-variant:normal;font-kerning:auto;font-optical-sizing:auto;font-feature-settings:normal;font-variation-settings:normal;font-stretch:normal;text-rendering:auto;-webkit-font-smoothing:antialiased;line-height:1;font-size:inherit;font-family:inherit;color:rgb(255, 255, 255);padding:6px 12px;display:block;font-weight:700;margin:-12px -12px 12px;border-top-left-radius:2px;border-top-right-radius:2px;background:rgb(240, 179, 126);"><span style="font-style:normal;font-variant:normal;font-weight:700;line-height:1;font-family:inherit;font-size:inherit;color:rgb(255, 255, 255);-webkit-font-smoothing:antialiased;display:inline-block;text-decoration:inherit;margin-right:4px;"></span>Video</p>
+<p style="line-height:24px;font-size:16px;margin:0px 0px 24px;box-sizing:inherit;margin-bottom:0px;">You can also watch a video explanation of this topic that also explores the tools available within Cilium to help
+you understand the life of a packet in <a href="https://www.youtube.com/watch?v=0BKU6avwS98&amp;t=494s" style="text-decoration:none;cursor:pointer;box-sizing:inherit;background-color:transparent;color:inherit;overflow-wrap:anywhere;">eCHO Episode 51: Life of a Packet with Cilium</a>.</p>
+</div>
+<div style="box-sizing:inherit;display:block;">
+<h2 style="box-sizing:inherit;font-size:30px;margin:10px 0px;font-weight:400;font-family:&quot;Segoe UI&quot;, Arial, sans-serif;margin-bottom:24px;">Endpoint to Endpoint<a href="https://docs.cilium.io/en/stable/network/ebpf/lifeofapacket/#endpoint-to-endpoint" title="Permalink to this heading" style="text-decoration:none;cursor:pointer;box-sizing:inherit;background-color:transparent;color:inherit;display:inline-block;font-style:normal;font-variant:normal;font-kerning:auto;font-optical-sizing:auto;font-feature-settings:normal;font-variation-settings:normal;font-weight:normal;font-stretch:normal;line-height:1;text-rendering:auto;-webkit-font-smoothing:antialiased;opacity:0;margin-left:0.5em;font-family:FontAwesome;font-size:14px;"><span style="font-style:normal;font-variant:normal;font-weight:400;line-height:1;font-family:FontAwesome;font-size:14px;color:inherit;cursor:pointer;-webkit-font-smoothing:antialiased;display:inline-block;text-decoration:inherit;"></span></a></h2>
+<p style="line-height:24px;font-size:16px;margin:0px 0px 24px;box-sizing:inherit;">First we show the local endpoint to endpoint flow with optional L7 Policy on
+egress and ingress. Followed by the same endpoint to endpoint flow with
+socket layer enforcement enabled. With socket layer enforcement enabled for TCP
+traffic the
+handshake initiating the connection will traverse the endpoint policy object until TCP state
+is ESTABLISHED. Then after the connection is ESTABLISHED only the L7 Policy
+object is still required.</p>
+<div class="media-placeholder">[图片/附件]</div></en-media></div>
+<div style="box-sizing:inherit;display:block;">
+<h2 style="box-sizing:inherit;font-size:30px;margin:10px 0px;font-weight:400;font-family:&quot;Segoe UI&quot;, Arial, sans-serif;margin-bottom:24px;">Egress from Endpoint<a href="https://docs.cilium.io/en/stable/network/ebpf/lifeofapacket/#egress-from-endpoint" title="Permalink to this heading" style="text-decoration:none;cursor:pointer;box-sizing:inherit;background-color:transparent;color:inherit;display:inline-block;font-style:normal;font-variant:normal;font-kerning:auto;font-optical-sizing:auto;font-feature-settings:normal;font-variation-settings:normal;font-weight:normal;font-stretch:normal;line-height:1;text-rendering:auto;-webkit-font-smoothing:antialiased;opacity:0;margin-left:0.5em;font-family:FontAwesome;font-size:14px;"><span style="font-style:normal;font-variant:normal;font-weight:400;line-height:1;font-family:FontAwesome;font-size:14px;color:inherit;cursor:pointer;-webkit-font-smoothing:antialiased;display:inline-block;text-decoration:inherit;"></span></a></h2>
+<p style="line-height:24px;font-size:16px;margin:0px 0px 24px;box-sizing:inherit;">Next we show local endpoint to egress with optional overlay network. In the
+optional overlay network traffic is forwarded out the Linux network interface
+corresponding to the overlay. In the default case the overlay interface is
+named cilium_vxlan. Similar to above, when socket layer enforcement is enabled
+and a L7 proxy is in use we can avoid running the endpoint policy block between
+the endpoint and the L7 Policy for TCP traffic. An optional L3 encryption block
+will encrypt the packet if enabled.</p>
+<div class="media-placeholder">[图片/附件]</div></en-media></div>
+<div style="box-sizing:inherit;display:block;">
+<h2 style="box-sizing:inherit;font-size:30px;margin:10px 0px;font-weight:400;font-family:&quot;Segoe UI&quot;, Arial, sans-serif;margin-bottom:24px;">Ingress to Endpoint<a href="https://docs.cilium.io/en/stable/network/ebpf/lifeofapacket/#ingress-to-endpoint" title="Permalink to this heading" style="text-decoration:none;cursor:pointer;box-sizing:inherit;background-color:transparent;color:inherit;display:inline-block;font-style:normal;font-variant:normal;font-kerning:auto;font-optical-sizing:auto;font-feature-settings:normal;font-variation-settings:normal;font-weight:normal;font-stretch:normal;line-height:1;text-rendering:auto;-webkit-font-smoothing:antialiased;opacity:0;margin-left:0.5em;font-family:FontAwesome;font-size:14px;"><span style="font-style:normal;font-variant:normal;font-weight:400;line-height:1;font-family:FontAwesome;font-size:14px;color:inherit;cursor:pointer;-webkit-font-smoothing:antialiased;display:inline-block;text-decoration:inherit;"></span></a></h2>
+<p style="line-height:24px;font-size:16px;margin:0px 0px 24px;box-sizing:inherit;">Finally we show ingress to local endpoint also with optional overlay network.
+Similar to above socket layer enforcement can be used to avoid a set of
+policy traversals between the proxy and the endpoint socket. If the packet
+is encrypted upon receive it is first decrypted and then handled through
+the normal flow.</p>
+<div class="media-placeholder">[图片/附件]</div></en-media><p style="line-height:24px;font-size:16px;margin:0px 0px 24px;box-sizing:inherit;">This completes the datapath overview. More BPF specifics can be found in the
+<a href="https://docs.cilium.io/en/stable/bpf/#bpf-guide" style="text-decoration:none;cursor:pointer;box-sizing:inherit;background-color:transparent;color:inherit;overflow-wrap:anywhere;"><span style="box-sizing:inherit;">BPF and XDP Reference Guide</span></a>. Additional details on how to extend the L7 Policy
+exist in the <a href="https://docs.cilium.io/en/stable/security/network/proxy/envoy/#envoy" style="text-decoration:none;cursor:pointer;box-sizing:inherit;background-color:transparent;color:inherit;overflow-wrap:anywhere;"><span style="box-sizing:inherit;">Envoy</span></a> section.</p>
+</div>
+</div>
+
+
+           </div>
+          </div>
+          <div style="color:grey;box-sizing:inherit;display:block;"><div style="box-sizing:inherit;"><span style="width:100%;display:table;"></span>
+        <a href="https://docs.cilium.io/en/stable/network/ebpf/intro/" title="Introduction" rel="prev" style="box-sizing:inherit;-webkit-font-smoothing:antialiased;display:inline-block;border-radius:2px;line-height:normal;white-space:nowrap;text-align:center;font-size:100%;padding:6px 12px 8px;border:1px solid rgba(0, 0, 0, 0.1);font-weight:400;font-family:Inter, Lato, proxima-nova, &quot;Helvetica Neue&quot;, Arial, sans-serif;box-shadow:rgba(255, 255, 255, 0.5) 0px 1px 2px -1px inset, rgba(0, 0, 0, 0.1) 0px -2px 0px 0px inset;vertical-align:middle;zoom:1;-webkit-user-drag:none;user-select:none;transition:all 0.1s linear 0s;cursor:pointer;text-decoration:none;float:left;background-color:rgb(243, 246, 246);color:rgb(0, 0, 0);"><span style="line-height:normal;white-space:nowrap;text-align:center;cursor:pointer;font-size:100%;color:rgb(0, 0, 0);font-weight:400;font-family:Inter, Lato, proxima-nova, Helvetica Neue, Arial, sans-serif;-webkit-font-smoothing:antialiased;"></span><span style="box-sizing:inherit;font-style:normal;font-variant:normal;font-kerning:auto;font-optical-sizing:auto;font-feature-settings:normal;font-variation-settings:normal;font-weight:normal;font-stretch:normal;line-height:1;font-size:inherit;text-rendering:auto;-webkit-font-smoothing:antialiased;font-family:inherit;text-decoration:inherit;display:inline;"><span style="font-style:normal;font-variant:normal;font-weight:normal;line-height:1;font-family:FontAwesome;font-size:inherit;-webkit-font-smoothing:antialiased;display:inline-block;text-decoration:inherit;"></span></span> Previous</a>
+        <a href="https://docs.cilium.io/en/stable/network/ebpf/maps/" title="eBPF Maps" rel="next" style="box-sizing:inherit;-webkit-font-smoothing:antialiased;display:inline-block;border-radius:2px;line-height:normal;white-space:nowrap;text-align:center;font-size:100%;padding:6px 12px 8px;border:1px solid rgba(0, 0, 0, 0.1);font-weight:400;font-family:Inter, Lato, proxima-nova, &quot;Helvetica Neue&quot;, Arial, sans-serif;box-shadow:rgba(255, 255, 255, 0.5) 0px 1px 2px -1px inset, rgba(0, 0, 0, 0.1) 0px -2px 0px 0px inset;vertical-align:middle;zoom:1;-webkit-user-drag:none;user-select:none;transition:all 0.1s linear 0s;cursor:pointer;text-decoration:none;float:right;background-color:rgb(243, 246, 246);color:rgb(0, 0, 0);"><span style="line-height:normal;white-space:nowrap;text-align:center;cursor:pointer;font-size:100%;color:rgb(0, 0, 0);font-weight:400;font-family:Inter, Lato, proxima-nova, Helvetica Neue, Arial, sans-serif;-webkit-font-smoothing:antialiased;"></span>Next <span style="box-sizing:inherit;font-style:normal;font-variant:normal;font-kerning:auto;font-optical-sizing:auto;font-feature-settings:normal;font-variation-settings:normal;font-weight:normal;font-stretch:normal;line-height:1;font-size:inherit;text-rendering:auto;-webkit-font-smoothing:antialiased;font-family:inherit;text-decoration:inherit;display:inline;"><span style="font-style:normal;font-variant:normal;font-weight:normal;line-height:1;font-family:FontAwesome;font-size:inherit;-webkit-font-smoothing:antialiased;display:inline-block;text-decoration:inherit;"></span></span></a>
+    <span style="width:100%;display:table;clear:both;"></span></div>
+
+  <hr style="display:block;padding:0px;overflow:visible;box-sizing:content-box;height:0px;border-width:1px 0px 0px;border-right-style:initial;border-bottom-style:initial;border-left-style:initial;border-right-color:initial;border-bottom-color:initial;border-left-color:initial;border-image:initial;border-top-style:solid;border-top-color:rgb(238, 238, 238);margin:20px 0px;"/>
+
+  <div style="box-sizing:inherit;">
+    <p style="line-height:24px;font-size:16px;margin:0px 0px 24px;box-sizing:inherit;margin-bottom:12px;">© Copyright Cilium Authors.
+      <span style="box-sizing:inherit;">Revision <code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif">85db28be</code>.
+      </span></p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/" style="text-decoration:none;cursor:pointer;box-sizing:inherit;background-color:transparent;color:inherit;">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme" style="text-decoration:none;cursor:pointer;box-sizing:inherit;background-color:transparent;color:inherit;">theme</a>
+    provided by <a href="https://readthedocs.org/" style="text-decoration:none;cursor:pointer;box-sizing:inherit;background-color:transparent;color:inherit;">Read the Docs</a>.
+   
+
+</div>
+        </div></div></div></div></div></div></div>
+</div>
+</div>
+<a class="back-link" href="../articles.html">← 返回笔记列表</a>
+</body>
+</html>

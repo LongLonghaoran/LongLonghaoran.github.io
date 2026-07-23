@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="zh-CN" data-theme="light">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AMD — 技术笔记</title>
+<style>
+:root { --bg:#fff; --text:#1a1a1a; --muted:#666; --border:#e0e0e0; --code-bg:#f5f5f5; --link:#0066cc; }
+@media (prefers-color-scheme: dark) { :root { --bg:#1a1a1a; --text:#e0e0e0; --muted:#999; --border:#333; --code-bg:#2a2a2a; --link:#66bbff; } }
+* { box-sizing:border-box; margin:0; padding:0; }
+body { font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Arial,sans-serif; line-height:1.7; color:var(--text); background:var(--bg); max-width:860px; margin:0 auto; padding:2rem 1.5rem; }
+.note-header { border-bottom:2px solid var(--border); padding-bottom:1rem; margin-bottom:2rem; }
+.note-title { font-size:1.6rem; font-weight:700; margin-bottom:0.3rem; }
+.note-meta { color:var(--muted); font-size:0.85rem; }
+.note-content { font-size:0.95rem; }
+.note-content h1 { font-size:1.4rem; margin:1.2rem 0 0.6rem; }
+.note-content h2 { font-size:1.2rem; margin:1rem 0 0.5rem; }
+.note-content h3 { font-size:1.05rem; margin:0.8rem 0 0.4rem; }
+.note-content p { margin:0.5rem 0; }
+.note-content ul,.note-content ol { margin:0.5rem 0 0.5rem 2rem; }
+.note-content li { margin:0.2rem 0; }
+.note-content pre { background:var(--code-bg); padding:1rem; border-radius:6px; overflow-x:auto; margin:0.8rem 0; font-size:0.85rem; }
+.note-content code { background:var(--code-bg); padding:0.1rem 0.3rem; border-radius:3px; font-size:0.88em; }
+.note-content pre code { background:none; padding:0; }
+.note-content blockquote { border-left:3px solid var(--border); padding-left:1rem; color:var(--muted); margin:0.8rem 0; }
+.note-content a { color:var(--link); }
+.note-content img { max-width:100%; height:auto; border-radius:6px; margin:0.5rem 0; }
+.note-content table { border-collapse:collapse; width:100%; margin:0.8rem 0; }
+.note-content th,.note-content td { border:1px solid var(--border); padding:0.5rem; }
+.note-content th { background:var(--code-bg); }
+.media-placeholder { background:var(--code-bg); padding:1rem; text-align:center; color:var(--muted); border-radius:6px; margin:0.5rem 0; font-size:0.85rem; }
+.encrypt-placeholder { background:#fff3cd; padding:0.5rem; text-align:center; color:#856404; border-radius:6px; margin:0.5rem 0; font-size:0.85rem; }
+.back-link { display:inline-block; margin-top:2rem; color:var(--link); text-decoration:none; font-size:0.85rem; }
+</style>
+</head>
+<body>
+<div class="note-header"><div class="note-title">AMD</div><div class="note-meta">笔记本：前端学习</div></div>
+<div class="note-content"><div style="margin-top: 1em; margin-bottom: 1em;"><span style="-en-paragraph:true;">AMD 即Asynchronous Module Definition，中文名是异步模块定义的意思。它是一个在浏览器端模块化开发的规范
+</span></div><div style="margin-top: 1em; margin-bottom: 1em;"><span style="-en-paragraph:true;">由于不是JavaScript原生支持，使用AMD规范进行页面开发需要用到对应的库函数，也就是大名鼎鼎RequireJS，实际上AMD 是 RequireJS 在推广过程中对模块定义的规范化的产出
+</span></div><div style="margin-top: 1em; margin-bottom: 1em;"><span style="-en-paragraph:true;">requireJS主要解决两个问题
+</span></div><div>1、多个js文件可能有依赖关系，被依赖的文件需要早于依赖它的文件加载到浏览器</div><div>2、js加载的时候浏览器会停止页面渲染，加载文件越多，页面失去响应时间越长</div><div style="margin-top: 1em; margin-bottom: 1em;"><span style="-en-paragraph:true;">看一个使用requireJS的例子
+</span></div><div>// 定义模块 myModule.js</div><div>define(['dependency'], function(){</div><div>    var name = 'Byron';</div><div>    function printName(){</div><div>        console.log(name);</div><div>    }</div><div><br /></div><div>    return {</div><div>        printName: printName</div><div>    };</div><div>});</div><div><br /></div><div>// 加载模块</div><div>require(['myModule'], function (my){</div><div>　 my.printName();</div><div>});12345678910111213141516复制代码</div><div style="margin-top: 1em; margin-bottom: 1em;"><span style="font-weight: bold;-en-paragraph:true;">语法</span></div><div style="margin-top: 1em; margin-bottom: 1em;"><span style="-en-paragraph:true;">requireJS定义了一个函数 define，它是全局变量，用来定义模块
+</span></div><div style="margin-top: 1em; margin-bottom: 1em;"><span style="-en-paragraph:true;">define(id?, dependencies?, factory);
+</span></div><ol><li><div>id：可选参数，用来定义模块的标识，如果没有提供该参数，脚本文件名（去掉拓展名）</div></li><li><div>dependencies：是一个当前模块依赖的模块名称数组</div></li><li><div>factory：工厂方法，模块初始化要执行的函数或对象。如果为函数，它应该只被执行一次。如果是对象，此对象应该为模块的输出值</div><div>在页面上使用require函数加载模块</div></li></ol><div>require([dependencies], function(){});</div><div style="margin-top: 1em; margin-bottom: 1em;"><span style="-en-paragraph:true;">require()函数接受两个参数
+</span></div><ol><li><div>第一个参数是一个数组，表示所依赖的模块</div></li><li><div>第二个参数是一个回调函数，当前面指定的模块都加载成功后，它将被调用。加载的模块会以参数形式传入该函数，从而在回调函数内部就可以使用这些模块</div></li></ol><div style="margin-top: 1em; margin-bottom: 1em;"><span style="-en-paragraph:true;">require()函数在加载依赖的函数的时候是异步加载的，这样浏览器不会失去响应，它指定的回调函数，只有前面的模块都加载成功后，才会运行，解决了依赖性的问题。
+</span></div><div><br /></div><div>作者：singer-coder</div><div>链接：<a href="https://juejin.im/post/5a422b036fb9a045211ef789">https://juejin.im/post/5a422b036fb9a045211ef789</a></div><div>来源：掘金</div><div>著作权归作者所有。商业转载请联系作者获得授权，非商业转载请注明出处。
+</div></div>
+<a class="back-link" href="../articles.html">← 返回笔记列表</a>
+</body></html>

@@ -1,0 +1,379 @@
+<!DOCTYPE html>
+<html lang="zh-CN" data-theme="light">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>linux chroot 命令 - sparkdev - 博客园 — 技术笔记</title>
+<style>
+:root {
+  --bg: #ffffff;
+  --text: #1a1a1a;
+  --muted: #666;
+  --border: #e0e0e0;
+  --code-bg: #f5f5f5;
+  --link: #0066cc;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #1a1a1a;
+    --text: #e0e0e0;
+    --muted: #999;
+    --border: #333;
+    --code-bg: #2a2a2a;
+    --link: #66bbff;
+  }
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  line-height: 1.7;
+  color: var(--text);
+  background: var(--bg);
+  max-width: 860px;
+  margin: 0 auto;
+  padding: 2rem 1.5rem;
+}
+.note-header {
+  border-bottom: 2px solid var(--border);
+  padding-bottom: 1rem;
+  margin-bottom: 2rem;
+}
+.note-title {
+  font-size: 1.6rem;
+  font-weight: 700;
+  margin-bottom: 0.3rem;
+}
+.note-meta {
+  color: var(--muted);
+  font-size: 0.85rem;
+}
+.note-content {
+  font-size: 0.95rem;
+}
+.note-content h1 { font-size: 1.4rem; margin: 1.2rem 0 0.6rem; }
+.note-content h2 { font-size: 1.2rem; margin: 1rem 0 0.5rem; }
+.note-content h3 { font-size: 1.05rem; margin: 0.8rem 0 0.4rem; }
+.note-content p { margin: 0.5rem 0; }
+.note-content ul, .note-content ol { margin: 0.5rem 0 0.5rem 2rem; }
+.note-content li { margin: 0.2rem 0; }
+.note-content pre {
+  background: var(--code-bg);
+  padding: 1rem;
+  border-radius: 6px;
+  overflow-x: auto;
+  margin: 0.8rem 0;
+  font-size: 0.85rem;
+}
+.note-content code {
+  background: var(--code-bg);
+  padding: 0.1rem 0.3rem;
+  border-radius: 3px;
+  font-size: 0.88em;
+}
+.note-content pre code {
+  background: none;
+  padding: 0;
+}
+.note-content blockquote {
+  border-left: 3px solid var(--border);
+  padding-left: 1rem;
+  color: var(--muted);
+  margin: 0.8rem 0;
+}
+.note-content a { color: var(--link); }
+.note-content img {
+  max-width: 100%;
+  height: auto;
+  border-radius: 6px;
+  margin: 0.5rem 0;
+}
+.note-content table {
+  border-collapse: collapse;
+  width: 100%;
+  margin: 0.8rem 0;
+}
+.note-content th, .note-content td {
+  border: 1px solid var(--border);
+  padding: 0.5rem;
+}
+.note-content th { background: var(--code-bg); }
+.media-placeholder {
+  background: var(--code-bg);
+  padding: 1rem;
+  text-align: center;
+  color: var(--muted);
+  border-radius: 6px;
+  margin: 0.5rem 0;
+  font-size: 0.85rem;
+}
+.encrypt-placeholder {
+  background: #fff3cd;
+  padding: 0.5rem;
+  text-align: center;
+  color: #856404;
+  border-radius: 6px;
+  margin: 0.5rem 0;
+  font-size: 0.85rem;
+}
+.back-link {
+  display: inline-block;
+  margin-top: 2rem;
+  color: var(--link);
+  text-decoration: none;
+  font-size: 0.85rem;
+}
+</style>
+</head>
+<body>
+<div class="note-header">
+  <div class="note-title">linux chroot 命令 - sparkdev - 博客园</div>
+  <div class="note-meta">笔记本：Linux</div>
+</div>
+<div class="note-content">
+<div style="--en-clipped-content:article"><div style="font-size: 16px; display:block; min-width: 100%; position: relative;"> <div style="--olcb-folder-code-block-max-height:80vh;--cnb-code-bg:rgb(245, 245, 245);--cnb-code-font-size:12px;--cnb-code-color:rgb(68, 68, 68);"><div style="tab-size:4;color:rgb(0, 0, 0);background:rgb(238, 238, 238);font-family:&quot;PingFang SC&quot;, &quot;Microsoft YaHei&quot;, &quot;Helvetica Neue&quot;, Helvetica, Arial, sans-serif;text-size-adjust:none;font-size:14px;"><div style="background:url(https://www.cnblogs.com/skins/red_autumnal_leaves/images/bg1.png) 50% 0% no-repeat;min-width:unset;"><div style="text-align:left;min-width:unset;"><div style="text-overflow:ellipsis;overflow:hidden;word-break:break-all;"><div><div><div style="background:url(https://www.cnblogs.com/skins/red_autumnal_leaves/images/tp.png);text-overflow:ellipsis;overflow:hidden;word-break:break-all;"><div>
+            <h1 style="margin:0px;padding:0px;clear:both;padding-bottom:20px;border-bottom:1px solid rgb(221, 221, 221);padding-left:5px;font-weight:bold;margin-top:20px;float:left;line-height:1.5em;width:100%;font-size:100%;">
+                <a href="https://www.cnblogs.com/sparkdev/p/8556075.html" title="发布于 2018-03-15 10:32" style="margin:0px;padding:0px;text-decoration:none;background:url(https://www.cnblogs.com/skins/red_autumnal_leaves/images/titlebg.png) no-repeat;padding-left:50px;padding-bottom:10px;padding-top:2px;color:rgb(68, 68, 68);">
+    <span style="margin:0px;padding:0px;vertical-align:middle;">linux chroot 命令</span>
+    
+
+</a>
+
+            </h1>
+            <div style="margin:0px;padding:0px;clear:both;"></div>
+            <div style="margin:0px;color:rgb(0, 0, 0);padding:10px 20px 20px;line-height:1.5;">
+                <div style="margin:0px;padding:0px;margin-bottom:20px;word-break:break-word;font-size:14px;">
+<p style="padding:0px;margin:10px auto;text-indent:0px;"><span style="margin:0px;padding:0px;font-family:Microsoft YaHei;font-size:15px;">chroot，即 change root directory (更改 root 目录)。在 linux 系统中，系统默认的目录结构都是以 /，即以根 (root) 开始的。而在使用 chroot 之后，系统的目录结构将以指定的位置作为 / 位置。</span></p>
+<h1 style="padding:0px;line-height:1.5;font-size:28px;font-weight:bold;margin:10px 0px;"><span style="margin:0px;padding:0px;font-family:Microsoft YaHei;font-size:18pt;">基本语法</span></h1>
+<p style="padding:0px;margin:10px auto;text-indent:0px;"><strong style="margin:0px;padding:0px;"><span style="margin:0px;padding:0px;font-family:Microsoft YaHei;font-size:15px;">chroot NEWROOT [COMMAND [ARG]...]</span></strong></p>
+<p style="padding:0px;margin:10px auto;text-indent:0px;"><span style="margin:0px;padding:0px;font-family:Microsoft YaHei;font-size:15px;">具体用法请参考本文的 demo。</span></p>
+<h1 style="padding:0px;line-height:1.5;font-size:28px;font-weight:bold;margin:10px 0px;"><span style="margin:0px;padding:0px;font-family:Microsoft YaHei;font-size:18pt;">为什么要使用 chroot 命令</span></h1>
+<p style="padding:0px;margin:10px auto;text-indent:0px;"><strong style="margin:0px;padding:0px;"><span style="margin:0px;padding:0px;font-family:Microsoft YaHei;font-size:15px;">增加了系统的安全性，限制了用户的权力：</span></strong><br style="margin:0px;padding:0px;"/><span style="margin:0px;padding:0px;font-family:Microsoft YaHei;font-size:15px;">在经过 chroot 之后，在新根下将访问不到旧系统的根目录结构和文件，这样就增强了系统的安全性。一般会在用户登录前应用 chroot，把用户的访问能力控制在一定的范围之内。</span></p>
+<p style="padding:0px;margin:10px auto;text-indent:0px;"><strong style="margin:0px;padding:0px;"><span style="margin:0px;padding:0px;font-family:Microsoft YaHei;font-size:15px;">建立一个与原系统隔离的系统目录结构，方便用户的开发：</span></strong><br style="margin:0px;padding:0px;"/><span style="margin:0px;padding:0px;font-family:Microsoft YaHei;font-size:15px;">使用 chroot 后，系统读取的是新根下的目录和文件，这是一个与原系统根下文件不相关的目录结构。在这个新的环境中，可以用来测试软件的静态编译以及一些与系统不相关的独立开发。</span></p>
+<p style="padding:0px;margin:10px auto;text-indent:0px;"><strong style="margin:0px;padding:0px;"><span style="margin:0px;padding:0px;font-family:Microsoft YaHei;font-size:15px;">切换系统的根目录位置，引导 Linux 系统启动以及急救系统等：</span></strong><br style="margin:0px;padding:0px;"/><span style="margin:0px;padding:0px;font-family:Microsoft YaHei;font-size:15px;">chroot 的作用就是切换系统的根位置，而这个作用最为明显的是在系统初始引导磁盘的处理过程中使用，从初始 RAM 磁盘 (initrd) 切换系统的根位置并执行真正的 init，本文的最后一个 demo 会详细的介绍这种用法。</span></p>
+<h1 style="padding:0px;line-height:1.5;font-size:28px;font-weight:bold;margin:10px 0px;"><span style="margin:0px;padding:0px;font-family:Microsoft YaHei;font-size:18pt;">通过 chroot 运行 busybox 工具</span></h1>
+<p style="padding:0px;margin:10px auto;text-indent:0px;"><span style="margin:0px;padding:0px;font-family:Microsoft YaHei;font-size:15px;">busybox 包含了丰富的工具，我们可以把这些工具放置在一个目录下，然后通过 chroot 构造出一个 mini 系统。简单起见我们直接使用 docker 的 busybox 镜像打包的文件系统。先在当前目录下创建一个目录 rootfs：</span></p>
+<div style="background-color:rgb(245, 245, 245);border:1px solid rgb(204, 204, 204);overflow:auto;color:rgb(0, 0, 0);padding:5px;margin:5px 0px;font-family:&quot;Courier New&quot;;font-size:12px;">
+<pre style="transition-duration:0.2s;transition-property:background, font-size, border-color, border-radius, border-width, padding, margin, color;overflow:auto;margin:0px;padding:0px;font-family:&quot;Courier New&quot;, serif;font-size:12px;overflow-wrap:break-word;">$ <span style="margin:0px;padding:0px;font-family:&quot;Courier New&quot;, serif;font-size:inherit;line-height:1.5;color:rgba(0, 0, 255, 1);">mkdir</span> rootfs</pre>
+</div>
+<p style="padding:0px;margin:10px auto;text-indent:0px;"><span style="margin:0px;padding:0px;font-family:Microsoft YaHei;font-size:15px;">然后把 busybox 镜像中的文件释放到这个目录中：</span></p>
+<div style="background-color:rgb(245, 245, 245);border:1px solid rgb(204, 204, 204);overflow:auto;color:rgb(0, 0, 0);padding:5px;margin:5px 0px;font-family:&quot;Courier New&quot;;font-size:12px;">
+<pre style="transition-duration:0.2s;transition-property:background, font-size, border-color, border-radius, border-width, padding, margin, color;overflow:auto;margin:0px;padding:0px;font-family:&quot;Courier New&quot;, serif;font-size:12px;overflow-wrap:break-word;">$ (docker export $(docker create busybox) | <span style="margin:0px;padding:0px;font-family:&quot;Courier New&quot;, serif;font-size:inherit;line-height:1.5;color:rgba(0, 0, 255, 1);">tar</span> -C rootfs -xvf -)</pre>
+</div>
+<p style="padding:0px;margin:10px auto;text-indent:0px;"><span style="margin:0px;padding:0px;font-family:Microsoft YaHei;font-size:15px;">通过 ls 命令查看 rootfs 文件夹下的内容：</span></p>
+<div style="background-color:rgb(245, 245, 245);border:1px solid rgb(204, 204, 204);overflow:auto;color:rgb(0, 0, 0);padding:5px;margin:5px 0px;font-family:&quot;Courier New&quot;;font-size:12px;">
+<pre style="transition-duration:0.2s;transition-property:background, font-size, border-color, border-radius, border-width, padding, margin, color;overflow:auto;margin:0px;padding:0px;font-family:&quot;Courier New&quot;, serif;font-size:12px;overflow-wrap:break-word;">$ <span style="margin:0px;padding:0px;font-family:&quot;Courier New&quot;, serif;font-size:inherit;line-height:1.5;color:rgba(0, 0, 255, 1);">ls</span> rootfs</pre>
+</div>
+<p style="padding:0px;margin:10px auto;text-indent:0px;"><span style="margin:0px;padding:0px;font-family:Microsoft YaHei;font-size:15px;"><div class="media-placeholder">[图片/附件]</div></en-media></span></p>
+<p style="padding:0px;margin:10px auto;text-indent:0px;"><span style="margin:0px;padding:0px;font-family:Microsoft YaHei;font-size:15px;">万事俱备，让我们开始吧！</span></p>
+<p style="padding:0px;margin:10px auto;text-indent:0px;"><strong style="margin:0px;padding:0px;"><span style="margin:0px;padding:0px;font-family:Microsoft YaHei;font-size:15px;">执行 chroot 后的 ls 命令</span></strong></p>
+<div style="background-color:rgb(245, 245, 245);border:1px solid rgb(204, 204, 204);overflow:auto;color:rgb(0, 0, 0);padding:5px;margin:5px 0px;font-family:&quot;Courier New&quot;;font-size:12px;">
+<pre style="transition-duration:0.2s;transition-property:background, font-size, border-color, border-radius, border-width, padding, margin, color;overflow:auto;margin:0px;padding:0px;font-family:&quot;Courier New&quot;, serif;font-size:12px;overflow-wrap:break-word;">$ <span style="margin:0px;padding:0px;font-family:&quot;Courier New&quot;, serif;font-size:inherit;line-height:1.5;color:rgba(0, 0, 255, 1);">sudo</span> <span style="margin:0px;padding:0px;font-family:&quot;Courier New&quot;, serif;font-size:inherit;line-height:1.5;color:rgba(0, 0, 255, 1);">chroot</span> rootfs /bin/<span style="margin:0px;padding:0px;font-family:&quot;Courier New&quot;, serif;font-size:inherit;line-height:1.5;color:rgba(0, 0, 255, 1);">ls</span></pre>
+</div>
+<p style="padding:0px;margin:10px auto;text-indent:0px;"><span style="margin:0px;padding:0px;font-family:Microsoft YaHei;font-size:15px;"><div class="media-placeholder">[图片/附件]</div></en-media></span></p>
+<p style="padding:0px;margin:10px auto;text-indent:0px;"><span style="margin:0px;padding:0px;font-family:Microsoft YaHei;font-size:15px;">虽然输出结果与刚才执行的 ls rootfs 命令形同，但是这次运行的命令却是 rootfs/bin/ls。</span></p>
+<p style="padding:0px;margin:10px auto;text-indent:0px;"><strong style="margin:0px;padding:0px;"><span style="margin:0px;padding:0px;font-family:Microsoft YaHei;font-size:15px;">运行 chroot 后的 pwd 命令</span></strong></p>
+<div style="background-color:rgb(245, 245, 245);border:1px solid rgb(204, 204, 204);overflow:auto;color:rgb(0, 0, 0);padding:5px;margin:5px 0px;font-family:&quot;Courier New&quot;;font-size:12px;">
+<pre style="transition-duration:0.2s;transition-property:background, font-size, border-color, border-radius, border-width, padding, margin, color;overflow:auto;margin:0px;padding:0px;font-family:&quot;Courier New&quot;, serif;font-size:12px;overflow-wrap:break-word;">$ <span style="margin:0px;padding:0px;font-family:&quot;Courier New&quot;, serif;font-size:inherit;line-height:1.5;color:rgba(0, 0, 255, 1);">sudo</span> <span style="margin:0px;padding:0px;font-family:&quot;Courier New&quot;, serif;font-size:inherit;line-height:1.5;color:rgba(0, 0, 255, 1);">chroot</span> rootfs /bin/<span style="margin:0px;padding:0px;font-family:&quot;Courier New&quot;, serif;font-size:inherit;line-height:1.5;color:rgba(0, 0, 255, 1);">pwd</span></pre>
+</div>
+<p style="padding:0px;margin:10px auto;text-indent:0px;"><span style="margin:0px;padding:0px;font-family:Microsoft YaHei;font-size:15px;"><div class="media-placeholder">[图片/附件]</div></en-media></span></p>
+<p style="padding:0px;margin:10px auto;text-indent:0px;"><span style="margin:0px;padding:0px;font-family:Microsoft YaHei;font-size:15px;">哈，pwd 命令真把 rootfs 目录当根目录了！</span></p>
+<p style="padding:0px;margin:10px auto;text-indent:0px;"><strong style="margin:0px;padding:0px;"><span style="margin:0px;padding:0px;font-family:Microsoft YaHei;font-size:15px;">不带命令执行 chroot</span></strong></p>
+<div style="background-color:rgb(245, 245, 245);border:1px solid rgb(204, 204, 204);overflow:auto;color:rgb(0, 0, 0);padding:5px;margin:5px 0px;font-family:&quot;Courier New&quot;;font-size:12px;">
+<pre style="transition-duration:0.2s;transition-property:background, font-size, border-color, border-radius, border-width, padding, margin, color;overflow:auto;margin:0px;padding:0px;font-family:&quot;Courier New&quot;, serif;font-size:12px;overflow-wrap:break-word;">$ <span style="margin:0px;padding:0px;font-family:&quot;Courier New&quot;, serif;font-size:inherit;line-height:1.5;color:rgba(0, 0, 255, 1);">sudo</span> <span style="margin:0px;padding:0px;font-family:&quot;Courier New&quot;, serif;font-size:inherit;line-height:1.5;color:rgba(0, 0, 255, 1);">chroot</span> rootfs</pre>
+</div>
+<p style="padding:0px;margin:10px auto;text-indent:0px;"><span style="margin:0px;padding:0px;font-family:Microsoft YaHei;font-size:15px;"><div class="media-placeholder">[图片/附件]</div></en-media></span></p>
+<p style="padding:0px;margin:10px auto;text-indent:0px;"><span style="margin:0px;padding:0px;font-family:Microsoft YaHei;font-size:15px;">这次出错了，因为找不到 /bin/bash。我们知道 busybox 中是不包含 bash 的，但是 chroot 命令为什么会找 bash 命令呢？ 原来，如果不给 chroot 指定执行的命令，默认它会执行 '${SHELL} -i'，而我的系统中 ${SHELL} 为 /bin/bash。</span><br style="margin:0px;padding:0px;"/><span style="margin:0px;padding:0px;font-family:Microsoft YaHei;font-size:15px;">既然 busybox 中没有 bash，我们只好指定 /bin/sh 来执行 shell 了。</span></p>
+<div style="background-color:rgb(245, 245, 245);border:1px solid rgb(204, 204, 204);overflow:auto;color:rgb(0, 0, 0);padding:5px;margin:5px 0px;font-family:&quot;Courier New&quot;;font-size:12px;">
+<pre style="transition-duration:0.2s;transition-property:background, font-size, border-color, border-radius, border-width, padding, margin, color;overflow:auto;margin:0px;padding:0px;font-family:&quot;Courier New&quot;, serif;font-size:12px;overflow-wrap:break-word;">$ <span style="margin:0px;padding:0px;font-family:&quot;Courier New&quot;, serif;font-size:inherit;line-height:1.5;color:rgba(0, 0, 255, 1);">sudo</span> <span style="margin:0px;padding:0px;font-family:&quot;Courier New&quot;, serif;font-size:inherit;line-height:1.5;color:rgba(0, 0, 255, 1);">chroot</span> rootfs /bin/<span style="margin:0px;padding:0px;font-family:&quot;Courier New&quot;, serif;font-size:inherit;line-height:1.5;color:rgba(0, 0, 255, 1);">sh</span></pre>
+</div>
+<p style="padding:0px;margin:10px auto;text-indent:0px;"><span style="margin:0px;padding:0px;font-family:Microsoft YaHei;font-size:15px;"><div class="media-placeholder">[图片/附件]</div></en-media></span></p>
+<p style="padding:0px;margin:10px auto;text-indent:0px;"><span style="margin:0px;padding:0px;font-family:Microsoft YaHei;font-size:15px;">运行 sh 是没有问题的，并且我们打印出了当前进程的 PID。</span></p>
+<h1 style="padding:0px;line-height:1.5;font-size:28px;font-weight:bold;margin:10px 0px;"><span style="margin:0px;padding:0px;font-family:Microsoft YaHei;font-size:18pt;">检查程序是否运行在 chroot 环境下</span></h1>
+<p style="padding:0px;margin:10px auto;text-indent:0px;"><span style="margin:0px;padding:0px;font-family:Microsoft YaHei;font-size:15px;">虽然我们做了好几个实验，但是肯定会有朋友心存疑问，怎么能证明我们运行的命令就是在 chroot 目录后的路径中呢？</span><br style="margin:0px;padding:0px;"/><span style="margin:0px;padding:0px;font-family:Microsoft YaHei;font-size:15px;">其实，我们可以通过 /proc 目录下的文件检查进程的中的根目录，比如我们可以通过下面的代码检查上面运行的 /bin/sh 命令的根目录(请在另外一个 shell 中执行)：</span></p>
+<div style="background-color:rgb(245, 245, 245);border:1px solid rgb(204, 204, 204);overflow:auto;color:rgb(0, 0, 0);padding:5px;margin:5px 0px;font-family:&quot;Courier New&quot;;font-size:12px;">
+<pre style="transition-duration:0.2s;transition-property:background, font-size, border-color, border-radius, border-width, padding, margin, color;overflow:auto;margin:0px;padding:0px;font-family:&quot;Courier New&quot;, serif;font-size:12px;overflow-wrap:break-word;">$ pid=$(<span style="margin:0px;padding:0px;font-family:&quot;Courier New&quot;, serif;font-size:inherit;line-height:1.5;color:rgba(0, 0, 255, 1);">pidof</span> -s <span style="margin:0px;padding:0px;font-family:&quot;Courier New&quot;, serif;font-size:inherit;line-height:1.5;color:rgba(0, 0, 255, 1);">sh</span><span style="margin:0px;padding:0px;font-family:&quot;Courier New&quot;, serif;font-size:inherit;line-height:1.5;color:rgba(0, 0, 0, 1);">)
+$ </span><span style="margin:0px;padding:0px;font-family:&quot;Courier New&quot;, serif;font-size:inherit;line-height:1.5;color:rgba(0, 0, 255, 1);">sudo</span> <span style="margin:0px;padding:0px;font-family:&quot;Courier New&quot;, serif;font-size:inherit;line-height:1.5;color:rgba(0, 0, 255, 1);">ls</span> -<span style="margin:0px;padding:0px;font-family:&quot;Courier New&quot;, serif;font-size:inherit;line-height:1.5;color:rgba(0, 0, 255, 1);">ld</span> /proc/$pid/root</pre>
+</div>
+<p style="padding:0px;margin:10px auto;text-indent:0px;"><span style="margin:0px;padding:0px;font-family:Microsoft YaHei;font-size:15px;"><div class="media-placeholder">[图片/附件]</div></en-media></span></p>
+<p style="padding:0px;margin:10px auto;text-indent:0px;"><span style="margin:0px;padding:0px;font-family:Microsoft YaHei;font-size:15px;">输出中的内容明确的指出 PID 为 46644 的进程的根目录被映射到了 /tmp/rootfs 目录。</span></p>
+<h1 style="padding:0px;line-height:1.5;font-size:28px;font-weight:bold;margin:10px 0px;"><span style="margin:0px;padding:0px;font-family:Microsoft YaHei;font-size:18pt;">通过代码理解 chroot 命令</span></h1>
+<p style="padding:0px;margin:10px auto;text-indent:0px;"><span style="margin:0px;padding:0px;font-family:Microsoft YaHei;font-size:15px;">下面我们尝试自己实现一个 chroot 程序，代码中涉及到两个函数，分别是 chroot() 函数和 chdir() 函数，其实真正的 chroot 命令也是通过调用它们实现的：</span></p>
+<div style="background-color:rgb(245, 245, 245);border:1px solid rgb(204, 204, 204);overflow:auto;color:rgb(0, 0, 0);padding:5px;margin:5px 0px;font-family:&quot;Courier New&quot;;font-size:12px;"><div style="margin:0px;padding:0px;background-color:rgb(245, 245, 245);margin-top:5px;"><span style="margin:0px;padding:0px;font-family:&quot;Courier New&quot;, serif;font-size:inherit;line-height:1.5;padding-right:5px;"><a style="margin:0px;padding:0px;color:rgb(0, 0, 0);text-decoration:underline;background-color:rgb(245, 245, 245);border:none;"><div class="media-placeholder">[图片/附件]</div></en-media></a></span></div>
+<pre style="transition-duration:0.2s;transition-property:background, font-size, border-color, border-radius, border-width, padding, margin, color;overflow:auto;margin:0px;padding:0px;font-family:&quot;Courier New&quot;, serif;font-size:12px;overflow-wrap:break-word;">#include &lt;stdio.h&gt;<span style="margin:0px;padding:0px;font-family:&quot;Courier New&quot;, serif;font-size:inherit;line-height:1.5;color:rgba(0, 0, 0, 1);">
+#include </span>&lt;unistd.h&gt;<span style="margin:0px;padding:0px;font-family:&quot;Courier New&quot;, serif;font-size:inherit;line-height:1.5;color:rgba(0, 0, 0, 1);">
+#include </span>&lt;stdlib.h&gt;
+ 
+<span style="margin:0px;padding:0px;font-family:&quot;Courier New&quot;, serif;font-size:inherit;line-height:1.5;color:rgba(0, 0, 255, 1);">int</span> main(<span style="margin:0px;padding:0px;font-family:&quot;Courier New&quot;, serif;font-size:inherit;line-height:1.5;color:rgba(0, 0, 255, 1);">int</span> argc, <span style="margin:0px;padding:0px;font-family:&quot;Courier New&quot;, serif;font-size:inherit;line-height:1.5;color:rgba(0, 0, 255, 1);">char</span> *<span style="margin:0px;padding:0px;font-family:&quot;Courier New&quot;, serif;font-size:inherit;line-height:1.5;color:rgba(0, 0, 0, 1);">argv[])
+{
+    </span><span style="margin:0px;padding:0px;font-family:&quot;Courier New&quot;, serif;font-size:inherit;line-height:1.5;color:rgba(0, 0, 255, 1);">if</span>(argc&lt;<span style="margin:0px;padding:0px;font-family:&quot;Courier New&quot;, serif;font-size:inherit;line-height:1.5;color:rgba(128, 0, 128, 1);">2</span><span style="margin:0px;padding:0px;font-family:&quot;Courier New&quot;, serif;font-size:inherit;line-height:1.5;color:rgba(0, 0, 0, 1);">){
+        printf(</span><span style="margin:0px;padding:0px;font-family:&quot;Courier New&quot;, serif;font-size:inherit;line-height:1.5;color:rgba(128, 0, 0, 1);">"</span><span style="margin:0px;padding:0px;font-family:&quot;Courier New&quot;, serif;font-size:inherit;line-height:1.5;color:rgba(128, 0, 0, 1);">Usage: chroot NEWROOT [COMMAND...] \n</span><span style="margin:0px;padding:0px;font-family:&quot;Courier New&quot;, serif;font-size:inherit;line-height:1.5;color:rgba(128, 0, 0, 1);">"</span><span style="margin:0px;padding:0px;font-family:&quot;Courier New&quot;, serif;font-size:inherit;line-height:1.5;color:rgba(0, 0, 0, 1);">);
+        return </span><span style="margin:0px;padding:0px;font-family:&quot;Courier New&quot;, serif;font-size:inherit;line-height:1.5;color:rgba(128, 0, 128, 1);">1</span><span style="margin:0px;padding:0px;font-family:&quot;Courier New&quot;, serif;font-size:inherit;line-height:1.5;color:rgba(0, 0, 0, 1);">;
+    }
+
+    </span><span style="margin:0px;padding:0px;font-family:&quot;Courier New&quot;, serif;font-size:inherit;line-height:1.5;color:rgba(0, 0, 255, 1);">if</span>(<span style="margin:0px;padding:0px;font-family:&quot;Courier New&quot;, serif;font-size:inherit;line-height:1.5;color:rgba(0, 0, 255, 1);">chroot</span>(argv[<span style="margin:0px;padding:0px;font-family:&quot;Courier New&quot;, serif;font-size:inherit;line-height:1.5;color:rgba(128, 0, 128, 1);">1</span><span style="margin:0px;padding:0px;font-family:&quot;Courier New&quot;, serif;font-size:inherit;line-height:1.5;color:rgba(0, 0, 0, 1);">])) {
+        perror(</span><span style="margin:0px;padding:0px;font-family:&quot;Courier New&quot;, serif;font-size:inherit;line-height:1.5;color:rgba(128, 0, 0, 1);">"</span><span style="margin:0px;padding:0px;font-family:&quot;Courier New&quot;, serif;font-size:inherit;line-height:1.5;color:rgba(128, 0, 0, 1);">chroot</span><span style="margin:0px;padding:0px;font-family:&quot;Courier New&quot;, serif;font-size:inherit;line-height:1.5;color:rgba(128, 0, 0, 1);">"</span><span style="margin:0px;padding:0px;font-family:&quot;Courier New&quot;, serif;font-size:inherit;line-height:1.5;color:rgba(0, 0, 0, 1);">);
+        return </span><span style="margin:0px;padding:0px;font-family:&quot;Courier New&quot;, serif;font-size:inherit;line-height:1.5;color:rgba(128, 0, 128, 1);">1</span><span style="margin:0px;padding:0px;font-family:&quot;Courier New&quot;, serif;font-size:inherit;line-height:1.5;color:rgba(0, 0, 0, 1);">;
+    }
+ 
+    </span><span style="margin:0px;padding:0px;font-family:&quot;Courier New&quot;, serif;font-size:inherit;line-height:1.5;color:rgba(0, 0, 255, 1);">if</span>(chdir(<span style="margin:0px;padding:0px;font-family:&quot;Courier New&quot;, serif;font-size:inherit;line-height:1.5;color:rgba(128, 0, 0, 1);">"</span><span style="margin:0px;padding:0px;font-family:&quot;Courier New&quot;, serif;font-size:inherit;line-height:1.5;color:rgba(128, 0, 0, 1);">/</span><span style="margin:0px;padding:0px;font-family:&quot;Courier New&quot;, serif;font-size:inherit;line-height:1.5;color:rgba(128, 0, 0, 1);">"</span><span style="margin:0px;padding:0px;font-family:&quot;Courier New&quot;, serif;font-size:inherit;line-height:1.5;color:rgba(0, 0, 0, 1);">)) {
+        perror(</span><span style="margin:0px;padding:0px;font-family:&quot;Courier New&quot;, serif;font-size:inherit;line-height:1.5;color:rgba(128, 0, 0, 1);">"</span><span style="margin:0px;padding:0px;font-family:&quot;Courier New&quot;, serif;font-size:inherit;line-height:1.5;color:rgba(128, 0, 0, 1);">chdir</span><span style="margin:0px;padding:0px;font-family:&quot;Courier New&quot;, serif;font-size:inherit;line-height:1.5;color:rgba(128, 0, 0, 1);">"</span><span style="margin:0px;padding:0px;font-family:&quot;Courier New&quot;, serif;font-size:inherit;line-height:1.5;color:rgba(0, 0, 0, 1);">);
+        return </span><span style="margin:0px;padding:0px;font-family:&quot;Courier New&quot;, serif;font-size:inherit;line-height:1.5;color:rgba(128, 0, 128, 1);">1</span><span style="margin:0px;padding:0px;font-family:&quot;Courier New&quot;, serif;font-size:inherit;line-height:1.5;color:rgba(0, 0, 0, 1);">;
+    }
+ 
+    </span><span style="margin:0px;padding:0px;font-family:&quot;Courier New&quot;, serif;font-size:inherit;line-height:1.5;color:rgba(0, 0, 255, 1);">if</span>(argc == <span style="margin:0px;padding:0px;font-family:&quot;Courier New&quot;, serif;font-size:inherit;line-height:1.5;color:rgba(128, 0, 128, 1);">2</span><span style="margin:0px;padding:0px;font-family:&quot;Courier New&quot;, serif;font-size:inherit;line-height:1.5;color:rgba(0, 0, 0, 1);">) {
+        </span><span style="margin:0px;padding:0px;font-family:&quot;Courier New&quot;, serif;font-size:inherit;line-height:1.5;color:rgba(0, 128, 0, 1);">//</span><span style="margin:0px;padding:0px;font-family:&quot;Courier New&quot;, serif;font-size:inherit;line-height:1.5;color:rgba(0, 128, 0, 1);"> hardcode /bin/sh for my busybox tools.</span>
+        argv[<span style="margin:0px;padding:0px;font-family:&quot;Courier New&quot;, serif;font-size:inherit;line-height:1.5;color:rgba(128, 0, 128, 1);">0</span>] = (<span style="margin:0px;padding:0px;font-family:&quot;Courier New&quot;, serif;font-size:inherit;line-height:1.5;color:rgba(0, 0, 255, 1);">char</span> *)<span style="margin:0px;padding:0px;font-family:&quot;Courier New&quot;, serif;font-size:inherit;line-height:1.5;color:rgba(128, 0, 0, 1);">"</span><span style="margin:0px;padding:0px;font-family:&quot;Courier New&quot;, serif;font-size:inherit;line-height:1.5;color:rgba(128, 0, 0, 1);">/bin/sh</span><span style="margin:0px;padding:0px;font-family:&quot;Courier New&quot;, serif;font-size:inherit;line-height:1.5;color:rgba(128, 0, 0, 1);">"</span><span style="margin:0px;padding:0px;font-family:&quot;Courier New&quot;, serif;font-size:inherit;line-height:1.5;color:rgba(0, 0, 0, 1);">;
+ 
+        argv[</span><span style="margin:0px;padding:0px;font-family:&quot;Courier New&quot;, serif;font-size:inherit;line-height:1.5;color:rgba(128, 0, 128, 1);">1</span>] = (<span style="margin:0px;padding:0px;font-family:&quot;Courier New&quot;, serif;font-size:inherit;line-height:1.5;color:rgba(0, 0, 255, 1);">char</span> *) <span style="margin:0px;padding:0px;font-family:&quot;Courier New&quot;, serif;font-size:inherit;line-height:1.5;color:rgba(128, 0, 0, 1);">"</span><span style="margin:0px;padding:0px;font-family:&quot;Courier New&quot;, serif;font-size:inherit;line-height:1.5;color:rgba(128, 0, 0, 1);">-i</span><span style="margin:0px;padding:0px;font-family:&quot;Courier New&quot;, serif;font-size:inherit;line-height:1.5;color:rgba(128, 0, 0, 1);">"</span><span style="margin:0px;padding:0px;font-family:&quot;Courier New&quot;, serif;font-size:inherit;line-height:1.5;color:rgba(0, 0, 0, 1);">;
+        argv[</span><span style="margin:0px;padding:0px;font-family:&quot;Courier New&quot;, serif;font-size:inherit;line-height:1.5;color:rgba(128, 0, 128, 1);">2</span>] =<span style="margin:0px;padding:0px;font-family:&quot;Courier New&quot;, serif;font-size:inherit;line-height:1.5;color:rgba(0, 0, 0, 1);"> NULL;
+    } </span><span style="margin:0px;padding:0px;font-family:&quot;Courier New&quot;, serif;font-size:inherit;line-height:1.5;color:rgba(0, 0, 255, 1);">else</span><span style="margin:0px;padding:0px;font-family:&quot;Courier New&quot;, serif;font-size:inherit;line-height:1.5;color:rgba(0, 0, 0, 1);"> {
+        argv </span>+= <span style="margin:0px;padding:0px;font-family:&quot;Courier New&quot;, serif;font-size:inherit;line-height:1.5;color:rgba(128, 0, 128, 1);">2</span><span style="margin:0px;padding:0px;font-family:&quot;Courier New&quot;, serif;font-size:inherit;line-height:1.5;color:rgba(0, 0, 0, 1);">;
+    }
+ 
+    execvp (argv[</span><span style="margin:0px;padding:0px;font-family:&quot;Courier New&quot;, serif;font-size:inherit;line-height:1.5;color:rgba(128, 0, 128, 1);">0</span><span style="margin:0px;padding:0px;font-family:&quot;Courier New&quot;, serif;font-size:inherit;line-height:1.5;color:rgba(0, 0, 0, 1);">], argv);
+    printf(</span><span style="margin:0px;padding:0px;font-family:&quot;Courier New&quot;, serif;font-size:inherit;line-height:1.5;color:rgba(128, 0, 0, 1);">"</span><span style="margin:0px;padding:0px;font-family:&quot;Courier New&quot;, serif;font-size:inherit;line-height:1.5;color:rgba(128, 0, 0, 1);">chroot: cannot run command `%s`\n</span><span style="margin:0px;padding:0px;font-family:&quot;Courier New&quot;, serif;font-size:inherit;line-height:1.5;color:rgba(128, 0, 0, 1);">"</span>, *<span style="margin:0px;padding:0px;font-family:&quot;Courier New&quot;, serif;font-size:inherit;line-height:1.5;color:rgba(0, 0, 0, 1);">argv);
+ 
+    return </span><span style="margin:0px;padding:0px;font-family:&quot;Courier New&quot;, serif;font-size:inherit;line-height:1.5;color:rgba(128, 0, 128, 1);">0</span><span style="margin:0px;padding:0px;font-family:&quot;Courier New&quot;, serif;font-size:inherit;line-height:1.5;color:rgba(0, 0, 0, 1);">;
+}</span></pre>
+<div style="margin:0px;padding:0px;background-color:rgb(245, 245, 245);margin-top:5px;"><span style="margin:0px;padding:0px;font-family:&quot;Courier New&quot;, serif;font-size:inherit;line-height:1.5;padding-right:5px;"><a style="margin:0px;padding:0px;color:rgb(0, 0, 0);text-decoration:underline;background-color:rgb(245, 245, 245);border:none;"><div class="media-placeholder">[图片/附件]</div></en-media></a></span></div></div>
+<p style="padding:0px;margin:10px auto;text-indent:0px;"><span style="margin:0px;padding:0px;font-family:Microsoft YaHei;font-size:15px;">把上面的代码保存到文件 mychroot.c 文件中，并执行下面的命令进行编译：</span></p>
+<div style="background-color:rgb(245, 245, 245);border:1px solid rgb(204, 204, 204);overflow:auto;color:rgb(0, 0, 0);padding:5px;margin:5px 0px;font-family:&quot;Courier New&quot;;font-size:12px;">
+<pre style="transition-duration:0.2s;transition-property:background, font-size, border-color, border-radius, border-width, padding, margin, color;overflow:auto;margin:0px;padding:0px;font-family:&quot;Courier New&quot;, serif;font-size:12px;overflow-wrap:break-word;">$ <span style="margin:0px;padding:0px;font-family:&quot;Courier New&quot;, serif;font-size:inherit;line-height:1.5;color:rgba(0, 0, 255, 1);">gcc</span> -Wall mychroot.c -o mychroot</pre>
+</div>
+<p style="padding:0px;margin:10px auto;text-indent:0px;"><span style="margin:0px;padding:0px;font-family:Microsoft YaHei;font-size:15px;">mychroot 的用法和 chroot 基本相同：</span></p>
+<div style="background-color:rgb(245, 245, 245);border:1px solid rgb(204, 204, 204);overflow:auto;color:rgb(0, 0, 0);padding:5px;margin:5px 0px;font-family:&quot;Courier New&quot;;font-size:12px;">
+<pre style="transition-duration:0.2s;transition-property:background, font-size, border-color, border-radius, border-width, padding, margin, color;overflow:auto;margin:0px;padding:0px;font-family:&quot;Courier New&quot;, serif;font-size:12px;overflow-wrap:break-word;">$ <span style="margin:0px;padding:0px;font-family:&quot;Courier New&quot;, serif;font-size:inherit;line-height:1.5;color:rgba(0, 0, 255, 1);">sudo</span> ./mychroot ./rootfs</pre>
+</div>
+<p style="padding:0px;margin:10px auto;text-indent:0px;"><span style="margin:0px;padding:0px;font-family:Microsoft YaHei;font-size:15px;"><div class="media-placeholder">[图片/附件]</div></en-media></span></p>
+<p style="padding:0px;margin:10px auto;text-indent:0px;"><span style="margin:0px;padding:0px;font-family:Microsoft YaHei;font-size:15px;">特别之处是我们的 mychroot 在没有传递命令的情况下执行了 /bin/sh，原因当然是为了支持我们的 busybox 工具集，笔者在代码中 hardcode 了默认的 shell：</span></p>
+<div style="background-color:rgb(245, 245, 245);border:1px solid rgb(204, 204, 204);overflow:auto;color:rgb(0, 0, 0);padding:5px;margin:5px 0px;font-family:&quot;Courier New&quot;;font-size:12px;">
+<pre style="transition-duration:0.2s;transition-property:background, font-size, border-color, border-radius, border-width, padding, margin, color;overflow:auto;margin:0px;padding:0px;font-family:&quot;Courier New&quot;, serif;font-size:12px;overflow-wrap:break-word;">argv[<span style="margin:0px;padding:0px;font-family:&quot;Courier New&quot;, serif;font-size:inherit;line-height:1.5;color:rgba(128, 0, 128, 1);">0</span>] = (<span style="margin:0px;padding:0px;font-family:&quot;Courier New&quot;, serif;font-size:inherit;line-height:1.5;color:rgba(0, 0, 255, 1);">char</span> *)<span style="margin:0px;padding:0px;font-family:&quot;Courier New&quot;, serif;font-size:inherit;line-height:1.5;color:rgba(128, 0, 0, 1);">"</span><span style="margin:0px;padding:0px;font-family:&quot;Courier New&quot;, serif;font-size:inherit;line-height:1.5;color:rgba(128, 0, 0, 1);">/bin/sh</span><span style="margin:0px;padding:0px;font-family:&quot;Courier New&quot;, serif;font-size:inherit;line-height:1.5;color:rgba(128, 0, 0, 1);">"</span>;</pre>
+</div>
+<p style="padding:0px;margin:10px auto;text-indent:0px;"><span style="margin:0px;padding:0px;font-family:Microsoft YaHei;font-size:15px;">从代码中我们也可以看到，实现 chroot 命令的核心逻辑其实并不复杂。</span></p>
+<h1 style="padding:0px;line-height:1.5;font-size:28px;font-weight:bold;margin:10px 0px;"><span style="margin:0px;padding:0px;font-family:Microsoft YaHei;font-size:18pt;">实例：通过 chroot 重新设置 root 密码</span></h1>
+<p style="padding:0px;margin:10px auto;text-indent:0px;"><span style="margin:0px;padding:0px;font-family:Microsoft YaHei;font-size:15px;">忘记了 root 密码该怎么办？接下来的 demo 将演示如何通过 chroot 命令重新设置 centos7 中被忘记了的 root 密码。</span><br style="margin:0px;padding:0px;"/><span style="margin:0px;padding:0px;font-family:Microsoft YaHei;font-size:15px;">systemd 的管理机制中，rescure 模式和 emeryency 模式是无法直接取得 root 权限的，需要使用 root 密码才能进入 rescure 和 emeryency 环境。所以我们需要通过其他方式来设置 root 密码。</span><span style="margin:0px;padding:0px;font-family:Microsoft YaHei;font-size:15px;">我们可以为内核的启动指定 "rd.break" 参数，从而让系统在启动的早期停下来，此时我们可以通过使用 root 权限并结合 chroot 命令完成设置 root 密码的操作。下面我们一起来看具体的操作过程。</span></p>
+<p style="padding:0px;margin:10px auto;text-indent:0px;"><strong style="margin:0px;padding:0px;"><span style="margin:0px;padding:0px;font-family:Microsoft YaHei;font-size:15px;">在系统启动过程中进入开机菜单时按下字母键 e 进程开机菜单的编辑模式：</span></strong></p>
+<p style="padding:0px;margin:10px auto;text-indent:0px;"><span style="margin:0px;padding:0px;font-family:Microsoft YaHei;font-size:15px;"><div class="media-placeholder">[图片/附件]</div></en-media></span></p>
+<p style="padding:0px;margin:10px auto;text-indent:0px;"><strong style="margin:0px;padding:0px;"><span style="margin:0px;padding:0px;font-family:Microsoft YaHei;font-size:15px;">这就是系统的开机菜单，按下 e 后进入编辑界面：</span></strong></p>
+<p style="padding:0px;margin:10px auto;text-indent:0px;"><span style="margin:0px;padding:0px;font-family:Microsoft YaHei;font-size:15px;"><div class="media-placeholder">[图片/附件]</div></en-media></span></p>
+<p style="padding:0px;margin:10px auto;text-indent:0px;"><span style="margin:0px;padding:0px;font-family:Microsoft YaHei;font-size:15px;"><strong style="margin:0px;padding:0px;">找到以 "linux16 /vmlinuz-" 开头的行。</strong>如果默认没有看到该行，需要按向下键把它滚动出来。</span><br style="margin:0px;padding:0px;"/><span style="margin:0px;padding:0px;font-family:Microsoft YaHei;font-size:15px;"><strong style="margin:0px;padding:0px;">然后定位到该行结尾处，输入一个空格和字符串 "rd.break"</strong>，如下图所示：</span></p>
+<p style="padding:0px;margin:10px auto;text-indent:0px;"><span style="margin:0px;padding:0px;font-family:Microsoft YaHei;font-size:15px;"><div class="media-placeholder">[图片/附件]</div></en-media></span></p>
+<p style="padding:0px;margin:10px auto;text-indent:0px;"><span style="margin:0px;padding:0px;font-family:Microsoft YaHei;font-size:15px;"><strong style="margin:0px;padding:0px;">接着按下 ctrl + x 以该设置继续启动，启动过程中操作系统会停下来</strong>，这是系统启动过程中的一个非常早的时间点：</span></p>
+<p style="padding:0px;margin:10px auto;text-indent:0px;"><span style="margin:0px;padding:0px;font-family:Microsoft YaHei;font-size:15px;"><div class="media-placeholder">[图片/附件]</div></en-media></span></p>
+<p style="padding:0px;margin:10px auto;text-indent:0px;"><span style="margin:0px;padding:0px;font-family:Microsoft YaHei;font-size:15px;">所以系统的根目录还挂载在 RAM disk 上(就是内存中的一个文件系统)，我们可以通过 mount 命令检查系统当前挂载的文件系统，下面是我们比较关心的两条：</span></p>
+<p style="padding:0px;margin:10px auto;text-indent:0px;"><span style="margin:0px;padding:0px;font-family:Microsoft YaHei;font-size:15px;"><div class="media-placeholder">[图片/附件]</div></en-media></span></p>
+<p style="padding:0px;margin:10px auto;text-indent:0px;"><span style="margin:0px;padding:0px;font-family:Microsoft YaHei;font-size:15px;">上图中 mount 命令输出的第一行说明此时的根目录在一个 RAM disk 中, 即 rootfs。</span><br style="margin:0px;padding:0px;"/><span style="margin:0px;padding:0px;font-family:Microsoft YaHei;font-size:15px;">图中输出的第二行说明我们的文件系统此时被挂载到了 /sysroot 目录，并且是只读的模式：</span></p>
+<div style="background-color:rgb(245, 245, 245);border:1px solid rgb(204, 204, 204);overflow:auto;color:rgb(0, 0, 0);padding:5px;margin:5px 0px;font-family:&quot;Courier New&quot;;font-size:12px;">
+<pre style="transition-duration:0.2s;transition-property:background, font-size, border-color, border-radius, border-width, padding, margin, color;overflow:auto;margin:0px;padding:0px;font-family:&quot;Courier New&quot;, serif;font-size:12px;overflow-wrap:break-word;">/dev/mapper/centos-root on /sysroot type xfs (ro,relatime,attr2,inode64,noquota)</pre>
+</div>
+<p style="padding:0px;margin:10px auto;text-indent:0px;"><span style="margin:0px;padding:0px;font-family:Microsoft YaHei;font-size:15px;">而在我们正常登陆系统的情况下，系统根目录的挂载情况如下：</span></p>
+<div style="background-color:rgb(245, 245, 245);border:1px solid rgb(204, 204, 204);overflow:auto;color:rgb(0, 0, 0);padding:5px;margin:5px 0px;font-family:&quot;Courier New&quot;;font-size:12px;">
+<pre style="transition-duration:0.2s;transition-property:background, font-size, border-color, border-radius, border-width, padding, margin, color;overflow:auto;margin:0px;padding:0px;font-family:&quot;Courier New&quot;, serif;font-size:12px;overflow-wrap:break-word;">/dev/mapper/centos-root on / type xfs (rw,relatime,seclabel,attr2,inode64,noquota)</pre>
+</div>
+<p style="padding:0px;margin:10px auto;text-indent:0px;"><span style="margin:0px;padding:0px;font-family:Microsoft YaHei;font-size:15px;">该时间点的最大优势是我们具有 root 权限！所以让我们开始设置新的 root 密码吧。</span></p>
+<p style="padding:0px;margin:10px auto;text-indent:0px;"><strong style="margin:0px;padding:0px;"><span style="margin:0px;padding:0px;font-family:Microsoft YaHei;font-size:15px;">先通过下面的命令把 /sysroot 重新挂载为可读写的模式：</span></strong></p>
+<div style="background-color:rgb(245, 245, 245);border:1px solid rgb(204, 204, 204);overflow:auto;color:rgb(0, 0, 0);padding:5px;margin:5px 0px;font-family:&quot;Courier New&quot;;font-size:12px;">
+<pre style="transition-duration:0.2s;transition-property:background, font-size, border-color, border-radius, border-width, padding, margin, color;overflow:auto;margin:0px;padding:0px;font-family:&quot;Courier New&quot;, serif;font-size:12px;overflow-wrap:break-word;">switch_root:/# <span style="margin:0px;padding:0px;font-family:&quot;Courier New&quot;, serif;font-size:inherit;line-height:1.5;color:rgba(0, 0, 255, 1);">mount</span> -o remount,rw /sysroot</pre>
+</div>
+<p style="padding:0px;margin:10px auto;text-indent:0px;"><strong style="margin:0px;padding:0px;"><span style="margin:0px;padding:0px;font-family:Microsoft YaHei;font-size:15px;">然后用下面 chroot 命令把根目录切换到我们原来的环境中：</span></strong></p>
+<div style="background-color:rgb(245, 245, 245);border:1px solid rgb(204, 204, 204);overflow:auto;color:rgb(0, 0, 0);padding:5px;margin:5px 0px;font-family:&quot;Courier New&quot;;font-size:12px;">
+<pre style="transition-duration:0.2s;transition-property:background, font-size, border-color, border-radius, border-width, padding, margin, color;overflow:auto;margin:0px;padding:0px;font-family:&quot;Courier New&quot;, serif;font-size:12px;overflow-wrap:break-word;">switch_root:/# <span style="margin:0px;padding:0px;font-family:&quot;Courier New&quot;, serif;font-size:inherit;line-height:1.5;color:rgba(0, 0, 255, 1);">chroot</span> /sysroot</pre>
+</div>
+<p style="padding:0px;margin:10px auto;text-indent:0px;"><span style="margin:0px;padding:0px;font-family:Microsoft YaHei;font-size:15px;">此时可以理解为：我们以 root 权限登录了原来的系统，修改密码就很容易了！<strong style="margin:0px;padding:0px;">用下面的命令为 root 用户设置新的密码：</strong><br style="margin:0px;padding:0px;"/></span></p>
+<div style="background-color:rgb(245, 245, 245);border:1px solid rgb(204, 204, 204);overflow:auto;color:rgb(0, 0, 0);padding:5px;margin:5px 0px;font-family:&quot;Courier New&quot;;font-size:12px;">
+<pre style="transition-duration:0.2s;transition-property:background, font-size, border-color, border-radius, border-width, padding, margin, color;overflow:auto;margin:0px;padding:0px;font-family:&quot;Courier New&quot;, serif;font-size:12px;overflow-wrap:break-word;"><span style="margin:0px;padding:0px;font-family:&quot;Courier New&quot;, serif;font-size:inherit;line-height:1.5;color:rgba(0, 0, 255, 1);">sh</span>-<span style="margin:0px;padding:0px;font-family:&quot;Courier New&quot;, serif;font-size:inherit;line-height:1.5;color:rgba(128, 0, 128, 1);">4.2</span># <span style="margin:0px;padding:0px;font-family:&quot;Courier New&quot;, serif;font-size:inherit;line-height:1.5;color:rgba(0, 0, 255, 1);">echo</span> <span style="margin:0px;padding:0px;font-family:&quot;Courier New&quot;, serif;font-size:inherit;line-height:1.5;color:rgba(128, 0, 0, 1);">"</span><span style="margin:0px;padding:0px;font-family:&quot;Courier New&quot;, serif;font-size:inherit;line-height:1.5;color:rgba(128, 0, 0, 1);">new_root_pw</span><span style="margin:0px;padding:0px;font-family:&quot;Courier New&quot;, serif;font-size:inherit;line-height:1.5;color:rgba(128, 0, 0, 1);">"</span> | <span style="margin:0px;padding:0px;font-family:&quot;Courier New&quot;, serif;font-size:inherit;line-height:1.5;color:rgba(0, 0, 255, 1);">passwd</span> --stdin root</pre>
+</div>
+<p style="padding:0px;margin:10px auto;text-indent:0px;"><span style="margin:0px;padding:0px;font-family:Microsoft YaHei;font-size:15px;"><strong style="margin:0px;padding:0px;">接下来还要处理 SELinux 相关的问题。</strong>由于当前的环境中 SELinux 并未启动，所以我们对文件的修改可能造成文件的 context 不正确。为了确保开机时重新设定 SELinux context，必須在根目录下添加隐藏文件 .autorelabel：</span></p>
+<div style="background-color:rgb(245, 245, 245);border:1px solid rgb(204, 204, 204);overflow:auto;color:rgb(0, 0, 0);padding:5px;margin:5px 0px;font-family:&quot;Courier New&quot;;font-size:12px;">
+<pre style="transition-duration:0.2s;transition-property:background, font-size, border-color, border-radius, border-width, padding, margin, color;overflow:auto;margin:0px;padding:0px;font-family:&quot;Courier New&quot;, serif;font-size:12px;overflow-wrap:break-word;"><span style="margin:0px;padding:0px;font-family:&quot;Courier New&quot;, serif;font-size:inherit;line-height:1.5;color:rgba(0, 0, 255, 1);">sh</span>-<span style="margin:0px;padding:0px;font-family:&quot;Courier New&quot;, serif;font-size:inherit;line-height:1.5;color:rgba(128, 0, 128, 1);">4.2</span># <span style="margin:0px;padding:0px;font-family:&quot;Courier New&quot;, serif;font-size:inherit;line-height:1.5;color:rgba(0, 0, 255, 1);">touch</span> /.autorelabel</pre>
+</div>
+<p style="padding:0px;margin:10px auto;text-indent:0px;"><strong style="margin:0px;padding:0px;"><span style="margin:0px;padding:0px;font-family:Microsoft YaHei;font-size:15px;">最后从 chroot 中退出，并重启系统：</span></strong></p>
+<div style="background-color:rgb(245, 245, 245);border:1px solid rgb(204, 204, 204);overflow:auto;color:rgb(0, 0, 0);padding:5px;margin:5px 0px;font-family:&quot;Courier New&quot;;font-size:12px;">
+<pre style="transition-duration:0.2s;transition-property:background, font-size, border-color, border-radius, border-width, padding, margin, color;overflow:auto;margin:0px;padding:0px;font-family:&quot;Courier New&quot;, serif;font-size:12px;overflow-wrap:break-word;"><span style="margin:0px;padding:0px;font-family:&quot;Courier New&quot;, serif;font-size:inherit;line-height:1.5;color:rgba(0, 0, 255, 1);">sh</span>-<span style="margin:0px;padding:0px;font-family:&quot;Courier New&quot;, serif;font-size:inherit;line-height:1.5;color:rgba(128, 0, 128, 1);">4.2</span><span style="margin:0px;padding:0px;font-family:&quot;Courier New&quot;, serif;font-size:inherit;line-height:1.5;color:rgba(0, 0, 0, 1);"># exit
+switch_root:</span>/# reboot</pre>
+</div>
+<p style="padding:0px;margin:10px auto;text-indent:0px;"><span style="margin:0px;padding:0px;font-family:Microsoft YaHei;font-size:15px;">重新进入登陆界面时就可以使用刚才设置的密码以 root 登陆了！</span></p>
+<h1 style="padding:0px;line-height:1.5;font-size:28px;font-weight:bold;margin:10px 0px;"><span style="margin:0px;padding:0px;font-family:Microsoft YaHei;font-size:18pt;">总结</span></h1>
+<p style="padding:0px;margin:10px auto;text-indent:0px;"><span style="margin:0px;padding:0px;font-family:Microsoft YaHei;font-size:15px;">chroot 是一个很有意思的命令，我们可以用它来简单的实现文件系统的隔离。但在一个容器技术繁荣的时代，用 chroot 来进行资源的隔离实在是 low 了点。所以 chroot 的主要用途还是集中在系统救援、维护等一些特殊的场景中。</span></p>
+<p style="padding:0px;margin:10px auto;text-indent:0px;"><strong style="margin:0px;padding:0px;"><span style="margin:0px;padding:0px;font-family:Microsoft YaHei;font-size:15px;">参考：</span></strong><br style="margin:0px;padding:0px;"/><a href="https://www.ibm.com/developerworks/cn/linux/l-cn-chroot/index.html" target="_blank" rel="noopener nofollow" style="margin:0px;padding:0px;color:rgb(0, 0, 0);text-decoration:underline;"><span style="margin:0px;padding:0px;font-family:Microsoft YaHei;font-size:15px;">理解 chroot</span></a><br style="margin:0px;padding:0px;"/><a href="http://www.cnblogs.com/mhten/p/4323228.html" target="_blank" style="margin:0px;padding:0px;color:rgb(0, 0, 0);text-decoration:underline;"><span style="margin:0px;padding:0px;font-family:Microsoft YaHei;font-size:15px;">Linux – RedHat7 / CentOS 7 忘记root密码修改</span></a></p>
+</div>
+<div style="margin:0px;border-width:1px;border-style:dashed;border-color:rgb(224, 224, 224);font-family:微软雅黑;font-size:11px;background:url(https://pic.cnblogs.com/face/952033/20160916141655.png) 1% 50% no-repeat rgb(229, 241, 244);padding:10px 10px 10px 60px;">
+    <div style="margin:0px;padding:0px;">作者：<a href="http://www.cnblogs.com/sparkdev/" target="_blank" style="margin:0px;padding:0px;color:rgb(0, 0, 0);text-decoration:underline;">sparkdev</a></div>
+<div style="margin:0px;padding:0px;">出处：<a href="http://www.cnblogs.com/sparkdev/" target="_blank" style="margin:0px;padding:0px;color:rgb(0, 0, 0);text-decoration:underline;">http://www.cnblogs.com/sparkdev/</a></div>
+<div style="margin:0px;padding:0px;">本文版权归作者和博客园共有，欢迎转载，但未经作者同意必须保留此段声明，且在文章页面明显位置给出原文连接，否则保留追究法律责任的权利。</div>
+</div>
+<div style="margin:0px;padding:0px;clear:both;"></div>
+<div style="margin:0px;padding:0px;margin-top:20px;">
+
+
+<div style="margin:0px;padding:0px;margin-bottom:10px;color:rgb(0, 0, 0);">
+    分类: 
+            <a href="https://www.cnblogs.com/sparkdev/category/834899.html" target="_blank" style="margin:0px;background:rgb(221, 221, 221);margin-left:5px;padding:3px 5px;text-decoration:none;color:rgb(0, 0, 0);">Linux</a>
+</div>
+<div style="margin:0px;padding:0px;font-size:9pt;color:rgb(0, 0, 0);margin-top:0px;">
+    标签: 
+            <a href="https://www.cnblogs.com/sparkdev/tag/chroot/" style="margin:0px;background:rgb(221, 221, 221);margin-left:5px;padding:3px 5px;text-decoration:none;color:rgb(0, 0, 0);">chroot</a>
+,             <a href="https://www.cnblogs.com/sparkdev/tag/Linux/" style="margin:0px;background:rgb(221, 221, 221);margin-left:5px;padding:3px 5px;text-decoration:none;color:rgb(0, 0, 0);">Linux</a>
+</div>
+    <div style="margin:0px;padding:0px;">
+<div style="margin:0px;margin-bottom:20px;margin-top:10px;border:1px dashed rgb(192, 192, 192);text-align:center;padding:10px 0px;font-size:12px;width:260px;">
+        <a href="#" style="margin:0px;background:url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAAkCAYAAABIdFAMAAAAGXRFWHRTb2Z0d2FyZQBBZG9iZSBJbWFnZVJlYWR5ccllPAAAAHhJREFUeNo8zjsOxCAMBFB/KEAUFFR0Cbng3nQPw68ArZdAlOZppPFIBhH5EAB8b+Tlt9MYQ6i1BuqFaq1CKSVcxZ2Acs6406KUgpt5/LCKuVgz5BDCSb13ZO99ZOdcZGvt4mJjzMVKqcha68iIePB86GAiOv8CDADlIUQBs7MD3wAAAABJRU5ErkJggg%3D%3D) repeat-x;display:inline-block;font-weight:bold;cursor:pointer;margin-right:10px;border-radius:10px;box-shadow:rgba(0, 0, 0, 0.5) 0px 1px 3px;text-shadow:rgba(0, 0, 0, 0.25) 0px -1px 1px;vertical-align:middle;padding:3px 8px;text-decoration:none;background-color:rgb(45, 174, 191);border:none;color:rgb(255, 255, 255);">好文要顶</a>
+        
+    <a href="#" style="margin:0px;background:url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAAkCAYAAABIdFAMAAAAGXRFWHRTb2Z0d2FyZQBBZG9iZSBJbWFnZVJlYWR5ccllPAAAAHhJREFUeNo8zjsOxCAMBFB/KEAUFFR0Cbng3nQPw68ArZdAlOZppPFIBhH5EAB8b+Tlt9MYQ6i1BuqFaq1CKSVcxZ2Acs6406KUgpt5/LCKuVgz5BDCSb13ZO99ZOdcZGvt4mJjzMVKqcha68iIePB86GAiOv8CDADlIUQBs7MD3wAAAABJRU5ErkJggg%3D%3D) repeat-x;display:inline-block;font-weight:bold;cursor:pointer;margin-right:10px;border-radius:10px;box-shadow:rgba(0, 0, 0, 0.5) 0px 1px 3px;text-shadow:rgba(0, 0, 0, 0.25) 0px -1px 1px;vertical-align:middle;padding:3px 8px;text-decoration:none;background-color:rgb(255, 181, 21);border:none;color:rgb(255, 255, 255);">收藏该文</a>
+    <a href="#" style="margin:0px;background:url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAAkCAYAAABIdFAMAAAAGXRFWHRTb2Z0d2FyZQBBZG9iZSBJbWFnZVJlYWR5ccllPAAAAHhJREFUeNo8zjsOxCAMBFB/KEAUFFR0Cbng3nQPw68ArZdAlOZppPFIBhH5EAB8b+Tlt9MYQ6i1BuqFaq1CKSVcxZ2Acs6406KUgpt5/LCKuVgz5BDCSb13ZO99ZOdcZGvt4mJjzMVKqcha68iIePB86GAiOv8CDADlIUQBs7MD3wAAAABJRU5ErkJggg%3D%3D) repeat-x;display:inline-block;font-weight:bold;cursor:pointer;margin-right:10px;border-radius:10px;box-shadow:rgba(0, 0, 0, 0.5) 0px 1px 3px;text-shadow:rgba(0, 0, 0, 0.25) 0px -1px 1px;vertical-align:middle;padding:3px 8px;text-decoration:none;background-color:rgb(78, 171, 87);border:none;color:rgb(255, 255, 255);">微信分享</a>
+</div>
+<div style="margin:0px;padding:0px;float:left;width:280px;margin-top:0px;margin-bottom:10px;color:rgb(0, 0, 0);margin-left:0px;font-size:12px;">
+    <div style="margin:0px;padding:0px;float:left;line-height:18px;">
+            <a style="margin:0px;padding:0px;color:rgb(0, 0, 0);text-decoration:underline;"><div class="media-placeholder">[图片/附件]</div></en-media></a>
+        <div style="margin:0px;padding:0px;float:left;line-height:18px;">
+            <a href="https://home.cnblogs.com/u/sparkdev/" style="margin:0px;padding:0px;color:rgb(0, 0, 0);text-decoration:underline;">sparkdev</a>
+            <br style="margin:0px;padding:0px;"/>
+            <a href="https://home.cnblogs.com/u/sparkdev/followers/" style="margin:0px;padding:0px;color:rgb(0, 0, 0);text-decoration:underline;">粉丝 - <span style="margin:0px;padding:0px;">1100</span></a>
+            <a href="https://home.cnblogs.com/u/sparkdev/followees/" style="margin:0px;padding:0px;color:rgb(0, 0, 0);text-decoration:underline;">关注 - <span style="margin:0px;padding:0px;">32</span></a><br style="margin:0px;padding:0px;"/>
+        </div>
+    </div>
+    <div style="margin:0px;padding:0px;clear:both;"></div>
+    <div style="margin:0px;padding:0px;">推荐博客</div>
+    <div style="margin:0px;padding:0px;">
+                <a href="#" style="margin:0px;padding:0px;color:rgb(0, 0, 0);text-decoration:underline;">+加关注</a>
+    </div>
+</div>
+<div style="margin:0px;padding:0px;float:right;margin-bottom:10px;margin-right:30px;font-size:12px;width:125px;text-align:center;margin-top:10px;">
+    <div style="margin:0px;padding:0px;float:left;width:46px;height:52px;background:url(https://assets.cnblogs.com/images/upup.gif) no-repeat;text-align:center;cursor:pointer;margin-top:2px;padding-top:5px;">
+        <span style="margin:0px;padding:0px;font-size:14px;color:rgb(7, 93, 179);font-family:Verdana;line-height:1.5em;">11</span>
+    </div>
+    <div style="margin:0px;padding:0px;float:right;margin-left:20px;width:46px;height:52px;background:url(https://assets.cnblogs.com/images/downdown.gif) no-repeat;text-align:center;cursor:pointer;margin-top:2px;padding-top:5px;">
+        <span style="margin:0px;padding:0px;font-size:14px;color:rgb(7, 93, 179);font-family:Verdana;line-height:1.5em;">0</span>
+    </div>
+    <div style="margin:0px;padding:0px;clear:both;"></div>
+    <div style="margin:0px;padding:0px;margin-top:5px;margin-left:0px;font-size:12px;color:rgb(128, 128, 128);">
+    </div>
+        <div style="margin:0px;padding:0px;"><a href="https://cnblogs.vip/" target="_blank" style="margin:0px;padding:0px;border-bottom:none;color:rgb(7, 93, 179);text-decoration:none;">升级成为会员</a></div>
+</div>
+
+
+</div>
+    <div style="margin:0px;padding:0px;clear:both;"></div>
+    <div style="margin:0px;padding:0px;line-height:1.8;font-size:12px;">
+
+    <a href="https://www.cnblogs.com/sparkdev/p/8508435.html" style="margin:0px;padding:0px;color:rgb(0, 0, 0);text-decoration:none;">« </a> 上一篇：    <a href="https://www.cnblogs.com/sparkdev/p/8508435.html" title="发布于 2018-03-12 08:42" style="margin:0px;padding:0px;color:rgb(0, 0, 0);text-decoration:underline;">Dockerfile 中的 multi-stage(多阶段构建)</a>
+    <br style="margin:0px;padding:0px;"/>
+    <a href="https://www.cnblogs.com/sparkdev/p/8594602.html" style="margin:0px;padding:0px;color:rgb(0, 0, 0);text-decoration:none;">» </a> 下一篇：    <a href="https://www.cnblogs.com/sparkdev/p/8594602.html" title="发布于 2018-03-26 08:39" style="margin:0px;padding:0px;color:rgb(0, 0, 0);text-decoration:underline;">减小容器镜像的三板斧</a>
+
+</div>
+</div>
+            </div>
+            <div style="margin:0px;padding:0px;clear:both;border-top:1px solid rgb(221, 221, 221);padding-top:1.6em;margin-left:20px;margin-bottom:20px;word-break:keep-all;float:right;text-align:right;padding-right:5px;color:rgb(102, 102, 102);margin-top:5px;font-size:80%;width:auto;">posted @ 
+<span style="margin:0px;padding:0px;">2018-03-15 10:32</span> 
+<a href="https://www.cnblogs.com/sparkdev" style="margin:0px;padding:0px;text-decoration:none;color:rgb(102, 102, 102);">sparkdev</a> 
+阅读(<span style="margin:0px;padding:0px;">39036</span>) 
+评论(<span style="margin:0px;padding:0px;">5</span>) 
+<a href="https://i.cnblogs.com/EditPosts.aspx?postid=8556075" rel="nofollow" style="margin:0px;padding:0px;text-decoration:none;color:rgb(102, 102, 102);">编辑</a> 
+<a href="#" style="margin:0px;padding:0px;text-decoration:none;color:rgb(102, 102, 102);">收藏</a> 
+<a href="#" style="margin:0px;padding:0px;text-decoration:none;color:rgb(102, 102, 102);">举报</a>
+</div>
+        </div></div></div></div></div></div></div></div></div></div></div>
+</div>
+<a class="back-link" href="../articles.html">← 返回笔记列表</a>
+</body>
+</html>

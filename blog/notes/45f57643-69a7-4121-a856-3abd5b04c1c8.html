@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="zh-CN" data-theme="light">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Caelus指标收集&amp;干扰检测 — 技术笔记</title>
+<style>
+:root {
+  --bg: #ffffff;
+  --text: #1a1a1a;
+  --muted: #666;
+  --border: #e0e0e0;
+  --code-bg: #f5f5f5;
+  --link: #0066cc;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #1a1a1a;
+    --text: #e0e0e0;
+    --muted: #999;
+    --border: #333;
+    --code-bg: #2a2a2a;
+    --link: #66bbff;
+  }
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  line-height: 1.7;
+  color: var(--text);
+  background: var(--bg);
+  max-width: 860px;
+  margin: 0 auto;
+  padding: 2rem 1.5rem;
+}
+.note-header {
+  border-bottom: 2px solid var(--border);
+  padding-bottom: 1rem;
+  margin-bottom: 2rem;
+}
+.note-title {
+  font-size: 1.6rem;
+  font-weight: 700;
+  margin-bottom: 0.3rem;
+}
+.note-meta {
+  color: var(--muted);
+  font-size: 0.85rem;
+}
+.note-content {
+  font-size: 0.95rem;
+}
+.note-content h1 { font-size: 1.4rem; margin: 1.2rem 0 0.6rem; }
+.note-content h2 { font-size: 1.2rem; margin: 1rem 0 0.5rem; }
+.note-content h3 { font-size: 1.05rem; margin: 0.8rem 0 0.4rem; }
+.note-content p { margin: 0.5rem 0; }
+.note-content ul, .note-content ol { margin: 0.5rem 0 0.5rem 2rem; }
+.note-content li { margin: 0.2rem 0; }
+.note-content pre {
+  background: var(--code-bg);
+  padding: 1rem;
+  border-radius: 6px;
+  overflow-x: auto;
+  margin: 0.8rem 0;
+  font-size: 0.85rem;
+}
+.note-content code {
+  background: var(--code-bg);
+  padding: 0.1rem 0.3rem;
+  border-radius: 3px;
+  font-size: 0.88em;
+}
+.note-content pre code {
+  background: none;
+  padding: 0;
+}
+.note-content blockquote {
+  border-left: 3px solid var(--border);
+  padding-left: 1rem;
+  color: var(--muted);
+  margin: 0.8rem 0;
+}
+.note-content a { color: var(--link); }
+.note-content img {
+  max-width: 100%;
+  height: auto;
+  border-radius: 6px;
+  margin: 0.5rem 0;
+}
+.note-content table {
+  border-collapse: collapse;
+  width: 100%;
+  margin: 0.8rem 0;
+}
+.note-content th, .note-content td {
+  border: 1px solid var(--border);
+  padding: 0.5rem;
+}
+.note-content th { background: var(--code-bg); }
+.media-placeholder {
+  background: var(--code-bg);
+  padding: 1rem;
+  text-align: center;
+  color: var(--muted);
+  border-radius: 6px;
+  margin: 0.5rem 0;
+  font-size: 0.85rem;
+}
+.encrypt-placeholder {
+  background: #fff3cd;
+  padding: 0.5rem;
+  text-align: center;
+  color: #856404;
+  border-radius: 6px;
+  margin: 0.5rem 0;
+  font-size: 0.85rem;
+}
+.back-link {
+  display: inline-block;
+  margin-top: 2rem;
+  color: var(--link);
+  text-decoration: none;
+  font-size: 0.85rem;
+}
+</style>
+</head>
+<body>
+<div class="note-header">
+  <div class="note-title">Caelus指标收集&amp;干扰检测</div>
+  <div class="note-meta">笔记本：Kubernetes学习笔记</div>
+</div>
+<div class="note-content">
+<div>collectProcess收集当前节点上的进程统计情况，比如sleeping、running、stopped、interruptible、wait on io状态的进程数量,这里看上去只是获取了离线组的进程情况</div><div><div class="media-placeholder">[图片/附件]</div></div><div>collectNetIO通过shirou包下的net包获取网络情况,主要包含网卡名称、发送/接收的字节数、错误数、丢弃数、总交换数据量、交换的数据包的数量</div><div><div class="media-placeholder">[图片/附件]</div></div><div>获取diskIO方式同上面类似，通过disk包获取</div><div><div class="media-placeholder">[图片/附件]</div></div><div>同上，通过load包获取</div><div><div class="media-placeholder">[图片/附件]</div></div><div><br/></div><div><div class="media-placeholder">[图片/附件]</div></div><div>最后这些数据获取到之后汇总在NodeResourceState中,再通过addResourceStats方法添加到cache中去</div><div><div class="media-placeholder">[图片/附件]</div></div><div><div class="media-placeholder">[图片/附件]</div></div><div>再来看一个NewPromStoreManager</div><div>promStoreManager同样有一个cache，用于之后通过promStoreManager获取到之前存储的指标值，promStoreManager的值来自于其他的Prometheus服务端，在Caelus中是通过配置文件进行配置的</div><div><div class="media-placeholder">[图片/附件]</div></div><div><div class="media-placeholder">[图片/附件]</div></div><div><div class="media-placeholder">[图片/附件]</div></div><div>在抓取数据的时候会遍历items下所有配置好的prometheus数据源,抓取到数据之后存储到cache中</div><div><div class="media-placeholder">[图片/附件]</div></div><div><div class="media-placeholder">[图片/附件]</div></div><div>再来看onlineCfg,Caelus支持还支持自定义数据源,可以支持用户配置来对特定的进程进行特定的指标获取,从配置项来看，需要设置命令行表达式、指标名称，获取指标的url地址</div><div><div class="media-placeholder">[图片/附件]</div></div><div>接着转移到cgroup指标收集这边,与上面类似,在Caelus.json配置文件中也可以配置cgroup指标收集的信息，在配置文件中container部分的配置即是</div><div>可以看到需要配置要收集的cgroup子系统的名称，以及看上去是cgroup根路径的地址</div><div><div class="media-placeholder">[图片/附件]</div></div><div>初始化cgroupStoreManager的时候，结构体类似，有caches用于存储指标，除此之外多了一个cadvisor的配置</div><div><div class="media-placeholder">[图片/附件]</div></div><div>从cadvisorManager的定义来看，它是用于实时收集具体容器的状态的</div><div><div class="media-placeholder">[图片/附件]</div></div><div><div class="media-placeholder">[图片/附件]</div></div><div><div class="media-placeholder">[图片/附件]</div></div><div>接下来看下cgroupStoreManager的Run方法的执行过程:</div><div>首先会启动cadvisorManager，这个应该cadvisor官方的库的api，需要启动了之后才可以获取容器信息，然后是调用collectCgroupStats</div><div><div class="media-placeholder">[图片/附件]</div></div><div>collectCgroupStats中主要是通过listCgroupStats收集到数据然后存储起来</div><div><div class="media-placeholder">[图片/附件]</div></div><div>listCgroupStats方法通过cadvisorManager实时地获取容器运行时信息,通过containerInfoV2来获取容器关联的pod名、容器id、容器运行时资源信息</div><div><div class="media-placeholder">[图片/附件]</div></div><div>接下来继续看initModules的其他部分:</div><div><br/></div><div>healthcheck,基于指标检测容器健康</div><div>执行分为3个部分:ruleChecker, cgroupNotifier, configWatcher</div><div><div class="media-placeholder">[图片/附件]</div></div><div>ruleChecker负责检测干扰,其中有3个checker表示的是ruleChecker,其中的config是来自rules.json配置文件,这个文件专门用于配置干扰检测配置</div><div><div class="media-placeholder">[图片/附件]</div></div><div><div class="media-placeholder">[图片/附件]</div></div><div><div class="media-placeholder">[图片/附件]</div></div><div>ContainerHealthChecker负责检测容器健康:</div><div><div class="media-placeholder">[图片/附件]</div></div><div>Check方法定义了其检测逻辑</div><div><div class="media-placeholder">[图片/附件]</div></div><div>核心是通过Add方法将指标添加到ruleChecker，isAnomal判断是不是异常</div><div><div class="media-placeholder">[图片/附件]</div></div><div>获得受到干扰的容器信息之后，生成actionresult,传递下去做调制操作,从这里可以看到，具体的资源压制操作应该放在了resourceManager中执行的，而驱逐操作还未实现</div><div><div class="media-placeholder">[图片/附件]</div></div><div>这里event是通过channel传递到resourceManager进行接收的，之后通过sync方法进行处理</div><div><div class="media-placeholder">[图片/附件]</div></div><div><div class="media-placeholder">[图片/附件]</div></div><div><div class="media-placeholder">[图片/附件]</div></div><div>计算出kill pod之后释放的资源以及相关参数后(不深入了)，kill pod</div><div><div class="media-placeholder">[图片/附件]</div></div><div>kill pod操作,通过k8s api进行驱逐操作（因为这里已经做了驱逐操作了，所以上面的evictPod就没写了?)，同时在prometheus中增加一笔指标数据用以记录kill pod的事件</div><div><div class="media-placeholder">[图片/附件]</div></div><div><br/></div>
+</div>
+<a class="back-link" href="../articles.html">← 返回笔记列表</a>
+</body>
+</html>

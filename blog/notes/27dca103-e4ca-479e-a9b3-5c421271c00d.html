@@ -1,0 +1,388 @@
+<!DOCTYPE html>
+<html lang="zh-CN" data-theme="light">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>What causes Ruby memory bloat? — 技术笔记</title>
+<style>
+:root {
+  --bg: #ffffff;
+  --text: #1a1a1a;
+  --muted: #666;
+  --border: #e0e0e0;
+  --code-bg: #f5f5f5;
+  --link: #0066cc;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #1a1a1a;
+    --text: #e0e0e0;
+    --muted: #999;
+    --border: #333;
+    --code-bg: #2a2a2a;
+    --link: #66bbff;
+  }
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  line-height: 1.7;
+  color: var(--text);
+  background: var(--bg);
+  max-width: 860px;
+  margin: 0 auto;
+  padding: 2rem 1.5rem;
+}
+.note-header {
+  border-bottom: 2px solid var(--border);
+  padding-bottom: 1rem;
+  margin-bottom: 2rem;
+}
+.note-title {
+  font-size: 1.6rem;
+  font-weight: 700;
+  margin-bottom: 0.3rem;
+}
+.note-meta {
+  color: var(--muted);
+  font-size: 0.85rem;
+}
+.note-content {
+  font-size: 0.95rem;
+}
+.note-content h1 { font-size: 1.4rem; margin: 1.2rem 0 0.6rem; }
+.note-content h2 { font-size: 1.2rem; margin: 1rem 0 0.5rem; }
+.note-content h3 { font-size: 1.05rem; margin: 0.8rem 0 0.4rem; }
+.note-content p { margin: 0.5rem 0; }
+.note-content ul, .note-content ol { margin: 0.5rem 0 0.5rem 2rem; }
+.note-content li { margin: 0.2rem 0; }
+.note-content pre {
+  background: var(--code-bg);
+  padding: 1rem;
+  border-radius: 6px;
+  overflow-x: auto;
+  margin: 0.8rem 0;
+  font-size: 0.85rem;
+}
+.note-content code {
+  background: var(--code-bg);
+  padding: 0.1rem 0.3rem;
+  border-radius: 3px;
+  font-size: 0.88em;
+}
+.note-content pre code {
+  background: none;
+  padding: 0;
+}
+.note-content blockquote {
+  border-left: 3px solid var(--border);
+  padding-left: 1rem;
+  color: var(--muted);
+  margin: 0.8rem 0;
+}
+.note-content a { color: var(--link); }
+.note-content img {
+  max-width: 100%;
+  height: auto;
+  border-radius: 6px;
+  margin: 0.5rem 0;
+}
+.note-content table {
+  border-collapse: collapse;
+  width: 100%;
+  margin: 0.8rem 0;
+}
+.note-content th, .note-content td {
+  border: 1px solid var(--border);
+  padding: 0.5rem;
+}
+.note-content th { background: var(--code-bg); }
+.media-placeholder {
+  background: var(--code-bg);
+  padding: 1rem;
+  text-align: center;
+  color: var(--muted);
+  border-radius: 6px;
+  margin: 0.5rem 0;
+  font-size: 0.85rem;
+}
+.encrypt-placeholder {
+  background: #fff3cd;
+  padding: 0.5rem;
+  text-align: center;
+  color: #856404;
+  border-radius: 6px;
+  margin: 0.5rem 0;
+  font-size: 0.85rem;
+}
+.back-link {
+  display: inline-block;
+  margin-top: 2rem;
+  color: var(--link);
+  text-decoration: none;
+  font-size: 0.85rem;
+}
+</style>
+</head>
+<body>
+<div class="note-header">
+  <div class="note-title">What causes Ruby memory bloat?</div>
+  <div class="note-meta">笔记本：Ruby</div>
+</div>
+<div class="note-content">
+<div style="--en-clipped-content:article">
+<div><br/></div><div style="font-size: 16px; display:block; min-width: 100%; position: relative;"> <div style="box-sizing:border-box;font-family:sans-serif;line-height:1.15;text-size-adjust:100%;-webkit-tap-highlight-color:rgba(0, 0, 0, 0);"><div style="box-sizing:border-box;font-family:&quot;Helvetica Neue&quot;, Roboto, sans-serif;font-size:16px;font-weight:400;line-height:1.5;color:rgb(33, 37, 41);text-align:left;background-color:rgb(255, 255, 255);-webkit-font-smoothing:antialiased;"><span style="box-sizing:border-box;"><div style="box-sizing:border-box;"><div style="box-sizing:border-box;font-size:17px;line-height:1.6;color:rgb(52, 52, 52);">
+<div style="box-sizing:border-box;position:sticky;float:left;top:50vh;margin-left:calc(-30px - 5rem);margin-top:-2rem;opacity:0.6;display:inline-block;">
+<ul style="box-sizing:border-box;display:flex;flex-direction:column;align-items:center;list-style:none;margin:0px;padding:0px;">
+<li style="box-sizing:border-box;vertical-align:top;display:block;margin-bottom:16px;">
+<span style="box-sizing:border-box;cursor:default;line-height:22px;display:inline-block;white-space:nowrap;direction:ltr;text-indent:0px;position:relative;"><span style="background-attachment:scroll;font-family:&quot;helvetica neue&quot;, Arial, sans-serif;font-size:12px;font-weight:700;border-width:0px;text-decoration:none;text-transform:none;direction:ltr;text-indent:0px;text-shadow:none;box-sizing:content-box;line-height:inherit;border-radius:2px;margin-right:3px;overflow:visible;cursor:pointer;padding-top:0px;padding-bottom:0px;padding-left:4px;flex-direction:column;border:none;margin:0px;display:flex;background-color:transparent;color:inherit;padding:0px;height:22px;"><span style="background-attachment:scroll;font-family:&quot;helvetica neue&quot;, Arial, sans-serif;font-size:12px;font-weight:700;margin:0px;padding:0px;border-width:0px;text-transform:none;direction:ltr;text-indent:0px;text-shadow:none;box-sizing:content-box;color:rgb(120, 120, 105);overflow:visible;position:relative;outline:none;text-decoration:none;text-align:center;line-height:inherit;top:0px;order:1;display:block;"><span style="box-sizing:content-box;margin:0px;padding:0px;height:22px;background-attachment:scroll;font-family:&quot;helvetica neue&quot;, Arial, sans-serif;font-size:30px;font-weight:700;border-width:0px;text-decoration:none;text-transform:none;direction:ltr;text-indent:0px;text-shadow:none;display:inline-block;cursor:pointer;margin-right:2px;width:auto;vertical-align:middle;background-image:none;line-height:inherit;color:rgb(151, 151, 151);"><span style="font-family:helvetica neue, Arial, sans-serif;font-size:14px;font-weight:700;text-transform:none;direction:ltr;text-indent:0px;cursor:pointer;line-height:inherit;speak:none;-webkit-font-smoothing:antialiased;font-style:normal !important;font-variant:normal !important;">V</span></span></span><span style="background-attachment:scroll;border-width:0px;text-decoration:none;text-transform:none;direction:ltr;text-indent:0px;text-shadow:none;box-sizing:content-box;display:inline-block;position:relative;vertical-align:middle;padding-left:2px;padding-right:6px;border-left:0px;height:auto;top:0px;text-align:center;margin:0.5em 0px 0px;color:rgb(142, 142, 142);padding:0px;order:0;font-family:Arial;font-size:12px;font-weight:normal;">396</span></span></span>
+</li>
+<li style="box-sizing:border-box;display:block;margin-bottom:16px;">
+<a href="https://news.ycombinator.com/submitlink?u=https%3A%2F%2Fwww.joyfulbikeshedding.com%2Fblog%2F2019-03-14-what-causes-ruby-memory-bloat.html&amp;t=What%20causes%20Ruby%20memory%20bloat%3F" target="_blank" style="box-sizing:border-box;color:rgb(182, 72, 0);background-color:transparent;transition:color 0.3s ease 0s, border-color 0.3s ease 0s;text-decoration:underline;display:inline-block;">
+<div class="media-placeholder">[图片/附件]</div></en-media>
+
+</a>
+</li>
+<li style="box-sizing:border-box;display:block;margin-bottom:16px;">
+<a href="https://twitter.com/intent/tweet?url=https%3A%2F%2Fwww.joyfulbikeshedding.com%2Fblog%2F2019-03-14-what-causes-ruby-memory-bloat.html&amp;text=What%20causes%20Ruby%20memory%20bloat%3F%20%28via%20%40honglilai%29" target="_blank" style="box-sizing:border-box;color:rgb(182, 72, 0);background-color:transparent;transition:color 0.3s ease 0s, border-color 0.3s ease 0s;text-decoration:underline;display:inline-block;">
+<div class="media-placeholder">[图片/附件]</div></en-media>
+
+</a>
+</li>
+<li style="box-sizing:border-box;display:block;margin-bottom:0px;">
+<a href="https://www.joyfulbikeshedding.com/blog/2019-03-14-what-causes-ruby-memory-bloat.htmlmailto:hongli@hongli.nl" target="_blank" style="box-sizing:border-box;color:rgb(182, 72, 0);background-color:transparent;transition:color 0.3s ease 0s, border-color 0.3s ease 0s;text-decoration:underline;display:inline-block;">
+<div class="media-placeholder">[图片/附件]</div></en-media>
+
+</a>
+</li>
+</ul>
+</div>
+<p style="box-sizing:border-box;margin-top:0px;position:relative;display:block;width:100%;padding:0px;overflow:hidden;margin-bottom:1em;"><span style="display:block;padding-top:56.25%;"></span><div style="box-sizing:border-box;position:absolute;top:0px;bottom:0px;left:0px;width:100%;height:100%;border:0px;"><div style="font-size: 16px; display:block; min-width: 100%; "> <div style="overflow:hidden;"><div dir="ltr" style="font:12px Roboto, Arial, sans-serif;background-color:rgb(0, 0, 0);color:rgb(255, 255, 255);overflow:hidden;"><a style="width:100%;height:100%;display:inline-block;position:absolute;top:0;background-image:url(https://img.youtube.com/vi/dY-XzumewKE/hqdefault.jpg);background-position:center;background-size:100% auto;background-repeat:no-repeat;" href="https://www.youtube.com/watch?v=dY-XzumewKE" target="_blank"></a></div></div></div></div></p>
+<p style="box-sizing:border-box;margin-top:0px;margin-bottom:1em;">At <a href="https://www.phusionpassenger.com/" style="box-sizing:border-box;color:rgb(182, 72, 0);background-color:transparent;transition:color 0.3s ease 0s, border-color 0.3s ease 0s;text-decoration:underline;">Phusion</a> we run a simple multithreaded HTTP proxy server written in Ruby (which serves our DEB and RPM packages). I've seen it consume 1.3 GB of memory. This is insane – the server is stateless and doesn't do all that much!</p>
+<div style="box-sizing:border-box;display:block;margin:0px 0px 1rem;text-align:center;">
+<div class="media-placeholder">[图片/附件]</div></en-media>
+<div style="box-sizing:border-box;margin:1rem 3rem;font-family:serif;font-style:italic;display:block;">Q: What's this? A: a Ruby process's memory usage over time!</div>
+</div>
+<p style="box-sizing:border-box;margin-top:0px;margin-bottom:1em;">Turns out I'm not alone in experiencing this issue. Ruby apps can use <em style="box-sizing:border-box;">a lot</em> of memory. But why? According to <a href="https://devcenter.heroku.com/articles/tuning-glibc-memory-behavior" style="box-sizing:border-box;color:rgb(182, 72, 0);background-color:transparent;transition:color 0.3s ease 0s, border-color 0.3s ease 0s;text-decoration:underline;">Heroku</a> and <a href="https://www.speedshop.co/2017/12/04/malloc-doubles-ruby-memory.html" style="box-sizing:border-box;color:rgb(182, 72, 0);background-color:transparent;transition:color 0.3s ease 0s, border-color 0.3s ease 0s;text-decoration:underline;">Nate Berkopec</a>, a large part of excessive memory usage is caused by <strong style="box-sizing:border-box;font-weight:bolder;">memory fragmentation</strong>, and by <strong style="box-sizing:border-box;font-weight:bolder;">memory overallocation</strong>.</p>
+<p style="box-sizing:border-box;margin-top:0px;margin-bottom:1em;">Nate Berkopec concludes that there are two solutions:</p>
+<ol style="box-sizing:border-box;margin-top:0px;margin-bottom:16px;">
+<li style="box-sizing:border-box;margin-bottom:0.5em;">Either use a completely different memory allocator than the one in glibc – usually <a href="http://jemalloc.net/" style="box-sizing:border-box;color:rgb(182, 72, 0);background-color:transparent;transition:color 0.3s ease 0s, border-color 0.3s ease 0s;text-decoration:underline;">jemalloc</a>, or:</li>
+<li style="box-sizing:border-box;margin-bottom:0.5em;">Set the magical environment variable <code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif">MALLOC_ARENA_MAX=2</code>.</li>
+</ol>
+<p style="box-sizing:border-box;margin-top:0px;margin-bottom:1em;">Both the problem description and the given solutions bug me. Something feels off: I'm not convinced that the problem description is entirely correct, or that those are the only solutions available. I'm also bugged by the fact that so many people <a href="https://medium.com/rubyinside/how-we-halved-our-memory-consumption-in-rails-with-jemalloc-86afa4e54aa3" style="box-sizing:border-box;color:rgb(182, 72, 0);background-color:transparent;transition:color 0.3s ease 0s, border-color 0.3s ease 0s;text-decoration:underline;">treat jemalloc as a magical silver bulllet</a>.</p>
+<p style="box-sizing:border-box;margin-top:0px;margin-bottom:1em;"><strong style="box-sizing:border-box;font-weight:bolder;">Magic is simply science that we don't understand yet.</strong> So I set out on a research journey to find out the truth behind this matter. In this article I'll cover:</p>
+<ol style="box-sizing:border-box;margin-top:0px;margin-bottom:16px;">
+<li style="box-sizing:border-box;margin-bottom:0.5em;">An introduction into memory allocation: how does it work?</li>
+<li style="box-sizing:border-box;margin-bottom:0.5em;">What is this "memory fragmentation" and "memory overallocation" that people speak of?</li>
+<li style="box-sizing:border-box;margin-bottom:0.5em;">What causes the high memory usage? Is the situation as people have described so far, or is there more? (hint: yes, and I'll share my research results)</li>
+<li style="box-sizing:border-box;margin-bottom:0.5em;">Are there alternative solutions available? (hint: I found one)</li>
+</ol>
+<p style="box-sizing:border-box;margin-top:0px;margin-bottom:1em;"><i style="box-sizing:border-box;">Note: the contents of this article only applies to Linux, and only to multithreaded Ruby apps.</i></p>
+<p style="box-sizing:border-box;margin-top:0px;margin-bottom:1em;"><strong style="box-sizing:border-box;font-weight:bolder;">Table of contents</strong></p>
+
+<ul style="box-sizing:border-box;margin-top:0px;margin-bottom:16px;">
+<li style="box-sizing:border-box;margin-bottom:0.5em;"><a href="https://www.joyfulbikeshedding.com/blog/2019-03-14-what-causes-ruby-memory-bloat.html#ruby-memory-allocation-101" style="box-sizing:border-box;color:rgb(182, 72, 0);background-color:transparent;transition:color 0.3s ease 0s, border-color 0.3s ease 0s;text-decoration:underline;">Ruby memory allocation 101</a>
+<ul style="box-sizing:border-box;margin-top:0px;margin-bottom:0px;">
+<li style="box-sizing:border-box;margin-bottom:0.5em;"><a href="https://www.joyfulbikeshedding.com/blog/2019-03-14-what-causes-ruby-memory-bloat.html#ruby" style="box-sizing:border-box;color:rgb(182, 72, 0);background-color:transparent;transition:color 0.3s ease 0s, border-color 0.3s ease 0s;text-decoration:underline;">Ruby</a></li>
+<li style="box-sizing:border-box;margin-bottom:0.5em;"><a href="https://www.joyfulbikeshedding.com/blog/2019-03-14-what-causes-ruby-memory-bloat.html#system-memory-allocator" style="box-sizing:border-box;color:rgb(182, 72, 0);background-color:transparent;transition:color 0.3s ease 0s, border-color 0.3s ease 0s;text-decoration:underline;">System memory allocator</a></li>
+<li style="box-sizing:border-box;margin-bottom:0.5em;"><a href="https://www.joyfulbikeshedding.com/blog/2019-03-14-what-causes-ruby-memory-bloat.html#kernel" style="box-sizing:border-box;color:rgb(182, 72, 0);background-color:transparent;transition:color 0.3s ease 0s, border-color 0.3s ease 0s;text-decoration:underline;">Kernel</a></li>
+<li style="box-sizing:border-box;margin-bottom:0.5em;"><a href="https://www.joyfulbikeshedding.com/blog/2019-03-14-what-causes-ruby-memory-bloat.html#defining-memory-usage" style="box-sizing:border-box;color:rgb(182, 72, 0);background-color:transparent;transition:color 0.3s ease 0s, border-color 0.3s ease 0s;text-decoration:underline;">Defining memory usage</a></li>
+</ul>
+</li>
+<li style="box-sizing:border-box;margin-bottom:0.5em;"><a href="https://www.joyfulbikeshedding.com/blog/2019-03-14-what-causes-ruby-memory-bloat.html#what-is-fragmentation" style="box-sizing:border-box;color:rgb(182, 72, 0);background-color:transparent;transition:color 0.3s ease 0s, border-color 0.3s ease 0s;text-decoration:underline;">What is fragmentation?</a>
+<ul style="box-sizing:border-box;margin-top:0px;margin-bottom:0px;">
+<li style="box-sizing:border-box;margin-bottom:0.5em;"><a href="https://www.joyfulbikeshedding.com/blog/2019-03-14-what-causes-ruby-memory-bloat.html#fragmentation-at-the-ruby-level" style="box-sizing:border-box;color:rgb(182, 72, 0);background-color:transparent;transition:color 0.3s ease 0s, border-color 0.3s ease 0s;text-decoration:underline;">Fragmentation at the Ruby level</a></li>
+<li style="box-sizing:border-box;margin-bottom:0.5em;"><a href="https://www.joyfulbikeshedding.com/blog/2019-03-14-what-causes-ruby-memory-bloat.html#fragmentation-at-the-memory-allocator-level" style="box-sizing:border-box;color:rgb(182, 72, 0);background-color:transparent;transition:color 0.3s ease 0s, border-color 0.3s ease 0s;text-decoration:underline;">Fragmentation at the memory allocator level</a></li>
+</ul>
+</li>
+<li style="box-sizing:border-box;margin-bottom:0.5em;"><a href="https://www.joyfulbikeshedding.com/blog/2019-03-14-what-causes-ruby-memory-bloat.html#is-fragmentation-at-the-ruby-heap-pages-level-the-cause-of-memory-bloating" style="box-sizing:border-box;color:rgb(182, 72, 0);background-color:transparent;transition:color 0.3s ease 0s, border-color 0.3s ease 0s;text-decoration:underline;">Is fragmentation at the Ruby heap pages level the cause of memory bloating?</a></li>
+<li style="box-sizing:border-box;margin-bottom:0.5em;"><a href="https://www.joyfulbikeshedding.com/blog/2019-03-14-what-causes-ruby-memory-bloat.html#investigating-fragmentation-at-the-memory-allocator-level" style="box-sizing:border-box;color:rgb(182, 72, 0);background-color:transparent;transition:color 0.3s ease 0s, border-color 0.3s ease 0s;text-decoration:underline;">Investigating fragmentation at the memory allocator level</a>
+<ul style="box-sizing:border-box;margin-top:0px;margin-bottom:0px;">
+<li style="box-sizing:border-box;margin-bottom:0.5em;"><a href="https://www.joyfulbikeshedding.com/blog/2019-03-14-what-causes-ruby-memory-bloat.html#overallocation--glibc-memory-arenas" style="box-sizing:border-box;color:rgb(182, 72, 0);background-color:transparent;transition:color 0.3s ease 0s, border-color 0.3s ease 0s;text-decoration:underline;">Overallocation &amp; glibc memory arenas</a></li>
+<li style="box-sizing:border-box;margin-bottom:0.5em;"><a href="https://www.joyfulbikeshedding.com/blog/2019-03-14-what-causes-ruby-memory-bloat.html#visualizing-os-heaps" style="box-sizing:border-box;color:rgb(182, 72, 0);background-color:transparent;transition:color 0.3s ease 0s, border-color 0.3s ease 0s;text-decoration:underline;">Visualizing OS heaps</a></li>
+</ul>
+</li>
+<li style="box-sizing:border-box;margin-bottom:0.5em;"><a href="https://www.joyfulbikeshedding.com/blog/2019-03-14-what-causes-ruby-memory-bloat.html#a-magic-trick-trimming" style="box-sizing:border-box;color:rgb(182, 72, 0);background-color:transparent;transition:color 0.3s ease 0s, border-color 0.3s ease 0s;text-decoration:underline;">A magic trick: trimming</a></li>
+<li style="box-sizing:border-box;margin-bottom:0.5em;"><a href="https://www.joyfulbikeshedding.com/blog/2019-03-14-what-causes-ruby-memory-bloat.html#conclusion" style="box-sizing:border-box;color:rgb(182, 72, 0);background-color:transparent;transition:color 0.3s ease 0s, border-color 0.3s ease 0s;text-decoration:underline;">Conclusion</a>
+<ul style="box-sizing:border-box;margin-top:0px;margin-bottom:0px;">
+<li style="box-sizing:border-box;margin-bottom:0.5em;"><a href="https://www.joyfulbikeshedding.com/blog/2019-03-14-what-causes-ruby-memory-bloat.html#visualizer-source-code" style="box-sizing:border-box;color:rgb(182, 72, 0);background-color:transparent;transition:color 0.3s ease 0s, border-color 0.3s ease 0s;text-decoration:underline;">Visualizer source code</a></li>
+<li style="box-sizing:border-box;margin-bottom:0.5em;"><a href="https://www.joyfulbikeshedding.com/blog/2019-03-14-what-causes-ruby-memory-bloat.html#what-about-performance" style="box-sizing:border-box;color:rgb(182, 72, 0);background-color:transparent;transition:color 0.3s ease 0s, border-color 0.3s ease 0s;text-decoration:underline;">What about performance?</a></li>
+<li style="box-sizing:border-box;margin-bottom:0.5em;"><a href="https://www.joyfulbikeshedding.com/blog/2019-03-14-what-causes-ruby-memory-bloat.html#more-testing-needed" style="box-sizing:border-box;color:rgb(182, 72, 0);background-color:transparent;transition:color 0.3s ease 0s, border-color 0.3s ease 0s;text-decoration:underline;">More testing needed</a></li>
+</ul>
+</li>
+</ul>
+
+<hr style="height:0px;overflow:visible;box-sizing:content-box;border-width:1px 0px 0px;border-right-style:initial;border-bottom-style:initial;border-left-style:initial;border-right-color:initial;border-bottom-color:initial;border-left-color:initial;border-image:initial;border-top-style:solid;border-top-color:rgba(0, 0, 0, 0.1);margin-top:40px;margin-bottom:40px;"/>
+<h2 style="box-sizing:border-box;font-family:inherit;font-weight:700;line-height:1.2;color:inherit;margin-bottom:8px;margin-top:1em;font-size:32px;">Ruby memory allocation 101</h2>
+<p style="box-sizing:border-box;margin-top:0px;margin-bottom:1em;">Memory allocation in Ruby involves three layers, ordered from high to low level:</p>
+<ol style="box-sizing:border-box;margin-top:0px;margin-bottom:16px;">
+<li style="box-sizing:border-box;margin-bottom:0.5em;">The Ruby interpreter, which manages Ruby objects.</li>
+<li style="box-sizing:border-box;margin-bottom:0.5em;">The operating system's memory allocator library.</li>
+<li style="box-sizing:border-box;margin-bottom:0.5em;">The kernel.</li>
+</ol>
+<p style="box-sizing:border-box;margin-top:0px;margin-bottom:1em;">Let's go over each layer.</p>
+<h3 style="box-sizing:border-box;font-family:inherit;font-weight:700;line-height:1.2;color:inherit;margin-bottom:8px;margin-top:1em;font-size:25.6px;">Ruby</h3>
+<p style="box-sizing:border-box;margin-top:0px;margin-bottom:1em;">On the Ruby side, Ruby organizes objects in memory areas called <em style="box-sizing:border-box;">Ruby heap pages</em>. Such a Ruby heap page is split into equal-sized slots, where one object occupies one slot. Whether it's a string, hash table, array, class, or whatever, it occupies one slot.</p>
+<div style="box-sizing:border-box;display:block;margin:0px 0px 1rem;text-align:center;">
+<div class="media-placeholder">[图片/附件]</div></en-media>
+</div>
+<p style="box-sizing:border-box;margin-top:0px;margin-bottom:1em;">Slots in a Ruby heap page may either be occupied or free. When Ruby allocates a new object, it first tries to occupy a free slot. If there are no free slots, then it will allocate a new Ruby heap page.</p>
+<p style="box-sizing:border-box;margin-top:0px;margin-bottom:1em;">A slot is small, about 40 bytes. Clearly not all Ruby objects fit in here – for example 1 MB strings. Ruby deals with this by storing any extraneous information – that doesn't fit in the slot – in a different location outside the Ruby heap page. Ruby then places a pointer in the slot that allows it to find that external information.</p>
+<div style="box-sizing:border-box;display:block;margin:0px 0px 1rem;text-align:center;">
+<div class="media-placeholder">[图片/附件]</div></en-media>
+<div style="box-sizing:border-box;margin:1rem 3rem;font-family:serif;font-style:italic;display:block;">Data that doesn't fit in a slot is stored outside the Ruby heap page. Ruby then places a pointer in the slot to point to that external data.</div>
+</div>
+<p style="box-sizing:border-box;margin-top:0px;margin-bottom:1em;">Both Ruby heap pages, and any external data, are allocated using the system's memory allocator.</p>
+<h3 style="box-sizing:border-box;font-family:inherit;font-weight:700;line-height:1.2;color:inherit;margin-bottom:8px;margin-top:1em;font-size:25.6px;">System memory allocator</h3>
+<p style="box-sizing:border-box;margin-top:0px;margin-bottom:1em;">The operating system's memory allocator is a library that is part of <i style="box-sizing:border-box;">glibc</i> (the C runtime). It is used by nearly all apps, not just Ruby. It has a simple API:</p>
+<ul style="box-sizing:border-box;margin-top:0px;margin-bottom:16px;">
+<li style="box-sizing:border-box;margin-bottom:0.5em;">Memory is allocated by calling <code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif">malloc(size)</code>. You pass it the number of bytes you want to allocate, and it returns either the address of the allocation, or an error.</li>
+<li style="box-sizing:border-box;margin-bottom:0.5em;">Allocated memory is freed by calling <code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif">free(address)</code>.</li>
+</ul>
+<p style="box-sizing:border-box;margin-top:0px;margin-bottom:1em;">Unlike Ruby, which deals with equally-sized slots most of the time, the memory allocator has to deal with memory allocation requests of any size. As you will learn later, this fact introduces some complications.</p>
+<p style="box-sizing:border-box;margin-top:0px;margin-bottom:1em;">The memory allocator, in turn, allocates memory through a kernel API. The memory allocator allocates much larger chunks of memory from the kernel than is requested by its own callers, because calling the kernel is expensive and because the kernel API has a limitation: it can only allocate memory in units of 4 KB.</p>
+<div style="box-sizing:border-box;display:block;margin:0px 0px 1rem;text-align:center;">
+<div class="media-placeholder">[图片/附件]</div></en-media>
+<div style="box-sizing:border-box;margin:1rem 3rem;font-family:serif;font-style:italic;display:block;">The memory allocator allocates large pieces -- called OS heaps -- from the kernel, and divides its contents to satisfy allocation requests from apps.</div>
+</div>
+<p style="box-sizing:border-box;margin-top:0px;margin-bottom:1em;">A memory area that the memory allocator allocates from the kernel, is called a <em style="box-sizing:border-box;">heap</em>. Note that this has got nothing to do with Ruby heap pages, so for clarity I will use the term <em style="box-sizing:border-box;">OS heap</em>.</p>
+<p style="box-sizing:border-box;margin-top:0px;margin-bottom:1em;">The memory allocator then assigns pieces of an OS heap to its own callers, until there is no more free space, in which case the memory allocator allocates a new OS heap from the kernel. This is similar to how Ruby allocates objects from Ruby heap pages.</p>
+<div style="box-sizing:border-box;display:block;margin:0px 0px 1rem;text-align:center;">
+<div class="media-placeholder">[图片/附件]</div></en-media>
+<div style="box-sizing:border-box;margin:1rem 3rem;font-family:serif;font-style:italic;display:block;">Ruby allocates memory from the memory allocator, which in turn allocates from the kernel</div>
+</div>
+<h3 style="box-sizing:border-box;font-family:inherit;font-weight:700;line-height:1.2;color:inherit;margin-bottom:8px;margin-top:1em;font-size:25.6px;">Kernel</h3>
+<p style="box-sizing:border-box;margin-top:0px;margin-bottom:1em;">The kernel can only allocate memory in units of 4 KB. One such 4 KB unit is called a <em style="box-sizing:border-box;">page</em>. Not to be confused with Ruby heap pages, which again have got nothing to do with this. So for clarity I will use the term <em style="box-sizing:border-box;">OS page</em>.</p>
+<p style="box-sizing:border-box;margin-top:0px;margin-bottom:1em;">The reason for this is complicated, but suffice to say that all modern kernels have this property.</p>
+<p style="box-sizing:border-box;margin-top:0px;margin-bottom:1em;">Allocating memory via the kernel also has a significant performance impact, so memory allocators try to minimize the number of kernel calls.</p>
+<h3 style="box-sizing:border-box;font-family:inherit;font-weight:700;line-height:1.2;color:inherit;margin-bottom:8px;margin-top:1em;font-size:25.6px;">Defining memory usage</h3>
+<p style="box-sizing:border-box;margin-top:0px;margin-bottom:1em;">So memory is allocated at multiple levels, and each level allocates more memory than it actually needs. Ruby heap pages can have free slots, and OS heaps can have free spots. So when you ask the question "how much memory is used?" the answer depends entirely on at which level you ask the question!</p>
+<p style="box-sizing:border-box;margin-top:0px;margin-bottom:1em;">When you use tools such as <code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif">top</code> or <code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif">ps</code> to measure a process's memory usage, they tell you the memory usage from the <strong style="box-sizing:border-box;font-weight:bolder;">kernel's</strong> point of view. This means that layers above the kernel have to work in coordination in order to free memory from the kernel's point of view. As you will learn next in the section about fragmentation, this could be harder than it seems.</p>
+<h2 style="box-sizing:border-box;font-family:inherit;font-weight:700;line-height:1.2;color:inherit;margin-bottom:8px;margin-top:1em;font-size:32px;">What is fragmentation?</h2>
+<p style="box-sizing:border-box;margin-top:0px;margin-bottom:1em;">Memory fragmentation is the phenomenon that memory allocations are scattered all over the place, which can cause interesting problems.</p>
+<h3 style="box-sizing:border-box;font-family:inherit;font-weight:700;line-height:1.2;color:inherit;margin-bottom:8px;margin-top:1em;font-size:25.6px;">Fragmentation at the Ruby level</h3>
+<p style="box-sizing:border-box;margin-top:0px;margin-bottom:1em;">Consider Ruby garbage collection. Garbage collecting an object means marking a Ruby heap page slot as free, allowing that slot to be reused. If an <em style="box-sizing:border-box;">entire</em> Ruby heap page ends up consisting <em style="box-sizing:border-box;">only</em> of free slots, then that entire Ruby heap page can be freed back to the memory allocator (and potentially back to the kernel).</p>
+<div style="box-sizing:border-box;display:block;margin:0px 0px 1rem;text-align:center;">
+<div class="media-placeholder">[图片/附件]</div></en-media>
+</div>
+<p style="box-sizing:border-box;margin-top:0px;margin-bottom:1em;">But what happens if not all slots are free? What if you have lots of Ruby heap pages, and a garbage collection frees up objects in different locations such that you end up with lots of free slots, but not many Ruby heap pages consist entirely of free slots? Even though there are free slots for Ruby to allocate objects into, as far as the memory allocator and the kernel are concerned, they're still allocated memory!</p>
+<h3 style="box-sizing:border-box;font-family:inherit;font-weight:700;line-height:1.2;color:inherit;margin-bottom:8px;margin-top:1em;font-size:25.6px;">Fragmentation at the memory allocator level</h3>
+<p style="box-sizing:border-box;margin-top:0px;margin-bottom:1em;">The memory allocator has a similar yet very different problem. The memory allocator doesn't have to release entire OS heaps at once. In theory, it can release any individual OS page. But because the memory allocator has to deal with allocations of any size, an OS page can contain multiple allocations. It cannot release an OS page until <em style="box-sizing:border-box;">all</em> allocations within a released.</p>
+<div style="box-sizing:border-box;display:block;margin:0px 0px 1rem;text-align:center;">
+<div class="media-placeholder">[图片/附件]</div></en-media>
+</div>
+<p style="box-sizing:border-box;margin-top:0px;margin-bottom:1em;">Consider what happens if there's a 3 KB allocation and a 2 KB allocation, spread over 2 OS pages. If you free the 3 KB allocation then the first OS page is still partially occupied, and so it cannot be released.</p>
+<div style="box-sizing:border-box;display:block;margin:0px 0px 1rem;text-align:center;">
+<div class="media-placeholder">[图片/附件]</div></en-media>
+</div>
+<p style="box-sizing:border-box;margin-top:0px;margin-bottom:1em;">So if we're unlucky, then we can end up in a situation where there's lots of free space inside OS heaps, but not many OS pages that are entirely free.</p>
+<p style="box-sizing:border-box;margin-top:0px;margin-bottom:1em;">Worse. What if there are many holes, but none of them big enough to satisfy a new allocation request? The memory allocator will have to allocate an entirely new OS heap.</p>
+<h2 style="box-sizing:border-box;font-family:inherit;font-weight:700;line-height:1.2;color:inherit;margin-bottom:8px;margin-top:1em;font-size:32px;">Is fragmentation at the Ruby heap pages level the cause of memory bloating?</h2>
+<p style="box-sizing:border-box;margin-top:0px;margin-bottom:1em;">It is plausible that fragmentation is what causes Ruby high memory usage. Assuming that fragmentation really is <strong style="box-sizing:border-box;font-weight:bolder;">the</strong> cause, which of the two sources of fragmentation is the biggest contributor to memory usage? Is it…</p>
+<ol style="box-sizing:border-box;margin-top:0px;margin-bottom:16px;">
+<li style="box-sizing:border-box;margin-bottom:0.5em;">Ruby heap pages fragmentation? Or:</li>
+<li style="box-sizing:border-box;margin-bottom:0.5em;">Memory allocator fragmentation?</li>
+</ol>
+<p style="box-sizing:border-box;margin-top:0px;margin-bottom:1em;">There is a simple way to verify whether it is #1. Ruby provides two APIs, <code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif">ObjectSpace.memsize_of_all</code> and <code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif">GC.stat</code>. With the information returned by both, we can count all the memory that Ruby knows it has allocated from the memory allocator.</p>
+<div style="box-sizing:border-box;display:block;margin:0px 0px 1rem;text-align:center;">
+<div class="media-placeholder">[图片/附件]</div></en-media>
+</div>
+<p style="box-sizing:border-box;margin-top:0px;margin-bottom:1em;"><code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif">ObjectSpace.memsize_of_all</code> returns the memory occupied by all live Ruby objects. That is, the space taken up by its slot as well as any external data. In the above graphic, that's the size of all blue and orange objects together.</p>
+<p style="box-sizing:border-box;margin-top:0px;margin-bottom:1em;"><code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif">GC.stat</code> allows us to find out the size of all free slots, i.e. all the gray area in the above graph. Here's the algorithm:</p>
+<div style="box-sizing:border-box;background-color:rgb(248, 248, 248);"><pre style="border-radius:4px;background-color: #fbfaf8;border: 1px solid rgba(0,0,0,.14902);color: #333;font-size: 12px;padding: 8px;font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif;box-sizing: border-box;"><code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span style="box-sizing:border-box;color:rgb(0, 128, 128);">GC</span><span style="box-sizing:border-box;">.</span><span style="box-sizing:border-box;color:rgb(153, 0, 0);font-weight:bold;">stat</span><span style="box-sizing:border-box;">[</span><span style="box-sizing:border-box;color:rgb(153, 0, 115);">:heap_free_slots</span><span style="box-sizing:border-box;">]</span> <span style="box-sizing:border-box;color:rgb(0, 0, 0);font-weight:bold;">*</span> <span style="box-sizing:border-box;color:rgb(0, 128, 128);">GC</span><span style="box-sizing:border-box;color:rgb(0, 0, 0);font-weight:bold;">::</span><span style="box-sizing:border-box;color:rgb(0, 128, 128);">INTERNAL_CONSTANTS</span><span style="box-sizing:border-box;">[</span><span style="box-sizing:border-box;color:rgb(153, 0, 115);">:RVALUE_SIZE</span><span style="box-sizing:border-box;">]</span>
+</code></pre></div>
+<p style="box-sizing:border-box;margin-top:0px;margin-bottom:1em;">If we sum them together, then that's all the memory that Ruby knows it has allocated, and includes Ruby heap page fragmentation overhead. This means that if the process's memory usage is higher than that, then the remaining memory usage comes from something that Ruby does not control, e.g. third-party libraries or fragmentation.</p>
+<p style="box-sizing:border-box;margin-top:0px;margin-bottom:1em;">I wrote a simple test program that spawns a bunch of threads, each of which allocates strings in a loop. Here's the memory usage that I measured after a while:</p>
+<div style="box-sizing:border-box;display:block;margin:0px 0px 1rem;text-align:center;">
+<div class="media-placeholder">[图片/附件]</div></en-media>
+</div>
+<p style="box-sizing:border-box;margin-top:0px;margin-bottom:1em;">…this … is… insane!</p>
+<p style="box-sizing:border-box;margin-top:0px;margin-bottom:1em;">This result shows us that Ruby's own memory usage is such a small contributor to overall memory usage, that it doesn't matter whether Ruby's heap pages are fragmented or not.</p>
+<p style="box-sizing:border-box;margin-top:0px;margin-bottom:1em;">We'll have to look for the culprit elsewhere. At least now we know that it's not Ruby's fault.</p>
+<h2 style="box-sizing:border-box;font-family:inherit;font-weight:700;line-height:1.2;color:inherit;margin-bottom:8px;margin-top:1em;font-size:32px;">Investigating fragmentation at the memory allocator level</h2>
+<p style="box-sizing:border-box;margin-top:0px;margin-bottom:1em;">Another likely suspect is the memory allocator. After all, Nate Berkopec and Heroku remarked that fiddling with the memory allocator (either replacing it altogether with jemalloc, or setting the magical environment variable <code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif">MALLOC_ARENA_MAX=2</code>) drastically lowers memory usage.</p>
+<p style="box-sizing:border-box;margin-top:0px;margin-bottom:1em;">Let's first take a look at what <code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif">MALLOC_ARENA_MAX=2</code> does and why it helps. Next, we'll investigate whether – and how much – there is fragmentation at the memory allocator level.</p>
+<h3 style="box-sizing:border-box;font-family:inherit;font-weight:700;line-height:1.2;color:inherit;margin-bottom:8px;margin-top:1em;font-size:25.6px;">Overallocation &amp; glibc memory arenas</h3>
+<p style="box-sizing:border-box;margin-top:0px;margin-bottom:1em;">The reason why <code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif">MALLOC_ARENA_MAX=2</code> works has got to do with multithreading. When multiple threads try to allocate memory from the same OS heap at the same time, they contend for access. Only one thread can perform an allocation at a time, reducing multithreaded memory allocation performance.</p>
+<div style="box-sizing:border-box;display:block;margin:0px 0px 1rem;text-align:center;">
+<div class="media-placeholder">[图片/附件]</div></en-media>
+<div style="box-sizing:border-box;margin:1rem 3rem;font-family:serif;font-style:italic;display:block;">Only 1 thread can operate on an OS heap at a time, so in multithreaded scenarios this causes contention and thus bad performance.</div>
+</div>
+<p style="box-sizing:border-box;margin-top:0px;margin-bottom:1em;">The memory allocator has an optimization for this scenario. It tries to create multiple OS heaps and tries to assign different threads to its own OS heap. Most of the time a thread only needs to work with that one, thereby avoiding contention with other threads.</p>
+<p style="box-sizing:border-box;margin-top:0px;margin-bottom:1em;">In fact, the max number of OS heaps allocated in such a fashion is, by default, equal to 8 times the number of virtual CPUs. So on a 2-core system with 2 hyperthreads each, that's <code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif">2 * 2 * 8 = 32</code> OS heaps! This is what I call <strong style="box-sizing:border-box;font-weight:bolder;">overallocation</strong>.</p>
+<p style="box-sizing:border-box;margin-top:0px;margin-bottom:1em;">Why is the default multiplier so big? It's because the primary developer of the memory allocator is Red Hat. Their customers are enterprises who have machines with a ton of RAM. The above optimization allows improving average multithreading performance by 10% at the cost of huge memory usage. For Red Hat's customers, this is the right tradeoff. For most non-enterprise users out there, not so much.</p>
+<p style="box-sizing:border-box;margin-top:0px;margin-bottom:1em;">Nate's blog post and the Heroku article state that more OS heaps equal more fragmentation, and cite the official documentation. The <code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif">MALLOC_ARENA_MAX</code> variable reduces the maximum number of OS heaps allocated for the purpose of reducing multithreading contention, and thus – so goes the logic – it reduces fragmentation.</p>
+<h3 style="box-sizing:border-box;font-family:inherit;font-weight:700;line-height:1.2;color:inherit;margin-bottom:8px;margin-top:1em;font-size:25.6px;">Visualizing OS heaps</h3>
+<p style="box-sizing:border-box;margin-top:0px;margin-bottom:1em;">Are Nate's and Heroku's assertion that more OS heaps equals more fragmentation, correct? Actually, is fragmentation at the memory allocator level the problem at all? I wasn't willing to take either assumptions for granted, so I started researching.</p>
+<p style="box-sizing:border-box;margin-top:0px;margin-bottom:1em;">If only there is a way visualize the OS heaps so that I can see what's going. Unfortunately there are <em style="box-sizing:border-box;">no tools that allow me to do that</em>.</p>
+<p style="box-sizing:border-box;font-family:&quot;PT Serif&quot;, serif;font-size:40px;text-align:center;margin:1em 2.5em;color:black;margin-bottom:1em;">So I wrote an OS heap visualizer myself.</p>
+<p style="box-sizing:border-box;margin-top:0px;margin-bottom:1em;">First, I had to dump the layout of the OS heaps somehow. So I dived into <a href="https://github.com/bminor/glibc/tree/master/malloc" style="box-sizing:border-box;color:rgb(182, 72, 0);background-color:transparent;transition:color 0.3s ease 0s, border-color 0.3s ease 0s;text-decoration:underline;">the memory allocator source code</a> to find out how the memory allocator internally lays out memory. Next, I wrote a library that traverses those data structures and writes the layout to a file. Finally, I wrote a tool that takes such a file as an input and compiles a visualization in the form of HTML and PNG images. <a href="https://github.com/FooBarWidget/heap_dumper_visualizer" style="box-sizing:border-box;color:rgb(182, 72, 0);background-color:transparent;transition:color 0.3s ease 0s, border-color 0.3s ease 0s;text-decoration:underline;">Here is the source code.</a></p>
+<div style="box-sizing:border-box;display:block;margin:0px 0px 1rem;text-align:center;">
+<a href="https://www.joyfulbikeshedding.com/images/2019/os_heap_visualization-e40e6bc2.png" target="_blank" style="box-sizing:border-box;color:rgb(182, 72, 0);background-color:transparent;transition:color 0.3s ease 0s, border-color 0.3s ease 0s;text-decoration:underline;"><div class="media-placeholder">[图片/附件]</div></en-media></a>
+</div>
+<p style="box-sizing:border-box;margin-top:0px;margin-bottom:1em;">Here's an example visualization of one particular OS heap (there are many more). The small blocks in this visualization represent OS pages.</p>
+<ul style="box-sizing:border-box;margin-top:0px;margin-bottom:16px;">
+<li style="box-sizing:border-box;margin-bottom:0.5em;">Red areas are memory locations in use.</li>
+<li style="box-sizing:border-box;margin-bottom:0.5em;">Gray areas are free locations, but not released back to the kernel.</li>
+<li style="box-sizing:border-box;margin-bottom:0.5em;">White areas are freed to the kernel.</li>
+</ul>
+<p style="box-sizing:border-box;margin-top:0px;margin-bottom:1em;">I can deduce the following from the visualization:</p>
+<ol style="box-sizing:border-box;margin-top:0px;margin-bottom:16px;">
+<li style="box-sizing:border-box;margin-bottom:0.5em;">There is <em style="box-sizing:border-box;">some</em> fragmentation. Because the red spots are scattered, and some OS pages are only half red.</li>
+<li style="box-sizing:border-box;margin-bottom:0.5em;">To my surprise, <em style="box-sizing:border-box;">most</em> OS heaps look like this: there's a significant number of entirely-gray OS pages without any red inside!</li>
+</ol>
+<p style="box-sizing:border-box;margin-top:0px;margin-bottom:1em;">Then, it struck me:</p>
+<p style="box-sizing:border-box;font-family:&quot;PT Serif&quot;, serif;text-align:center;margin:1em 2.5em;color:black;margin-bottom:1em;line-height:1.45;font-size:28px;">Even though fragmentation <em style="box-sizing:border-box;">could</em> be an issue, it doesn't seem to be as bad as people thought!</p>
+<p style="box-sizing:border-box;margin-top:0px;margin-bottom:1em;">Rather, the large amount of gray seems to be more problematic: that's the memory allocator <em style="box-sizing:border-box;">not releasing memory back to the kernel</em>!</p>
+<p style="box-sizing:border-box;margin-top:0px;margin-bottom:1em;">After researching the memory allocator's source code more, it turns out that by default it only releases OS pages at the <em style="box-sizing:border-box;">end</em> of an OS heap, and even that is only done <em style="box-sizing:border-box;">occassionally</em>. This is probably done for performance reasons.</p>
+<h2 style="box-sizing:border-box;font-family:inherit;font-weight:700;line-height:1.2;color:inherit;margin-bottom:8px;margin-top:1em;font-size:32px;">A magic trick: trimming</h2>
+<p style="box-sizing:border-box;margin-top:0px;margin-bottom:1em;">Luckily I found a magic trick. There is an API to force the memory allocator to free <em style="box-sizing:border-box;">all</em> eligible OS pages to the kernel, not just those at the end. It's called <a href="http://man7.org/linux/man-pages/man3/malloc_trim.3.html" style="box-sizing:border-box;color:rgb(182, 72, 0);background-color:transparent;transition:color 0.3s ease 0s, border-color 0.3s ease 0s;text-decoration:underline;">malloc_trim</a>.</p>
+<p style="box-sizing:border-box;margin-top:0px;margin-bottom:1em;">I knew about this function but did not think it was useful, because of this sentence in its manual page:</p>
+<blockquote style="box-sizing:border-box;border-left:6px solid rgb(255, 164, 87);padding:0px 0px 0px 1em;color:rgb(152, 60, 0);margin:1em 0px;">
+<p style="box-sizing:border-box;margin-top:0px;margin-bottom:0px;">The malloc_trim() function attempts to release free memory at the <strong style="box-sizing:border-box;font-weight:bolder;">top</strong> of the heap.</p>
+</blockquote>
+<p style="box-sizing:border-box;margin-top:0px;margin-bottom:1em;"><strong style="box-sizing:border-box;font-weight:bolder;">The manual is wrong!</strong> Analysis of the source code tells me that it frees <em style="box-sizing:border-box;">all</em> eligible OS pages, not just those at the top.</p>
+<p style="box-sizing:border-box;margin-top:0px;margin-bottom:1em;">So I thought, what happens if we modify Ruby to call this function during garbage collection? I patched Ruby 2.6 to call <code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif">malloc_trim()</code> in gc.c, function <code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif">gc_start</code>, like this:</p>
+<div style="box-sizing:border-box;background-color:rgb(248, 248, 248);"><pre style="border-radius:4px;background-color: #fbfaf8;border: 1px solid rgba(0,0,0,.14902);color: #333;font-size: 12px;padding: 8px;font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif;box-sizing: border-box;"><code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span style="box-sizing:border-box;">gc_prof_timer_start</span><span style="box-sizing:border-box;">(</span><span style="box-sizing:border-box;">objspace</span><span style="box-sizing:border-box;">);</span>
+<span style="box-sizing:border-box;">{</span>
+    <span style="box-sizing:border-box;">gc_marks</span><span style="box-sizing:border-box;">(</span><span style="box-sizing:border-box;">objspace</span><span style="box-sizing:border-box;">,</span> <span style="box-sizing:border-box;">do_full_mark</span><span style="box-sizing:border-box;">);</span>
+    <span style="box-sizing:border-box;color:rgb(153, 153, 136);font-style:italic;">// BEGIN MODIFICATION</span>
+    <span style="box-sizing:border-box;color:rgb(0, 0, 0);font-weight:bold;">if</span> <span style="box-sizing:border-box;">(</span><span style="box-sizing:border-box;">do_full_mark</span><span style="box-sizing:border-box;">)</span>
+    <span style="box-sizing:border-box;">{</span>
+        <span style="box-sizing:border-box;">malloc_trim</span><span style="box-sizing:border-box;">(</span><span style="box-sizing:border-box;color:rgb(0, 153, 153);">0</span><span style="box-sizing:border-box;">);</span>
+    <span style="box-sizing:border-box;">}</span>
+    <span style="box-sizing:border-box;color:rgb(153, 153, 136);font-style:italic;">// END MODIFICATION</span>
+<span style="box-sizing:border-box;">}</span>
+<span style="box-sizing:border-box;">gc_prof_timer_stop</span><span style="box-sizing:border-box;">(</span><span style="box-sizing:border-box;">objspace</span><span style="box-sizing:border-box;">);</span>
+</code></pre></div>
+<p style="box-sizing:border-box;margin-top:0px;margin-bottom:1em;">And here are the test results:</p>
+<div style="box-sizing:border-box;display:block;margin:0px 0px 1rem;text-align:center;">
+<div class="media-placeholder">[图片/附件]</div></en-media>
+</div>
+<p style="box-sizing:border-box;margin-top:0px;margin-bottom:1em;"><strong style="box-sizing:border-box;font-weight:bolder;">What a big difference!</strong> This simple patch causes memory usage to become almost as low as setting <code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif">MALLOC_ARENA_MAX=2</code>.</p>
+<p style="box-sizing:border-box;margin-top:0px;margin-bottom:1em;">Here's how things look like in the visualization:</p>
+<div style="box-sizing:border-box;display:block;margin:0px 0px 1rem;text-align:center;">
+<a href="https://www.joyfulbikeshedding.com/images/2019/os_heap_visualization_after_trim-b3e36496.png" target="_blank" style="box-sizing:border-box;color:rgb(182, 72, 0);background-color:transparent;transition:color 0.3s ease 0s, border-color 0.3s ease 0s;text-decoration:underline;"><div class="media-placeholder">[图片/附件]</div></en-media></a>
+</div>
+<p style="box-sizing:border-box;margin-top:0px;margin-bottom:1em;">We see a lot of "white holes", which are OS pages freed back to the kernel.</p>
+<h2 style="box-sizing:border-box;font-family:inherit;font-weight:700;line-height:1.2;color:inherit;margin-bottom:8px;margin-top:1em;font-size:32px;">Conclusion</h2>
+<p style="box-sizing:border-box;margin-top:0px;margin-bottom:1em;">Fragmentation turns out to be mostly a red herring. There's still gains to be had by reducing fragmentation, but main problem is the fact that the memory allocator doesn't like to free memory back to the kernel.</p>
+<p style="box-sizing:border-box;margin-top:0px;margin-bottom:1em;">The solution turns out to be, fortunately, super simple. But finding the solution and the root cause… not so much.</p>
+<h3 style="box-sizing:border-box;font-family:inherit;font-weight:700;line-height:1.2;color:inherit;margin-bottom:8px;margin-top:1em;font-size:25.6px;">Visualizer source code</h3>
+<p style="box-sizing:border-box;margin-top:0px;margin-bottom:1em;"><a href="https://github.com/FooBarWidget/heap_dumper_visualizer" style="box-sizing:border-box;color:rgb(182, 72, 0);background-color:transparent;transition:color 0.3s ease 0s, border-color 0.3s ease 0s;text-decoration:underline;">Here is the OS heap visualizer source code.</a></p>
+<h3 style="box-sizing:border-box;font-family:inherit;font-weight:700;line-height:1.2;color:inherit;margin-bottom:8px;margin-top:1em;font-size:25.6px;">What about performance?</h3>
+<p style="box-sizing:border-box;margin-top:0px;margin-bottom:1em;">One big concern was performance. Calling <code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif">malloc_trim()</code> can't be free, and looking at the code the algorithm appears to run in linear time. So I reached out to <a href="https://twitter.com/codefolio" style="box-sizing:border-box;color:rgb(182, 72, 0);background-color:transparent;transition:color 0.3s ease 0s, border-color 0.3s ease 0s;text-decoration:underline;">Noah Gibbs</a>, who ran the Rails Ruby Bench. To my surprise he found out that my patch yielded a slight performance <strong style="box-sizing:border-box;font-weight:bolder;">increase</strong>.</p>
+<div style="box-sizing:border-box;display:block;margin:0px 0px 1rem;text-align:center;">
+<div class="media-placeholder">[图片/附件]</div></en-media><br style="box-sizing:border-box;"/>
+<div class="media-placeholder">[图片/附件]</div></en-media>
+</div>
+<p style="box-sizing:border-box;margin-top:0px;margin-bottom:1em;">That blew my mind. I can't explain it, but I'm not saying no to good news.</p>
+<h3 style="box-sizing:border-box;font-family:inherit;font-weight:700;line-height:1.2;color:inherit;margin-bottom:8px;margin-top:1em;font-size:25.6px;">More testing needed</h3>
+<p style="box-sizing:border-box;margin-top:0px;margin-bottom:1em;">This research has only been tested against a limited number of cases, so I don't know the impact on other workloads. If you would like to help with testing, please <a href="https://www.joyfulbikeshedding.com/blog/2019-03-14-what-causes-ruby-memory-bloat.htmlmailto:hongli@hongli.nl" style="box-sizing:border-box;color:rgb(182, 72, 0);background-color:transparent;transition:color 0.3s ease 0s, border-color 0.3s ease 0s;text-decoration:underline;">contact me</a>.</p>
+<p style="box-sizing:border-box;margin-top:0px;margin-bottom:1em;"><b style="box-sizing:border-box;font-weight:bolder;"><i style="box-sizing:border-box;">Update 2019-03-29:</i></b> I've written a follow-up in <a href="https://www.joyfulbikeshedding.com/blog/2019-03-29-the-status-of-ruby-memory-trimming-and-how-you-can-help-with-testing.html" style="box-sizing:border-box;color:rgb(182, 72, 0);background-color:transparent;transition:color 0.3s ease 0s, border-color 0.3s ease 0s;text-decoration:underline;">The status of Ruby memory trimming &amp; how you can help with testing</a>.</p>
+</div></div></span></div></div></div>
+</div>
+</div>
+<a class="back-link" href="../articles.html">← 返回笔记列表</a>
+</body>
+</html>

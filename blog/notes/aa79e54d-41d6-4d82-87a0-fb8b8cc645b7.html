@@ -1,0 +1,730 @@
+<!DOCTYPE html>
+<html lang="zh-CN" data-theme="light">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AbstractClass,ActiveRecord::Inheritance::ClassMethods — 技术笔记</title>
+<style>
+:root {
+  --bg: #ffffff;
+  --text: #1a1a1a;
+  --muted: #666;
+  --border: #e0e0e0;
+  --code-bg: #f5f5f5;
+  --link: #0066cc;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #1a1a1a;
+    --text: #e0e0e0;
+    --muted: #999;
+    --border: #333;
+    --code-bg: #2a2a2a;
+    --link: #66bbff;
+  }
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  line-height: 1.7;
+  color: var(--text);
+  background: var(--bg);
+  max-width: 860px;
+  margin: 0 auto;
+  padding: 2rem 1.5rem;
+}
+.note-header {
+  border-bottom: 2px solid var(--border);
+  padding-bottom: 1rem;
+  margin-bottom: 2rem;
+}
+.note-title {
+  font-size: 1.6rem;
+  font-weight: 700;
+  margin-bottom: 0.3rem;
+}
+.note-meta {
+  color: var(--muted);
+  font-size: 0.85rem;
+}
+.note-content {
+  font-size: 0.95rem;
+}
+.note-content h1 { font-size: 1.4rem; margin: 1.2rem 0 0.6rem; }
+.note-content h2 { font-size: 1.2rem; margin: 1rem 0 0.5rem; }
+.note-content h3 { font-size: 1.05rem; margin: 0.8rem 0 0.4rem; }
+.note-content p { margin: 0.5rem 0; }
+.note-content ul, .note-content ol { margin: 0.5rem 0 0.5rem 2rem; }
+.note-content li { margin: 0.2rem 0; }
+.note-content pre {
+  background: var(--code-bg);
+  padding: 1rem;
+  border-radius: 6px;
+  overflow-x: auto;
+  margin: 0.8rem 0;
+  font-size: 0.85rem;
+}
+.note-content code {
+  background: var(--code-bg);
+  padding: 0.1rem 0.3rem;
+  border-radius: 3px;
+  font-size: 0.88em;
+}
+.note-content pre code {
+  background: none;
+  padding: 0;
+}
+.note-content blockquote {
+  border-left: 3px solid var(--border);
+  padding-left: 1rem;
+  color: var(--muted);
+  margin: 0.8rem 0;
+}
+.note-content a { color: var(--link); }
+.note-content img {
+  max-width: 100%;
+  height: auto;
+  border-radius: 6px;
+  margin: 0.5rem 0;
+}
+.note-content table {
+  border-collapse: collapse;
+  width: 100%;
+  margin: 0.8rem 0;
+}
+.note-content th, .note-content td {
+  border: 1px solid var(--border);
+  padding: 0.5rem;
+}
+.note-content th { background: var(--code-bg); }
+.media-placeholder {
+  background: var(--code-bg);
+  padding: 1rem;
+  text-align: center;
+  color: var(--muted);
+  border-radius: 6px;
+  margin: 0.5rem 0;
+  font-size: 0.85rem;
+}
+.encrypt-placeholder {
+  background: #fff3cd;
+  padding: 0.5rem;
+  text-align: center;
+  color: #856404;
+  border-radius: 6px;
+  margin: 0.5rem 0;
+  font-size: 0.85rem;
+}
+.back-link {
+  display: inline-block;
+  margin-top: 2rem;
+  color: var(--link);
+  text-decoration: none;
+  font-size: 0.85rem;
+}
+</style>
+</head>
+<body>
+<div class="note-header">
+  <div class="note-title">AbstractClass,ActiveRecord::Inheritance::ClassMethods</div>
+  <div class="note-meta">笔记本：RubyOnRails</div>
+</div>
+<div class="note-content">
+<div style="--en-clipped-content:article; --en-clipped-source-url:https://api.rubyonrails.org/classes/ActiveRecord/Inheritance/ClassMethods.html; --en-clipped-source-title:AbstractClass,ActiveRecord::Inheritance::ClassMethods;">
+<div><br/></div><div style="min-height: 2955px; font-size: 16px; display:block; min-width: 100%; position: relative;"> <div style="outline:0px;font-size:100%;vertical-align:baseline;background:transparent;"><div style="outline:0px;vertical-align:baseline;font-family:&quot;Helvetica Neue&quot;, Arial, sans-serif;color:rgb(59, 59, 59);font-size:15px;background:rgb(255, 255, 255);line-height:1.25em;">
+
+    
+
+
+
+
+    <div style="margin:0px;border:0px;outline:0px;font-size:100%;vertical-align:baseline;margin-left:300px;color:rgb(255, 255, 255);border-bottom:1px solid rgb(155, 40, 28);box-shadow:rgba(0, 0, 0, 0.2) 1px 1px 3px;padding:1em;background:rgb(182, 29, 29);">
+        
+            <span style="margin:0px;padding:0px;border:0px;outline:0px;font-size:100%;vertical-align:baseline;background:transparent;">Ruby on Rails 6.1.4</span><br/>
+        
+        <h2 style="padding:0px;border:0px;outline:0px;vertical-align:baseline;background:transparent;font-weight:normal;line-height:1.2em;margin:0px;font-size:1.2em;">
+            <span style="margin:0px;padding:0px;border:0px;outline:0px;vertical-align:baseline;background:transparent;display:block;font-size:0.833em;color:rgb(204, 204, 204);">Module</span>
+            ActiveRecord::Inheritance::ClassMethods
+            
+        </h2>
+        <ul style="margin:0px;padding:0px;border:0px;outline:0px;vertical-align:baseline;background:transparent;list-style:none;margin-top:0.3em;margin-bottom:0px;font-size:0.85em;">
+            
+            <li style="padding:0px;border:0px;outline:0px;font-size:100%;vertical-align:baseline;background:transparent;margin:0px 0px 0.5em 2em;margin-left:0px;margin-bottom:0px;list-style:none;"><a href="https://api.rubyonrails.org/files/activerecord/lib/active_record/inheritance_rb.html" style="margin:0px;padding:0px;border:0px;outline:0px;font-size:100%;vertical-align:baseline;background:transparent;text-decoration:none;color:rgb(255, 255, 255);">activerecord/lib/active_record/inheritance.rb</a></li>
+            
+        </ul>
+    </div>
+
+    <div style="margin:0px;padding:0px;border:0px;outline:0px;font-size:100%;vertical-align:baseline;background:transparent;margin-left:300px;">
+        <div style="padding:0px;border:0px;outline:0px;font-size:100%;vertical-align:baseline;background:transparent;max-width:980px;margin:2em 3.5em;">
+  
+
+
+  
+
+
+  
+  
+
+
+  
+
+
+  
+    
+    <div style="margin:0px;border:0px;outline:0px;vertical-align:baseline;background:transparent;margin-top:2em;margin-bottom:1.3em;margin-left:-1.2em;font-weight:bold;border-bottom:1px solid rgb(0, 0, 0);padding:0px 0px 0.25em;font-size:1.2em;">Methods</div>
+    <dl style="margin:0px;padding:0px;border:0px;outline:0px;font-size:100%;vertical-align:baseline;background:transparent;"><dt style="padding:0px;border:0px;outline:0px;vertical-align:baseline;background:transparent;width:1em;color:rgb(170, 170, 170);position:absolute;margin:0px;font-size:1.5em;font-weight:normal;">A</dt><dd style="margin:0px;padding:0px;border:0px;outline:0px;font-size:100%;vertical-align:baseline;background:transparent;margin-bottom:1em;min-height:1.8em;padding-bottom:0.8em;margin-left:2.5em;">
+          <ul style="margin:0px;padding:0px;border:0px;outline:0px;font-size:100%;vertical-align:baseline;background:transparent;list-style:none;">
+            
+              
+              <li style="padding:0px;border:0px;outline:0px;font-size:100%;vertical-align:baseline;background:transparent;margin:0px 0px 0.5em 2em;margin-right:0.7em;margin-left:0px;display:inline;list-style:none;">
+                <a href="https://api.rubyonrails.org/classes/ActiveRecord/Inheritance/ClassMethods.html#method-i-abstract_class-3F" style="margin:0px;padding:0px;border:0px;outline:0px;font-size:100%;vertical-align:baseline;background:transparent;color:rgb(204, 0, 0);text-decoration:none;">abstract_class?</a>
+              </li>
+            
+          </ul>
+        </dd><dt style="padding:0px;border:0px;outline:0px;vertical-align:baseline;background:transparent;width:1em;color:rgb(170, 170, 170);position:absolute;margin:0px;font-size:1.5em;font-weight:normal;">B</dt><dd style="margin:0px;padding:0px;border:0px;outline:0px;font-size:100%;vertical-align:baseline;background:transparent;margin-bottom:1em;min-height:1.8em;padding-bottom:0.8em;margin-left:2.5em;">
+          <ul style="margin:0px;padding:0px;border:0px;outline:0px;font-size:100%;vertical-align:baseline;background:transparent;list-style:none;">
+            
+              
+              <li style="padding:0px;border:0px;outline:0px;font-size:100%;vertical-align:baseline;background:transparent;margin:0px 0px 0.5em 2em;margin-right:0.7em;margin-left:0px;display:inline;list-style:none;">
+                <a href="https://api.rubyonrails.org/classes/ActiveRecord/Inheritance/ClassMethods.html#method-i-base_class" style="margin:0px;padding:0px;border:0px;outline:0px;font-size:100%;vertical-align:baseline;background:transparent;color:rgb(204, 0, 0);text-decoration:none;">base_class</a>,
+              </li>
+            
+              
+              <li style="padding:0px;border:0px;outline:0px;font-size:100%;vertical-align:baseline;background:transparent;margin:0px 0px 0.5em 2em;margin-right:0.7em;margin-left:0px;display:inline;list-style:none;">
+                <a href="https://api.rubyonrails.org/classes/ActiveRecord/Inheritance/ClassMethods.html#method-i-base_class-3F" style="margin:0px;padding:0px;border:0px;outline:0px;font-size:100%;vertical-align:baseline;background:transparent;color:rgb(204, 0, 0);text-decoration:none;">base_class?</a>
+              </li>
+            
+          </ul>
+        </dd><dt style="padding:0px;border:0px;outline:0px;vertical-align:baseline;background:transparent;width:1em;color:rgb(170, 170, 170);position:absolute;margin:0px;font-size:1.5em;font-weight:normal;">C</dt><dd style="margin:0px;padding:0px;border:0px;outline:0px;font-size:100%;vertical-align:baseline;background:transparent;margin-bottom:1em;min-height:1.8em;padding-bottom:0.8em;margin-left:2.5em;">
+          <ul style="margin:0px;padding:0px;border:0px;outline:0px;font-size:100%;vertical-align:baseline;background:transparent;list-style:none;">
+            
+              
+              <li style="padding:0px;border:0px;outline:0px;font-size:100%;vertical-align:baseline;background:transparent;margin:0px 0px 0.5em 2em;margin-right:0.7em;margin-left:0px;display:inline;list-style:none;">
+                <a href="https://api.rubyonrails.org/classes/ActiveRecord/Inheritance/ClassMethods.html#method-i-compute_type" style="margin:0px;padding:0px;border:0px;outline:0px;font-size:100%;vertical-align:baseline;background:transparent;color:rgb(204, 0, 0);text-decoration:none;">compute_type</a>
+              </li>
+            
+          </ul>
+        </dd><dt style="padding:0px;border:0px;outline:0px;vertical-align:baseline;background:transparent;width:1em;color:rgb(170, 170, 170);position:absolute;margin:0px;font-size:1.5em;font-weight:normal;">D</dt><dd style="margin:0px;padding:0px;border:0px;outline:0px;font-size:100%;vertical-align:baseline;background:transparent;margin-bottom:1em;min-height:1.8em;padding-bottom:0.8em;margin-left:2.5em;">
+          <ul style="margin:0px;padding:0px;border:0px;outline:0px;font-size:100%;vertical-align:baseline;background:transparent;list-style:none;">
+            
+              
+              <li style="padding:0px;border:0px;outline:0px;font-size:100%;vertical-align:baseline;background:transparent;margin:0px 0px 0.5em 2em;margin-right:0.7em;margin-left:0px;display:inline;list-style:none;">
+                <a href="https://api.rubyonrails.org/classes/ActiveRecord/Inheritance/ClassMethods.html#method-i-descends_from_active_record-3F" style="margin:0px;padding:0px;border:0px;outline:0px;font-size:100%;vertical-align:baseline;background:transparent;color:rgb(204, 0, 0);text-decoration:none;">descends_from_active_record?</a>
+              </li>
+            
+          </ul>
+        </dd><dt style="padding:0px;border:0px;outline:0px;vertical-align:baseline;background:transparent;width:1em;color:rgb(170, 170, 170);position:absolute;margin:0px;font-size:1.5em;font-weight:normal;">I</dt><dd style="margin:0px;padding:0px;border:0px;outline:0px;font-size:100%;vertical-align:baseline;background:transparent;margin-bottom:1em;min-height:1.8em;padding-bottom:0.8em;margin-left:2.5em;">
+          <ul style="margin:0px;padding:0px;border:0px;outline:0px;font-size:100%;vertical-align:baseline;background:transparent;list-style:none;">
+            
+              
+              <li style="padding:0px;border:0px;outline:0px;font-size:100%;vertical-align:baseline;background:transparent;margin:0px 0px 0.5em 2em;margin-right:0.7em;margin-left:0px;display:inline;list-style:none;">
+                <a href="https://api.rubyonrails.org/classes/ActiveRecord/Inheritance/ClassMethods.html#method-i-inherited" style="margin:0px;padding:0px;border:0px;outline:0px;font-size:100%;vertical-align:baseline;background:transparent;color:rgb(204, 0, 0);text-decoration:none;">inherited</a>
+              </li>
+            
+          </ul>
+        </dd><dt style="padding:0px;border:0px;outline:0px;vertical-align:baseline;background:transparent;width:1em;color:rgb(170, 170, 170);position:absolute;margin:0px;font-size:1.5em;font-weight:normal;">N</dt><dd style="margin:0px;padding:0px;border:0px;outline:0px;font-size:100%;vertical-align:baseline;background:transparent;margin-bottom:1em;min-height:1.8em;padding-bottom:0.8em;margin-left:2.5em;">
+          <ul style="margin:0px;padding:0px;border:0px;outline:0px;font-size:100%;vertical-align:baseline;background:transparent;list-style:none;">
+            
+              
+              <li style="padding:0px;border:0px;outline:0px;font-size:100%;vertical-align:baseline;background:transparent;margin:0px 0px 0.5em 2em;margin-right:0.7em;margin-left:0px;display:inline;list-style:none;">
+                <a href="https://api.rubyonrails.org/classes/ActiveRecord/Inheritance/ClassMethods.html#method-i-new" style="margin:0px;padding:0px;border:0px;outline:0px;font-size:100%;vertical-align:baseline;background:transparent;color:rgb(204, 0, 0);text-decoration:none;">new</a>
+              </li>
+            
+          </ul>
+        </dd><dt style="padding:0px;border:0px;outline:0px;vertical-align:baseline;background:transparent;width:1em;color:rgb(170, 170, 170);position:absolute;margin:0px;font-size:1.5em;font-weight:normal;">P</dt><dd style="margin:0px;padding:0px;border:0px;outline:0px;font-size:100%;vertical-align:baseline;background:transparent;margin-bottom:1em;min-height:1.8em;padding-bottom:0.8em;margin-left:2.5em;">
+          <ul style="margin:0px;padding:0px;border:0px;outline:0px;font-size:100%;vertical-align:baseline;background:transparent;list-style:none;">
+            
+              
+              <li style="padding:0px;border:0px;outline:0px;font-size:100%;vertical-align:baseline;background:transparent;margin:0px 0px 0.5em 2em;margin-right:0.7em;margin-left:0px;display:inline;list-style:none;">
+                <a href="https://api.rubyonrails.org/classes/ActiveRecord/Inheritance/ClassMethods.html#method-i-polymorphic_class_for" style="margin:0px;padding:0px;border:0px;outline:0px;font-size:100%;vertical-align:baseline;background:transparent;color:rgb(204, 0, 0);text-decoration:none;">polymorphic_class_for</a>,
+              </li>
+            
+              
+              <li style="padding:0px;border:0px;outline:0px;font-size:100%;vertical-align:baseline;background:transparent;margin:0px 0px 0.5em 2em;margin-right:0.7em;margin-left:0px;display:inline;list-style:none;">
+                <a href="https://api.rubyonrails.org/classes/ActiveRecord/Inheritance/ClassMethods.html#method-i-polymorphic_name" style="margin:0px;padding:0px;border:0px;outline:0px;font-size:100%;vertical-align:baseline;background:transparent;color:rgb(204, 0, 0);text-decoration:none;">polymorphic_name</a>
+              </li>
+            
+          </ul>
+        </dd><dt style="padding:0px;border:0px;outline:0px;vertical-align:baseline;background:transparent;width:1em;color:rgb(170, 170, 170);position:absolute;margin:0px;font-size:1.5em;font-weight:normal;">S</dt><dd style="margin:0px;padding:0px;border:0px;outline:0px;font-size:100%;vertical-align:baseline;background:transparent;margin-bottom:1em;min-height:1.8em;padding-bottom:0.8em;margin-left:2.5em;">
+          <ul style="margin:0px;padding:0px;border:0px;outline:0px;font-size:100%;vertical-align:baseline;background:transparent;list-style:none;">
+            
+              
+              <li style="padding:0px;border:0px;outline:0px;font-size:100%;vertical-align:baseline;background:transparent;margin:0px 0px 0.5em 2em;margin-right:0.7em;margin-left:0px;display:inline;list-style:none;">
+                <a href="https://api.rubyonrails.org/classes/ActiveRecord/Inheritance/ClassMethods.html#method-i-sti_class_for" style="margin:0px;padding:0px;border:0px;outline:0px;font-size:100%;vertical-align:baseline;background:transparent;color:rgb(204, 0, 0);text-decoration:none;">sti_class_for</a>,
+              </li>
+            
+              
+              <li style="padding:0px;border:0px;outline:0px;font-size:100%;vertical-align:baseline;background:transparent;margin:0px 0px 0.5em 2em;margin-right:0.7em;margin-left:0px;display:inline;list-style:none;">
+                <a href="https://api.rubyonrails.org/classes/ActiveRecord/Inheritance/ClassMethods.html#method-i-sti_name" style="margin:0px;padding:0px;border:0px;outline:0px;font-size:100%;vertical-align:baseline;background:transparent;color:rgb(204, 0, 0);text-decoration:none;">sti_name</a>
+              </li>
+            
+          </ul>
+        </dd></dl>
+  
+
+  
+
+
+
+  
+
+    
+
+    
+
+    
+
+
+    
+      
+      <h2 style="border:0px;outline:0px;vertical-align:baseline;background:transparent;line-height:1.2em;margin:1.8em 0px 0.8em;margin-top:2em;margin-bottom:1.3em;margin-left:-1.2em;border-bottom:1px solid rgb(0, 0, 0);padding:0px 0px 0.25em;font-size:1.2em;font-weight:bold;">Attributes</h2>
+      <table border="0" cellpadding="5" style="font-weight:inherit;font-style:inherit;font-variant:inherit;font-size:100%;margin:0px;padding:0px;border:0px;outline:0px;vertical-align:baseline;background:transparent;border-collapse:collapse;border-spacing:0px;margin-bottom:1em;">
+        
+          <tbody style="margin:0px;padding:0px;border:0px;outline:0px;font-size:100%;vertical-align:baseline;background:transparent;"><tr valign="top" style="margin:0px;padding:0px;border:0px;outline:0px;font-size:100%;vertical-align:baseline;background:transparent;">
+            <td style="margin:0px;border:0px;outline:0px;font-size:100%;vertical-align:baseline;background:transparent;padding:0px 0.7em 0.3em 0px;padding-right:1em;text-align:center;color:rgb(0, 85, 85);">
+              [RW]
+            </td>
+            <td style="margin:0px;border:0px;outline:0px;font-size:100%;vertical-align:baseline;background:transparent;padding:0px 0.7em 0.3em 0px;font-weight:bold;padding-right:1em;">abstract_class</td>
+            <td style="margin:0px;border:0px;outline:0px;font-size:100%;vertical-align:baseline;background:transparent;padding:0px 0.7em 0.3em 0px;"><p style="margin:0px;padding:0px;border:0px;outline:0px;font-size:100%;vertical-align:baseline;background:transparent;margin-bottom:1em;text-align:justify;">Set this to <code style="margin:0px;outline:0px;vertical-align:baseline;border-radius:2px;font-family:Consolas, Menlo, Courier, monospace;margin-bottom:1px;padding:0px 5px;border:1px solid rgb(221, 221, 221);font-size:14px;background:rgb(238, 238, 238);">true</code> if this is an abstract class (see <code style="margin:0px;outline:0px;vertical-align:baseline;border-radius:2px;font-family:Consolas, Menlo, Courier, monospace;margin-bottom:1px;padding:0px 5px;border:1px solid rgb(221, 221, 221);font-size:14px;background:rgb(238, 238, 238);">abstract_class?</code>). If you are using inheritance with Active Record and don't want a class to be considered as part of the STI hierarchy, you must set this to true. <code style="margin:0px;outline:0px;vertical-align:baseline;border-radius:2px;font-family:Consolas, Menlo, Courier, monospace;margin-bottom:1px;padding:0px 5px;border:1px solid rgb(221, 221, 221);font-size:14px;background:rgb(238, 238, 238);">ApplicationRecord</code>, for example, is generated as an abstract class.</p>
+
+<p style="margin:0px;padding:0px;border:0px;outline:0px;font-size:100%;vertical-align:baseline;background:transparent;margin-bottom:1em;text-align:justify;">Consider the following default behaviour:</p>
+
+<pre style="margin:0px;padding:0px;border:0px;outline:0px;font-size:100%;vertical-align:baseline;background:transparent;margin-bottom:1em;"><code style="margin:0px;padding:0px;border:0px;outline:0px;font-size:100%;vertical-align:baseline;background:transparent;">Shape = Class.new(ActiveRecord::Base)
+Polygon = Class.new(Shape)
+Square = Class.new(Polygon)
+
+Shape.table_name   # =&gt; "shapes"
+Polygon.table_name # =&gt; "shapes"
+Square.table_name  # =&gt; "shapes"
+Shape.create!      # =&gt; #&lt;Shape id: 1, type: nil&gt;
+Polygon.create!    # =&gt; #&lt;Polygon id: 2, type: "Polygon"&gt;
+Square.create!     # =&gt; #&lt;Square id: 3, type: "Square"&gt;
+</code></pre>
+
+<p style="margin:0px;padding:0px;border:0px;outline:0px;font-size:100%;vertical-align:baseline;background:transparent;margin-bottom:1em;text-align:justify;">However, when using <code style="margin:0px;outline:0px;vertical-align:baseline;border-radius:2px;font-family:Consolas, Menlo, Courier, monospace;margin-bottom:1px;padding:0px 5px;border:1px solid rgb(221, 221, 221);font-size:14px;background:rgb(238, 238, 238);">abstract_class</code>, <code style="margin:0px;outline:0px;vertical-align:baseline;border-radius:2px;font-family:Consolas, Menlo, Courier, monospace;margin-bottom:1px;padding:0px 5px;border:1px solid rgb(221, 221, 221);font-size:14px;background:rgb(238, 238, 238);">Shape</code> is omitted from the hierarchy:</p>
+
+<pre style="margin:0px;padding:0px;border:0px;outline:0px;font-size:100%;vertical-align:baseline;background:transparent;margin-bottom:1em;"><code style="margin:0px;padding:0px;border:0px;outline:0px;font-size:100%;vertical-align:baseline;background:transparent;">class Shape &lt; ActiveRecord::Base
+  self.abstract_class = true
+end
+Polygon = Class.new(Shape)
+Square = Class.new(Polygon)
+
+Shape.table_name   # =&gt; nil
+Polygon.table_name # =&gt; "polygons"
+Square.table_name  # =&gt; "polygons"
+Shape.create!      # =&gt; NotImplementedError: Shape is an abstract class and cannot be instantiated.
+Polygon.create!    # =&gt; #&lt;Polygon id: 1, type: nil&gt;
+Square.create!     # =&gt; #&lt;Square id: 2, type: "Square"&gt;
+</code></pre>
+
+<p style="margin:0px;padding:0px;border:0px;outline:0px;font-size:100%;vertical-align:baseline;background:transparent;margin-bottom:1em;text-align:justify;">Note that in the above example, to disallow the creation of a plain <code style="margin:0px;outline:0px;vertical-align:baseline;border-radius:2px;font-family:Consolas, Menlo, Courier, monospace;margin-bottom:1px;padding:0px 5px;border:1px solid rgb(221, 221, 221);font-size:14px;background:rgb(238, 238, 238);">Polygon</code>, you should use <code style="margin:0px;outline:0px;vertical-align:baseline;border-radius:2px;font-family:Consolas, Menlo, Courier, monospace;margin-bottom:1px;padding:0px 5px;border:1px solid rgb(221, 221, 221);font-size:14px;background:rgb(238, 238, 238);">validates :type, presence: true</code>, instead of setting it as an abstract class. This way, <code style="margin:0px;outline:0px;vertical-align:baseline;border-radius:2px;font-family:Consolas, Menlo, Courier, monospace;margin-bottom:1px;padding:0px 5px;border:1px solid rgb(221, 221, 221);font-size:14px;background:rgb(238, 238, 238);">Polygon</code> will stay in the hierarchy, and Active Record will continue to correctly derive the table name.</p></td>
+          </tr>
+        
+      </tbody></table>
+    
+
+
+    
+    
+    
+      <h2 style="border:0px;outline:0px;vertical-align:baseline;background:transparent;line-height:1.2em;margin:1.8em 0px 0.8em;margin-top:2em;margin-bottom:1.3em;margin-left:-1.2em;border-bottom:1px solid rgb(0, 0, 0);padding:0px 0px 0.25em;font-size:1.2em;font-weight:bold;">Instance Public methods</h2>
+      
+        <div style="margin:0px;padding:0px;border:0px;outline:0px;font-size:100%;vertical-align:baseline;background:transparent;margin-bottom:2em;">
+          <h3 style="border:0px;outline:0px;vertical-align:baseline;background:transparent;color:rgb(85, 85, 85);font-weight:normal;border-bottom:1px dotted rgb(102, 102, 102);line-height:1.25em;position:relative;margin:0px 0px 0.5em;padding:0px 0px 0.15em;font-size:1.2em;">
+            
+              <b style="margin:0px;padding:0px;border:0px;outline:0px;font-size:100%;vertical-align:baseline;background:transparent;">abstract_class?</b>()
+            
+            <a href="https://api.rubyonrails.org/classes/ActiveRecord/Inheritance/ClassMethods.html#method-i-abstract_class-3F" name="method-i-abstract_class-3F" style="margin:0px;padding:0px;border:0px;outline:0px;vertical-align:baseline;background:transparent;color:rgb(204, 0, 0);text-decoration:none;position:absolute;right:0px;font-size:0.75em;">Link</a>
+          </h3>
+
+          
+            <div style="margin:0px;padding:0px;border:0px;outline:0px;font-size:100%;vertical-align:baseline;background:transparent;margin-left:1.2em;">
+              <p style="margin:0px;padding:0px;border:0px;outline:0px;font-size:100%;vertical-align:baseline;background:transparent;margin-bottom:1em;text-align:justify;">Returns whether this class is an abstract class or not.</p>
+            </div>
+          
+
+          
+
+          
+
+          
+            
+            <div style="margin:0px;padding:0px;border:0px;outline:0px;font-size:100%;vertical-align:baseline;background:transparent;margin-left:1.2em;">
+              
+              <p style="margin:0px;padding:0px;border:0px;outline:0px;vertical-align:baseline;background:transparent;margin-bottom:1em;text-align:justify;font-size:0.85em;text-indent:0em;margin-top:0.5em;">
+                Source:
+                <a href="#" style="margin:0px;padding:0px;border:0px;outline:0px;font-size:100%;vertical-align:baseline;background:transparent;color:rgb(204, 0, 0);text-decoration:none;">show</a>
+                
+                  | <a href="https://github.com/rails/rails/blob/83217025a171593547d1268651b446d3533e2019/activerecord/lib/active_record/inheritance.rb#L163" target="_blank" style="margin:0px;padding:0px;border:0px;outline:0px;font-size:100%;vertical-align:baseline;background:transparent;color:rgb(204, 0, 0);text-decoration:none;">on GitHub</a>
+                
+              </p>
+              
+            </div>
+            
+          </div>
+        
+        <div style="margin:0px;padding:0px;border:0px;outline:0px;font-size:100%;vertical-align:baseline;background:transparent;margin-bottom:2em;">
+          <h3 style="border:0px;outline:0px;vertical-align:baseline;background:transparent;color:rgb(85, 85, 85);font-weight:normal;border-bottom:1px dotted rgb(102, 102, 102);line-height:1.25em;position:relative;margin:0px 0px 0.5em;padding:0px 0px 0.15em;font-size:1.2em;">
+            
+              <b style="margin:0px;padding:0px;border:0px;outline:0px;font-size:100%;vertical-align:baseline;background:transparent;">base_class</b>()
+            
+            <a href="https://api.rubyonrails.org/classes/ActiveRecord/Inheritance/ClassMethods.html#method-i-base_class" name="method-i-base_class" style="margin:0px;padding:0px;border:0px;outline:0px;vertical-align:baseline;background:transparent;color:rgb(204, 0, 0);text-decoration:none;position:absolute;right:0px;font-size:0.75em;">Link</a>
+          </h3>
+
+          
+            <div style="margin:0px;padding:0px;border:0px;outline:0px;font-size:100%;vertical-align:baseline;background:transparent;margin-left:1.2em;">
+              <p style="margin:0px;padding:0px;border:0px;outline:0px;font-size:100%;vertical-align:baseline;background:transparent;margin-bottom:1em;text-align:justify;">Returns the class descending directly from <a href="https://api.rubyonrails.org/classes/ActiveRecord/Base.html" style="margin:0px;padding:0px;border:0px;outline:0px;font-size:100%;vertical-align:baseline;background:transparent;color:rgb(204, 0, 0);text-decoration:none;"><code style="margin:0px;outline:0px;vertical-align:baseline;border-radius:2px;font-family:Consolas, Menlo, Courier, monospace;margin-bottom:1px;padding:0px 5px;border:1px solid rgb(221, 221, 221);font-size:14px;background:rgb(238, 238, 238);">ActiveRecord::Base</code></a>, or an abstract class, if any, in the inheritance hierarchy.</p>
+
+<p style="margin:0px;padding:0px;border:0px;outline:0px;font-size:100%;vertical-align:baseline;background:transparent;margin-bottom:1em;text-align:justify;">If A extends <a href="https://api.rubyonrails.org/classes/ActiveRecord/Base.html" style="margin:0px;padding:0px;border:0px;outline:0px;font-size:100%;vertical-align:baseline;background:transparent;color:rgb(204, 0, 0);text-decoration:none;"><code style="margin:0px;outline:0px;vertical-align:baseline;border-radius:2px;font-family:Consolas, Menlo, Courier, monospace;margin-bottom:1px;padding:0px 5px;border:1px solid rgb(221, 221, 221);font-size:14px;background:rgb(238, 238, 238);">ActiveRecord::Base</code></a>, A.base_class will return A. If B descends from A through some arbitrarily deep hierarchy, B.base_class will return A.</p>
+
+<p style="margin:0px;padding:0px;border:0px;outline:0px;font-size:100%;vertical-align:baseline;background:transparent;margin-bottom:1em;text-align:justify;">If B &lt; A and C &lt; B and if A is an <a href="https://api.rubyonrails.org/classes/ActiveRecord/Inheritance/ClassMethods.html#attribute-i-abstract_class" style="margin:0px;padding:0px;border:0px;outline:0px;font-size:100%;vertical-align:baseline;background:transparent;color:rgb(204, 0, 0);text-decoration:none;"><code style="margin:0px;outline:0px;vertical-align:baseline;border-radius:2px;font-family:Consolas, Menlo, Courier, monospace;margin-bottom:1px;padding:0px 5px;border:1px solid rgb(221, 221, 221);font-size:14px;background:rgb(238, 238, 238);">abstract_class</code></a> then both B.base_class and C.base_class would return B as the answer since A is an abstract_class.</p>
+            </div>
+          
+
+          
+
+          
+
+          
+            
+            <div style="margin:0px;padding:0px;border:0px;outline:0px;font-size:100%;vertical-align:baseline;background:transparent;margin-left:1.2em;">
+              
+              <p style="margin:0px;padding:0px;border:0px;outline:0px;vertical-align:baseline;background:transparent;margin-bottom:1em;text-align:justify;font-size:0.85em;text-indent:0em;margin-top:0.5em;">
+                Source:
+                <a href="#" style="margin:0px;padding:0px;border:0px;outline:0px;font-size:100%;vertical-align:baseline;background:transparent;color:rgb(204, 0, 0);text-decoration:none;">show</a>
+                
+                  | <a href="https://github.com/rails/rails/blob/83217025a171593547d1268651b446d3533e2019/activerecord/lib/active_record/inheritance.rb#L101" target="_blank" style="margin:0px;padding:0px;border:0px;outline:0px;font-size:100%;vertical-align:baseline;background:transparent;color:rgb(204, 0, 0);text-decoration:none;">on GitHub</a>
+                
+              </p>
+              
+            </div>
+            
+          </div>
+        
+        <div style="margin:0px;padding:0px;border:0px;outline:0px;font-size:100%;vertical-align:baseline;background:transparent;margin-bottom:2em;">
+          <h3 style="border:0px;outline:0px;vertical-align:baseline;background:transparent;color:rgb(85, 85, 85);font-weight:normal;border-bottom:1px dotted rgb(102, 102, 102);line-height:1.25em;position:relative;margin:0px 0px 0.5em;padding:0px 0px 0.15em;font-size:1.2em;">
+            
+              <b style="margin:0px;padding:0px;border:0px;outline:0px;font-size:100%;vertical-align:baseline;background:transparent;">base_class?</b>()
+            
+            <a href="https://api.rubyonrails.org/classes/ActiveRecord/Inheritance/ClassMethods.html#method-i-base_class-3F" name="method-i-base_class-3F" style="margin:0px;padding:0px;border:0px;outline:0px;vertical-align:baseline;background:transparent;color:rgb(204, 0, 0);text-decoration:none;position:absolute;right:0px;font-size:0.75em;">Link</a>
+          </h3>
+
+          
+            <div style="margin:0px;padding:0px;border:0px;outline:0px;font-size:100%;vertical-align:baseline;background:transparent;margin-left:1.2em;">
+              <p style="margin:0px;padding:0px;border:0px;outline:0px;font-size:100%;vertical-align:baseline;background:transparent;margin-bottom:1em;text-align:justify;">Returns whether the class is a base class. See <a href="https://api.rubyonrails.org/classes/ActiveRecord/Inheritance/ClassMethods.html#method-i-base_class" style="margin:0px;padding:0px;border:0px;outline:0px;font-size:100%;vertical-align:baseline;background:transparent;color:rgb(204, 0, 0);text-decoration:none;"><code style="margin:0px;outline:0px;vertical-align:baseline;border-radius:2px;font-family:Consolas, Menlo, Courier, monospace;margin-bottom:1px;padding:0px 5px;border:1px solid rgb(221, 221, 221);font-size:14px;background:rgb(238, 238, 238);">base_class</code></a> for more information.</p>
+            </div>
+          
+
+          
+
+          
+
+          
+            
+            <div style="margin:0px;padding:0px;border:0px;outline:0px;font-size:100%;vertical-align:baseline;background:transparent;margin-left:1.2em;">
+              
+              <p style="margin:0px;padding:0px;border:0px;outline:0px;vertical-align:baseline;background:transparent;margin-bottom:1em;text-align:justify;font-size:0.85em;text-indent:0em;margin-top:0.5em;">
+                Source:
+                <a href="#" style="margin:0px;padding:0px;border:0px;outline:0px;font-size:100%;vertical-align:baseline;background:transparent;color:rgb(204, 0, 0);text-decoration:none;">show</a>
+                
+                  | <a href="https://github.com/rails/rails/blob/83217025a171593547d1268651b446d3533e2019/activerecord/lib/active_record/inheritance.rb#L115" target="_blank" style="margin:0px;padding:0px;border:0px;outline:0px;font-size:100%;vertical-align:baseline;background:transparent;color:rgb(204, 0, 0);text-decoration:none;">on GitHub</a>
+                
+              </p>
+              
+            </div>
+            
+          </div>
+        
+        <div style="margin:0px;padding:0px;border:0px;outline:0px;font-size:100%;vertical-align:baseline;background:transparent;margin-bottom:2em;">
+          <h3 style="border:0px;outline:0px;vertical-align:baseline;background:transparent;color:rgb(85, 85, 85);font-weight:normal;border-bottom:1px dotted rgb(102, 102, 102);line-height:1.25em;position:relative;margin:0px 0px 0.5em;padding:0px 0px 0.15em;font-size:1.2em;">
+            
+              <b style="margin:0px;padding:0px;border:0px;outline:0px;font-size:100%;vertical-align:baseline;background:transparent;">descends_from_active_record?</b>()
+            
+            <a href="https://api.rubyonrails.org/classes/ActiveRecord/Inheritance/ClassMethods.html#method-i-descends_from_active_record-3F" name="method-i-descends_from_active_record-3F" style="margin:0px;padding:0px;border:0px;outline:0px;vertical-align:baseline;background:transparent;color:rgb(204, 0, 0);text-decoration:none;position:absolute;right:0px;font-size:0.75em;">Link</a>
+          </h3>
+
+          
+            <div style="margin:0px;padding:0px;border:0px;outline:0px;font-size:100%;vertical-align:baseline;background:transparent;margin-left:1.2em;">
+              <p style="margin:0px;padding:0px;border:0px;outline:0px;font-size:100%;vertical-align:baseline;background:transparent;margin-bottom:1em;text-align:justify;">Returns <code style="margin:0px;outline:0px;vertical-align:baseline;border-radius:2px;font-family:Consolas, Menlo, Courier, monospace;margin-bottom:1px;padding:0px 5px;border:1px solid rgb(221, 221, 221);font-size:14px;background:rgb(238, 238, 238);">true</code> if this does not need STI type condition. Returns <code style="margin:0px;outline:0px;vertical-align:baseline;border-radius:2px;font-family:Consolas, Menlo, Courier, monospace;margin-bottom:1px;padding:0px 5px;border:1px solid rgb(221, 221, 221);font-size:14px;background:rgb(238, 238, 238);">false</code> if STI type condition needs to be applied.</p>
+            </div>
+          
+
+          
+
+          
+
+          
+            
+            <div style="margin:0px;padding:0px;border:0px;outline:0px;font-size:100%;vertical-align:baseline;background:transparent;margin-left:1.2em;">
+              
+              <p style="margin:0px;padding:0px;border:0px;outline:0px;vertical-align:baseline;background:transparent;margin-bottom:1em;text-align:justify;font-size:0.85em;text-indent:0em;margin-top:0.5em;">
+                Source:
+                <a href="#" style="margin:0px;padding:0px;border:0px;outline:0px;font-size:100%;vertical-align:baseline;background:transparent;color:rgb(204, 0, 0);text-decoration:none;">show</a>
+                
+                  | <a href="https://github.com/rails/rails/blob/83217025a171593547d1268651b446d3533e2019/activerecord/lib/active_record/inheritance.rb#L78" target="_blank" style="margin:0px;padding:0px;border:0px;outline:0px;font-size:100%;vertical-align:baseline;background:transparent;color:rgb(204, 0, 0);text-decoration:none;">on GitHub</a>
+                
+              </p>
+              
+            </div>
+            
+          </div>
+        
+        <div style="margin:0px;padding:0px;border:0px;outline:0px;font-size:100%;vertical-align:baseline;background:transparent;margin-bottom:2em;">
+          <h3 style="border:0px;outline:0px;vertical-align:baseline;background:transparent;color:rgb(85, 85, 85);font-weight:normal;border-bottom:1px dotted rgb(102, 102, 102);line-height:1.25em;position:relative;margin:0px 0px 0.5em;padding:0px 0px 0.15em;font-size:1.2em;">
+            
+              <b style="margin:0px;padding:0px;border:0px;outline:0px;font-size:100%;vertical-align:baseline;background:transparent;">inherited</b>(subclass)
+            
+            <a href="https://api.rubyonrails.org/classes/ActiveRecord/Inheritance/ClassMethods.html#method-i-inherited" name="method-i-inherited" style="margin:0px;padding:0px;border:0px;outline:0px;vertical-align:baseline;background:transparent;color:rgb(204, 0, 0);text-decoration:none;position:absolute;right:0px;font-size:0.75em;">Link</a>
+          </h3>
+
+          
+            <div style="margin:0px;padding:0px;border:0px;outline:0px;font-size:100%;vertical-align:baseline;background:transparent;margin-left:1.2em;">
+              
+            </div>
+          
+
+          
+
+          
+
+          
+            
+            <div style="margin:0px;padding:0px;border:0px;outline:0px;font-size:100%;vertical-align:baseline;background:transparent;margin-left:1.2em;">
+              
+              <p style="margin:0px;padding:0px;border:0px;outline:0px;vertical-align:baseline;background:transparent;margin-bottom:1em;text-align:justify;font-size:0.85em;text-indent:0em;margin-top:0.5em;">
+                Source:
+                <a href="#" style="margin:0px;padding:0px;border:0px;outline:0px;font-size:100%;vertical-align:baseline;background:transparent;color:rgb(204, 0, 0);text-decoration:none;">show</a>
+                
+                  | <a href="https://github.com/rails/rails/blob/83217025a171593547d1268651b446d3533e2019/activerecord/lib/active_record/inheritance.rb#L205" target="_blank" style="margin:0px;padding:0px;border:0px;outline:0px;font-size:100%;vertical-align:baseline;background:transparent;color:rgb(204, 0, 0);text-decoration:none;">on GitHub</a>
+                
+              </p>
+              
+            </div>
+            
+          </div>
+        
+        <div style="margin:0px;padding:0px;border:0px;outline:0px;font-size:100%;vertical-align:baseline;background:transparent;margin-bottom:2em;">
+          <h3 style="border:0px;outline:0px;vertical-align:baseline;background:transparent;color:rgb(85, 85, 85);font-weight:normal;border-bottom:1px dotted rgb(102, 102, 102);line-height:1.25em;position:relative;margin:0px 0px 0.5em;padding:0px 0px 0.15em;font-size:1.2em;">
+            
+              <b style="margin:0px;padding:0px;border:0px;outline:0px;font-size:100%;vertical-align:baseline;background:transparent;">new</b>(attributes = nil, &amp;block)
+            
+            <a href="https://api.rubyonrails.org/classes/ActiveRecord/Inheritance/ClassMethods.html#method-i-new" name="method-i-new" style="margin:0px;padding:0px;border:0px;outline:0px;vertical-align:baseline;background:transparent;color:rgb(204, 0, 0);text-decoration:none;position:absolute;right:0px;font-size:0.75em;">Link</a>
+          </h3>
+
+          
+            <div style="margin:0px;padding:0px;border:0px;outline:0px;font-size:100%;vertical-align:baseline;background:transparent;margin-left:1.2em;">
+              <p style="margin:0px;padding:0px;border:0px;outline:0px;font-size:100%;vertical-align:baseline;background:transparent;margin-bottom:1em;text-align:justify;">Determines if one of the attributes passed in is the inheritance column, and if the inheritance column is attr accessible, it initializes an instance of the given subclass instead of the base class.</p>
+            </div>
+          
+
+          
+
+          
+
+          
+            
+            <div style="margin:0px;padding:0px;border:0px;outline:0px;font-size:100%;vertical-align:baseline;background:transparent;margin-left:1.2em;">
+              
+              <p style="margin:0px;padding:0px;border:0px;outline:0px;vertical-align:baseline;background:transparent;margin-bottom:1em;text-align:justify;font-size:0.85em;text-indent:0em;margin-top:0.5em;">
+                Source:
+                <a href="#" style="margin:0px;padding:0px;border:0px;outline:0px;font-size:100%;vertical-align:baseline;background:transparent;color:rgb(204, 0, 0);text-decoration:none;">show</a>
+                
+                  | <a href="https://github.com/rails/rails/blob/83217025a171593547d1268651b446d3533e2019/activerecord/lib/active_record/inheritance.rb#L52" target="_blank" style="margin:0px;padding:0px;border:0px;outline:0px;font-size:100%;vertical-align:baseline;background:transparent;color:rgb(204, 0, 0);text-decoration:none;">on GitHub</a>
+                
+              </p>
+              
+            </div>
+            
+          </div>
+        
+        <div style="margin:0px;padding:0px;border:0px;outline:0px;font-size:100%;vertical-align:baseline;background:transparent;margin-bottom:2em;">
+          <h3 style="border:0px;outline:0px;vertical-align:baseline;background:transparent;color:rgb(85, 85, 85);font-weight:normal;border-bottom:1px dotted rgb(102, 102, 102);line-height:1.25em;position:relative;margin:0px 0px 0.5em;padding:0px 0px 0.15em;font-size:1.2em;">
+            
+              <b style="margin:0px;padding:0px;border:0px;outline:0px;font-size:100%;vertical-align:baseline;background:transparent;">polymorphic_class_for</b>(name)
+            
+            <a href="https://api.rubyonrails.org/classes/ActiveRecord/Inheritance/ClassMethods.html#method-i-polymorphic_class_for" name="method-i-polymorphic_class_for" style="margin:0px;padding:0px;border:0px;outline:0px;vertical-align:baseline;background:transparent;color:rgb(204, 0, 0);text-decoration:none;position:absolute;right:0px;font-size:0.75em;">Link</a>
+          </h3>
+
+          
+            <div style="margin:0px;padding:0px;border:0px;outline:0px;font-size:100%;vertical-align:baseline;background:transparent;margin-left:1.2em;">
+              <p style="margin:0px;padding:0px;border:0px;outline:0px;font-size:100%;vertical-align:baseline;background:transparent;margin-bottom:1em;text-align:justify;">Returns the class for the provided <code style="margin:0px;outline:0px;vertical-align:baseline;border-radius:2px;font-family:Consolas, Menlo, Courier, monospace;margin-bottom:1px;padding:0px 5px;border:1px solid rgb(221, 221, 221);font-size:14px;background:rgb(238, 238, 238);">name</code>.</p>
+
+<p style="margin:0px;padding:0px;border:0px;outline:0px;font-size:100%;vertical-align:baseline;background:transparent;margin-bottom:1em;text-align:justify;">It is used to find the class correspondent to the value stored in the polymorphic type column.</p>
+            </div>
+          
+
+          
+
+          
+
+          
+            
+            <div style="margin:0px;padding:0px;border:0px;outline:0px;font-size:100%;vertical-align:baseline;background:transparent;margin-left:1.2em;">
+              
+              <p style="margin:0px;padding:0px;border:0px;outline:0px;vertical-align:baseline;background:transparent;margin-bottom:1em;text-align:justify;font-size:0.85em;text-indent:0em;margin-top:0.5em;">
+                Source:
+                <a href="#" style="margin:0px;padding:0px;border:0px;outline:0px;font-size:100%;vertical-align:baseline;background:transparent;color:rgb(204, 0, 0);text-decoration:none;">show</a>
+                
+                  | <a href="https://github.com/rails/rails/blob/83217025a171593547d1268651b446d3533e2019/activerecord/lib/active_record/inheritance.rb#L197" target="_blank" style="margin:0px;padding:0px;border:0px;outline:0px;font-size:100%;vertical-align:baseline;background:transparent;color:rgb(204, 0, 0);text-decoration:none;">on GitHub</a>
+                
+              </p>
+              
+            </div>
+            
+          </div>
+        
+        <div style="margin:0px;padding:0px;border:0px;outline:0px;font-size:100%;vertical-align:baseline;background:transparent;margin-bottom:2em;">
+          <h3 style="border:0px;outline:0px;vertical-align:baseline;background:transparent;color:rgb(85, 85, 85);font-weight:normal;border-bottom:1px dotted rgb(102, 102, 102);line-height:1.25em;position:relative;margin:0px 0px 0.5em;padding:0px 0px 0.15em;font-size:1.2em;">
+            
+              <b style="margin:0px;padding:0px;border:0px;outline:0px;font-size:100%;vertical-align:baseline;background:transparent;">polymorphic_name</b>()
+            
+            <a href="https://api.rubyonrails.org/classes/ActiveRecord/Inheritance/ClassMethods.html#method-i-polymorphic_name" name="method-i-polymorphic_name" style="margin:0px;padding:0px;border:0px;outline:0px;vertical-align:baseline;background:transparent;color:rgb(204, 0, 0);text-decoration:none;position:absolute;right:0px;font-size:0.75em;">Link</a>
+          </h3>
+
+          
+            <div style="margin:0px;padding:0px;border:0px;outline:0px;font-size:100%;vertical-align:baseline;background:transparent;margin-left:1.2em;">
+              <p style="margin:0px;padding:0px;border:0px;outline:0px;font-size:100%;vertical-align:baseline;background:transparent;margin-bottom:1em;text-align:justify;">Returns the value to be stored in the polymorphic type column for Polymorphic <a href="https://api.rubyonrails.org/classes/ActiveRecord/Associations.html" style="margin:0px;padding:0px;border:0px;outline:0px;font-size:100%;vertical-align:baseline;background:transparent;color:rgb(204, 0, 0);text-decoration:none;"><code style="margin:0px;outline:0px;vertical-align:baseline;border-radius:2px;font-family:Consolas, Menlo, Courier, monospace;margin-bottom:1px;padding:0px 5px;border:1px solid rgb(221, 221, 221);font-size:14px;background:rgb(238, 238, 238);">Associations</code></a>.</p>
+            </div>
+          
+
+          
+
+          
+
+          
+            
+            <div style="margin:0px;padding:0px;border:0px;outline:0px;font-size:100%;vertical-align:baseline;background:transparent;margin-left:1.2em;">
+              
+              <p style="margin:0px;padding:0px;border:0px;outline:0px;vertical-align:baseline;background:transparent;margin-bottom:1em;text-align:justify;font-size:0.85em;text-indent:0em;margin-top:0.5em;">
+                Source:
+                <a href="#" style="margin:0px;padding:0px;border:0px;outline:0px;font-size:100%;vertical-align:baseline;background:transparent;color:rgb(204, 0, 0);text-decoration:none;">show</a>
+                
+                  | <a href="https://github.com/rails/rails/blob/83217025a171593547d1268651b446d3533e2019/activerecord/lib/active_record/inheritance.rb#L190" target="_blank" style="margin:0px;padding:0px;border:0px;outline:0px;font-size:100%;vertical-align:baseline;background:transparent;color:rgb(204, 0, 0);text-decoration:none;">on GitHub</a>
+                
+              </p>
+              
+            </div>
+            
+          </div>
+        
+        <div style="margin:0px;padding:0px;border:0px;outline:0px;font-size:100%;vertical-align:baseline;background:transparent;margin-bottom:2em;">
+          <h3 style="border:0px;outline:0px;vertical-align:baseline;background:transparent;color:rgb(85, 85, 85);font-weight:normal;border-bottom:1px dotted rgb(102, 102, 102);line-height:1.25em;position:relative;margin:0px 0px 0.5em;padding:0px 0px 0.15em;font-size:1.2em;">
+            
+              <b style="margin:0px;padding:0px;border:0px;outline:0px;font-size:100%;vertical-align:baseline;background:transparent;">sti_class_for</b>(type_name)
+            
+            <a href="https://api.rubyonrails.org/classes/ActiveRecord/Inheritance/ClassMethods.html#method-i-sti_class_for" name="method-i-sti_class_for" style="margin:0px;padding:0px;border:0px;outline:0px;vertical-align:baseline;background:transparent;color:rgb(204, 0, 0);text-decoration:none;position:absolute;right:0px;font-size:0.75em;">Link</a>
+          </h3>
+
+          
+            <div style="margin:0px;padding:0px;border:0px;outline:0px;font-size:100%;vertical-align:baseline;background:transparent;margin-left:1.2em;">
+              <p style="margin:0px;padding:0px;border:0px;outline:0px;font-size:100%;vertical-align:baseline;background:transparent;margin-bottom:1em;text-align:justify;">Returns the class for the provided <code style="margin:0px;outline:0px;vertical-align:baseline;border-radius:2px;font-family:Consolas, Menlo, Courier, monospace;margin-bottom:1px;padding:0px 5px;border:1px solid rgb(221, 221, 221);font-size:14px;background:rgb(238, 238, 238);">type_name</code>.</p>
+
+<p style="margin:0px;padding:0px;border:0px;outline:0px;font-size:100%;vertical-align:baseline;background:transparent;margin-bottom:1em;text-align:justify;">It is used to find the class correspondent to the value stored in the inheritance column.</p>
+            </div>
+          
+
+          
+
+          
+
+          
+            
+            <div style="margin:0px;padding:0px;border:0px;outline:0px;font-size:100%;vertical-align:baseline;background:transparent;margin-left:1.2em;">
+              
+              <p style="margin:0px;padding:0px;border:0px;outline:0px;vertical-align:baseline;background:transparent;margin-bottom:1em;text-align:justify;font-size:0.85em;text-indent:0em;margin-top:0.5em;">
+                Source:
+                <a href="#" style="margin:0px;padding:0px;border:0px;outline:0px;font-size:100%;vertical-align:baseline;background:transparent;color:rgb(204, 0, 0);text-decoration:none;">show</a>
+                
+                  | <a href="https://github.com/rails/rails/blob/83217025a171593547d1268651b446d3533e2019/activerecord/lib/active_record/inheritance.rb#L175" target="_blank" style="margin:0px;padding:0px;border:0px;outline:0px;font-size:100%;vertical-align:baseline;background:transparent;color:rgb(204, 0, 0);text-decoration:none;">on GitHub</a>
+                
+              </p>
+              
+            </div>
+            
+          </div>
+        
+        <div style="margin:0px;padding:0px;border:0px;outline:0px;font-size:100%;vertical-align:baseline;background:transparent;margin-bottom:2em;">
+          <h3 style="border:0px;outline:0px;vertical-align:baseline;background:transparent;color:rgb(85, 85, 85);font-weight:normal;border-bottom:1px dotted rgb(102, 102, 102);line-height:1.25em;position:relative;margin:0px 0px 0.5em;padding:0px 0px 0.15em;font-size:1.2em;">
+            
+              <b style="margin:0px;padding:0px;border:0px;outline:0px;font-size:100%;vertical-align:baseline;background:transparent;">sti_name</b>()
+            
+            <a href="https://api.rubyonrails.org/classes/ActiveRecord/Inheritance/ClassMethods.html#method-i-sti_name" name="method-i-sti_name" style="margin:0px;padding:0px;border:0px;outline:0px;vertical-align:baseline;background:transparent;color:rgb(204, 0, 0);text-decoration:none;position:absolute;right:0px;font-size:0.75em;">Link</a>
+          </h3>
+
+          
+            <div style="margin:0px;padding:0px;border:0px;outline:0px;font-size:100%;vertical-align:baseline;background:transparent;margin-left:1.2em;">
+              <p style="margin:0px;padding:0px;border:0px;outline:0px;font-size:100%;vertical-align:baseline;background:transparent;margin-bottom:1em;text-align:justify;">Returns the value to be stored in the inheritance column for STI.</p>
+            </div>
+          
+
+          
+
+          
+
+          
+            
+            <div style="margin:0px;padding:0px;border:0px;outline:0px;font-size:100%;vertical-align:baseline;background:transparent;margin-left:1.2em;">
+              
+              <p style="margin:0px;padding:0px;border:0px;outline:0px;vertical-align:baseline;background:transparent;margin-bottom:1em;text-align:justify;font-size:0.85em;text-indent:0em;margin-top:0.5em;">
+                Source:
+                <a href="#" style="margin:0px;padding:0px;border:0px;outline:0px;font-size:100%;vertical-align:baseline;background:transparent;color:rgb(204, 0, 0);text-decoration:none;">show</a>
+                
+                  | <a href="https://github.com/rails/rails/blob/83217025a171593547d1268651b446d3533e2019/activerecord/lib/active_record/inheritance.rb#L168" target="_blank" style="margin:0px;padding:0px;border:0px;outline:0px;font-size:100%;vertical-align:baseline;background:transparent;color:rgb(204, 0, 0);text-decoration:none;">on GitHub</a>
+                
+              </p>
+              
+            </div>
+            
+          </div>
+        
+      
+      <h2 style="border:0px;outline:0px;vertical-align:baseline;background:transparent;line-height:1.2em;margin:1.8em 0px 0.8em;margin-top:2em;margin-bottom:1.3em;margin-left:-1.2em;border-bottom:1px solid rgb(0, 0, 0);padding:0px 0px 0.25em;font-size:1.2em;font-weight:bold;">Instance Protected methods</h2>
+      
+        <div style="margin:0px;padding:0px;border:0px;outline:0px;font-size:100%;vertical-align:baseline;background:transparent;margin-bottom:2em;">
+          <h3 style="border:0px;outline:0px;vertical-align:baseline;background:transparent;color:rgb(85, 85, 85);font-weight:normal;border-bottom:1px dotted rgb(102, 102, 102);line-height:1.25em;position:relative;margin:0px 0px 0.5em;padding:0px 0px 0.15em;font-size:1.2em;">
+            
+              <b style="margin:0px;padding:0px;border:0px;outline:0px;font-size:100%;vertical-align:baseline;background:transparent;">compute_type</b>(type_name)
+            
+            <a href="https://api.rubyonrails.org/classes/ActiveRecord/Inheritance/ClassMethods.html#method-i-compute_type" name="method-i-compute_type" style="margin:0px;padding:0px;border:0px;outline:0px;vertical-align:baseline;background:transparent;color:rgb(204, 0, 0);text-decoration:none;position:absolute;right:0px;font-size:0.75em;">Link</a>
+          </h3>
+
+          
+            <div style="margin:0px;padding:0px;border:0px;outline:0px;font-size:100%;vertical-align:baseline;background:transparent;margin-left:1.2em;">
+              <p style="margin:0px;padding:0px;border:0px;outline:0px;font-size:100%;vertical-align:baseline;background:transparent;margin-bottom:1em;text-align:justify;">Returns the class type of the record using the current module as a prefix. So descendants of MyApp::Business::Account would appear as MyApp::Business::AccountSubclass.</p>
+            </div>
+          
+
+          
+
+          
+
+          
+            
+            <div style="margin:0px;padding:0px;border:0px;outline:0px;font-size:100%;vertical-align:baseline;background:transparent;margin-left:1.2em;">
+              
+              <p style="margin:0px;padding:0px;border:0px;outline:0px;vertical-align:baseline;background:transparent;margin-bottom:1em;text-align:justify;font-size:0.85em;text-indent:0em;margin-top:0.5em;">
+                Source:
+                <a href="#" style="margin:0px;padding:0px;border:0px;outline:0px;font-size:100%;vertical-align:baseline;background:transparent;color:rgb(204, 0, 0);text-decoration:none;">show</a>
+                
+                  | <a href="https://github.com/rails/rails/blob/83217025a171593547d1268651b446d3533e2019/activerecord/lib/active_record/inheritance.rb#L213" target="_blank" style="margin:0px;padding:0px;border:0px;outline:0px;font-size:100%;vertical-align:baseline;background:transparent;color:rgb(204, 0, 0);text-decoration:none;">on GitHub</a>
+                
+              </p>
+              
+            </div>
+            
+          </div>
+        
+      
+    
+  
+</div>
+
+    </div>
+  
+
+</div></div></div>
+</div>
+</div>
+<a class="back-link" href="../articles.html">← 返回笔记列表</a>
+</body>
+</html>

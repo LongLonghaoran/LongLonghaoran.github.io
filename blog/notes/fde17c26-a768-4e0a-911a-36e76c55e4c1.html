@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="zh-CN" data-theme="light">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>go list命令 — 技术笔记</title>
+<style>
+:root { --bg:#fff; --text:#1a1a1a; --muted:#666; --border:#e0e0e0; --code-bg:#f5f5f5; --link:#0066cc; }
+@media (prefers-color-scheme: dark) { :root { --bg:#1a1a1a; --text:#e0e0e0; --muted:#999; --border:#333; --code-bg:#2a2a2a; --link:#66bbff; } }
+* { box-sizing:border-box; margin:0; padding:0; }
+body { font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Arial,sans-serif; line-height:1.7; color:var(--text); background:var(--bg); max-width:860px; margin:0 auto; padding:2rem 1.5rem; }
+.note-header { border-bottom:2px solid var(--border); padding-bottom:1rem; margin-bottom:2rem; }
+.note-title { font-size:1.6rem; font-weight:700; margin-bottom:0.3rem; }
+.note-meta { color:var(--muted); font-size:0.85rem; }
+.note-content { font-size:0.95rem; }
+.note-content h1 { font-size:1.4rem; margin:1.2rem 0 0.6rem; }
+.note-content h2 { font-size:1.2rem; margin:1rem 0 0.5rem; }
+.note-content h3 { font-size:1.05rem; margin:0.8rem 0 0.4rem; }
+.note-content p { margin:0.5rem 0; }
+.note-content ul,.note-content ol { margin:0.5rem 0 0.5rem 2rem; }
+.note-content li { margin:0.2rem 0; }
+.note-content pre { background:var(--code-bg); padding:1rem; border-radius:6px; overflow-x:auto; margin:0.8rem 0; font-size:0.85rem; }
+.note-content code { background:var(--code-bg); padding:0.1rem 0.3rem; border-radius:3px; font-size:0.88em; }
+.note-content pre code { background:none; padding:0; }
+.note-content blockquote { border-left:3px solid var(--border); padding-left:1rem; color:var(--muted); margin:0.8rem 0; }
+.note-content a { color:var(--link); }
+.note-content img { max-width:100%; height:auto; border-radius:6px; margin:0.5rem 0; }
+.note-content table { border-collapse:collapse; width:100%; margin:0.8rem 0; }
+.note-content th,.note-content td { border:1px solid var(--border); padding:0.5rem; }
+.note-content th { background:var(--code-bg); }
+.media-placeholder { background:var(--code-bg); padding:1rem; text-align:center; color:var(--muted); border-radius:6px; margin:0.5rem 0; font-size:0.85rem; }
+.encrypt-placeholder { background:#fff3cd; padding:0.5rem; text-align:center; color:#856404; border-radius:6px; margin:0.5rem 0; font-size:0.85rem; }
+.back-link { display:inline-block; margin-top:2rem; color:var(--link); text-decoration:none; font-size:0.85rem; }
+</style>
+</head>
+<body>
+<div class="note-header"><div class="note-title">go list命令</div><div class="note-meta">笔记本：笔记</div></div>
+<div class="note-content"><div>go list [-f format] [-json] [-m] [list flags] [build flags] [packages]</div><div><span style="font-size: 24px; font-weight: bold;">Package行为</span></div><div>默认行为是根据import paths(导入路径)展示包列表或者单个包，用以判断一个包是否存在，在go package主要判断一个包是否存在与GOPATH/src中</div><div>使用-f可以通过字符模板指定输出格式,模板中可以使用的方法即为一个包对象的struct的字段,默认是调用该包对象的String方法</div><div> type Package struct {</div><div>        Dir           string   // directory containing package sources</div><div>        ImportPath    string   // import path of package in dir</div><div>        ImportComment string   // path in import comment on package statement</div><div>        Name          string   // package name</div><div>        Doc           string   // package documentation string</div><div>        Target        string   // install path</div><div>        Shlib         string   // the shared library that contains this package (only set when -linkshared)</div><div>        ... ...</div><div>}</div><div>比如: go list -f '{{.Target}}'</div><div><br /></div><div>vendor目录下的包/Packages反馈了包含到vendor目录的导入路径ImportPath，所以导入路径是可以唯一标识一个包的。</div><div>如果有错误信息的话，则是</div><div>    type PackageError struct {</div><div>        ImportStack   []string // shortest path from package named on command line to this one</div><div>        Pos           string   // position of error (if present, file:line:col)</div><div>        Err           string   // the error itself</div><div>    }</div><div><br /></div><div>模板中还可以使用join和context,join表示strings.Join方法,context表示Context结构体</div><div>    type Context struct {</div><div>        GOARCH        string   // target architecture</div><div>        GOOS          string   // target operating system</div><div>        GOROOT        string   // Go root</div><div>        GOPATH        string   // Go path</div><div>        CgoEnabled    bool     // whether cgo can be used</div><div>        UseAllFiles   bool     // use files regardless of +build lines, file names</div><div>        Compiler      string   // compiler to assume when computing target paths</div><div>        BuildTags     []string // build constraints to match in +build lines</div><div>        ToolTags      []string // toolchain-specific build constraints</div><div>        ReleaseTags   []string // releases the current release is compatible with</div><div>        InstallSuffix string   // suffix to use in the name of the install dir</div><div>    }</div><div>比如 go list -f '{{context.GOARCH}}'</div><div>-json标识: 以json格式输出，如果只使用 go list 包导入路径 的话，那么只会展示一个包的导入路径而已</div><div><div class="media-placeholder">[图片/附件]</div><br /></div><div>如果用json选项的话，会将该包的详细信息都打印出来</div><div><div class="media-placeholder">[图片/附件]</div><br /></div><div>go list all可以输出当前目录使用到的所有的包(包含直接和间接引用的)</div><div>-e选项: 如果引入的软件包中有错误，将导致输出中只有错误信息，而不会输出其他信息，使用-e似乎就可以跳过错误信息，继续输出所有的包列表:</div><div>比如gocolo项目中，就有包在macOS上无法使用导致有错误输出（因为有部分代码是针对linux才有的xx_linux.go)</div><div><div class="media-placeholder">[图片/附件]</div><br /></div><div>使用-e选项之后,能够正常输出</div><div><div class="media-placeholder">[图片/附件]</div><br /></div><div>在使用package的golang的年代，所有导入的包都是放在GOPATH或者GOROOT下的src目录下的</div><div><br /></div><div>再补充两个展示包的例子:</div><div>go list ./...会列出当前目录下遇到的所有包，但是这些包依赖的包不会列出来, ...表示通配符，./...表示查找当前目录下所有包</div><div><div class="media-placeholder">[图片/附件]</div><br /></div><div>再加上-deps就会将当前目录下的包以及它们所依赖的所有包全部列出来了</div><div><div class="media-placeholder">[图片/附件]</div><br /></div><div><br /></div><div>参考 <a href="evernote:///view/23288610/s22/0a48379f-e53d-49c6-9fcb-e6475e7a7972/0a48379f-e53d-49c6-9fcb-e6475e7a7972/">Golang包和工具</a></div><div><br /></div><div><font style="font-size: 24px;"><span style="font-size: 24px; font-weight: bold;">Module下行为</span></font></div><div>事实上，现在几乎所有golang项目都已经切换到gomodule模式</div><div>模块module信息与包package类似，也是有一个结构体type Module struct</div><div><div class="media-placeholder">[图片/附件]</div></div><div>-m选项使得go list命令可以列出module模块</div><div>-f选项，模块也有一个结构体type Module struct，配合-f选项可以只展示指定的字段</div><div>使用go list -m all以列出当前module使用的所有module, go list命令是根据go.mod文件来查询module信息的</div><div>-u选项会在输出中添加可用的更新的，-u会设置module的Update字段为更新的模块的信息。如果当前正在使用的版本，已经废弃了，那么还会设置module的Retracted字段来表示；module的String方法也会指示可用的更新，它会在输出中的最后用括号将新版本括起来。</div><div><div class="media-placeholder">[图片/附件]</div></div><div>-u选项会在输出中，在每个模块后追加展示该模块可用的所有可更新的版本</div><div><div class="media-placeholder">[图片/附件]</div></div><div><span><span>go list -m列出哪些模块?</span></span></div><div><span><span>1.主模块: 当前目录所在的模块就是主模块,而模块就是含有go.mod的目录</span></span></div><div><span><span>2.active module:当前主模块以及它的依赖模块</span></span></div><div><span><span>3.如果go list -m 后面没有带参数的话，那么默认就是仅列出主模块，或者指定一个模块名那么就列出该模块，这个模块名必须是当前模块所依赖的模块才可以；all参数表示将所有active module全部列出来；...三个点表示通配符；path@version这样的格式用于限定要查找的模块的版本。</span></span></div></div>
+<a class="back-link" href="../articles.html">← 返回笔记列表</a>
+</body></html>

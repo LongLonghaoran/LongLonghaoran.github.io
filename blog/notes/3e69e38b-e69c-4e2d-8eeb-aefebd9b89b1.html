@@ -1,0 +1,363 @@
+<!DOCTYPE html>
+<html lang="zh-CN" data-theme="light">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>6. 模块 — Python 3.9.7 文档 — 技术笔记</title>
+<style>
+:root { --bg:#fff; --text:#1a1a1a; --muted:#666; --border:#e0e0e0; --code-bg:#f5f5f5; --link:#0066cc; }
+@media (prefers-color-scheme: dark) { :root { --bg:#1a1a1a; --text:#e0e0e0; --muted:#999; --border:#333; --code-bg:#2a2a2a; --link:#66bbff; } }
+* { box-sizing:border-box; margin:0; padding:0; }
+body { font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Arial,sans-serif; line-height:1.7; color:var(--text); background:var(--bg); max-width:860px; margin:0 auto; padding:2rem 1.5rem; }
+.note-header { border-bottom:2px solid var(--border); padding-bottom:1rem; margin-bottom:2rem; }
+.note-title { font-size:1.6rem; font-weight:700; margin-bottom:0.3rem; }
+.note-meta { color:var(--muted); font-size:0.85rem; }
+.note-content { font-size:0.95rem; }
+.note-content h1 { font-size:1.4rem; margin:1.2rem 0 0.6rem; }
+.note-content h2 { font-size:1.2rem; margin:1rem 0 0.5rem; }
+.note-content h3 { font-size:1.05rem; margin:0.8rem 0 0.4rem; }
+.note-content p { margin:0.5rem 0; }
+.note-content ul,.note-content ol { margin:0.5rem 0 0.5rem 2rem; }
+.note-content li { margin:0.2rem 0; }
+.note-content pre { background:var(--code-bg); padding:1rem; border-radius:6px; overflow-x:auto; margin:0.8rem 0; font-size:0.85rem; }
+.note-content code { background:var(--code-bg); padding:0.1rem 0.3rem; border-radius:3px; font-size:0.88em; }
+.note-content pre code { background:none; padding:0; }
+.note-content blockquote { border-left:3px solid var(--border); padding-left:1rem; color:var(--muted); margin:0.8rem 0; }
+.note-content a { color:var(--link); }
+.note-content img { max-width:100%; height:auto; border-radius:6px; margin:0.5rem 0; }
+.note-content table { border-collapse:collapse; width:100%; margin:0.8rem 0; }
+.note-content th,.note-content td { border:1px solid var(--border); padding:0.5rem; }
+.note-content th { background:var(--code-bg); }
+.media-placeholder { background:var(--code-bg); padding:1rem; text-align:center; color:var(--muted); border-radius:6px; margin:0.5rem 0; font-size:0.85rem; }
+.encrypt-placeholder { background:#fff3cd; padding:0.5rem; text-align:center; color:#856404; border-radius:6px; margin:0.5rem 0; font-size:0.85rem; }
+.back-link { display:inline-block; margin-top:2rem; color:var(--link); text-decoration:none; font-size:0.85rem; }
+</style>
+</head>
+<body>
+<div class="note-header"><div class="note-title">6. 模块 — Python 3.9.7 文档</div><div class="note-meta">笔记本：python</div></div>
+<div class="note-content"><div style="--en-clipped-content:article; --en-clipped-source-url:https://docs.python.org/zh-cn/3.9/tutorial/modules.html; --en-clipped-source-title:6. 模块 — Python 3.9.7 文档;">
+<div><br/></div><div style="min-height: 8247px; font-size: 16px; display:block; min-width: 100%; position: relative;"> <div><div style="background-color:white;"><div><div><div><div><div>
+<span></span><h1 style="margin:0px;border:0px;padding:0.3em 0px;"><span>6. </span>模块<a href="https://docs.python.org/zh-cn/3.9/tutorial/modules.html#modules" title="永久链接至标题" style="color:rgb(0, 114, 170);">¶</a></h1>
+<p style="line-height:140%;">退出 Python 解释器后，再次进入时，之前在 Python 解释器中定义的函数和变量就丢失了。因此，编写较长程序时，建议用文本编辑器代替解释器，执行文件中的输入内容，这就是编写 <em>脚本</em> 。随着程序越来越长，为了方便维护，最好把脚本拆分成多个文件。编写脚本还一个好处，不同程序调用同一个函数时，不用每次把函数复制到各个程序。</p>
+<p style="line-height:140%;">为实现这些需求，Python 把各种定义存入一个文件，在脚本或解释器的交互式实例中使用。这个文件就是 <em>模块</em> ；模块中的定义可以 <em>导入</em> 到其他模块或 <em>主</em> 模块（在顶层和计算器模式下，执行脚本中可访问的变量集）。</p>
+<p style="line-height:140%;">模块是包含 Python 定义和语句的文件。其文件名是模块名加后缀名 <code style="font-family:monospace, sans-serif;font-size:96.5%;border-radius:3px;"><span>.py</span></code> 。在模块内部，通过全局变量 <code style="font-family:monospace, sans-serif;font-size:96.5%;border-radius:3px;"><span>__name__</span></code> 可以获取模块名（即字符串）。例如，用文本编辑器在当前目录下创建 <code style="font-family:monospace, sans-serif;font-size:96.5%;border-radius:3px;"><span>fibo.py</span></code> 文件，输入以下内容：</p>
+<div style="position:relative;"><div style="background:none;"><pre style="font-family:monospace, sans-serif;font-size:96.5%;line-height:125%;margin:0px;border-radius:3px;border:1px solid rgb(170, 204, 153);"><span></span><span style="color:rgb(64, 128, 144);font-style:italic;"># Fibonacci numbers module</span>
+
+<span style="color:rgb(0, 112, 32);font-weight:bold;">def</span> <span style="color:rgb(6, 40, 126);">fib</span><span>(</span><span>n</span><span>):</span>    <span style="color:rgb(64, 128, 144);font-style:italic;"># write Fibonacci series up to n</span>
+    <span>a</span><span>,</span> <span>b</span> <span style="color:rgb(102, 102, 102);">=</span> <span style="color:rgb(32, 128, 80);">0</span><span>,</span> <span style="color:rgb(32, 128, 80);">1</span>
+    <span style="color:rgb(0, 112, 32);font-weight:bold;">while</span> <span>a</span> <span style="color:rgb(102, 102, 102);">&lt;</span> <span>n</span><span>:</span>
+        <span style="color:rgb(0, 112, 32);">print</span><span>(</span><span>a</span><span>,</span> <span>end</span><span style="color:rgb(102, 102, 102);">=</span><span style="color:rgb(64, 112, 160);">' '</span><span>)</span>
+        <span>a</span><span>,</span> <span>b</span> <span style="color:rgb(102, 102, 102);">=</span> <span>b</span><span>,</span> <span>a</span><span style="color:rgb(102, 102, 102);">+</span><span>b</span>
+    <span style="color:rgb(0, 112, 32);">print</span><span>()</span>
+
+<span style="color:rgb(0, 112, 32);font-weight:bold;">def</span> <span style="color:rgb(6, 40, 126);">fib2</span><span>(</span><span>n</span><span>):</span>   <span style="color:rgb(64, 128, 144);font-style:italic;"># return Fibonacci series up to n</span>
+    <span>result</span> <span style="color:rgb(102, 102, 102);">=</span> <span>[]</span>
+    <span>a</span><span>,</span> <span>b</span> <span style="color:rgb(102, 102, 102);">=</span> <span style="color:rgb(32, 128, 80);">0</span><span>,</span> <span style="color:rgb(32, 128, 80);">1</span>
+    <span style="color:rgb(0, 112, 32);font-weight:bold;">while</span> <span>a</span> <span style="color:rgb(102, 102, 102);">&lt;</span> <span>n</span><span>:</span>
+        <span>result</span><span style="color:rgb(102, 102, 102);">.</span><span>append</span><span>(</span><span>a</span><span>)</span>
+        <span>a</span><span>,</span> <span>b</span> <span style="color:rgb(102, 102, 102);">=</span> <span>b</span><span>,</span> <span>a</span><span style="color:rgb(102, 102, 102);">+</span><span>b</span>
+    <span style="color:rgb(0, 112, 32);font-weight:bold;">return</span> <span>result</span>
+</pre></div>
+</div>
+<p style="line-height:140%;">现在，进入 Python 解释器，用以下命令导入该模块：</p>
+<div style="position:relative;"><div style="background:none;"><span title="Hide the prompts and output" style="cursor:pointer;position:absolute;top:0px;right:0px;border-color:rgb(170, 204, 153);border-style:solid;border-width:1px;color:rgb(170, 204, 153);font-family:monospace;padding-left:0.2em;padding-right:0.2em;border-radius:0px 3px 0px 0px;">&gt;&gt;&gt;</span><pre style="font-family:monospace, sans-serif;font-size:96.5%;line-height:125%;margin:0px;border-radius:3px;border:1px solid rgb(170, 204, 153);"><span></span><span style="color:rgb(198, 93, 9);font-weight:bold;">&gt;&gt;&gt; </span><span style="color:rgb(0, 112, 32);font-weight:bold;">import</span> <span style="color:rgb(14, 132, 181);font-weight:bold;">fibo</span>
+</pre></div>
+</div>
+<p style="line-height:140%;">这项操作不直接把 <code style="font-family:monospace, sans-serif;font-size:96.5%;border-radius:3px;"><span>fibo</span></code> 函数定义的名称导入到当前符号表，只导入模块名 <code style="font-family:monospace, sans-serif;font-size:96.5%;border-radius:3px;"><span>fibo</span></code> 。要使用模块名访问函数：</p>
+<div style="position:relative;"><div style="background:none;"><span title="Hide the prompts and output" style="cursor:pointer;position:absolute;top:0px;right:0px;border-color:rgb(170, 204, 153);border-style:solid;border-width:1px;color:rgb(170, 204, 153);font-family:monospace;padding-left:0.2em;padding-right:0.2em;border-radius:0px 3px 0px 0px;">&gt;&gt;&gt;</span><pre style="font-family:monospace, sans-serif;font-size:96.5%;line-height:125%;margin:0px;border-radius:3px;border:1px solid rgb(170, 204, 153);"><span></span><span style="color:rgb(198, 93, 9);font-weight:bold;">&gt;&gt;&gt; </span><span>fibo</span><span style="color:rgb(102, 102, 102);">.</span><span>fib</span><span>(</span><span style="color:rgb(32, 128, 80);">1000</span><span>)</span>
+<span style="color:rgb(51, 51, 51);">0 1 1 2 3 5 8 13 21 34 55 89 144 233 377 610 987</span>
+<span style="color:rgb(198, 93, 9);font-weight:bold;">&gt;&gt;&gt; </span><span>fibo</span><span style="color:rgb(102, 102, 102);">.</span><span>fib2</span><span>(</span><span style="color:rgb(32, 128, 80);">100</span><span>)</span>
+<span style="color:rgb(51, 51, 51);">[0, 1, 1, 2, 3, 5, 8, 13, 21, 34, 55, 89]</span>
+<span style="color:rgb(198, 93, 9);font-weight:bold;">&gt;&gt;&gt; </span><span>fibo</span><span style="color:rgb(102, 102, 102);">.</span><span style="color:rgb(187, 96, 213);">__name__</span>
+<span style="color:rgb(51, 51, 51);">'fibo'</span>
+</pre></div>
+</div>
+<p style="line-height:140%;">如果经常使用某个函数，可以把它赋值给局部变量：</p>
+<div style="position:relative;"><div style="background:none;"><span title="Hide the prompts and output" style="cursor:pointer;position:absolute;top:0px;right:0px;border-color:rgb(170, 204, 153);border-style:solid;border-width:1px;color:rgb(170, 204, 153);font-family:monospace;padding-left:0.2em;padding-right:0.2em;border-radius:0px 3px 0px 0px;">&gt;&gt;&gt;</span><pre style="font-family:monospace, sans-serif;font-size:96.5%;line-height:125%;margin:0px;border-radius:3px;border:1px solid rgb(170, 204, 153);"><span></span><span style="color:rgb(198, 93, 9);font-weight:bold;">&gt;&gt;&gt; </span><span>fib</span> <span style="color:rgb(102, 102, 102);">=</span> <span>fibo</span><span style="color:rgb(102, 102, 102);">.</span><span>fib</span>
+<span style="color:rgb(198, 93, 9);font-weight:bold;">&gt;&gt;&gt; </span><span>fib</span><span>(</span><span style="color:rgb(32, 128, 80);">500</span><span>)</span>
+<span style="color:rgb(51, 51, 51);">0 1 1 2 3 5 8 13 21 34 55 89 144 233 377</span>
+</pre></div>
+</div>
+<div>
+<span></span><h2 style="margin:0px;border:0px;padding:0.3em 0px;"><span>6.1. </span>模块详解<a href="https://docs.python.org/zh-cn/3.9/tutorial/modules.html#more-on-modules" title="永久链接至标题" style="color:rgb(0, 114, 170);">¶</a></h2>
+<p style="line-height:140%;">模块包含可执行语句及函数定义。这些语句用于初始化模块，且仅在 import 语句 <em>第一次</em> 遇到模块名时执行。<a href="https://docs.python.org/zh-cn/3.9/tutorial/modules.html#id2" style="color:rgb(0, 114, 170);">1</a> (文件作为脚本运行时，也会执行这些语句。)</p>
+<p style="line-height:140%;">模块有自己的私有符号表，用作模块中所有函数的全局符号表。因此，在模块内使用全局变量时，不用担心与用户定义的全局变量发生冲突。另一方面，可以用与访问模块函数一样的标记法，访问模块的全局变量，<code style="font-family:monospace, sans-serif;font-size:96.5%;border-radius:3px;"><span>modname.itemname</span></code>。</p>
+<p style="line-height:140%;">可以把其他模块导入模块。按惯例，所有 <a href="https://docs.python.org/zh-cn/3.9/reference/simple_stmts.html#import" style="color:rgb(0, 114, 170);"><code style="font-family:monospace, sans-serif;font-size:96.5%;border-radius:3px;font-weight:normal;"><span>import</span></code></a> 语句都放在模块（或脚本）开头，但这不是必须的。导入的模块名存在导入模块的全局符号表里。</p>
+<p style="line-height:140%;"><a href="https://docs.python.org/zh-cn/3.9/reference/simple_stmts.html#import" style="color:rgb(0, 114, 170);"><code style="font-family:monospace, sans-serif;font-size:96.5%;border-radius:3px;font-weight:normal;"><span>import</span></code></a> 语句有一个变体，可以直接把模块里的名称导入到另一个模块的符号表。例如：</p>
+<div style="position:relative;"><div style="background:none;"><span title="Hide the prompts and output" style="cursor:pointer;position:absolute;top:0px;right:0px;border-color:rgb(170, 204, 153);border-style:solid;border-width:1px;color:rgb(170, 204, 153);font-family:monospace;padding-left:0.2em;padding-right:0.2em;border-radius:0px 3px 0px 0px;">&gt;&gt;&gt;</span><pre style="font-family:monospace, sans-serif;font-size:96.5%;line-height:125%;margin:0px;border-radius:3px;border:1px solid rgb(170, 204, 153);"><span></span><span style="color:rgb(198, 93, 9);font-weight:bold;">&gt;&gt;&gt; </span><span style="color:rgb(0, 112, 32);font-weight:bold;">from</span> <span style="color:rgb(14, 132, 181);font-weight:bold;">fibo</span> <span style="color:rgb(0, 112, 32);font-weight:bold;">import</span> <span>fib</span><span>,</span> <span>fib2</span>
+<span style="color:rgb(198, 93, 9);font-weight:bold;">&gt;&gt;&gt; </span><span>fib</span><span>(</span><span style="color:rgb(32, 128, 80);">500</span><span>)</span>
+<span style="color:rgb(51, 51, 51);">0 1 1 2 3 5 8 13 21 34 55 89 144 233 377</span>
+</pre></div>
+</div>
+<p style="line-height:140%;">这段代码不会把模块名导入到局部符号表里（因此，本例没有定义 <code style="font-family:monospace, sans-serif;font-size:96.5%;border-radius:3px;"><span>fibo</span></code>）。</p>
+<p style="line-height:140%;">还有一种变体可以导入模块内定义的所有名称：</p>
+<div style="position:relative;"><div style="background:none;"><span title="Hide the prompts and output" style="cursor:pointer;position:absolute;top:0px;right:0px;border-color:rgb(170, 204, 153);border-style:solid;border-width:1px;color:rgb(170, 204, 153);font-family:monospace;padding-left:0.2em;padding-right:0.2em;border-radius:0px 3px 0px 0px;">&gt;&gt;&gt;</span><pre style="font-family:monospace, sans-serif;font-size:96.5%;line-height:125%;margin:0px;border-radius:3px;border:1px solid rgb(170, 204, 153);"><span></span><span style="color:rgb(198, 93, 9);font-weight:bold;">&gt;&gt;&gt; </span><span style="color:rgb(0, 112, 32);font-weight:bold;">from</span> <span style="color:rgb(14, 132, 181);font-weight:bold;">fibo</span> <span style="color:rgb(0, 112, 32);font-weight:bold;">import</span> <span style="color:rgb(102, 102, 102);">*</span>
+<span style="color:rgb(198, 93, 9);font-weight:bold;">&gt;&gt;&gt; </span><span>fib</span><span>(</span><span style="color:rgb(32, 128, 80);">500</span><span>)</span>
+<span style="color:rgb(51, 51, 51);">0 1 1 2 3 5 8 13 21 34 55 89 144 233 377</span>
+</pre></div>
+</div>
+<p style="line-height:140%;">这种方式会导入所有不以下划线（<code style="font-family:monospace, sans-serif;font-size:96.5%;border-radius:3px;"><span>_</span></code>）开头的名称。大多数情况下，不要用这个功能，这种方式向解释器导入了一批未知的名称，可能会覆盖已经定义的名称。</p>
+<p style="line-height:140%;">注意，一般情况下，不建议从模块或包内导入 <code style="font-family:monospace, sans-serif;font-size:96.5%;border-radius:3px;"><span>*</span></code>， 因为，这项操作经常让代码变得难以理解。不过，为了在交互式编译器中少打几个字，这么用也没问题。</p>
+<p style="line-height:140%;">模块名后使用 <code style="font-family:monospace, sans-serif;font-size:96.5%;border-radius:3px;font-weight:normal;"><span>as</span></code> 时，直接把 <code style="font-family:monospace, sans-serif;font-size:96.5%;border-radius:3px;font-weight:normal;"><span>as</span></code> 后的名称与导入模块绑定。</p>
+<div style="position:relative;"><div style="background:none;"><span title="Hide the prompts and output" style="cursor:pointer;position:absolute;top:0px;right:0px;border-color:rgb(170, 204, 153);border-style:solid;border-width:1px;color:rgb(170, 204, 153);font-family:monospace;padding-left:0.2em;padding-right:0.2em;border-radius:0px 3px 0px 0px;">&gt;&gt;&gt;</span><pre style="font-family:monospace, sans-serif;font-size:96.5%;line-height:125%;margin:0px;border-radius:3px;border:1px solid rgb(170, 204, 153);"><span></span><span style="color:rgb(198, 93, 9);font-weight:bold;">&gt;&gt;&gt; </span><span style="color:rgb(0, 112, 32);font-weight:bold;">import</span> <span style="color:rgb(14, 132, 181);font-weight:bold;">fibo</span> <span style="color:rgb(0, 112, 32);font-weight:bold;">as</span> <span style="color:rgb(14, 132, 181);font-weight:bold;">fib</span>
+<span style="color:rgb(198, 93, 9);font-weight:bold;">&gt;&gt;&gt; </span><span>fib</span><span style="color:rgb(102, 102, 102);">.</span><span>fib</span><span>(</span><span style="color:rgb(32, 128, 80);">500</span><span>)</span>
+<span style="color:rgb(51, 51, 51);">0 1 1 2 3 5 8 13 21 34 55 89 144 233 377</span>
+</pre></div>
+</div>
+<p style="line-height:140%;">与 <code style="font-family:monospace, sans-serif;font-size:96.5%;border-radius:3px;"><span>import</span> <span>fibo</span></code> 一样，这种方式也可以有效地导入模块，唯一的区别是，导入的名称是 <code style="font-family:monospace, sans-serif;font-size:96.5%;border-radius:3px;"><span>fib</span></code>。</p>
+<p style="line-height:140%;"><a href="https://docs.python.org/zh-cn/3.9/reference/simple_stmts.html#from" style="color:rgb(0, 114, 170);"><code style="font-family:monospace, sans-serif;font-size:96.5%;border-radius:3px;font-weight:normal;"><span>from</span></code></a> 中也可以使用这种方式，效果类似：</p>
+<div style="position:relative;"><div style="background:none;"><span title="Hide the prompts and output" style="cursor:pointer;position:absolute;top:0px;right:0px;border-color:rgb(170, 204, 153);border-style:solid;border-width:1px;color:rgb(170, 204, 153);font-family:monospace;padding-left:0.2em;padding-right:0.2em;border-radius:0px 3px 0px 0px;">&gt;&gt;&gt;</span><pre style="font-family:monospace, sans-serif;font-size:96.5%;line-height:125%;margin:0px;border-radius:3px;border:1px solid rgb(170, 204, 153);"><span></span><span style="color:rgb(198, 93, 9);font-weight:bold;">&gt;&gt;&gt; </span><span style="color:rgb(0, 112, 32);font-weight:bold;">from</span> <span style="color:rgb(14, 132, 181);font-weight:bold;">fibo</span> <span style="color:rgb(0, 112, 32);font-weight:bold;">import</span> <span>fib</span> <span style="color:rgb(0, 112, 32);font-weight:bold;">as</span> <span>fibonacci</span>
+<span style="color:rgb(198, 93, 9);font-weight:bold;">&gt;&gt;&gt; </span><span>fibonacci</span><span>(</span><span style="color:rgb(32, 128, 80);">500</span><span>)</span>
+<span style="color:rgb(51, 51, 51);">0 1 1 2 3 5 8 13 21 34 55 89 144 233 377</span>
+</pre></div>
+</div>
+<div style="border-radius:3px;">
+<p style="line-height:140%;">注解</p>
+<p style="line-height:140%;">为了保证运行效率，每次解释器会话只导入一次模块。如果更改了模块内容，必须重启解释器；仅交互测试一个模块时，也可以使用 <a href="https://docs.python.org/zh-cn/3.9/library/importlib.html#importlib.reload" title="importlib.reload" style="color:rgb(0, 114, 170);"><code style="font-family:monospace, sans-serif;font-size:96.5%;border-radius:3px;font-weight:normal;"><span>importlib.reload()</span></code></a>，例如 <code style="font-family:monospace, sans-serif;font-size:96.5%;border-radius:3px;"><span>import</span> <span>importlib;</span> <span>importlib.reload(modulename)</span></code>。</p>
+</div>
+<div>
+<span></span><h3 style="margin:0px;border:0px;padding:0.3em 0px;"><span>6.1.1. </span>以脚本方式执行模块<a href="https://docs.python.org/zh-cn/3.9/tutorial/modules.html#executing-modules-as-scripts" title="永久链接至标题" style="color:rgb(0, 114, 170);">¶</a></h3>
+<p style="line-height:140%;">可以用以下方式运行 Python 模块：</p>
+<div style="position:relative;"><div style="background:none;"><pre style="font-family:monospace, sans-serif;font-size:96.5%;line-height:125%;margin:0px;border-radius:3px;border:1px solid rgb(170, 204, 153);"><span></span><span>python</span> <span>fibo</span><span style="color:rgb(102, 102, 102);">.</span><span>py</span> <span style="color:rgb(102, 102, 102);">&lt;</span><span>arguments</span><span style="color:rgb(102, 102, 102);">&gt;</span>
+</pre></div>
+</div>
+<p style="line-height:140%;">这项操作将执行模块里的代码，和导入模块一样，但会把 <code style="font-family:monospace, sans-serif;font-size:96.5%;border-radius:3px;"><span>__name__</span></code> 赋值为 <code style="font-family:monospace, sans-serif;font-size:96.5%;border-radius:3px;"><span>"__main__"</span></code>。 也就是把下列代码添加到模块末尾：</p>
+<div style="position:relative;"><div style="background:none;"><pre style="font-family:monospace, sans-serif;font-size:96.5%;line-height:125%;margin:0px;border-radius:3px;border:1px solid rgb(170, 204, 153);"><span></span><span style="color:rgb(0, 112, 32);font-weight:bold;">if</span> <span style="color:rgb(187, 96, 213);">__name__</span> <span style="color:rgb(102, 102, 102);">==</span> <span style="color:rgb(64, 112, 160);">"__main__"</span><span>:</span>
+    <span style="color:rgb(0, 112, 32);font-weight:bold;">import</span> <span style="color:rgb(14, 132, 181);font-weight:bold;">sys</span>
+    <span>fib</span><span>(</span><span style="color:rgb(0, 112, 32);">int</span><span>(</span><span>sys</span><span style="color:rgb(102, 102, 102);">.</span><span>argv</span><span>[</span><span style="color:rgb(32, 128, 80);">1</span><span>]))</span>
+</pre></div>
+</div>
+<p style="line-height:140%;">既可以把这个文件当脚本使用，也可以用作导入的模块， 因为，解析命令行的代码只有在模块以 “main” 文件执行时才会运行：</p>
+<div><div style="background:none;"><pre style="font-family:monospace, sans-serif;font-size:96.5%;line-height:125%;margin:0px;border-radius:3px;border:1px solid rgb(170, 204, 153);"><span></span><span style="color:rgb(198, 93, 9);font-weight:bold;">$</span> python fibo.py <span style="color:rgb(32, 128, 80);">50</span>
+<span style="color:rgb(51, 51, 51);">0 1 1 2 3 5 8 13 21 34</span>
+</pre></div>
+</div>
+<p style="line-height:140%;">导入模块时，不运行这些代码：</p>
+<div style="position:relative;"><div style="background:none;"><span title="Hide the prompts and output" style="cursor:pointer;position:absolute;top:0px;right:0px;border-color:rgb(170, 204, 153);border-style:solid;border-width:1px;color:rgb(170, 204, 153);font-family:monospace;padding-left:0.2em;padding-right:0.2em;border-radius:0px 3px 0px 0px;">&gt;&gt;&gt;</span><pre style="font-family:monospace, sans-serif;font-size:96.5%;line-height:125%;margin:0px;border-radius:3px;border:1px solid rgb(170, 204, 153);"><span></span><span style="color:rgb(198, 93, 9);font-weight:bold;">&gt;&gt;&gt; </span><span style="color:rgb(0, 112, 32);font-weight:bold;">import</span> <span style="color:rgb(14, 132, 181);font-weight:bold;">fibo</span>
+<span style="color:rgb(51, 51, 51);">&gt;&gt;&gt;</span>
+</pre></div>
+</div>
+<p style="line-height:140%;">这种操作常用于为模块提供便捷用户接口，或用于测试（把模块当作执行测试套件的脚本运行）。</p>
+</div>
+<div>
+<span></span><h3 style="margin:0px;border:0px;padding:0.3em 0px;"><span>6.1.2. </span>模块搜索路径<a href="https://docs.python.org/zh-cn/3.9/tutorial/modules.html#the-module-search-path" title="永久链接至标题" style="color:rgb(0, 114, 170);">¶</a></h3>
+<p style="line-height:140%;">导入 <code style="font-family:monospace, sans-serif;font-size:96.5%;border-radius:3px;font-weight:normal;"><span>spam</span></code> 模块时，解释器首先查找名为 <cite>spam</cite> 的内置模块。如果没找到，解释器再从 <a href="https://docs.python.org/zh-cn/3.9/library/sys.html#sys.path" title="sys.path" style="color:rgb(0, 114, 170);"><code style="font-family:monospace, sans-serif;font-size:96.5%;border-radius:3px;font-weight:normal;"><span>sys.path</span></code></a> 变量中的目录列表里查找 <code style="font-family:monospace, sans-serif;font-size:96.5%;border-radius:3px;"><span>spam.py</span></code> 文件。<a href="https://docs.python.org/zh-cn/3.9/library/sys.html#sys.path" title="sys.path" style="color:rgb(0, 114, 170);"><code style="font-family:monospace, sans-serif;font-size:96.5%;border-radius:3px;font-weight:normal;"><span>sys.path</span></code></a> 初始化时包含以下位置：</p>
+<ul>
+<li><p style="line-height:140%;">输入脚本的目录（或未指定文件时的当前目录）。</p></li>
+<li><p style="line-height:140%;"><span></span><a href="https://docs.python.org/zh-cn/3.9/using/cmdline.html#envvar-PYTHONPATH" style="color:rgb(0, 114, 170);"><code style="font-family:monospace, sans-serif;font-size:96.5%;border-radius:3px;font-weight:normal;"><span>PYTHONPATH</span></code></a> （目录列表，与 shell 变量 <span></span><code style="font-family:monospace, sans-serif;font-size:96.5%;border-radius:3px;font-weight:normal;"><span>PATH</span></code> 的语法一样）。</p></li>
+<li><p style="line-height:140%;">默认安装目录。</p></li>
+</ul>
+<div style="border-radius:3px;">
+<p style="line-height:140%;">注解</p>
+<p style="line-height:140%;">在支持 symlink 的文件系统中，输入脚本目录是在追加 symlink 后计算出来的。换句话说，包含 symlink 的目录并 <strong>没有</strong> 添加至模块搜索路径。</p>
+</div>
+<p style="line-height:140%;">初始化后，Python 程序可以更改 <a href="https://docs.python.org/zh-cn/3.9/library/sys.html#sys.path" title="sys.path" style="color:rgb(0, 114, 170);"><code style="font-family:monospace, sans-serif;font-size:96.5%;border-radius:3px;font-weight:normal;"><span>sys.path</span></code></a>。运行脚本的目录在标准库路径之前，置于搜索路径的开头。即，加载的是该目录里的脚本，而不是标准库的同名模块。 除非刻意替换，否则会报错。详见 <a href="https://docs.python.org/zh-cn/3.9/tutorial/modules.html#tut-standardmodules" style="color:rgb(0, 114, 170);"><span>标准模块</span></a>。</p>
+</div>
+<div>
+<h3 style="margin:0px;border:0px;padding:0.3em 0px;"><span>6.1.3. </span>“已编译的” Python 文件<a href="https://docs.python.org/zh-cn/3.9/tutorial/modules.html#compiled-python-files" title="永久链接至标题" style="color:rgb(0, 114, 170);">¶</a></h3>
+<p style="line-height:140%;">为了快速加载模块，Python 把模块的编译版缓存在 <code style="font-family:monospace, sans-serif;font-size:96.5%;border-radius:3px;"><span>__pycache__</span></code> 目录中，文件名为 <code style="font-family:monospace, sans-serif;font-size:96.5%;border-radius:3px;"><span>module.</span><em><span>version</span></em><span>.pyc</span></code>，version 对编译文件格式进行编码，一般是 Python 的版本号。例如，CPython 的 3.3 发行版中，spam.py 的编译版本缓存为 <code style="font-family:monospace, sans-serif;font-size:96.5%;border-radius:3px;"><span>__pycache__/spam.cpython-33.pyc</span></code>。使用这种命名惯例，可以让不同 Python 发行版及不同版本的已编译模块共存。</p>
+<p style="line-height:140%;">Python 对比编译版本与源码的修改日期，查看它是否已过期，是否要重新编译，此过程完全自动化。此外，编译模块与平台无关，因此，可在不同架构系统之间共享相同的支持库。</p>
+<p style="line-height:140%;">Python 在两种情况下不检查缓存。其一，从命令行直接载入模块，只重新编译，不存储编译结果；其二，没有源模块，就不会检查缓存。为了支持无源文件（仅编译）发行版本， 编译模块必须在源目录下，并且绝不能有源模块。</p>
+<p style="line-height:140%;">给专业人士的一些小建议：</p>
+<ul>
+<li><p style="line-height:140%;">在 Python 命令中使用 <a href="https://docs.python.org/zh-cn/3.9/using/cmdline.html#cmdoption-o" style="color:rgb(0, 114, 170);"><code style="font-family:monospace, sans-serif;font-size:96.5%;border-radius:3px;font-weight:normal;"><span>-O</span></code></a> 或 <a href="https://docs.python.org/zh-cn/3.9/using/cmdline.html#cmdoption-oo" style="color:rgb(0, 114, 170);"><code style="font-family:monospace, sans-serif;font-size:96.5%;border-radius:3px;font-weight:normal;"><span>-OO</span></code></a> 开关，可以减小编译模块的大小。<code style="font-family:monospace, sans-serif;font-size:96.5%;border-radius:3px;"><span>-O</span></code> 去除断言语句，<code style="font-family:monospace, sans-serif;font-size:96.5%;border-radius:3px;"><span>-OO</span></code> 去除断言语句和 __doc__ 字符串。有些程序可能依赖于这些内容，因此，没有十足的把握，不要使用这两个选项。“优化过的”模块带有 <code style="font-family:monospace, sans-serif;font-size:96.5%;border-radius:3px;"><span>opt-</span></code> 标签，并且文件通常会一小些。将来的发行版或许会改进优化的效果。</p></li>
+<li><p style="line-height:140%;">从 <code style="font-family:monospace, sans-serif;font-size:96.5%;border-radius:3px;"><span>.pyc</span></code> 文件读取的程序不比从 <code style="font-family:monospace, sans-serif;font-size:96.5%;border-radius:3px;"><span>.py</span></code> 读取的执行速度快，<code style="font-family:monospace, sans-serif;font-size:96.5%;border-radius:3px;"><span>.pyc</span></code> 文件只是加载速度更快。</p></li>
+<li><p style="line-height:140%;"><a href="https://docs.python.org/zh-cn/3.9/library/compileall.html#module-compileall" title="compileall: Tools for byte-compiling all Python source files in a directory tree." style="color:rgb(0, 114, 170);"><code style="font-family:monospace, sans-serif;font-size:96.5%;border-radius:3px;font-weight:normal;"><span>compileall</span></code></a> 模块可以为一个目录下的所有模块创建 .pyc 文件。</p></li>
+<li><p style="line-height:140%;">本过程的细节及决策流程图，详见 <span></span><a href="https://www.python.org/dev/peps/pep-3147" style="color:rgb(0, 114, 170);"><strong>PEP 3147</strong></a>。</p></li>
+</ul>
+</div>
+</div>
+<div>
+<span></span><h2 style="margin:0px;border:0px;padding:0.3em 0px;"><span>6.2. </span>标准模块<a href="https://docs.python.org/zh-cn/3.9/tutorial/modules.html#standard-modules" title="永久链接至标题" style="color:rgb(0, 114, 170);">¶</a></h2>
+<p style="line-height:140%;">Python 附带了标准模块库，详见 Python 标准库参考手册（以下简称为“库参考”）。解释器中内置了一些模块，用于访问不属于语言核心的内置操作，其目的主要是为了提高运行效率，或访问系统调用等操作系统原语。这些模块的集合是依赖于底层平台的配置选项。例如，<a href="https://docs.python.org/zh-cn/3.9/library/winreg.html#module-winreg" title="winreg: Routines and objects for manipulating the Windows registry. (Windows)" style="color:rgb(0, 114, 170);"><code style="font-family:monospace, sans-serif;font-size:96.5%;border-radius:3px;font-weight:normal;"><span>winreg</span></code></a> 模块仅供 Windows 使用。特别要注意内嵌到 Python 解释器中的模块 <a href="https://docs.python.org/zh-cn/3.9/library/sys.html#module-sys" title="sys: Access system-specific parameters and functions." style="color:rgb(0, 114, 170);"><code style="font-family:monospace, sans-serif;font-size:96.5%;border-radius:3px;font-weight:normal;"><span>sys</span></code></a>。变量 <code style="font-family:monospace, sans-serif;font-size:96.5%;border-radius:3px;"><span>sys.ps1</span></code> 和 <code style="font-family:monospace, sans-serif;font-size:96.5%;border-radius:3px;"><span>sys.ps2</span></code> 则用来定义主次提示的字符串：</p>
+<div style="position:relative;"><div style="background:none;"><span title="Hide the prompts and output" style="cursor:pointer;position:absolute;top:0px;right:0px;border-color:rgb(170, 204, 153);border-style:solid;border-width:1px;color:rgb(170, 204, 153);font-family:monospace;padding-left:0.2em;padding-right:0.2em;border-radius:0px 3px 0px 0px;">&gt;&gt;&gt;</span><pre style="font-family:monospace, sans-serif;font-size:96.5%;line-height:125%;margin:0px;border-radius:3px;border:1px solid rgb(170, 204, 153);"><span></span><span style="color:rgb(198, 93, 9);font-weight:bold;">&gt;&gt;&gt; </span><span style="color:rgb(0, 112, 32);font-weight:bold;">import</span> <span style="color:rgb(14, 132, 181);font-weight:bold;">sys</span>
+<span style="color:rgb(198, 93, 9);font-weight:bold;">&gt;&gt;&gt; </span><span>sys</span><span style="color:rgb(102, 102, 102);">.</span><span>ps1</span>
+<span style="color:rgb(51, 51, 51);">'&gt;&gt;&gt; '</span>
+<span style="color:rgb(198, 93, 9);font-weight:bold;">&gt;&gt;&gt; </span><span>sys</span><span style="color:rgb(102, 102, 102);">.</span><span>ps2</span>
+<span style="color:rgb(51, 51, 51);">'... '</span>
+<span style="color:rgb(198, 93, 9);font-weight:bold;">&gt;&gt;&gt; </span><span>sys</span><span style="color:rgb(102, 102, 102);">.</span><span>ps1</span> <span style="color:rgb(102, 102, 102);">=</span> <span style="color:rgb(64, 112, 160);">'C&gt; '</span>
+<span style="color:rgb(51, 51, 51);">C&gt; print('Yuck!')</span>
+<span style="color:rgb(51, 51, 51);">Yuck!</span>
+<span style="color:rgb(51, 51, 51);">C&gt;</span>
+</pre></div>
+</div>
+<p style="line-height:140%;">只有解释器用于交互模式时，才定义这两个变量。</p>
+<p style="line-height:140%;">变量 <code style="font-family:monospace, sans-serif;font-size:96.5%;border-radius:3px;"><span>sys.path</span></code> 是字符串列表，用于确定解释器的模块搜索路径。该变量以环境变量 <span></span><a href="https://docs.python.org/zh-cn/3.9/using/cmdline.html#envvar-PYTHONPATH" style="color:rgb(0, 114, 170);"><code style="font-family:monospace, sans-serif;font-size:96.5%;border-radius:3px;font-weight:normal;"><span>PYTHONPATH</span></code></a> 提取的默认路径进行初始化，如未设置 <span></span><a href="https://docs.python.org/zh-cn/3.9/using/cmdline.html#envvar-PYTHONPATH" style="color:rgb(0, 114, 170);"><code style="font-family:monospace, sans-serif;font-size:96.5%;border-radius:3px;font-weight:normal;"><span>PYTHONPATH</span></code></a>，则使用内置的默认路径。可以用标准列表操作修改该变量：</p>
+<div style="position:relative;"><div style="background:none;"><span title="Hide the prompts and output" style="cursor:pointer;position:absolute;top:0px;right:0px;border-color:rgb(170, 204, 153);border-style:solid;border-width:1px;color:rgb(170, 204, 153);font-family:monospace;padding-left:0.2em;padding-right:0.2em;border-radius:0px 3px 0px 0px;">&gt;&gt;&gt;</span><pre style="font-family:monospace, sans-serif;font-size:96.5%;line-height:125%;margin:0px;border-radius:3px;border:1px solid rgb(170, 204, 153);"><span></span><span style="color:rgb(198, 93, 9);font-weight:bold;">&gt;&gt;&gt; </span><span style="color:rgb(0, 112, 32);font-weight:bold;">import</span> <span style="color:rgb(14, 132, 181);font-weight:bold;">sys</span>
+<span style="color:rgb(198, 93, 9);font-weight:bold;">&gt;&gt;&gt; </span><span>sys</span><span style="color:rgb(102, 102, 102);">.</span><span>path</span><span style="color:rgb(102, 102, 102);">.</span><span>append</span><span>(</span><span style="color:rgb(64, 112, 160);">'/ufs/guido/lib/python'</span><span>)</span>
+</pre></div>
+</div>
+</div>
+<div>
+<span></span><h2 style="margin:0px;border:0px;padding:0.3em 0px;"><span>6.3. </span><a href="https://docs.python.org/zh-cn/3.9/library/functions.html#dir" title="dir" style="color:rgb(0, 114, 170);"><code style="font-family:monospace, sans-serif;font-size:96.5%;border-radius:3px;font-weight:normal;"><span>dir()</span></code></a> 函数<a href="https://docs.python.org/zh-cn/3.9/tutorial/modules.html#the-dir-function" title="永久链接至标题" style="color:rgb(0, 114, 170);">¶</a></h2>
+<p style="line-height:140%;">内置函数 <a href="https://docs.python.org/zh-cn/3.9/library/functions.html#dir" title="dir" style="color:rgb(0, 114, 170);"><code style="font-family:monospace, sans-serif;font-size:96.5%;border-radius:3px;font-weight:normal;"><span>dir()</span></code></a> 用于查找模块定义的名称。返回结果是经过排序的字符串列表：</p>
+<div style="position:relative;"><div style="background:none;"><span title="Hide the prompts and output" style="cursor:pointer;position:absolute;top:0px;right:0px;border-color:rgb(170, 204, 153);border-style:solid;border-width:1px;color:rgb(170, 204, 153);font-family:monospace;padding-left:0.2em;padding-right:0.2em;border-radius:0px 3px 0px 0px;">&gt;&gt;&gt;</span><pre style="font-family:monospace, sans-serif;font-size:96.5%;line-height:125%;margin:0px;border-radius:3px;border:1px solid rgb(170, 204, 153);"><span></span><span style="color:rgb(198, 93, 9);font-weight:bold;">&gt;&gt;&gt; </span><span style="color:rgb(0, 112, 32);font-weight:bold;">import</span> <span style="color:rgb(14, 132, 181);font-weight:bold;">fibo</span><span style="color:rgb(102, 102, 102);">,</span> <span style="color:rgb(14, 132, 181);font-weight:bold;">sys</span>
+<span style="color:rgb(198, 93, 9);font-weight:bold;">&gt;&gt;&gt; </span><span style="color:rgb(0, 112, 32);">dir</span><span>(</span><span>fibo</span><span>)</span>
+<span style="color:rgb(51, 51, 51);">['__name__', 'fib', 'fib2']</span>
+<span style="color:rgb(198, 93, 9);font-weight:bold;">&gt;&gt;&gt; </span><span style="color:rgb(0, 112, 32);">dir</span><span>(</span><span>sys</span><span>)</span>  
+<span style="color:rgb(51, 51, 51);">['__breakpointhook__', '__displayhook__', '__doc__', '__excepthook__',</span>
+<span style="color:rgb(51, 51, 51);"> '__interactivehook__', '__loader__', '__name__', '__package__', '__spec__',</span>
+<span style="color:rgb(51, 51, 51);"> '__stderr__', '__stdin__', '__stdout__', '__unraisablehook__',</span>
+<span style="color:rgb(51, 51, 51);"> '_clear_type_cache', '_current_frames', '_debugmallocstats', '_framework',</span>
+<span style="color:rgb(51, 51, 51);"> '_getframe', '_git', '_home', '_xoptions', 'abiflags', 'addaudithook',</span>
+<span style="color:rgb(51, 51, 51);"> 'api_version', 'argv', 'audit', 'base_exec_prefix', 'base_prefix',</span>
+<span style="color:rgb(51, 51, 51);"> 'breakpointhook', 'builtin_module_names', 'byteorder', 'call_tracing',</span>
+<span style="color:rgb(51, 51, 51);"> 'callstats', 'copyright', 'displayhook', 'dont_write_bytecode', 'exc_info',</span>
+<span style="color:rgb(51, 51, 51);"> 'excepthook', 'exec_prefix', 'executable', 'exit', 'flags', 'float_info',</span>
+<span style="color:rgb(51, 51, 51);"> 'float_repr_style', 'get_asyncgen_hooks', 'get_coroutine_origin_tracking_depth',</span>
+<span style="color:rgb(51, 51, 51);"> 'getallocatedblocks', 'getdefaultencoding', 'getdlopenflags',</span>
+<span style="color:rgb(51, 51, 51);"> 'getfilesystemencodeerrors', 'getfilesystemencoding', 'getprofile',</span>
+<span style="color:rgb(51, 51, 51);"> 'getrecursionlimit', 'getrefcount', 'getsizeof', 'getswitchinterval',</span>
+<span style="color:rgb(51, 51, 51);"> 'gettrace', 'hash_info', 'hexversion', 'implementation', 'int_info',</span>
+<span style="color:rgb(51, 51, 51);"> 'intern', 'is_finalizing', 'last_traceback', 'last_type', 'last_value',</span>
+<span style="color:rgb(51, 51, 51);"> 'maxsize', 'maxunicode', 'meta_path', 'modules', 'path', 'path_hooks',</span>
+<span style="color:rgb(51, 51, 51);"> 'path_importer_cache', 'platform', 'prefix', 'ps1', 'ps2', 'pycache_prefix',</span>
+<span style="color:rgb(51, 51, 51);"> 'set_asyncgen_hooks', 'set_coroutine_origin_tracking_depth', 'setdlopenflags',</span>
+<span style="color:rgb(51, 51, 51);"> 'setprofile', 'setrecursionlimit', 'setswitchinterval', 'settrace', 'stderr',</span>
+<span style="color:rgb(51, 51, 51);"> 'stdin', 'stdout', 'thread_info', 'unraisablehook', 'version', 'version_info',</span>
+<span style="color:rgb(51, 51, 51);"> 'warnoptions']</span>
+</pre></div>
+</div>
+<p style="line-height:140%;">没有参数时，<a href="https://docs.python.org/zh-cn/3.9/library/functions.html#dir" title="dir" style="color:rgb(0, 114, 170);"><code style="font-family:monospace, sans-serif;font-size:96.5%;border-radius:3px;font-weight:normal;"><span>dir()</span></code></a> 列出当前定义的名称：</p>
+<div style="position:relative;"><div style="background:none;"><span title="Hide the prompts and output" style="cursor:pointer;position:absolute;top:0px;right:0px;border-color:rgb(170, 204, 153);border-style:solid;border-width:1px;color:rgb(170, 204, 153);font-family:monospace;padding-left:0.2em;padding-right:0.2em;border-radius:0px 3px 0px 0px;">&gt;&gt;&gt;</span><pre style="font-family:monospace, sans-serif;font-size:96.5%;line-height:125%;margin:0px;border-radius:3px;border:1px solid rgb(170, 204, 153);"><span></span><span style="color:rgb(198, 93, 9);font-weight:bold;">&gt;&gt;&gt; </span><span>a</span> <span style="color:rgb(102, 102, 102);">=</span> <span>[</span><span style="color:rgb(32, 128, 80);">1</span><span>,</span> <span style="color:rgb(32, 128, 80);">2</span><span>,</span> <span style="color:rgb(32, 128, 80);">3</span><span>,</span> <span style="color:rgb(32, 128, 80);">4</span><span>,</span> <span style="color:rgb(32, 128, 80);">5</span><span>]</span>
+<span style="color:rgb(198, 93, 9);font-weight:bold;">&gt;&gt;&gt; </span><span style="color:rgb(0, 112, 32);font-weight:bold;">import</span> <span style="color:rgb(14, 132, 181);font-weight:bold;">fibo</span>
+<span style="color:rgb(198, 93, 9);font-weight:bold;">&gt;&gt;&gt; </span><span>fib</span> <span style="color:rgb(102, 102, 102);">=</span> <span>fibo</span><span style="color:rgb(102, 102, 102);">.</span><span>fib</span>
+<span style="color:rgb(198, 93, 9);font-weight:bold;">&gt;&gt;&gt; </span><span style="color:rgb(0, 112, 32);">dir</span><span>()</span>
+<span style="color:rgb(51, 51, 51);">['__builtins__', '__name__', 'a', 'fib', 'fibo', 'sys']</span>
+</pre></div>
+</div>
+<p style="line-height:140%;">注意，该函数列出所有类型的名称：变量、模块、函数等。</p>
+<p style="line-height:140%;"><a href="https://docs.python.org/zh-cn/3.9/library/functions.html#dir" title="dir" style="color:rgb(0, 114, 170);"><code style="font-family:monospace, sans-serif;font-size:96.5%;border-radius:3px;font-weight:normal;"><span>dir()</span></code></a> 不会列出内置函数和变量的名称。这些内容的定义在标准模块 <a href="https://docs.python.org/zh-cn/3.9/library/builtins.html#module-builtins" title="builtins: The module that provides the built-in namespace." style="color:rgb(0, 114, 170);"><code style="font-family:monospace, sans-serif;font-size:96.5%;border-radius:3px;font-weight:normal;"><span>builtins</span></code></a> 里：</p>
+<div style="position:relative;"><div style="background:none;"><span title="Hide the prompts and output" style="cursor:pointer;position:absolute;top:0px;right:0px;border-color:rgb(170, 204, 153);border-style:solid;border-width:1px;color:rgb(170, 204, 153);font-family:monospace;padding-left:0.2em;padding-right:0.2em;border-radius:0px 3px 0px 0px;">&gt;&gt;&gt;</span><pre style="font-family:monospace, sans-serif;font-size:96.5%;line-height:125%;margin:0px;border-radius:3px;border:1px solid rgb(170, 204, 153);"><span></span><span style="color:rgb(198, 93, 9);font-weight:bold;">&gt;&gt;&gt; </span><span style="color:rgb(0, 112, 32);font-weight:bold;">import</span> <span style="color:rgb(14, 132, 181);font-weight:bold;">builtins</span>
+<span style="color:rgb(198, 93, 9);font-weight:bold;">&gt;&gt;&gt; </span><span style="color:rgb(0, 112, 32);">dir</span><span>(</span><span>builtins</span><span>)</span>  
+<span style="color:rgb(51, 51, 51);">['ArithmeticError', 'AssertionError', 'AttributeError', 'BaseException',</span>
+<span style="color:rgb(51, 51, 51);"> 'BlockingIOError', 'BrokenPipeError', 'BufferError', 'BytesWarning',</span>
+<span style="color:rgb(51, 51, 51);"> 'ChildProcessError', 'ConnectionAbortedError', 'ConnectionError',</span>
+<span style="color:rgb(51, 51, 51);"> 'ConnectionRefusedError', 'ConnectionResetError', 'DeprecationWarning',</span>
+<span style="color:rgb(51, 51, 51);"> 'EOFError', 'Ellipsis', 'EnvironmentError', 'Exception', 'False',</span>
+<span style="color:rgb(51, 51, 51);"> 'FileExistsError', 'FileNotFoundError', 'FloatingPointError',</span>
+<span style="color:rgb(51, 51, 51);"> 'FutureWarning', 'GeneratorExit', 'IOError', 'ImportError',</span>
+<span style="color:rgb(51, 51, 51);"> 'ImportWarning', 'IndentationError', 'IndexError', 'InterruptedError',</span>
+<span style="color:rgb(51, 51, 51);"> 'IsADirectoryError', 'KeyError', 'KeyboardInterrupt', 'LookupError',</span>
+<span style="color:rgb(51, 51, 51);"> 'MemoryError', 'NameError', 'None', 'NotADirectoryError', 'NotImplemented',</span>
+<span style="color:rgb(51, 51, 51);"> 'NotImplementedError', 'OSError', 'OverflowError',</span>
+<span style="color:rgb(51, 51, 51);"> 'PendingDeprecationWarning', 'PermissionError', 'ProcessLookupError',</span>
+<span style="color:rgb(51, 51, 51);"> 'ReferenceError', 'ResourceWarning', 'RuntimeError', 'RuntimeWarning',</span>
+<span style="color:rgb(51, 51, 51);"> 'StopIteration', 'SyntaxError', 'SyntaxWarning', 'SystemError',</span>
+<span style="color:rgb(51, 51, 51);"> 'SystemExit', 'TabError', 'TimeoutError', 'True', 'TypeError',</span>
+<span style="color:rgb(51, 51, 51);"> 'UnboundLocalError', 'UnicodeDecodeError', 'UnicodeEncodeError',</span>
+<span style="color:rgb(51, 51, 51);"> 'UnicodeError', 'UnicodeTranslateError', 'UnicodeWarning', 'UserWarning',</span>
+<span style="color:rgb(51, 51, 51);"> 'ValueError', 'Warning', 'ZeroDivisionError', '_', '__build_class__',</span>
+<span style="color:rgb(51, 51, 51);"> '__debug__', '__doc__', '__import__', '__name__', '__package__', 'abs',</span>
+<span style="color:rgb(51, 51, 51);"> 'all', 'any', 'ascii', 'bin', 'bool', 'bytearray', 'bytes', 'callable',</span>
+<span style="color:rgb(51, 51, 51);"> 'chr', 'classmethod', 'compile', 'complex', 'copyright', 'credits',</span>
+<span style="color:rgb(51, 51, 51);"> 'delattr', 'dict', 'dir', 'divmod', 'enumerate', 'eval', 'exec', 'exit',</span>
+<span style="color:rgb(51, 51, 51);"> 'filter', 'float', 'format', 'frozenset', 'getattr', 'globals', 'hasattr',</span>
+<span style="color:rgb(51, 51, 51);"> 'hash', 'help', 'hex', 'id', 'input', 'int', 'isinstance', 'issubclass',</span>
+<span style="color:rgb(51, 51, 51);"> 'iter', 'len', 'license', 'list', 'locals', 'map', 'max', 'memoryview',</span>
+<span style="color:rgb(51, 51, 51);"> 'min', 'next', 'object', 'oct', 'open', 'ord', 'pow', 'print', 'property',</span>
+<span style="color:rgb(51, 51, 51);"> 'quit', 'range', 'repr', 'reversed', 'round', 'set', 'setattr', 'slice',</span>
+<span style="color:rgb(51, 51, 51);"> 'sorted', 'staticmethod', 'str', 'sum', 'super', 'tuple', 'type', 'vars',</span>
+<span style="color:rgb(51, 51, 51);"> 'zip']</span>
+</pre></div>
+</div>
+</div>
+<div>
+<span></span><h2 style="margin:0px;border:0px;padding:0.3em 0px;"><span>6.4. </span>包<a href="https://docs.python.org/zh-cn/3.9/tutorial/modules.html#packages" title="永久链接至标题" style="color:rgb(0, 114, 170);">¶</a></h2>
+<p style="line-height:140%;">包是一种用“点式模块名”构造 Python 模块命名空间的方法。例如，模块名 <code style="font-family:monospace, sans-serif;font-size:96.5%;border-radius:3px;font-weight:normal;"><span>A.B</span></code> 表示包 <code style="font-family:monospace, sans-serif;font-size:96.5%;border-radius:3px;"><span>A</span></code> 中名为 <code style="font-family:monospace, sans-serif;font-size:96.5%;border-radius:3px;"><span>B</span></code> 的子模块。正如模块可以区分不同模块之间的全局变量名称一样，点式模块名可以区分 NumPy 或 Pillow 等不同多模块包之间的模块名称。</p>
+<p style="line-height:140%;">假设要为统一处理声音文件与声音数据设计一个模块集（“包”）。声音文件的格式很多（通常以扩展名来识别，例如：<code style="font-family:monospace, sans-serif;font-size:96.5%;border-radius:3px;"><span>.wav</span></code>， <code style="font-family:monospace, sans-serif;font-size:96.5%;border-radius:3px;"><span>.aiff</span></code>， <code style="font-family:monospace, sans-serif;font-size:96.5%;border-radius:3px;"><span>.au</span></code>），因此，为了不同文件格式之间的转换，需要创建和维护一个不断增长的模块集合。为了实现对声音数据的不同处理（例如，混声、添加回声、均衡器功能、创造人工立体声效果），还要编写无穷无尽的模块流。下面这个分级文件树展示了这个包的架构：</p>
+<div><div style="background:none;"><pre style="font-family:monospace, sans-serif;font-size:96.5%;line-height:125%;margin:0px;border-radius:3px;border:1px solid rgb(170, 204, 153);"><span></span>sound/                          Top-level package
+      __init__.py               Initialize the sound package
+      formats/                  Subpackage for file format conversions
+              __init__.py
+              wavread.py
+              wavwrite.py
+              aiffread.py
+              aiffwrite.py
+              auread.py
+              auwrite.py
+              ...
+      effects/                  Subpackage for sound effects
+              __init__.py
+              echo.py
+              surround.py
+              reverse.py
+              ...
+      filters/                  Subpackage for filters
+              __init__.py
+              equalizer.py
+              vocoder.py
+              karaoke.py
+              ...
+</pre></div>
+</div>
+<p style="line-height:140%;">导入包时，Python 搜索 <code style="font-family:monospace, sans-serif;font-size:96.5%;border-radius:3px;"><span>sys.path</span></code> 里的目录，查找包的子目录。</p>
+<p style="line-height:140%;">Python 只把含 <code style="font-family:monospace, sans-serif;font-size:96.5%;border-radius:3px;"><span>__init__.py</span></code> 文件的目录当成包。这样可以防止以 <code style="font-family:monospace, sans-serif;font-size:96.5%;border-radius:3px;"><span>string</span></code> 等通用名称命名的目录，无意中屏蔽出现在后方模块搜索路径中的有效模块。 最简情况下，<code style="font-family:monospace, sans-serif;font-size:96.5%;border-radius:3px;"><span>__init__.py</span></code> 只是一个空文件，但该文件也可以执行包的初始化代码，或设置 <code style="font-family:monospace, sans-serif;font-size:96.5%;border-radius:3px;"><span>__all__</span></code> 变量，详见下文。</p>
+<p style="line-height:140%;">还可以从包中导入单个模块，例如：</p>
+<div style="position:relative;"><div style="background:none;"><pre style="font-family:monospace, sans-serif;font-size:96.5%;line-height:125%;margin:0px;border-radius:3px;border:1px solid rgb(170, 204, 153);"><span></span><span style="color:rgb(0, 112, 32);font-weight:bold;">import</span> <span style="color:rgb(14, 132, 181);font-weight:bold;">sound.effects.echo</span>
+</pre></div>
+</div>
+<p style="line-height:140%;">这段代码加载子模块 <code style="font-family:monospace, sans-serif;font-size:96.5%;border-radius:3px;font-weight:normal;"><span>sound.effects.echo</span></code> ，但引用时必须使用子模块的全名：</p>
+<div style="position:relative;"><div style="background:none;"><pre style="font-family:monospace, sans-serif;font-size:96.5%;line-height:125%;margin:0px;border-radius:3px;border:1px solid rgb(170, 204, 153);"><span></span><span>sound</span><span style="color:rgb(102, 102, 102);">.</span><span>effects</span><span style="color:rgb(102, 102, 102);">.</span><span>echo</span><span style="color:rgb(102, 102, 102);">.</span><span>echofilter</span><span>(</span><span style="color:rgb(0, 112, 32);">input</span><span>,</span> <span>output</span><span>,</span> <span>delay</span><span style="color:rgb(102, 102, 102);">=</span><span style="color:rgb(32, 128, 80);">0.7</span><span>,</span> <span>atten</span><span style="color:rgb(102, 102, 102);">=</span><span style="color:rgb(32, 128, 80);">4</span><span>)</span>
+</pre></div>
+</div>
+<p style="line-height:140%;">另一种导入子模块的方法是 ：</p>
+<div style="position:relative;"><div style="background:none;"><pre style="font-family:monospace, sans-serif;font-size:96.5%;line-height:125%;margin:0px;border-radius:3px;border:1px solid rgb(170, 204, 153);"><span></span><span style="color:rgb(0, 112, 32);font-weight:bold;">from</span> <span style="color:rgb(14, 132, 181);font-weight:bold;">sound.effects</span> <span style="color:rgb(0, 112, 32);font-weight:bold;">import</span> <span>echo</span>
+</pre></div>
+</div>
+<p style="line-height:140%;">这段代码还可以加载子模块 <code style="font-family:monospace, sans-serif;font-size:96.5%;border-radius:3px;font-weight:normal;"><span>echo</span></code> ，不加包前缀也可以使用。因此，可以按如下方式使用：</p>
+<div style="position:relative;"><div style="background:none;"><pre style="font-family:monospace, sans-serif;font-size:96.5%;line-height:125%;margin:0px;border-radius:3px;border:1px solid rgb(170, 204, 153);"><span></span><span>echo</span><span style="color:rgb(102, 102, 102);">.</span><span>echofilter</span><span>(</span><span style="color:rgb(0, 112, 32);">input</span><span>,</span> <span>output</span><span>,</span> <span>delay</span><span style="color:rgb(102, 102, 102);">=</span><span style="color:rgb(32, 128, 80);">0.7</span><span>,</span> <span>atten</span><span style="color:rgb(102, 102, 102);">=</span><span style="color:rgb(32, 128, 80);">4</span><span>)</span>
+</pre></div>
+</div>
+<p style="line-height:140%;">Import 语句的另一种变体是直接导入所需的函数或变量：</p>
+<div style="position:relative;"><div style="background:none;"><pre style="font-family:monospace, sans-serif;font-size:96.5%;line-height:125%;margin:0px;border-radius:3px;border:1px solid rgb(170, 204, 153);"><span></span><span style="color:rgb(0, 112, 32);font-weight:bold;">from</span> <span style="color:rgb(14, 132, 181);font-weight:bold;">sound.effects.echo</span> <span style="color:rgb(0, 112, 32);font-weight:bold;">import</span> <span>echofilter</span>
+</pre></div>
+</div>
+<p style="line-height:140%;">同样，这样也会加载子模块 <code style="font-family:monospace, sans-serif;font-size:96.5%;border-radius:3px;font-weight:normal;"><span>echo</span></code>，但可以直接使用函数 <code style="font-family:monospace, sans-serif;font-size:96.5%;border-radius:3px;font-weight:normal;"><span>echofilter()</span></code>：</p>
+<div style="position:relative;"><div style="background:none;"><pre style="font-family:monospace, sans-serif;font-size:96.5%;line-height:125%;margin:0px;border-radius:3px;border:1px solid rgb(170, 204, 153);"><span></span><span>echofilter</span><span>(</span><span style="color:rgb(0, 112, 32);">input</span><span>,</span> <span>output</span><span>,</span> <span>delay</span><span style="color:rgb(102, 102, 102);">=</span><span style="color:rgb(32, 128, 80);">0.7</span><span>,</span> <span>atten</span><span style="color:rgb(102, 102, 102);">=</span><span style="color:rgb(32, 128, 80);">4</span><span>)</span>
+</pre></div>
+</div>
+<p style="line-height:140%;">注意，使用 <code style="font-family:monospace, sans-serif;font-size:96.5%;border-radius:3px;"><span>from</span> <span>package</span> <span>import</span> <span>item</span></code> 时，item 可以是包的子模块（或子包），也可以是包中定义的函数、类或变量等其他名称。<code style="font-family:monospace, sans-serif;font-size:96.5%;border-radius:3px;"><span>import</span></code> 语句首先测试包中是否定义了 item；如果未在包中定义，则假定 item 是模块，并尝试加载。如果找不到 item，则触发 <a href="https://docs.python.org/zh-cn/3.9/library/exceptions.html#ImportError" title="ImportError" style="color:rgb(0, 114, 170);"><code style="font-family:monospace, sans-serif;font-size:96.5%;border-radius:3px;font-weight:normal;"><span>ImportError</span></code></a> 异常。</p>
+<p style="line-height:140%;">相反，使用 <code style="font-family:monospace, sans-serif;font-size:96.5%;border-radius:3px;"><span>import</span> <span>item.subitem.subsubitem</span></code> 句法时，除最后一项外，每个 item 都必须是包；最后一项可以是模块或包，但不能是上一项中定义的类、函数或变量。</p>
+<div>
+<span></span><h3 style="margin:0px;border:0px;padding:0.3em 0px;"><span>6.4.1. </span>从包中导入 *<a href="https://docs.python.org/zh-cn/3.9/tutorial/modules.html#importing-from-a-package" title="永久链接至标题" style="color:rgb(0, 114, 170);">¶</a></h3>
+<p style="line-height:140%;">使用 <code style="font-family:monospace, sans-serif;font-size:96.5%;border-radius:3px;"><span>from</span> <span>sound.effects</span> <span>import</span> <span>*</span></code> 时会发生什么？理想情况下，该语句在文件系统查找并导入包的所有子模块。这项操作花费的时间较长，并且导入子模块可能会产生不必要的副作用，这种副作用只有在显式导入子模块时才会发生。</p>
+<p style="line-height:140%;">唯一的解决方案是提供包的显式索引。<a href="https://docs.python.org/zh-cn/3.9/reference/simple_stmts.html#import" style="color:rgb(0, 114, 170);"><code style="font-family:monospace, sans-serif;font-size:96.5%;border-radius:3px;font-weight:normal;"><span>import</span></code></a> 语句使用如下惯例：如果包的 <code style="font-family:monospace, sans-serif;font-size:96.5%;border-radius:3px;"><span>__init__.py</span></code> 代码定义了列表 <code style="font-family:monospace, sans-serif;font-size:96.5%;border-radius:3px;"><span>__all__</span></code>，运行 <code style="font-family:monospace, sans-serif;font-size:96.5%;border-radius:3px;"><span>from</span> <span>package</span> <span>import</span> <span>*</span></code> 时，它就是用于导入的模块名列表。发布包的新版本时，包的作者应更新此列表。如果包的作者认为没有必要在包中执行导入 * 操作，也可以不提供此列表。例如，<code style="font-family:monospace, sans-serif;font-size:96.5%;border-radius:3px;"><span>sound/effects/__init__.py</span></code> 文件包含以下代码：</p>
+<div style="position:relative;"><div style="background:none;"><pre style="font-family:monospace, sans-serif;font-size:96.5%;line-height:125%;margin:0px;border-radius:3px;border:1px solid rgb(170, 204, 153);"><span></span><span>__all__</span> <span style="color:rgb(102, 102, 102);">=</span> <span>[</span><span style="color:rgb(64, 112, 160);">"echo"</span><span>,</span> <span style="color:rgb(64, 112, 160);">"surround"</span><span>,</span> <span style="color:rgb(64, 112, 160);">"reverse"</span><span>]</span>
+</pre></div>
+</div>
+<p style="line-height:140%;">即，<code style="font-family:monospace, sans-serif;font-size:96.5%;border-radius:3px;"><span>from</span> <span>sound.effects</span> <span>import</span> <span>*</span></code> 将导入 <code style="font-family:monospace, sans-serif;font-size:96.5%;border-radius:3px;font-weight:normal;"><span>sound</span></code> 包中的这三个命名子模块。</p>
+<p style="line-height:140%;">如果没有定义 <code style="font-family:monospace, sans-serif;font-size:96.5%;border-radius:3px;"><span>__all__</span></code>，<code style="font-family:monospace, sans-serif;font-size:96.5%;border-radius:3px;"><span>from</span> <span>sound.effects</span> <span>import</span> <span>*</span></code> 语句 <em>不会</em> 把包 <code style="font-family:monospace, sans-serif;font-size:96.5%;border-radius:3px;font-weight:normal;"><span>sound.effects</span></code> 中所有子模块都导入到当前命名空间；该语句只确保导入包 <code style="font-family:monospace, sans-serif;font-size:96.5%;border-radius:3px;font-weight:normal;"><span>sound.effects</span></code> （可能还会运行 <code style="font-family:monospace, sans-serif;font-size:96.5%;border-radius:3px;"><span>__init__.py</span></code> 中的初始化代码），然后，再导入包中定义的名称。这些名称包括 <code style="font-family:monospace, sans-serif;font-size:96.5%;border-radius:3px;"><span>__init__.py</span></code> 中定义的任何名称（以及显式加载的子模块），还包括之前 <a href="https://docs.python.org/zh-cn/3.9/reference/simple_stmts.html#import" style="color:rgb(0, 114, 170);"><code style="font-family:monospace, sans-serif;font-size:96.5%;border-radius:3px;font-weight:normal;"><span>import</span></code></a> 语句显式加载的包里的子模块。请看以下代码：</p>
+<div style="position:relative;"><div style="background:none;"><pre style="font-family:monospace, sans-serif;font-size:96.5%;line-height:125%;margin:0px;border-radius:3px;border:1px solid rgb(170, 204, 153);"><span></span><span style="color:rgb(0, 112, 32);font-weight:bold;">import</span> <span style="color:rgb(14, 132, 181);font-weight:bold;">sound.effects.echo</span>
+<span style="color:rgb(0, 112, 32);font-weight:bold;">import</span> <span style="color:rgb(14, 132, 181);font-weight:bold;">sound.effects.surround</span>
+<span style="color:rgb(0, 112, 32);font-weight:bold;">from</span> <span style="color:rgb(14, 132, 181);font-weight:bold;">sound.effects</span> <span style="color:rgb(0, 112, 32);font-weight:bold;">import</span> <span style="color:rgb(102, 102, 102);">*</span>
+</pre></div>
+</div>
+<p style="line-height:140%;">本例中，执行 <code style="font-family:monospace, sans-serif;font-size:96.5%;border-radius:3px;"><span>from...import</span></code> 语句时，将把 <code style="font-family:monospace, sans-serif;font-size:96.5%;border-radius:3px;font-weight:normal;"><span>echo</span></code> 和 <code style="font-family:monospace, sans-serif;font-size:96.5%;border-radius:3px;font-weight:normal;"><span>surround</span></code> 模块导入至当前命名空间，因为，它们是在 <code style="font-family:monospace, sans-serif;font-size:96.5%;border-radius:3px;font-weight:normal;"><span>sound.effects</span></code> 包里定义的。（该导入操作在定义了 <code style="font-family:monospace, sans-serif;font-size:96.5%;border-radius:3px;"><span>__all__</span></code> 时也有效。）</p>
+<p style="line-height:140%;">虽然，可以把模块设计为用 <code style="font-family:monospace, sans-serif;font-size:96.5%;border-radius:3px;"><span>import</span> <span>*</span></code> 时只导出遵循指定模式的名称，但仍不提倡在生产代码中使用这种做法。</p>
+<p style="line-height:140%;">记住，使用 <code style="font-family:monospace, sans-serif;font-size:96.5%;border-radius:3px;"><span>from</span> <span>package</span> <span>import</span> <span>specific_submodule</span></code> 没有任何问题！ 实际上，除了导入模块使用不同包的同名子模块之外，这种方式是推荐用法。</p>
+</div>
+<div>
+<h3 style="margin:0px;border:0px;padding:0.3em 0px;"><span>6.4.2. </span>子包参考<a href="https://docs.python.org/zh-cn/3.9/tutorial/modules.html#intra-package-references" title="永久链接至标题" style="color:rgb(0, 114, 170);">¶</a></h3>
+<p style="line-height:140%;">包中含有多个子包时（与示例中的 <code style="font-family:monospace, sans-serif;font-size:96.5%;border-radius:3px;font-weight:normal;"><span>sound</span></code> 包一样），可以使用绝对导入引用兄弟包中的子模块。例如，要在模块 <code style="font-family:monospace, sans-serif;font-size:96.5%;border-radius:3px;font-weight:normal;"><span>sound.filters.vocoder</span></code> 中使用 <code style="font-family:monospace, sans-serif;font-size:96.5%;border-radius:3px;font-weight:normal;"><span>sound.effects</span></code> 包的 <code style="font-family:monospace, sans-serif;font-size:96.5%;border-radius:3px;font-weight:normal;"><span>echo</span></code> 模块时，可以用 <code style="font-family:monospace, sans-serif;font-size:96.5%;border-radius:3px;"><span>from</span> <span>sound.effects</span> <span>import</span> <span>echo</span></code> 导入。</p>
+<p style="line-height:140%;">还可以用 import 语句的 <code style="font-family:monospace, sans-serif;font-size:96.5%;border-radius:3px;"><span>from</span> <span>module</span> <span>import</span> <span>name</span></code> 形式执行相对导入。这些导入语句使用前导句点表示相对导入中的当前包和父包。例如，相对于 <code style="font-family:monospace, sans-serif;font-size:96.5%;border-radius:3px;font-weight:normal;"><span>surround</span></code> 模块，可以使用：</p>
+<div style="position:relative;"><div style="background:none;"><pre style="font-family:monospace, sans-serif;font-size:96.5%;line-height:125%;margin:0px;border-radius:3px;border:1px solid rgb(170, 204, 153);"><span></span><span style="color:rgb(0, 112, 32);font-weight:bold;">from</span> <span style="color:rgb(14, 132, 181);font-weight:bold;">.</span> <span style="color:rgb(0, 112, 32);font-weight:bold;">import</span> <span>echo</span>
+<span style="color:rgb(0, 112, 32);font-weight:bold;">from</span> <span style="color:rgb(14, 132, 181);font-weight:bold;">..</span> <span style="color:rgb(0, 112, 32);font-weight:bold;">import</span> <span>formats</span>
+<span style="color:rgb(0, 112, 32);font-weight:bold;">from</span> <span style="color:rgb(14, 132, 181);font-weight:bold;">..filters</span> <span style="color:rgb(0, 112, 32);font-weight:bold;">import</span> <span>equalizer</span>
+</pre></div>
+</div>
+<p style="line-height:140%;">注意，相对导入基于当前模块名。因为主模块名是 <code style="font-family:monospace, sans-serif;font-size:96.5%;border-radius:3px;"><span>"__main__"</span></code> ，所以 Python 程序的主模块必须始终使用绝对导入。</p>
+</div>
+<div>
+<h3 style="margin:0px;border:0px;padding:0.3em 0px;"><span>6.4.3. </span>多目录中的包<a href="https://docs.python.org/zh-cn/3.9/tutorial/modules.html#packages-in-multiple-directories" title="永久链接至标题" style="color:rgb(0, 114, 170);">¶</a></h3>
+<p style="line-height:140%;">包还支持特殊属性 <a href="https://docs.python.org/zh-cn/3.9/reference/import.html#__path__" title="__path__" style="color:rgb(0, 114, 170);"><code style="font-family:monospace, sans-serif;font-size:96.5%;border-radius:3px;font-weight:normal;"><span>__path__</span></code></a>。该属性初始化为在包的 <code style="font-family:monospace, sans-serif;font-size:96.5%;border-radius:3px;"><span>__init__.py</span></code> 文件中的代码执行前所在的目录名列表。这个变量可以修改，但这样做会影响将来搜索包中模块和子包的操作。</p>
+<p style="line-height:140%;">这个功能虽然不常用，但可用于扩展包中的模块集。</p>
+<p style="line-height:140%;">脚注</p>
+<dl><dt><span><a href="https://docs.python.org/zh-cn/3.9/tutorial/modules.html#id1" style="color:rgb(0, 114, 170);">1</a></span></dt><dd><p style="line-height:140%;">实际上，函数定义也是“可执行”的“语句”；执行模块级函数定义时，函数名将被导入到模块的全局符号表。</p>
+</dd></dl>
+</div>
+</div>
+</div></div></div></div></div></div></div></div>
+</div></div>
+<a class="back-link" href="../articles.html">← 返回笔记列表</a>
+</body></html>

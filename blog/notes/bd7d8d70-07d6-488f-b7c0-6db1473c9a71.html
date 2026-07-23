@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="zh-CN" data-theme="light">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>pytorch Getstarted Learn the Basic Quickstart — 技术笔记</title>
+<style>
+:root {
+  --bg: #ffffff;
+  --text: #1a1a1a;
+  --muted: #666;
+  --border: #e0e0e0;
+  --code-bg: #f5f5f5;
+  --link: #0066cc;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #1a1a1a;
+    --text: #e0e0e0;
+    --muted: #999;
+    --border: #333;
+    --code-bg: #2a2a2a;
+    --link: #66bbff;
+  }
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  line-height: 1.7;
+  color: var(--text);
+  background: var(--bg);
+  max-width: 860px;
+  margin: 0 auto;
+  padding: 2rem 1.5rem;
+}
+.note-header {
+  border-bottom: 2px solid var(--border);
+  padding-bottom: 1rem;
+  margin-bottom: 2rem;
+}
+.note-title {
+  font-size: 1.6rem;
+  font-weight: 700;
+  margin-bottom: 0.3rem;
+}
+.note-meta {
+  color: var(--muted);
+  font-size: 0.85rem;
+}
+.note-content {
+  font-size: 0.95rem;
+}
+.note-content h1 { font-size: 1.4rem; margin: 1.2rem 0 0.6rem; }
+.note-content h2 { font-size: 1.2rem; margin: 1rem 0 0.5rem; }
+.note-content h3 { font-size: 1.05rem; margin: 0.8rem 0 0.4rem; }
+.note-content p { margin: 0.5rem 0; }
+.note-content ul, .note-content ol { margin: 0.5rem 0 0.5rem 2rem; }
+.note-content li { margin: 0.2rem 0; }
+.note-content pre {
+  background: var(--code-bg);
+  padding: 1rem;
+  border-radius: 6px;
+  overflow-x: auto;
+  margin: 0.8rem 0;
+  font-size: 0.85rem;
+}
+.note-content code {
+  background: var(--code-bg);
+  padding: 0.1rem 0.3rem;
+  border-radius: 3px;
+  font-size: 0.88em;
+}
+.note-content pre code {
+  background: none;
+  padding: 0;
+}
+.note-content blockquote {
+  border-left: 3px solid var(--border);
+  padding-left: 1rem;
+  color: var(--muted);
+  margin: 0.8rem 0;
+}
+.note-content a { color: var(--link); }
+.note-content img {
+  max-width: 100%;
+  height: auto;
+  border-radius: 6px;
+  margin: 0.5rem 0;
+}
+.note-content table {
+  border-collapse: collapse;
+  width: 100%;
+  margin: 0.8rem 0;
+}
+.note-content th, .note-content td {
+  border: 1px solid var(--border);
+  padding: 0.5rem;
+}
+.note-content th { background: var(--code-bg); }
+.media-placeholder {
+  background: var(--code-bg);
+  padding: 1rem;
+  text-align: center;
+  color: var(--muted);
+  border-radius: 6px;
+  margin: 0.5rem 0;
+  font-size: 0.85rem;
+}
+.encrypt-placeholder {
+  background: #fff3cd;
+  padding: 0.5rem;
+  text-align: center;
+  color: #856404;
+  border-radius: 6px;
+  margin: 0.5rem 0;
+  font-size: 0.85rem;
+}
+.back-link {
+  display: inline-block;
+  margin-top: 2rem;
+  color: var(--link);
+  text-decoration: none;
+  font-size: 0.85rem;
+}
+</style>
+</head>
+<body>
+<div class="note-header">
+  <div class="note-title">pytorch Getstarted Learn the Basic Quickstart</div>
+  <div class="note-meta">笔记本：AI</div>
+</div>
+<div class="note-content">
+<div>Data</div><div>主要有Dataset和Dataloader两个类，Dataset用于存储样本和对应的标签，Dataloader用于封装遍历Dataset的逻辑，torch自带很多数据集</div><div>同时有一些领域特定的库，可以分别提供不同领域的数据集</div><div>比如torchvision torchaudio torchtext，各自有各自的Dataset分别用于提供</div><div>领域特定的数据集</div><div><span><span><span><span><span><span><span>Dataset有个transform参数用于转换数据格式（转换为某种矩阵）</span></span></span></span></span></span></span></div><div>领域特定的这些库本身也提供了一些转换方法：</div><div>import torch</div><div>from torch import nn</div><div>from torch.utils.data import DataLoader</div><div>from torchvision import datasets</div><div>from torchvision.transforms import ToTensor</div><div># Download training data from open datasets.</div><div>training_data = datasets.FashionMNIST(</div><div>    root="data",</div><div>    train=True,</div><div>    download=True,</div><div>    transform=ToTensor(),</div><div>)</div><div><br /></div><div># Download test data from open datasets.</div><div>test_data = datasets.FashionMNIST(</div><div>    root="data",</div><div>    train=False,</div><div>    download=True,</div><div>    transform=ToTensor(),</div><div>)</div><div>创建模型</div><div>要定义神经网络，只需要创建一个继承自nn.Module的类。</div><div><div class="media-placeholder">[图片/附件]</div></div><div>优化模型参数:</div><div>就是损失函数和优化器</div><div>在一个训练循环中，模型对训练数据集（分批输入）进行预测，并通过反向传播预测误差来调整模型参数。</div><div>保存模型</div><div><span>torch.save(model.state_dict(), 'model.pth')</span></div><div>加载模型</div><div>model=NeuralNetwork().to(device)</div><div>model.load_state_dict(torch.load('model.pth', weights_only=True)</div><div>然后就可以用于推理/预测</div><div><br /></div><div style="background-color:rgb(243, 244, 245);color:rgb(34, 40, 50);font-family:SFMono-Regular, Menlo, Consolas, Monaco, &quot;Liberation Mono&quot;, &quot;Lucida Console&quot;, monospace;font-size:0.875em;font-variant-caps:normal;font-variant-ligatures:normal;letter-spacing:normal;line-height:17.5px;orphans:2;widows:2;word-spacing:0px;"><a href="https://docs.pytorch.org/docs/stable/generated/torch.nn.Module.html#torch.nn.Module.eval" style="box-sizing: border-box; color: rgb(8, 8, 8); overflow-wrap: break-word; text-underline-offset: 0.1578em; text-decoration: underline;" title="torch.nn.Module.eval">model</a><a href="https://docs.pytorch.org/docs/stable/generated/torch.nn.Module.html#torch.nn.Module.eval" style="box-sizing: border-box; color: rgb(0, 98, 47); overflow-wrap: break-word; text-underline-offset: 0.1578em; text-decoration: underline;" title="torch.nn.Module.eval">.</a><a href="https://docs.pytorch.org/docs/stable/generated/torch.nn.Module.html#torch.nn.Module.eval" style="box-sizing: border-box; color: rgb(8, 8, 8); overflow-wrap: break-word; text-underline-offset: 0.1578em; text-decoration: underline;" title="torch.nn.Module.eval">eval</a><span style="box-sizing: border-box; color: rgb(8, 8, 8);">()</span></div><div style="background-color:rgb(243, 244, 245);color:rgb(34, 40, 50);font-family:SFMono-Regular, Menlo, Consolas, Monaco, &quot;Liberation Mono&quot;, &quot;Lucida Console&quot;, monospace;font-size:0.875em;font-variant-caps:normal;font-variant-ligatures:normal;letter-spacing:normal;line-height:17.5px;orphans:2;widows:2;word-spacing:0px;"><a href="https://docs.pytorch.org/docs/stable/tensors.html#torch.Tensor" style="box-sizing: border-box; color: rgb(8, 8, 8); overflow-wrap: break-word; text-underline-offset: 0.1578em;" title="torch.Tensor">x</a><span style="box-sizing: border-box; color: rgb(8, 8, 8);">,</span> <span style="box-sizing: border-box; color: rgb(8, 8, 8);">y</span> <span style="box-sizing: border-box; color: rgb(0, 98, 47);">=</span> <a href="https://docs.pytorch.org/vision/stable/generated/torchvision.datasets.FashionMNIST.html#torchvision.datasets.FashionMNIST" style="box-sizing: border-box; color: rgb(8, 8, 8); overflow-wrap: break-word; text-underline-offset: 0.1578em;" title="torchvision.datasets.FashionMNIST">test_data</a><span style="box-sizing: border-box; color: rgb(8, 8, 8);">[</span><span style="box-sizing: border-box; color: rgb(127, 71, 7);">0</span><span style="box-sizing: border-box; color: rgb(8, 8, 8);">][</span><span style="box-sizing: border-box; color: rgb(127, 71, 7);">0</span><span style="box-sizing: border-box; color: rgb(8, 8, 8);">],</span> <a href="https://docs.pytorch.org/vision/stable/generated/torchvision.datasets.FashionMNIST.html#torchvision.datasets.FashionMNIST" style="box-sizing: border-box; color: rgb(8, 8, 8); overflow-wrap: break-word; text-underline-offset: 0.1578em;" title="torchvision.datasets.FashionMNIST">test_data</a><span style="box-sizing: border-box; color: rgb(8, 8, 8);">[</span><span style="box-sizing: border-box; color: rgb(127, 71, 7);">0</span><span style="box-sizing: border-box; color: rgb(8, 8, 8);">][</span><span style="box-sizing: border-box; color: rgb(127, 71, 7);">1</span><span style="box-sizing: border-box; color: rgb(8, 8, 8);">]</span></div><div style="background-color:rgb(243, 244, 245);color:rgb(34, 40, 50);font-family:SFMono-Regular, Menlo, Consolas, Monaco, &quot;Liberation Mono&quot;, &quot;Lucida Console&quot;, monospace;font-size:0.875em;font-variant-caps:normal;font-variant-ligatures:normal;letter-spacing:normal;line-height:17.5px;orphans:2;widows:2;word-spacing:0px;"><span style="box-sizing: border-box; color: rgb(103, 48, 197);">with</span> <a href="https://docs.pytorch.org/docs/stable/generated/torch.no_grad.html#torch.no_grad" style="box-sizing: border-box; color: rgb(8, 8, 8); overflow-wrap: break-word; text-underline-offset: 0.1578em; text-decoration: underline;" title="torch.no_grad">torch</a><a href="https://docs.pytorch.org/docs/stable/generated/torch.no_grad.html#torch.no_grad" style="box-sizing: border-box; color: rgb(0, 98, 47); overflow-wrap: break-word; text-underline-offset: 0.1578em; text-decoration: underline;" title="torch.no_grad">.</a><a href="https://docs.pytorch.org/docs/stable/generated/torch.no_grad.html#torch.no_grad" style="box-sizing: border-box; color: rgb(8, 8, 8); overflow-wrap: break-word; text-underline-offset: 0.1578em; text-decoration: underline;" title="torch.no_grad">no_grad</a><span style="box-sizing: border-box; color: rgb(8, 8, 8);">():</span></div><div style="background-color:rgb(243, 244, 245);color:rgb(34, 40, 50);font-family:SFMono-Regular, Menlo, Consolas, Monaco, &quot;Liberation Mono&quot;, &quot;Lucida Console&quot;, monospace;font-size:0.875em;font-variant-caps:normal;font-variant-ligatures:normal;letter-spacing:normal;line-height:17.5px;orphans:2;widows:2;word-spacing:0px;">    <a href="https://docs.pytorch.org/docs/stable/tensors.html#torch.Tensor" style="box-sizing: border-box; color: rgb(8, 8, 8); overflow-wrap: break-word; text-underline-offset: 0.1578em;" title="torch.Tensor">x</a> <span style="box-sizing: border-box; color: rgb(0, 98, 47);">=</span> <a href="https://docs.pytorch.org/docs/stable/tensors.html#torch.Tensor" style="box-sizing: border-box; color: rgb(8, 8, 8); overflow-wrap: break-word; text-underline-offset: 0.1578em;" title="torch.Tensor">x</a><span style="box-sizing: border-box; color: rgb(0, 98, 47);">.</span><span style="box-sizing: border-box; color: rgb(8, 8, 8);">to</span><span style="box-sizing: border-box; color: rgb(8, 8, 8);">(</span><span style="box-sizing: border-box; color: rgb(8, 8, 8);">device</span><span style="box-sizing: border-box; color: rgb(8, 8, 8);">)</span></div><div style="background-color:rgb(243, 244, 245);color:rgb(34, 40, 50);font-family:SFMono-Regular, Menlo, Consolas, Monaco, &quot;Liberation Mono&quot;, &quot;Lucida Console&quot;, monospace;font-size:0.875em;font-variant-caps:normal;font-variant-ligatures:normal;letter-spacing:normal;line-height:17.5px;orphans:2;widows:2;word-spacing:0px;">    <a href="https://docs.pytorch.org/docs/stable/tensors.html#torch.Tensor" style="box-sizing: border-box; color: rgb(8, 8, 8); overflow-wrap: break-word; text-underline-offset: 0.1578em;" title="torch.Tensor">pred</a> <span style="box-sizing: border-box; color: rgb(0, 98, 47);">=</span> <span style="box-sizing: border-box; color: rgb(8, 8, 8);">model</span><span style="box-sizing: border-box; color: rgb(8, 8, 8);">(</span><a href="https://docs.pytorch.org/docs/stable/tensors.html#torch.Tensor" style="box-sizing: border-box; color: rgb(8, 8, 8); overflow-wrap: break-word; text-underline-offset: 0.1578em;" title="torch.Tensor">x</a><span style="box-sizing: border-box; color: rgb(8, 8, 8);">)</span></div><div style="background-color:rgb(243, 244, 245);color:rgb(34, 40, 50);font-family:SFMono-Regular, Menlo, Consolas, Monaco, &quot;Liberation Mono&quot;, &quot;Lucida Console&quot;, monospace;font-size:0.875em;font-variant-caps:normal;font-variant-ligatures:normal;letter-spacing:normal;line-height:17.5px;orphans:2;widows:2;word-spacing:0px;">    <span style="box-sizing: border-box; color: rgb(8, 8, 8);">predicted</span><span style="box-sizing: border-box; color: rgb(8, 8, 8);">,</span> <span style="box-sizing: border-box; color: rgb(8, 8, 8);">actual</span> <span style="box-sizing: border-box; color: rgb(0, 98, 47);">=</span> <span style="box-sizing: border-box; color: rgb(8, 8, 8);">classes</span><span style="box-sizing: border-box; color: rgb(8, 8, 8);">[</span><a href="https://docs.pytorch.org/docs/stable/tensors.html#torch.Tensor" style="box-sizing: border-box; color: rgb(8, 8, 8); overflow-wrap: break-word; text-underline-offset: 0.1578em;" title="torch.Tensor">pred</a><span style="box-sizing: border-box; color: rgb(8, 8, 8);">[</span><span style="box-sizing: border-box; color: rgb(127, 71, 7);">0</span><span style="box-sizing: border-box; color: rgb(8, 8, 8);">]</span><span style="box-sizing: border-box; color: rgb(0, 98, 47);">.</span><span style="box-sizing: border-box; color: rgb(8, 8, 8);">argmax</span><span style="box-sizing: border-box; color: rgb(8, 8, 8);">(</span><span style="box-sizing: border-box; color: rgb(127, 71, 7);">0</span><span style="box-sizing: border-box; color: rgb(8, 8, 8);">)],</span> <span style="box-sizing: border-box; color: rgb(8, 8, 8);">classes</span><span style="box-sizing: border-box; color: rgb(8, 8, 8);">[</span><span style="box-sizing: border-box; color: rgb(8, 8, 8);">y</span><span style="box-sizing: border-box; color: rgb(8, 8, 8);">]</span></div><div style="background-color:rgb(243, 244, 245);color:rgb(34, 40, 50);font-family:SFMono-Regular, Menlo, Consolas, Monaco, &quot;Liberation Mono&quot;, &quot;Lucida Console&quot;, monospace;font-size:0.875em;font-variant-caps:normal;font-variant-ligatures:normal;letter-spacing:normal;line-height:17.5px;orphans:2;widows:2;word-spacing:0px;">    <span style="box-sizing: border-box; color: rgb(127, 71, 7);">print</span><span style="box-sizing: border-box; color: rgb(8, 8, 8);">(</span><span style="box-sizing: border-box; color: rgb(0, 98, 47);">f</span><span style="box-sizing: border-box; color: rgb(0, 98, 47);">'Predicted: "</span><span style="box-sizing: border-box; color: rgb(0, 98, 47);">{</span><span style="box-sizing: border-box; color: rgb(8, 8, 8);">predicted</span><span style="box-sizing: border-box; color: rgb(0, 98, 47);">}</span><span style="box-sizing: border-box; color: rgb(0, 98, 47);">", Actual: "</span><span style="box-sizing: border-box; color: rgb(0, 98, 47);">{</span><span style="box-sizing: border-box; color: rgb(8, 8, 8);">actual</span><span style="box-sizing: border-box; color: rgb(0, 98, 47);">}</span><span style="box-sizing: border-box; color: rgb(0, 98, 47);">"'</span><span style="box-sizing: border-box; color: rgb(8, 8, 8);">)</span></div><div><span><span><br /></span></span></div>
+</div>
+<a class="back-link" href="../articles.html">← 返回笔记列表</a>
+</body>
+</html>

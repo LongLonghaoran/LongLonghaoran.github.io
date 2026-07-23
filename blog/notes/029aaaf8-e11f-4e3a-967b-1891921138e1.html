@@ -1,0 +1,450 @@
+<!DOCTYPE html>
+<html lang="zh-CN" data-theme="light">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>详解Python函数参数定义及传参（必备参数、关键字参数、默认可省略参数、可变不定长参数、*args、**kwargs） - 学为所用 - 博客园 — 技术笔记</title>
+<style>
+:root { --bg:#fff; --text:#1a1a1a; --muted:#666; --border:#e0e0e0; --code-bg:#f5f5f5; --link:#0066cc; }
+@media (prefers-color-scheme: dark) { :root { --bg:#1a1a1a; --text:#e0e0e0; --muted:#999; --border:#333; --code-bg:#2a2a2a; --link:#66bbff; } }
+* { box-sizing:border-box; margin:0; padding:0; }
+body { font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Arial,sans-serif; line-height:1.7; color:var(--text); background:var(--bg); max-width:860px; margin:0 auto; padding:2rem 1.5rem; }
+.note-header { border-bottom:2px solid var(--border); padding-bottom:1rem; margin-bottom:2rem; }
+.note-title { font-size:1.6rem; font-weight:700; margin-bottom:0.3rem; }
+.note-meta { color:var(--muted); font-size:0.85rem; }
+.note-content { font-size:0.95rem; }
+.note-content h1 { font-size:1.4rem; margin:1.2rem 0 0.6rem; }
+.note-content h2 { font-size:1.2rem; margin:1rem 0 0.5rem; }
+.note-content h3 { font-size:1.05rem; margin:0.8rem 0 0.4rem; }
+.note-content p { margin:0.5rem 0; }
+.note-content ul,.note-content ol { margin:0.5rem 0 0.5rem 2rem; }
+.note-content li { margin:0.2rem 0; }
+.note-content pre { background:var(--code-bg); padding:1rem; border-radius:6px; overflow-x:auto; margin:0.8rem 0; font-size:0.85rem; }
+.note-content code { background:var(--code-bg); padding:0.1rem 0.3rem; border-radius:3px; font-size:0.88em; }
+.note-content pre code { background:none; padding:0; }
+.note-content blockquote { border-left:3px solid var(--border); padding-left:1rem; color:var(--muted); margin:0.8rem 0; }
+.note-content a { color:var(--link); }
+.note-content img { max-width:100%; height:auto; border-radius:6px; margin:0.5rem 0; }
+.note-content table { border-collapse:collapse; width:100%; margin:0.8rem 0; }
+.note-content th,.note-content td { border:1px solid var(--border); padding:0.5rem; }
+.note-content th { background:var(--code-bg); }
+.media-placeholder { background:var(--code-bg); padding:1rem; text-align:center; color:var(--muted); border-radius:6px; margin:0.5rem 0; font-size:0.85rem; }
+.encrypt-placeholder { background:#fff3cd; padding:0.5rem; text-align:center; color:#856404; border-radius:6px; margin:0.5rem 0; font-size:0.85rem; }
+.back-link { display:inline-block; margin-top:2rem; color:var(--link); text-decoration:none; font-size:0.85rem; }
+</style>
+</head>
+<body>
+<div class="note-header"><div class="note-title">详解Python函数参数定义及传参（必备参数、关键字参数、默认可省略参数、可变不定长参数、*args、**kwargs） - 学为所用 - 博客园</div><div class="note-meta">笔记本：python</div></div>
+<div class="note-content"><div style="--en-clipped-content:article">
+<div><br/></div><div style="font-size: 16px; display:block; min-width: 100%; position: relative;"> <div style="--olcb-folder-code-block-max-height:80vh;--cnb-code-bg:rgb(245, 245, 245);--cnb-code-font-size:12px;--cnb-code-color:rgb(68, 68, 68);"><div style="tab-size:4;font-family:&quot;PingFang SC&quot;, &quot;Microsoft YaHei&quot;, &quot;Helvetica Neue&quot;, Helvetica, Arial, sans-serif;text-size-adjust:none;font-size:14px;"><div style="background-color:rgb(255, 255, 255);"><div><div><div style="font-size:13px;line-height:1.5;"><div style="word-break:break-word;">
+<h1 style="font-weight:bold;line-height:1.5;font-size:28px;margin:10px 0px;">详解Python函数参数定义及传参（必备参数、关键字参数、默认可省略参数、可变不定长参数、*args、**kwargs）</h1>
+<h2 style="margin-top:10px;margin-bottom:3px;font-weight:bold;line-height:1.5;margin:10px 0px;font-size:21px;">Python函数参数传参的种类</h2>
+<p style="font-size:13px;line-height:1.5;text-indent:0px;margin:10px auto;">  Python中函数参数定义及调用函数时传参大体可分必备参数、关键字参数、默认可省略参数、不定长元组参数、不定长关键字参数等，下面通过函数定义及调用上的不同情况深入解析这些中参数的不同及应用场景。</p>
+<p style="font-size:13px;line-height:1.5;text-indent:0px;margin:10px auto;">  为了更好的理解不同参数的具体意义，所以下面演示代码中，使用的参数数量较多。具体是一个调用MySQL数据库配置参数的函数所需要的参数，我们用这个来演示不同类型的特点及适用方法，了解每种类型的应用场景及优缺点。</p>
+<h2 style="margin-top:10px;margin-bottom:3px;font-weight:bold;line-height:1.5;margin:10px 0px;font-size:21px;">必备参数__仅赋值传参</h2>
+<p style="font-size:13px;line-height:1.5;text-indent:0px;margin:10px auto;">  必备参数，就是在调用函数的时候，定义的参数要全部都有赋值，否则执行的时候代码会报错。</p>
+<pre style="border-radius:4px;background-color: #fbfaf8;border: 1px solid rgba(0,0,0,.14902);color: #333;font-size: 12px;padding: 8px;font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif;box-sizing: border-box;"><code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span style="line-height:1.5;color:rgb(0, 128, 0);">#!/usr/bin/env python</span>
+<span style="line-height:1.5;color:rgb(0, 128, 0);"># -*- coding: utf-8 -*-</span>
+
+
+<span style="line-height:1.5;color:rgb(0, 128, 0);"># 演示获得数据库配置参数，使用必备参数</span>
+<span style="line-height:1.5;color:rgb(0, 0, 255);">def</span> <span style="line-height:1.5;color:rgb(163, 21, 21);">demo_get_conf1</span>(<span style="line-height:1.5;">user, pw, host, port, db, charset</span>):
+    <span style="line-height:1.5;color:rgb(163, 21, 21);">"打印得到的数据库配置"</span>
+    <span style="line-height:1.5;color:rgb(0, 0, 255);">print</span>(<span style="line-height:1.5;color:rgb(163, 21, 21);">'host: '</span>, host)
+    <span style="line-height:1.5;color:rgb(0, 0, 255);">print</span>(<span style="line-height:1.5;color:rgb(163, 21, 21);">'port: '</span>, port)
+    <span style="line-height:1.5;color:rgb(0, 0, 255);">print</span>(<span style="line-height:1.5;color:rgb(163, 21, 21);">'user: '</span>, user)
+    <span style="line-height:1.5;color:rgb(0, 0, 255);">print</span>(<span style="line-height:1.5;color:rgb(163, 21, 21);">'pw: '</span>, pw)
+    <span style="line-height:1.5;color:rgb(0, 0, 255);">print</span>(<span style="line-height:1.5;color:rgb(163, 21, 21);">'db: '</span>, db)
+    <span style="line-height:1.5;color:rgb(0, 0, 255);">print</span>(<span style="line-height:1.5;color:rgb(163, 21, 21);">'charset: '</span>, charset)
+
+
+demo_get_conf1(<span style="line-height:1.5;color:rgb(163, 21, 21);">'root'</span>, <span style="line-height:1.5;color:rgb(163, 21, 21);">'1234'</span>, <span style="line-height:1.5;color:rgb(163, 21, 21);">'127.0.0.1'</span>, <span style="line-height:1.5;color:rgb(163, 21, 21);">'3306'</span>, <span style="line-height:1.5;color:rgb(163, 21, 21);">'tests'</span>, <span style="line-height:1.5;color:rgb(163, 21, 21);">'utf8'</span>)
+
+</code></pre>
+<p style="font-size:13px;line-height:1.5;text-indent:0px;margin:10px auto;">  上述代码中，调用demo_get_conf1函数的时候，定义的所有参数都必须传递，并且要按照规定的顺序传递，否则函数体内得到的也是错误的。以上代码控制台输出：</p>
+<pre style="border-radius:4px;background-color: #fbfaf8;border: 1px solid rgba(0,0,0,.14902);color: #333;font-size: 12px;padding: 8px;font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif;box-sizing: border-box;"><code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif">host:  127.0.0.1
+port:  3306
+user:  root
+pw:  1234
+db:  tests
+charset:  utf8
+</code></pre>
+<p style="font-size:13px;line-height:1.5;text-indent:0px;margin:10px auto;">  这也是我们希望得到的正确结果。</p>
+<p style="font-size:13px;line-height:1.5;text-indent:0px;margin:10px auto;">  下面我们把上述代码最后一行调用的前两个参数（"root"和"1234"）对调一下：</p>
+<pre style="border-radius:4px;background-color: #fbfaf8;border: 1px solid rgba(0,0,0,.14902);color: #333;font-size: 12px;padding: 8px;font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif;box-sizing: border-box;"><code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif">demo_get_conf1(<span style="line-height:1.5;color:rgb(163, 21, 21);">'1234'</span>, <span style="line-height:1.5;color:rgb(163, 21, 21);">'root'</span>, <span style="line-height:1.5;color:rgb(163, 21, 21);">'127.0.0.1'</span>, <span style="line-height:1.5;color:rgb(163, 21, 21);">'3306'</span>, <span style="line-height:1.5;color:rgb(163, 21, 21);">'tests'</span>, <span style="line-height:1.5;color:rgb(163, 21, 21);">'utf8'</span>)
+</code></pre>
+<p style="font-size:13px;line-height:1.5;text-indent:0px;margin:10px auto;">  执行后控制台输出：</p>
+<pre style="border-radius:4px;background-color: #fbfaf8;border: 1px solid rgba(0,0,0,.14902);color: #333;font-size: 12px;padding: 8px;font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif;box-sizing: border-box;"><code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif">host:  127.0.0.1
+port:  3306
+user:  1234
+pw:  root
+db:  tests
+charset:  utf8
+</code></pre>
+<p style="font-size:13px;line-height:1.5;text-indent:0px;margin:10px auto;">  很显然，得到的 user 变成了 1234，pw 变成了 root，也就是说是完全按照位置来对应函数定义时的参数变量，所以传参的时候，顺序不能错，参数比较多的时候，就不容易记住顺序了。那么Python还给大家一种传递方式，同样是上面的函数，可以不用按顺序传参，请看下节“必备参数__键值对传参”。</p>
+<h2 style="margin-top:10px;margin-bottom:3px;font-weight:bold;line-height:1.5;margin:10px 0px;font-size:21px;">必备参数__键值对传参（关键字参数）</h2>
+<p style="font-size:13px;line-height:1.5;text-indent:0px;margin:10px auto;">  同样是必备参数，但是在代用函数传参的时候，可以直接使用键值对的方式，看下面演示代码：</p>
+<pre style="border-radius:4px;background-color: #fbfaf8;border: 1px solid rgba(0,0,0,.14902);color: #333;font-size: 12px;padding: 8px;font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif;box-sizing: border-box;"><code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span style="line-height:1.5;color:rgb(0, 128, 0);">#!/usr/bin/env python</span>
+<span style="line-height:1.5;color:rgb(0, 128, 0);"># -*- coding: utf-8 -*-</span>
+
+
+<span style="line-height:1.5;color:rgb(0, 128, 0);"># 演示获得数据库配置参数，使用必备参数</span>
+<span style="line-height:1.5;color:rgb(0, 0, 255);">def</span> <span style="line-height:1.5;color:rgb(163, 21, 21);">demo_get_conf1</span>(<span style="line-height:1.5;">user, pw, host, port, db, charset</span>):
+    <span style="line-height:1.5;color:rgb(163, 21, 21);">"打印得到的数据库配置"</span>
+    <span style="line-height:1.5;color:rgb(0, 0, 255);">print</span>(<span style="line-height:1.5;color:rgb(163, 21, 21);">'host: '</span>, host)
+    <span style="line-height:1.5;color:rgb(0, 0, 255);">print</span>(<span style="line-height:1.5;color:rgb(163, 21, 21);">'port: '</span>, port)
+    <span style="line-height:1.5;color:rgb(0, 0, 255);">print</span>(<span style="line-height:1.5;color:rgb(163, 21, 21);">'user: '</span>, user)
+    <span style="line-height:1.5;color:rgb(0, 0, 255);">print</span>(<span style="line-height:1.5;color:rgb(163, 21, 21);">'pw: '</span>, pw)
+    <span style="line-height:1.5;color:rgb(0, 0, 255);">print</span>(<span style="line-height:1.5;color:rgb(163, 21, 21);">'db: '</span>, db)
+    <span style="line-height:1.5;color:rgb(0, 0, 255);">print</span>(<span style="line-height:1.5;color:rgb(163, 21, 21);">'charset: '</span>, charset)
+
+
+demo_get_conf1(
+    charset=<span style="line-height:1.5;color:rgb(163, 21, 21);">'utf8'</span>,
+    pw=<span style="line-height:1.5;color:rgb(163, 21, 21);">'1234'</span>,
+    user=<span style="line-height:1.5;color:rgb(163, 21, 21);">'root'</span>,
+    host=<span style="line-height:1.5;color:rgb(163, 21, 21);">'127.0.0.1'</span>,
+    port=<span style="line-height:1.5;color:rgb(163, 21, 21);">'3306'</span>,
+    db=<span style="line-height:1.5;color:rgb(163, 21, 21);">'tests'</span>)
+
+</code></pre>
+<p style="font-size:13px;line-height:1.5;text-indent:0px;margin:10px auto;">  控制台输出：</p>
+<pre style="border-radius:4px;background-color: #fbfaf8;border: 1px solid rgba(0,0,0,.14902);color: #333;font-size: 12px;padding: 8px;font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif;box-sizing: border-box;"><code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif">host:  127.0.0.1
+port:  3306
+user:  root
+pw:  1234
+db:  tests
+charset:  utf8
+</code></pre>
+<p style="font-size:13px;line-height:1.5;text-indent:0px;margin:10px auto;">  函数定义还是与上例一样，只是调用函数的时候，参数传递使用了键值对，键名就是参数定义时的变量名，这样就可以不用理会顺序，只要记住键名（参数变量名）就可以了。</p>
+<p style="font-size:13px;line-height:1.5;text-indent:0px;margin:10px auto;">  但是这毕竟是必备参数，所有的参数都要传递，否则会报错，例如将调用修改成：</p>
+<pre style="border-radius:4px;background-color: #fbfaf8;border: 1px solid rgba(0,0,0,.14902);color: #333;font-size: 12px;padding: 8px;font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif;box-sizing: border-box;"><code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif">demo_get_conf1(
+    pw=<span style="line-height:1.5;color:rgb(163, 21, 21);">'1234'</span>,
+    user=<span style="line-height:1.5;color:rgb(163, 21, 21);">'root'</span>,
+    host=<span style="line-height:1.5;color:rgb(163, 21, 21);">'127.0.0.1'</span>,
+    port=<span style="line-height:1.5;color:rgb(163, 21, 21);">'3306'</span>,
+    db=<span style="line-height:1.5;color:rgb(163, 21, 21);">'tests'</span>)
+</code></pre>
+<p style="font-size:13px;line-height:1.5;text-indent:0px;margin:10px auto;">  控制台会输出：</p>
+<pre style="border-radius:4px;background-color: #fbfaf8;border: 1px solid rgba(0,0,0,.14902);color: #333;font-size: 12px;padding: 8px;font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif;box-sizing: border-box;"><code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif">TypeError: demo_get_conf1() missing 1 required positional argument: <span style="line-height:1.5;color:rgb(163, 21, 21);">'charset'</span>
+</code></pre>
+<p style="font-size:13px;line-height:1.5;text-indent:0px;margin:10px auto;">  提示缺少'charset'参数，代码不能正常运行。那么有没有可以缺省参数，用就传递，不用就不传递的，Python肯定也有这种参数，继续看下一节“默认可省略参数”。</p>
+<h2 style="margin-top:10px;margin-bottom:3px;font-weight:bold;line-height:1.5;margin:10px 0px;font-size:21px;">默认可省略参数</h2>
+<p style="font-size:13px;line-height:1.5;text-indent:0px;margin:10px auto;">  默认可省略参数，就是在定义的时候就给了默认值，如果在函数调用的时候给这个参数传值了，那么就使用传递的值，如果没有传递就使用定义时候的默认值。</p>
+<pre style="border-radius:4px;background-color: #fbfaf8;border: 1px solid rgba(0,0,0,.14902);color: #333;font-size: 12px;padding: 8px;font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif;box-sizing: border-box;"><code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span style="line-height:1.5;color:rgb(0, 128, 0);">#!/usr/bin/env python</span>
+<span style="line-height:1.5;color:rgb(0, 128, 0);"># -*- coding: utf-8 -*-</span>
+
+
+<span style="line-height:1.5;color:rgb(0, 128, 0);"># 演示获得数据库配置参数，使用默认可省略参数</span>
+<span style="line-height:1.5;color:rgb(0, 0, 255);">def</span> <span style="line-height:1.5;color:rgb(163, 21, 21);">demo_get_conf2</span>(<span style="line-height:1.5;">user, pw, host, port, db, charset=<span style="line-height:1.5;color:rgb(163, 21, 21);">'utf8'</span></span>):
+    <span style="line-height:1.5;color:rgb(163, 21, 21);">"打印得到的数据库配置"</span>
+    <span style="line-height:1.5;color:rgb(0, 0, 255);">print</span>(<span style="line-height:1.5;color:rgb(163, 21, 21);">'host: '</span>, host)
+    <span style="line-height:1.5;color:rgb(0, 0, 255);">print</span>(<span style="line-height:1.5;color:rgb(163, 21, 21);">'port: '</span>, port)
+    <span style="line-height:1.5;color:rgb(0, 0, 255);">print</span>(<span style="line-height:1.5;color:rgb(163, 21, 21);">'user: '</span>, user)
+    <span style="line-height:1.5;color:rgb(0, 0, 255);">print</span>(<span style="line-height:1.5;color:rgb(163, 21, 21);">'pw: '</span>, pw)
+    <span style="line-height:1.5;color:rgb(0, 0, 255);">print</span>(<span style="line-height:1.5;color:rgb(163, 21, 21);">'db: '</span>, db)
+    <span style="line-height:1.5;color:rgb(0, 0, 255);">print</span>(<span style="line-height:1.5;color:rgb(163, 21, 21);">'charset: '</span>, charset)
+
+
+demo_get_conf2(<span style="line-height:1.5;color:rgb(163, 21, 21);">'root'</span>, <span style="line-height:1.5;color:rgb(163, 21, 21);">'1234'</span>, <span style="line-height:1.5;color:rgb(163, 21, 21);">'127.0.0.1'</span>, <span style="line-height:1.5;color:rgb(163, 21, 21);">'3306'</span>, <span style="line-height:1.5;color:rgb(163, 21, 21);">'tests'</span>)
+
+</code></pre>
+<p style="font-size:13px;line-height:1.5;text-indent:0px;margin:10px auto;">  在上述代码中，调用demo_get_conf2函数的时候，我们并没有传递第六个参数charset，但是代码没有报错，控制台输出：</p>
+<pre style="border-radius:4px;background-color: #fbfaf8;border: 1px solid rgba(0,0,0,.14902);color: #333;font-size: 12px;padding: 8px;font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif;box-sizing: border-box;"><code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif">host:  127.0.0.1
+port:  3306
+user:  root
+pw:  1234
+db:  tests
+charset:  utf8
+</code></pre>
+<p style="font-size:13px;line-height:1.5;text-indent:0px;margin:10px auto;">  可见参数"charset"虽然在调用的时候没有传递，但是依然得到了值"utf8"，这个值就是在函数定义时候，参数"charset"赋值的默认值。</p>
+<p style="font-size:13px;line-height:1.5;text-indent:0px;margin:10px auto;">  但是这个参数必须在后面，否则调用的时候按照顺序赋值的时候，少传递一个就不是这个有默认值的了，所以Python不允许那样做，看下面的例子：</p>
+<pre style="border-radius:4px;background-color: #fbfaf8;border: 1px solid rgba(0,0,0,.14902);color: #333;font-size: 12px;padding: 8px;font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif;box-sizing: border-box;"><code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span style="line-height:1.5;color:rgb(0, 128, 0);">#!/usr/bin/env python</span>
+<span style="line-height:1.5;color:rgb(0, 128, 0);"># -*- coding: utf-8 -*-</span>
+
+
+<span style="line-height:1.5;color:rgb(0, 128, 0);"># 演示获得数据库配置参数，使用默认可省略参数</span>
+<span style="line-height:1.5;color:rgb(0, 0, 255);">def</span> <span style="line-height:1.5;color:rgb(163, 21, 21);">demo_get_conf1</span>(<span style="line-height:1.5;">user, pw, host, port, db=<span style="line-height:1.5;color:rgb(163, 21, 21);">'tests'</span>, charset</span>):
+    <span style="line-height:1.5;color:rgb(163, 21, 21);">"打印得到的数据库配置"</span>
+    <span style="line-height:1.5;color:rgb(0, 0, 255);">print</span>(<span style="line-height:1.5;color:rgb(163, 21, 21);">'host: '</span>, host)
+    <span style="line-height:1.5;color:rgb(0, 0, 255);">print</span>(<span style="line-height:1.5;color:rgb(163, 21, 21);">'port: '</span>, port)
+    <span style="line-height:1.5;color:rgb(0, 0, 255);">print</span>(<span style="line-height:1.5;color:rgb(163, 21, 21);">'user: '</span>, user)
+    <span style="line-height:1.5;color:rgb(0, 0, 255);">print</span>(<span style="line-height:1.5;color:rgb(163, 21, 21);">'pw: '</span>, pw)
+    <span style="line-height:1.5;color:rgb(0, 0, 255);">print</span>(<span style="line-height:1.5;color:rgb(163, 21, 21);">'db: '</span>, db)
+    <span style="line-height:1.5;color:rgb(0, 0, 255);">print</span>(<span style="line-height:1.5;color:rgb(163, 21, 21);">'charset: '</span>, charset)
+
+
+demo_get_conf1(<span style="line-height:1.5;color:rgb(163, 21, 21);">'root'</span>, <span style="line-height:1.5;color:rgb(163, 21, 21);">'1234'</span>, <span style="line-height:1.5;color:rgb(163, 21, 21);">'127.0.0.1'</span>, <span style="line-height:1.5;color:rgb(163, 21, 21);">'3306'</span>, <span style="line-height:1.5;color:rgb(163, 21, 21);">'tests'</span>)
+
+</code></pre>
+<p style="font-size:13px;line-height:1.5;text-indent:0px;margin:10px auto;">  控制台输出：</p>
+<pre style="border-radius:4px;background-color: #fbfaf8;border: 1px solid rgba(0,0,0,.14902);color: #333;font-size: 12px;padding: 8px;font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif;box-sizing: border-box;"><code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif">SyntaxError: non-default argument follows default argument
+</code></pre>
+<p style="font-size:13px;line-height:1.5;text-indent:0px;margin:10px auto;">  提示非默认参数不能在默认参数之后，代码不能正常执行。</p>
+<p style="font-size:13px;line-height:1.5;text-indent:0px;margin:10px auto;">  有些时候，我们不能确定要具体传递几个参数，应用场景需要的参数数量差异较大，那么是否可以动态传递不同数量的参数呢，继续看下一节“可变长元组参数”</p>
+<h2 style="margin-top:10px;margin-bottom:3px;font-weight:bold;line-height:1.5;margin:10px 0px;font-size:21px;">不定长元组参数（*args）</h2>
+<p style="font-size:13px;line-height:1.5;text-indent:0px;margin:10px auto;">  不定长元组参数，就是不确定数量的参数，定义一个参数把传入的参数组合成元组，来接收函数调用时传递过来的N个参数，在函数体内以元组形式按顺序读取。为了演示更多是使用场景，下面没有使用网络中通常使用的循环方式来取可变长元组参数。</p>
+<pre style="border-radius:4px;background-color: #fbfaf8;border: 1px solid rgba(0,0,0,.14902);color: #333;font-size: 12px;padding: 8px;font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif;box-sizing: border-box;"><code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span style="line-height:1.5;color:rgb(0, 128, 0);">#!/usr/bin/env python</span>
+<span style="line-height:1.5;color:rgb(0, 128, 0);"># -*- coding: utf-8 -*-</span>
+
+
+<span style="line-height:1.5;color:rgb(0, 128, 0);"># 演示获得数据库配置参数，使用可变长元组参数</span>
+<span style="line-height:1.5;color:rgb(0, 0, 255);">def</span> <span style="line-height:1.5;color:rgb(163, 21, 21);">demo_get_conf3</span>(<span style="line-height:1.5;">host, port, *cnf</span>):
+    <span style="line-height:1.5;color:rgb(163, 21, 21);">"打印得到的数据库配置"</span>
+    <span style="line-height:1.5;color:rgb(0, 0, 255);">print</span>(<span style="line-height:1.5;color:rgb(163, 21, 21);">'host: '</span>, host)
+    <span style="line-height:1.5;color:rgb(0, 0, 255);">print</span>(<span style="line-height:1.5;color:rgb(163, 21, 21);">'port: '</span>, port)
+    <span style="line-height:1.5;color:rgb(0, 0, 255);">print</span>(<span style="line-height:1.5;color:rgb(163, 21, 21);">'user: '</span>, cnf[<span style="line-height:1.5;color:rgb(136, 0, 0);">0</span>])
+    <span style="line-height:1.5;color:rgb(0, 0, 255);">print</span>(<span style="line-height:1.5;color:rgb(163, 21, 21);">'pw: '</span>, cnf[<span style="line-height:1.5;color:rgb(136, 0, 0);">1</span>])
+    <span style="line-height:1.5;color:rgb(0, 0, 255);">print</span>(<span style="line-height:1.5;color:rgb(163, 21, 21);">'db: '</span>, cnf[<span style="line-height:1.5;color:rgb(136, 0, 0);">2</span>])
+    <span style="line-height:1.5;color:rgb(0, 0, 255);">print</span>(<span style="line-height:1.5;color:rgb(163, 21, 21);">'charset: '</span>, cnf[<span style="line-height:1.5;color:rgb(136, 0, 0);">3</span>])
+
+
+demo_get_conf3(<span style="line-height:1.5;color:rgb(163, 21, 21);">'127.0.0.1'</span>, <span style="line-height:1.5;color:rgb(163, 21, 21);">'3306'</span>, <span style="line-height:1.5;color:rgb(163, 21, 21);">'root'</span>, <span style="line-height:1.5;color:rgb(163, 21, 21);">'1234'</span>, <span style="line-height:1.5;color:rgb(163, 21, 21);">'tests'</span>, <span style="line-height:1.5;color:rgb(163, 21, 21);">'utf8'</span>)
+
+</code></pre>
+<p style="font-size:13px;line-height:1.5;text-indent:0px;margin:10px auto;">控制台输出：</p>
+<pre style="border-radius:4px;background-color: #fbfaf8;border: 1px solid rgba(0,0,0,.14902);color: #333;font-size: 12px;padding: 8px;font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif;box-sizing: border-box;"><code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif">host:  127.0.0.1
+port:  3306
+user:  root
+pw:  1234
+db:  tests
+charset:  utf8
+</code></pre>
+<p style="font-size:13px;line-height:1.5;text-indent:0px;margin:10px auto;">  可见这是我们正常需要得到的结果，可以多传更多的参数，只要里面取值的数量没有超过传递过来可变参数的数量，就不会报错。</p>
+<p style="font-size:13px;line-height:1.5;text-indent:0px;margin:10px auto;">  在上例中，host 和 port 是必备参数，函数调用的时候，在这两个参数后面所传递的，就都是对应到函数定义时的变长参数元组里了。</p>
+<p style="font-size:13px;line-height:1.5;text-indent:0px;margin:10px auto;">  在Python中，函数参数是可以使用元组的，那么这总定义与直接使用元组参数有什么区别呢，下面看使用元组参数的示例：</p>
+<pre style="border-radius:4px;background-color: #fbfaf8;border: 1px solid rgba(0,0,0,.14902);color: #333;font-size: 12px;padding: 8px;font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif;box-sizing: border-box;"><code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span style="line-height:1.5;color:rgb(0, 128, 0);">#!/usr/bin/env python</span>
+<span style="line-height:1.5;color:rgb(0, 128, 0);"># -*- coding: utf-8 -*-</span>
+
+
+<span style="line-height:1.5;color:rgb(0, 128, 0);"># 演示获得数据库配置参数，使用元组参数</span>
+<span style="line-height:1.5;color:rgb(0, 0, 255);">def</span> <span style="line-height:1.5;color:rgb(163, 21, 21);">demo_get_conf4</span>(<span style="line-height:1.5;">host, port, cnf</span>):
+    <span style="line-height:1.5;color:rgb(163, 21, 21);">"打印得到的数据库配置"</span>
+    <span style="line-height:1.5;color:rgb(0, 0, 255);">print</span>(<span style="line-height:1.5;color:rgb(163, 21, 21);">'host: '</span>, host)
+    <span style="line-height:1.5;color:rgb(0, 0, 255);">print</span>(<span style="line-height:1.5;color:rgb(163, 21, 21);">'port: '</span>, port)
+    <span style="line-height:1.5;color:rgb(0, 0, 255);">print</span>(<span style="line-height:1.5;color:rgb(163, 21, 21);">'user: '</span>, cnf[<span style="line-height:1.5;color:rgb(136, 0, 0);">0</span>])
+    <span style="line-height:1.5;color:rgb(0, 0, 255);">print</span>(<span style="line-height:1.5;color:rgb(163, 21, 21);">'pw: '</span>, cnf[<span style="line-height:1.5;color:rgb(136, 0, 0);">1</span>])
+    <span style="line-height:1.5;color:rgb(0, 0, 255);">print</span>(<span style="line-height:1.5;color:rgb(163, 21, 21);">'db: '</span>, cnf[<span style="line-height:1.5;color:rgb(136, 0, 0);">2</span>])
+    <span style="line-height:1.5;color:rgb(0, 0, 255);">print</span>(<span style="line-height:1.5;color:rgb(163, 21, 21);">'charset: '</span>, cnf[<span style="line-height:1.5;color:rgb(136, 0, 0);">3</span>])
+
+
+demo_get_conf4(<span style="line-height:1.5;color:rgb(163, 21, 21);">'127.0.0.1'</span>, <span style="line-height:1.5;color:rgb(163, 21, 21);">'3306'</span>, (<span style="line-height:1.5;color:rgb(163, 21, 21);">'root'</span>, <span style="line-height:1.5;color:rgb(163, 21, 21);">'1234'</span>, <span style="line-height:1.5;color:rgb(163, 21, 21);">'tests'</span>, <span style="line-height:1.5;color:rgb(163, 21, 21);">'utf8'</span>))
+
+</code></pre>
+<p style="font-size:13px;line-height:1.5;text-indent:0px;margin:10px auto;">  控制台输出：</p>
+<pre style="border-radius:4px;background-color: #fbfaf8;border: 1px solid rgba(0,0,0,.14902);color: #333;font-size: 12px;padding: 8px;font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif;box-sizing: border-box;"><code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif">host:  127.0.0.1
+port:  3306
+user:  root
+pw:  1234
+db:  tests
+charset:  utf8
+</code></pre>
+<p style="font-size:13px;line-height:1.5;text-indent:0px;margin:10px auto;">  与上一例比，函数体一模一样，参数 cnf 只是少了个 “*”。重点是调用的时候不同，可以看出明显的区别，可变长元组参数在调用的时候，可以与必备参数一样依次传递，而定义元组类型参数，调用函数传递参数时，需要传递元组类型的数据才可以。</p>
+<p style="font-size:13px;line-height:1.5;text-indent:0px;margin:10px auto;">  这种参数传递的时候，元组里面的元素也是要强调顺序的，如果是累加一类的函数，顺序不重要，如果是每个元素都代表不同具体含义的，那顺序就十分重要，不可以搞错，否则与必备参数一样，会在函数体内取值错误。</p>
+<p style="font-size:13px;line-height:1.5;text-indent:0px;margin:10px auto;">  在上两例中，只能算是元组参数，还不能算不定长，因为函数体内的取值规定了元组的元素数量，那接下来看一个网络上通常写法的例子：</p>
+<pre style="border-radius:4px;background-color: #fbfaf8;border: 1px solid rgba(0,0,0,.14902);color: #333;font-size: 12px;padding: 8px;font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif;box-sizing: border-box;"><code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span style="line-height:1.5;color:rgb(0, 128, 0);">#!/usr/bin/env python</span>
+<span style="line-height:1.5;color:rgb(0, 128, 0);"># -*- coding: utf-8 -*-</span>
+
+
+<span style="line-height:1.5;color:rgb(0, 128, 0);"># 演示获得数据库配置参数，使用可变长元组参数</span>
+<span style="line-height:1.5;color:rgb(0, 0, 255);">def</span> <span style="line-height:1.5;color:rgb(163, 21, 21);">demo_get_conf5</span>(<span style="line-height:1.5;">x, y, *nums</span>):
+    <span style="line-height:1.5;color:rgb(163, 21, 21);">"得到累加和"</span>
+    res = x + y
+    <span style="line-height:1.5;color:rgb(0, 0, 255);">for</span> i <span style="line-height:1.5;color:rgb(0, 0, 255);">in</span> nums:
+        res += i
+    <span style="line-height:1.5;color:rgb(0, 0, 255);">return</span> res
+
+
+<span style="line-height:1.5;color:rgb(0, 0, 255);">print</span>(demo_get_conf5(<span style="line-height:1.5;color:rgb(136, 0, 0);">10</span>, <span style="line-height:1.5;color:rgb(136, 0, 0);">20</span>,))
+<span style="line-height:1.5;color:rgb(0, 0, 255);">print</span>(demo_get_conf5(<span style="line-height:1.5;color:rgb(136, 0, 0);">10</span>, <span style="line-height:1.5;color:rgb(136, 0, 0);">20</span>, <span style="line-height:1.5;color:rgb(136, 0, 0);">15</span>, <span style="line-height:1.5;color:rgb(136, 0, 0);">25</span>, <span style="line-height:1.5;color:rgb(136, 0, 0);">30</span>))
+<span style="line-height:1.5;color:rgb(0, 0, 255);">print</span>(demo_get_conf5(<span style="line-height:1.5;color:rgb(136, 0, 0);">10</span>, <span style="line-height:1.5;color:rgb(136, 0, 0);">20</span>, <span style="line-height:1.5;color:rgb(136, 0, 0);">15</span>, <span style="line-height:1.5;color:rgb(136, 0, 0);">25</span>, <span style="line-height:1.5;color:rgb(136, 0, 0);">30</span>, <span style="line-height:1.5;color:rgb(136, 0, 0);">50</span>, <span style="line-height:1.5;color:rgb(136, 0, 0);">30</span>))
+
+</code></pre>
+<p style="font-size:13px;line-height:1.5;text-indent:0px;margin:10px auto;">  控制台输出：</p>
+<pre style="border-radius:4px;background-color: #fbfaf8;border: 1px solid rgba(0,0,0,.14902);color: #333;font-size: 12px;padding: 8px;font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif;box-sizing: border-box;"><code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif">30
+100
+180
+</code></pre>
+<p style="font-size:13px;line-height:1.5;text-indent:0px;margin:10px auto;">  上例中，前两个参数是必须传的，后面的参数可传可不传，传的数量也不固定，根据需要由外部调用决定，所以这是可变长参数。但是这种应用适合元组内参数是相同类型和作用，如果回到上面的配置参数应用中，是否可以不定长的呢，看下面的代码：</p>
+<pre style="border-radius:4px;background-color: #fbfaf8;border: 1px solid rgba(0,0,0,.14902);color: #333;font-size: 12px;padding: 8px;font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif;box-sizing: border-box;"><code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span style="line-height:1.5;color:rgb(0, 128, 0);">#!/usr/bin/env python</span>
+<span style="line-height:1.5;color:rgb(0, 128, 0);"># -*- coding: utf-8 -*-</span>
+
+
+<span style="line-height:1.5;color:rgb(0, 128, 0);"># 演示获得数据库配置参数，使用可变长元组参数</span>
+<span style="line-height:1.5;color:rgb(0, 0, 255);">def</span> <span style="line-height:1.5;color:rgb(163, 21, 21);">demo_get_conf6</span>(<span style="line-height:1.5;">host, port, *cnf</span>):
+    <span style="line-height:1.5;color:rgb(163, 21, 21);">"打印得到的数据库配置"</span>
+    arr = [<span style="line-height:1.5;color:rgb(163, 21, 21);">'root'</span>, <span style="line-height:1.5;color:rgb(163, 21, 21);">'1234'</span>, <span style="line-height:1.5;color:rgb(163, 21, 21);">'tests'</span>, <span style="line-height:1.5;color:rgb(163, 21, 21);">'utf8'</span>]     <span style="line-height:1.5;color:rgb(0, 128, 0);"># 可变参数的默认值</span>
+    len_arr = <span style="line-height:1.5;color:rgb(0, 0, 255);">len</span>(arr)
+    len_cnf = <span style="line-height:1.5;color:rgb(0, 0, 255);">len</span>(cnf)
+    <span style="line-height:1.5;color:rgb(0, 0, 255);">if</span> len_cnf &gt; len_arr:
+        len_cnf = len_arr                       <span style="line-height:1.5;color:rgb(0, 128, 0);"># 取变长参数最多不超过默认列表中的数量，多余的忽略</span>
+
+    <span style="line-height:1.5;color:rgb(0, 0, 255);">for</span> i <span style="line-height:1.5;color:rgb(0, 0, 255);">in</span> <span style="line-height:1.5;color:rgb(0, 0, 255);">range</span>(len_cnf):
+        arr[i] = cnf[i]
+
+    <span style="line-height:1.5;color:rgb(0, 0, 255);">print</span>(<span style="line-height:1.5;color:rgb(163, 21, 21);">'host: '</span>, host)
+    <span style="line-height:1.5;color:rgb(0, 0, 255);">print</span>(<span style="line-height:1.5;color:rgb(163, 21, 21);">'port: '</span>, port)
+    <span style="line-height:1.5;color:rgb(0, 0, 255);">print</span>(<span style="line-height:1.5;color:rgb(163, 21, 21);">'user: '</span>, arr[<span style="line-height:1.5;color:rgb(136, 0, 0);">0</span>])
+    <span style="line-height:1.5;color:rgb(0, 0, 255);">print</span>(<span style="line-height:1.5;color:rgb(163, 21, 21);">'pw: '</span>, arr[<span style="line-height:1.5;color:rgb(136, 0, 0);">1</span>])
+    <span style="line-height:1.5;color:rgb(0, 0, 255);">print</span>(<span style="line-height:1.5;color:rgb(163, 21, 21);">'db: '</span>, arr[<span style="line-height:1.5;color:rgb(136, 0, 0);">2</span>])
+    <span style="line-height:1.5;color:rgb(0, 0, 255);">print</span>(<span style="line-height:1.5;color:rgb(163, 21, 21);">'charset: '</span>, arr[<span style="line-height:1.5;color:rgb(136, 0, 0);">3</span>])
+
+
+<span style="line-height:1.5;color:rgb(0, 0, 255);">print</span>(<span style="line-height:1.5;color:rgb(163, 21, 21);">'\n'</span>, <span style="line-height:1.5;color:rgb(163, 21, 21);">'传递5个变长参数'</span>)
+demo_get_conf6(<span style="line-height:1.5;color:rgb(163, 21, 21);">'127.0.0.1'</span>, <span style="line-height:1.5;color:rgb(163, 21, 21);">'3306'</span>, <span style="line-height:1.5;color:rgb(163, 21, 21);">'new_user'</span>, <span style="line-height:1.5;color:rgb(163, 21, 21);">'5678'</span>, <span style="line-height:1.5;color:rgb(163, 21, 21);">'tests'</span>, <span style="line-height:1.5;color:rgb(163, 21, 21);">'utf8mb4'</span>, <span style="line-height:1.5;color:rgb(163, 21, 21);">'abc'</span>)
+<span style="line-height:1.5;color:rgb(0, 0, 255);">print</span>(<span style="line-height:1.5;color:rgb(163, 21, 21);">'\n'</span>, <span style="line-height:1.5;color:rgb(163, 21, 21);">'传递4个变长参数'</span>)
+demo_get_conf6(<span style="line-height:1.5;color:rgb(163, 21, 21);">'127.0.0.1'</span>, <span style="line-height:1.5;color:rgb(163, 21, 21);">'3306'</span>, <span style="line-height:1.5;color:rgb(163, 21, 21);">'new_user'</span>, <span style="line-height:1.5;color:rgb(163, 21, 21);">'5678'</span>, <span style="line-height:1.5;color:rgb(163, 21, 21);">'tests'</span>, <span style="line-height:1.5;color:rgb(163, 21, 21);">'utf8mb4'</span>)
+<span style="line-height:1.5;color:rgb(0, 0, 255);">print</span>(<span style="line-height:1.5;color:rgb(163, 21, 21);">'\n'</span>, <span style="line-height:1.5;color:rgb(163, 21, 21);">'传递2个变长参数'</span>)
+demo_get_conf6(<span style="line-height:1.5;color:rgb(163, 21, 21);">'127.0.0.1'</span>, <span style="line-height:1.5;color:rgb(163, 21, 21);">'3306'</span>, <span style="line-height:1.5;color:rgb(163, 21, 21);">'new_user'</span>, <span style="line-height:1.5;color:rgb(163, 21, 21);">'5678'</span>)
+<span style="line-height:1.5;color:rgb(0, 0, 255);">print</span>(<span style="line-height:1.5;color:rgb(163, 21, 21);">'\n'</span>, <span style="line-height:1.5;color:rgb(163, 21, 21);">'不传递变长参数'</span>)
+demo_get_conf6(<span style="line-height:1.5;color:rgb(163, 21, 21);">'127.0.0.1'</span>, <span style="line-height:1.5;color:rgb(163, 21, 21);">'3306'</span>)
+
+</code></pre>
+<p style="font-size:13px;line-height:1.5;text-indent:0px;margin:10px auto;">  控制台输出：</p>
+<pre style="border-radius:4px;background-color: #fbfaf8;border: 1px solid rgba(0,0,0,.14902);color: #333;font-size: 12px;padding: 8px;font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif;box-sizing: border-box;"><code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"> 传递5个变长参数
+host:  127.0.0.1
+port:  3306
+user:  new_user
+pw:  5678
+db:  tests
+charset:  utf8mb4
+
+ 传递4个变长参数
+host:  127.0.0.1
+port:  3306
+user:  new_user
+pw:  5678
+db:  tests
+charset:  utf8mb4
+
+ 传递2个变长参数
+host:  127.0.0.1
+port:  3306
+user:  new_user
+pw:  5678
+db:  tests
+charset:  utf8
+
+ 不传递变长参数
+host:  127.0.0.1
+port:  3306
+user:  root
+pw:  1234
+db:  tests
+charset:  utf8
+</code></pre>
+<p style="font-size:13px;line-height:1.5;text-indent:0px;margin:10px auto;">  可以看出，传递5个变长参数的，多出那个“abc”参数被忽略掉了，余下的四个参数都按照传递的值取到了；传递4个变长参数的，完全吻合，得到的都是传递的参数；传递2个变长参数的，前两个变长参数是调用传输时传递的值，后两个则是使用的默认值；不传递变长参数的，变长参数全部使用了默认值。这就实现了不同用途的变长参数取值并都可以设置默认值的目的，在一定范围内实现了不定长。</p>
+<p style="font-size:13px;line-height:1.5;text-indent:0px;margin:10px auto;">  但是这种变长参数，都还是要保证传递顺序的，元组里的顺序如果传递错误，对于后面例子那获取的数据就是错误的。是否可以不定长有不用理会顺序呢，继续看下一节“不定长字典参数”。</p>
+<h2 style="margin-top:10px;margin-bottom:3px;font-weight:bold;line-height:1.5;margin:10px 0px;font-size:21px;">不定长字典参数（**kwargs）</h2>
+<p style="font-size:13px;line-height:1.5;text-indent:0px;margin:10px auto;">  不定长字典参数，就是不确定数量的参数，定义一个字典，按键值对形式来接收函数调用时传递过来的N个参数，在函数体内以字典形式按键值对读取。这样在传递的时候，就可以不用在意顺序问题了，看下面的代码：</p>
+<pre style="border-radius:4px;background-color: #fbfaf8;border: 1px solid rgba(0,0,0,.14902);color: #333;font-size: 12px;padding: 8px;font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif;box-sizing: border-box;"><code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span style="line-height:1.5;color:rgb(0, 128, 0);">#!/usr/bin/env python</span>
+<span style="line-height:1.5;color:rgb(0, 128, 0);"># -*- coding: utf-8 -*-</span>
+
+
+<span style="line-height:1.5;color:rgb(0, 128, 0);"># 演示获得数据库配置参数，使用可变长字典参数</span>
+<span style="line-height:1.5;color:rgb(0, 0, 255);">def</span> <span style="line-height:1.5;color:rgb(163, 21, 21);">demo_get_conf7</span>(<span style="line-height:1.5;">host, port, **cnf</span>):
+    <span style="line-height:1.5;color:rgb(163, 21, 21);">"打印得到的数据库配置"</span>
+    <span style="line-height:1.5;color:rgb(0, 0, 255);">print</span>(<span style="line-height:1.5;color:rgb(163, 21, 21);">'host: '</span>, host)
+    <span style="line-height:1.5;color:rgb(0, 0, 255);">print</span>(<span style="line-height:1.5;color:rgb(163, 21, 21);">'port: '</span>, port)
+    <span style="line-height:1.5;color:rgb(0, 0, 255);">print</span>(<span style="line-height:1.5;color:rgb(163, 21, 21);">'user: '</span>, cnf[<span style="line-height:1.5;color:rgb(163, 21, 21);">'user'</span>])
+    <span style="line-height:1.5;color:rgb(0, 0, 255);">print</span>(<span style="line-height:1.5;color:rgb(163, 21, 21);">'pw: '</span>, cnf[<span style="line-height:1.5;color:rgb(163, 21, 21);">'pw'</span>])
+    <span style="line-height:1.5;color:rgb(0, 0, 255);">print</span>(<span style="line-height:1.5;color:rgb(163, 21, 21);">'db: '</span>, cnf[<span style="line-height:1.5;color:rgb(163, 21, 21);">'db'</span>])
+    <span style="line-height:1.5;color:rgb(0, 0, 255);">print</span>(<span style="line-height:1.5;color:rgb(163, 21, 21);">'charset: '</span>, cnf[<span style="line-height:1.5;color:rgb(163, 21, 21);">'charset'</span>])
+
+
+demo_get_conf7(<span style="line-height:1.5;color:rgb(163, 21, 21);">'127.0.0.1'</span>, <span style="line-height:1.5;color:rgb(163, 21, 21);">'3306'</span>, user=<span style="line-height:1.5;color:rgb(163, 21, 21);">'new_user'</span>, pw=<span style="line-height:1.5;color:rgb(163, 21, 21);">'5678'</span>, db=<span style="line-height:1.5;color:rgb(163, 21, 21);">'tests'</span>, charset=<span style="line-height:1.5;color:rgb(163, 21, 21);">'utf8mb4'</span>)
+
+</code></pre>
+<p style="font-size:13px;line-height:1.5;text-indent:0px;margin:10px auto;">  控制台输出：</p>
+<pre style="border-radius:4px;background-color: #fbfaf8;border: 1px solid rgba(0,0,0,.14902);color: #333;font-size: 12px;padding: 8px;font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif;box-sizing: border-box;"><code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif">host:  127.0.0.1
+port:  3306
+user:  new_user
+pw:  5678
+db:  tests
+charset:  utf8mb4
+</code></pre>
+<p style="font-size:13px;line-height:1.5;text-indent:0px;margin:10px auto;">  在上述代码中，可以看出，在函数体内实际把**cnf参数当做字典来读取，那么与把函数参数直接定义成字典来用相比较，对函数体内是没有区别的，但是在函数调用的时候，参数传递就有差别了。如果参数定义成字典，那么调用的时候就需要传递字典，否则会报错，如下面代码：</p>
+<pre style="border-radius:4px;background-color: #fbfaf8;border: 1px solid rgba(0,0,0,.14902);color: #333;font-size: 12px;padding: 8px;font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif;box-sizing: border-box;"><code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span style="line-height:1.5;color:rgb(0, 128, 0);"># 演示获得数据库配置参数，使用字典参数</span>
+<span style="line-height:1.5;color:rgb(0, 0, 255);">def</span> <span style="line-height:1.5;color:rgb(163, 21, 21);">demo_get_conf7</span>(<span style="line-height:1.5;">host, port, cnf</span>):
+    <span style="line-height:1.5;color:rgb(163, 21, 21);">"打印得到的数据库配置"</span>
+    <span style="line-height:1.5;color:rgb(0, 0, 255);">print</span>(<span style="line-height:1.5;color:rgb(163, 21, 21);">'host: '</span>, host)
+    <span style="line-height:1.5;color:rgb(0, 0, 255);">print</span>(<span style="line-height:1.5;color:rgb(163, 21, 21);">'port: '</span>, port)
+    <span style="line-height:1.5;color:rgb(0, 0, 255);">print</span>(<span style="line-height:1.5;color:rgb(163, 21, 21);">'user: '</span>, cnf[<span style="line-height:1.5;color:rgb(163, 21, 21);">'user'</span>])
+    <span style="line-height:1.5;color:rgb(0, 0, 255);">print</span>(<span style="line-height:1.5;color:rgb(163, 21, 21);">'pw: '</span>, cnf[<span style="line-height:1.5;color:rgb(163, 21, 21);">'pw'</span>])
+    <span style="line-height:1.5;color:rgb(0, 0, 255);">print</span>(<span style="line-height:1.5;color:rgb(163, 21, 21);">'db: '</span>, cnf[<span style="line-height:1.5;color:rgb(163, 21, 21);">'db'</span>])
+    <span style="line-height:1.5;color:rgb(0, 0, 255);">print</span>(<span style="line-height:1.5;color:rgb(163, 21, 21);">'charset: '</span>, cnf[<span style="line-height:1.5;color:rgb(163, 21, 21);">'charset'</span>])
+
+
+demo_get_conf7(<span style="line-height:1.5;color:rgb(163, 21, 21);">'127.0.0.1'</span>, <span style="line-height:1.5;color:rgb(163, 21, 21);">'3306'</span>, {<span style="line-height:1.5;color:rgb(163, 21, 21);">'user'</span>:<span style="line-height:1.5;color:rgb(163, 21, 21);">'new_user'</span>, <span style="line-height:1.5;color:rgb(163, 21, 21);">'pw'</span>:<span style="line-height:1.5;color:rgb(163, 21, 21);">'5678'</span>, <span style="line-height:1.5;color:rgb(163, 21, 21);">'db'</span>:<span style="line-height:1.5;color:rgb(163, 21, 21);">'tests'</span>, <span style="line-height:1.5;color:rgb(163, 21, 21);">'charset'</span>:<span style="line-height:1.5;color:rgb(163, 21, 21);">'utf8mb4'</span>})
+
+</code></pre>
+<p style="font-size:13px;line-height:1.5;text-indent:0px;margin:10px auto;">  与上一例比，函数体一模一样，参数 cnf 只是少了两个 “*”。重点是调用的时候不同，可以看出明显的区别，可变长字典参数在调用的时候，可以直接写键名，不用引号，使用“=”赋值，而定义字典类型参数，调用函数传递参数时，需要传递字典类型的数据才可以。</p>
+<p style="font-size:13px;line-height:1.5;text-indent:0px;margin:10px auto;">  在上线的例子中，函数体内的代码变相等于指定了不定长参数**cnf的长度，但参数是可以变长的是确定的，主要是函数体里面取值的代码逻辑。如果循环打印输出，就可以任意变长，但是实际项目中这样做适用场景不多。还是取数据库配置这个需求，我们改写一下函数体的代码：</p>
+<pre style="border-radius:4px;background-color: #fbfaf8;border: 1px solid rgba(0,0,0,.14902);color: #333;font-size: 12px;padding: 8px;font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif;box-sizing: border-box;"><code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span style="line-height:1.5;color:rgb(0, 128, 0);">#!/usr/bin/env python</span>
+<span style="line-height:1.5;color:rgb(0, 128, 0);"># -*- coding: utf-8 -*-</span>
+
+
+<span style="line-height:1.5;color:rgb(0, 128, 0);"># 演示获得数据库配置参数，使用字典参数</span>
+<span style="line-height:1.5;color:rgb(0, 0, 255);">def</span> <span style="line-height:1.5;color:rgb(163, 21, 21);">demo_get_conf7</span>(<span style="line-height:1.5;">host, port, **cnf</span>):
+    <span style="line-height:1.5;color:rgb(163, 21, 21);">"打印得到的数据库配置"</span>
+    arr = {<span style="line-height:1.5;color:rgb(163, 21, 21);">'user'</span>: <span style="line-height:1.5;color:rgb(163, 21, 21);">'root'</span>, <span style="line-height:1.5;color:rgb(163, 21, 21);">'pw'</span>: <span style="line-height:1.5;color:rgb(163, 21, 21);">'1234'</span>, <span style="line-height:1.5;color:rgb(163, 21, 21);">'db'</span>: <span style="line-height:1.5;color:rgb(163, 21, 21);">'tests'</span>, <span style="line-height:1.5;color:rgb(163, 21, 21);">'charset'</span>: <span style="line-height:1.5;color:rgb(163, 21, 21);">'utf8'</span>}     <span style="line-height:1.5;color:rgb(0, 128, 0);"># 可变参数的默认值</span>
+
+    <span style="line-height:1.5;color:rgb(0, 0, 255);">for</span> key, val <span style="line-height:1.5;color:rgb(0, 0, 255);">in</span> cnf.items():
+        <span style="line-height:1.5;color:rgb(0, 0, 255);">if</span> key <span style="line-height:1.5;color:rgb(0, 0, 255);">in</span> arr:
+            arr[key] = val                       <span style="line-height:1.5;color:rgb(0, 128, 0);"># 取变长参数传递过来的键，如果在预置里面存在就更改，不存在的忽略</span>
+
+    <span style="line-height:1.5;color:rgb(0, 0, 255);">print</span>(<span style="line-height:1.5;color:rgb(163, 21, 21);">'host: '</span>, host)
+    <span style="line-height:1.5;color:rgb(0, 0, 255);">print</span>(<span style="line-height:1.5;color:rgb(163, 21, 21);">'port: '</span>, port)
+    <span style="line-height:1.5;color:rgb(0, 0, 255);">print</span>(<span style="line-height:1.5;color:rgb(163, 21, 21);">'user: '</span>, arr[<span style="line-height:1.5;color:rgb(163, 21, 21);">'user'</span>])
+    <span style="line-height:1.5;color:rgb(0, 0, 255);">print</span>(<span style="line-height:1.5;color:rgb(163, 21, 21);">'pw: '</span>, arr[<span style="line-height:1.5;color:rgb(163, 21, 21);">'pw'</span>])
+    <span style="line-height:1.5;color:rgb(0, 0, 255);">print</span>(<span style="line-height:1.5;color:rgb(163, 21, 21);">'db: '</span>, arr[<span style="line-height:1.5;color:rgb(163, 21, 21);">'db'</span>])
+    <span style="line-height:1.5;color:rgb(0, 0, 255);">print</span>(<span style="line-height:1.5;color:rgb(163, 21, 21);">'charset: '</span>, arr[<span style="line-height:1.5;color:rgb(163, 21, 21);">'charset'</span>])
+
+
+<span style="line-height:1.5;color:rgb(0, 0, 255);">print</span>(<span style="line-height:1.5;color:rgb(163, 21, 21);">'----------参数完整传递：'</span>)
+demo_get_conf7(<span style="line-height:1.5;color:rgb(163, 21, 21);">'127.0.0.1'</span>, <span style="line-height:1.5;color:rgb(163, 21, 21);">'3306'</span>, user=<span style="line-height:1.5;color:rgb(163, 21, 21);">'new_user'</span>, pw=<span style="line-height:1.5;color:rgb(163, 21, 21);">'5678'</span>, db=<span style="line-height:1.5;color:rgb(163, 21, 21);">'tests'</span>, charset=<span style="line-height:1.5;color:rgb(163, 21, 21);">'utf8mb4'</span>)
+<span style="line-height:1.5;color:rgb(0, 0, 255);">print</span>(<span style="line-height:1.5;color:rgb(163, 21, 21);">'----------参数多余传递：'</span>)
+demo_get_conf7(<span style="line-height:1.5;color:rgb(163, 21, 21);">'127.0.0.1'</span>, <span style="line-height:1.5;color:rgb(163, 21, 21);">'3306'</span>, user=<span style="line-height:1.5;color:rgb(163, 21, 21);">'new_user'</span>, pw=<span style="line-height:1.5;color:rgb(163, 21, 21);">'5678'</span>, db=<span style="line-height:1.5;color:rgb(163, 21, 21);">'tests'</span>, charset=<span style="line-height:1.5;color:rgb(163, 21, 21);">'utf8mb4'</span>, abc=<span style="line-height:1.5;color:rgb(163, 21, 21);">'123'</span>)
+<span style="line-height:1.5;color:rgb(0, 0, 255);">print</span>(<span style="line-height:1.5;color:rgb(163, 21, 21);">'----------参数减少传递：'</span>)
+demo_get_conf7(<span style="line-height:1.5;color:rgb(163, 21, 21);">'127.0.0.1'</span>, <span style="line-height:1.5;color:rgb(163, 21, 21);">'3306'</span>, user=<span style="line-height:1.5;color:rgb(163, 21, 21);">'new_user'</span>, pw=<span style="line-height:1.5;color:rgb(163, 21, 21);">'5678'</span>)
+<span style="line-height:1.5;color:rgb(0, 0, 255);">print</span>(<span style="line-height:1.5;color:rgb(163, 21, 21);">'----------变参没有传递：'</span>)
+demo_get_conf7(<span style="line-height:1.5;color:rgb(163, 21, 21);">'127.0.0.1'</span>, <span style="line-height:1.5;color:rgb(163, 21, 21);">'3306'</span>)
+
+</code></pre>
+<p style="font-size:13px;line-height:1.5;text-indent:0px;margin:10px auto;">  控制台输出：</p>
+<pre style="border-radius:4px;background-color: #fbfaf8;border: 1px solid rgba(0,0,0,.14902);color: #333;font-size: 12px;padding: 8px;font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif;box-sizing: border-box;"><code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif">----------参数完整传递：
+host:  127.0.0.1
+port:  3306
+user:  new_user
+pw:  5678
+db:  tests
+charset:  utf8mb4
+----------参数多余传递：
+host:  127.0.0.1
+port:  3306
+user:  new_user
+pw:  5678
+db:  tests
+charset:  utf8mb4
+----------参数减少传递：
+host:  127.0.0.1
+port:  3306
+user:  new_user
+pw:  5678
+db:  tests
+charset:  utf8
+----------变参没有传递：
+host:  127.0.0.1
+port:  3306
+user:  root
+pw:  1234
+db:  tests
+charset:  utf8
+</code></pre>
+<p style="font-size:13px;line-height:1.5;text-indent:0px;margin:10px auto;">  从控制台结果可以看出，多余传递的可变长参数被忽略掉了，少传的可变长参数使用了函数体内的默认值。可变长参数如果一个也没传递，那就完全使用了函数体内的默认值。</p>
+<p style="font-size:13px;line-height:1.5;text-indent:0px;margin:10px auto;">  以上是对Python中函数的不同类型参数的区别及应用场景例举，一点心得体会，希望对有兴趣的朋友能有所帮助！</p>
+
+</div></div></div></div></div></div></div></div>
+</div></div>
+<a class="back-link" href="../articles.html">← 返回笔记列表</a>
+</body></html>

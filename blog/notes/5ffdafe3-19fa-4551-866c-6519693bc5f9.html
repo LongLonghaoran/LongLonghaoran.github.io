@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="zh-CN" data-theme="light">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Puppet词汇，术语 — 技术笔记</title>
+<style>
+:root {
+  --bg: #ffffff;
+  --text: #1a1a1a;
+  --muted: #666;
+  --border: #e0e0e0;
+  --code-bg: #f5f5f5;
+  --link: #0066cc;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #1a1a1a;
+    --text: #e0e0e0;
+    --muted: #999;
+    --border: #333;
+    --code-bg: #2a2a2a;
+    --link: #66bbff;
+  }
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  line-height: 1.7;
+  color: var(--text);
+  background: var(--bg);
+  max-width: 860px;
+  margin: 0 auto;
+  padding: 2rem 1.5rem;
+}
+.note-header {
+  border-bottom: 2px solid var(--border);
+  padding-bottom: 1rem;
+  margin-bottom: 2rem;
+}
+.note-title {
+  font-size: 1.6rem;
+  font-weight: 700;
+  margin-bottom: 0.3rem;
+}
+.note-meta {
+  color: var(--muted);
+  font-size: 0.85rem;
+}
+.note-content {
+  font-size: 0.95rem;
+}
+.note-content h1 { font-size: 1.4rem; margin: 1.2rem 0 0.6rem; }
+.note-content h2 { font-size: 1.2rem; margin: 1rem 0 0.5rem; }
+.note-content h3 { font-size: 1.05rem; margin: 0.8rem 0 0.4rem; }
+.note-content p { margin: 0.5rem 0; }
+.note-content ul, .note-content ol { margin: 0.5rem 0 0.5rem 2rem; }
+.note-content li { margin: 0.2rem 0; }
+.note-content pre {
+  background: var(--code-bg);
+  padding: 1rem;
+  border-radius: 6px;
+  overflow-x: auto;
+  margin: 0.8rem 0;
+  font-size: 0.85rem;
+}
+.note-content code {
+  background: var(--code-bg);
+  padding: 0.1rem 0.3rem;
+  border-radius: 3px;
+  font-size: 0.88em;
+}
+.note-content pre code {
+  background: none;
+  padding: 0;
+}
+.note-content blockquote {
+  border-left: 3px solid var(--border);
+  padding-left: 1rem;
+  color: var(--muted);
+  margin: 0.8rem 0;
+}
+.note-content a { color: var(--link); }
+.note-content img {
+  max-width: 100%;
+  height: auto;
+  border-radius: 6px;
+  margin: 0.5rem 0;
+}
+.note-content table {
+  border-collapse: collapse;
+  width: 100%;
+  margin: 0.8rem 0;
+}
+.note-content th, .note-content td {
+  border: 1px solid var(--border);
+  padding: 0.5rem;
+}
+.note-content th { background: var(--code-bg); }
+.media-placeholder {
+  background: var(--code-bg);
+  padding: 1rem;
+  text-align: center;
+  color: var(--muted);
+  border-radius: 6px;
+  margin: 0.5rem 0;
+  font-size: 0.85rem;
+}
+.encrypt-placeholder {
+  background: #fff3cd;
+  padding: 0.5rem;
+  text-align: center;
+  color: #856404;
+  border-radius: 6px;
+  margin: 0.5rem 0;
+  font-size: 0.85rem;
+}
+.back-link {
+  display: inline-block;
+  margin-top: 2rem;
+  color: var(--link);
+  text-decoration: none;
+  font-size: 0.85rem;
+}
+</style>
+</head>
+<body>
+<div class="note-header">
+  <div class="note-title">Puppet词汇，术语</div>
+  <div class="note-meta">笔记本：Puppet</div>
+</div>
+<div class="note-content">
+<div><div>1.agent:</div><div>    1.1 agent软件包，也称为puppet-agent。puppet通常部署在cs结构中。当你在设备上安装puppet的时候，你就是在安装agent软件以及它所关联的工具和依赖项。在类unix系统中，这个包被称为puppet-agent</div><div>    1.2 puppet agent守护进程。你可以通过运行agent守护进程命令来调用agent软件，或者你可以让它以守护进程运行</div><div>    1.3 一个运行agent的节点。</div><div>    一个agent会定期运行puppet，来发送它的facts到主服务并接收一个配置清单，然后使用它的provider应用这份清单到本地机器。</div><div>    注意： 主puppet服务也会运行agent守护进程，这样可以让puppet可以去管理它自身的配置。在这种意义下，一个主服务也可以是一个agent。一个agent也可以作为它自己的主服务；这经常被称为一个无服务serverless配置。</div><div><br/></div><div>2.attribute属性</div><div>    attribute指定了给定的配置资源的 期望状态。每个资源类型有一套不同的属性attributes,并且每个属性有它自己的一套允许的值。例如，一个包资源（比如vim）可能有一个ensure属性，它的值可能是present,latest,absent或者一个具体的版本号：</div><div><span style="font-size: 18px; letter-spacing: normal; orphans: 2; text-indent: 0px; text-transform: none; white-space: pre; widows: 2; word-spacing: 0px; -webkit-text-stroke-width: 0px; background-color: rgb(245, 248, 250); color: rgb(69, 76, 82); font-family: marketing-mono; font-variant-caps: normal; font-variant-ligatures: normal;">package {'vim': ensure =&gt; present, provider =&gt; apt, }</span></div><div>其中provider表示安装软件包的提供者（比如apt yum?)，你使用 =&gt;操作符指定属性值，而且属性值对由逗号分隔</div><div><br/></div><div>3.catalog编目文档</div><div>编目文档是一个描述节点上每个被管理的资源的期望状态的文件。它是由所有puppet agent应用到指定节点的所有资源编制的，以及那些资源之间的关系。</div><div>    编目文档是由主服务从manifest和agent提供的数据（比如facts,certificates）编制而来，以及可选的外部数据。然后主服务在收到请求的时候将已编译的编目文档伺服给agent。</div><div>不像是manifest是来自于它们所编制的地方，编目文档不包含任何条件逻辑或者函数。它们是非歧义的，只与特定节点相关的，而且是通过节点生成的。<a style="box-sizing: border-box; font-size: 18px; letter-spacing: normal; orphans: 2; text-indent: 0px; text-transform: none; white-space: normal; widows: 2; word-spacing: 0px; -webkit-text-stroke-width: 0px; -webkit-font-smoothing: antialiased !important; color: rgb(49, 140, 245); font-family: marketing-sans; font-variant-caps: normal; font-variant-ligatures: normal; text-decoration: underline;" href="https://puppet.com/docs/puppet/6.22/subsystem_catalog_compilation.html#subsystem_catalog_compilation" title="When configuring a node, the agent uses a document called a catalog, which it downloads from the primary server. For each resource under management, the catalog describes its desired state and can specify ordered dependency information.">Catalog compilation</a></div><div><br/></div><div>4.exported resource</div><div>    导出的资源是一个你声明的对其他节点可用的可以资源</div><div><br/></div><div>5.manifest or site manifest</div><div style="font-size: 13px; letter-spacing: normal; orphans: 2; text-align: start; text-indent: 0px; text-transform: none; white-space: normal; widows: 2; word-spacing: 0px; -webkit-text-stroke-width: 0px; margin-top: 1em; margin-bottom: 1em;"><span style="font-size: 13px; letter-spacing: normal; orphans: 2; text-indent: 0px; text-transform: none; white-space: normal; widows: 2; word-spacing: 0px; -webkit-text-stroke-width: 0px; color: rgb(51, 51, 51); font-family: &quot;Helvetica Neue&quot;, Helvetica, Arial, &quot;Hiragino Sans GB&quot;, &quot;Hiragino Sans GB W3&quot;, &quot;Microsoft YaHei UI&quot;, &quot;Microsoft YaHei&quot;, sans-serif; font-variant-caps: normal; font-variant-ligatures: normal;-en-paragraph:true;">主要清单是主服务器在编制catalog时使用的主要入口点清单。</span></div><div style="font-size: 13px; letter-spacing: normal; orphans: 2; text-align: start; text-indent: 0px; text-transform: none; white-space: normal; widows: 2; word-spacing: 0px; -webkit-text-stroke-width: 0px; margin-top: 1em; margin-bottom: 1em;"><span style="font-size: 13px; letter-spacing: normal; orphans: 2; text-indent: 0px; text-transform: none; white-space: normal; widows: 2; word-spacing: 0px; -webkit-text-stroke-width: 0px; color: rgb(51, 51, 51); font-family: &quot;Helvetica Neue&quot;, Helvetica, Arial, &quot;Hiragino Sans GB&quot;, &quot;Hiragino Sans GB W3&quot;, &quot;Microsoft YaHei UI&quot;, &quot;Microsoft YaHei&quot;, sans-serif; font-variant-caps: normal; font-variant-ligatures: normal;-en-paragraph:true;">主清单文件或站点清单文件通常命名为site.pp。 它的位置由environment.conf中的manifest setting来设置，默认位置由puppet.conf中的default_manifest设置来设置。</span></div><div style="font-size: 13px; letter-spacing: normal; orphans: 2; text-align: start; text-indent: 0px; text-transform: none; white-space: normal; widows: 2; word-spacing: 0px; -webkit-text-stroke-width: 0px; margin-top: 1em; margin-bottom: 1em;"><span style="font-size: 13px;letter-spacing: normal;orphans: 2;text-indent: 0px;text-transform: none;white-space: normal;widows: 2;word-spacing: 0px;-webkit-text-stroke-width: 0px;-en-paragraph:true;"><br/></span></div><div style="font-size: 13px; letter-spacing: normal; orphans: 2; text-align: start; text-indent: 0px; text-transform: none; white-space: normal; widows: 2; word-spacing: 0px; -webkit-text-stroke-width: 0px; margin-top: 1em; margin-bottom: 1em;"><span style="font-size: 13px; color: rgb(51, 51, 51); font-family: &quot;Helvetica Neue&quot;, Helvetica, Arial, &quot;Hiragino Sans GB&quot;, &quot;Hiragino Sans GB W3&quot;, &quot;Microsoft YaHei UI&quot;, &quot;Microsoft YaHei&quot;, sans-serif; font-variant-caps: normal; font-variant-ligatures: normal;">6.manifest or puppet code</span></div><div style="font-size: 13px; letter-spacing: normal; orphans: 2; text-align: start; text-indent: 0px; text-transform: none; white-space: normal; widows: 2; word-spacing: 0px; -webkit-text-stroke-width: 0px; margin-top: 1em; margin-bottom: 1em;"><span style="font-size: 13px; color: rgb(51, 51, 51); font-family: &quot;Helvetica Neue&quot;, Helvetica, Arial, &quot;Hiragino Sans GB&quot;, &quot;Hiragino Sans GB W3&quot;, &quot;Microsoft YaHei UI&quot;, &quot;Microsoft YaHei&quot;, sans-serif; font-variant-caps: normal; font-variant-ligatures: normal;">一个清单文件包含了用puppet语言写的代码而且是以.pp文件扩展来命名的。puppet code可以包含：</span></div><ol><li><div style="font-size: 13px; letter-spacing: normal; orphans: 2; text-align: start; text-indent: 0px; text-transform: none; white-space: normal; widows: 2; word-spacing: 0px; -webkit-text-stroke-width: 0px; margin-top: 1em; margin-bottom: 1em;"><span style="font-size: 13px; color: rgb(51, 51, 51); font-family: &quot;Helvetica Neue&quot;, Helvetica, Arial, &quot;Hiragino Sans GB&quot;, &quot;Hiragino Sans GB W3&quot;, &quot;Microsoft YaHei UI&quot;, &quot;Microsoft YaHei&quot;, sans-serif; font-variant-caps: normal; font-variant-ligatures: normal;">声明资源resource和类class</span></div></li><li><div style="font-size: 13px; letter-spacing: normal; orphans: 2; text-align: start; text-indent: 0px; text-transform: none; white-space: normal; widows: 2; word-spacing: 0px; -webkit-text-stroke-width: 0px; margin-top: 1em; margin-bottom: 1em;"><span style="font-size: 13px; color: rgb(51, 51, 51); font-family: &quot;Helvetica Neue&quot;, Helvetica, Arial, &quot;Hiragino Sans GB&quot;, &quot;Hiragino Sans GB W3&quot;, &quot;Microsoft YaHei UI&quot;, &quot;Microsoft YaHei&quot;, sans-serif; font-variant-caps: normal; font-variant-ligatures: normal;">设置变量</span></div></li><li><div style="font-size: 13px; letter-spacing: normal; orphans: 2; text-align: start; text-indent: 0px; text-transform: none; white-space: normal; widows: 2; word-spacing: 0px; -webkit-text-stroke-width: 0px; margin-top: 1em; margin-bottom: 1em;"><span style="font-size: 13px; color: rgb(51, 51, 51); font-family: &quot;Helvetica Neue&quot;, Helvetica, Arial, &quot;Hiragino Sans GB&quot;, &quot;Hiragino Sans GB W3&quot;, &quot;Microsoft YaHei UI&quot;, &quot;Microsoft YaHei&quot;, sans-serif; font-variant-caps: normal; font-variant-ligatures: normal;">指定函数</span></div></li><li><div style="font-size: 13px; letter-spacing: normal; orphans: 2; text-align: start; text-indent: 0px; text-transform: none; white-space: normal; widows: 2; word-spacing: 0px; -webkit-text-stroke-width: 0px; margin-top: 1em; margin-bottom: 1em;"><span style="font-size: 13px; color: rgb(51, 51, 51); font-family: &quot;Helvetica Neue&quot;, Helvetica, Arial, &quot;Hiragino Sans GB&quot;, &quot;Hiragino Sans GB W3&quot;, &quot;Microsoft YaHei UI&quot;, &quot;Microsoft YaHei&quot;, sans-serif; font-variant-caps: normal; font-variant-ligatures: normal;">定义类，类型，函数，节点</span></div></li></ol><div>大多数清单都被包含在modules中。module中的每个清单定义一个单独的类，定义类型或者函数</div><div>主服务器服务会读取环境的main manifest。这个清单通常会定义节点，以至于每个管理的代理会接收一个独特的清单</div></div><div><br/></div><div>7.class类 or classification</div><div>    是一个相关的资源的集合的定义，在定义之后，可以被声明为一个单元。例如，一个类可以包含配置一个apache webserver所需所有的资源（比如文件，设置，模块以及脚本）。类还可以声明其它类。要查看更多信息，请看  <a style="box-sizing: border-box; font-size: 18px; letter-spacing: normal; orphans: 2; text-indent: 0px; text-transform: none; white-space: normal; widows: 2; word-spacing: 0px; -webkit-text-stroke-width: 0px; -webkit-font-smoothing: antialiased !important; color: rgb(49, 140, 245); font-family: marketing-sans; font-variant-caps: normal; font-variant-ligatures: normal;" href="https://puppet.com/docs/puppet/6.22/lang_classes.html#lang_classes" title="Classes are named blocks of Puppet code that are stored in modules and applied later when they are invoked by name. You can add classes to a node’s catalog by either declaring them in your manifests or assigning them from an external node classifier (ENC). Classes generally configure large or medium-sized chunks of functionality, such as all of the packages, configuration files, and services needed to run an application.">Classes</a></div><div>    类是单例的（类似于单例类只能初始化一次）并且只能执行一次；即便可以通过include函数多次声明，puppet也仍然只会执行一次</div><div>    require和contain函数可以创建类之间的关联。要查看更多信息，请看 <a style="box-sizing: border-box; font-size: 18px; letter-spacing: normal; orphans: 2; text-indent: 0px; text-transform: none; white-space: normal; widows: 2; word-spacing: 0px; -webkit-text-stroke-width: 0px; -webkit-font-smoothing: antialiased !important; color: rgb(49, 140, 245); font-family: marketing-sans; font-variant-caps: normal; font-variant-ligatures: normal;" href="https://puppet.com/docs/puppet/6.22/lang_containment.html#lang_containment" title="Containment is what controls the order in which the various parts of your Puppet code are executed. Containment is the relationship that resources have to classes and defined types, determining what has to happen before other things can happen.">Containment of resources</a></div><div>8.declare声明</div><div>    要指示puppet在配置文件中去引入一个指定的类或者资源，你可以使用puppet语言去声明它。为了声明类，使用函数（比如include)或者class {'my_class': }符号。为了声明资源，使用小写的 file {'/tmp/my_file':}符号</div><div><br/></div><div>9.fact 因素</div><div>    因素是一块关于节点的信息，比如它的主机名，Ip地址，或者操作系统</div><div>    facter从节点读取因素并且让它们对puppet可用。你可以通过自定义隐私来扩展facter，这样可以暴露一些站点特定的你的系统的详细信息给Puppet manifest</div><div><br/></div><div>10.facter</div><div>    它是puppet系统信息工具。facter会读取一个节点的因素，facter内置了很多很多因素，你可以通过在节点上运行facter命令来查看他们的名字和值</div><div>    在客户-服务端的puppet结构中，客户端发送它们的节点因素给主服务端</div><div><br/></div><div>11.Hiera</div><div>    hiera是一个随客户端附带的一个工具，可以为特定站点的数据提供层级键值查看。这让你可以从manifest中提取出特定站点的数据并且将它放置到中心的位置，与此同时它也可以设置默认数据并且覆盖特定的值。</div><div><br/></div><div>12.module模块</div><div>    模块是一个类、资源类型、文件、函数以及模板的集合，基于特定目标组织的。例如，一个模块可以配置一个apache服务器实例或者rails应用。在puppet forge上有非常多的模块可供下载</div><div><br/></div><div><br/></div><div>13.namevar or name</div><div>    名称属性代表着资源在目标系统上的唯一标识。比如，两个不同的文件不能拥有相同的路径，两个不同的服务不同有相同的名字。</div><div>    每个资源类型都有着指定的名称，一般是name。一些类型，比如file或者exec。如果类型的名称不是name，那么就会在关联文档中提到</div><div>    如果你不指定资源的名称，那么它默认将会是资源的title标题</div><div><br/></div><div>14.puppet language</div><div>    puppet code就是使用puppet language写的。puppet language文件被称作manifests而且是以.pp为文件名后缀的。主服务端在运行puppet run期间编制puppet code为编目文档</div><div><br/></div><div>15.puppet run</div><div>    所谓puppet run就是 客户端发送因素和一个标识证书给主服务端并且请求一个编目文档 。客户端应用编目到节点上通过使用特定操作系统的provider来按行赋予节点属性，然后发送日志报告和指标信息给主服务端。</div><div>    默认情况下，Puppet run每30分钟执行一次，即使客户端编目文档或者配置文件没有发生变更。</div><div><br/></div><div>16.puppet server</div><div>    puppet server是一个开源的jvm应用，它提供了高性能、可扩展的主服务端服务以及用于维护的管理API。</div><div><br/></div><div>17.puppet db</div><div>    puppet db是一个开源的数据库，用于缓存和存储由puppet产生的数据。它可以让puppet运行得更快并且为其他应用提供api来访问puppet收集到的数据。它也可以开启高级puppet高级特性</div><div><br/></div><div>18.puppet file</div><div>    puppetfile是一个权威的、独立的清单，它告诉pe要安装哪个模块，哪个版本要安装，以及使用哪个源。让你管理一整套模块的安装</div><div><br/></div><div>19.scope域</div><div>    域指的是puppet code的一块区域，从其他的code中部分分割出来。域限制了变量和资源的范围。域可以被命名或者是匿名域。</div><div>    总体来说，如果多个名称相同的变量都是可用的，那么puppet将只会最近的域。local -&gt; node -&gt; top</div><div>    你会使用到的最通用的域：</div><div>        top scope: 顶级域</div><div>        node scope: 节点域</div><div>        local scope: 本地域</div><div><br/></div><div>20.title</div><div>    title在编目文档中是一个资源或者类的唯一标识</div><div>        在class中，title就是class名称</div><div>        在资源定义中，title就是第一个花括号之后的部分。比如:</div><div>            file {'/etc/passwd': </div><div>                    owner =&gt; 'root',</div><div>                    group =&gt; 'root',</div><div>            }</div><div>        则，title就是 /etc/passwd</div><div>        在原生资源类型中，名称name使用title作为它的默认值，如果你不显示指定一个名称的话。</div><div>        在定义类型或者类中，标题可通过$title变量在整个定义过程中都可以用</div>
+</div>
+<a class="back-link" href="../articles.html">← 返回笔记列表</a>
+</body>
+</html>

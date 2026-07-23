@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="zh-CN" data-theme="light">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>vue笔记第七个 — 技术笔记</title>
+<style>
+:root { --bg:#fff; --text:#1a1a1a; --muted:#666; --border:#e0e0e0; --code-bg:#f5f5f5; --link:#0066cc; }
+@media (prefers-color-scheme: dark) { :root { --bg:#1a1a1a; --text:#e0e0e0; --muted:#999; --border:#333; --code-bg:#2a2a2a; --link:#66bbff; } }
+* { box-sizing:border-box; margin:0; padding:0; }
+body { font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Arial,sans-serif; line-height:1.7; color:var(--text); background:var(--bg); max-width:860px; margin:0 auto; padding:2rem 1.5rem; }
+.note-header { border-bottom:2px solid var(--border); padding-bottom:1rem; margin-bottom:2rem; }
+.note-title { font-size:1.6rem; font-weight:700; margin-bottom:0.3rem; }
+.note-meta { color:var(--muted); font-size:0.85rem; }
+.note-content { font-size:0.95rem; }
+.note-content h1 { font-size:1.4rem; margin:1.2rem 0 0.6rem; }
+.note-content h2 { font-size:1.2rem; margin:1rem 0 0.5rem; }
+.note-content h3 { font-size:1.05rem; margin:0.8rem 0 0.4rem; }
+.note-content p { margin:0.5rem 0; }
+.note-content ul,.note-content ol { margin:0.5rem 0 0.5rem 2rem; }
+.note-content li { margin:0.2rem 0; }
+.note-content pre { background:var(--code-bg); padding:1rem; border-radius:6px; overflow-x:auto; margin:0.8rem 0; font-size:0.85rem; }
+.note-content code { background:var(--code-bg); padding:0.1rem 0.3rem; border-radius:3px; font-size:0.88em; }
+.note-content pre code { background:none; padding:0; }
+.note-content blockquote { border-left:3px solid var(--border); padding-left:1rem; color:var(--muted); margin:0.8rem 0; }
+.note-content a { color:var(--link); }
+.note-content img { max-width:100%; height:auto; border-radius:6px; margin:0.5rem 0; }
+.note-content table { border-collapse:collapse; width:100%; margin:0.8rem 0; }
+.note-content th,.note-content td { border:1px solid var(--border); padding:0.5rem; }
+.note-content th { background:var(--code-bg); }
+.media-placeholder { background:var(--code-bg); padding:1rem; text-align:center; color:var(--muted); border-radius:6px; margin:0.5rem 0; font-size:0.85rem; }
+.encrypt-placeholder { background:#fff3cd; padding:0.5rem; text-align:center; color:#856404; border-radius:6px; margin:0.5rem 0; font-size:0.85rem; }
+.back-link { display:inline-block; margin-top:2rem; color:var(--link); text-decoration:none; font-size:0.85rem; }
+</style>
+</head>
+<body>
+<div class="note-header"><div class="note-title">vue笔记第七个</div><div class="note-meta">笔记本：前端学习</div></div>
+<div class="note-content"><div style="font-size: 14px; margin: 0; padding: 0; width: 100%;"><h1 style="line-height: 160%; box-sizing: content-box; font-weight: 700; font-size: 41px; border-bottom: 3px double #999; color: #000; margin-top: 14px;">day7</h1>
+<h2 style="line-height: 160%; box-sizing: content-box; font-weight: 700; font-size: 34px; border-bottom: 1px solid #dbdbdb; color: #333;">使用mui的<code style="line-height: 160%; box-sizing: content-box; border: 0; border-radius: 0; color: #c1788b; padding: 4px 4px 2px 0; letter-spacing: -.3px;">tab-top-webview-main</code>完成分类滑动栏</h2>
+<h3 style="line-height: 160%; box-sizing: content-box; font-weight: 700; font-size: 27px; color: #333;">兼容问题</h3>
+<ol style="line-height: 160%; box-sizing: content-box; display: block; padding-left: 30px; margin: 6px 0 10px; color: #333; list-style-type: decimal;">
+<li style="line-height: 160%; box-sizing: content-box;">和 App.vue 中的 <code style="line-height: 160%; box-sizing: content-box; border: 0; border-radius: 0; color: #c1788b; padding: 4px 4px 2px 0; letter-spacing: -.3px;">router-link</code> 身上的类名 <code style="line-height: 160%; box-sizing: content-box; border: 0; border-radius: 0; color: #c1788b; padding: 4px 4px 2px 0; letter-spacing: -.3px;">mui-tab-item</code> 存在兼容性问题，导致tab栏失效，可以把<code style="line-height: 160%; box-sizing: content-box; border: 0; border-radius: 0; color: #c1788b; padding: 4px 4px 2px 0; letter-spacing: -.3px;">mui-tab-item</code>改名为<code style="line-height: 160%; box-sizing: content-box; border: 0; border-radius: 0; color: #c1788b; padding: 4px 4px 2px 0; letter-spacing: -.3px;">mui-tab-item1</code>，并复制相关的类样式，来解决这个问题；</li>
+</ol>
+<pre style="line-height: 160%; box-sizing: content-box; border: 0; border-radius: 0; margin: 2px 0 8px; background-color: #f5f7f8;"><code style="display: block; overflow-x: auto; background: #1e1e1e; line-height: 160%; box-sizing: content-box; border: 0; border-radius: 0; letter-spacing: -.3px; padding: 18px; color: #f4f4f4; white-space: pre-wrap;">    .mui-bar-tab .mui-tab-item1.mui-active {
+      color: #007aff;
+    }
+
+    .mui-bar-tab .mui-tab-item1 {
+      display: table-cell;
+      overflow: hidden;
+      width: 1%;
+      
+      text-align: center;
+      vertical-align: middle;
+      white-space: nowrap;
+      text-overflow: ellipsis;
+      color: #929292;
+    }
+
+    .mui-bar-tab .mui-tab-item1 .mui-icon {
+      top: 3px;
+      
+      
+      padding-top: 0;
+      padding-bottom: 0;
+    }
+
+    .mui-bar-tab .mui-tab-item1 .mui-icon~.mui-tab-label {
+      font-size: 11px;
+      display: block;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+</code></pre>
+<ol start="2" style="line-height: 160%; box-sizing: content-box; display: block; padding-left: 30px; margin: 6px 0 10px; color: #333; list-style-type: decimal;">
+<li style="line-height: 160%; box-sizing: content-box;"><code style="line-height: 160%; box-sizing: content-box; border: 0; border-radius: 0; color: #c1788b; padding: 4px 4px 2px 0; letter-spacing: -.3px;">tab-top-webview-main</code>组件第一次显示到页面中的时候，无法被滑动的解决方案：</li>
+</ol>
+<ul style="line-height: 160%; box-sizing: content-box; display: block; list-style-type: disc; padding-left: 30px; margin: 6px 0 10px; color: #333;">
+<li style="line-height: 160%; box-sizing: content-box; position: relative;">先导入 mui 的JS文件:</li>
+</ul>
+<pre style="line-height: 160%; box-sizing: content-box; border: 0; border-radius: 0; margin: 2px 0 8px; background-color: #f5f7f8;"><code style="display: block; overflow-x: auto; background: #1e1e1e; line-height: 160%; box-sizing: content-box; border: 0; border-radius: 0; letter-spacing: -.3px; padding: 18px; color: #f4f4f4; white-space: pre-wrap;">import mui from '../../../lib/mui/js/mui.min.js'
+</code></pre>
+<ul style="line-height: 160%; box-sizing: content-box; display: block; list-style-type: disc; padding-left: 30px; margin: 6px 0 10px; color: #333;">
+<li style="line-height: 160%; box-sizing: content-box; position: relative;">在 组件的 <code style="line-height: 160%; box-sizing: content-box; border: 0; border-radius: 0; color: #c1788b; padding: 4px 4px 2px 0; letter-spacing: -.3px;">mounted</code> 事件钩子中，注册 mui 的滚动事件：</li>
+</ul>
+<pre style="line-height: 160%; box-sizing: content-box; border: 0; border-radius: 0; margin: 2px 0 8px; background-color: #f5f7f8;"><code style="display: block; overflow-x: auto; background: #1e1e1e; line-height: 160%; box-sizing: content-box; border: 0; border-radius: 0; letter-spacing: -.3px; padding: 18px; color: #f4f4f4; white-space: pre-wrap;">	mounted() {
+   	// 需要在组件的 mounted 事件钩子中，注册 mui 的 scroll 滚动事件
+       mui('.mui-scroll-wrapper').scroll({
+         deceleration: 0.0005 //flick 减速系数，系数越大，滚动速度越慢，滚动距离越小，默认值0.0006
+       });
+ 	}
+</code></pre>
+<ol start="3" style="line-height: 160%; box-sizing: content-box; display: block; padding-left: 30px; margin: 6px 0 10px; color: #333; list-style-type: decimal;">
+<li style="line-height: 160%; box-sizing: content-box;">滑动的时候报警告：<code style="line-height: 160%; box-sizing: content-box; border: 0; border-radius: 0; color: #c1788b; padding: 4px 4px 2px 0; letter-spacing: -.3px;">Unable to preventDefault inside passive event listener due to target being treated as passive. See https://www.chromestatus.com/features/5093566007214080</code></li>
+</ol>
+<pre style="line-height: 160%; box-sizing: content-box; border: 0; border-radius: 0; margin: 2px 0 8px; background-color: #f5f7f8;"><code style="display: block; overflow-x: auto; background: #1e1e1e; line-height: 160%; box-sizing: content-box; border: 0; border-radius: 0; letter-spacing: -.3px; padding: 18px; color: #f4f4f4; white-space: pre-wrap;">解决方法，可以加上* { touch-action: none; } 这句样式去掉。
+</code></pre>
+<p style="line-height: 160%; box-sizing: content-box; margin: 10px 0; color: #333;">原因：（是chrome为了提高页面的滑动流畅度而新折腾出来的一个东西） http://www.cnblogs.com/pearl07/p/6589114.html<br/>
+https://developer.mozilla.org/zh-CN/docs/Web/CSS/touch-action</p>
+<h2 style="line-height: 160%; box-sizing: content-box; font-weight: 700; font-size: 34px; border-bottom: 1px solid #dbdbdb; color: #333;">移除严格模式</h2>
+<p style="line-height: 160%; box-sizing: content-box; margin: 10px 0; color: #333;"><a href="https://github.com/genify/babel-plugin-transform-remove-strict-mode" style="line-height: 160%; box-sizing: content-box; text-decoration: underline; color: #5286bc;">babel-plugin-transform-remove-strict-mode</a></p>
+<h2 style="line-height: 160%; box-sizing: content-box; font-weight: 700; font-size: 34px; border-bottom: 1px solid #dbdbdb; color: #333;"><a href="https://github.com/LS1231/vue-preview" style="line-height: 160%; box-sizing: content-box; text-decoration: underline; color: #5286bc;">vue-preview</a></h2>
+<p style="line-height: 160%; box-sizing: content-box; margin: 10px 0; color: #333;">一个Vue集成PhotoSwipe图片预览插件</p>
+</div><center style='display:none !important;visibility:collapse !important;height:0 !important;white-space:nowrap;width:100%;overflow:hidden'>vue07%0A%23%20day7%0A%0A%23%23%20%E4%BD%BF%E7%94%A8mui%E7%9A%84%60tab-top-webview-main%60%E5%AE%8C%E6%88%90%E5%88%86%E7%B1%BB%E6%BB%91%E5%8A%A8%E6%A0%8F%0A%0A%23%23%23%20%E5%85%BC%E5%AE%B9%E9%97%AE%E9%A2%98%0A1.%20%E5%92%8C%20App.vue%20%E4%B8%AD%E7%9A%84%20%60router-link%60%20%E8%BA%AB%E4%B8%8A%E7%9A%84%E7%B1%BB%E5%90%8D%20%60mui-tab-item%60%20%E5%AD%98%E5%9C%A8%E5%85%BC%E5%AE%B9%E6%80%A7%E9%97%AE%E9%A2%98%EF%BC%8C%E5%AF%BC%E8%87%B4tab%E6%A0%8F%E5%A4%B1%E6%95%88%EF%BC%8C%E5%8F%AF%E4%BB%A5%E6%8A%8A%60mui-tab-item%60%E6%94%B9%E5%90%8D%E4%B8%BA%60mui-tab-item1%60%EF%BC%8C%E5%B9%B6%E5%A4%8D%E5%88%B6%E7%9B%B8%E5%85%B3%E7%9A%84%E7%B1%BB%E6%A0%B7%E5%BC%8F%EF%BC%8C%E6%9D%A5%E8%A7%A3%E5%86%B3%E8%BF%99%E4%B8%AA%E9%97%AE%E9%A2%98%EF%BC%9B%0A%60%60%60%0A%20%20%20%20.mui-bar-tab%20.mui-tab-item1.mui-active%20%7B%0A%20%20%20%20%20%20color%3A%20%23007aff%3B%0A%20%20%20%20%7D%0A%0A%20%20%20%20.mui-bar-tab%20.mui-tab-item1%20%7B%0A%20%20%20%20%20%20display%3A%20table-cell%3B%0A%20%20%20%20%20%20overflow%3A%20hidden%3B%0A%20%20%20%20%20%20width%3A%201%25%3B%0A%20%20%20%20%20%20height%3A%2050px%3B%0A%20%20%20%20%20%20text-align%3A%20center%3B%0A%20%20%20%20%20%20vertical-align%3A%20middle%3B%0A%20%20%20%20%20%20white-space%3A%20nowrap%3B%0A%20%20%20%20%20%20text-overflow%3A%20ellipsis%3B%0A%20%20%20%20%20%20color%3A%20%23929292%3B%0A%20%20%20%20%7D%0A%0A%20%20%20%20.mui-bar-tab%20.mui-tab-item1%20.mui-icon%20%7B%0A%20%20%20%20%20%20top%3A%203px%3B%0A%20%20%20%20%20%20width%3A%2024px%3B%0A%20%20%20%20%20%20height%3A%2024px%3B%0A%20%20%20%20%20%20padding-top%3A%200%3B%0A%20%20%20%20%20%20padding-bottom%3A%200%3B%0A%20%20%20%20%7D%0A%0A%20%20%20%20.mui-bar-tab%20.mui-tab-item1%20.mui-icon~.mui-tab-label%20%7B%0A%20%20%20%20%20%20font-size%3A%2011px%3B%0A%20%20%20%20%20%20display%3A%20block%3B%0A%20%20%20%20%20%20overflow%3A%20hidden%3B%0A%20%20%20%20%20%20text-overflow%3A%20ellipsis%3B%0A%20%20%20%20%7D%0A%60%60%60%0A2.%20%60tab-top-webview-main%60%E7%BB%84%E4%BB%B6%E7%AC%AC%E4%B8%80%E6%AC%A1%E6%98%BE%E7%A4%BA%E5%88%B0%E9%A1%B5%E9%9D%A2%E4%B8%AD%E7%9A%84%E6%97%B6%E5%80%99%EF%BC%8C%E6%97%A0%E6%B3%95%E8%A2%AB%E6%BB%91%E5%8A%A8%E7%9A%84%E8%A7%A3%E5%86%B3%E6%96%B9%E6%A1%88%EF%BC%9A%0A%20%2B%20%E5%85%88%E5%AF%BC%E5%85%A5%20mui%20%E7%9A%84JS%E6%96%87%E4%BB%B6%3A%0A%20%60%60%60%0A%20import%20mui%20from%20'..%2F..%2F..%2Flib%2Fmui%2Fjs%2Fmui.min.js'%0A%20%60%60%60%0A%20%2B%20%E5%9C%A8%20%E7%BB%84%E4%BB%B6%E7%9A%84%20%60mounted%60%20%E4%BA%8B%E4%BB%B6%E9%92%A9%E5%AD%90%E4%B8%AD%EF%BC%8C%E6%B3%A8%E5%86%8C%20mui%20%E7%9A%84%E6%BB%9A%E5%8A%A8%E4%BA%8B%E4%BB%B6%EF%BC%9A%0A%20%60%60%60%0A%20%09mounted()%20%7B%0A%20%20%20%20%09%2F%2F%20%E9%9C%80%E8%A6%81%E5%9C%A8%E7%BB%84%E4%BB%B6%E7%9A%84%20mounted%20%E4%BA%8B%E4%BB%B6%E9%92%A9%E5%AD%90%E4%B8%AD%EF%BC%8C%E6%B3%A8%E5%86%8C%20mui%20%E7%9A%84%20scroll%20%E6%BB%9A%E5%8A%A8%E4%BA%8B%E4%BB%B6%0A%20%20%20%20%20%20%20%20mui('.mui-scroll-wrapper').scroll(%7B%0A%20%20%20%20%20%20%20%20%20%20deceleration%3A%200.0005%20%2F%2Fflick%20%E5%87%8F%E9%80%9F%E7%B3%BB%E6%95%B0%EF%BC%8C%E7%B3%BB%E6%95%B0%E8%B6%8A%E5%A4%A7%EF%BC%8C%E6%BB%9A%E5%8A%A8%E9%80%9F%E5%BA%A6%E8%B6%8A%E6%85%A2%EF%BC%8C%E6%BB%9A%E5%8A%A8%E8%B7%9D%E7%A6%BB%E8%B6%8A%E5%B0%8F%EF%BC%8C%E9%BB%98%E8%AE%A4%E5%80%BC0.0006%0A%20%20%20%20%20%20%20%20%7D)%3B%0A%20%20%09%7D%0A%20%60%60%60%0A3.%20%E6%BB%91%E5%8A%A8%E7%9A%84%E6%97%B6%E5%80%99%E6%8A%A5%E8%AD%A6%E5%91%8A%EF%BC%9A%60Unable%20to%20preventDefault%20inside%20passive%20event%20listener%20due%20to%20target%20being%20treated%20as%20passive.%20See%20https%3A%2F%2Fwww.chromestatus.com%2Ffeatures%2F5093566007214080%60%0A%60%60%60%0A%E8%A7%A3%E5%86%B3%E6%96%B9%E6%B3%95%EF%BC%8C%E5%8F%AF%E4%BB%A5%E5%8A%A0%E4%B8%8A*%20%7B%20touch-action%3A%20none%3B%20%7D%20%E8%BF%99%E5%8F%A5%E6%A0%B7%E5%BC%8F%E5%8E%BB%E6%8E%89%E3%80%82%0A%60%60%60%0A%E5%8E%9F%E5%9B%A0%EF%BC%9A%EF%BC%88%E6%98%AFchrome%E4%B8%BA%E4%BA%86%E6%8F%90%E9%AB%98%E9%A1%B5%E9%9D%A2%E7%9A%84%E6%BB%91%E5%8A%A8%E6%B5%81%E7%95%85%E5%BA%A6%E8%80%8C%E6%96%B0%E6%8A%98%E8%85%BE%E5%87%BA%E6%9D%A5%E7%9A%84%E4%B8%80%E4%B8%AA%E4%B8%9C%E8%A5%BF%EF%BC%89%20http%3A%2F%2Fwww.cnblogs.com%2Fpearl07%2Fp%2F6589114.html%0Ahttps%3A%2F%2Fdeveloper.mozilla.org%2Fzh-CN%2Fdocs%2FWeb%2FCSS%2Ftouch-action%0A%0A%0A%23%23%20%E7%A7%BB%E9%99%A4%E4%B8%A5%E6%A0%BC%E6%A8%A1%E5%BC%8F%0A%5Bbabel-plugin-transform-remove-strict-mode%5D(https%3A%2F%2Fgithub.com%2Fgenify%2Fbabel-plugin-transform-remove-strict-mode)%0A%0A%23%23%20%5Bvue-preview%5D(https%3A%2F%2Fgithub.com%2FLS1231%2Fvue-preview)%0A%E4%B8%80%E4%B8%AAVue%E9%9B%86%E6%88%90PhotoSwipe%E5%9B%BE%E7%89%87%E9%A2%84%E8%A7%88%E6%8F%92%E4%BB%B6</center></div>
+<a class="back-link" href="../articles.html">← 返回笔记列表</a>
+</body></html>

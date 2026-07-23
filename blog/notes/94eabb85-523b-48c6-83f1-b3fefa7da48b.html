@@ -1,0 +1,289 @@
+<!DOCTYPE html>
+<html lang="zh-CN" data-theme="light">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>openssl s_client工具官方文档 /docs/man1.0.2/man1/openssl-s_client.html — 技术笔记</title>
+<style>
+:root { --bg:#fff; --text:#1a1a1a; --muted:#666; --border:#e0e0e0; --code-bg:#f5f5f5; --link:#0066cc; }
+@media (prefers-color-scheme: dark) { :root { --bg:#1a1a1a; --text:#e0e0e0; --muted:#999; --border:#333; --code-bg:#2a2a2a; --link:#66bbff; } }
+* { box-sizing:border-box; margin:0; padding:0; }
+body { font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Arial,sans-serif; line-height:1.7; color:var(--text); background:var(--bg); max-width:860px; margin:0 auto; padding:2rem 1.5rem; }
+.note-header { border-bottom:2px solid var(--border); padding-bottom:1rem; margin-bottom:2rem; }
+.note-title { font-size:1.6rem; font-weight:700; margin-bottom:0.3rem; }
+.note-meta { color:var(--muted); font-size:0.85rem; }
+.note-content { font-size:0.95rem; }
+.note-content h1 { font-size:1.4rem; margin:1.2rem 0 0.6rem; }
+.note-content h2 { font-size:1.2rem; margin:1rem 0 0.5rem; }
+.note-content h3 { font-size:1.05rem; margin:0.8rem 0 0.4rem; }
+.note-content p { margin:0.5rem 0; }
+.note-content ul,.note-content ol { margin:0.5rem 0 0.5rem 2rem; }
+.note-content li { margin:0.2rem 0; }
+.note-content pre { background:var(--code-bg); padding:1rem; border-radius:6px; overflow-x:auto; margin:0.8rem 0; font-size:0.85rem; }
+.note-content code { background:var(--code-bg); padding:0.1rem 0.3rem; border-radius:3px; font-size:0.88em; }
+.note-content pre code { background:none; padding:0; }
+.note-content blockquote { border-left:3px solid var(--border); padding-left:1rem; color:var(--muted); margin:0.8rem 0; }
+.note-content a { color:var(--link); }
+.note-content img { max-width:100%; height:auto; border-radius:6px; margin:0.5rem 0; }
+.note-content table { border-collapse:collapse; width:100%; margin:0.8rem 0; }
+.note-content th,.note-content td { border:1px solid var(--border); padding:0.5rem; }
+.note-content th { background:var(--code-bg); }
+.media-placeholder { background:var(--code-bg); padding:1rem; text-align:center; color:var(--muted); border-radius:6px; margin:0.5rem 0; font-size:0.85rem; }
+.encrypt-placeholder { background:#fff3cd; padding:0.5rem; text-align:center; color:#856404; border-radius:6px; margin:0.5rem 0; font-size:0.85rem; }
+.back-link { display:inline-block; margin-top:2rem; color:var(--link); text-decoration:none; font-size:0.85rem; }
+</style>
+</head>
+<body>
+<div class="note-header"><div class="note-title">openssl s_client工具官方文档 /docs/man1.0.2/man1/openssl-s_client.html</div><div class="note-meta">笔记本：关于加密、解密、签名</div></div>
+<div class="note-content"><div style="--en-clipped-content:simplified; --en-clipped-source-url:https://www.openssl.org/docs/man1.0.2/man1/openssl-s_client.html; --en-clipped-source-title:openssl s_client工具官方文档 /docs/man1.0.2/man1/openssl-s_client.html;">
+<div><br/></div><div style="min-height: 6363px; font-size: 16px; display: block; min-width: 100%; position: relative;"> <div style="background-color:transparent;font:inherit;vertical-align:baseline;"><div style="background-color:transparent;font:inherit;vertical-align:baseline;font-family:&quot;PT Serif&quot;;font-size:16px;line-height:1.5em;color:rgb(31, 9, 9);text-align:left;"><div style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;"><div style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;width:36em;z-index:200;padding-left:2em;padding-right:2em;margin-left:auto;margin-right:auto;position:relative;"><div style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;position:relative;margin-left:-25px;margin-right:25px;"><div style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;padding-top:0px;padding-bottom:9em;position:relative;"><div style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;margin-bottom:1.5em;"><div style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;position:relative;margin-bottom:0px;"><div style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;margin-bottom:0px;"><div style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;margin-bottom:0px;"><h1 style="font-family:&quot;PT Serif&quot;;text-align:left;border:0px;font:inherit;vertical-align:baseline;font-size:35px;font-weight:normal;line-height:35px;margin-bottom:20px;padding:0px;margin:0px;"> OpenSSL </h1><div style="padding:0px;border:0px;font:inherit;vertical-align:baseline;position:relative;height:1em;line-height:1;text-align:center;margin:0px;padding-top:1.5em;padding-bottom:1.5em;margin-bottom:0px;"><div style="padding:0px;border:0px;font:inherit;vertical-align:baseline;background:-webkit-linear-gradient(0deg, rgb(243, 242, 238) 1%, rgb(31, 9, 9) 50%, rgb(243, 242, 238) 99%);position:absolute;left:-4em;top:50%;z-index:10;width:100%;padding-left:4em;padding-right:4em;height:0.1em;opacity:0.5;margin:0px;margin-bottom:0px;"><span style="font:inherit;position:absolute;left:-4em;top:50%;z-index:10;width:100%;padding-left:4em;padding-right:4em;height:0.1em;margin:0px;opacity:0.5;background:-webkit-linear-gradient(0deg, rgb(243, 242, 238) 1%, rgb(31, 9, 9) 50%, rgb(243, 242, 238) 99%);"></span></div></div></div>
+    <h2 style="font-family:&quot;PT Serif&quot;;text-align:left;margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;font-weight:bold;font-size:30px;line-height:35px;margin-top:35px;margin-bottom:15px;">
+      Cryptography and SSL/TLS Toolkit
+    </h2>
+  
+
+
+
+
+
+  
+    
+      
+        
+          <div style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;display:block;"><h2 style="font-family:&quot;PT Serif&quot;;text-align:left;margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;font-weight:bold;font-size:30px;line-height:35px;margin-top:35px;margin-bottom:15px;">s_client</h2></div>
+          
+            <h3 style="font-family:&quot;PT Serif&quot;;text-align:left;margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;font-size:30px;line-height:35px;margin-top:35px;font-weight:normal;margin-bottom:15px;">NAME</h3>
+
+<p style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;margin-bottom:1.5em;">openssl-s_client, s_client - SSL/TLS client program</p>
+
+<h3 style="font-family:&quot;PT Serif&quot;;text-align:left;margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;font-size:30px;line-height:35px;margin-top:35px;font-weight:normal;margin-bottom:15px;">SYNOPSIS</h3>
+
+<p style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;margin-bottom:1.5em;"><b style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;font-weight:bold;">openssl</b> <b style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;font-weight:bold;">s_client</b> [<b style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;font-weight:bold;">-connect host:port</b>] [<b style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;font-weight:bold;">-servername name</b>] [<b style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;font-weight:bold;">-verify depth</b>] [<b style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;font-weight:bold;">-verify_return_error</b>] [<b style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;font-weight:bold;">-cert filename</b>] [<b style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;font-weight:bold;">-certform DER|PEM</b>] [<b style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;font-weight:bold;">-key filename</b>] [<b style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;font-weight:bold;">-keyform DER|PEM</b>] [<b style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;font-weight:bold;">-pass arg</b>] [<b style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;font-weight:bold;">-CApath directory</b>] [<b style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;font-weight:bold;">-CAfile filename</b>] [<b style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;font-weight:bold;">-no_alt_chains</b>] [<b style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;font-weight:bold;">-reconnect</b>] [<b style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;font-weight:bold;">-pause</b>] [<b style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;font-weight:bold;">-showcerts</b>] [<b style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;font-weight:bold;">-debug</b>] [<b style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;font-weight:bold;">-msg</b>] [<b style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;font-weight:bold;">-nbio_test</b>] [<b style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;font-weight:bold;">-state</b>] [<b style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;font-weight:bold;">-nbio</b>] [<b style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;font-weight:bold;">-crlf</b>] [<b style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;font-weight:bold;">-ign_eof</b>] [<b style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;font-weight:bold;">-no_ign_eof</b>] [<b style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;font-weight:bold;">-quiet</b>] [<b style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;font-weight:bold;">-ssl2</b>] [<b style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;font-weight:bold;">-ssl3</b>] [<b style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;font-weight:bold;">-tls1</b>] [<b style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;font-weight:bold;">-no_ssl2</b>] [<b style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;font-weight:bold;">-no_ssl3</b>] [<b style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;font-weight:bold;">-no_tls1</b>] [<b style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;font-weight:bold;">-no_tls1_1</b>] [<b style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;font-weight:bold;">-no_tls1_2</b>] [<b style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;font-weight:bold;">-fallback_scsv</b>] [<b style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;font-weight:bold;">-bugs</b>] [<b style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;font-weight:bold;">-sigalgs sigalglist</b>] [<b style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;font-weight:bold;">-curves curvelist</b>] [<b style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;font-weight:bold;">-cipher cipherlist</b>] [<b style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;font-weight:bold;">-serverpref</b>] [<b style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;font-weight:bold;">-starttls protocol</b>] [<b style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;font-weight:bold;">-engine id</b>] [<b style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;font-weight:bold;">-tlsextdebug</b>] [<b style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;font-weight:bold;">-no_ticket</b>] [<b style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;font-weight:bold;">-sess_out filename</b>] [<b style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;font-weight:bold;">-sess_in filename</b>] [<b style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;font-weight:bold;">-rand file(s)</b>] [<b style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;font-weight:bold;">-serverinfo types</b>] [<b style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;font-weight:bold;">-status</b>] [<b style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;font-weight:bold;">-alpn protocols</b>] [<b style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;font-weight:bold;">-nextprotoneg protocols</b>]</p>
+
+<h3 style="font-family:&quot;PT Serif&quot;;text-align:left;margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;font-size:30px;line-height:35px;margin-top:35px;font-weight:normal;margin-bottom:15px;">DESCRIPTION</h3>
+
+<p style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;margin-bottom:1.5em;">The <b style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;font-weight:bold;">s_client</b> command implements a generic SSL/TLS client which connects to a remote host using SSL/TLS. It is a <i style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;font-style:italic;">very</i> useful diagnostic tool for SSL servers.</p>
+
+<h3 style="font-family:&quot;PT Serif&quot;;text-align:left;margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;font-size:30px;line-height:35px;margin-top:35px;font-weight:normal;margin-bottom:15px;">OPTIONS</h3>
+
+<dl style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;"><dt style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;"><b style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;font-weight:bold;">-connect host:port</b></dt><dd style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;">
+
+<p style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;margin-bottom:0px;">This specifies the host and optional port to connect to. If not specified then an attempt is made to connect to the local host on port 4433.</p>
+
+</dd><dt style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;"><b style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;font-weight:bold;">-servername name</b></dt><dd style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;">
+
+<p style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;margin-bottom:0px;">Set the TLS SNI (Server Name Indication) extension in the ClientHello message.</p>
+
+</dd><dt style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;"><b style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;font-weight:bold;">-cert certname</b></dt><dd style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;">
+
+<p style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;margin-bottom:0px;">The certificate to use, if one is requested by the server. The default is not to use a certificate.</p>
+
+</dd><dt style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;"><b style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;font-weight:bold;">-certform format</b></dt><dd style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;">
+
+<p style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;margin-bottom:0px;">The certificate format to use: DER or PEM. PEM is the default.</p>
+
+</dd><dt style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;"><b style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;font-weight:bold;">-key keyfile</b></dt><dd style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;">
+
+<p style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;margin-bottom:0px;">The private key to use. If not specified then the certificate file will be used.</p>
+
+</dd><dt style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;"><b style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;font-weight:bold;">-keyform format</b></dt><dd style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;">
+
+<p style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;margin-bottom:0px;">The private format to use: DER or PEM. PEM is the default.</p>
+
+</dd><dt style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;"><b style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;font-weight:bold;">-pass arg</b></dt><dd style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;">
+
+<p style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;margin-bottom:0px;">the private key password source. For more information about the format of <b style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;font-weight:bold;">arg</b> see the <b style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;font-weight:bold;">PASS PHRASE ARGUMENTS</b> section in <a href="https://www.openssl.org/docs/man1.0.2/man1/openssl.html" style="color:rgb(6, 85, 136);margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;text-decoration:none;">openssl(1)</a>.</p>
+
+</dd><dt style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;"><b style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;font-weight:bold;">-verify depth</b></dt><dd style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;">
+
+<p style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;margin-bottom:0px;">The verify depth to use. This specifies the maximum length of the server certificate chain and turns on server certificate verification. Currently the verify operation continues after errors so all the problems with a certificate chain can be seen. As a side effect the connection will never fail due to a server certificate verify failure.</p>
+
+</dd><dt style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;"><b style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;font-weight:bold;">-verify_return_error</b></dt><dd style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;">
+
+<p style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;margin-bottom:0px;">Return verification errors instead of continuing. This will typically abort the handshake with a fatal error.</p>
+
+</dd><dt style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;"><b style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;font-weight:bold;">-CApath directory</b></dt><dd style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;">
+
+<p style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;margin-bottom:0px;">The directory to use for server certificate verification. This directory must be in "hash format", see <b style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;font-weight:bold;">verify</b> for more information. These are also used when building the client certificate chain.</p>
+
+</dd><dt style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;"><b style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;font-weight:bold;">-CAfile file</b></dt><dd style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;">
+
+<p style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;margin-bottom:0px;">A file containing trusted certificates to use during server authentication and to use when attempting to build the client certificate chain.</p>
+
+</dd><dt style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;"><b style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;font-weight:bold;">-purpose, -ignore_critical, -issuer_checks, -crl_check, -crl_check_all, -policy_check, -extended_crl, -x509_strict, -policy -check_ss_sig -no_alt_chains</b></dt><dd style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;">
+
+<p style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;margin-bottom:0px;">Set various certificate chain valiadition option. See the <a href="https://www.openssl.org/docs/man1.0.2/man1/verify.html" style="color:rgb(6, 85, 136);margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;text-decoration:none;"><b style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;font-weight:bold;">verify</b></a> manual page for details.</p>
+
+</dd><dt style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;"><b style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;font-weight:bold;">-reconnect</b></dt><dd style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;">
+
+<p style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;margin-bottom:0px;">reconnects to the same server 5 times using the same session ID, this can be used as a test that session caching is working.</p>
+
+</dd><dt style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;"><b style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;font-weight:bold;">-pause</b></dt><dd style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;">
+
+<p style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;margin-bottom:0px;">pauses 1 second between each read and write call.</p>
+
+</dd><dt style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;"><b style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;font-weight:bold;">-showcerts</b></dt><dd style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;">
+
+<p style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;margin-bottom:0px;">Displays the server certificate list as sent by the server: it only consists of certificates the server has sent (in the order the server has sent them). It is <b style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;font-weight:bold;">not</b> a verified chain.</p>
+
+</dd><dt style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;"><b style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;font-weight:bold;">-prexit</b></dt><dd style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;">
+
+<p style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;margin-bottom:0px;">print session information when the program exits. This will always attempt to print out information even if the connection fails. Normally information will only be printed out once if the connection succeeds. This option is useful because the cipher in use may be renegotiated or the connection may fail because a client certificate is required or is requested only after an attempt is made to access a certain URL. Note: the output produced by this option is not always accurate because a connection might never have been established.</p>
+
+</dd><dt style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;"><b style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;font-weight:bold;">-state</b></dt><dd style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;">
+
+<p style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;margin-bottom:0px;">prints out the SSL session states.</p>
+
+</dd><dt style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;"><b style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;font-weight:bold;">-debug</b></dt><dd style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;">
+
+<p style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;margin-bottom:0px;">print extensive debugging information including a hex dump of all traffic.</p>
+
+</dd><dt style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;"><b style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;font-weight:bold;">-msg</b></dt><dd style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;">
+
+<p style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;margin-bottom:0px;">show all protocol messages with hex dump.</p>
+
+</dd><dt style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;"><b style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;font-weight:bold;">-nbio_test</b></dt><dd style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;">
+
+<p style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;margin-bottom:0px;">tests non-blocking I/O</p>
+
+</dd><dt style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;"><b style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;font-weight:bold;">-nbio</b></dt><dd style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;">
+
+<p style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;margin-bottom:0px;">turns on non-blocking I/O</p>
+
+</dd><dt style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;"><b style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;font-weight:bold;">-crlf</b></dt><dd style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;">
+
+<p style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;margin-bottom:0px;">this option translated a line feed from the terminal into CR+LF as required by some servers.</p>
+
+</dd><dt style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;"><b style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;font-weight:bold;">-ign_eof</b></dt><dd style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;">
+
+<p style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;margin-bottom:0px;">inhibit shutting down the connection when end of file is reached in the input.</p>
+
+</dd><dt style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;"><b style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;font-weight:bold;">-quiet</b></dt><dd style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;">
+
+<p style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;margin-bottom:0px;">inhibit printing of session and certificate information. This implicitly turns on <b style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;font-weight:bold;">-ign_eof</b> as well.</p>
+
+</dd><dt style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;"><b style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;font-weight:bold;">-no_ign_eof</b></dt><dd style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;">
+
+<p style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;margin-bottom:0px;">shut down the connection when end of file is reached in the input. Can be used to override the implicit <b style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;font-weight:bold;">-ign_eof</b> after <b style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;font-weight:bold;">-quiet</b>.</p>
+
+</dd><dt style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;"><b style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;font-weight:bold;">-psk_identity identity</b></dt><dd style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;">
+
+<p style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;margin-bottom:0px;">Use the PSK identity <b style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;font-weight:bold;">identity</b> when using a PSK cipher suite. The default value is "Client_identity" (without the quotes).</p>
+
+</dd><dt style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;"><b style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;font-weight:bold;">-psk key</b></dt><dd style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;">
+
+<p style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;margin-bottom:0px;">Use the PSK key <b style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;font-weight:bold;">key</b> when using a PSK cipher suite. The key is given as a hexadecimal number without leading 0x, for example -psk 1a2b3c4d. This option must be provided in order to use a PSK cipher.</p>
+
+</dd><dt style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;"><b style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;font-weight:bold;">-ssl2</b>, <b style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;font-weight:bold;">-ssl3</b>, <b style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;font-weight:bold;">-tls1</b>, <b style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;font-weight:bold;">-tls1_1</b>, <b style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;font-weight:bold;">-tls1_2</b>, <b style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;font-weight:bold;">-no_ssl2</b>, <b style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;font-weight:bold;">-no_ssl3</b>, <b style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;font-weight:bold;">-no_tls1</b>, <b style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;font-weight:bold;">-no_tls1_1</b>, <b style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;font-weight:bold;">-no_tls1_2</b></dt><dd style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;">
+
+<p style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;margin-bottom:0px;">These options require or disable the use of the specified SSL or TLS protocols. By default the initial handshake uses a <i style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;font-style:italic;">version-flexible</i> method which will negotiate the highest mutually supported protocol version.</p>
+
+</dd><dt style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;"><b style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;font-weight:bold;">-fallback_scsv</b></dt><dd style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;">
+
+<p style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;margin-bottom:0px;">Send TLS_FALLBACK_SCSV in the ClientHello.</p>
+
+</dd><dt style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;"><b style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;font-weight:bold;">-bugs</b></dt><dd style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;">
+
+<p style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;margin-bottom:0px;">there are several known bug in SSL and TLS implementations. Adding this option enables various workarounds.</p>
+
+</dd><dt style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;"><b style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;font-weight:bold;">-sigalgs sigalglist</b></dt><dd style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;">
+
+<p style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;margin-bottom:0px;">Specifies the list of signature algorithms that are sent by the client. The server selects one entry in the list based on its preferences. For example strings, see <a href="https://www.openssl.org/docs/man1.0.2/man3/SSL_CTX_set1_sigalgs.html" style="color:rgb(6, 85, 136);margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;text-decoration:none;">SSL_CTX_set1_sigalgs(3)</a></p>
+
+</dd><dt style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;"><b style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;font-weight:bold;">-curves curvelist</b></dt><dd style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;">
+
+<p style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;margin-bottom:1.5em;">Specifies the list of supported curves to be sent by the client. The curve is is ultimately selected by the server. For a list of all curves, use:</p>
+
+<pre style="background-color:rgb(243, 242, 238);font-family:Inconsolata;margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;width:auto;font-size:0.875em;line-height:1.71429em;"><code style="font-family:Inconsolata;margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;line-height:1.71429em;font-size:1.15em;">    $ openssl ecparam -list_curves</code></pre>
+
+</dd><dt style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;"><b style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;font-weight:bold;">-cipher cipherlist</b></dt><dd style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;">
+
+<p style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;margin-bottom:0px;">this allows the cipher list sent by the client to be modified. Although the server determines which cipher suite is used it should take the first supported cipher in the list sent by the client. See the <b style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;font-weight:bold;">ciphers</b> command for more information.</p>
+
+</dd><dt style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;"><b style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;font-weight:bold;">-serverpref</b></dt><dd style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;">
+
+<p style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;margin-bottom:0px;">use the server's cipher preferences; only used for SSLV2.</p>
+
+</dd><dt style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;"><b style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;font-weight:bold;">-starttls protocol</b></dt><dd style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;">
+
+<p style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;margin-bottom:0px;">send the protocol-specific message(s) to switch to TLS for communication. <b style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;font-weight:bold;">protocol</b> is a keyword for the intended protocol. Currently, the only supported keywords are "smtp", "pop3", "imap", "ftp" and "xmpp".</p>
+
+</dd><dt style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;"><b style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;font-weight:bold;">-tlsextdebug</b></dt><dd style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;">
+
+<p style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;margin-bottom:0px;">print out a hex dump of any TLS extensions received from the server.</p>
+
+</dd><dt style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;"><b style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;font-weight:bold;">-no_ticket</b></dt><dd style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;">
+
+<p style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;margin-bottom:0px;">disable RFC4507bis session ticket support.</p>
+
+</dd><dt style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;"><b style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;font-weight:bold;">-sess_out filename</b></dt><dd style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;">
+
+<p style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;margin-bottom:0px;">output SSL session to <b style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;font-weight:bold;">filename</b></p>
+
+</dd><dt style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;"><b style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;font-weight:bold;">-sess_in sess.pem</b></dt><dd style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;">
+
+<p style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;margin-bottom:0px;">load SSL session from <b style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;font-weight:bold;">filename</b>. The client will attempt to resume a connection from this session.</p>
+
+</dd><dt style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;"><b style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;font-weight:bold;">-engine id</b></dt><dd style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;">
+
+<p style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;margin-bottom:0px;">specifying an engine (by its unique <b style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;font-weight:bold;">id</b> string) will cause <b style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;font-weight:bold;">s_client</b> to attempt to obtain a functional reference to the specified engine, thus initialising it if needed. The engine will then be set as the default for all available algorithms.</p>
+
+</dd><dt style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;"><b style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;font-weight:bold;">-rand file(s)</b></dt><dd style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;">
+
+<p style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;margin-bottom:0px;">a file or files containing random data used to seed the random number generator, or an EGD socket (see <a href="https://www.openssl.org/docs/man1.0.2/man3/RAND_egd.html" style="color:rgb(6, 85, 136);margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;text-decoration:none;">RAND_egd(3)</a>). Multiple files can be specified separated by a OS-dependent character. The separator is <b style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;font-weight:bold;">;</b> for MS-Windows, <b style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;font-weight:bold;">,</b> for OpenVMS, and <b style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;font-weight:bold;">:</b> for all others.</p>
+
+</dd><dt style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;"><b style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;font-weight:bold;">-serverinfo types</b></dt><dd style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;">
+
+<p style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;margin-bottom:0px;">a list of comma-separated TLS Extension Types (numbers between 0 and 65535). Each type will be sent as an empty ClientHello TLS Extension. The server's response (if any) will be encoded and displayed as a PEM file.</p>
+
+</dd><dt style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;"><b style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;font-weight:bold;">-status</b></dt><dd style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;">
+
+<p style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;margin-bottom:0px;">sends a certificate status request to the server (OCSP stapling). The server response (if any) is printed out.</p>
+
+</dd><dt style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;"><b style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;font-weight:bold;">-alpn protocols</b>, <b style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;font-weight:bold;">-nextprotoneg protocols</b></dt><dd style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;">
+
+<p style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;margin-bottom:0px;">these flags enable the Enable the Application-Layer Protocol Negotiation or Next Protocol Negotiation extension, respectively. ALPN is the IETF standard and replaces NPN. The <b style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;font-weight:bold;">protocols</b> list is a comma-separated protocol names that the client should advertise support for. The list should contain most wanted protocols first. Protocol names are printable ASCII strings, for example "http/1.1" or "spdy/3". Empty list of protocols is treated specially and will cause the client to advertise support for the TLS extension but disconnect just after reciving ServerHello with a list of server supported protocols.</p>
+
+</dd></dl>
+
+<h3 style="font-family:&quot;PT Serif&quot;;text-align:left;margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;font-size:30px;line-height:35px;margin-top:35px;font-weight:normal;margin-bottom:15px;">CONNECTED COMMANDS</h3>
+
+<p style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;margin-bottom:1.5em;">If a connection is established with an SSL server then any data received from the server is displayed and any key presses will be sent to the server. When used interactively (which means neither <b style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;font-weight:bold;">-quiet</b> nor <b style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;font-weight:bold;">-ign_eof</b> have been given), the session will be renegotiated if the line begins with an <b style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;font-weight:bold;">R</b>, and if the line begins with a <b style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;font-weight:bold;">Q</b> or if end of file is reached, the connection will be closed down.</p>
+
+<h3 style="font-family:&quot;PT Serif&quot;;text-align:left;margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;font-size:30px;line-height:35px;margin-top:35px;font-weight:normal;margin-bottom:15px;">NOTES</h3>
+
+<p style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;margin-bottom:1.5em;"><b style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;font-weight:bold;">s_client</b> can be used to debug SSL servers. To connect to an SSL HTTP server the command:</p>
+
+<pre style="background-color:rgb(243, 242, 238);font-family:Inconsolata;margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;width:auto;font-size:0.875em;line-height:1.71429em;"><code style="font-family:Inconsolata;margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;line-height:1.71429em;font-size:1.15em;"> openssl s_client -connect servername:443</code></pre>
+
+<p style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;margin-bottom:1.5em;">would typically be used (https uses port 443). If the connection succeeds then an HTTP command can be given such as "GET /" to retrieve a web page.</p>
+
+<p style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;margin-bottom:1.5em;">If the handshake fails then there are several possible causes, if it is nothing obvious like no client certificate then the <b style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;font-weight:bold;">-bugs</b>, <b style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;font-weight:bold;">-ssl2</b>, <b style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;font-weight:bold;">-ssl3</b>, <b style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;font-weight:bold;">-tls1</b>, <b style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;font-weight:bold;">-no_ssl2</b>, <b style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;font-weight:bold;">-no_ssl3</b>, <b style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;font-weight:bold;">-no_tls1</b> options can be tried in case it is a buggy server. In particular you should play with these options <b style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;font-weight:bold;">before</b> submitting a bug report to an OpenSSL mailing list.</p>
+
+<p style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;margin-bottom:1.5em;">A frequent problem when attempting to get client certificates working is that a web client complains it has no certificates or gives an empty list to choose from. This is normally because the server is not sending the clients certificate authority in its "acceptable CA list" when it requests a certificate. By using <b style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;font-weight:bold;">s_client</b> the CA list can be viewed and checked. However some servers only request client authentication after a specific URL is requested. To obtain the list in this case it is necessary to use the <b style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;font-weight:bold;">-prexit</b> option and send an HTTP request for an appropriate page.</p>
+
+<p style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;margin-bottom:1.5em;">If a certificate is specified on the command line using the <b style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;font-weight:bold;">-cert</b> option it will not be used unless the server specifically requests a client certificate. Therefor merely including a client certificate on the command line is no guarantee that the certificate works.</p>
+
+<p style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;margin-bottom:1.5em;">If there are problems verifying a server certificate then the <b style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;font-weight:bold;">-showcerts</b> option can be used to show all the certificates sent by the server.</p>
+
+<p style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;margin-bottom:1.5em;">Since the SSLv23 client hello cannot include compression methods or extensions these will only be supported if its use is disabled, for example by using the <b style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;font-weight:bold;">-no_sslv2</b> option.</p>
+
+<p style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;margin-bottom:1.5em;">The <b style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;font-weight:bold;">s_client</b> utility is a test tool and is designed to continue the handshake after any certificate verification errors. As a result it will accept any certificate chain (trusted or not) sent by the peer. None test applications should <b style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;font-weight:bold;">not</b> do this as it makes them vulnerable to a MITM attack. This behaviour can be changed by with the <b style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;font-weight:bold;">-verify_return_error</b> option: any verify errors are then returned aborting the handshake.</p>
+
+<h3 style="font-family:&quot;PT Serif&quot;;text-align:left;margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;font-size:30px;line-height:35px;margin-top:35px;font-weight:normal;margin-bottom:15px;">BUGS</h3>
+
+<p style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;margin-bottom:1.5em;">Because this program has a lot of options and also because some of the techniques used are rather old, the C source of s_client is rather hard to read and not a model of how things should be done. A typical SSL client program would be much simpler.</p>
+
+<p style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;margin-bottom:1.5em;">The <b style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;font-weight:bold;">-prexit</b> option is a bit of a hack. We should really report information whenever a session is renegotiated.</p>
+
+<h3 style="font-family:&quot;PT Serif&quot;;text-align:left;margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;font-size:30px;line-height:35px;margin-top:35px;font-weight:normal;margin-bottom:15px;">SEE ALSO</h3>
+
+<p style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;margin-bottom:1.5em;"><a href="https://www.openssl.org/docs/man1.0.2/man1/sess_id.html" style="color:rgb(6, 85, 136);margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;text-decoration:none;">sess_id(1)</a>, <a href="https://www.openssl.org/docs/man1.0.2/man1/s_server.html" style="color:rgb(6, 85, 136);margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;text-decoration:none;">s_server(1)</a>, <a href="https://www.openssl.org/docs/man1.0.2/man1/ciphers.html" style="color:rgb(6, 85, 136);margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;text-decoration:none;">ciphers(1)</a></p>
+
+<h3 style="font-family:&quot;PT Serif&quot;;text-align:left;margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;font-size:30px;line-height:35px;margin-top:35px;font-weight:normal;margin-bottom:15px;">HISTORY</h3>
+
+<p style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;margin-bottom:0px;">The -no_alt_chains options was first added to OpenSSL 1.0.2b.</p>
+          </div></div></div></div></div></div></div></div></div></div>
+</div></div>
+<a class="back-link" href="../articles.html">← 返回笔记列表</a>
+</body></html>

@@ -1,0 +1,236 @@
+<!DOCTYPE html>
+<html lang="zh-CN" data-theme="light">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>在本地构建和推送多架构容器镜像到镜像仓库_容器镜像服务(ACR)-阿里云帮助中心 — 技术笔记</title>
+<style>
+:root {
+  --bg: #ffffff;
+  --text: #1a1a1a;
+  --muted: #666;
+  --border: #e0e0e0;
+  --code-bg: #f5f5f5;
+  --link: #0066cc;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #1a1a1a;
+    --text: #e0e0e0;
+    --muted: #999;
+    --border: #333;
+    --code-bg: #2a2a2a;
+    --link: #66bbff;
+  }
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  line-height: 1.7;
+  color: var(--text);
+  background: var(--bg);
+  max-width: 860px;
+  margin: 0 auto;
+  padding: 2rem 1.5rem;
+}
+.note-header {
+  border-bottom: 2px solid var(--border);
+  padding-bottom: 1rem;
+  margin-bottom: 2rem;
+}
+.note-title {
+  font-size: 1.6rem;
+  font-weight: 700;
+  margin-bottom: 0.3rem;
+}
+.note-meta {
+  color: var(--muted);
+  font-size: 0.85rem;
+}
+.note-content {
+  font-size: 0.95rem;
+}
+.note-content h1 { font-size: 1.4rem; margin: 1.2rem 0 0.6rem; }
+.note-content h2 { font-size: 1.2rem; margin: 1rem 0 0.5rem; }
+.note-content h3 { font-size: 1.05rem; margin: 0.8rem 0 0.4rem; }
+.note-content p { margin: 0.5rem 0; }
+.note-content ul, .note-content ol { margin: 0.5rem 0 0.5rem 2rem; }
+.note-content li { margin: 0.2rem 0; }
+.note-content pre {
+  background: var(--code-bg);
+  padding: 1rem;
+  border-radius: 6px;
+  overflow-x: auto;
+  margin: 0.8rem 0;
+  font-size: 0.85rem;
+}
+.note-content code {
+  background: var(--code-bg);
+  padding: 0.1rem 0.3rem;
+  border-radius: 3px;
+  font-size: 0.88em;
+}
+.note-content pre code {
+  background: none;
+  padding: 0;
+}
+.note-content blockquote {
+  border-left: 3px solid var(--border);
+  padding-left: 1rem;
+  color: var(--muted);
+  margin: 0.8rem 0;
+}
+.note-content a { color: var(--link); }
+.note-content img {
+  max-width: 100%;
+  height: auto;
+  border-radius: 6px;
+  margin: 0.5rem 0;
+}
+.note-content table {
+  border-collapse: collapse;
+  width: 100%;
+  margin: 0.8rem 0;
+}
+.note-content th, .note-content td {
+  border: 1px solid var(--border);
+  padding: 0.5rem;
+}
+.note-content th { background: var(--code-bg); }
+.media-placeholder {
+  background: var(--code-bg);
+  padding: 1rem;
+  text-align: center;
+  color: var(--muted);
+  border-radius: 6px;
+  margin: 0.5rem 0;
+  font-size: 0.85rem;
+}
+.encrypt-placeholder {
+  background: #fff3cd;
+  padding: 0.5rem;
+  text-align: center;
+  color: #856404;
+  border-radius: 6px;
+  margin: 0.5rem 0;
+  font-size: 0.85rem;
+}
+.back-link {
+  display: inline-block;
+  margin-top: 2rem;
+  color: var(--link);
+  text-decoration: none;
+  font-size: 0.85rem;
+}
+</style>
+</head>
+<body>
+<div class="note-header">
+  <div class="note-title">在本地构建和推送多架构容器镜像到镜像仓库_容器镜像服务(ACR)-阿里云帮助中心</div>
+  <div class="note-meta">笔记本：Kubernetes学习笔记</div>
+</div>
+<div class="note-content">
+<div style="--en-clipped-content:article"><div style="font-size: 16px; display:flex; min-width: 100%; position: relative;"> <div style="text-size-adjust:100%;line-height:1.15;font-size:100%;box-sizing:border-box;scroll-padding-top:58px;--topbar-main-height:64px;--help-doc-height:2593px;--default-nav-height:64px;--default-head-height:40px;"><div style="font-size:14px;-webkit-font-smoothing:antialiased;overscroll-behavior:none;color:rgb(24, 24, 24);line-height:unset;font-family:&quot;helvetica neue&quot;, &quot;pingfang SC&quot;, arial, &quot;hiragino sans gb&quot;, &quot;microsoft yahei ui&quot;, &quot;microsoft yahei&quot;, simsun, sans-serif;box-sizing:border-box;"><div style="box-sizing:border-box;font-family:&quot;helvetica neue&quot;, &quot;pingfang SC&quot;, arial, &quot;hiragino sans gb&quot;, &quot;microsoft yahei ui&quot;, &quot;microsoft yahei&quot;, simsun, sans-serif;"><div style="box-sizing:border-box;"><div style="box-sizing:border-box;"><div style="box-sizing:border-box;overflow:visible;"><span style="box-sizing:border-box;-webkit-box-flex:1;-webkit-box-orient:horizontal;-webkit-box-direction:normal;background:rgb(255, 255, 255);"><div style="box-sizing:border-box;-webkit-box-flex:1;"><div style="box-sizing:border-box;-webkit-box-flex:1;"><div style="display:block;margin:0px;padding:0px;box-sizing:border-box;"><div style="margin:0px;padding:0px;box-sizing:border-box;-webkit-box-pack:justify;display:flex;flex-wrap:nowrap;justify-content:space-between;"><div style="margin:0px;padding:0px;box-sizing:border-box;-webkit-box-align:center;align-items:center;display:flex;flex-wrap:wrap;font-size:12px;line-height:18px;"><div style="margin:0px;padding:0px;box-sizing:border-box;"><a href="https://help.aliyun.com/" style="background-color:transparent;margin:0px;padding:0px;box-sizing:border-box;text-decoration:none;cursor:pointer;color:rgb(24, 24, 24);">首页</a><span style="margin:0px;padding:0px;box-sizing:border-box;color:rgb(115, 119, 122);"><span style="margin:0px;box-sizing:border-box;color:rgb(115, 119, 122);padding:0px 4px;"><i style="margin:0px;padding:0px;box-sizing:border-box;font-size:12px;font-family:help-iconfont;"></i></span><a href="https://help.aliyun.com/zh/acr/" style="background-color:transparent;margin:0px;padding:0px;box-sizing:border-box;text-decoration:none;cursor:pointer;color:rgb(24, 24, 24);">容器镜像服务</a></span><span style="margin:0px;padding:0px;box-sizing:border-box;color:rgb(115, 119, 122);"><span style="margin:0px;box-sizing:border-box;color:rgb(115, 119, 122);padding:0px 4px;"><i style="margin:0px;padding:0px;box-sizing:border-box;font-size:12px;font-family:help-iconfont;"></i></span><a href="https://help.aliyun.com/zh/acr/use-cases/" style="background-color:transparent;margin:0px;padding:0px;box-sizing:border-box;text-decoration:none;cursor:pointer;color:rgb(24, 24, 24);">实践教程</a></span><span style="margin:0px;padding:0px;box-sizing:border-box;color:rgb(115, 119, 122);"><span style="margin:0px;box-sizing:border-box;color:rgb(115, 119, 122);padding:0px 4px;"><i style="margin:0px;padding:0px;box-sizing:border-box;font-size:12px;font-family:help-iconfont;"></i></span><span style="margin:0px;padding:0px;box-sizing:border-box;color:rgb(115, 119, 122);">本地构建和推送多架构镜像到容器镜像服务</span></span></div></div></div><div style="margin:0px;padding:0px;box-sizing:border-box;"><h1 style="padding:0px;margin:0px;box-sizing:border-box;color:rgb(24, 24, 24);letter-spacing:0.4px;margin-top:24px;min-height:44px;word-break:break-word;font-size:34px;line-height:44px;font-weight:700;margin-bottom:16px;-webkit-box-align:center;align-items:center;display:flex;">本地构建和推送多架构镜像到容器镜像服务</h1><div style="margin:0px;padding:0px;box-sizing:border-box;-webkit-box-align:center;align-items:center;display:flex;-webkit-box-pack:justify;font-size:12px;height:24px;justify-content:space-between;margin-top:6px;position:relative;"><div style="margin:0px;padding:0px;box-sizing:border-box;-webkit-box-flex:1;-webkit-box-align:center;align-items:center;display:flex;flex:1 1 0%;flex-wrap:wrap;min-width:150px;"><span style="margin:0px;padding:0px;box-sizing:border-box;color:rgb(153, 153, 153);">更新时间：2024-11-13 09:33:13</span></div><div style="margin:0px;padding:0px;box-sizing:border-box;flex-wrap:wrap;gap:12px;position:relative;-webkit-box-align:center;align-items:center;display:flex;"><div style="margin:0px;padding:0px;box-sizing:border-box;-webkit-box-align:center;align-items:center;display:flex;height:20px;"><div style="margin:0px;padding:0px;box-sizing:border-box;font-size:12px;margin-left:10px;min-width:50px;"><a href="https://www.aliyun.com/product/acr" target="_blank" rel="noreferrer" style="background-color:transparent;margin:0px;padding:0px;box-sizing:border-box;text-decoration:none;color:rgb(153, 153, 153);">产品详情</a><span style="font-size:12px;background:rgb(153, 153, 153);display:inline-block;height:8px;margin-left:12px;width:1px;"></span></div></div><div style="margin:0px;padding:0px;box-sizing:border-box;-webkit-box-align:center;align-items:center;display:flex;height:15px;position:relative;width:100px;"><span title="收藏本文档" style="margin:0px;padding:0px;box-sizing:border-box;color:rgb(153, 153, 153);background-color:rgb(255, 255, 255);border:0px;cursor:pointer;display:inline-block;height:20px;margin-right:10px;text-align:center;vertical-align:middle;width:16px;"><i style="margin:0px;padding:0px;box-sizing:border-box;font-family:help-iconfont;"></i></span><a href="https://help.aliyun.com/my_favorites.html" style="background-color:transparent;margin:0px;padding:0px;box-sizing:border-box;text-decoration:none;color:rgb(153, 153, 153);">我的收藏</a></div></div></div></div></div><div style="margin:0px;padding:0px;box-sizing:border-box;"><div style="padding:0px;box-sizing:border-box;overflow-wrap:break-word;color:rgb(24, 24, 24);font-family:help-font, &quot;helvetica neue&quot;, &quot;pingfang SC&quot;, arial, &quot;hiragino sans gb&quot;, &quot;microsoft yahei ui&quot;, &quot;microsoft yahei&quot;, simsun, sans-serif;font-size:14px;line-height:24px;overflow:hidden;margin:24px 0px;"><div style="margin:0px;padding:0px;box-sizing:border-box;"></div><div lang="zh" style="margin:0px;padding:0px;box-sizing:border-box;">
+<span style="display:block;margin:0px;padding:0px;box-sizing:border-box;"><p style="box-sizing:border-box;padding:0px;letter-spacing:0.4px;word-break:break-word;font-size:14px;line-height:24px;font-weight:400;margin:0px 0px 16px;">使用ARM架构资源部署容器通常可以节省不少成本，但也可能导致维护成本增加，您可能需要面向x86、ARM架构分别构建镜像并设置不同的Tag。您可以使用<code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span style="font-family:Menlo, Monaco, Consolas, Courier, monospace;font-size:1em;letter-spacing:-2px;"> </span>docker buildx<span style="font-family:Menlo, Monaco, Consolas, Courier, monospace;font-size:1em;letter-spacing:-2px;"> </span></code>来构建多架构镜像，并通过<code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span style="font-family:Menlo, Monaco, Consolas, Courier, monospace;font-size:1em;letter-spacing:-2px;"> </span>docker manifest<span style="font-family:Menlo, Monaco, Consolas, Courier, monospace;font-size:1em;letter-spacing:-2px;"> </span></code>实现一个Tag管理多架构的容器镜像。</p><div style="margin:0px;padding:0px;box-sizing:border-box;"><h2 style="margin:0px;box-sizing:border-box;color:rgb(24, 24, 24);letter-spacing:0.4px;margin-top:24px;font-weight:700;padding:0px;margin-bottom:16px;border-top:1px solid rgb(233, 233, 233);padding-top:24px;font-size:26px;line-height:32px;"><b style="font-weight:bolder;margin:0px;padding:0px;box-sizing:border-box;">前提条件</b></h2><ul style="box-sizing:border-box;margin:0px;padding:0px;list-style:none;margin-bottom:24px;margin-top:16px;padding-left:25px;"><li style="padding:0px;box-sizing:border-box;list-style:disc;margin:8px 0px;list-style-type:disc;"><p style="box-sizing:border-box;padding:0px;letter-spacing:0.4px;word-break:break-word;font-size:14px;line-height:24px;font-weight:400;margin:0px;">创建容器镜像服务ACR企业版实例。具体操作，请参见<a href="https://help.aliyun.com/zh/acr/user-guide/create-a-container-registry-enterprise-edition-instance" title="" style="margin:0px;padding:0px;box-sizing:border-box;background:0px 0px;outline:none;text-decoration:none;color:rgb(19, 102, 236);">创建企业版实例</a>。</p></li><li style="padding:0px;box-sizing:border-box;list-style:disc;margin:8px 0px;list-style-type:disc;"><p style="box-sizing:border-box;padding:0px;letter-spacing:0.4px;word-break:break-word;font-size:14px;line-height:24px;font-weight:400;margin:0px;">在本地安装Docker客户端。具体操作，请参见<a href="https://help.aliyun.com/zh/ecs/use-cases/install-and-use-docker-on-a-linux-ecs-instance" title="" style="margin:0px;padding:0px;box-sizing:border-box;background:0px 0px;outline:none;text-decoration:none;color:rgb(19, 102, 236);">安装Docker</a>。</p></li></ul><h2 style="margin:0px;box-sizing:border-box;color:rgb(24, 24, 24);letter-spacing:0.4px;margin-top:24px;font-weight:700;padding:0px;margin-bottom:16px;border-top:1px solid rgb(233, 233, 233);padding-top:24px;font-size:26px;line-height:32px;"><b style="font-weight:bolder;margin:0px;padding:0px;box-sizing:border-box;">从Dockerfile构建多架构镜像</b></h2><ol style="list-style:none;box-sizing:border-box;margin:0px;padding:0px;margin-bottom:24px;margin-top:16px;padding-left:25px;"><li style="padding:0px;box-sizing:border-box;list-style:decimal;margin:8px 0px;list-style-type:decimal;"><p style="box-sizing:border-box;padding:0px;letter-spacing:0.4px;word-break:break-word;font-size:14px;line-height:24px;font-weight:400;margin:0px;">本文以<a href="https://github.com/zlseu-edu/simple-java-maven-app?spm=a2c4g.11186623.0.0.395c6d98mOKMhq" target="_blank" style="margin:0px;padding:0px;box-sizing:border-box;background:0px 0px;outline:none;text-decoration:none;color:rgb(19, 102, 236);">Java Maven</a>项目为例，在Java Maven项目中新建Dockerfile文件，并在文件中添加如下内容。</p>
+    <div style="box-sizing:border-box;background-color:rgb(244, 247, 250);position:relative;margin:16px 0px;padding:16px;">
+      <div style="margin:0px;padding:0px;box-sizing:border-box;-webkit-box-pack:justify;background-color:rgb(255, 255, 255);box-shadow:rgba(0, 0, 0, 0.1) 0px 2px 10px 0px;display:flex;height:24px;justify-content:space-between;position:absolute;right:0px;top:0px;">
+        <div style="margin:0px;padding:0px;box-sizing:border-box;">
+        </div>
+        <div style="margin:0px;padding:0px;box-sizing:border-box;">
+          <i title="更改代码主题" style="margin:0px;padding:0px;box-sizing:border-box;font-style:normal;color:rgb(102, 102, 102);cursor:pointer;display:inline-block;font-size:12px;height:24px;line-height:24px;text-align:center;width:24px;font-family:help-iconfont;"></i>
+      <i title="复制代码" style="margin:0px;padding:0px;box-sizing:border-box;font-style:normal;color:rgb(102, 102, 102);cursor:pointer;display:inline-block;font-size:12px;height:24px;line-height:24px;text-align:center;width:24px;font-family:help-iconfont;"></i>
+        </div>
+      </div>
+      <pre style="--en-codeblock:true;--en-meta:{&quot;title&quot;:&quot;&quot;,&quot;lang&quot;:&quot;&quot;,&quot;theme&quot;:&quot;default&quot;,&quot;showLine&quot;:true,&quot;lineWrap&quot;:true};border-radius:4px;background-color: #fbfaf8;border: 1px solid rgba(0,0,0,.14902);color: #333;font-size: 12px;padding: 8px;font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif;box-sizing: border-box;"><span style="box-sizing:border-box;overflow-wrap:normal;background:0px 0px;border:0px;display:inline;max-width:none;overflow-y:initial;overflow-x:auto;white-space:pre;word-break:normal;background-color:rgba(0, 0, 0, 0.04);border-radius:3px;font-size:14px;font-family:Menlo, Monaco, Consolas, Courier, monospace;margin:0px;padding:0px;color:rgb(56, 58, 66);"><span style="font-family:Menlo, Monaco, Consolas, Courier, monospace;font-size:14px;white-space:pre;color:rgb(56, 58, 66);letter-spacing:-2px;"> </span><span style="margin:0px;padding:0px;box-sizing:border-box;color:rgb(160, 161, 167);font-style:italic;">#First stage: complete build environment</span>
+<span style="margin:0px;padding:0px;box-sizing:border-box;color:rgb(166, 38, 164);">FROM</span> maven:<span style="margin:0px;padding:0px;box-sizing:border-box;color:rgb(152, 104, 1);">3.5</span>.<span style="margin:0px;padding:0px;box-sizing:border-box;color:rgb(152, 104, 1);">0</span>-jdk-<span style="margin:0px;padding:0px;box-sizing:border-box;color:rgb(152, 104, 1);">8</span>-alpine AS builder
+
+<span style="margin:0px;padding:0px;box-sizing:border-box;color:rgb(160, 161, 167);font-style:italic;"># add pom.xml and source code</span>
+<span style="margin:0px;padding:0px;box-sizing:border-box;color:rgb(166, 38, 164);">ADD</span><span style="margin:0px;padding:0px;box-sizing:border-box;"> ./pom.xml pom.xml</span>
+<span style="margin:0px;padding:0px;box-sizing:border-box;color:rgb(166, 38, 164);">ADD</span><span style="margin:0px;padding:0px;box-sizing:border-box;"> ./src src/</span>
+
+<span style="margin:0px;padding:0px;box-sizing:border-box;color:rgb(160, 161, 167);font-style:italic;"># package jar</span>
+<span style="margin:0px;padding:0px;box-sizing:border-box;color:rgb(166, 38, 164);">RUN</span><span style="margin:0px;padding:0px;box-sizing:border-box;"> mvn clean package</span>
+
+<span style="margin:0px;padding:0px;box-sizing:border-box;color:rgb(160, 161, 167);font-style:italic;"># Second stage: minimal runtime environment</span>
+<span style="margin:0px;padding:0px;box-sizing:border-box;color:rgb(166, 38, 164);">From</span> openjdk:<span style="margin:0px;padding:0px;box-sizing:border-box;color:rgb(152, 104, 1);">8</span>-jre-alpine
+
+<span style="margin:0px;padding:0px;box-sizing:border-box;color:rgb(160, 161, 167);font-style:italic;"># copy jar from the first stage</span>
+<span style="margin:0px;padding:0px;box-sizing:border-box;color:rgb(166, 38, 164);">COPY</span><span style="margin:0px;padding:0px;box-sizing:border-box;"> --from=builder target/my-app-1.0-SNAPSHOT.jar my-app-1.0-SNAPSHOT.jar</span>
+
+<span style="margin:0px;padding:0px;box-sizing:border-box;color:rgb(166, 38, 164);">EXPOSE</span> <span style="margin:0px;padding:0px;box-sizing:border-box;color:rgb(152, 104, 1);">8080</span>
+
+<span style="margin:0px;padding:0px;box-sizing:border-box;color:rgb(166, 38, 164);">CMD</span><span style="margin:0px;padding:0px;box-sizing:border-box;"> [<span style="margin:0px;padding:0px;box-sizing:border-box;color:rgb(80, 161, 79);">"java"</span>, <span style="margin:0px;padding:0px;box-sizing:border-box;color:rgb(80, 161, 79);">"-jar"</span>, <span style="margin:0px;padding:0px;box-sizing:border-box;color:rgb(80, 161, 79);">"my-app-1.0-SNAPSHOT.jar"</span>]</span><span style="font-family:Menlo, Monaco, Consolas, Courier, monospace;font-size:14px;white-space:pre;color:rgb(56, 58, 66);letter-spacing:-2px;"> </span></span></pre>
+    </div>
+    </li><li style="padding:0px;box-sizing:border-box;list-style:decimal;margin:8px 0px;list-style-type:decimal;"><p style="box-sizing:border-box;padding:0px;letter-spacing:0.4px;word-break:break-word;font-size:14px;line-height:24px;font-weight:400;margin:0px;">在Java Maven项目所在的目录下打开本地终端，执行如下命令。</p><div style="display:block;margin:0px;padding:0px;box-sizing:border-box;"><ol style="list-style:none;box-sizing:border-box;margin:0px;padding:0px;padding-left:25px;margin-bottom:16px;margin-top:16px;"><li style="padding:0px;box-sizing:border-box;list-style:decimal;margin:8px 0px;list-style-type:lower-alpha;"><p style="box-sizing:border-box;padding:0px;letter-spacing:0.4px;word-break:break-word;font-size:14px;line-height:24px;font-weight:400;margin:0px;">执行如下命令，关闭docker buildx的<a href="https://docs.docker.com/build/attestations/slsa-provenance/" title="" style="margin:0px;padding:0px;box-sizing:border-box;background:0px 0px;outline:none;text-decoration:none;color:rgb(19, 102, 236);">Provenance attestations</a>选项。</p>
+    <div style="box-sizing:border-box;background-color:rgb(244, 247, 250);position:relative;margin:16px 0px;padding:16px;">
+      <div style="margin:0px;padding:0px;box-sizing:border-box;-webkit-box-pack:justify;background-color:rgb(255, 255, 255);box-shadow:rgba(0, 0, 0, 0.1) 0px 2px 10px 0px;display:flex;height:24px;justify-content:space-between;position:absolute;right:0px;top:0px;">
+        <div style="margin:0px;padding:0px;box-sizing:border-box;">
+        </div>
+        <div style="margin:0px;padding:0px;box-sizing:border-box;">
+          <i title="更改代码主题" style="margin:0px;padding:0px;box-sizing:border-box;font-style:normal;color:rgb(102, 102, 102);cursor:pointer;display:inline-block;font-size:12px;height:24px;line-height:24px;text-align:center;width:24px;font-family:help-iconfont;"></i>
+      <i title="复制代码" style="margin:0px;padding:0px;box-sizing:border-box;font-style:normal;color:rgb(102, 102, 102);cursor:pointer;display:inline-block;font-size:12px;height:24px;line-height:24px;text-align:center;width:24px;font-family:help-iconfont;"></i>
+        </div>
+      </div>
+      <pre style="--en-codeblock:true;--en-meta:{&quot;title&quot;:&quot;&quot;,&quot;lang&quot;:&quot;&quot;,&quot;theme&quot;:&quot;default&quot;,&quot;showLine&quot;:true,&quot;lineWrap&quot;:true};border-radius:4px;background-color: #fbfaf8;border: 1px solid rgba(0,0,0,.14902);color: #333;font-size: 12px;padding: 8px;font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif;box-sizing: border-box;"><span style="box-sizing:border-box;overflow-wrap:normal;background:0px 0px;border:0px;display:inline;max-width:none;overflow-y:initial;overflow-x:auto;white-space:pre;word-break:normal;background-color:rgba(0, 0, 0, 0.04);border-radius:3px;font-size:14px;font-family:Menlo, Monaco, Consolas, Courier, monospace;margin:0px;padding:0px;color:rgb(56, 58, 66);"><span style="font-family:Menlo, Monaco, Consolas, Courier, monospace;font-size:14px;white-space:pre;color:rgb(56, 58, 66);letter-spacing:-2px;"> </span>export BUILDX_NO_DEFAULT_ATTESTATIONS=1<span style="font-family:Menlo, Monaco, Consolas, Courier, monospace;font-size:14px;white-space:pre;color:rgb(56, 58, 66);letter-spacing:-2px;"> </span></span></pre>
+    </div>
+    </li><li style="padding:0px;box-sizing:border-box;list-style:decimal;margin:8px 0px;list-style-type:lower-alpha;"><p style="box-sizing:border-box;padding:0px;letter-spacing:0.4px;word-break:break-word;font-size:14px;line-height:24px;font-weight:400;margin:0px;">执行如下命令，构建多架构镜像。</p>
+    <div style="box-sizing:border-box;background-color:rgb(244, 247, 250);position:relative;margin:16px 0px;padding:16px;">
+      <div style="margin:0px;padding:0px;box-sizing:border-box;-webkit-box-pack:justify;background-color:rgb(255, 255, 255);box-shadow:rgba(0, 0, 0, 0.1) 0px 2px 10px 0px;display:flex;height:24px;justify-content:space-between;position:absolute;right:0px;top:0px;">
+        <div style="margin:0px;padding:0px;box-sizing:border-box;">
+        </div>
+        <div style="margin:0px;padding:0px;box-sizing:border-box;">
+          <i title="更改代码主题" style="margin:0px;padding:0px;box-sizing:border-box;font-style:normal;color:rgb(102, 102, 102);cursor:pointer;display:inline-block;font-size:12px;height:24px;line-height:24px;text-align:center;width:24px;font-family:help-iconfont;"></i>
+      <i title="复制代码" style="margin:0px;padding:0px;box-sizing:border-box;font-style:normal;color:rgb(102, 102, 102);cursor:pointer;display:inline-block;font-size:12px;height:24px;line-height:24px;text-align:center;width:24px;font-family:help-iconfont;"></i>
+        </div>
+      </div>
+      <pre style="--en-codeblock:true;--en-meta:{&quot;title&quot;:&quot;&quot;,&quot;lang&quot;:&quot;&quot;,&quot;theme&quot;:&quot;default&quot;,&quot;showLine&quot;:true,&quot;lineWrap&quot;:true};border-radius:4px;background-color: #fbfaf8;border: 1px solid rgba(0,0,0,.14902);color: #333;font-size: 12px;padding: 8px;font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif;box-sizing: border-box;"><span style="box-sizing:border-box;overflow-wrap:normal;background:0px 0px;border:0px;display:inline;max-width:none;overflow-y:initial;overflow-x:auto;white-space:pre;word-break:normal;background-color:rgba(0, 0, 0, 0.04);border-radius:3px;font-size:14px;font-family:Menlo, Monaco, Consolas, Courier, monospace;margin:0px;padding:0px;color:rgb(56, 58, 66);"><span style="font-family:Menlo, Monaco, Consolas, Courier, monospace;font-size:14px;white-space:pre;color:rgb(56, 58, 66);letter-spacing:-2px;"> </span>docker buildx build . -t acr-test-registry.cn-hangzhou.cr.aliyuncs.com/test/test:multi  --platform linux/amd64,linux/arm64 --push<span style="font-family:Menlo, Monaco, Consolas, Courier, monospace;font-size:14px;white-space:pre;color:rgb(56, 58, 66);letter-spacing:-2px;"> </span></span></pre>
+    </div>
+    <p style="box-sizing:border-box;padding:0px;letter-spacing:0.4px;word-break:break-word;font-size:14px;line-height:24px;font-weight:400;margin:0px;">执行该命令后，将在本地构建出Amd64、Arm64两种平台的容器镜像，并将其推送到容器镜像仓库中。</p></li></ol></div><div style="box-sizing:border-box;-webkit-box-align:start;align-items:flex-start;display:flex;background-color:rgb(245, 245, 246);margin:16px 0px;padding:12px 16px;border-left:2px solid rgb(19, 102, 236);"><div style="margin:0px;padding:0px;box-sizing:border-box;-webkit-box-align:center;align-items:center;display:flex;height:24px;width:56px;"><i style="margin:0px;box-sizing:border-box;font-style:normal;background-position:50% center;background-repeat:no-repeat;background-size:18px 18px;border:none;display:inline-block;height:18px;margin-right:8px;vertical-align:middle;width:18px;padding:0px;background-image:url(https://img.alicdn.com/imgextra/i1/O1CN01ctvdSc1UIl2t8RRJ8_!!6000000002495-2-tps-200-200.png);"></i><strong style="margin:0px;padding:0px;box-sizing:border-box;font-weight:700;">说明 </strong></div><div style="margin:0px;padding:0px;box-sizing:border-box;-webkit-box-flex:1;color:rgb(88, 88, 88);flex:1 1 0%;margin-left:12px;overflow:hidden;"><p style="box-sizing:border-box;padding:0px;letter-spacing:0.4px;word-break:break-word;font-size:14px;line-height:24px;font-weight:400;margin:0px;">执行Docker Push需要提前通过Docker Login登录目标仓库。例如：<code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span style="font-family:Menlo, Monaco, Consolas, Courier, monospace;font-size:1em;letter-spacing:-2px;"> </span>docker login --username=xxx acr-test-registry.cn-hangzhou.cr.aliyuncs.com<span style="font-family:Menlo, Monaco, Consolas, Courier, monospace;font-size:1em;letter-spacing:-2px;"> </span></code>。</p></div></div></li></ol><div style="display:block;margin:0px;padding:0px;box-sizing:border-box;"><h2 style="margin:0px;box-sizing:border-box;color:rgb(24, 24, 24);letter-spacing:0.4px;margin-top:24px;font-weight:700;padding:0px;margin-bottom:16px;border-top:1px solid rgb(233, 233, 233);padding-top:24px;font-size:26px;line-height:32px;"><b style="font-weight:bolder;margin:0px;padding:0px;box-sizing:border-box;">从已有镜像中创建多架构镜像</b></h2><p style="box-sizing:border-box;padding:0px;letter-spacing:0.4px;word-break:break-word;font-size:14px;line-height:24px;font-weight:400;margin:0px 0px 16px;">本文以您拥有两个单架构镜像，且希望使用这两个单架构镜像创建出一个多架构镜像为例。</p><ol style="list-style:none;box-sizing:border-box;margin:0px;padding:0px;margin-bottom:24px;margin-top:16px;padding-left:25px;"><li style="padding:0px;box-sizing:border-box;list-style:decimal;margin:8px 0px;list-style-type:decimal;"><p style="box-sizing:border-box;padding:0px;letter-spacing:0.4px;word-break:break-word;font-size:14px;line-height:24px;font-weight:400;margin:0px;">运行<code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span style="font-family:Menlo, Monaco, Consolas, Courier, monospace;font-size:1em;letter-spacing:-2px;"> </span>docker tag<span style="font-family:Menlo, Monaco, Consolas, Courier, monospace;font-size:1em;letter-spacing:-2px;"> </span></code>，重新每个单架构镜像打上标记，并将其推送至容器镜像服务企业版实例。如下以一个架构为ARM64和一个架构为AMD64的单架构Nginx镜像为例。</p>
+    <div style="box-sizing:border-box;background-color:rgb(244, 247, 250);position:relative;margin:16px 0px;padding:16px;">
+      <div style="margin:0px;padding:0px;box-sizing:border-box;-webkit-box-pack:justify;background-color:rgb(255, 255, 255);box-shadow:rgba(0, 0, 0, 0.1) 0px 2px 10px 0px;display:flex;height:24px;justify-content:space-between;position:absolute;right:0px;top:0px;">
+        <div style="margin:0px;padding:0px;box-sizing:border-box;">
+        </div>
+        <div style="margin:0px;padding:0px;box-sizing:border-box;">
+          <i title="更改代码主题" style="margin:0px;padding:0px;box-sizing:border-box;font-style:normal;color:rgb(102, 102, 102);cursor:pointer;display:inline-block;font-size:12px;height:24px;line-height:24px;text-align:center;width:24px;font-family:help-iconfont;"></i>
+      <i title="复制代码" style="margin:0px;padding:0px;box-sizing:border-box;font-style:normal;color:rgb(102, 102, 102);cursor:pointer;display:inline-block;font-size:12px;height:24px;line-height:24px;text-align:center;width:24px;font-family:help-iconfont;"></i>
+        </div>
+      </div>
+      <pre style="--en-codeblock:true;--en-meta:{&quot;title&quot;:&quot;&quot;,&quot;lang&quot;:&quot;&quot;,&quot;theme&quot;:&quot;default&quot;,&quot;showLine&quot;:true,&quot;lineWrap&quot;:true};border-radius:4px;background-color: #fbfaf8;border: 1px solid rgba(0,0,0,.14902);color: #333;font-size: 12px;padding: 8px;font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif;box-sizing: border-box;"><span style="box-sizing:border-box;overflow-wrap:normal;background:0px 0px;border:0px;display:inline;max-width:none;overflow-y:initial;overflow-x:auto;white-space:pre;word-break:normal;background-color:rgba(0, 0, 0, 0.04);border-radius:3px;font-size:14px;font-family:Menlo, Monaco, Consolas, Courier, monospace;margin:0px;padding:0px;color:rgb(56, 58, 66);"><span style="font-family:Menlo, Monaco, Consolas, Courier, monospace;font-size:14px;white-space:pre;color:rgb(56, 58, 66);letter-spacing:-2px;"> </span>docker tag nginx:arm64 acr-test-registry.cn-hangzhou.cr.aliyuncs.com/multi-arch/nginx:arm64
+docker push acr-test-registry.cn-hangzhou.cr.aliyuncs.com/multi-arch/nginx:arm64
+
+docker tag nginx:amd64 acr-test-registry.cn-hangzhou.cr.aliyuncs.com/multi-arch/nginx:amd64
+docker push acr-test-registry.cn-hangzhou.cr.aliyuncs.com/multi-arch/nginx:amd64<span style="font-family:Menlo, Monaco, Consolas, Courier, monospace;font-size:14px;white-space:pre;color:rgb(56, 58, 66);letter-spacing:-2px;"> </span></span></pre>
+    </div>
+    </li><li style="padding:0px;box-sizing:border-box;list-style:decimal;margin:8px 0px;list-style-type:decimal;"><p style="box-sizing:border-box;padding:0px;letter-spacing:0.4px;word-break:break-word;font-size:14px;line-height:24px;font-weight:400;margin:0px;">运行<code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span style="font-family:Menlo, Monaco, Consolas, Courier, monospace;font-size:1em;letter-spacing:-2px;"> </span>docker manifest create<span style="font-family:Menlo, Monaco, Consolas, Courier, monospace;font-size:1em;letter-spacing:-2px;"> </span></code>创建一个Manifest List，将<a href="https://help.aliyun.com/zh/acr/use-cases/build-and-push-multi-arch-images-locally-to-container-registry-service#03eac2a03fz6y" title="" style="margin:0px;padding:0px;box-sizing:border-box;background:0px 0px;outline:none;text-decoration:none;color:rgb(19, 102, 236);">1</a>中的镜像合并到一个多架构镜像中。</p>
+    <div style="box-sizing:border-box;background-color:rgb(244, 247, 250);position:relative;margin:16px 0px;padding:16px;">
+      <div style="margin:0px;padding:0px;box-sizing:border-box;-webkit-box-pack:justify;background-color:rgb(255, 255, 255);box-shadow:rgba(0, 0, 0, 0.1) 0px 2px 10px 0px;display:flex;height:24px;justify-content:space-between;position:absolute;right:0px;top:0px;">
+        <div style="margin:0px;padding:0px;box-sizing:border-box;">
+        </div>
+        <div style="margin:0px;padding:0px;box-sizing:border-box;">
+          <i title="更改代码主题" style="margin:0px;padding:0px;box-sizing:border-box;font-style:normal;color:rgb(102, 102, 102);cursor:pointer;display:inline-block;font-size:12px;height:24px;line-height:24px;text-align:center;width:24px;font-family:help-iconfont;"></i>
+      <i title="复制代码" style="margin:0px;padding:0px;box-sizing:border-box;font-style:normal;color:rgb(102, 102, 102);cursor:pointer;display:inline-block;font-size:12px;height:24px;line-height:24px;text-align:center;width:24px;font-family:help-iconfont;"></i>
+        </div>
+      </div>
+      <pre style="--en-codeblock:true;--en-meta:{&quot;title&quot;:&quot;&quot;,&quot;lang&quot;:&quot;&quot;,&quot;theme&quot;:&quot;default&quot;,&quot;showLine&quot;:true,&quot;lineWrap&quot;:true};border-radius:4px;background-color: #fbfaf8;border: 1px solid rgba(0,0,0,.14902);color: #333;font-size: 12px;padding: 8px;font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif;box-sizing: border-box;"><span style="box-sizing:border-box;overflow-wrap:normal;background:0px 0px;border:0px;display:inline;max-width:none;overflow-y:initial;overflow-x:auto;white-space:pre;word-break:normal;background-color:rgba(0, 0, 0, 0.04);border-radius:3px;font-size:14px;font-family:Menlo, Monaco, Consolas, Courier, monospace;margin:0px;padding:0px;color:rgb(56, 58, 66);"><span style="font-family:Menlo, Monaco, Consolas, Courier, monospace;font-size:14px;white-space:pre;color:rgb(56, 58, 66);letter-spacing:-2px;"> </span>docker manifest create acr-test-registry.cn-hangzhou.cr.aliyuncs.com/multi-arch/nginx:multi \
+ acr-test-registry.cn-hangzhou.cr.aliyuncs.com/multi-arch/nginx:arm64 \
+ acr-test-registry.cn-hangzhou.cr.aliyuncs.com/multi-arch/nginx:amd64<span style="font-family:Menlo, Monaco, Consolas, Courier, monospace;font-size:14px;white-space:pre;color:rgb(56, 58, 66);letter-spacing:-2px;"> </span></span></pre>
+    </div>
+    </li><li style="padding:0px;box-sizing:border-box;list-style:decimal;margin:8px 0px;list-style-type:decimal;"><p style="box-sizing:border-box;padding:0px;letter-spacing:0.4px;word-break:break-word;font-size:14px;line-height:24px;font-weight:400;margin:0px;">运行<code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span style="font-family:Menlo, Monaco, Consolas, Courier, monospace;font-size:1em;letter-spacing:-2px;"> </span>docker manifest push<span style="font-family:Menlo, Monaco, Consolas, Courier, monospace;font-size:1em;letter-spacing:-2px;"> </span></code>将Manifest List送到容器镜像服务企业版实例中。</p>
+    <div style="box-sizing:border-box;background-color:rgb(244, 247, 250);position:relative;margin:16px 0px;padding:16px;">
+      <div style="margin:0px;padding:0px;box-sizing:border-box;-webkit-box-pack:justify;background-color:rgb(255, 255, 255);box-shadow:rgba(0, 0, 0, 0.1) 0px 2px 10px 0px;display:flex;height:24px;justify-content:space-between;position:absolute;right:0px;top:0px;">
+        <div style="margin:0px;padding:0px;box-sizing:border-box;">
+        </div>
+        <div style="margin:0px;padding:0px;box-sizing:border-box;">
+          <i title="更改代码主题" style="margin:0px;padding:0px;box-sizing:border-box;font-style:normal;color:rgb(102, 102, 102);cursor:pointer;display:inline-block;font-size:12px;height:24px;line-height:24px;text-align:center;width:24px;font-family:help-iconfont;"></i>
+      <i title="复制代码" style="margin:0px;padding:0px;box-sizing:border-box;font-style:normal;color:rgb(102, 102, 102);cursor:pointer;display:inline-block;font-size:12px;height:24px;line-height:24px;text-align:center;width:24px;font-family:help-iconfont;"></i>
+        </div>
+      </div>
+      <pre style="--en-codeblock:true;--en-meta:{&quot;title&quot;:&quot;&quot;,&quot;lang&quot;:&quot;&quot;,&quot;theme&quot;:&quot;default&quot;,&quot;showLine&quot;:true,&quot;lineWrap&quot;:true};border-radius:4px;background-color: #fbfaf8;border: 1px solid rgba(0,0,0,.14902);color: #333;font-size: 12px;padding: 8px;font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif;box-sizing: border-box;"><span style="box-sizing:border-box;overflow-wrap:normal;background:0px 0px;border:0px;display:inline;max-width:none;overflow-y:initial;overflow-x:auto;white-space:pre;word-break:normal;background-color:rgba(0, 0, 0, 0.04);border-radius:3px;font-size:14px;font-family:Menlo, Monaco, Consolas, Courier, monospace;margin:0px;padding:0px;color:rgb(56, 58, 66);"><span style="font-family:Menlo, Monaco, Consolas, Courier, monospace;font-size:14px;white-space:pre;color:rgb(56, 58, 66);letter-spacing:-2px;"> </span>docker manifest push acr-test-registry.cn-hangzhou.cr.aliyuncs.com/multi-arch/nginx:multi<span style="font-family:Menlo, Monaco, Consolas, Courier, monospace;font-size:14px;white-space:pre;color:rgb(56, 58, 66);letter-spacing:-2px;"> </span></span></pre>
+    </div>
+    </li></ol></div><h2 style="margin:0px;box-sizing:border-box;color:rgb(24, 24, 24);letter-spacing:0.4px;margin-top:24px;font-weight:700;padding:0px;margin-bottom:16px;border-top:1px solid rgb(233, 233, 233);padding-top:24px;font-size:26px;line-height:32px;"><b style="font-weight:bolder;margin:0px;padding:0px;box-sizing:border-box;">相关文档</b></h2><p style="box-sizing:border-box;padding:0px;letter-spacing:0.4px;word-break:break-word;font-size:14px;line-height:24px;font-weight:400;margin:0px 0px 16px;">您也可以通过容器镜像服务ACR控制台配置并在云端运行多架构镜像构建任务，请参见<a href="https://help.aliyun.com/zh/acr/user-guide/build-multi-schema-container-images" title="" style="margin:0px;padding:0px;box-sizing:border-box;background:0px 0px;outline:none;text-decoration:none;color:rgb(19, 102, 236);">构建多架构容器镜像</a>。</p></div></span>
+
+</div></div><div style="margin:0px;padding:0px;box-sizing:border-box;height:60px;"><div style="margin:0px;box-sizing:border-box;-webkit-box-orient:horizontal;-webkit-box-direction:normal;-webkit-box-align:center;-webkit-box-pack:justify;align-items:center;border-top:1px solid rgb(215, 216, 217);display:flex;flex-direction:row;height:60px;justify-content:space-between;padding:16px 0px 24px;"><span style="margin:0px;padding:0px;box-sizing:border-box;"><a href="https://help.aliyun.com/zh/acr/use-cases/build-an-image-for-a-java-application-by-using-a-dockerfile-with-multi-stage-builds" style="background-color:transparent;margin:0px;padding:0px;box-sizing:border-box;text-decoration:none;color:rgb(24, 24, 24);"><i style="margin:0px;padding:0px;box-sizing:border-box;font-size:12px;color:rgb(102, 102, 102);margin-right:8px;font-family:help-iconfont;"></i>上一篇：在Dockerfile中使用构建打包镜像并运行</a></span><span style="margin:0px;padding:0px;box-sizing:border-box;"><a href="https://help.aliyun.com/zh/acr/use-cases/migrate-images-from-a-self-managed-harbor-instance-to-container-registry-enterprise-edition-in-10-minutes" style="background-color:transparent;margin:0px;padding:0px;box-sizing:border-box;text-decoration:none;color:rgb(24, 24, 24);">下一篇：十分钟迁移自建Harbor至容器镜像服务企业版<i style="margin:0px;padding:0px;box-sizing:border-box;font-size:12px;margin-left:8px;color:rgb(102, 102, 102);margin-right:8px;font-family:help-iconfont;"></i></a></span></div></div></div><div style="margin:0px;padding:0px;box-sizing:border-box;"><div style="margin:0px;padding:0px;box-sizing:border-box;"><h2 style="font-weight:500;font-size:20px;line-height:30px;margin:0px;padding:0px;box-sizing:border-box;">文档推荐</h2><ul style="box-sizing:border-box;margin:0px;padding:0px;list-style:none;"><li style="margin:0px;padding:0px;box-sizing:border-box;"><a href="https://help.aliyun.com/zh/acr/product-overview/what-is-container-registry?scm=20140722.H_257112._.ID_257112-OR_rec-V_1" title="什么是容器镜像服务ACR" style="background-color:transparent;margin:0px;padding:0px;box-sizing:border-box;color:rgb(19, 102, 236);text-decoration:none;">什么是容器镜像服务ACR</a></li><li style="margin:0px;padding:0px;box-sizing:border-box;"><a href="https://help.aliyun.com/zh/acr/getting-started/use-a-container-registry-enterprise-edition-instance-to-push-and-pull-images?scm=20140722.H_198690._.ID_198690-OR_rec-V_1" title="使用企业版实例推送和拉取镜像" style="background-color:transparent;margin:0px;padding:0px;box-sizing:border-box;color:rgb(19, 102, 236);text-decoration:none;">使用企业版实例推送和拉取镜像</a></li><li style="margin:0px;padding:0px;box-sizing:border-box;"><a href="https://help.aliyun.com/zh/acr/getting-started/basic-operations-on-docker?scm=20140722.H_60743._.ID_60743-OR_rec-V_1" title="Docker基本操作" style="background-color:transparent;margin:0px;padding:0px;box-sizing:border-box;color:rgb(19, 102, 236);text-decoration:none;">Docker基本操作</a></li><li style="margin:0px;padding:0px;box-sizing:border-box;"><a href="https://help.aliyun.com/zh/acr/user-guide/create-a-container-registry-personal-edition-instance?scm=20140722.H_205066._.ID_205066-OR_rec-V_1" title="创建个人版实例" style="background-color:transparent;margin:0px;padding:0px;box-sizing:border-box;color:rgb(19, 102, 236);text-decoration:none;">创建个人版实例</a></li><li style="margin:0px;padding:0px;box-sizing:border-box;"><a href="https://help.aliyun.com/zh/acr/user-guide/build-multi-schema-container-images?scm=20140722.H_214497._.ID_214497-OR_rec-V_1" title="构建多架构容器镜像" style="background-color:transparent;margin:0px;padding:0px;box-sizing:border-box;color:rgb(19, 102, 236);text-decoration:none;">构建多架构容器镜像</a></li><li style="margin:0px;padding:0px;box-sizing:border-box;"><a href="https://help.aliyun.com/zh/acr/user-guide/create-a-repository-and-build-images?scm=20140722.H_60997._.ID_60997-OR_rec-V_1" title="构建仓库与镜像" style="background-color:transparent;margin:0px;padding:0px;box-sizing:border-box;color:rgb(19, 102, 236);text-decoration:none;">构建仓库与镜像</a></li><li style="margin:0px;padding:0px;box-sizing:border-box;"><a href="https://help.aliyun.com/zh/acr/user-guide/build-images-on-container-registry-enterprise-edition-instances?scm=20140722.H_199658._.ID_199658-OR_rec-V_1" title="使用企业版实例构建镜像" style="background-color:transparent;margin:0px;padding:0px;box-sizing:border-box;color:rgb(19, 102, 236);text-decoration:none;">使用企业版实例构建镜像</a></li><li style="margin:0px;padding:0px;box-sizing:border-box;"><a href="https://help.aliyun.com/zh/acr/user-guide/bind-a-source-code-hosting-platform-1?scm=20140722.H_406349._.ID_406349-OR_rec-V_1" title="绑定源代码托管平台" style="background-color:transparent;margin:0px;padding:0px;box-sizing:border-box;color:rgb(19, 102, 236);text-decoration:none;">绑定源代码托管平台</a></li></ul></div></div></div></div></span></div></div></div></div></div></div></div></div>
+</div>
+<a class="back-link" href="../articles.html">← 返回笔记列表</a>
+</body>
+</html>

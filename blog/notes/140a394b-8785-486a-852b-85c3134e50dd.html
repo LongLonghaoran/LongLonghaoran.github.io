@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="zh-CN" data-theme="light">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>gitlab-介绍CI/CD — 技术笔记</title>
+<style>
+:root {
+  --bg: #ffffff;
+  --text: #1a1a1a;
+  --muted: #666;
+  --border: #e0e0e0;
+  --code-bg: #f5f5f5;
+  --link: #0066cc;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #1a1a1a;
+    --text: #e0e0e0;
+    --muted: #999;
+    --border: #333;
+    --code-bg: #2a2a2a;
+    --link: #66bbff;
+  }
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  line-height: 1.7;
+  color: var(--text);
+  background: var(--bg);
+  max-width: 860px;
+  margin: 0 auto;
+  padding: 2rem 1.5rem;
+}
+.note-header {
+  border-bottom: 2px solid var(--border);
+  padding-bottom: 1rem;
+  margin-bottom: 2rem;
+}
+.note-title {
+  font-size: 1.6rem;
+  font-weight: 700;
+  margin-bottom: 0.3rem;
+}
+.note-meta {
+  color: var(--muted);
+  font-size: 0.85rem;
+}
+.note-content {
+  font-size: 0.95rem;
+}
+.note-content h1 { font-size: 1.4rem; margin: 1.2rem 0 0.6rem; }
+.note-content h2 { font-size: 1.2rem; margin: 1rem 0 0.5rem; }
+.note-content h3 { font-size: 1.05rem; margin: 0.8rem 0 0.4rem; }
+.note-content p { margin: 0.5rem 0; }
+.note-content ul, .note-content ol { margin: 0.5rem 0 0.5rem 2rem; }
+.note-content li { margin: 0.2rem 0; }
+.note-content pre {
+  background: var(--code-bg);
+  padding: 1rem;
+  border-radius: 6px;
+  overflow-x: auto;
+  margin: 0.8rem 0;
+  font-size: 0.85rem;
+}
+.note-content code {
+  background: var(--code-bg);
+  padding: 0.1rem 0.3rem;
+  border-radius: 3px;
+  font-size: 0.88em;
+}
+.note-content pre code {
+  background: none;
+  padding: 0;
+}
+.note-content blockquote {
+  border-left: 3px solid var(--border);
+  padding-left: 1rem;
+  color: var(--muted);
+  margin: 0.8rem 0;
+}
+.note-content a { color: var(--link); }
+.note-content img {
+  max-width: 100%;
+  height: auto;
+  border-radius: 6px;
+  margin: 0.5rem 0;
+}
+.note-content table {
+  border-collapse: collapse;
+  width: 100%;
+  margin: 0.8rem 0;
+}
+.note-content th, .note-content td {
+  border: 1px solid var(--border);
+  padding: 0.5rem;
+}
+.note-content th { background: var(--code-bg); }
+.media-placeholder {
+  background: var(--code-bg);
+  padding: 1rem;
+  text-align: center;
+  color: var(--muted);
+  border-radius: 6px;
+  margin: 0.5rem 0;
+  font-size: 0.85rem;
+}
+.encrypt-placeholder {
+  background: #fff3cd;
+  padding: 0.5rem;
+  text-align: center;
+  color: #856404;
+  border-radius: 6px;
+  margin: 0.5rem 0;
+  font-size: 0.85rem;
+}
+.back-link {
+  display: inline-block;
+  margin-top: 2rem;
+  color: var(--link);
+  text-decoration: none;
+  font-size: 0.85rem;
+}
+</style>
+</head>
+<body>
+<div class="note-header">
+  <div class="note-title">gitlab-介绍CI/CD</div>
+  <div class="note-meta">笔记本：CI/CD</div>
+</div>
+<div class="note-content">
+<div><span style="font-weight: bold;">什么是gitlab ci/cd呢?</span></div><div>    gitlab ci/cd 是gitlab内建的用于持续开发方法的工具:</div><div>        continuous integration 持续集成</div><div>        持续交付、分发</div><div>        持续部署</div><div><br /></div><div><span style="font-weight: bold;">持续集成</span>：每一个推送代码都会运行一次管线脚本来构建、测试、验证代码，在合并之前</div><div>持续交付和部署由更进一步的ci组成，即mei次推送到默认分支的时候都部署到生产环境</div><div><br /></div><div><span style="font-weight: bold;">好处</span>：更早的发现bug和错误</div><div><br /></div><div>通过自动化运维gitlab还可以自动探测、构建、测试、部署并监控的你的应用</div><div><br /></div><div><span style="font-weight: bold;">一些概念</span>：</div><ul><li><div>    管线： 结构化CI/CD流程</div></li><li><div>    CI/CD变量： 复用键值对</div></li><li><div>    环境：将应用部署到不同环境中（比如演示环境、生产环境）</div></li><li><div>    任务工件：输出、使用、复用任务工件</div></li><li><div>    缓存的依赖：将依赖缓存用于更快的执行</div></li><li><div>    Gitlab执行器：配置你自己的执行器来执行你的脚本</div></li><li><div>    管线效率：配置你自己的管线来快速有效的运行</div></li><li><div>    测试用例：配置自己的关系来快速有效的运行</div></li></ul><div><br /></div><div><span style="font-weight: bold;">特性:</span></div><div><span style="font-weight: bold;">    配置：</span></div><div><span style="font-weight: bold;">        </span>自动化运维</div><div>        聊天运维（在聊天中就可以出发CI，并且处理结果会发送回频道)</div><div>    <span style="font-weight: bold;">校验：</span></div><div>        浏览器性能测试</div><div>        负载均衡测试</div><div>        CI服务</div><div>        代码质量</div><div>        使用Docker镜像</div><div>    <span style="font-weight: bold;">发布</span></div><div>        自动部署</div><div>        构建Docker镜像</div><div>        金丝雀部署</div><div>        审查应用</div><div>        云部署</div><div><br /></div><div><span style="font-weight: bold;">任务工件讲解</span>:</div><div>    在任务执行过程中产生的文件，默认各个任务是独立的访问不了的，通过工件可以实现共享访问</div><div><span style="font-weight: bold;">缓存的依赖讲解</span>：</div><div>    </div><div><span style="font-weight: bold;">执行器讲解</span>：</div><div>    要执行管线就需要配置执行器来执行,它就是运行管线中的任务的程序。</div><div>    要安装执行器的话建议将其安装在独立与gitlab实例的机器上，这样利用性能和安全。当你分离了机器之后，你就可以有不同的操作系统和工具了，比如k8s和docker</div><div>    安装说明：<a href="https://docs.gitlab.com/runner/install/index.html">https://docs.gitlab.com/runner/install/index.html</a></div><div>    安装好执行器后需要注册才可以使用</div><div>    执行器是用go语言开发的。</div><div>    执行者executor:</div><div>        所谓执行决定了每个任务运行的环境，比如：</div><div>            如果希望用powershell来运行命令，那么你或许可以在windows server上runner并且注册执行器让它使用shell执行者</div><div>            如果希望用docker容器，你或许会在linux服务器上安装并注册它来使用docker执行者</div><div>    标签：</div><div>        注册好执行器后，可以给它添加标签，用于确定任务与可执行该任务的执行器之间的关系</div><div>    配置执行器:</div><div>        配置文件位于config.toml，该文件在执行器安装过程中就安装好了</div><div>    监控执行器：可以使用promethus来配合监控</div><div>    使用执行器来运行任务：</div><div>        执行器安装并配置好之后，在.gitlab-ci.yml文件中指定好执行器的名称或者标签名。然后，当你提交到仓库的时候，管线开始运行，接着执行器的执行者开始处理命令</div><div>    执行器的一些特性： </div><div>            多任务并行、</div><div>            多服务器多令牌结构（甚至每个项目一个令牌），令牌的概念下面会解释、对每个令牌限制并行数量、</div><div>            任务可以：本地、docker容器、通过ssh使用docker容器、连接远程服务器ssh来执行</div><div>            支持bash、powershell</div><div>            GNU/linux、macOS、windows（其实几乎任何能够运行docker的主机都可以,因为任务可以放在docker中执行）</div><div>            可以作为后台服务来运行</div><div>            支持通过http服务来使用普罗米修斯监控</div><div>        执行器工作流程：</div><div>            包含了注册、认证以及任务令牌的操作</div><div>            注册令牌：即注册时gitlab 设置页面中的注册令牌</div><div>            认证令牌：通过gitlab api注册成功后返回的令牌，或者通过gitlab-runner命令注册后，该令牌也会自动添加到配置文件中去</div><div>            任务令牌：</div><div><span>    <span>    <span>    访问令牌：即调用gitlab api的时候需要传递的令牌，这个也可以通过在Settings -&gt; Access Tokens中进行设置</span></span></span><div class="media-placeholder">[图片/附件]</div><br /></div><div>     </div><div>        </div><div><br /></div><div><span style="font-weight: bold;">在gitlab中使用执行器：</span></div><div><span style="font-weight: bold;">    </span>在gitlab cicd中执行器会执行在.gitlab-ci.yml中的定义的代码。执行器是一个轻量级的、高度可扩展的代理，通过gitlab cicd的api来拾取任务任务并执行，并将结果发送回gitlab 实例。</div><div>    有3种执行器： 公共执行器、组执行器、特定执行器</div><div>    公共执行器只有超级管理员可以更改</div><div>    组执行器用于同一个组中的所有项目可以访问同一组执行器，组执行器队列遵循先进先出原则</div><div>    组执行器创建步骤：Settings -&gt; CI/CD -&gt; 展开Runners部分 -&gt; 注意URL和token -&gt; 注册执行器</div><div>    管理、查看组执行器：</div><div>            可通过runner api来管理</div><div>    特定的执行器:</div><div>        特定于项目的执行器，注意fork的项目不会自动共享特定的执行器</div><div>        创建： 安装执行器-》Settings -&gt; CI/CD -〉 展开Runners部分 -》 注意URL和Token -〉注册执行器</div><div>    给特定的项目启用特定的执行器</div><div>        必须有该项目的所有者全县</div><div>        特定的执行器不能是锁定的</div><div>    通过标签来限制的任务执行的数量，默认情况下执行器只会拾取打了标签的任务，你必须拥有所有者全县才可以更改，</div><div>    如果要让执行器拾取未打标签的任务：</div><div>        Settings&gt;CI/CD 展开Runners部分 -&gt; 找到你要更改的执行器并确保它是一启动的-》点击铅笔按钮-〉检查 Run untagged jobs选项-》点击来更改</div><div>        注意： 执行标签列表不能为空，当它不允许去拾取未打标签的任务时</div><div>    通过变量来配置执行器的行为：</div><div>        在.gitlab-ci.yml文件通过variables:部分中设置一些变量可以配置执行器的行为：</div><ul><li><div><a href="evernote-html-snippet://#git-strategy">GIT_STRATEGY</a> git 拉取方式</div></li><li><div><a href="evernote-html-snippet://#git-submodule-strategy">GIT_SUBMODULE_STRATEGY</a> 子模块拉取方式</div></li><li><div><a href="evernote-html-snippet://#git-checkout">GIT_CHECKOUT</a></div></li><li><div><a href="evernote-html-snippet://#git-clean-flags">GIT_CLEAN_FLAGS</a></div></li><li><div><a href="evernote-html-snippet://#git-fetch-extra-flags">GIT_FETCH_EXTRA_FLAGS</a></div></li><li><div><a href="evernote-html-snippet://#shallow-cloning">GIT_DEPTH</a> (shallow cloning) 克隆拉取时的深度</div></li><li><div><a href="evernote-html-snippet://#custom-build-directories">GIT_CLONE_PATH</a> (custom build directories) 自定义克隆到的目录</div></li></ul><div><br /></div><div><br /></div><div><br /></div><div><span style="font-weight: bold;">执行器最佳实践</span>：</div><div>    取决于具体的执行者，其构建目录会有所不同：</div><div>    k8s docker docker machine: 在/builds</div><div>    shell在 $PWD/builds</div><div>    ssh virtualbox parallels:在~/builds,home目录取决于自行配置的用于ssh连接所使用的home目录</div><div>    custom:必须通过builds_dir设置明确指定构建目录</div><div>    关闭执行器:</div><div>    执行器会单独启动一个进程来执行注入下载、上传工件、处理缓存的事情。这些进程使用gitlab-runner命令来执行，可以通过pkill -QUIT gitlab-runner 或者killall QUIT gitlab-runner来杀掉它（进程的执行命令会有gitlab-runner，pkill和killall都可以通过名称匹配来杀进程)，但是这样杀掉之后，所处理的操作也会执行失败，所以有2种方式来避免：</div><div>    1.将执行器注册为本地服务systemd，使用SIGQUIT作为杀进程的信号，然后使用gitlab-runner stop 或者 systemctl stop gitlab-runner.service来关闭执行器</div><div>    2.手动执行发送信号</div><div>        kill -SIGQUIT pid (pid在gitlab-runner run的时候会打印到标准输出（终端）)</div><div><br /></div>
+</div>
+<a class="back-link" href="../articles.html">← 返回笔记列表</a>
+</body>
+</html>

@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="zh-CN" data-theme="light">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>对Cookie设置HttpOnly可以用于阻止XSS攻击 — 技术笔记</title>
+<style>
+:root {
+  --bg: #ffffff;
+  --text: #1a1a1a;
+  --muted: #666;
+  --border: #e0e0e0;
+  --code-bg: #f5f5f5;
+  --link: #0066cc;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #1a1a1a;
+    --text: #e0e0e0;
+    --muted: #999;
+    --border: #333;
+    --code-bg: #2a2a2a;
+    --link: #66bbff;
+  }
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  line-height: 1.7;
+  color: var(--text);
+  background: var(--bg);
+  max-width: 860px;
+  margin: 0 auto;
+  padding: 2rem 1.5rem;
+}
+.note-header {
+  border-bottom: 2px solid var(--border);
+  padding-bottom: 1rem;
+  margin-bottom: 2rem;
+}
+.note-title {
+  font-size: 1.6rem;
+  font-weight: 700;
+  margin-bottom: 0.3rem;
+}
+.note-meta {
+  color: var(--muted);
+  font-size: 0.85rem;
+}
+.note-content {
+  font-size: 0.95rem;
+}
+.note-content h1 { font-size: 1.4rem; margin: 1.2rem 0 0.6rem; }
+.note-content h2 { font-size: 1.2rem; margin: 1rem 0 0.5rem; }
+.note-content h3 { font-size: 1.05rem; margin: 0.8rem 0 0.4rem; }
+.note-content p { margin: 0.5rem 0; }
+.note-content ul, .note-content ol { margin: 0.5rem 0 0.5rem 2rem; }
+.note-content li { margin: 0.2rem 0; }
+.note-content pre {
+  background: var(--code-bg);
+  padding: 1rem;
+  border-radius: 6px;
+  overflow-x: auto;
+  margin: 0.8rem 0;
+  font-size: 0.85rem;
+}
+.note-content code {
+  background: var(--code-bg);
+  padding: 0.1rem 0.3rem;
+  border-radius: 3px;
+  font-size: 0.88em;
+}
+.note-content pre code {
+  background: none;
+  padding: 0;
+}
+.note-content blockquote {
+  border-left: 3px solid var(--border);
+  padding-left: 1rem;
+  color: var(--muted);
+  margin: 0.8rem 0;
+}
+.note-content a { color: var(--link); }
+.note-content img {
+  max-width: 100%;
+  height: auto;
+  border-radius: 6px;
+  margin: 0.5rem 0;
+}
+.note-content table {
+  border-collapse: collapse;
+  width: 100%;
+  margin: 0.8rem 0;
+}
+.note-content th, .note-content td {
+  border: 1px solid var(--border);
+  padding: 0.5rem;
+}
+.note-content th { background: var(--code-bg); }
+.media-placeholder {
+  background: var(--code-bg);
+  padding: 1rem;
+  text-align: center;
+  color: var(--muted);
+  border-radius: 6px;
+  margin: 0.5rem 0;
+  font-size: 0.85rem;
+}
+.encrypt-placeholder {
+  background: #fff3cd;
+  padding: 0.5rem;
+  text-align: center;
+  color: #856404;
+  border-radius: 6px;
+  margin: 0.5rem 0;
+  font-size: 0.85rem;
+}
+.back-link {
+  display: inline-block;
+  margin-top: 2rem;
+  color: var(--link);
+  text-decoration: none;
+  font-size: 0.85rem;
+}
+</style>
+</head>
+<body>
+<div class="note-header">
+  <div class="note-title">对Cookie设置HttpOnly可以用于阻止XSS攻击</div>
+  <div class="note-meta">笔记本：HTTP</div>
+</div>
+<div class="note-content">
+<div style="font-size: 14px; margin: 0; padding: 0; width: 100%;"><blockquote style="line-height: 160%; box-sizing: content-box; margin: 15px 0; border-left: 4px solid #ddd; padding: 0 15px; color: #777;">
+<p style="line-height: 160%; box-sizing: content-box; margin: 10px 0; color: #333; margin-top: 0; margin-bottom: 0;">因为设置了httponly的cookie无法被js获取</p>
+</blockquote>
+<p style="line-height: 160%; box-sizing: content-box; margin: 10px 0; color: #333;">The modern web relies a lot on cookies. However, we are not talking about sweet pieces of pastry you can eat. Instead, cookies are pieces of information a website stores on the user’s device. If you have a website, you can mark a cookie to be an HttpOnly Cookie. If you want to know what does this means or why should you use this type of cookie, you are in the right place.</p>
+<p style="line-height: 160%; box-sizing: content-box; margin: 10px 0; color: #333;">The HttpOnly Cookie<br/>
+What is a Cookie?<br/>
+Before we can explain what is an HttpOnly Cookie, we should clarify what a traditional cookie is. If you already know that, feel free to skip this part.</p>
+<p style="line-height: 160%; box-sizing: content-box; margin: 10px 0; color: #333;">A cookie is a piece of text that a website tells your PC to store for later use. Remember that a website can only suggest that to your browser (e.g. Chrome, Firefox), but it cannot force the cookie to be saved. Instead, it is the browser deciding if it should accept cookies or not, and you can configure that in any modern browser. However, browsers accept cookies by default because the web heavily relies on them.</p>
+<p style="line-height: 160%; box-sizing: content-box; margin: 10px 0; color: #333;">A cookie doesn’t simply mean saving some piece of data in your browser. It also means sending that piece of data in every request to the site that created the cookie. This becomes pretty useful, for example for authentication. With a cookie, you can store a token that identifies the user. Then, every time the browser makes a request to your site, it will send the authentication token. Now, on your web server, you can recognize users by their token (their cookie).</p>
+<p style="line-height: 160%; box-sizing: content-box; margin: 10px 0; color: #333;">HttpOnly Cookie<br/>
+HttpOnly is a flag the website can specify about a cookie. In other words, the webserver tells your browser “Hey, here is a cookie, and you should treat is as HttpOnly”.</p>
+<p style="line-height: 160%; box-sizing: content-box; margin: 10px 0; color: #333;"><u style="line-height: 160%; box-sizing: content-box;"><strong style="line-height: 160%; box-sizing: content-box; font-weight: 700;">An HttpOnly Cookie is not accessible by the JavaScript. Only the browser knows about it, and it doesn’t give it to the JavaScript code in the page</strong></u>. At first, it might sound like a limitation, and it is. However, the goal of that is that we cannot trust the JavaScript code. An attacker may use JavaScript to steal our authentication token stored in a cookie, and then access the website with our account. With HttpOnly cookies, this is not possible. This makes XSS attacks (the one we just described) harder to perform.</p>
+<p style="line-height: 160%; box-sizing: content-box; margin: 10px 0; color: #333;">It is a recognized best practice to share any authentication data only with HttpOnly cookies. Using a standard cookie for authentication is a known vulnerability we should avoid in any case.</p>
+<p style="line-height: 160%; box-sizing: content-box; margin: 10px 0; color: #333;">Diving deeper<br/>
+In the end, cookies are a property of HTTP. HTTP is a standard protocol that defines how to send and receive cookies. Luckily, the instructions of HTTP are in plain text. To set a cookie as HttpOnly, the instruction to use in the header is the following.</p>
+<p style="line-height: 160%; box-sizing: content-box; margin: 10px 0; color: #333;">Set-Cookie: =[; =][; expires=][; domain=][; path=][; secure][; HttpOnly]<br/>
+If you are not familiar with this syntax, it provides several options. One of them is HttpOnly, and we should add in our case. The simplest way to make an HttpOnly Cookie is thus the following.</p>
+<p style="line-height: 160%; box-sizing: content-box; margin: 10px 0; color: #333;">Set-Cookie: cookie_name="cookie_value"; HttpOnly<br/>
+Of course, creating cookies from a programming language you will not have to write HTTP headers manually. You will have a dedicated function to create cookies, check the documentation of your programming language.</p>
+<p style="line-height: 160%; box-sizing: content-box; margin: 10px 0; color: #333;">HttpOnly Cookies are a matter of trust<br/>
+As we said in the beginning, cookies are suggestions the website tells to your browser. In the end, is the browser to decide whether to accept a cookie or not. Like so, it is also the browser to decide to provide the cookie to JavaScript or not. To put it simply, when you make an HttpOnly Cookie, you are telling the browser “Please, don’t show that to JavaScript”. Thus, trust HttpOnly cookies blindly. Most importantly, don’t use to store sensitive data like credentials or passwords: use only tokens.</p>
+<p style="line-height: 160%; box-sizing: content-box; margin: 10px 0; color: #333;">However, be aware that all modern browsers implement HttpOnly cookies. In fact, Internet Explorer 6 started to support them in 2002. Even today, this technology is still relevant.</p>
+<p style="line-height: 160%; box-sizing: content-box; margin: 10px 0; color: #333;">In Conclusion (and TL;DR).<br/>
+HttpOnly Cookies are Cookies that are not available to JavaScript. Thus, they are the best choice for storing session tokens. To implement them, you should check the reference of your programming language, but in general, it is as simple as adding an additional parameter to a function.</p>
+<p style="line-height: 160%; box-sizing: content-box; margin: 10px 0; color: #333;">If you want to make your web application more secure, making sessions based on an HttpOnly cookie is a good start.  What to do next? A good start could be reading some articles of the Open Web Application Security Project, which dictates some of the best practices in the field.</p>
+</div><center style='display:none !important;visibility:collapse !important;height:0 !important;white-space:nowrap;width:100%;overflow:hidden'>%3E%20%E5%9B%A0%E4%B8%BA%E8%AE%BE%E7%BD%AE%E4%BA%86httponly%E7%9A%84cookie%E6%97%A0%E6%B3%95%E8%A2%ABjs%E8%8E%B7%E5%8F%96%0A%0AThe%20modern%20web%20relies%20a%20lot%20on%20cookies.%20However%2C%20we%20are%20not%20talking%20about%20sweet%20pieces%20of%20pastry%20you%20can%20eat.%20Instead%2C%20cookies%20are%20pieces%20of%20information%20a%20website%20stores%20on%20the%20user%E2%80%99s%20device.%20If%20you%20have%20a%20website%2C%20you%20can%20mark%20a%20cookie%20to%20be%20an%20HttpOnly%20Cookie.%20If%20you%20want%20to%20know%20what%20does%20this%20means%20or%20why%20should%20you%20use%20this%20type%20of%20cookie%2C%20you%20are%20in%20the%20right%20place.%0A%0AThe%20HttpOnly%20Cookie%0AWhat%20is%20a%20Cookie%3F%0ABefore%20we%20can%20explain%20what%20is%20an%20HttpOnly%20Cookie%2C%20we%20should%20clarify%20what%20a%20traditional%20cookie%20is.%20If%20you%20already%20know%20that%2C%20feel%20free%20to%20skip%20this%20part.%0A%0AA%20cookie%20is%20a%20piece%20of%20text%20that%20a%20website%20tells%20your%20PC%20to%20store%20for%20later%20use.%20Remember%20that%20a%20website%20can%20only%20suggest%20that%20to%20your%20browser%20(e.g.%20Chrome%2C%20Firefox)%2C%20but%20it%20cannot%20force%20the%20cookie%20to%20be%20saved.%20Instead%2C%20it%20is%20the%20browser%20deciding%20if%20it%20should%20accept%20cookies%20or%20not%2C%20and%20you%20can%20configure%20that%20in%20any%20modern%20browser.%20However%2C%20browsers%20accept%20cookies%20by%20default%20because%20the%20web%20heavily%20relies%20on%20them.%0A%0AA%20cookie%20doesn%E2%80%99t%20simply%20mean%20saving%20some%20piece%20of%20data%20in%20your%20browser.%20It%20also%20means%20sending%20that%20piece%20of%20data%20in%20every%20request%20to%20the%20site%20that%20created%20the%20cookie.%20This%20becomes%20pretty%20useful%2C%20for%20example%20for%20authentication.%20With%20a%20cookie%2C%20you%20can%20store%20a%20token%20that%20identifies%20the%20user.%20Then%2C%20every%20time%20the%20browser%20makes%20a%20request%20to%20your%20site%2C%20it%20will%20send%20the%20authentication%20token.%20Now%2C%20on%20your%20web%20server%2C%20you%20can%20recognize%20users%20by%20their%20token%20(their%20cookie).%0A%0AHttpOnly%20Cookie%0AHttpOnly%20is%20a%20flag%20the%20website%20can%20specify%20about%20a%20cookie.%20In%20other%20words%2C%20the%20webserver%20tells%20your%20browser%20%E2%80%9CHey%2C%20here%20is%20a%20cookie%2C%20and%20you%20should%20treat%20is%20as%20HttpOnly%E2%80%9D.%0A%0A%3Cu%3E**An%20HttpOnly%20Cookie%20is%20not%20accessible%20by%20the%20JavaScript.%20Only%20the%20browser%20knows%20about%20it%2C%20and%20it%20doesn%E2%80%99t%20give%20it%20to%20the%20JavaScript%20code%20in%20the%20page**%3C%2Fu%3E.%20At%20first%2C%20it%20might%20sound%20like%20a%20limitation%2C%20and%20it%20is.%20However%2C%20the%20goal%20of%20that%20is%20that%20we%20cannot%20trust%20the%20JavaScript%20code.%20An%20attacker%20may%20use%20JavaScript%20to%20steal%20our%20authentication%20token%20stored%20in%20a%20cookie%2C%20and%20then%20access%20the%20website%20with%20our%20account.%20With%20HttpOnly%20cookies%2C%20this%20is%20not%20possible.%20This%20makes%20XSS%20attacks%20(the%20one%20we%20just%20described)%20harder%20to%20perform.%0A%0AIt%20is%20a%20recognized%20best%20practice%20to%20share%20any%20authentication%20data%20only%20with%20HttpOnly%20cookies.%20Using%20a%20standard%20cookie%20for%20authentication%20is%20a%20known%20vulnerability%20we%20should%20avoid%20in%20any%20case.%0A%0ADiving%20deeper%0AIn%20the%20end%2C%20cookies%20are%20a%20property%20of%20HTTP.%20HTTP%20is%20a%20standard%20protocol%20that%20defines%20how%20to%20send%20and%20receive%20cookies.%20Luckily%2C%20the%20instructions%20of%20HTTP%20are%20in%20plain%20text.%20To%20set%20a%20cookie%20as%20HttpOnly%2C%20the%20instruction%20to%20use%20in%20the%20header%20is%20the%20following.%0A%0ASet-Cookie%3A%20%3D%5B%3B%20%3D%5D%5B%3B%20expires%3D%5D%5B%3B%20domain%3D%5D%5B%3B%20path%3D%5D%5B%3B%20secure%5D%5B%3B%20HttpOnly%5D%0AIf%20you%20are%20not%20familiar%20with%20this%20syntax%2C%20it%20provides%20several%20options.%20One%20of%20them%20is%20HttpOnly%2C%20and%20we%20should%20add%20in%20our%20case.%20The%20simplest%20way%20to%20make%20an%20HttpOnly%20Cookie%20is%20thus%20the%20following.%0A%0ASet-Cookie%3A%20cookie_name%3D%22cookie_value%22%3B%20HttpOnly%0AOf%20course%2C%20creating%20cookies%20from%20a%20programming%20language%20you%20will%20not%20have%20to%20write%20HTTP%20headers%20manually.%20You%20will%20have%20a%20dedicated%20function%20to%20create%20cookies%2C%20check%20the%20documentation%20of%20your%20programming%20language.%0A%0AHttpOnly%20Cookies%20are%20a%20matter%20of%20trust%0AAs%20we%20said%20in%20the%20beginning%2C%20cookies%20are%20suggestions%20the%20website%20tells%20to%20your%20browser.%20In%20the%20end%2C%20is%20the%20browser%20to%20decide%20whether%20to%20accept%20a%20cookie%20or%20not.%20Like%20so%2C%20it%20is%20also%20the%20browser%20to%20decide%20to%20provide%20the%20cookie%20to%20JavaScript%20or%20not.%20To%20put%20it%20simply%2C%20when%20you%20make%20an%20HttpOnly%20Cookie%2C%20you%20are%20telling%20the%20browser%20%E2%80%9CPlease%2C%20don%E2%80%99t%20show%20that%20to%20JavaScript%E2%80%9D.%20Thus%2C%20trust%20HttpOnly%20cookies%20blindly.%20Most%20importantly%2C%20don%E2%80%99t%20use%20to%20store%20sensitive%20data%20like%20credentials%20or%20passwords%3A%20use%20only%20tokens.%0A%0AHowever%2C%20be%20aware%20that%20all%20modern%20browsers%20implement%20HttpOnly%20cookies.%20In%20fact%2C%20Internet%20Explorer%206%20started%20to%20support%20them%20in%202002.%20Even%20today%2C%20this%20technology%20is%20still%20relevant.%0A%0AIn%20Conclusion%20(and%20TL%3BDR).%0AHttpOnly%20Cookies%20are%20Cookies%20that%20are%20not%20available%20to%20JavaScript.%20Thus%2C%20they%20are%20the%20best%20choice%20for%20storing%20session%20tokens.%20To%20implement%20them%2C%20you%20should%20check%20the%20reference%20of%20your%20programming%20language%2C%20but%20in%20general%2C%20it%20is%20as%20simple%20as%20adding%20an%20additional%20parameter%20to%20a%20function.%0A%0AIf%20you%20want%20to%20make%20your%20web%20application%20more%20secure%2C%20making%20sessions%20based%20on%20an%20HttpOnly%20cookie%20is%20a%20good%20start.%20%20What%20to%20do%20next%3F%20A%20good%20start%20could%20be%20reading%20some%20articles%20of%20the%20Open%20Web%20Application%20Security%20Project%2C%20which%20dictates%20some%20of%20the%20best%20practices%20in%20the%20field.</center>
+</div>
+<a class="back-link" href="../articles.html">← 返回笔记列表</a>
+</body>
+</html>

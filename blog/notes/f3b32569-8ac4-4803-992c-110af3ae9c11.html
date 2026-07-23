@@ -1,0 +1,223 @@
+<!DOCTYPE html>
+<html lang="zh-CN" data-theme="light">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CA认证原理以及实现（下）_lujiancs的专栏-CSDN博客 — 技术笔记</title>
+<style>
+:root { --bg:#fff; --text:#1a1a1a; --muted:#666; --border:#e0e0e0; --code-bg:#f5f5f5; --link:#0066cc; }
+@media (prefers-color-scheme: dark) { :root { --bg:#1a1a1a; --text:#e0e0e0; --muted:#999; --border:#333; --code-bg:#2a2a2a; --link:#66bbff; } }
+* { box-sizing:border-box; margin:0; padding:0; }
+body { font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Arial,sans-serif; line-height:1.7; color:var(--text); background:var(--bg); max-width:860px; margin:0 auto; padding:2rem 1.5rem; }
+.note-header { border-bottom:2px solid var(--border); padding-bottom:1rem; margin-bottom:2rem; }
+.note-title { font-size:1.6rem; font-weight:700; margin-bottom:0.3rem; }
+.note-meta { color:var(--muted); font-size:0.85rem; }
+.note-content { font-size:0.95rem; }
+.note-content h1 { font-size:1.4rem; margin:1.2rem 0 0.6rem; }
+.note-content h2 { font-size:1.2rem; margin:1rem 0 0.5rem; }
+.note-content h3 { font-size:1.05rem; margin:0.8rem 0 0.4rem; }
+.note-content p { margin:0.5rem 0; }
+.note-content ul,.note-content ol { margin:0.5rem 0 0.5rem 2rem; }
+.note-content li { margin:0.2rem 0; }
+.note-content pre { background:var(--code-bg); padding:1rem; border-radius:6px; overflow-x:auto; margin:0.8rem 0; font-size:0.85rem; }
+.note-content code { background:var(--code-bg); padding:0.1rem 0.3rem; border-radius:3px; font-size:0.88em; }
+.note-content pre code { background:none; padding:0; }
+.note-content blockquote { border-left:3px solid var(--border); padding-left:1rem; color:var(--muted); margin:0.8rem 0; }
+.note-content a { color:var(--link); }
+.note-content img { max-width:100%; height:auto; border-radius:6px; margin:0.5rem 0; }
+.note-content table { border-collapse:collapse; width:100%; margin:0.8rem 0; }
+.note-content th,.note-content td { border:1px solid var(--border); padding:0.5rem; }
+.note-content th { background:var(--code-bg); }
+.media-placeholder { background:var(--code-bg); padding:1rem; text-align:center; color:var(--muted); border-radius:6px; margin:0.5rem 0; font-size:0.85rem; }
+.encrypt-placeholder { background:#fff3cd; padding:0.5rem; text-align:center; color:#856404; border-radius:6px; margin:0.5rem 0; font-size:0.85rem; }
+.back-link { display:inline-block; margin-top:2rem; color:var(--link); text-decoration:none; font-size:0.85rem; }
+</style>
+</head>
+<body>
+<div class="note-header"><div class="note-title">CA认证原理以及实现（下）_lujiancs的专栏-CSDN博客</div><div class="note-meta">笔记本：关于加密、解密、签名</div></div>
+<div class="note-content"><div style="--en-clipped-content:simplified; --en-clipped-source-url:https://blog.csdn.net/lujiancs/article/details/38487261?ops_request_misc=%25257B%252522request%25255Fid%252522%25253A%252522162087766616780262556682%252522%25252C%252522scm%252522%25253A%25252220140713.130102334.pc%25255Fblog.%252522%25257D&amp;request_id=162087766616780262556682&amp;biz_id=0&amp;utm_medium=distribute.pc_search_result.none-task-blog-2~blog~first_rank_v2~rank_v29-2-38487261.nonecase&amp;utm_term=CA%25E8%25AE%25A4%25E8%25AF%2581%25E5%258E%259F%25E7%2590%2586%25E4%25BB%25A5%25E5%258F%258A%25E5%25AE%259E%25E7%258E%25B0&amp;spm=1018.2226.3001.4450; --en-clipped-source-title:CA认证原理以及实现（下）_lujiancs的专栏-CSDN博客;">
+<div><br/></div><div style="min-height: 16076px; font-size: 16px; display:block; min-width: 100%; "> <div style="background-color:transparent;font:inherit;vertical-align:baseline;"><div style="background-color:transparent;font:inherit;vertical-align:baseline;font-family:&quot;PT Serif&quot;;font-size:16px;line-height:1.5em;color:rgb(31, 9, 9);text-align:left;"><div style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;"><div style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;width:36em;z-index:200;padding-left:2em;padding-right:2em;margin-left:auto;margin-right:auto;position:relative;"><div style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;position:relative;margin-left:-25px;margin-right:25px;"><div style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;padding-top:0px;padding-bottom:9em;position:relative;"><div style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;margin-bottom:1.5em;"><div style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;position:relative;margin-bottom:0px;"><div style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;margin-bottom:0px;"><div style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;margin-bottom:0px;"><h1 style="font-family:&quot;PT Serif&quot;;text-align:left;border:0px;font:inherit;vertical-align:baseline;font-size:35px;font-weight:normal;line-height:35px;margin-bottom:20px;padding:0px;margin:0px;">CA认证原理以及实现（下）</h1><div style="padding:0px;border:0px;font:inherit;vertical-align:baseline;position:relative;height:1em;line-height:1;text-align:center;margin:0px;padding-top:1.5em;padding-bottom:1.5em;margin-bottom:0px;"><div style="padding:0px;border:0px;font:inherit;vertical-align:baseline;background:-webkit-linear-gradient(0deg, rgb(243, 242, 238) 1%, rgb(31, 9, 9) 50%, rgb(243, 242, 238) 99%);position:absolute;left:-4em;top:50%;z-index:10;width:100%;padding-left:4em;padding-right:4em;height:0.1em;opacity:0.5;margin:0px;margin-bottom:0px;"><span style="font:inherit;position:absolute;left:-4em;top:50%;z-index:10;width:100%;padding-left:4em;padding-right:4em;height:0.1em;margin:0px;opacity:0.5;background:-webkit-linear-gradient(0deg, rgb(243, 242, 238) 1%, rgb(31, 9, 9) 50%, rgb(243, 242, 238) 99%);"></span></div></div></div>
+            <div style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;margin-bottom:1.5em;">
+                <div style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;margin-bottom:1.5em;">
+                    <div class="media-placeholder">[图片/附件]</div></en-media>
+                    <div style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;margin-bottom:0px;">
+                    <a href="https://blog.csdn.net/lujiancs" style="color:rgb(6, 85, 136);margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;text-decoration:none;">卢健</a>
+                    2014-08-11 09:32:18
+                    <div class="media-placeholder">[图片/附件]</div></en-media>
+                    4090
+                    
+                    </div>
+                </div>
+                <div style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;margin-bottom:0px;">
+                    <div style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;margin-bottom:0px;">
+                            分类专栏：
+                                <a href="https://blog.csdn.net/lujiancs/category_945566.html" style="color:rgb(6, 85, 136);margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;text-decoration:none;">他山之石</a>
+                    </div>
+                </div>
+                
+                
+            </div>
+        
+    
+    
+    <div style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;display:block;">
+        <div style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;margin-bottom:0px;">
+        
+                <div style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;margin-bottom:0px;">
+                    <div style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;margin-bottom:1.5em;"> 
+ <ul style="padding:0px;border:0px;font:inherit;vertical-align:baseline;margin:0px 0px 1.5em 1.5em;list-style:none;list-style-type:none;"><li style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;list-style-type:inherit;list-style-position:outside;">在上述的文章后了解到原理之后，我们这篇文章来进行CA的搭建。
+ </li></ul> 
+</div> 
+<div style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;margin-bottom:0px;"> 
+ <p style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;margin-bottom:1.5em;"><strong style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;font-weight:bold;">OPEN SSL 环境搭建<br/> </strong>在基础原理中我们提到了两种认证服务，单项认证服务和双向认证服务，我们就以双向认证服务举例说明。<br/> OpenSSL是一个开放源代码软件包，实现了SSL以及相关加密技术，是最常用的证书管理工具，OpenSSL功能远胜于KeyTool，可用于根证书(KeyTool不含有，因此KeyTool没有办法作为CA)、服务器证书、客户证书的管理。<br/> 在OpenSSL官网下载:http:www.openssl.org/source/下载最新的源码，官网还提供了windows版的二进制发行版地址：<a href="http://www.slproweb.com/products/Win32OpenSSL.html" style="color:rgb(6, 85, 136);margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;text-decoration:none;">http://www.slproweb.com/products/Win32OpenSSL.html</a><br/>  <strong style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;font-weight:bold;">1、 准备工作<br/> </strong> 选择适合自己操作系统的版本进行下载后，安装操作与普通软件一样，没有什么区别<br/>  设置环境变量：</p><div style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;display:block;text-align:center;margin-bottom:1em;margin-top:1em;"><div class="media-placeholder">[图片/附件]</div></en-media></div><p style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;margin-bottom:1.5em;"></p> 
+ <p style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;margin-bottom:1.5em;"></p><div style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;display:block;text-align:center;margin-bottom:1em;margin-top:1em;"><div class="media-placeholder">[图片/附件]</div></en-media></div><p style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;margin-bottom:1.5em;"></p> 
+ <p style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;margin-bottom:1.5em;">打开配置文件openssl.cfg(%OpenSSL_Home%\bin\openssl.cfg)，找到配置[CA_default]：</p> 
+ <p style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;margin-bottom:1.5em;"></p><div style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;display:block;text-align:center;margin-bottom:1em;margin-top:1em;"><div class="media-placeholder">[图片/附件]</div></en-media></div><p style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;margin-bottom:1.5em;"></p> 
+ <p style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;margin-bottom:1.5em;">上述变量dir，它指向的是CA工作目录，可以对其进行修改</p> 
+ <p style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;margin-bottom:1.5em;"><strong style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;font-weight:bold;">2、 创建bat文件<br/> </strong>整个bat文件的创建过程我们可以把它想象成这样一种场景：<br/> 高考结束，教育局来颁发毕业证书给各个学校，各个学校在把证书发给学生，具体步骤如下：<br/> 1) 教育局先有空白证书了<br/> 2) 教育局又有自己的公章<br/> 3) 让各个学校可以拥有毕业证发放申请<br/> 4) 对空白的毕业证盖上了教育局的公章，并可以交给已经申请的学校<br/> 5) 申请的学校拿到了盖有教育局的毕业证后，准备对其盖上自己的公章<br/> 6) 学校在教育局已经盖上教育局公章的毕业证上又盖上了自己学校的公章<br/> 7) 准备把毕业证发给学校申请毕业的学生们<br/> 8) 申请毕业的学生拿取自己的学生证和身份证准备领取毕业证<br/> 9) 来到学校教务处，填写单据申请学校发放毕业证<br/> 10) 教育局已经转交学校来发放毕业证，此时学校把毕业证发放给申请学生<br/> 11) 学生认为盖有教育局的公章和学校的公章的毕业证是有效的</p> 
+ <p style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;margin-bottom:1.5em;">上述步骤，都可以在下面的bat文件中找到相应的地方：</p> 
+ <div style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;margin-bottom:1.5em;"> 
+  <div style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;margin-bottom:1.5em;"> 
+   <div style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;margin-bottom:0px;">
+    Xml代码  
+   </div> 
+  </div> 
+  <ol style="padding:0px;border:0px;font:inherit;vertical-align:baseline;margin:0px 0px 1.5em 1.5em;list-style:none;list-style-type:decimal;"><li style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;list-style-type:inherit;list-style-position:outside;">//构建ca子目录(证书创建时，用到下述目录,最终在certs目录中获得证书文件)   </li><li style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;list-style-type:inherit;list-style-position:outside;">echo 构建已发型证书存放目录 certs   </li><li style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;list-style-type:inherit;list-style-position:outside;">mkdir certs   </li><li style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;list-style-type:inherit;list-style-position:outside;">echo 构建新证书存放目录 newcerts   </li><li style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;list-style-type:inherit;list-style-position:outside;">mkdir newcerts   </li><li style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;list-style-type:inherit;list-style-position:outside;">echo 构建私钥存放目录 private   </li><li style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;list-style-type:inherit;list-style-position:outside;">mkdir private   </li><li style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;list-style-type:inherit;list-style-position:outside;">echo 构建证书吊销列表存放目录 crl   </li><li style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;list-style-type:inherit;list-style-position:outside;">mkdir cr1    </li><li style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;list-style-type:inherit;list-style-position:outside;">//构建相关文件，完成后可以进行证书的构建和签发工作   </li><li style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;list-style-type:inherit;list-style-position:outside;">echo 构建索引文件 index.txt   </li><li style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;list-style-type:inherit;list-style-position:outside;">echo 0&gt;index.txt   </li><li style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;list-style-type:inherit;list-style-position:outside;">echo 构建序列号文件 serial   </li><li style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;list-style-type:inherit;list-style-position:outside;">echo 01&gt;serial   </li><li style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;list-style-type:inherit;list-style-position:outside;">      //构建根证书    </li><li style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;list-style-type:inherit;list-style-position:outside;">echo 构建随机数 private/.rand   </li><li style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;list-style-type:inherit;list-style-position:outside;">openssl rand -out private/.rand 1000   </li><li style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;list-style-type:inherit;list-style-position:outside;">//构建根证书私钥   </li><li style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;list-style-type:inherit;list-style-position:outside;">echo 构建根证书私钥 private/ca.key.pem   </li><li style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;list-style-type:inherit;list-style-position:outside;">openssl genrsa -aes256 -out private/ca.key.pem 2048   </li><li style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;list-style-type:inherit;list-style-position:outside;">//完成密钥构建操作后，需要生成根证书签发申请文件ca.csr   </li><li style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;list-style-type:inherit;list-style-position:outside;">//生成根证书签发申请   </li><li style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;list-style-type:inherit;list-style-position:outside;">echo 生成根证书签发申请 private/ca.csr   </li><li style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;list-style-type:inherit;list-style-position:outside;">openssl req -new -key private/ca.key.pem -out private/ca.csr -subj "/C=CN/ST=HUBEI/L=WUHAN/O=YALE/OU=YALE/CN=*.qiujinyong.org"   </li><li style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;list-style-type:inherit;list-style-position:outside;">//执行完后此处又要输入根证书密码   </li><li style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;list-style-type:inherit;list-style-position:outside;">//得到根证书签发申请文件后，可以将其发送给CA机构签发，也可以自行签发根证书   </li><li style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;list-style-type:inherit;list-style-position:outside;">echo 签发根证书 private/ca.cer     </li><li style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;list-style-type:inherit;list-style-position:outside;">openssl x509 -req -days 1000 -sha1 -extensions v3_ca -signkey private/ca.key.pem -in private/ca.csr -out certs/ca.cer   </li><li style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;list-style-type:inherit;list-style-position:outside;">//执行完后此处又要输入根证书密码   </li><li style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;list-style-type:inherit;list-style-position:outside;">echo 根证书转换 private/ca.p12   </li><li style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;list-style-type:inherit;list-style-position:outside;">openssl pkcs12 -export -cacerts -inkey private/ca.key.pem -in certs/ca.cer -out certs/ca.p12   </li><li style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;list-style-type:inherit;list-style-position:outside;">//执行完后此处又要输入根证书密码   </li><li style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;list-style-type:inherit;list-style-position:outside;">//构建服务器证书   </li><li style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;list-style-type:inherit;list-style-position:outside;">echo 构建服务器私钥 private/server.key.pem   </li><li style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;list-style-type:inherit;list-style-position:outside;">openssl genrsa -aes256 -out private/server.key.pem 2048   </li><li style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;list-style-type:inherit;list-style-position:outside;">//服务器证书签发申请   </li><li style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;list-style-type:inherit;list-style-position:outside;">echo 生成服务器证书签发申请 private/server.csr   </li><li style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;list-style-type:inherit;list-style-position:outside;">openssl req -new -key private/server.key.pem -out private/server.csr -subj "/C=CN/ST=HUBEI/L=WUHAN/O=YALE/OU=YALE/CN=www.qiujinyong.com"   </li><li style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;list-style-type:inherit;list-style-position:outside;">//执行完后此处又要输入根证书密码   </li><li style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;list-style-type:inherit;list-style-position:outside;">//根证书签发服务器证书    </li><li style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;list-style-type:inherit;list-style-position:outside;">echo 签发服务器证书 private/server.cer   </li><li style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;list-style-type:inherit;list-style-position:outside;">openssl x509 -req -days 3650 -sha1 -extensions v3_req -CA certs/ca.cer -CAkey private/ca.key.pem -CAserial ca.srl -CAcreateserial -in private/server.csr -out certs/server.cer   </li><li style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;list-style-type:inherit;list-style-position:outside;">//执行完后此处又要输入根证书密码   </li><li style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;list-style-type:inherit;list-style-position:outside;">//将OpenSSL产生的数字证书转换为PKCS#12编码格式   </li><li style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;list-style-type:inherit;list-style-position:outside;">echo 服务器证书转换 private/server.p12   </li><li style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;list-style-type:inherit;list-style-position:outside;">openssl pkcs12 -export -clcerts -inkey private/server.key.pem -in certs/server.cer -out certs/server.p12   </li><li style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;list-style-type:inherit;list-style-position:outside;">//执行完后此处又要输入根证书密码   </li><li style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;list-style-type:inherit;list-style-position:outside;">//构建客户证书   </li><li style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;list-style-type:inherit;list-style-position:outside;">echo 产生客户私钥 private/client.key.pem   </li><li style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;list-style-type:inherit;list-style-position:outside;">openssl genrsa -aes256 -out private/client.key.pem 2048   </li><li style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;list-style-type:inherit;list-style-position:outside;">//执行完后此处又要输入根证书密码   </li><li style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;list-style-type:inherit;list-style-position:outside;">//产生客户证书签发申请   </li><li style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;list-style-type:inherit;list-style-position:outside;">echo 生成客户证书签发申请 client.csr   </li><li style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;list-style-type:inherit;list-style-position:outside;">openssl req -new -key private/client.key.pem -out private/client.csr -subj "/C=CN/ST=HUBEI/L=WUHAN/O=YALE/OU=YALE/CN=qiujinyong"   </li><li style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;list-style-type:inherit;list-style-position:outside;">//执行完后此处又要输入根证书密码   </li><li style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;list-style-type:inherit;list-style-position:outside;">//根证书签发客户证书   </li><li style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;list-style-type:inherit;list-style-position:outside;">echo 签发客户证书 certs/client.cer   </li><li style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;list-style-type:inherit;list-style-position:outside;">openssl  x509 -req -days 3650 -sha1 -extensions v3_req -CA  certs/ca.cer  -CAkey  private/ca.key.pem  -CAserial ca.srl -CAcreateserial -in private/client.csr -out  certs/client.cer   </li><li style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;list-style-type:inherit;list-style-position:outside;">//执行完后此处又要输入根证书密码   </li><li style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;list-style-type:inherit;list-style-position:outside;">//将获得客户证书转换JAVA语言可以识别的PKCS#12编码格式   </li><li style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;list-style-type:inherit;list-style-position:outside;">echo 客户证书转换 certs/client.p12   </li><li style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;list-style-type:inherit;list-style-position:outside;">openssl pkcs12 -export -inkey private/client.key.pem -in certs/client.cer -out certs/client.p12   </li><li style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;list-style-type:inherit;list-style-position:outside;">//完成了双向认证的所需的全部证书  </li></ol> 
+ </div> 
+ <pre style="background-color:rgb(243, 242, 238);font-family:Inconsolata;margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;width:auto;font-size:0.875em;line-height:1.71429em;">//构建ca子目录(证书创建时，用到下述目录,最终在certs目录中获得证书文件)
+echo 构建已发型证书存放目录 certs
+mkdir certs
+echo 构建新证书存放目录 newcerts
+mkdir newcerts
+echo 构建私钥存放目录 private
+mkdir private
+echo 构建证书吊销列表存放目录 crl
+mkdir cr1 
+//构建相关文件，完成后可以进行证书的构建和签发工作
+echo 构建索引文件 index.txt
+echo 0&gt;index.txt
+echo 构建序列号文件 serial
+echo 01&gt;serial
+      //构建根证书 
+echo 构建随机数 private/.rand
+openssl rand -out private/.rand 1000
+//构建根证书私钥
+echo 构建根证书私钥 private/ca.key.pem
+openssl genrsa -aes256 -out private/ca.key.pem 2048
+//完成密钥构建操作后，需要生成根证书签发申请文件ca.csr
+//生成根证书签发申请
+echo 生成根证书签发申请 private/ca.csr
+openssl req -new -key private/ca.key.pem -out private/ca.csr -subj "/C=CN/ST=HUBEI/L=WUHAN/O=YALE/OU=YALE/CN=*.qiujinyong.org"
+//执行完后此处又要输入根证书密码
+//得到根证书签发申请文件后，可以将其发送给CA机构签发，也可以自行签发根证书
+echo 签发根证书 private/ca.cer  
+openssl x509 -req -days 1000 -sha1 -extensions v3_ca -signkey private/ca.key.pem -in private/ca.csr -out certs/ca.cer
+//执行完后此处又要输入根证书密码
+echo 根证书转换 private/ca.p12
+openssl pkcs12 -export -cacerts -inkey private/ca.key.pem -in certs/ca.cer -out certs/ca.p12
+//执行完后此处又要输入根证书密码
+//构建服务器证书
+echo 构建服务器私钥 private/server.key.pem
+openssl genrsa -aes256 -out private/server.key.pem 2048
+//服务器证书签发申请
+echo 生成服务器证书签发申请 private/server.csr
+openssl req -new -key private/server.key.pem -out private/server.csr -subj "/C=CN/ST=HUBEI/L=WUHAN/O=YALE/OU=YALE/CN=www.qiujinyong.com"
+//执行完后此处又要输入根证书密码
+//根证书签发服务器证书 
+echo 签发服务器证书 private/server.cer
+openssl x509 -req -days 3650 -sha1 -extensions v3_req -CA certs/ca.cer -CAkey private/ca.key.pem -CAserial ca.srl -CAcreateserial -in private/server.csr -out certs/server.cer
+//执行完后此处又要输入根证书密码
+//将OpenSSL产生的数字证书转换为PKCS#12编码格式
+echo 服务器证书转换 private/server.p12
+openssl pkcs12 -export -clcerts -inkey private/server.key.pem -in certs/server.cer -out certs/server.p12
+//执行完后此处又要输入根证书密码
+//构建客户证书
+echo 产生客户私钥 private/client.key.pem
+openssl genrsa -aes256 -out private/client.key.pem 2048
+//执行完后此处又要输入根证书密码
+//产生客户证书签发申请
+echo 生成客户证书签发申请 client.csr
+openssl req -new -key private/client.key.pem -out private/client.csr -subj "/C=CN/ST=HUBEI/L=WUHAN/O=YALE/OU=YALE/CN=qiujinyong"
+//执行完后此处又要输入根证书密码
+//根证书签发客户证书
+echo 签发客户证书 certs/client.cer
+openssl  x509 -req -days 3650 -sha1 -extensions v3_req -CA  certs/ca.cer  -CAkey  private/ca.key.pem  -CAserial ca.srl -CAcreateserial -in private/client.csr -out  certs/client.cer
+//执行完后此处又要输入根证书密码
+//将获得客户证书转换JAVA语言可以识别的PKCS#12编码格式
+echo 客户证书转换 certs/client.p12
+openssl pkcs12 -export -inkey private/client.key.pem -in certs/client.cer -out certs/client.p12
+//完成了双向认证的所需的全部证书
+</pre> 
+ <p style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;margin-bottom:1.5em;"><strong style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;font-weight:bold;">3、 文件生成<br/> </strong>通过上述语句我们生成了以下几个“一级”文件以及文件夹：</p> 
+ <p style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;margin-bottom:1.5em;"></p><div style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;display:block;text-align:center;margin-bottom:1em;margin-top:1em;"><div class="media-placeholder">[图片/附件]</div></en-media></div><p style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;margin-bottom:1.5em;"></p> 
+ <p style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;margin-bottom:1.5em;">Certs文件夹下又生成了：</p> 
+ <p style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;margin-bottom:1.5em;"></p><div style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;display:block;text-align:center;margin-bottom:1em;margin-top:1em;"><div class="media-placeholder">[图片/附件]</div></en-media></div><p style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;margin-bottom:1.5em;"></p> 
+ <p style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;margin-bottom:1.5em;">Private文件夹下又生成了：</p> 
+ <p style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;margin-bottom:1.5em;"></p><div style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;display:block;text-align:center;margin-bottom:1em;margin-top:1em;"><div class="media-placeholder">[图片/附件]</div></en-media></div><p style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;margin-bottom:1.5em;"></p> 
+ <p style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;margin-bottom:1.5em;"><strong style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;font-weight:bold;">4、 证书导入<br/> </strong>我们使用ca.p12、server.p12、client.p12个人信息交换文件构建双向认证，在验证操作之前，我们先导入ca.p12、client.p12文件</p> 
+ <p style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;margin-bottom:1.5em;">ca.p12文件是ca根证书的个人信息交换文件:<br/> 双击”ca.p12”或者点击在浏览器"工具"-&gt;"internet选项"-&gt;"内容"中的"证书"-&gt;"导入"</p> 
+ <p style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;margin-bottom:1.5em;"></p><div style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;display:block;text-align:center;margin-bottom:1em;margin-top:1em;"><div class="media-placeholder">[图片/附件]</div></en-media></div> 点击“下一步”后，“浏览”按钮时，指定个人信息交换文件格式(*.p12;*.pfx), 选择“ca.p12的所在位置”：<p style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;margin-bottom:1.5em;"></p> 
+ <p style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;margin-bottom:1.5em;"></p><div style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;display:block;text-align:center;margin-bottom:1em;margin-top:1em;"><div class="media-placeholder">[图片/附件]</div></en-media></div><p style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;margin-bottom:1.5em;"></p> 
+ <p style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;margin-bottom:1.5em;"></p><div style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;display:block;text-align:center;margin-bottom:1em;margin-top:1em;"><div class="media-placeholder">[图片/附件]</div></en-media></div><p style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;margin-bottom:1.5em;"></p> 
+ <p style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;margin-bottom:1.5em;">输入私钥的密码：</p> 
+ <p style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;margin-bottom:1.5em;"></p><div style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;display:block;text-align:center;margin-bottom:1em;margin-top:1em;"><div class="media-placeholder">[图片/附件]</div></en-media></div><p style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;margin-bottom:1.5em;"></p> 
+ <p style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;margin-bottom:1.5em;">选择“将所有的证书放入下列存储”:</p> 
+ <p style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;margin-bottom:1.5em;"></p><div style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;display:block;text-align:center;margin-bottom:1em;margin-top:1em;"><div class="media-placeholder">[图片/附件]</div></en-media></div><p style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;margin-bottom:1.5em;"></p> 
+ <p style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;margin-bottom:1.5em;">点击“浏览”，选择“受信任的根证书颁发机构”:</p><div style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;display:block;text-align:center;margin-bottom:1em;margin-top:1em;"><div class="media-placeholder">[图片/附件]</div></en-media></div><p style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;margin-bottom:1.5em;"></p> 
+ <p style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;margin-bottom:1.5em;"> </p><div style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;display:block;text-align:center;margin-bottom:1em;margin-top:1em;"><div class="media-placeholder">[图片/附件]</div></en-media></div><p style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;margin-bottom:1.5em;"></p> 
+ <p style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;margin-bottom:1.5em;">点击“下一步”，然后点击“完成”</p> 
+ <p style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;margin-bottom:1.5em;">导入”client.p12”文件：<br/> 导入clinet.p12文件的方式和ca.p12文件方式基本相似，只是在证书存储时，选择“个人”:</p><div style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;display:block;text-align:center;margin-bottom:1em;margin-top:1em;"><div class="media-placeholder">[图片/附件]</div></en-media></div><p style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;margin-bottom:1.5em;"></p> 
+ <p style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;margin-bottom:1.5em;"></p><div style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;display:block;text-align:center;margin-bottom:1em;margin-top:1em;"><div class="media-placeholder">[图片/附件]</div></en-media></div><p style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;margin-bottom:1.5em;"></p> 
+ <p style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;margin-bottom:1.5em;"><strong style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;font-weight:bold;">5、 服务器配置<br/> </strong>将”ca.p12”、”server.p12”文件复制到tomcat的conf目录下：</p> 
+ <p style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;margin-bottom:1.5em;"></p><div style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;display:block;text-align:center;margin-bottom:1em;margin-top:1em;"><div class="media-placeholder">[图片/附件]</div></en-media></div><p style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;margin-bottom:1.5em;"></p> 
+ <p style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;margin-bottom:1.5em;">同时，需要在windows系统下通过ie导入ca.p12和client.p12文件：</p> 
+ <p style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;margin-bottom:1.5em;"></p><div style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;display:block;text-align:center;margin-bottom:1em;margin-top:1em;"><div class="media-placeholder">[图片/附件]</div></en-media></div><p style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;margin-bottom:1.5em;"></p> 
+ <p style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;margin-bottom:1.5em;"></p><div style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;display:block;text-align:center;margin-bottom:1em;margin-top:1em;"><div class="media-placeholder">[图片/附件]</div></en-media></div><p style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;margin-bottom:1.5em;"></p> 
+ <p style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;margin-bottom:1.5em;">我们在tomcat的server.xml文件中配置双向认证：</p> 
+ <div style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;margin-bottom:1.5em;"> 
+  <div style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;margin-bottom:1.5em;"> 
+   <div style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;margin-bottom:0px;">
+    Xml代码  
+   </div> 
+  </div> 
+  <ol style="padding:0px;border:0px;font:inherit;vertical-align:baseline;margin:0px 0px 1.5em 1.5em;list-style:none;list-style-type:decimal;"><li style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;list-style-type:inherit;list-style-position:outside;">&lt;Connector port="443" maxHttpHeaderSize="8192"  </li><li style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;list-style-type:inherit;list-style-position:outside;">          maxThreads="150" minSpareThreads="25" maxSpareThreads="75"  </li><li style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;list-style-type:inherit;list-style-position:outside;">   sslProtocol="TLS" keystoreFile="conf/server.p12"     </li><li style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;list-style-type:inherit;list-style-position:outside;">   keystorePass="123456" keystoreType="PKCS12"                                </li><li style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;list-style-type:inherit;list-style-position:outside;">          truststoreFile="conf/ca.p12" acceptCount="100" scheme="https" secure="true"  </li><li style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;list-style-type:inherit;list-style-position:outside;">          sslEnabled="true" clientAuth="true" truststorePass="123456" truststoreType="PKCS12"/&gt;  </li></ol> 
+ </div> 
+ <pre style="background-color:rgb(243, 242, 238);font-family:Inconsolata;margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;width:auto;font-size:0.875em;line-height:1.71429em;">  &lt;Connector port="443" maxHttpHeaderSize="8192"
+            maxThreads="150" minSpareThreads="25" maxSpareThreads="75"
+	    sslProtocol="TLS" keystoreFile="conf/server.p12"  
+	    keystorePass="123456" keystoreType="PKCS12"                             
+            truststoreFile="conf/ca.p12" acceptCount="100" scheme="https" secure="true"
+            sslEnabled="true" clientAuth="true" truststorePass="123456" truststoreType="PKCS12"/&gt;</pre> 
+ <p style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;margin-bottom:1.5em;"> 这里的密钥库文件参数keystoreFile指向server.p12文件,密钥库密码参数keystorePass值为”123456”，密钥库类型参数keystoreType值为”PKCS12”，因为双向认证服务区分信任库文件和密钥库文件，此时，server.p12文件将作为密钥库文件，而ca.p12文件则作为信任库文件，因此，信任库文件参数truststoreFile指向ca.p12文件，信任库密码参数truststorePass值为”123456”，信任库类型参数truststoreType值为“pkcs12”，clientAuth的值为”true”，这是打开双向认证的关键一步，port默认为8443，现在修改为443，这样就省去我们在地址栏中输入端口号。</p> 
+ <p style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;margin-bottom:1.5em;"><strong style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;font-weight:bold;">效果展现</strong></p> 
+ <p style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;margin-bottom:1.5em;"> 输入我们证书绑定的网站，https打头：</p> 
+ <p style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;margin-bottom:1.5em;"></p><div style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;display:block;text-align:center;margin-bottom:1em;margin-top:1em;"><div class="media-placeholder">[图片/附件]</div></en-media></div><p style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;margin-bottom:1.5em;"></p> 
+ <p style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;margin-bottom:1.5em;"> 查看给该网站颁发的证书的属性：</p> 
+ <p style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;margin-bottom:1.5em;"></p><div style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;display:block;text-align:center;margin-bottom:1em;margin-top:1em;"><div class="media-placeholder">[图片/附件]</div></en-media></div><p style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;margin-bottom:1.5em;"></p> 
+ <p style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;margin-bottom:1.5em;">点击授予权限：</p> 
+ <p style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;margin-bottom:1.5em;"></p><div style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;display:block;text-align:center;margin-bottom:1em;margin-top:1em;"><div class="media-placeholder">[图片/附件]</div></en-media></div><p style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;margin-bottom:1.5em;"></p> 
+ <p style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;margin-bottom:1.5em;">如果我们是自己创建的根证书没有通过CA验证的话，那么会在地址栏中看到相关信息，如下图：</p> 
+ <p style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;margin-bottom:1.5em;"></p><div style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;display:block;text-align:center;margin-bottom:1em;margin-top:1em;"><div class="media-placeholder">[图片/附件]</div></en-media></div><p style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;margin-bottom:1.5em;"></p> 
+ <p style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;margin-bottom:1.5em;"> 点击继续浏览, 虽然我们连接的是本地服务器，但仍然会感到有些延时，这是因为浏览器访问CA机构验证该证书，并初始化加密/解密等信息：</p><div style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;display:block;text-align:center;margin-bottom:1em;margin-top:1em;"><div class="media-placeholder">[图片/附件]</div></en-media></div><p style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;margin-bottom:1.5em;"></p> 
+ <p style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;margin-bottom:1.5em;"> 上述我们看到“证书错误”，就是因为我们的根证书并没有得到CA的认证</p> 
+ <p style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;margin-bottom:1.5em;">我们如果加上验证的代码后：</p> 
+ <div style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;margin-bottom:1.5em;"> 
+  <div style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;margin-bottom:1.5em;"> 
+   <div style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;margin-bottom:0px;">
+    Java代码  
+   </div> 
+  </div> 
+  <ol style="padding:0px;border:0px;font:inherit;vertical-align:baseline;margin:0px 0px 1.5em 1.5em;list-style:none;list-style-type:decimal;"><li style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;list-style-type:inherit;list-style-position:outside;">for(Enumeration en = request.getAttributeNames();   </li><li style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;list-style-type:inherit;list-style-position:outside;">     en.hasMoreElements();){   </li><li style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;list-style-type:inherit;list-style-position:outside;">     String name = (String)en.nextElement();   </li><li style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;list-style-type:inherit;list-style-position:outside;">     out.println(name);   </li><li style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;list-style-type:inherit;list-style-position:outside;">     out.println(" = " + request.getAttribute(name));   </li><li style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;list-style-type:inherit;list-style-position:outside;">     out.println();   </li><li style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;list-style-type:inherit;list-style-position:outside;">}  </li></ol> 
+ </div> 
+  
+ <p style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;margin-bottom:1.5em;">可以看到如下结果：</p> 
+ <p style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;margin-bottom:1.5em;"></p><div style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;display:block;text-align:center;margin-bottom:1em;margin-top:1em;"><div class="media-placeholder">[图片/附件]</div></en-media></div><p style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;margin-bottom:1.5em;"></p> 
+ <p style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;margin-bottom:0px;"> 上述有些相关属性解释：<br/> javax.servlet.request.ssl_session：当前SSL/TLS协议的会话ID<br/> java.servlet.request.key_size:当前加密算法所使用的密钥长度<br/> javax.servlet.request.cipher_suite:当前SSL /TLS协议所使用的加密套件(比如上述：使用的TLS协议，RSA的非对称加密算法，AES的对称加密算法，同时是128的，SHA的消息摘要算法，CBC的工作模式，，，一般使用非对称加密算法对数据进行加密/解密操作的效率相当低，而使用对称加密算法进行加密/解密的效率相当高，合理的解决办法是使用非对称加密算法传递对称加密算法的密钥，使用对称加密算法对数据加密)<br/> javax.servlet.request.X509Certificate:指向客户证书列表</p> 
+</div>
+                </div>
+        </div>
+    </div>
+</div></div></div></div></div></div></div></div></div></div>
+</div></div>
+<a class="back-link" href="../articles.html">← 返回笔记列表</a>
+</body></html>

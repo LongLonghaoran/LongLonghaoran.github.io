@@ -1,0 +1,475 @@
+<!DOCTYPE html>
+<html lang="zh-CN" data-theme="light">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>对优化Ruby on Rails性能的一些办法的探究 - Ruby开发社区 | CTOLib码库 — 技术笔记</title>
+<style>
+:root {
+  --bg: #ffffff;
+  --text: #1a1a1a;
+  --muted: #666;
+  --border: #e0e0e0;
+  --code-bg: #f5f5f5;
+  --link: #0066cc;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #1a1a1a;
+    --text: #e0e0e0;
+    --muted: #999;
+    --border: #333;
+    --code-bg: #2a2a2a;
+    --link: #66bbff;
+  }
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  line-height: 1.7;
+  color: var(--text);
+  background: var(--bg);
+  max-width: 860px;
+  margin: 0 auto;
+  padding: 2rem 1.5rem;
+}
+.note-header {
+  border-bottom: 2px solid var(--border);
+  padding-bottom: 1rem;
+  margin-bottom: 2rem;
+}
+.note-title {
+  font-size: 1.6rem;
+  font-weight: 700;
+  margin-bottom: 0.3rem;
+}
+.note-meta {
+  color: var(--muted);
+  font-size: 0.85rem;
+}
+.note-content {
+  font-size: 0.95rem;
+}
+.note-content h1 { font-size: 1.4rem; margin: 1.2rem 0 0.6rem; }
+.note-content h2 { font-size: 1.2rem; margin: 1rem 0 0.5rem; }
+.note-content h3 { font-size: 1.05rem; margin: 0.8rem 0 0.4rem; }
+.note-content p { margin: 0.5rem 0; }
+.note-content ul, .note-content ol { margin: 0.5rem 0 0.5rem 2rem; }
+.note-content li { margin: 0.2rem 0; }
+.note-content pre {
+  background: var(--code-bg);
+  padding: 1rem;
+  border-radius: 6px;
+  overflow-x: auto;
+  margin: 0.8rem 0;
+  font-size: 0.85rem;
+}
+.note-content code {
+  background: var(--code-bg);
+  padding: 0.1rem 0.3rem;
+  border-radius: 3px;
+  font-size: 0.88em;
+}
+.note-content pre code {
+  background: none;
+  padding: 0;
+}
+.note-content blockquote {
+  border-left: 3px solid var(--border);
+  padding-left: 1rem;
+  color: var(--muted);
+  margin: 0.8rem 0;
+}
+.note-content a { color: var(--link); }
+.note-content img {
+  max-width: 100%;
+  height: auto;
+  border-radius: 6px;
+  margin: 0.5rem 0;
+}
+.note-content table {
+  border-collapse: collapse;
+  width: 100%;
+  margin: 0.8rem 0;
+}
+.note-content th, .note-content td {
+  border: 1px solid var(--border);
+  padding: 0.5rem;
+}
+.note-content th { background: var(--code-bg); }
+.media-placeholder {
+  background: var(--code-bg);
+  padding: 1rem;
+  text-align: center;
+  color: var(--muted);
+  border-radius: 6px;
+  margin: 0.5rem 0;
+  font-size: 0.85rem;
+}
+.encrypt-placeholder {
+  background: #fff3cd;
+  padding: 0.5rem;
+  text-align: center;
+  color: #856404;
+  border-radius: 6px;
+  margin: 0.5rem 0;
+  font-size: 0.85rem;
+}
+.back-link {
+  display: inline-block;
+  margin-top: 2rem;
+  color: var(--link);
+  text-decoration: none;
+  font-size: 0.85rem;
+}
+</style>
+</head>
+<body>
+<div class="note-header">
+  <div class="note-title">对优化Ruby on Rails性能的一些办法的探究 - Ruby开发社区 | CTOLib码库</div>
+  <div class="note-meta">笔记本：RubyOnRails</div>
+</div>
+<div class="note-content">
+<div style="--en-clipped-content:article; --en-clipped-source-url:https://www.ctolib.com/topics-35123.html; --en-clipped-source-title:对优化Ruby on Rails性能的一些办法的探究 - Ruby开发社区 | CTOLib码库;">
+<div><br/></div><div style="font-size: 16px; display:block; min-width: 100%; position: relative;"> <div style="font-family:sans-serif;text-size-adjust:100%;box-sizing:border-box;font-size:10px;-webkit-tap-highlight-color:rgba(0, 0, 0, 0);background-color:rgb(240, 243, 244);"><div style="box-sizing:border-box;-webkit-font-smoothing:antialiased;font-family:-apple-system, &quot;PingFang SC&quot;, &quot;Hiragino Sans GB&quot;, Arial, &quot;Microsoft YaHei&quot;, &quot;Helvetica Neue&quot;, sans-serif;font-size:14px;line-height:1.42857;color:rgb(88, 102, 110);background-color:transparent;overflow-x:hidden;"><div style="box-sizing:border-box;background-color:rgb(237, 241, 242);"><div style="box-sizing:border-box;color:rgb(88, 102, 110);background-color:rgb(237, 241, 242);"><div style="box-sizing:border-box;"><div style="box-sizing:border-box;"><div style="box-sizing:border-box;background:rgb(255, 255, 255);">
+<div style="box-sizing:border-box;text-align:center;padding-top:21px;">
+<h3 style="box-sizing:border-box;font-family:inherit;font-weight:500;line-height:1.1;color:inherit;margin-bottom:10px;font-size:24px;margin-top:5px;">
+对优化Ruby on Rails性能的一些办法的探究
+</h3>
+</div>
+<div style="box-sizing:border-box;height:28px;line-height:28px;border-bottom:1px dotted rgb(216, 216, 216);margin:0 10px;">
+<div style="box-sizing:border-box;float:left;font-family:NSimSun;font-size:12px;color:rgb(136, 136, 136);">
+<i style="box-sizing:border-box;position:relative;top:1px;display:inline-block;font-family:&quot;Glyphicons Halflings&quot;;font-style:normal;font-weight:400;line-height:1;-webkit-font-smoothing:antialiased;"><span style="font-family:Glyphicons Halflings;font-style:normal;font-weight:400;line-height:1;"></span></i> <a href="https://www.ctolib.com/user/pe-503.html" title="browngoose" style="background-color:transparent;box-sizing:border-box;cursor:pointer;color:rgb(51, 51, 51);text-decoration:none;">browngoose</a>
+发布于3年前
+</div>
+<div style="box-sizing:border-box;text-align:right;float:right;padding-left:10px;border-left:1px solid rgb(224, 224, 224);height:18px;margin-top:5px;line-height:18px;display:block;">
+<span title="点赞人数" style="box-sizing:border-box;font-family:NSimSun;font-size:12px;color:rgb(136, 136, 136);">
+<i style="box-sizing:border-box;position:relative;top:1px;display:inline-block;font-family:&quot;Glyphicons Halflings&quot;;font-style:normal;font-weight:400;line-height:1;-webkit-font-smoothing:antialiased;color:red;"><span style="font-family:Glyphicons Halflings;font-style:normal;font-weight:400;line-height:1;color:red;"></span></i>
+<span style="box-sizing:border-box;">0</span> 人点赞 
+</span>
+</div>
+</div>
+<div style="box-sizing:border-box;padding:10px 0px 0px;margin:0px 30px;">
+</div>
+<div style="box-sizing:border-box;font-size:16px;text-size-adjust:100%;color:rgb(51, 51, 51);overflow:hidden;font-family:&quot;Microsoft YaHei&quot;, Helvetica, &quot;Meiryo UI&quot;, &quot;Malgun Gothic&quot;, &quot;Segoe UI&quot;, &quot;Trebuchet MS&quot;, Monaco, monospace, Tahoma, STXihei, 华文细黑, STHeiti, &quot;Helvetica Neue&quot;, &quot;Droid Sans&quot;, &quot;wenquanyi micro hei&quot;, FreeSans, Arimo, Arial, SimSun, 宋体, Heiti, 黑体, sans-serif;line-height:1.6;overflow-wrap:break-word;margin:0px 10px;height:auto !important;">
+<div style="display:block;box-sizing:border-box;margin-top:0px;margin-bottom:0px;height:auto !important;">
+
+<ins style="box-sizing:border-box;display:block;text-align:center;height:200px;"><ins style="box-sizing:border-box;display:inline-table;border:none;height:200px;margin:0;padding:0;position:relative;visibility:visible;width:828px;background-color:transparent;"><ins style="box-sizing:border-box;display:block;border:none;height:200px;margin:0;padding:0;position:relative;visibility:visible;width:828px;background-color:transparent;"><div style="box-sizing:border-box;left:0;position:absolute;top:0;border:0;width:828px;height:200px;"><div style="font-size: 16px; display:block; min-width: 100%; "> <div style="overflow:hidden;user-select:none;"><div style="overflow:hidden;user-select:none;"><div style="margin:0px;padding:0px;height:100%;width:100%;overflow:hidden;position:absolute;top:0px;left:0px;align-items:center;display:flex;justify-content:center;line-height:normal;"><div style="margin:0px;padding:0px;flex-shrink:0;position:relative;overflow:hidden;z-index:0;width:828px;height:200px;"><div style="margin:0px;padding:0px;display:block;top:0px;left:0px;width:828px;height:200px;opacity:1;position:relative;"><div lang="zh-cn" style="margin:0px;padding:0px;line-height:1.3;font-family:Roboto, Roboto, Arial, sans-serif;font-size:10px;display:flex;flex-direction:column;box-sizing:border-box;width:100%;height:100%;background-color:rgb(255, 255, 255);cursor:default;"><div style="margin:0px;padding:0px;line-height:1.3;box-sizing:border-box;display:flex;align-items:center;flex-direction:row;flex:1 0 0px;"><div style="margin:0px;padding:0px;line-height:1.3;box-sizing:border-box;position:absolute;z-index:-1;"><div style="margin:0px;border:1px solid white;padding:2px 4px;background-color:green;border-radius:3px;color:white;font-size:14px;line-height:14px;"><span dir="auto" style="display:inline;white-space:nowrap;">广告</span></div></div><a href="https://googleads.g.doubleclick.net/aclk?sa=l&amp;ai=C_xgGXxAMX-T4BYqm2gTL2LigD5P38-tcooSx0cIIqLPS1twTEAEg5oqQA2CdAaABjqHOpAPIAQapAh2pF2_0LIM-qAMByAPDBKoE3AFP0NIlDHgWKA7KnC25d2s-tKzUWplq1D31xsGDR21-VUWUy8E62-ZPfp-Ag33vpqPtf30k7kVI5ufAr1BXNfBjHgiR3qnz38jPGwM34VX9tsTEqx3LnYmCXfJ6PpoJTbMiCdJzuX3SfIdAsyI44fDEOovcD2YgIiHqeDPvx3FeDAn4diGf8B2wstJyFF_Qx8ORUQq-IA-VJ9ePdQs9PEZj1YoHHDdOQVxkq7qvp61bMF8aKp6-V6o8kcZSiv4JbWtXfz4x87XccRTbZ7YnNX0RSa66ohRnr59ULbDMwATtypaV5AGgBjeAB9resVuoB47OG6gH1ckbqAeT2BuoB7oGqAfw2RuoB_LZG6gHpr4bqAfs1RuoB_PRG6gH7NUbqAeW2BuoB8LaG9gHAdIIBwiIYRABGB-xCXbK2-mpo-sjgAoBmAsByAsB2BMMiBQC&amp;ae=1&amp;num=1&amp;sig=AOD64_3bF11t-rtk5hu7_-rRC3LIVNH83g&amp;client=ca-pub-7963911354665843&amp;nb=9&amp;adurl=https://www.agora.io/cn/%3Fgclid%3DEAIaIQobChMIpKS8pt3J6gIVCpOWCh1LLA70EAEYASAAEgJ_dPD_BwE" target="_blank" style="color:inherit;cursor:pointer;text-decoration:inherit;display:block;"><div class="media-placeholder">[图片/附件]</div></en-media></a><div style="margin:0px;line-height:1.3;box-sizing:border-box;display:flex;flex-direction:column;flex:1 0 0px;height:100%;padding:6px 24px;"><div title="agora.io" style="margin:0px;padding:0px;box-sizing:border-box;line-height:1.3;max-height:2.6em;font-weight:400;padding-right:30px;color:rgb(33, 33, 33);cursor:pointer;overflow:visible;text-overflow:unset;font-size:22px;"><a dir="auto" href="https://googleads.g.doubleclick.net/aclk?sa=l&amp;ai=C_xgGXxAMX-T4BYqm2gTL2LigD5P38-tcooSx0cIIqLPS1twTEAEg5oqQA2CdAaABjqHOpAPIAQapAh2pF2_0LIM-qAMByAPDBKoE3AFP0NIlDHgWKA7KnC25d2s-tKzUWplq1D31xsGDR21-VUWUy8E62-ZPfp-Ag33vpqPtf30k7kVI5ufAr1BXNfBjHgiR3qnz38jPGwM34VX9tsTEqx3LnYmCXfJ6PpoJTbMiCdJzuX3SfIdAsyI44fDEOovcD2YgIiHqeDPvx3FeDAn4diGf8B2wstJyFF_Qx8ORUQq-IA-VJ9ePdQs9PEZj1YoHHDdOQVxkq7qvp61bMF8aKp6-V6o8kcZSiv4JbWtXfz4x87XccRTbZ7YnNX0RSa66ohRnr59ULbDMwATtypaV5AGgBjeAB9resVuoB47OG6gH1ckbqAeT2BuoB7oGqAfw2RuoB_LZG6gHpr4bqAfs1RuoB_PRG6gH7NUbqAeW2BuoB8LaG9gHAdIIBwiIYRABGB-xCXbK2-mpo-sjgAoBmAsByAsB2BMMiBQC&amp;ae=1&amp;num=1&amp;sig=AOD64_3bF11t-rtk5hu7_-rRC3LIVNH83g&amp;client=ca-pub-7963911354665843&amp;nb=0&amp;adurl=https://www.agora.io/cn/%3Fgclid%3DEAIaIQobChMIpKS8pt3J6gIVCpOWCh1LLA70EAEYASAAEgJ_dPD_BwE" target="_blank" style="color:inherit;cursor:pointer;text-decoration:inherit;white-space:nowrap;">视频通话 API</a></div><div style="margin:0px;padding:0px;line-height:1.3;box-sizing:border-box;min-height:4px;flex-grow:1;"></div><div style="margin:0px;padding:0px;box-sizing:border-box;font-weight:300;line-height:1.2;color:rgb(119, 119, 119);cursor:pointer;overflow:visible;text-overflow:unset;font-size:18px;"><a dir="auto" style="text-decoration:inherit;line-height:1.2;font-weight:400;display:block;padding:0px 5px 0px 0px;color:rgb(119, 119, 119);cursor:pointer;overflow:visible;text-overflow:unset;font-size:18px;"><span style="border:1px solid white;padding:2px 4px;background-color:green;border-radius:3px;color:white;font-size:14px;line-height:14px;position:relative;display:inline-block;">广告</span><span>  </span><span dir="auto" style="display:inline;white-space:nowrap;"> 声网Agora 视频通话SDK，每月10000分钟<br/>免费。 覆盖全球200+国家和地区，18万注册应用<br/>的选择。</span></a></div><div style="margin:0px;padding:0px;line-height:1.3;box-sizing:border-box;min-height:4px;flex-grow:1;"></div><div style="margin:0px;padding:0px;line-height:1.3;box-sizing:border-box;display:flex;align-items:center;"><div title="声网Agora" style="margin:0px;padding:0px;box-sizing:border-box;font-weight:400;line-height:1.3;max-height:1.3em;color:rgb(119, 119, 119);cursor:pointer;opacity:0.7;overflow:visible;text-overflow:unset;font-size:17px;"><a dir="auto" href="https://googleads.g.doubleclick.net/aclk?sa=l&amp;ai=C_xgGXxAMX-T4BYqm2gTL2LigD5P38-tcooSx0cIIqLPS1twTEAEg5oqQA2CdAaABjqHOpAPIAQapAh2pF2_0LIM-qAMByAPDBKoE3AFP0NIlDHgWKA7KnC25d2s-tKzUWplq1D31xsGDR21-VUWUy8E62-ZPfp-Ag33vpqPtf30k7kVI5ufAr1BXNfBjHgiR3qnz38jPGwM34VX9tsTEqx3LnYmCXfJ6PpoJTbMiCdJzuX3SfIdAsyI44fDEOovcD2YgIiHqeDPvx3FeDAn4diGf8B2wstJyFF_Qx8ORUQq-IA-VJ9ePdQs9PEZj1YoHHDdOQVxkq7qvp61bMF8aKp6-V6o8kcZSiv4JbWtXfz4x87XccRTbZ7YnNX0RSa66ohRnr59ULbDMwATtypaV5AGgBjeAB9resVuoB47OG6gH1ckbqAeT2BuoB7oGqAfw2RuoB_LZG6gHpr4bqAfs1RuoB_PRG6gH7NUbqAeW2BuoB8LaG9gHAdIIBwiIYRABGB-xCXbK2-mpo-sjgAoBmAsByAsB2BMMiBQC&amp;ae=1&amp;num=1&amp;sig=AOD64_3bF11t-rtk5hu7_-rRC3LIVNH83g&amp;client=ca-pub-7963911354665843&amp;nb=1&amp;adurl=https://www.agora.io/cn/%3Fgclid%3DEAIaIQobChMIpKS8pt3J6gIVCpOWCh1LLA70EAEYASAAEgJ_dPD_BwE" target="_blank" style="color:inherit;cursor:pointer;text-decoration:inherit;white-space:nowrap;">声网Agora</a></div></div><div style="margin:0px;padding:0px;line-height:1.3;box-sizing:border-box;min-height:4px;flex-grow:1;"></div><div title="agora.io" style="margin:0px;padding:0px;line-height:1.3;box-sizing:border-box;display:flex;height:40px;"><a dir="auto" href="https://googleads.g.doubleclick.net/aclk?sa=l&amp;ai=C_xgGXxAMX-T4BYqm2gTL2LigD5P38-tcooSx0cIIqLPS1twTEAEg5oqQA2CdAaABjqHOpAPIAQapAh2pF2_0LIM-qAMByAPDBKoE3AFP0NIlDHgWKA7KnC25d2s-tKzUWplq1D31xsGDR21-VUWUy8E62-ZPfp-Ag33vpqPtf30k7kVI5ufAr1BXNfBjHgiR3qnz38jPGwM34VX9tsTEqx3LnYmCXfJ6PpoJTbMiCdJzuX3SfIdAsyI44fDEOovcD2YgIiHqeDPvx3FeDAn4diGf8B2wstJyFF_Qx8ORUQq-IA-VJ9ePdQs9PEZj1YoHHDdOQVxkq7qvp61bMF8aKp6-V6o8kcZSiv4JbWtXfz4x87XccRTbZ7YnNX0RSa66ohRnr59ULbDMwATtypaV5AGgBjeAB9resVuoB47OG6gH1ckbqAeT2BuoB7oGqAfw2RuoB_LZG6gHpr4bqAfs1RuoB_PRG6gH7NUbqAeW2BuoB8LaG9gHAdIIBwiIYRABGB-xCXbK2-mpo-sjgAoBmAsByAsB2BMMiBQC&amp;ae=1&amp;num=1&amp;sig=AOD64_3bF11t-rtk5hu7_-rRC3LIVNH83g&amp;client=ca-pub-7963911354665843&amp;nb=8&amp;adurl=https://www.agora.io/cn/%3Fgclid%3DEAIaIQobChMIpKS8pt3J6gIVCpOWCh1LLA70EAEYASAAEgJ_dPD_BwE" target="_blank" style="text-decoration:inherit;font-weight:500;display:block;background-color:rgb(78, 146, 223);border-radius:2px;box-shadow:rgba(0, 0, 0, 0.12) 0px 0px 2px 0px, rgba(0, 0, 0, 0.24) 0px 2px 2px 0px;color:rgb(255, 255, 255);cursor:pointer;font-size:17px;line-height:40px;padding:0px 23px;"><span dir="auto" style="display:inline;color:rgb(255, 255, 255);white-space:nowrap;">打开</span></a></div></div></div></div></div></div></div><div dir="ltr" style="margin:0px;padding:0px;display:block;height:15px;position:absolute;right:17px;top:1px;text-rendering:geometricprecision;z-index:2147483646;cursor:pointer;opacity:1;"><div style="margin:0px;padding:0px;display:inline-block;height:15px;position:absolute;right:0px;top:0px;"><div style="margin:0px;padding:0px;background-color:rgb(255, 255, 255);height:15px;white-space:nowrap;"><div style="margin:0px;padding:0px;display:inline-block;height:15px;width:22px;"><img style="display:inline-block;height:15px;width:auto;vertical-align:top;fill:rgb(0, 174, 205);" src="data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' xmlns:xlink='http://www.w3.org/1999/xlink' viewBox='0 0 24 16' data-evernote-id='46' class='js-evernote-checked'%3e%3cpath d='M10.90 4.69L10.90 5.57L3.17 5.57L3.17 7.22L3.17 7.22Q3.17 9.15 3.06 10.11L3.06 10.11L3.06 10.11Q2.95 11.07 2.58 11.92L2.58 11.92L2.58 11.92Q2.21 12.77 1.27 13.56L1.27 13.56L0.59 12.93L0.59 12.93Q2.29 11.82 2.29 8.66L2.29 8.66L2.29 4.69L6.11 4.69L6.11 2.95L7.00 2.95L7.00 4.69L10.90 4.69ZM23.00 7.34L23.00 8.22L12.80 8.22L12.80 7.34L17.55 7.34L17.55 5.53L15.12 5.53L15.12 5.53Q14.55 6.53 13.86 7.07L13.86 7.07L13.10 6.46L13.10 6.46Q14.44 5.46 14.95 3.33L14.95 3.33L15.84 3.55L15.84 3.55Q15.77 3.86 15.49 4.65L15.49 4.65L17.55 4.65L17.55 2.84L18.47 2.84L18.47 4.65L21.86 4.65L21.86 5.53L18.47 5.53L18.47 7.34L23.00 7.34ZM21.45 8.88L21.45 13.63L20.53 13.63L20.53 12.78L15.32 12.78L15.32 13.63L14.41 13.63L14.41 8.88L21.45 8.88ZM15.32 11.90L20.53 11.90L20.53 9.76L15.32 9.76L15.32 11.90Z'%3e%3c/path%3e%3c/svg%3e"/></div></div></div></div><div style="margin:0px;padding:0px;cursor:pointer;height:15px;width:15px;z-index:2147483646;background-color:rgb(255, 255, 255);position:absolute;right:1px;top:1px;opacity:1;"><img style="position:absolute;top:0px;right:0px;height:15px;width:15px;stroke:rgb(0, 174, 205);stroke-width:1.25;" src="data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' xmlns:xlink='http://www.w3.org/1999/xlink' viewBox='0 0 15 15' data-evernote-id='44' class='js-evernote-checked'%3e%3cpath d='M3.25%2c3.25l8.5%2c8.5M11.75%2c3.25l-8.5%2c8.5'%3e%3c/path%3e%3c/svg%3e"/></div><div style="margin:0px;padding:0px;z-index:2147483646;"></div><div style="margin:0px;padding:0px;bottom:0;right:0;width:136px;height:200px;background:initial !important;position:absolute !important;max-width:100% !important;max-height:100% !important;pointer-events:none !important;image-rendering:pixelated !important;z-index:2147483647;background-image:url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACsAAAAWBAMAAACrl3iAAAAABlBMVEUAAAD+AciWmZzWAAAAAnRSTlMAApidrBQAAAB/SURBVBjTbZABDsAgCAPrD/r/1y5AC2jmnJF5q6XA/zg1ar8q5heuN9YksJ6s4oRkUDld9flpdVzagY227m7l9gURiY9viM+pS+xD2oiKwlG3Tw8Y17VxC44Crb+NTIfcCdqGcbbrgKmWd4JmnwQVOIEn7/zhSlBO5PxK8Hj9AF6lBfVuUywEAAAAAElFTkSuQmCC) !important;"></div><div style="height:0px;width:0px;position:absolute;"><div ></div></div></div></div></div></div></ins></ins></ins>
+
+<p style="margin:0px 0px 10px;box-sizing:border-box;margin-top:0px;margin-bottom:16px;"><strong style="font-weight:700;box-sizing:border-box;">1.导致你的 Rails 应用变慢无非以下两个原因：</strong></p>
+<ol style="box-sizing:border-box;padding:0px;margin-top:0px;margin-bottom:16px;padding-left:2em;">
+<li style="box-sizing:border-box;">在不应该将 Ruby and Rails 作为首选的地方使用 Ruby and Rails。（用 Ruby and Rails 做了不擅长做的工作）</li>
+<li style="box-sizing:border-box;">过度的消耗内存导致需要利用大量的时间进行垃圾回收。</li>
+</ol>
+<p style="margin:0px 0px 10px;box-sizing:border-box;margin-top:0px;margin-bottom:16px;">Rails 是个令人愉快的框架，而且 Ruby 也是一个简洁而优雅的语言。但是如果它被滥用，那会相当的影响性能。有很多工作并不适合用 Ruby and Rails，你最好使用其它的工具，比如，数据库在大数据处理上优势明显，R 语言特别适合做统计学相关的工作。</p>
+<p style="margin:0px 0px 10px;box-sizing:border-box;margin-top:0px;margin-bottom:16px;">内存问题是导致诸多 Ruby 应用变慢的首要原因。Rails 性能优化的 80-20 法则是这样的：80% 的提速是源自于对内存的优化，剩下的 20% 属于其它因素。为什么内存消耗如此重要呢？因为你分配的内存越多，Ruby GC（Ruby 的垃圾回收机制）需要做的工作也就越多。Rails 就已经占用了很大的内存了，而且平均每个应用刚刚启动后都要占用将近 100M 的内存。如果你不注意内存的控制，你的程序内存增长超过 1G 是很有可能的。需要回收这么多的内存，难怪程序执行的大部分时间都被 GC 占用了。</p>
+<p style="margin:0px 0px 10px;box-sizing:border-box;margin-top:0px;margin-bottom:16px;"><strong style="font-weight:700;box-sizing:border-box;">2 我们如何使一个 Rails 应用运行更快?</strong></p>
+<p style="margin:0px 0px 10px;box-sizing:border-box;margin-top:0px;margin-bottom:16px;">有三种方法可以让你的应用更快：扩容、缓存和代码优化。</p>
+<p style="margin:0px 0px 10px;box-sizing:border-box;margin-top:0px;margin-bottom:16px;">扩容在如今很容易实现。Heroku 基本上就是为你做这个的，而 Hirefire 则让这一过程更加的自动化。其它的托管环境提供了类似的解决方案。总之，可以的话你用它就是了。但是请牢记扩容并不是一颗改善性能的银弹。如果你的应用只需在 5 分钟内响应一个请求，扩容就没有什么用。还有就是用 Heroku + Hirefire 几乎很容易导致你的银行账户透支。我已经见识过 Hirefire 把我一个应用的扩容至 36 个实体，让我为此支付了 $3100。我立马就手动吧实例减容到了 2 个, 并且对代码进行了优化.</p>
+<p style="margin:0px 0px 10px;box-sizing:border-box;margin-top:0px;margin-bottom:16px;">Rails 缓存也很容易实施。Rails 4 中的块缓存非常不错。Rails 文档 是有关缓存知识的优秀资料。不过同扩容相比，缓存并不能成为性能问题的终极解决方案。如果你的代码无法理想的运行，那么你将发现自己会把越来越多的资源耗费在缓存上，直到缓存再也不能带来速度的提升。</p><div style="box-sizing:border-box;width:100%;height:auto;clear:none;text-align:center;"><ins style="box-sizing:border-box;display:block;margin:auto;background-color:transparent;height:280px;"><ins style="box-sizing:border-box;display:inline-table;border:none;height:280px;margin:0;padding:0;position:relative;visibility:visible;width:828px;background-color:transparent;"><ins style="box-sizing:border-box;display:block;border:none;height:280px;margin:0px;padding:0px;position:relative;visibility:visible;width:828px;background-color:transparent;overflow:visible;"><div style="box-sizing:border-box;left:0;position:absolute;top:0;border:0;width:828px;height:280px;"><div style="font-size: 16px; display:block; min-width: 100%; "> <div><div style="text-align:center;background-color:transparent;"><div style="margin:0px;padding:0px;display:table-cell;font-size:0px;line-height:0;"><div style="margin:0px;padding:0px;display:inline-block;height:213px;width:828px;overflow:hidden;position:relative;"><a target="_blank" href="https://googleads.g.doubleclick.net/aclk?sa=l&amp;ai=CY0-CgFoMX7GREdSl2ATm-LrIAvbRk41e8vDqu-MLzcvwgPUaEAEg5oqQA2CdAaABwIvS1QLIAQKpAi1XMORJLIM-qAMByAPJBKoE2gFP0JXw_P411VdZD8n7up7noNrioFsPe0WimF-wltBff5BR72KcN203HCdVDSSzOZ_j1Qj6Jy24m_kEqvg8y3EVcW1RfPAkPbqAwNajrGjuwjzzJh74jvAFvEcPYhhuEM6XpBof-kK_oMp1pw7iAFi-IZcF8Zeju9i52csZbSUauuVeG158UpuoXRJtS2GE5435_qT_N2JFuhIjUL6mplVQyzJsxGHFiDrtXK3scKOgy6qJGRS9EV7wYr_6temh8XdAwCPYriiHRi0FzQyE-kZS7kk5S_DCFH4K-sAEvenZ4J0CoAYCgAeo9K2qAagHjs4bqAfVyRuoB5PYG6gHugaoB_DZG6gH8tkbqAemvhuoB-zVG6gH89EbqAfs1RuoB5bYG6gHwtob2AcB0ggHCIhhEAEYH7EJtpnvehhY-duACgGYCwHICwHYEwI&amp;ae=1&amp;num=1&amp;sig=AOD64_36IlYKjV3z-H2hgUmbf3l6xgXupA&amp;client=ca-pub-7963911354665843&amp;nb=17&amp;adurl=https://www.yisu.com/ddos/huodong/%3Ff%3Dgoogle%26plan%3Dgaofangfuwuqirenqun%26unit%3Drenqunshouzhong%26keyword%3Dddos%26eyisu%3Dgoogle20200101%26gclid%3DEAIaIQobChMIsdG__6PK6gIV1BKWCh1mvA4pEAEYASAAEgIoY_D_BwE" style="color:rgb(0, 0, 0);"><div class="media-placeholder">[图片/附件]</div></en-media></a><div dir="ltr" style="margin:0px;padding:0px;display:block;height:15px;position:absolute;right:17px;top:1px;text-rendering:geometricprecision;z-index:2147483646;cursor:pointer;opacity:1;"><div style="margin:0px;padding:0px;display:inline-block;height:15px;position:absolute;right:0px;top:0px;"><div style="margin:0px;padding:0px;background-color:rgb(255, 255, 255);height:15px;white-space:nowrap;"><div style="margin:0px;padding:0px;display:inline-block;height:15px;width:22px;"><img style="display:inline-block;height:15px;width:auto;vertical-align:top;fill:rgb(0, 174, 205);" src="data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' xmlns:xlink='http://www.w3.org/1999/xlink' viewBox='0 0 24 16' data-evernote-id='22' class='js-evernote-checked'%3e%3cpath d='M10.90 4.69L10.90 5.57L3.17 5.57L3.17 7.22L3.17 7.22Q3.17 9.15 3.06 10.11L3.06 10.11L3.06 10.11Q2.95 11.07 2.58 11.92L2.58 11.92L2.58 11.92Q2.21 12.77 1.27 13.56L1.27 13.56L0.59 12.93L0.59 12.93Q2.29 11.82 2.29 8.66L2.29 8.66L2.29 4.69L6.11 4.69L6.11 2.95L7.00 2.95L7.00 4.69L10.90 4.69ZM23.00 7.34L23.00 8.22L12.80 8.22L12.80 7.34L17.55 7.34L17.55 5.53L15.12 5.53L15.12 5.53Q14.55 6.53 13.86 7.07L13.86 7.07L13.10 6.46L13.10 6.46Q14.44 5.46 14.95 3.33L14.95 3.33L15.84 3.55L15.84 3.55Q15.77 3.86 15.49 4.65L15.49 4.65L17.55 4.65L17.55 2.84L18.47 2.84L18.47 4.65L21.86 4.65L21.86 5.53L18.47 5.53L18.47 7.34L23.00 7.34ZM21.45 8.88L21.45 13.63L20.53 13.63L20.53 12.78L15.32 12.78L15.32 13.63L14.41 13.63L14.41 8.88L21.45 8.88ZM15.32 11.90L20.53 11.90L20.53 9.76L15.32 9.76L15.32 11.90Z'%3e%3c/path%3e%3c/svg%3e"/></div></div></div></div><div style="margin:0px;padding:0px;cursor:pointer;height:15px;width:15px;z-index:2147483646;background-color:rgb(255, 255, 255);position:absolute;right:1px;top:1px;opacity:1;"><img style="position:absolute;top:0px;right:0px;height:15px;width:15px;stroke:rgb(0, 174, 205);stroke-width:1.25;" src="data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' xmlns:xlink='http://www.w3.org/1999/xlink' viewBox='0 0 15 15' data-evernote-id='21' class='js-evernote-checked'%3e%3cpath d='M3.25%2c3.25l8.5%2c8.5M11.75%2c3.25l-8.5%2c8.5'%3e%3c/path%3e%3c/svg%3e"/></div><div style="margin:0px;padding:0px;z-index:2147483646;"></div></div></div><div style="margin:0px;padding:0px;bottom:0;right:0;width:123px;height:213px;background:initial !important;position:absolute !important;max-width:100% !important;max-height:100% !important;pointer-events:none !important;image-rendering:pixelated !important;z-index:2147483647;background-image:url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACsAAAAWBAMAAACrl3iAAAAABlBMVEUAAAD+AciWmZzWAAAAAnRSTlMAApidrBQAAAB+SURBVBjTbZALCsAwCEP1Bt7/tGvNh2zMglSM6atV/9GIe8mqZrsnz0TVV1FxtrqdObrBgCv3lay2N6bgzbftTBIFXIO7qG+yv2WLgRJvQwEKImFgmIiyCQtpXxNE5LD+cJd3OcbRQkQS/+NcbpAQxJBaLO8NgkR/tSORMf0AUTkF05uv500AAAAASUVORK5CYII=) !important;"></div> <div style="height:0px;width:0px;position:absolute;"><div ></div></div></div></div></div></div></ins></ins></ins></div>
+<p style="margin:0px 0px 10px;box-sizing:border-box;margin-top:0px;margin-bottom:16px;">让你的 Rails 应用更快的唯一可靠的方式就是代码优化。在 Rails 的场景中这就是内存优化。而理所当然的是，如果你接受了我的建议，并且避免把 Rails 用于它的设计能力范围之外，你就会有更少的代码要优化。</p>
+<p style="margin:0px 0px 10px;box-sizing:border-box;margin-top:0px;margin-bottom:16px;"><strong style="font-weight:700;box-sizing:border-box;">2.1 避免内存密集型Rails特性</strong></p>
+<p style="margin:0px 0px 10px;box-sizing:border-box;margin-top:0px;margin-bottom:16px;">Rails 一些特性花费很多内存导致额外的垃圾收集。列表如下。</p>
+<p style="margin:0px 0px 10px;box-sizing:border-box;margin-top:0px;margin-bottom:16px;"><strong style="font-weight:700;box-sizing:border-box;">2.1.1 序列化程序</strong></p>
+<p style="margin:0px 0px 10px;box-sizing:border-box;margin-top:0px;margin-bottom:16px;">序列化程序是从数据库读取的字符串表现为 Ruby 数据类型的实用方法。</p>
+<div style="box-sizing:border-box;">
+<pre style="margin:0px 0px 10px;word-break:break-all;border:1px solid rgb(204, 204, 204);border-color:rgb(222, 229, 231);overflow-x:auto;background:rgb(248, 248, 248);display:block;color:rgb(51, 51, 51);font-family:&quot;Meiryo UI&quot;, &quot;YaHei Consolas Hybrid&quot;, Consolas, &quot;Malgun Gothic&quot;, &quot;Segoe UI&quot;, &quot;Trebuchet MS&quot;, Helvetica, monospace, monospace;box-sizing:border-box;overflow-wrap:normal;font:12px Consolas, &quot;Liberation Mono&quot;, Menlo, Courier, monospace;margin-top:0px;margin-bottom:16px;overflow:auto;font-size:85%;padding:16px;border-radius:3px;background-color:rgb(247, 247, 247);line-height:1.6;"><span style="box-sizing:border-box;"><span style="color:rgb(51, 51, 51);font-weight:bold;box-sizing:border-box;">class</span> <span style="box-sizing:border-box;color:rgb(68, 85, 136);font-weight:bold;">Smth</span> &lt; ActiveRecord::Base</span>
+ serialize <span style="color:rgb(153, 0, 115);box-sizing:border-box;">:data</span>, JSON
+<span style="color:rgb(51, 51, 51);font-weight:bold;box-sizing:border-box;">end</span>
+Smth.find(...).data
+Smth.find(...).data = { ... }
+</pre>
+</div>
+<p style="margin:0px 0px 10px;box-sizing:border-box;margin-top:0px;margin-bottom:16px;">它要消耗更多的内存去有效的序列化，你自己看：</p>
+<div style="box-sizing:border-box;">
+<pre style="margin:0px 0px 10px;word-break:break-all;border:1px solid rgb(204, 204, 204);border-color:rgb(222, 229, 231);overflow-x:auto;background:rgb(248, 248, 248);display:block;color:rgb(51, 51, 51);font-family:&quot;Meiryo UI&quot;, &quot;YaHei Consolas Hybrid&quot;, Consolas, &quot;Malgun Gothic&quot;, &quot;Segoe UI&quot;, &quot;Trebuchet MS&quot;, Helvetica, monospace, monospace;box-sizing:border-box;overflow-wrap:normal;font:12px Consolas, &quot;Liberation Mono&quot;, Menlo, Courier, monospace;margin-top:0px;margin-bottom:16px;overflow:auto;font-size:85%;padding:16px;border-radius:3px;background-color:rgb(247, 247, 247);line-height:1.6;"><span style="box-sizing:border-box;"><span style="color:rgb(51, 51, 51);font-weight:bold;box-sizing:border-box;">class</span> <span style="box-sizing:border-box;color:rgb(68, 85, 136);font-weight:bold;">Smth</span> &lt; ActiveRecord::Base</span>
+ <span style="box-sizing:border-box;"><span style="color:rgb(51, 51, 51);font-weight:bold;box-sizing:border-box;">def</span> <span style="color:rgb(153, 0, 0);font-weight:bold;box-sizing:border-box;">data</span></span>
+ JSON.parse(read_attribute(<span style="color:rgb(153, 0, 115);box-sizing:border-box;">:data</span>))
+ <span style="color:rgb(51, 51, 51);font-weight:bold;box-sizing:border-box;">end</span>
+ <span style="box-sizing:border-box;"><span style="color:rgb(51, 51, 51);font-weight:bold;box-sizing:border-box;">def</span> <span style="color:rgb(153, 0, 0);font-weight:bold;box-sizing:border-box;">data=</span><span style="box-sizing:border-box;">(value)</span></span>
+ write_attribute(<span style="color:rgb(153, 0, 115);box-sizing:border-box;">:data</span>, value.to_json)
+ <span style="color:rgb(51, 51, 51);font-weight:bold;box-sizing:border-box;">end</span>
+<span style="color:rgb(51, 51, 51);font-weight:bold;box-sizing:border-box;">end</span>
+</pre>
+</div>
+<p style="margin:0px 0px 10px;box-sizing:border-box;margin-top:0px;margin-bottom:16px;">这将只要 2 倍的内存开销。有些人，包括我自己，看到 Rails 的 JSON 序列化程序内存泄漏，大约每个请求 10% 的数据量。我不明白这背后的原因。我也不知道是否有一个可复制的情况。如果你有经验，或者知道怎么减少内存，请告诉我。</p>
+<p style="margin:0px 0px 10px;box-sizing:border-box;margin-top:0px;margin-bottom:16px;"><strong style="font-weight:700;box-sizing:border-box;">2.1.2 活动记录</strong></p>
+<p style="margin:0px 0px 10px;box-sizing:border-box;margin-top:0px;margin-bottom:16px;">很容易与 ActiveRecord 操纵数据。但是 ActiveRecord 本质是包装了你的数据。如果你有 1g 的表数据，ActiveRecord 表示将要花费 2g，在某些情况下更多。是的，90% 的情况，你获得了额外的便利。但是有的时候你并不需要，比如，批量更新可以减少 ActiveRecord 开销。下面的代码，即不会实例化任何模型，也不会运行验证和回调。</p>
+<p style="margin:0px 0px 10px;box-sizing:border-box;margin-top:0px;margin-bottom:16px;">Book.where('title LIKE ?', '%Rails%').update_all(author: 'David')<br style="box-sizing:border-box;"/> 后面的场景它只是执行 SQL 更新语句。</p>
+<div style="box-sizing:border-box;">
+<pre style="margin:0px 0px 10px;word-break:break-all;border:1px solid rgb(204, 204, 204);border-color:rgb(222, 229, 231);overflow-x:auto;background:rgb(248, 248, 248);display:block;color:rgb(51, 51, 51);font-family:&quot;Meiryo UI&quot;, &quot;YaHei Consolas Hybrid&quot;, Consolas, &quot;Malgun Gothic&quot;, &quot;Segoe UI&quot;, &quot;Trebuchet MS&quot;, Helvetica, monospace, monospace;box-sizing:border-box;overflow-wrap:normal;font:12px Consolas, &quot;Liberation Mono&quot;, Menlo, Courier, monospace;margin-top:0px;margin-bottom:16px;overflow:auto;font-size:85%;padding:16px;border-radius:3px;background-color:rgb(247, 247, 247);line-height:1.6;"><span style="color:rgb(51, 51, 51);font-weight:bold;box-sizing:border-box;">update</span> books
+ <span style="color:rgb(51, 51, 51);font-weight:bold;box-sizing:border-box;">set</span> author = <span style="color:rgb(221, 17, 68);box-sizing:border-box;">'David'</span>
+ <span style="color:rgb(51, 51, 51);font-weight:bold;box-sizing:border-box;">where</span> title <span style="color:rgb(51, 51, 51);font-weight:bold;box-sizing:border-box;">LIKE</span> <span style="color:rgb(221, 17, 68);box-sizing:border-box;">'%Rails%'</span>
+Another example <span style="color:rgb(51, 51, 51);font-weight:bold;box-sizing:border-box;">is</span> iteration <span style="color:rgb(51, 51, 51);font-weight:bold;box-sizing:border-box;">over</span> a <span style="color:rgb(51, 51, 51);font-weight:bold;box-sizing:border-box;">large</span> dataset. Sometimes you need <span style="color:rgb(51, 51, 51);font-weight:bold;box-sizing:border-box;">only</span> the data. <span style="color:rgb(51, 51, 51);font-weight:bold;box-sizing:border-box;">No</span> typecasting, <span style="color:rgb(51, 51, 51);font-weight:bold;box-sizing:border-box;">no</span> updates. This snippet just runs the <span style="color:rgb(51, 51, 51);font-weight:bold;box-sizing:border-box;">query</span> <span style="color:rgb(51, 51, 51);font-weight:bold;box-sizing:border-box;">and</span> avoids ActiveRecord altogether:
+<span style="color:rgb(51, 51, 51);font-weight:bold;box-sizing:border-box;">result</span> = ActiveRecord::Base.execute <span style="color:rgb(221, 17, 68);box-sizing:border-box;">'select * from books'</span>
+result.each <span style="color:rgb(51, 51, 51);font-weight:bold;box-sizing:border-box;">do</span> |<span style="color:rgb(51, 51, 51);font-weight:bold;box-sizing:border-box;">row</span>|
+ # <span style="color:rgb(51, 51, 51);font-weight:bold;box-sizing:border-box;">do</span> something <span style="color:rgb(51, 51, 51);font-weight:bold;box-sizing:border-box;">with</span> row.values_at(<span style="color:rgb(221, 17, 68);box-sizing:border-box;">'col1'</span>, <span style="color:rgb(221, 17, 68);box-sizing:border-box;">'col2'</span>)
+<span style="color:rgb(51, 51, 51);font-weight:bold;box-sizing:border-box;">end</span>
+</pre>
+</div>
+<p style="margin:0px 0px 10px;box-sizing:border-box;margin-top:0px;margin-bottom:16px;"><strong style="font-weight:700;box-sizing:border-box;">2.1.3 字符串回调</strong></p>
+<p style="margin:0px 0px 10px;box-sizing:border-box;margin-top:0px;margin-bottom:16px;">Rails 回调像之前/之后的保存，之前/之后的动作，以及大量的使用。但是你写的这种方式可能影响你的性能。这里有 3 种方式你可以写，比如：在保存之前回调：</p>
+<div style="box-sizing:border-box;">
+<pre style="margin:0px 0px 10px;word-break:break-all;border:1px solid rgb(204, 204, 204);border-color:rgb(222, 229, 231);overflow-x:auto;background:rgb(248, 248, 248);display:block;color:rgb(51, 51, 51);font-family:&quot;Meiryo UI&quot;, &quot;YaHei Consolas Hybrid&quot;, Consolas, &quot;Malgun Gothic&quot;, &quot;Segoe UI&quot;, &quot;Trebuchet MS&quot;, Helvetica, monospace, monospace;box-sizing:border-box;overflow-wrap:normal;font:12px Consolas, &quot;Liberation Mono&quot;, Menlo, Courier, monospace;margin-top:0px;margin-bottom:16px;overflow:auto;font-size:85%;padding:16px;border-radius:3px;background-color:rgb(247, 247, 247);line-height:1.6;">before_save <span style="color:rgb(153, 0, 115);box-sizing:border-box;">:update_status</span>
+before_save <span style="color:rgb(51, 51, 51);font-weight:bold;box-sizing:border-box;">do</span> <span style="box-sizing:border-box;">|model|</span>
+model.update_status
+<span style="color:rgb(51, 51, 51);font-weight:bold;box-sizing:border-box;">end</span>
+before_save “<span style="color:rgb(51, 51, 51);font-weight:bold;box-sizing:border-box;">self</span>.update_status”
+
+</pre>
+</div>
+<p style="margin:0px 0px 10px;box-sizing:border-box;margin-top:0px;margin-bottom:16px;">前两种方式能够很好的运行，但是第三种不可以。为什么呢？因为执行 Rails 回调需要存储执行上下文（变量，常量，全局实例等等）就是在回调的时候。如果你的应用很大，你最终在内存里复制了大量的数据。因为回调在任何时候都可以执行，内存在你程序结束之前不可以回收。</p>
+<p style="margin:0px 0px 10px;box-sizing:border-box;margin-top:0px;margin-bottom:16px;">有象征，回调在每个请求为我节省了 0.6 秒。</p>
+<p style="margin:0px 0px 10px;box-sizing:border-box;margin-top:0px;margin-bottom:16px;"><strong style="font-weight:700;box-sizing:border-box;">2.2 写更少的 Ruby</strong></p>
+<p style="margin:0px 0px 10px;box-sizing:border-box;margin-top:0px;margin-bottom:16px;">这是我最喜欢的一步。我的大学计算机科学类教授喜欢说，最好的代码是不存在的。有时候做好手头的任务需要其它的工具。最常用的是数据库。为什么呢？因为 Ruby 不善于处理大数据集。非常非常的糟糕。记住，Ruby 占用非常大的内存。所以举个例子，处理 1G 的数据你可能需要 3G 的或者更多的内存。它将要花费几十秒的时间去垃圾回收这 3G。好的数据库可以一秒处理这些数据。让我来举一些例子。</p>
+<p style="margin:0px 0px 10px;box-sizing:border-box;margin-top:0px;margin-bottom:16px;"><strong style="font-weight:700;box-sizing:border-box;">2.2.1 属性预加载</strong></p>
+<p style="margin:0px 0px 10px;box-sizing:border-box;margin-top:0px;margin-bottom:16px;">有时候反规范化模型的属性从另外一个数据库获取。比如，想象我们正在构建一个 TODO 列表，包括任务。每个任务可以有一个或者几个标签标记。规范化数据模型是这样的：</p>
+<ul style="box-sizing:border-box;padding:0px;margin-top:0px;margin-bottom:16px;padding-left:2em;">
+<li style="box-sizing:border-box;">Tasks</li>
+<li style="box-sizing:border-box;"> id</li>
+<li style="box-sizing:border-box;"> name</li>
+<li style="box-sizing:border-box;">Tags</li>
+<li style="box-sizing:border-box;"> id</li>
+<li style="box-sizing:border-box;"> name</li>
+<li style="box-sizing:border-box;">Tasks_Tags</li>
+<li style="box-sizing:border-box;"> tag_id</li>
+<li style="box-sizing:border-box;"> task_id</li>
+</ul>
+<p style="margin:0px 0px 10px;box-sizing:border-box;margin-top:0px;margin-bottom:16px;">加载任务以及它们的 Rails 标签，你会这样做：</p>
+<p style="margin:0px 0px 10px;box-sizing:border-box;margin-top:0px;margin-bottom:16px;">这段代码有问题，它为每个标签创建了对象，花费很多内存。可选择的解决方案，将标签在数据库预加载。</p>
+<div style="box-sizing:border-box;">
+<pre style="margin:0px 0px 10px;word-break:break-all;border:1px solid rgb(204, 204, 204);border-color:rgb(222, 229, 231);overflow-x:auto;background:rgb(248, 248, 248);display:block;color:rgb(51, 51, 51);font-family:&quot;Meiryo UI&quot;, &quot;YaHei Consolas Hybrid&quot;, Consolas, &quot;Malgun Gothic&quot;, &quot;Segoe UI&quot;, &quot;Trebuchet MS&quot;, Helvetica, monospace, monospace;box-sizing:border-box;overflow-wrap:normal;font:12px Consolas, &quot;Liberation Mono&quot;, Menlo, Courier, monospace;margin-top:0px;margin-bottom:16px;overflow:auto;font-size:85%;padding:16px;border-radius:3px;background-color:rgb(247, 247, 247);line-height:1.6;">tasks = Task.<span style="color:rgb(51, 51, 51);font-weight:bold;box-sizing:border-box;">select</span> &lt;&lt;-END
+  *,
+  array(
+  <span style="color:rgb(51, 51, 51);font-weight:bold;box-sizing:border-box;">select</span> tags.<span style="box-sizing:border-box;">name <span style="color:rgb(51, 51, 51);font-weight:bold;box-sizing:border-box;">from</span> tags inner <span style="color:rgb(51, 51, 51);font-weight:bold;box-sizing:border-box;">join</span> tasks_tags <span style="color:rgb(153, 0, 0);font-weight:bold;box-sizing:border-box;">on</span> (<span style="box-sizing:border-box;">tags.id = tasks_tags.tag_id</span>)
+  <span style="color:rgb(51, 51, 51);font-weight:bold;box-sizing:border-box;">where</span> tasks_tags.task_id</span>=tasks.id
+  ) <span style="color:rgb(51, 51, 51);font-weight:bold;box-sizing:border-box;">as</span> tag_names
+ END
+ &gt; <span style="color:rgb(0, 128, 128);box-sizing:border-box;">0.018</span> sec
+</pre>
+</div>
+<p style="margin:0px 0px 10px;box-sizing:border-box;margin-top:0px;margin-bottom:16px;">这只需要内存存储额外一列，有一个数组标签。难怪快 3 倍。</p>
+<p style="margin:0px 0px 10px;box-sizing:border-box;margin-top:0px;margin-bottom:16px;"><strong style="font-weight:700;box-sizing:border-box;">2.2.2 数据集合</strong></p>
+<p style="margin:0px 0px 10px;box-sizing:border-box;margin-top:0px;margin-bottom:16px;">我所说的数据集合任何代码去总结或者分析数据。这些操作可以简单的总结，或者一些更复杂的。以小组排名为例。假设我们有一个员工，部门，工资的数据集，我们要计算员工的工资在一个部门的排名。</p>
+<div style="box-sizing:border-box;">
+<pre style="margin:0px 0px 10px;word-break:break-all;border:1px solid rgb(204, 204, 204);border-color:rgb(222, 229, 231);overflow-x:auto;background:rgb(248, 248, 248);display:block;color:rgb(51, 51, 51);font-family:&quot;Meiryo UI&quot;, &quot;YaHei Consolas Hybrid&quot;, Consolas, &quot;Malgun Gothic&quot;, &quot;Segoe UI&quot;, &quot;Trebuchet MS&quot;, Helvetica, monospace, monospace;box-sizing:border-box;overflow-wrap:normal;font:12px Consolas, &quot;Liberation Mono&quot;, Menlo, Courier, monospace;margin-top:0px;margin-bottom:16px;overflow:auto;font-size:85%;padding:16px;border-radius:3px;background-color:rgb(247, 247, 247);line-height:1.6;"><span style="color:rgb(51, 51, 51);font-weight:bold;box-sizing:border-box;">SELECT</span> * <span style="color:rgb(51, 51, 51);font-weight:bold;box-sizing:border-box;">FROM</span> empsalary;
+</pre>
+</div>
+<div style="box-sizing:border-box;">
+<pre style="margin:0px 0px 10px;word-break:break-all;border:1px solid rgb(204, 204, 204);border-color:rgb(222, 229, 231);overflow-x:auto;background:rgb(248, 248, 248);display:block;color:rgb(51, 51, 51);font-family:&quot;Meiryo UI&quot;, &quot;YaHei Consolas Hybrid&quot;, Consolas, &quot;Malgun Gothic&quot;, &quot;Segoe UI&quot;, &quot;Trebuchet MS&quot;, Helvetica, monospace, monospace;box-sizing:border-box;overflow-wrap:normal;font:12px Consolas, &quot;Liberation Mono&quot;, Menlo, Courier, monospace;margin-top:0px;margin-bottom:16px;overflow:auto;font-size:85%;padding:16px;border-radius:3px;background-color:rgb(247, 247, 247);line-height:1.6;"> depname <span style="box-sizing:border-box;">| empno |</span> salary
+-----------+-------+-------
+ develop <span style="box-sizing:border-box;">|  6 |</span> <span style="color:rgb(0, 128, 128);box-sizing:border-box;">6000</span>
+ develop <span style="box-sizing:border-box;">|  7 |</span> <span style="color:rgb(0, 128, 128);box-sizing:border-box;">4500</span>
+ develop <span style="box-sizing:border-box;">|  5 |</span> <span style="color:rgb(0, 128, 128);box-sizing:border-box;">4200</span>
+ personnel <span style="box-sizing:border-box;">|  2 |</span> <span style="color:rgb(0, 128, 128);box-sizing:border-box;">3900</span>
+ personnel <span style="box-sizing:border-box;">|  4 |</span> <span style="color:rgb(0, 128, 128);box-sizing:border-box;">3500</span>
+ sales  <span style="box-sizing:border-box;">|  1 |</span> <span style="color:rgb(0, 128, 128);box-sizing:border-box;">5000</span>
+ sales  <span style="box-sizing:border-box;">|  3 |</span> <span style="color:rgb(0, 128, 128);box-sizing:border-box;">4800</span>
+</pre>
+</div>
+<p style="margin:0px 0px 10px;box-sizing:border-box;margin-top:0px;margin-bottom:16px;">你可以用 Ruby 计算排名：</p>
+<div style="box-sizing:border-box;">
+<pre style="margin:0px 0px 10px;word-break:break-all;border:1px solid rgb(204, 204, 204);border-color:rgb(222, 229, 231);overflow-x:auto;background:rgb(248, 248, 248);display:block;color:rgb(51, 51, 51);font-family:&quot;Meiryo UI&quot;, &quot;YaHei Consolas Hybrid&quot;, Consolas, &quot;Malgun Gothic&quot;, &quot;Segoe UI&quot;, &quot;Trebuchet MS&quot;, Helvetica, monospace, monospace;box-sizing:border-box;overflow-wrap:normal;font:12px Consolas, &quot;Liberation Mono&quot;, Menlo, Courier, monospace;margin-top:0px;margin-bottom:16px;overflow:auto;font-size:85%;padding:16px;border-radius:3px;background-color:rgb(247, 247, 247);line-height:1.6;">salaries = Empsalary.all
+salaries.sort_by! { <span style="box-sizing:border-box;">|s|</span> [s.depname, s.salary] }
+key, counter = <span style="color:rgb(0, 128, 128);box-sizing:border-box;">nil</span>, <span style="color:rgb(0, 128, 128);box-sizing:border-box;">nil</span>
+salaries.each <span style="color:rgb(51, 51, 51);font-weight:bold;box-sizing:border-box;">do</span> <span style="box-sizing:border-box;">|s|</span>
+ <span style="color:rgb(51, 51, 51);font-weight:bold;box-sizing:border-box;">if</span> s.depname != key
+ key, counter = s.depname, <span style="color:rgb(0, 128, 128);box-sizing:border-box;">0</span>
+ <span style="color:rgb(51, 51, 51);font-weight:bold;box-sizing:border-box;">end</span>
+ counter += <span style="color:rgb(0, 128, 128);box-sizing:border-box;">1</span>
+ s.rank = counter
+<span style="color:rgb(51, 51, 51);font-weight:bold;box-sizing:border-box;">end</span>
+</pre>
+</div>
+<p style="margin:0px 0px 10px;box-sizing:border-box;margin-top:0px;margin-bottom:16px;">Empsalary 表里 100K 的数据程序在 4.02 秒内完成。替代 Postgres 查询，使用 window 函数做同样的工作在 1.1 秒内超过 4 倍。</p>
+<div style="box-sizing:border-box;">
+<pre style="margin:0px 0px 10px;word-break:break-all;border:1px solid rgb(204, 204, 204);border-color:rgb(222, 229, 231);overflow-x:auto;background:rgb(248, 248, 248);display:block;color:rgb(51, 51, 51);font-family:&quot;Meiryo UI&quot;, &quot;YaHei Consolas Hybrid&quot;, Consolas, &quot;Malgun Gothic&quot;, &quot;Segoe UI&quot;, &quot;Trebuchet MS&quot;, Helvetica, monospace, monospace;box-sizing:border-box;overflow-wrap:normal;font:12px Consolas, &quot;Liberation Mono&quot;, Menlo, Courier, monospace;margin-top:0px;margin-bottom:16px;overflow:auto;font-size:85%;padding:16px;border-radius:3px;background-color:rgb(247, 247, 247);line-height:1.6;"><span style="color:rgb(51, 51, 51);font-weight:bold;box-sizing:border-box;">SELECT</span> depname, empno, salary, <span style="color:rgb(51, 51, 51);font-weight:bold;box-sizing:border-box;">rank</span>()
+<span style="color:rgb(51, 51, 51);font-weight:bold;box-sizing:border-box;">OVER</span> (<span style="color:rgb(51, 51, 51);font-weight:bold;box-sizing:border-box;">PARTITION</span> <span style="color:rgb(51, 51, 51);font-weight:bold;box-sizing:border-box;">BY</span> depname <span style="color:rgb(51, 51, 51);font-weight:bold;box-sizing:border-box;">ORDER</span> <span style="color:rgb(51, 51, 51);font-weight:bold;box-sizing:border-box;">BY</span> salary <span style="color:rgb(51, 51, 51);font-weight:bold;box-sizing:border-box;">DESC</span>)
+<span style="color:rgb(51, 51, 51);font-weight:bold;box-sizing:border-box;">FROM</span> empsalary;
+</pre>
+</div>
+<div style="box-sizing:border-box;">
+<pre style="margin:0px 0px 10px;word-break:break-all;border:1px solid rgb(204, 204, 204);border-color:rgb(222, 229, 231);overflow-x:auto;background:rgb(248, 248, 248);display:block;color:rgb(51, 51, 51);font-family:&quot;Meiryo UI&quot;, &quot;YaHei Consolas Hybrid&quot;, Consolas, &quot;Malgun Gothic&quot;, &quot;Segoe UI&quot;, &quot;Trebuchet MS&quot;, Helvetica, monospace, monospace;box-sizing:border-box;overflow-wrap:normal;font:12px Consolas, &quot;Liberation Mono&quot;, Menlo, Courier, monospace;margin-top:0px;margin-bottom:16px;overflow:auto;font-size:85%;padding:16px;border-radius:3px;background-color:rgb(247, 247, 247);line-height:1.6;"> depname <span style="box-sizing:border-box;">| empno |</span> salary <span style="box-sizing:border-box;">| rank 
+-----------+-------+--------+------
+ develop |</span>  <span style="color:rgb(0, 128, 128);box-sizing:border-box;">6</span> <span style="box-sizing:border-box;">| 6000 |</span> <span style="color:rgb(0, 128, 128);box-sizing:border-box;">1</span>
+ develop <span style="box-sizing:border-box;">|  7 |</span> <span style="color:rgb(0, 128, 128);box-sizing:border-box;">4500</span> <span style="box-sizing:border-box;">| 2
+ develop |</span>  <span style="color:rgb(0, 128, 128);box-sizing:border-box;">5</span> <span style="box-sizing:border-box;">| 4200 |</span> <span style="color:rgb(0, 128, 128);box-sizing:border-box;">3</span>
+ personnel <span style="box-sizing:border-box;">|  2 |</span> <span style="color:rgb(0, 128, 128);box-sizing:border-box;">3900</span> <span style="box-sizing:border-box;">| 1
+ personnel |</span>  <span style="color:rgb(0, 128, 128);box-sizing:border-box;">4</span> <span style="box-sizing:border-box;">| 3500 |</span> <span style="color:rgb(0, 128, 128);box-sizing:border-box;">2</span>
+ sales  <span style="box-sizing:border-box;">|  1 |</span> <span style="color:rgb(0, 128, 128);box-sizing:border-box;">5000</span> <span style="box-sizing:border-box;">| 1
+ sales  |</span>  <span style="color:rgb(0, 128, 128);box-sizing:border-box;">3</span> <span style="box-sizing:border-box;">| 4800 |</span> <span style="color:rgb(0, 128, 128);box-sizing:border-box;">2</span>
+</pre>
+</div>
+<p style="margin:0px 0px 10px;box-sizing:border-box;margin-top:0px;margin-bottom:16px;">4 倍加速已经令人印象深刻，有时候你得到更多，到 20 倍。从我自己经验举个例子。我有一个三维 OLAP 多维数据集与 600k 数据行。我的程序做了切片和聚合。在 Ruby 中，它花费了 1G 的内存大约 90 秒完成。等价的 SQL 查询在 5 内完成。</p>
+<p style="margin:0px 0px 10px;box-sizing:border-box;margin-top:0px;margin-bottom:16px;"><strong style="font-weight:700;box-sizing:border-box;">2.3 优化 Unicorn</strong></p>
+<p style="margin:0px 0px 10px;box-sizing:border-box;margin-top:0px;margin-bottom:16px;">如果你正在使用Unicorn，那么以下的优化技巧将会适用。Unicorn 是 Rails 框架中最快的 web 服务器。但是你仍然可以让它更运行得快一点。</p>
+<p style="margin:0px 0px 10px;box-sizing:border-box;margin-top:0px;margin-bottom:16px;"><strong style="font-weight:700;box-sizing:border-box;">2.3.1 预载入 App 应用</strong></p>
+<p style="margin:0px 0px 10px;box-sizing:border-box;margin-top:0px;margin-bottom:16px;">Unicorn 可以在创建新的 worker 进程前，预载入 Rails 应用。这样有两个好处。第一，主线程可以通过写入时复制的友好GC机制(Ruby 2.0以上)，共享内存的数据。操作系统会透明的复制这些数据，以防被worker修改。第二，预载入减少了worker进程启动的时间。Rails worker进程重启是很常见的（稍后将进一步阐述），所以worker重启的速度越快，我们就可以得到更好的性能。</p>
+<p style="margin:0px 0px 10px;box-sizing:border-box;margin-top:0px;margin-bottom:16px;">若需要开启应用的预载入，只需要在unicorn的配置文件中添加一行：</p>
+<p style="margin:0px 0px 10px;box-sizing:border-box;margin-top:0px;margin-bottom:16px;">preload_app true<br style="box-sizing:border-box;"/> <strong style="font-weight:700;box-sizing:border-box;">2.3.2 在 Request 请求间的 GC</strong></p>
+<p style="margin:0px 0px 10px;box-sizing:border-box;margin-top:0px;margin-bottom:16px;">请谨记，GC 的处理时间最大会占到应用时间的50%。这个还不是唯一的问题。GC 通常是不可预知的，并且会在你不想它运行的时候触发运行。那么，你该怎么处理？</p>
+<p style="margin:0px 0px 10px;box-sizing:border-box;margin-top:0px;margin-bottom:16px;">首先我们会想到，如果完全禁用 GC 会怎么样？这个似乎是个很糟糕的想法。你的应用很可能很快就占满 1G 的内存，而你还未能及时发现。如果你服务器还同时运行着几个 worker，那么你的应用将很快会出现内存不足，即使你的应用是在自托管的服务器。更不用说只有 512M 内存限制的 Heroku。</p><div style="box-sizing:border-box;width:100%;height:auto;clear:none;text-align:center;"><ins style="box-sizing:border-box;display:block;margin:auto;background-color:transparent;height:0px;"><ins style="box-sizing:border-box;display:inline-table;border:none;height:0px;margin:0px;padding:0px;position:relative;visibility:visible;width:828px;background-color:transparent;"><ins style="box-sizing:border-box;display:block;border:none;height:0px;margin:0px;padding:0px;position:relative;visibility:visible;width:828px;background-color:transparent;overflow:hidden;opacity:0;"><div style="box-sizing:border-box;left:0;position:absolute;top:0;border:0;width:828px;height:280px;"><div style="font-size: 16px; display:block; min-width: 100%; "> <div><div></div></div></div></div></ins></ins></ins></div>
+<p style="margin:0px 0px 10px;box-sizing:border-box;margin-top:0px;margin-bottom:16px;">其实我们有更好的办法。那么如果我们无法回避GC，我们可以尝试让GC运行的时间点尽量的确定，并且在闲时运行。例如，在两个request之间，运行GC。这个很容易通过配置Unicorn实现。</p>
+<p style="margin:0px 0px 10px;box-sizing:border-box;margin-top:0px;margin-bottom:16px;">对于Ruby 2.1以前的版本，有一个unicorn模块叫做OobGC:</p>
+<div style="box-sizing:border-box;">
+<pre style="margin:0px 0px 10px;word-break:break-all;border:1px solid rgb(204, 204, 204);border-color:rgb(222, 229, 231);overflow-x:auto;background:rgb(248, 248, 248);display:block;color:rgb(51, 51, 51);font-family:&quot;Meiryo UI&quot;, &quot;YaHei Consolas Hybrid&quot;, Consolas, &quot;Malgun Gothic&quot;, &quot;Segoe UI&quot;, &quot;Trebuchet MS&quot;, Helvetica, monospace, monospace;box-sizing:border-box;overflow-wrap:normal;font:12px Consolas, &quot;Liberation Mono&quot;, Menlo, Courier, monospace;margin-top:0px;margin-bottom:16px;overflow:auto;font-size:85%;padding:16px;border-radius:3px;background-color:rgb(247, 247, 247);line-height:1.6;">require <span style="color:rgb(153, 0, 115);box-sizing:border-box;">'unicorn</span>/oob_gc'
+ <span style="color:rgb(51, 51, 51);font-weight:bold;box-sizing:border-box;">use</span>(Unicorn::OobGC, <span style="color:rgb(0, 128, 128);box-sizing:border-box;">1</span>) # <span style="color:rgb(221, 17, 68);box-sizing:border-box;">"1"</span> 表示<span style="color:rgb(221, 17, 68);box-sizing:border-box;">"强制GC在1个request后运行"</span>
+</pre>
+</div>
+<p style="margin:0px 0px 10px;box-sizing:border-box;margin-top:0px;margin-bottom:16px;">对于Ruby 2.1及以后的版本，最好使用gctools(https://github.com/tmm1/gctools):</p>
+<div style="box-sizing:border-box;">
+<pre style="margin:0px 0px 10px;word-break:break-all;border:1px solid rgb(204, 204, 204);border-color:rgb(222, 229, 231);overflow-x:auto;background:rgb(248, 248, 248);display:block;color:rgb(51, 51, 51);font-family:&quot;Meiryo UI&quot;, &quot;YaHei Consolas Hybrid&quot;, Consolas, &quot;Malgun Gothic&quot;, &quot;Segoe UI&quot;, &quot;Trebuchet MS&quot;, Helvetica, monospace, monospace;box-sizing:border-box;overflow-wrap:normal;font:12px Consolas, &quot;Liberation Mono&quot;, Menlo, Courier, monospace;margin-top:0px;margin-bottom:16px;overflow:auto;font-size:85%;padding:16px;border-radius:3px;background-color:rgb(247, 247, 247);line-height:1.6;">require <span style="color:rgb(153, 0, 115);box-sizing:border-box;">'gctools</span>/oobgc'
+<span style="color:rgb(51, 51, 51);font-weight:bold;box-sizing:border-box;">use</span>(GC::OOB::UnicornMiddleware)
+</pre>
+</div>
+<p style="margin:0px 0px 10px;box-sizing:border-box;margin-top:0px;margin-bottom:16px;">但在request之间运行GC也有一些注意事项。最重要的是，这种优化技术是可感知的。也就是说，用户会明显感觉到性能的提升。但是服务器需要做更多的工作。不同于在需要时才运行GC，这种技术需要服务器频繁的运行GC. 所以，你要确定你的服务器有足够的资源来运行GC，并且在其他worker正在运行GC的过程中，有足够的worker来处理用户的请求。</p>
+<p style="margin:0px 0px 10px;box-sizing:border-box;margin-top:0px;margin-bottom:16px;"><strong style="font-weight:700;box-sizing:border-box;">2.4 有限的增长</strong></p>
+<p style="margin:0px 0px 10px;box-sizing:border-box;margin-top:0px;margin-bottom:16px;">我已经给你展示了一些应用会占用1G内存的例子。如果你的内存是足够的，那么占用这么一大块内存并不是个大问题。但是Ruby可能不会把这块内存返还给操作系统。接下来让我来阐述一下为什么。</p>
+<p style="margin:0px 0px 10px;box-sizing:border-box;margin-top:0px;margin-bottom:16px;">Ruby通过两个堆来分配内存。所有Ruby的对象在存储在Ruby自己的堆当中。每个对象占用40字节（64位操作系统中）。当对象需要更多内存的时候，它就会在操作系统的堆中分配内存。当对象被垃圾回收并释放后，被占用的操作系统中的堆的内存将会返还给操作系统，但是Ruby自有的堆当中占用的内存只会简单的标记为free可用，并不会返还给操作系统。</p>
+<p style="margin:0px 0px 10px;box-sizing:border-box;margin-top:0px;margin-bottom:16px;">这意味着，Ruby的堆只会增加不会减少。想象一下，如果你从数据库读取了1百万行记录，每行10个列。那么你需要至少分配1千万个对象来存储这些数据。通常Ruby worker在启动后占用100M内存。为了适应这么多数据，worker需要额外增加400M的内存（1千万个对象，每个对象占用40个字节）。即使这些对象最后被收回，这个worker仍然使用着500M的内存。</p>
+<p style="margin:0px 0px 10px;box-sizing:border-box;margin-top:0px;margin-bottom:16px;">这里需要声明， Ruby GC可以减少这个堆的大小。但是我在实战中还没发现有这个功能。因为在生产环境中，触发堆减少的条件很少会出现。</p>
+<p style="margin:0px 0px 10px;box-sizing:border-box;margin-top:0px;margin-bottom:16px;">如果你的worker只能增长，最明显的解决办法就是每当它的内存占用太多的时候，就重启该worker。某些托管的服务会这么做，例如Heroku。让我们来看看其他方法来实现这个功能。</p>
+<p style="margin:0px 0px 10px;box-sizing:border-box;margin-top:0px;margin-bottom:16px;"><strong style="font-weight:700;box-sizing:border-box;">2.4.1 内部内存控制</strong></p>
+<p style="margin:0px 0px 10px;box-sizing:border-box;margin-top:0px;margin-bottom:16px;">Trust in God, but lock your car 相信上帝，但别忘了锁车。（寓意：大部分外国人都有宗教信仰，相信上帝是万能的，但是日常生活中，谁能指望上帝能帮助自己呢。信仰是信仰，但是有困难的时候 还是要靠自己。）。有两个途径可以让你的应用实现自我内存限制。我管他们做，Kind（友好）和hard（强制）.</p>
+<p style="margin:0px 0px 10px;box-sizing:border-box;margin-top:0px;margin-bottom:16px;">Kind 友好内存限制是在每个请求后强制内存大小。如果worker占用的内存过大，那么该worker就会结束，并且unicorn会创建一个新的worker。这就是为什么我管它做“kind”。它不会导致你的应用中断。</p><div style="box-sizing:border-box;width:100%;height:auto;clear:none;text-align:center;"><ins style="box-sizing:border-box;display:block;margin:auto;background-color:transparent;height:0px;"><ins style="box-sizing:border-box;display:inline-table;border:none;height:0px;margin:0px;padding:0px;position:relative;visibility:visible;width:828px;background-color:transparent;"><ins style="box-sizing:border-box;display:block;border:none;height:0px;margin:0px;padding:0px;position:relative;visibility:visible;width:828px;background-color:transparent;overflow:hidden;opacity:0;"><div style="box-sizing:border-box;left:0;position:absolute;top:0;border:0;width:828px;height:280px;"><div style="font-size: 16px; display:block; min-width: 100%; "> <div><div></div></div></div></div></ins></ins></ins></div>
+<p style="margin:0px 0px 10px;box-sizing:border-box;margin-top:0px;margin-bottom:16px;">获取进程的内存大小，使用 RSS 度量在 Linux 和 MacOS 或者 OS gem 在 windows 上。我来展示下在 Unicorn 配置文件里怎么实现这个限制：</p>
+<div style="box-sizing:border-box;">
+<pre style="margin:0px 0px 10px;word-break:break-all;border:1px solid rgb(204, 204, 204);border-color:rgb(222, 229, 231);overflow-x:auto;background:rgb(248, 248, 248);display:block;color:rgb(51, 51, 51);font-family:&quot;Meiryo UI&quot;, &quot;YaHei Consolas Hybrid&quot;, Consolas, &quot;Malgun Gothic&quot;, &quot;Segoe UI&quot;, &quot;Trebuchet MS&quot;, Helvetica, monospace, monospace;box-sizing:border-box;overflow-wrap:normal;font:12px Consolas, &quot;Liberation Mono&quot;, Menlo, Courier, monospace;margin-top:0px;margin-bottom:16px;overflow:auto;font-size:85%;padding:16px;border-radius:3px;background-color:rgb(247, 247, 247);line-height:1.6;"><span style="box-sizing:border-box;"><span style="color:rgb(51, 51, 51);font-weight:bold;box-sizing:border-box;">class</span> <span style="box-sizing:border-box;color:rgb(68, 85, 136);font-weight:bold;">Unicorn::HttpServer</span></span>
+ KIND_MEMORY_LIMIT_RSS = <span style="color:rgb(0, 128, 128);box-sizing:border-box;">150</span> <span style="color:rgb(153, 153, 136);font-style:italic;box-sizing:border-box;">#MB</span>
+ <span style="color:rgb(51, 51, 51);font-weight:bold;box-sizing:border-box;">alias</span> process_client_orig process_client
+ undef_method <span style="color:rgb(153, 0, 115);box-sizing:border-box;">:process_client</span>
+ <span style="box-sizing:border-box;"><span style="color:rgb(51, 51, 51);font-weight:bold;box-sizing:border-box;">def</span> <span style="color:rgb(153, 0, 0);font-weight:bold;box-sizing:border-box;">process_client</span><span style="box-sizing:border-box;">(client)</span></span>
+ process_client_orig(client)
+ rss = <span style="color:rgb(221, 17, 68);box-sizing:border-box;">`ps -o rss= -p <span style="color:rgb(51, 51, 51);font-weight:normal;box-sizing:border-box;">#{Process.pid}</span>`</span>.chomp.to_i / <span style="color:rgb(0, 128, 128);box-sizing:border-box;">1024</span>
+ exit <span style="color:rgb(51, 51, 51);font-weight:bold;box-sizing:border-box;">if</span> rss &gt; KIND_MEMORY_LIMIT_RSS
+ <span style="color:rgb(51, 51, 51);font-weight:bold;box-sizing:border-box;">end</span>
+<span style="color:rgb(51, 51, 51);font-weight:bold;box-sizing:border-box;">end</span>
+</pre>
+</div>
+<p style="margin:0px 0px 10px;box-sizing:border-box;margin-top:0px;margin-bottom:16px;">硬盘内存限制是通过询问操作系统去杀你的工作进程，如果它增长很多。在 Unix 上你可以叫 setrlimit 去设置 RSSx 限制。据我所知，这种只在 Linux 上有效。MacOS 实现被打破了。我会感激任何新的信息。</p>
+<p style="margin:0px 0px 10px;box-sizing:border-box;margin-top:0px;margin-bottom:16px;">这个片段来自 Unicorn 硬盘限制的配置文件：</p>
+<div style="box-sizing:border-box;">
+<pre style="margin:0px 0px 10px;word-break:break-all;border:1px solid rgb(204, 204, 204);border-color:rgb(222, 229, 231);overflow-x:auto;background:rgb(248, 248, 248);display:block;color:rgb(51, 51, 51);font-family:&quot;Meiryo UI&quot;, &quot;YaHei Consolas Hybrid&quot;, Consolas, &quot;Malgun Gothic&quot;, &quot;Segoe UI&quot;, &quot;Trebuchet MS&quot;, Helvetica, monospace, monospace;box-sizing:border-box;overflow-wrap:normal;font:12px Consolas, &quot;Liberation Mono&quot;, Menlo, Courier, monospace;margin-top:0px;margin-bottom:16px;overflow:auto;font-size:85%;padding:16px;border-radius:3px;background-color:rgb(247, 247, 247);line-height:1.6;">after_fork <span style="color:rgb(51, 51, 51);font-weight:bold;box-sizing:border-box;">do</span> <span style="box-sizing:border-box;">|server, worker|</span>
+ worker.set_memory_limits
+<span style="color:rgb(51, 51, 51);font-weight:bold;box-sizing:border-box;">end</span>
+<span style="box-sizing:border-box;"><span style="color:rgb(51, 51, 51);font-weight:bold;box-sizing:border-box;">class</span> <span style="box-sizing:border-box;color:rgb(68, 85, 136);font-weight:bold;">Unicorn::Worker</span></span>
+ HARD_MEMORY_LIMIT_RSS = <span style="color:rgb(0, 128, 128);box-sizing:border-box;">600</span> <span style="color:rgb(153, 153, 136);font-style:italic;box-sizing:border-box;">#MB</span>
+ <span style="box-sizing:border-box;"><span style="color:rgb(51, 51, 51);font-weight:bold;box-sizing:border-box;">def</span> <span style="color:rgb(153, 0, 0);font-weight:bold;box-sizing:border-box;">set_memory_limits</span></span>
+ Process.setrlimit(Process::RLIMIT_AS, HARD_MEMORY_LIMIT * <span style="color:rgb(0, 128, 128);box-sizing:border-box;">1024</span> * <span style="color:rgb(0, 128, 128);box-sizing:border-box;">1024</span>)
+ <span style="color:rgb(51, 51, 51);font-weight:bold;box-sizing:border-box;">end</span>
+<span style="color:rgb(51, 51, 51);font-weight:bold;box-sizing:border-box;">end</span>
+</pre>
+</div>
+<p style="margin:0px 0px 10px;box-sizing:border-box;margin-top:0px;margin-bottom:16px;"><strong style="font-weight:700;box-sizing:border-box;">2.4.2 外部内存控制</strong></p>
+<p style="margin:0px 0px 10px;box-sizing:border-box;margin-top:0px;margin-bottom:16px;">自动控制没有从偶尔的 OMM（内存不足）拯救你。通常你应该设置一些外部工具。在 Heroku 上，没有必要因为它们有自己的监控。但是如果你是自托管，使用 monit，god 是一个很好的主意，或者其它的监视解决方案。</p>
+<p style="margin:0px 0px 10px;box-sizing:border-box;margin-top:0px;margin-bottom:16px;"><strong style="font-weight:700;box-sizing:border-box;">2.5 优化 Ruby GC</strong></p>
+<p style="margin:0px 0px 10px;box-sizing:border-box;margin-top:0px;margin-bottom:16px;">在某些情况下，你可以调整 Ruby GC 来改善其性能。我想说，这些 GC 调优变得越来越不重要，Ruby 2.1 的默认设置，后来已经对大多数人有利。</p>
+<p style="margin:0px 0px 10px;box-sizing:border-box;margin-top:0px;margin-bottom:16px;">我的建议是最好不要改变 GC 的设置，除非你明确知道你想要做什么，而且有足够的理论知识知道如何提高性能。对于使用 Ruby 2.1 或之后的版本的用户，这点尤为重要。</p><div style="box-sizing:border-box;width:100%;height:auto;clear:none;text-align:center;"><ins style="box-sizing:border-box;display:block;margin:auto;background-color:transparent;height:0px;"><ins style="box-sizing:border-box;display:inline-table;border:none;height:0px;margin:0px;padding:0px;position:relative;visibility:visible;width:828px;background-color:transparent;"><ins style="box-sizing:border-box;display:block;border:none;height:0px;margin:0px;padding:0px;position:relative;visibility:visible;width:828px;background-color:transparent;overflow:hidden;opacity:0;"><div style="box-sizing:border-box;left:0;position:absolute;top:0;border:0;width:828px;height:280px;"><div style="font-size: 16px; display:block; min-width: 100%; "> <div><div></div></div></div></div></ins></ins></ins></div>
+<p style="margin:0px 0px 10px;box-sizing:border-box;margin-top:0px;margin-bottom:16px;">我知道只有一种场合 GC 优化确实能带来性能的提升。那就是，当你要一次过载入大量的数据。你可以通过改变如下的环境变量来达到减少GC运行的频率：RUBY_GC_HEAP_GROWTH_FACTOR，RUBY_GC_MALLOC_LIMIT，RUBY_GC_MALLOC_LIMIT_MAX，RUBY_GC_OLDMALLOC_LIMIT，和 RUBY_GC_OLDMALLOC_LIMIT。</p>
+<p style="margin:0px 0px 10px;box-sizing:border-box;margin-top:0px;margin-bottom:16px;">请注意，这些变量只适用于 Ruby 2.1 及之后的版本。对于 2.1 之前的版本，可能缺少某一个变量，或者变量不是使用这个名字。</p>
+<p style="margin:0px 0px 10px;box-sizing:border-box;margin-top:0px;margin-bottom:16px;">RUBY_GC_HEAP_GROWTH_FACTOR 默认值 1.8，它用于当 Ruby 的堆没有足够的空间来分配内存的时候，每次应该增加多少。当你需要使用大量的对象的时候，你希望堆的内存空间增长的快一点。在这种场合，你需要增加该因子的大小。</p>
+<p style="margin:0px 0px 10px;box-sizing:border-box;margin-top:0px;margin-bottom:16px;">内存限制是用于定义当你需要向操作系统的堆申请空间的时候，GC 被触发的频率。Ruby 2.1 及之后的版本，默认的限额为：</p>
+<div style="box-sizing:border-box;">
+<pre style="margin:0px 0px 10px;word-break:break-all;border:1px solid rgb(204, 204, 204);border-color:rgb(222, 229, 231);overflow-x:auto;background:rgb(248, 248, 248);display:block;color:rgb(51, 51, 51);font-family:&quot;Meiryo UI&quot;, &quot;YaHei Consolas Hybrid&quot;, Consolas, &quot;Malgun Gothic&quot;, &quot;Segoe UI&quot;, &quot;Trebuchet MS&quot;, Helvetica, monospace, monospace;box-sizing:border-box;overflow-wrap:normal;font:12px Consolas, &quot;Liberation Mono&quot;, Menlo, Courier, monospace;margin-top:0px;margin-bottom:16px;overflow:auto;font-size:85%;padding:16px;border-radius:3px;background-color:rgb(247, 247, 247);line-height:1.6;">New generation malloc <span style="color:rgb(0, 134, 179);box-sizing:border-box;">limit</span> RUBY_GC_MALLOC_LIMIT 16M
+Maximum new generation malloc <span style="color:rgb(0, 134, 179);box-sizing:border-box;">limit</span> RUBY_GC_MALLOC_LIMIT_MAX 32M
+Old generation malloc <span style="color:rgb(0, 134, 179);box-sizing:border-box;">limit</span> RUBY_GC_OLDMALLOC_LIMIT 16M
+Maximum old generation malloc <span style="color:rgb(0, 134, 179);box-sizing:border-box;">limit</span> RUBY_GC_OLDMALLOC_LIMIT_MAX 128M
+</pre>
+</div>
+<p style="margin:0px 0px 10px;box-sizing:border-box;margin-top:0px;margin-bottom:16px;">让我简要的说明一下这些值的意义。通过设置以上的值，每次新对象分配 16M 到 32M 之间，并且旧对象每占用 16M 到 128M 之间的时候 (“旧对象” 的意思是，该对象至少被垃圾回收调用过一次)， Ruby 将运行 GC。Ruby 会根据你的内存模式，动态的调整当前的限额值。</p>
+<p style="margin:0px 0px 10px;box-sizing:border-box;margin-top:0px;margin-bottom:16px;">所以，当你只有少数几个对象，却占用了大量的内存（例如读取一个很大的文件到字符串对象中），你可以增加该限额，以减少 GC 被触发的频率。请记住，要同时增加 4 个限额值，而且最好是该默认值的倍数。</p>
+<p style="margin:0px 0px 10px;box-sizing:border-box;margin-top:0px;margin-bottom:16px;">我的建议是可能和其他人的建议不一样。对我可能合适，但对于你却未必。这些文章将介绍，哪些对 Twitter 适用，而哪些对 Discourse 适用。</p>
+<p style="margin:0px 0px 10px;box-sizing:border-box;margin-top:0px;margin-bottom:16px;"><strong style="font-weight:700;box-sizing:border-box;">2.6 Profile</strong></p>
+<p style="margin:0px 0px 10px;box-sizing:border-box;margin-top:0px;margin-bottom:16px;">有时候，这些建议未必就是通用。你需要弄清楚你的问题。这时候，你就要使用 profiler。Ruby-Prof 是每个 Ruby 用户都会使用的工具。</p>
+<p style="margin:0px 0px 10px;box-sizing:border-box;margin-top:0px;margin-bottom:16px;">想知道更多关于 profiling 的知识, 请阅读 Chris Heald's 和我的关于在 Rails 中 使用ruby-prof 的文章。还有一些也许有点过时的关于 memory profiling 的建议.</p>
+<p style="margin:0px 0px 10px;box-sizing:border-box;margin-top:0px;margin-bottom:16px;"><strong style="font-weight:700;box-sizing:border-box;">2.7 编写性能测试用例</strong></p>
+<p style="margin:0px 0px 10px;box-sizing:border-box;margin-top:0px;margin-bottom:16px;">最后，提高 Rails 性能的技巧中，虽然不是最重要的，就是确认应用的性能不会因你修改了代码而导致性能再次下降。</p>
+<p style="margin:0px 0px 10px;box-sizing:border-box;margin-top:0px;margin-bottom:16px;"><strong style="font-weight:700;box-sizing:border-box;">3 总结感言</strong></p>
+<p style="margin:0px 0px 10px;box-sizing:border-box;margin-top:0px;margin-bottom:16px;">对于一篇文章中，对于如何提高 Ruby 和 Rails 的性能，要面面俱到，确实不可能。所以，在这之后，我会通过写一本书来总结我的经验。如果你觉得我的建议有用，请登记 mailinglist ，当我准备好了该书的预览版之后，将会第一时间通知你。现在，让我们一起来动手，让 Rails 应用跑得更快一些吧！</p>
+
+<ins style="box-sizing:border-box;display:block;text-align:center;height:200px;"><ins style="box-sizing:border-box;display:inline-table;border:none;height:200px;margin:0;padding:0;position:relative;visibility:visible;width:828px;background-color:transparent;"><ins style="box-sizing:border-box;display:block;border:none;height:200px;margin:0;padding:0;position:relative;visibility:visible;width:828px;background-color:transparent;"></ins></ins></ins>
+
+</div>
+</div>
+<div style="box-sizing:border-box;margin-right:-15px;margin-left:-15px;border-bottom:1px dotted #d8d8d8;padding-bottom:5px;padding-top:10px;margin:0 10px;"><span style="display:table;"> </span>
+<div style="box-sizing:border-box;position:relative;min-height:1px;padding-right:15px;padding-left:15px;float:left;width:50%;margin-top:10px;">
+<a href="https://www.ctolib.com/topics-113094.html" title="Ruby 的 HTTP 客户端开发库，Faraday 0.12.0.1 发布 - 下翻页快捷键：右方向键" style="box-sizing:border-box;text-decoration:none;display:inline-block;margin-bottom:0px;text-align:center;white-space:nowrap;vertical-align:middle;touch-action:manipulation;user-select:none;background-image:none;border:1px solid transparent;cursor:pointer;padding:5px 10px;font-size:12px;line-height:1.5;font-weight:500;border-radius:2px;box-shadow:rgba(90, 90, 90, 0.1) 0px 1px 1px;background-color:rgb(255, 255, 255);border-color:rgb(222, 229, 231) rgb(222, 229, 231) rgb(216, 225, 227);outline:0px;color:rgb(88, 102, 110);">下一篇 <span style="box-sizing:border-box;display:inline-block;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;line-height:1;font-family:FontAwesome;font-size:inherit;text-rendering:auto;-webkit-font-smoothing:antialiased;transform:translate(0px, 0px);"><span style="font-style:normal;font-variant:normal;font-weight:normal;line-height:1;font-family:FontAwesome;font-size:inherit;"></span></span></a>
+</div>
+<div style="box-sizing:border-box;position:relative;min-height:1px;padding-right:15px;padding-left:15px;float:left;width:50%;">
+<div style="box-sizing:border-box;zoom:1;float:right;"><a href="https://www.ctolib.com/topics-35123.html#" style="background-color:transparent;box-sizing:border-box;text-decoration:none;float:left;width:32px;line-height:32px;height:32px;background-image:url(https://www.ctolib.com/static/api/css/../img/share/icons_0_32.png?v=dc944784.png);background-repeat:no-repeat;margin:6px 6px 6px 0px;text-indent:-100em;overflow:hidden;cursor:pointer;color:rgb(51, 51, 51);"></a><a href="https://www.ctolib.com/topics-35123.html#" title="分享到新浪微博" style="background-color:transparent;box-sizing:border-box;text-decoration:none;float:left;width:32px;line-height:32px;height:32px;background-image:url(https://www.ctolib.com/static/api/css/../img/share/icons_0_32.png?v=dc944784.png);background-repeat:no-repeat;margin:6px 6px 6px 0px;text-indent:-100em;overflow:hidden;color:rgb(58, 140, 235);cursor:pointer;background-position:0px -104px;"></a><a href="https://www.ctolib.com/topics-35123.html#" title="分享到有道云笔记" style="background-color:transparent;box-sizing:border-box;text-decoration:none;float:left;width:32px;line-height:32px;height:32px;background-image:url(https://www.ctolib.com/static/api/css/../img/share/icons_0_32.png?v=dc944784.png);background-repeat:no-repeat;margin:6px 6px 6px 0px;text-indent:-100em;overflow:hidden;color:rgb(58, 140, 235);cursor:pointer;background-position:0px -2080px;"></a><a href="https://www.ctolib.com/topics-35123.html#" title="分享到微信" style="background-color:transparent;box-sizing:border-box;text-decoration:none;float:left;width:32px;line-height:32px;height:32px;background-image:url(https://www.ctolib.com/static/api/css/../img/share/icons_0_32.png?v=dc944784.png);background-repeat:no-repeat;margin:6px 6px 6px 0px;text-indent:-100em;overflow:hidden;color:rgb(58, 140, 235);cursor:pointer;background-position:0px -1612px;"></a><a href="https://www.ctolib.com/topics-35123.html#" title="分享到豆瓣网" style="background-color:transparent;box-sizing:border-box;text-decoration:none;float:left;width:32px;line-height:32px;height:32px;background-image:url(https://www.ctolib.com/static/api/css/../img/share/icons_0_32.png?v=dc944784.png);background-repeat:no-repeat;margin:6px 6px 6px 0px;text-indent:-100em;overflow:hidden;color:rgb(58, 140, 235);cursor:pointer;background-position:0px -468px;"></a><a href="https://www.ctolib.com/topics-35123.html#" title="分享到QQ空间" style="background-color:transparent;box-sizing:border-box;text-decoration:none;float:left;width:32px;line-height:32px;height:32px;background-image:url(https://www.ctolib.com/static/api/css/../img/share/icons_0_32.png?v=dc944784.png);background-repeat:no-repeat;margin:6px 6px 6px 0px;text-indent:-100em;overflow:hidden;color:rgb(58, 140, 235);cursor:pointer;background-position:0px -52px;"></a><span style="visibility:hidden;display:block;height:0px;clear:both;">.</span></div>
+
+</div>
+<span style="display:table;clear:both;"> </span></div>
+
+
+<ins style="box-sizing:border-box;display:block;height:0px;"><ins style="box-sizing:border-box;display:inline-table;border:none;height:0px;margin:0px;padding:0px;position:relative;visibility:visible;width:848px;background-color:transparent;"><ins style="box-sizing:border-box;display:block;border:none;height:0px;margin:0px;padding:0px;position:relative;visibility:visible;width:848px;background-color:transparent;overflow:hidden;opacity:0;"><div style="box-sizing:border-box;left:0;position:absolute;top:0;border:0;width:848px;height:508px;"><div style="font-size: 16px; display:block; min-width: 100%; "> <div><div></div></div></div></div></ins></ins></ins>
+
+<div style="box-sizing:border-box;margin:0 10px;">
+<div style="box-sizing:border-box;">
+<ul style="box-sizing:border-box;margin-top:0px;margin-bottom:10px;padding-left:0px;list-style:none;">
+</ul>
+</div>
+</div>
+<div style="box-sizing:border-box;display:block;">
+<div style="box-sizing:border-box;"><div style="box-sizing:border-box;border:0;vertical-align:bottom;margin:0;width:800px;height:200px;position:relative;"><div style="font-size: 16px; display:block; min-width: 100%; "> <div><div>
+
+  <div style="margin:0px;padding:0px;">
+      <a target="_blank" href="https://cpro.baidu.com/cpro/ui/uijs.php?en=mywWUA71T1Yknzu9TZKxpyfqnauWpjYsFhwG5H6hpgPxmgKs5H0hph_qnhn4PHwhuWf4nywBrHN-mzuo5iNaPaNAnzNjfiNAwaNawiNDwaNaPzNDPBNjwiNAPBNawBNjriNjfiNDnzNafBNKwBNariNKPaNawiNDwBu_IyVG5HDhUyPsUHYknWDkrHfhTHdJuhqzugu-ThIxmLKzFMFB5H0hTMnqniu1uyk_ugFxpyfqniu1pyfquyn4PywBrH7hPjwhrHRzmzu1IA-b5HDvniuY5gwsmvkGmvV-ujPxpAnhIAfqPH61njmzrauYUgnqnHR4PjmzPWDYnBuYIHddPH61njmzraud5y9YIZK1FHPKFHFAFHFAILILFHF7mLwEUA-BFHF7mvqVFMmqnBuG5yNWryNbuWDL&amp;besl=-1&amp;c=news&amp;cf=1&amp;cvrq=342005&amp;eid_list=106590_204480&amp;expid=201213_202270_203276_204188_205961_207091_207237_207472_207547&amp;fr=17&amp;fv=0&amp;haacp=507&amp;img_typ=20518&amp;itm=0&amp;lu_idc=nj02&amp;lukid=1&amp;lus=ec95db91f44f952c&amp;lust=5f0c105e&amp;luwtr=7356220167628665423&amp;mscf=0&amp;mtids=2221497276,2221454854,3000012994,28903224&amp;n=10&amp;nttp=1&amp;p=baidu&amp;sce=5&amp;sr=352&amp;ssp2=1&amp;tpl=template_inlay_all_pc_lu_info_flow_images&amp;tsf=dtp:1&amp;tt_sign=2020%D7%A8%D2%B5%B4%F3%CA%FD%BE%DD%BF%C9%CA%D3%BB%AF%C0%B4%C1%CB%A3%A1%D7%A8%D2%B5%B5%C4%C8%ED%BC%FE%B8%F8%C4%E3%BF%BF%C6%D7%B5%C4%BD%E1%B9%FB&amp;tt_src=16384&amp;u=%2Ftopics%2D35123%2Ehtml&amp;uicf=lurecv&amp;urlid=0&amp;eot=1" style="margin:0px;padding:0px;text-decoration:none;cursor:pointer;width:800px;height:200px;">
+        <div style="margin:0px;padding:14px;display:block;overflow:hidden;font-weight:normal;position:relative;width:772px;height:172px;background-color:rgb(255, 255, 255);">
+          <div style="margin:0px;padding:0px;width:772px;height:168px;margin-top:2px;">
+              <h4 style="margin:0px;padding:0px;text-overflow:ellipsis;white-space:nowrap;overflow:hidden;font-family:&quot;Microsoft YaHei&quot;, Simsun, serif, san-serif;font-size:16px;line-height:16px;padding-top:0px;margin-bottom:10px;color:rgb(0, 0, 0);font-weight:bold;">2020专业大数据可视化来了！专业的软件给你靠谱的结果</h4>
+              <ul style="margin:0px;padding:0px;width:772px;height:120px;position:relative;"><li style="margin:0px;padding:0px;list-style:none;width:160px;height:120px;position:absolute;top:0px;left:0px;"><div class="media-placeholder">[图片/附件]</div></en-media></li><li style="margin:0px;padding:0px;list-style:none;width:160px;height:120px;position:absolute;top:0px;left:170px;"><div class="media-placeholder">[图片/附件]</div></en-media></li><li style="margin:0px;padding:0px;list-style:none;width:160px;height:120px;position:absolute;top:0px;left:340px;"><div class="media-placeholder">[图片/附件]</div></en-media></li><li style="margin:0px;padding:0px;list-style:none;width:160px;height:120px;position:absolute;top:0px;left:510px;"><div class="media-placeholder">[图片/附件]</div></en-media></li><div style="margin:0px;display:block;position:absolute;right:0px;bottom:0px;z-index:65534;font-size:0px;height:16px;background:rgba(0, 0, 0, 0.3);padding:0px 1px;"><a href="https://union.baidu.com/" target="_blank" style="margin:0px;padding:0px;text-decoration:none;cursor:pointer;font-size:0px;background:rgba(102, 102, 102, 0.6);"><div class="media-placeholder">[图片/附件]</div></en-media></a><div style="margin:0px;padding:0px;display:inline-block;width:1px;height:16px;background-color:rgb(255, 255, 255);opacity:0.45;"></div><a href="#" style="margin:0px;padding:0px;text-decoration:none;cursor:pointer;font-size:0px;background:rgba(102, 102, 102, 0.6);"><div class="media-placeholder">[图片/附件]</div></en-media></a></div></ul>
+          </div>
+        </div>
+      </a>
+  </div>
+
+  
+  
+
+
+</div></div></div></div></div>
+
+
+</div>
+<div style="box-sizing:border-box;margin-right:-15px;margin-left:-15px;background:rgb(255, 255, 255);margin-bottom:20px;margin:10px;"><span style="display:table;"> </span>
+<div style="box-sizing:border-box;position:relative;min-height:1px;padding-right:15px;padding-left:15px;float:left;width:50%;">
+<div style="box-sizing:border-box;margin-bottom:20px;background-color:rgb(255, 255, 255);border:1px solid transparent;border-radius:4px;box-shadow:rgba(0, 0, 0, 0.05) 0px 1px 1px;border-color:rgb(222, 229, 231);">
+
+<div style="box-sizing:border-box;padding:10px 15px;border-bottom:1px solid transparent;border-top-left-radius:3px;border-top-right-radius:3px;border-radius:2px 2px 0px 0px;color:rgb(51, 51, 51);background-color:rgb(246, 248, 248);border-color:rgb(237, 241, 242);"><i style="box-sizing:border-box;position:relative;top:1px;display:inline-block;font-family:&quot;Glyphicons Halflings&quot;;font-style:normal;font-weight:400;line-height:1;-webkit-font-smoothing:antialiased;"><span style="font-family:Glyphicons Halflings;font-style:normal;font-weight:400;line-height:1;"></span></i> 最新项目</div>
+<div style="box-sizing:border-box;margin-bottom:20px;">
+<div style="box-sizing:border-box;margin:15px 5px 10px 0px;">
+<ul style="box-sizing:border-box;margin-top:0px;margin-bottom:10px;padding-left:0px;list-style:none;margin-left:12px;">
+<li style="box-sizing:border-box;text-overflow:ellipsis;overflow:hidden;white-space:nowrap;"><i style="box-sizing:border-box;float:left;width:4px;height:4px;background:rgb(133, 133, 133);margin-top:13px;margin-right:7px;"></i><a href="https://www.ctolib.com/luolinae86-sensitive.html" title="基于DFA算法, 用 Ruby 实现敏感词过滤" style="background-color:transparent;box-sizing:border-box;cursor:pointer;line-height:30px;height:30px;padding-bottom:18px;width:180px;font-size:12px;white-space:nowrap;color:rgb(102, 102, 102);text-decoration:none;">基于DFA算法, 用 Ruby 实现敏感词过滤</a></li>
+<li style="box-sizing:border-box;text-overflow:ellipsis;overflow:hidden;white-space:nowrap;"><i style="box-sizing:border-box;float:left;width:4px;height:4px;background:rgb(133, 133, 133);margin-top:13px;margin-right:7px;"></i><a href="https://www.ctolib.com/zverok-delegates.html" title="delegate :methods, to: :target, extracted from ActiveSupport" style="background-color:transparent;box-sizing:border-box;cursor:pointer;line-height:30px;height:30px;padding-bottom:18px;width:180px;font-size:12px;white-space:nowrap;color:rgb(102, 102, 102);text-decoration:none;">delegate :methods, to: :target, extracted from ActiveSupport</a></li>
+<li style="box-sizing:border-box;text-overflow:ellipsis;overflow:hidden;white-space:nowrap;"><i style="box-sizing:border-box;float:left;width:4px;height:4px;background:rgb(133, 133, 133);margin-top:13px;margin-right:7px;"></i><a href="https://www.ctolib.com/davidesantangelo-datoji.html" title="datoji 远程JSON存储服务器，支持创建、读取、更新、删除和搜索JSON数据" style="background-color:transparent;box-sizing:border-box;cursor:pointer;line-height:30px;height:30px;padding-bottom:18px;width:180px;font-size:12px;white-space:nowrap;color:rgb(102, 102, 102);text-decoration:none;">datoji 远程JSON存储服务器，支持创建、读取、更新、删除和搜索JSON数据</a></li>
+<li style="box-sizing:border-box;text-overflow:ellipsis;overflow:hidden;white-space:nowrap;"><i style="box-sizing:border-box;float:left;width:4px;height:4px;background:rgb(133, 133, 133);margin-top:13px;margin-right:7px;"></i><a href="https://www.ctolib.com/in3rsha-sha256-animation.html" title="在终端中展示SHA-256哈希函数的动画" style="background-color:transparent;box-sizing:border-box;cursor:pointer;line-height:30px;height:30px;padding-bottom:18px;width:180px;font-size:12px;white-space:nowrap;color:rgb(102, 102, 102);text-decoration:none;">在终端中展示SHA-256哈希函数的动画</a></li>
+<li style="box-sizing:border-box;text-overflow:ellipsis;overflow:hidden;white-space:nowrap;"><i style="box-sizing:border-box;float:left;width:4px;height:4px;background:rgb(133, 133, 133);margin-top:13px;margin-right:7px;"></i><a href="https://www.ctolib.com/chrisvel-wreeto_official.html" title="Wreeto是一个基于Ruby on Rails框架的开源笔记，知识管理和Wiki系统" style="background-color:transparent;box-sizing:border-box;cursor:pointer;line-height:30px;height:30px;padding-bottom:18px;width:180px;font-size:12px;white-space:nowrap;color:rgb(102, 102, 102);text-decoration:none;">Wreeto是一个基于Ruby on Rails框架的开源笔记，知识管理和Wiki系统</a></li>
+<li style="box-sizing:border-box;text-overflow:ellipsis;overflow:hidden;white-space:nowrap;"><i style="box-sizing:border-box;float:left;width:4px;height:4px;background:rgb(133, 133, 133);margin-top:13px;margin-right:7px;"></i><a href="https://www.ctolib.com/davidesantangelo-feedirss-api.html" title="FeediRSS 一项将RSS feed转换为RESTful API的服务" style="background-color:transparent;box-sizing:border-box;cursor:pointer;line-height:30px;height:30px;padding-bottom:18px;width:180px;font-size:12px;white-space:nowrap;color:rgb(102, 102, 102);text-decoration:none;">FeediRSS 一项将RSS feed转换为RESTful API的服务</a></li>
+<li style="box-sizing:border-box;text-overflow:ellipsis;overflow:hidden;white-space:nowrap;"><i style="box-sizing:border-box;float:left;width:4px;height:4px;background:rgb(133, 133, 133);margin-top:13px;margin-right:7px;"></i><a href="https://www.ctolib.com/coviddata-covid-api.html" title="每日COVID-19统计数据（按国家，地区和城市）" style="background-color:transparent;box-sizing:border-box;cursor:pointer;line-height:30px;height:30px;padding-bottom:18px;width:180px;font-size:12px;white-space:nowrap;color:rgb(102, 102, 102);text-decoration:none;">每日COVID-19统计数据（按国家，地区和城市）</a></li>
+<li style="box-sizing:border-box;text-overflow:ellipsis;overflow:hidden;white-space:nowrap;"><i style="box-sizing:border-box;float:left;width:4px;height:4px;background:rgb(133, 133, 133);margin-top:13px;margin-right:7px;"></i><a href="https://www.ctolib.com/AillisInc-ml_competition_platform.html" title="用Ruby on Rails开发的类似Kaggle的机器学习竞赛平台" style="background-color:transparent;box-sizing:border-box;cursor:pointer;line-height:30px;height:30px;padding-bottom:18px;width:180px;font-size:12px;white-space:nowrap;color:rgb(102, 102, 102);text-decoration:none;">用Ruby on Rails开发的类似Kaggle的机器学习竞赛平台</a></li>
+</ul>
+</div>
+</div>
+</div>
+</div>
+<div style="box-sizing:border-box;position:relative;min-height:1px;padding-right:15px;padding-left:15px;float:left;width:50%;">
+<div style="box-sizing:border-box;margin-bottom:20px;background-color:rgb(255, 255, 255);border:1px solid transparent;border-radius:4px;box-shadow:rgba(0, 0, 0, 0.05) 0px 1px 1px;border-color:rgb(222, 229, 231);">
+
+ <div style="box-sizing:border-box;padding:10px 15px;border-bottom:1px solid transparent;border-top-left-radius:3px;border-top-right-radius:3px;border-radius:2px 2px 0px 0px;color:rgb(51, 51, 51);background-color:rgb(246, 248, 248);border-color:rgb(237, 241, 242);"><i style="box-sizing:border-box;position:relative;top:1px;display:inline-block;font-family:&quot;Glyphicons Halflings&quot;;font-style:normal;font-weight:400;line-height:1;-webkit-font-smoothing:antialiased;"><span style="font-family:Glyphicons Halflings;font-style:normal;font-weight:400;line-height:1;"></span></i> 相关主题</div>
+<div style="box-sizing:border-box;margin-bottom:20px;">
+<div style="box-sizing:border-box;margin:15px 5px 10px 0px;">
+<ul style="box-sizing:border-box;margin-top:0px;margin-bottom:10px;padding-left:0px;list-style:none;margin-left:12px;">
+<li style="box-sizing:border-box;text-overflow:ellipsis;overflow:hidden;white-space:nowrap;"><i style="box-sizing:border-box;float:left;width:4px;height:4px;background:rgb(133, 133, 133);margin-top:13px;margin-right:7px;"></i><a target="_blank" href="https://www.ctolib.com/topics-136932.html" title="NODE + JWT + Mongo（简单实现权限管理）" style="background-color:transparent;box-sizing:border-box;cursor:pointer;line-height:30px;height:30px;padding-bottom:18px;width:180px;font-size:12px;white-space:nowrap;color:rgb(102, 102, 102);text-decoration:none;">NODE + JWT + Mongo（简单实现权限管理）</a></li>
+</ul>
+</div>
+</div>
+</div>
+</div>
+<span style="display:table;clear:both;"> </span></div>
+</div></div></div></div></div></div></div></div>
+</div>
+</div>
+<a class="back-link" href="../articles.html">← 返回笔记列表</a>
+</body>
+</html>

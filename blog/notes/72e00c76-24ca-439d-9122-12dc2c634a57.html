@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="zh-CN" data-theme="light">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Rails 7.0熟悉 — 技术笔记</title>
+<style>
+:root {
+  --bg: #ffffff;
+  --text: #1a1a1a;
+  --muted: #666;
+  --border: #e0e0e0;
+  --code-bg: #f5f5f5;
+  --link: #0066cc;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #1a1a1a;
+    --text: #e0e0e0;
+    --muted: #999;
+    --border: #333;
+    --code-bg: #2a2a2a;
+    --link: #66bbff;
+  }
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  line-height: 1.7;
+  color: var(--text);
+  background: var(--bg);
+  max-width: 860px;
+  margin: 0 auto;
+  padding: 2rem 1.5rem;
+}
+.note-header {
+  border-bottom: 2px solid var(--border);
+  padding-bottom: 1rem;
+  margin-bottom: 2rem;
+}
+.note-title {
+  font-size: 1.6rem;
+  font-weight: 700;
+  margin-bottom: 0.3rem;
+}
+.note-meta {
+  color: var(--muted);
+  font-size: 0.85rem;
+}
+.note-content {
+  font-size: 0.95rem;
+}
+.note-content h1 { font-size: 1.4rem; margin: 1.2rem 0 0.6rem; }
+.note-content h2 { font-size: 1.2rem; margin: 1rem 0 0.5rem; }
+.note-content h3 { font-size: 1.05rem; margin: 0.8rem 0 0.4rem; }
+.note-content p { margin: 0.5rem 0; }
+.note-content ul, .note-content ol { margin: 0.5rem 0 0.5rem 2rem; }
+.note-content li { margin: 0.2rem 0; }
+.note-content pre {
+  background: var(--code-bg);
+  padding: 1rem;
+  border-radius: 6px;
+  overflow-x: auto;
+  margin: 0.8rem 0;
+  font-size: 0.85rem;
+}
+.note-content code {
+  background: var(--code-bg);
+  padding: 0.1rem 0.3rem;
+  border-radius: 3px;
+  font-size: 0.88em;
+}
+.note-content pre code {
+  background: none;
+  padding: 0;
+}
+.note-content blockquote {
+  border-left: 3px solid var(--border);
+  padding-left: 1rem;
+  color: var(--muted);
+  margin: 0.8rem 0;
+}
+.note-content a { color: var(--link); }
+.note-content img {
+  max-width: 100%;
+  height: auto;
+  border-radius: 6px;
+  margin: 0.5rem 0;
+}
+.note-content table {
+  border-collapse: collapse;
+  width: 100%;
+  margin: 0.8rem 0;
+}
+.note-content th, .note-content td {
+  border: 1px solid var(--border);
+  padding: 0.5rem;
+}
+.note-content th { background: var(--code-bg); }
+.media-placeholder {
+  background: var(--code-bg);
+  padding: 1rem;
+  text-align: center;
+  color: var(--muted);
+  border-radius: 6px;
+  margin: 0.5rem 0;
+  font-size: 0.85rem;
+}
+.encrypt-placeholder {
+  background: #fff3cd;
+  padding: 0.5rem;
+  text-align: center;
+  color: #856404;
+  border-radius: 6px;
+  margin: 0.5rem 0;
+  font-size: 0.85rem;
+}
+.back-link {
+  display: inline-block;
+  margin-top: 2rem;
+  color: var(--link);
+  text-decoration: none;
+  font-size: 0.85rem;
+}
+</style>
+</head>
+<body>
+<div class="note-header">
+  <div class="note-title">Rails 7.0熟悉</div>
+  <div class="note-meta">笔记本：RubyOnRails</div>
+</div>
+<div class="note-content">
+<div>
+<span style="font-size: 13px; font-family: &quot;Helvetica Neue&quot;; font-stretch: normal; font-style: normal; font-variant-caps: normal; font-weight: normal; line-height: normal;">1.postgres集成</span></div><div><span style="font-size: 13px; font-family: &quot;Helvetica Neue&quot;; font-stretch: normal; font-style: normal; font-variant-caps: normal; font-weight: normal; line-height: normal;">
+</span><span style="font-size: 13px; white-space: pre; font-family: &quot;Helvetica Neue&quot;; font-stretch: normal; font-style: normal; font-variant-caps: normal; font-weight: normal; line-height: normal;">	</span><span style="font-size: 13px; font-family: &quot;Helvetica Neue&quot;; font-stretch: normal; font-style: normal; font-variant-caps: normal; font-weight: normal; line-height: normal;">hstore类型sql,-&gt; -&gt;&gt;</span></div><div><span style="font-size: 13px; font-family: &quot;Helvetica Neue&quot;; font-stretch: normal; font-style: normal; font-variant-caps: normal; font-weight: normal; line-height: normal;">
+</span><span style="font-size: 13px; white-space: pre; font-family: &quot;Helvetica Neue&quot;; font-stretch: normal; font-style: normal; font-variant-caps: normal; font-weight: normal; line-height: normal;">	</span><span style="font-size: 13px; font-family: &quot;Helvetica Neue&quot;; font-stretch: normal; font-style: normal; font-variant-caps: normal; font-weight: normal; line-height: normal;">几种postgresql原生支持的数据类型 hstore json jsonb daterange uuid inet macaddress cidr</span></div><div><span style="font-size: 13px; font-family: &quot;Helvetica Neue&quot;; font-stretch: normal; font-style: normal; font-variant-caps: normal; font-weight: normal; line-height: normal;">
+</span><span style="font-size: 13px; white-space: pre; font-family: &quot;Helvetica Neue&quot;; font-stretch: normal; font-style: normal; font-variant-caps: normal; font-weight: normal; line-height: normal;">	</span><span style="font-size: 13px; font-family: &quot;Helvetica Neue&quot;; font-stretch: normal; font-style: normal; font-variant-caps: normal; font-weight: normal; line-height: normal;">自动生成的列，虚拟列(可按规则自动生成值,pg12.04以后支持)</span></div><div><span style="font-size: 13px; font-family: &quot;Helvetica Neue&quot;; font-stretch: normal; font-style: normal; font-variant-caps: normal; font-weight: normal; line-height: normal;">
+</span><span style="font-size: 13px; white-space: pre; font-family: &quot;Helvetica Neue&quot;; font-stretch: normal; font-style: normal; font-variant-caps: normal; font-weight: normal; line-height: normal;">	</span><span style="font-size: 13px; font-family: &quot;Helvetica Neue&quot;; font-stretch: normal; font-style: normal; font-variant-caps: normal; font-weight: normal; line-height: normal;">全文搜索 tsvector</span></div><div><span style="font-size: 13px; font-family: &quot;Helvetica Neue&quot;; font-stretch: normal; font-style: normal; font-variant-caps: normal; font-weight: normal; line-height: normal;">
+</span><span style="font-size: 13px; white-space: pre; font-family: &quot;Helvetica Neue&quot;; font-stretch: normal; font-style: normal; font-variant-caps: normal; font-weight: normal; line-height: normal;">	</span><span style="font-size: 13px; font-family: &quot;Helvetica Neue&quot;; font-stretch: normal; font-style: normal; font-variant-caps: normal; font-weight: normal; line-height: normal;">数据库视图</span></div><div><span style="font-size: 13px; white-space: pre; font-family: &quot;Helvetica Neue&quot;; font-stretch: normal; font-style: normal; font-variant-caps: normal; font-weight: normal; line-height: normal;"><span>    <span>    </span></span>	</span><span style="font-size: 13px; font-family: &quot;Helvetica Neue&quot;; font-stretch: normal; font-style: normal; font-variant-caps: normal; font-weight: normal; line-height: normal;">基于sql select语句来建立视图，在rails应用层面视同为逻辑上的一张数据表</span></div><div><span style="font-size: 13px; font-family: &quot;Helvetica Neue&quot;; font-stretch: normal; font-style: normal; font-variant-caps: normal; font-weight: normal; line-height: normal;">
+</span><span style="font-size: 13px; white-space: pre; font-family: &quot;Helvetica Neue&quot;; font-stretch: normal; font-style: normal; font-variant-caps: normal; font-weight: normal; line-height: normal;">	</span><span style="font-size: 13px; white-space: pre; font-family: &quot;Helvetica Neue&quot;; font-stretch: normal; font-style: normal; font-variant-caps: normal; font-weight: normal; line-height: normal;">	</span></div><div><span style="font-size: 13px; font-family: &quot;Helvetica Neue&quot;; font-stretch: normal; font-style: normal; font-variant-caps: normal; font-weight: normal; line-height: normal;">4.classic to zeitwerk使用</span></div><div><span style="font-size: 13px; font-family: &quot;Helvetica Neue&quot;; font-stretch: normal; font-style: normal; font-variant-caps: normal; font-weight: normal; line-height: normal;">
+</span><span style="font-size: 13px; white-space: pre; font-family: &quot;Helvetica Neue&quot;; font-stretch: normal; font-style: normal; font-variant-caps: normal; font-weight: normal; line-height: normal;">	</span><span style="font-size: 13px; font-family: &quot;Helvetica Neue&quot;; font-stretch: normal; font-style: normal; font-variant-caps: normal; font-weight: normal; line-height: normal;">一个文件一个常量,之前在经典模式下一个文件中可以定义多个同层级的常量，只要其中一个正确加载其他的可以顺带加载,在zeitwerk下无法这样</span></div><div><span style="font-size: 13px; font-family: &quot;Helvetica Neue&quot;; font-stretch: normal; font-style: normal; font-variant-caps: normal; font-weight: normal; line-height: normal;">
+</span><span style="font-size: 13px; white-space: pre; font-family: &quot;Helvetica Neue&quot;; font-stretch: normal; font-style: normal; font-variant-caps: normal; font-weight: normal; line-height: normal;">	</span><span style="font-size: 13px; white-space: pre; font-family: &quot;Helvetica Neue&quot;; font-stretch: normal; font-style: normal; font-variant-caps: normal; font-weight: normal; line-height: normal;">	</span><span style="font-size: 13px; white-space: pre; font-family: &quot;Helvetica Neue&quot;; font-stretch: normal; font-style: normal; font-variant-caps: normal; font-weight: normal; line-height: normal;">	</span></div><div><span style="font-size: 13px; font-family: &quot;Helvetica Neue&quot;; font-stretch: normal; font-style: normal; font-variant-caps: normal; font-weight: normal; line-height: normal;">
+</span><div class="media-placeholder">[图片/附件]</div><br /></div><div><span style="font-size: 13px; font-family: &quot;Helvetica Neue&quot;; font-stretch: normal; font-style: normal; font-variant-caps: normal; font-weight: normal; line-height: normal;">5.Rails初始化过程深度解析</span></div><div><span style="font-size: 13px; font-family: &quot;Helvetica Neue&quot;; font-stretch: normal; font-style: normal; font-variant-caps: normal; font-weight: normal; line-height: normal;"><span>    1.launch rails</span><br /></span></div><div><span style="font-size: 13px; font-family: &quot;Helvetica Neue&quot;; font-stretch: normal; font-style: normal; font-variant-caps: normal; font-weight: normal; line-height: normal;"><span><span>    2.load rails</span></span></span></div><div><span style="font-size: 13px; font-family: &quot;Helvetica Neue&quot;; font-stretch: normal; font-style: normal; font-variant-caps: normal; font-weight: normal; line-height: normal;">9.threading_and_code_execution</span></div><div><span style="font-size: 13px; font-family: &quot;Helvetica Neue&quot;; font-stretch: normal; font-style: normal; font-variant-caps: normal; font-weight: normal; line-height: normal;">
+</span><span style="font-size: 13px; white-space: pre; font-family: &quot;Helvetica Neue&quot;; font-stretch: normal; font-style: normal; font-variant-caps: normal; font-weight: normal; line-height: normal;">	</span><span style="font-size: 13px; font-family: &quot;PingFang SC&quot;; font-stretch: normal; font-style: normal; font-variant-caps: normal; font-weight: normal; line-height: normal;">没太明白</span></div><div><span style="font-size: 13px; font-family: &quot;Helvetica Neue&quot;; font-stretch: normal; font-variant-caps: normal; line-height: normal;"><br /></span></div><div><span style="font-size: 13px; font-family: &quot;Helvetica Neue&quot;; font-stretch: normal; font-variant-caps: normal; line-height: normal;">Rails前端资源的使用:</span></div><div><span style="font-size: 13px; font-family: &quot;Helvetica Neue&quot;; font-stretch: normal; font-variant-caps: normal; line-height: normal;"><span>    </span>2.importmap使用</span></div><div><span style="font-size: 13px; font-family: &quot;Helvetica Neue&quot;; font-stretch: normal; font-variant-caps: normal; line-height: normal;"><span>    </span>3.stimulas使用</span></div><div><span style="font-size: 13px; font-family: &quot;Helvetica Neue&quot;; font-stretch: normal; font-variant-caps: normal; line-height: normal;"><span>    </span>6.部署过程</span></div><div><span style="font-size: 13px; font-family: &quot;Helvetica Neue&quot;; font-stretch: normal; font-variant-caps: normal; line-height: normal;"><span>    </span>7.webpacker使用</span></div><div><span style="font-size: 13px; font-family: &quot;Helvetica Neue&quot;; font-stretch: normal; font-variant-caps: normal; line-height: normal;"><span>    </span>8.asset pipeline</span></div>
+</div>
+<a class="back-link" href="../articles.html">← 返回笔记列表</a>
+</body>
+</html>

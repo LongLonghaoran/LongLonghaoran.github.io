@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="zh-CN" data-theme="light">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>puppet语言基础 — 技术笔记</title>
+<style>
+:root {
+  --bg: #ffffff;
+  --text: #1a1a1a;
+  --muted: #666;
+  --border: #e0e0e0;
+  --code-bg: #f5f5f5;
+  --link: #0066cc;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #1a1a1a;
+    --text: #e0e0e0;
+    --muted: #999;
+    --border: #333;
+    --code-bg: #2a2a2a;
+    --link: #66bbff;
+  }
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  line-height: 1.7;
+  color: var(--text);
+  background: var(--bg);
+  max-width: 860px;
+  margin: 0 auto;
+  padding: 2rem 1.5rem;
+}
+.note-header {
+  border-bottom: 2px solid var(--border);
+  padding-bottom: 1rem;
+  margin-bottom: 2rem;
+}
+.note-title {
+  font-size: 1.6rem;
+  font-weight: 700;
+  margin-bottom: 0.3rem;
+}
+.note-meta {
+  color: var(--muted);
+  font-size: 0.85rem;
+}
+.note-content {
+  font-size: 0.95rem;
+}
+.note-content h1 { font-size: 1.4rem; margin: 1.2rem 0 0.6rem; }
+.note-content h2 { font-size: 1.2rem; margin: 1rem 0 0.5rem; }
+.note-content h3 { font-size: 1.05rem; margin: 0.8rem 0 0.4rem; }
+.note-content p { margin: 0.5rem 0; }
+.note-content ul, .note-content ol { margin: 0.5rem 0 0.5rem 2rem; }
+.note-content li { margin: 0.2rem 0; }
+.note-content pre {
+  background: var(--code-bg);
+  padding: 1rem;
+  border-radius: 6px;
+  overflow-x: auto;
+  margin: 0.8rem 0;
+  font-size: 0.85rem;
+}
+.note-content code {
+  background: var(--code-bg);
+  padding: 0.1rem 0.3rem;
+  border-radius: 3px;
+  font-size: 0.88em;
+}
+.note-content pre code {
+  background: none;
+  padding: 0;
+}
+.note-content blockquote {
+  border-left: 3px solid var(--border);
+  padding-left: 1rem;
+  color: var(--muted);
+  margin: 0.8rem 0;
+}
+.note-content a { color: var(--link); }
+.note-content img {
+  max-width: 100%;
+  height: auto;
+  border-radius: 6px;
+  margin: 0.5rem 0;
+}
+.note-content table {
+  border-collapse: collapse;
+  width: 100%;
+  margin: 0.8rem 0;
+}
+.note-content th, .note-content td {
+  border: 1px solid var(--border);
+  padding: 0.5rem;
+}
+.note-content th { background: var(--code-bg); }
+.media-placeholder {
+  background: var(--code-bg);
+  padding: 1rem;
+  text-align: center;
+  color: var(--muted);
+  border-radius: 6px;
+  margin: 0.5rem 0;
+  font-size: 0.85rem;
+}
+.encrypt-placeholder {
+  background: #fff3cd;
+  padding: 0.5rem;
+  text-align: center;
+  color: #856404;
+  border-radius: 6px;
+  margin: 0.5rem 0;
+  font-size: 0.85rem;
+}
+.back-link {
+  display: inline-block;
+  margin-top: 2rem;
+  color: var(--link);
+  text-decoration: none;
+  font-size: 0.85rem;
+}
+</style>
+</head>
+<body>
+<div class="note-header">
+  <div class="note-title">puppet语言基础</div>
+  <div class="note-meta">笔记本：Puppet</div>
+</div>
+<div class="note-content">
+<div>1.介绍</div><div>    puppet语言基础的五大基础概念，resource资源，class类，module模块，variable变量,metaparameters源参数</div><div><br /></div><div>2.resource资源</div><div>    资源是puppet language的核心部分。一个资源是需要通过时间来管理的节点的特征，比如包，注册码。资源允许你使用代码来表示系统配置来一致性地自动化以及应用它到一个或多个节点。</div><div>    因为puppet lang是声明式的，一个资源描述一个节点最终配置，而不是为了完成这种的状态所需的步骤。一个资源声明添加资源到编目文档catalog中并且告知puppet master去管理那个资源状态</div><div>3.class类</div><div style="margin: 0.3em 0px; font-size: 13px; letter-spacing: normal; orphans: 2; text-align: start; text-indent: 0px; text-transform: none; white-space: normal; widows: 2; word-spacing: 0px; -webkit-text-stroke-width: 0px;"><span style="font-size: 13px; letter-spacing: normal; orphans: 2; text-indent: 0px; text-transform: none; white-space: normal; widows: 2; word-spacing: 0px; -webkit-text-stroke-width: 0px; color: rgb(51, 51, 51); font-family: &quot;Helvetica Neue&quot;, Helvetica, Arial, &quot;Hiragino Sans GB&quot;, &quot;Hiragino Sans GB W3&quot;, &quot;Microsoft YaHei UI&quot;, &quot;Microsoft YaHei&quot;, sans-serif; font-variant-caps: normal; font-variant-ligatures: normal;">可以使用类来收集，组合和分发资源。 通过将资源组合到一个类中，一个类可以配置大型功能块，其中包含运行应用程序所需的所有程序包，配置文件和服务。</span></div><div style="margin: 0.3em 0px; font-size: 13px; letter-spacing: normal; orphans: 2; text-align: start; text-indent: 0px; text-transform: none; white-space: normal; widows: 2; word-spacing: 0px; -webkit-text-stroke-width: 0px;"><span style="font-size: 13px; letter-spacing: normal; orphans: 2; text-indent: 0px; text-transform: none; white-space: normal; widows: 2; word-spacing: 0px; -webkit-text-stroke-width: 0px; color: rgb(51, 51, 51); font-family: &quot;Helvetica Neue&quot;, Helvetica, Arial, &quot;Hiragino Sans GB&quot;, &quot;Hiragino Sans GB W3&quot;, &quot;Microsoft YaHei UI&quot;, &quot;Microsoft YaHei&quot;, sans-serif; font-variant-caps: normal; font-variant-ligatures: normal;">一个清单应该每个只包含一个类定义。 单个类可以在多个节点上使用，但是您使用的每个类名称必须唯一，并且一旦声明，就不能在同一节点上再次声明一个类</span></div><div><div class="media-placeholder">[图片/附件]</div><br /></div><div><span style="font-size: 13px; letter-spacing: normal; orphans: 2; text-indent: 0px; text-transform: none; white-space: normal; widows: 2; word-spacing: 0px; -webkit-text-stroke-width: 0px; color: rgb(51, 51, 51); font-family: &quot;Helvetica Neue&quot;, Helvetica, Arial, &quot;Hiragino Sans GB&quot;, &quot;Hiragino Sans GB W3&quot;, &quot;Microsoft YaHei UI&quot;, &quot;Microsoft YaHei&quot;, sans-serif; font-variant-caps: normal; font-variant-ligatures: normal;">类以class关键字开头，后跟类的名称。 然后，您将在{}（大括号）内编写所有课程的资源。 类中的每个资源都遵循正常的资源声明语法。</span></div><div><div class="media-placeholder">[图片/附件]</div><br /></div><div style="margin: 0.3em 0px; font-size: 13px; letter-spacing: normal; orphans: 2; text-align: start; text-indent: 0px; text-transform: none; white-space: normal; widows: 2; word-spacing: 0px; -webkit-text-stroke-width: 0px;"><span style="font-size: 13px; letter-spacing: normal; orphans: 2; text-indent: 0px; text-transform: none; white-space: normal; widows: 2; word-spacing: 0px; -webkit-text-stroke-width: 0px; color: rgb(51, 51, 51); font-family: &quot;Helvetica Neue&quot;, Helvetica, Arial, &quot;Hiragino Sans GB&quot;, &quot;Hiragino Sans GB W3&quot;, &quot;Microsoft YaHei UI&quot;, &quot;Microsoft YaHei&quot;, sans-serif; font-variant-caps: normal; font-variant-ligatures: normal;">此示例类定义包含程序包，文件和服务资源。 当此类分配给节点时，该节点将立即一起接收所有这些配置。</span></div><div style="margin: 0.3em 0px; font-size: 13px; letter-spacing: normal; orphans: 2; text-align: start; text-indent: 0px; text-transform: none; white-space: normal; widows: 2; word-spacing: 0px; -webkit-text-stroke-width: 0px;"><span style="font-size: 13px; letter-spacing: normal; orphans: 2; text-indent: 0px; text-transform: none; white-space: normal; widows: 2; word-spacing: 0px; -webkit-text-stroke-width: 0px; color: rgb(51, 51, 51); font-family: &quot;Helvetica Neue&quot;, Helvetica, Arial, &quot;Hiragino Sans GB&quot;, &quot;Hiragino Sans GB W3&quot;, &quot;Microsoft YaHei UI&quot;, &quot;Microsoft YaHei&quot;, sans-serif; font-variant-caps: normal; font-variant-ligatures: normal;">定义一个类可以指定该类的内容和行为，但不会自动将该类添加到您的配置中。 为此，必须声明该类。 声明一个类会将每个资源添加到目录中，并指示Puppet开始管理这些资源。</span></div><div style="margin: 0.3em 0px; font-size: 13px; letter-spacing: normal; orphans: 2; text-align: start; text-indent: 0px; text-transform: none; white-space: normal; widows: 2; word-spacing: 0px; -webkit-text-stroke-width: 0px;"><span style="color: rgb(51, 51, 51); font-family: &quot;Helvetica Neue&quot;; font-size: 13px; font-variant-caps: normal; font-variant-ligatures: normal;"><div class="media-placeholder">[图片/附件]</div><br /></span></div><div><span style="font-size: 13px; letter-spacing: normal; orphans: 2; text-indent: 0px; text-transform: none; white-space: normal; widows: 2; word-spacing: 0px; -webkit-text-stroke-width: 0px; color: rgb(51, 51, 51); font-family: &quot;Helvetica Neue&quot;, Helvetica, Arial, &quot;Hiragino Sans GB&quot;, &quot;Hiragino Sans GB W3&quot;, &quot;Microsoft YaHei UI&quot;, &quot;Microsoft YaHei&quot;, sans-serif; font-variant-caps: normal; font-variant-ligatures: normal;">有两种在清单中声明类的方法：使用include关键字，后跟该类的名称，或者使用class关键字，后跟在''（单引号）中的类的名称，再后跟一个： （冒号），并用{}（大括号）括起来。</span></div><div><br /></div><div><br /></div><div>4.module模块</div><div><div class="media-placeholder">[图片/附件]</div><br /></div><div style="margin: 0.3em 0px; font-size: 13px; letter-spacing: normal; orphans: 2; text-align: start; text-indent: 0px; text-transform: none; white-space: normal; widows: 2; word-spacing: 0px; -webkit-text-stroke-width: 0px;"><span style="font-size: 13px; letter-spacing: normal; orphans: 2; text-indent: 0px; text-transform: none; white-space: normal; widows: 2; word-spacing: 0px; -webkit-text-stroke-width: 0px; color: rgb(51, 51, 51); font-family: &quot;Helvetica Neue&quot;, Helvetica, Arial, &quot;Hiragino Sans GB&quot;, &quot;Hiragino Sans GB W3&quot;, &quot;Microsoft YaHei UI&quot;, &quot;Microsoft YaHei&quot;, sans-serif; font-variant-caps: normal; font-variant-ligatures: normal;">模块只是包含清单和其他文件的目录树。 此目录结构允许节点发现和加载类，资源类型，事实等。 模块的名称是顶层目录的名称。</span></div><div style="margin: 0.3em 0px; font-size: 13px; letter-spacing: normal; orphans: 2; text-align: start; text-indent: 0px; text-transform: none; white-space: normal; widows: 2; word-spacing: 0px; -webkit-text-stroke-width: 0px;"><span style="font-size: 13px; letter-spacing: normal; orphans: 2; text-indent: 0px; text-transform: none; white-space: normal; widows: 2; word-spacing: 0px; -webkit-text-stroke-width: 0px; color: rgb(51, 51, 51); font-family: &quot;Helvetica Neue&quot;, Helvetica, Arial, &quot;Hiragino Sans GB&quot;, &quot;Hiragino Sans GB W3&quot;, &quot;Microsoft YaHei UI&quot;, &quot;Microsoft YaHei&quot;, sans-serif; font-variant-caps: normal; font-variant-ligatures: normal;">如果在模块中定义了一个类，则可以在任何清单中按名称声明该类。 当Puppet母版编译目录时，它将动态加载包含类定义的清单，从而使内部的所有类和资源可在整个系统中使用。</span></div><div style="margin: 0.3em 0px; font-size: 13px; letter-spacing: normal; orphans: 2; text-align: start; text-indent: 0px; text-transform: none; white-space: normal; widows: 2; word-spacing: 0px; -webkit-text-stroke-width: 0px;"><span style="font-size: 13px; letter-spacing: normal; orphans: 2; text-indent: 0px; text-transform: none; white-space: normal; widows: 2; word-spacing: 0px; -webkit-text-stroke-width: 0px; color: rgb(51, 51, 51); font-family: &quot;Helvetica Neue&quot;, Helvetica, Arial, &quot;Hiragino Sans GB&quot;, &quot;Hiragino Sans GB W3&quot;, &quot;Microsoft YaHei UI&quot;, &quot;Microsoft YaHei&quot;, sans-serif; font-variant-caps: normal; font-variant-ligatures: normal;">由Puppet开发人员和社区成员编写的Puppet Forge上有数千个模块可供下载。 支持的模块不仅已经过测试，可以与Puppet Enterprise一起使用； 它们也包含在企业支持中，并且与多个平台兼容。 在Forge上探索模块是一种了解模块的更多信息以及它们可以完成的工作的好方法。</span></div><div style="margin: 0.3em 0px; font-size: 13px; letter-spacing: normal; orphans: 2; text-align: start; text-indent: 0px; text-transform: none; white-space: normal; widows: 2; word-spacing: 0px; -webkit-text-stroke-width: 0px;"><span style="font-size: 13px; letter-spacing: normal; orphans: 2; text-indent: 0px; text-transform: none; white-space: normal; widows: 2; word-spacing: 0px; -webkit-text-stroke-width: 0px;"><br /></span></div><div style="margin: 0.3em 0px; font-size: 13px; letter-spacing: normal; orphans: 2; text-align: start; text-indent: 0px; text-transform: none; white-space: normal; widows: 2; word-spacing: 0px; -webkit-text-stroke-width: 0px;"><span style="font-size: 13px; letter-spacing: normal; orphans: 2; text-indent: 0px; text-transform: none; white-space: normal; widows: 2; word-spacing: 0px; -webkit-text-stroke-width: 0px; color: rgb(51, 51, 51); font-family: &quot;Helvetica Neue&quot;, Helvetica, Arial, &quot;Hiragino Sans GB&quot;, &quot;Hiragino Sans GB W3&quot;, &quot;Microsoft YaHei UI&quot;, &quot;Microsoft YaHei&quot;, sans-serif; font-variant-caps: normal; font-variant-ligatures: normal;">5.variables变量</span></div><div style="margin: 0.3em 0px; font-size: 13px; letter-spacing: normal; orphans: 2; text-align: start; text-indent: 0px; text-transform: none; white-space: normal; widows: 2; word-spacing: 0px; -webkit-text-stroke-width: 0px;"><span style="font-size: 13px; letter-spacing: normal; orphans: 2; text-indent: 0px; text-transform: none; white-space: normal; widows: 2; word-spacing: 0px; -webkit-text-stroke-width: 0px; color: rgb(51, 51, 51); font-family: &quot;Helvetica Neue&quot;, Helvetica, Arial, &quot;Hiragino Sans GB&quot;, &quot;Hiragino Sans GB W3&quot;, &quot;Microsoft YaHei UI&quot;, &quot;Microsoft YaHei&quot;, sans-serif; font-variant-caps: normal; font-variant-ligatures: normal;">在编写Puppet代码时，您可能会发现自己一次又一次地重复相同的值。 为了节省时间并最大程度地减少错误，可以将这些重复值分配给变量。</span></div><div style="margin: 0.3em 0px; font-size: 13px; letter-spacing: normal; orphans: 2; text-align: start; text-indent: 0px; text-transform: none; white-space: normal; widows: 2; word-spacing: 0px; -webkit-text-stroke-width: 0px;"><span style="font-size: 20px; letter-spacing: normal; orphans: 2; text-indent: 0px; text-transform: none; white-space: pre; widows: 2; word-spacing: 0px; -webkit-text-stroke-width: 0px; background-color: rgb(245, 248, 250); color: rgb(93, 111, 122); font-family: marketing-mono; font-variant-caps: normal; font-variant-ligatures: normal;">$variable_name = variable_content</span></div><div style="margin: 0.3em 0px; font-size: 13px; letter-spacing: normal; orphans: 2; text-align: start; text-indent: 0px; text-transform: none; white-space: normal; widows: 2; word-spacing: 0px; -webkit-text-stroke-width: 0px;"><span style="font-size: 13px; letter-spacing: normal; orphans: 2; text-indent: 0px; text-transform: none; white-space: normal; widows: 2; word-spacing: 0px; -webkit-text-stroke-width: 0px; color: rgb(51, 51, 51); font-family: &quot;Helvetica Neue&quot;, Helvetica, Arial, &quot;Hiragino Sans GB&quot;, &quot;Hiragino Sans GB W3&quot;, &quot;Microsoft YaHei UI&quot;, &quot;Microsoft YaHei&quot;, sans-serif; font-variant-caps: normal; font-variant-ligatures: normal;">变量以$（美元符号）和变量名称开头，后跟=（等号），最后是变量的值。 变量名称区分大小写，并且必须以小写字母或_（下划线）开头。</span></div><div style="margin: 0.3em 0px; font-size: 13px; letter-spacing: normal; orphans: 2; text-align: start; text-indent: 0px; text-transform: none; white-space: normal; widows: 2; word-spacing: 0px; -webkit-text-stroke-width: 0px;"><span style="color: rgb(51, 51, 51); font-family: &quot;Helvetica Neue&quot;; font-size: 13px; font-variant-caps: normal; font-variant-ligatures: normal;"><div class="media-placeholder">[图片/附件]</div><br /></span></div><div style="margin: 0.3em 0px; font-size: 13px; letter-spacing: normal; orphans: 2; text-align: start; text-indent: 0px; text-transform: none; white-space: normal; widows: 2; word-spacing: 0px; -webkit-text-stroke-width: 0px;"><span style="color: rgb(51, 51, 51); font-family: &quot;Helvetica Neue&quot;; font-size: 13px; font-variant-caps: normal; font-variant-ligatures: normal;">or</span></div><div style="margin: 0.3em 0px; font-size: 13px; letter-spacing: normal; orphans: 2; text-align: start; text-indent: 0px; text-transform: none; white-space: normal; widows: 2; word-spacing: 0px; -webkit-text-stroke-width: 0px;"><span style="color: rgb(51, 51, 51); font-family: &quot;Helvetica Neue&quot;; font-size: 13px; font-variant-caps: normal; font-variant-ligatures: normal;"><div class="media-placeholder">[图片/附件]</div><br /></span></div><div style="margin: 0.3em 0px; font-size: 13px; letter-spacing: normal; orphans: 2; text-align: start; text-indent: 0px; text-transform: none; white-space: normal; widows: 2; word-spacing: 0px; -webkit-text-stroke-width: 0px;"><span style="font-size: 13px; letter-spacing: normal; orphans: 2; text-indent: 0px; text-transform: none; white-space: normal; widows: 2; word-spacing: 0px; -webkit-text-stroke-width: 0px; color: rgb(51, 51, 51); font-family: &quot;Helvetica Neue&quot;, Helvetica, Arial, &quot;Hiragino Sans GB&quot;, &quot;Hiragino Sans GB W3&quot;, &quot;Microsoft YaHei UI&quot;, &quot;Microsoft YaHei&quot;, sans-serif; font-variant-caps: normal; font-variant-ligatures: normal;">请注意，变量的值包装在“”（双引号）中，与到目前为止在资源和类声明中看到的''（单引号）不同。</span></div><div style="margin: 0.3em 0px; font-size: 13px; letter-spacing: normal; orphans: 2; text-align: start; text-indent: 0px; text-transform: none; white-space: normal; widows: 2; word-spacing: 0px; -webkit-text-stroke-width: 0px;"><span style="font-size: 13px;"><span style="font-size: 13px; letter-spacing: normal; orphans: 2; text-indent: 0px; text-transform: none; white-space: normal; widows: 2; word-spacing: 0px; -webkit-text-stroke-width: 0px; color: rgb(51, 51, 51); font-family: &quot;Helvetica Neue&quot;, Helvetica, Arial, &quot;Hiragino Sans GB&quot;, &quot;Hiragino Sans GB W3&quot;, &quot;Microsoft YaHei UI&quot;, &quot;Microsoft YaHei&quot;, sans-serif; font-variant-caps: normal; font-variant-ligatures: normal;">``（单引号）内的任何代码都将被系统按字面意义读取。 将变量值包装在“”（双引号）中将告诉您的系统内插该代码。 人偶代理会看到“”（双引号），并理解该字符串是变量，并自动用该变量的值替换该代码。</span></span></div><div style="margin: 0.3em 0px; font-size: 13px; letter-spacing: normal; orphans: 2; text-align: start; text-indent: 0px; text-transform: none; white-space: normal; widows: 2; word-spacing: 0px; -webkit-text-stroke-width: 0px;"><span style="color: rgb(51, 51, 51); font-family: &quot;Helvetica Neue&quot;; font-size: 13px; font-variant-caps: normal; font-variant-ligatures: normal;">6.metaparameters</span></div><div style="margin: 0.3em 0px; font-size: 13px; letter-spacing: normal; orphans: 2; text-align: start; text-indent: 0px; text-transform: none; white-space: normal; widows: 2; word-spacing: 0px; -webkit-text-stroke-width: 0px;"><span style="font-size: 13px; letter-spacing: normal; orphans: 2; text-indent: 0px; text-transform: none; white-space: normal; widows: 2; word-spacing: 0px; -webkit-text-stroke-width: 0px; color: rgb(51, 51, 51); font-family: &quot;Helvetica Neue&quot;, Helvetica, Arial, &quot;Hiragino Sans GB&quot;, &quot;Hiragino Sans GB W3&quot;, &quot;Microsoft YaHei UI&quot;, &quot;Microsoft YaHei&quot;, sans-serif; font-variant-caps: normal; font-variant-ligatures: normal;">加载人偶清单后，清单中的资源将按照声明的顺序进行管理。 但是，当您需要以不同的特定顺序管理一组资源时，必须显式声明这些关系。 那就是元参数出现的地方。</span></div><div style="margin: 0.3em 0px; font-size: 13px; letter-spacing: normal; orphans: 2; text-align: start; text-indent: 0px; text-transform: none; white-space: normal; widows: 2; word-spacing: 0px; -webkit-text-stroke-width: 0px;"><span style="font-size: 13px;"><span style="font-size: 13px; letter-spacing: normal; orphans: 2; text-indent: 0px; text-transform: none; white-space: normal; widows: 2; word-spacing: 0px; -webkit-text-stroke-width: 0px; color: rgb(51, 51, 51); font-family: &quot;Helvetica Neue&quot;, Helvetica, Arial, &quot;Hiragino Sans GB&quot;, &quot;Hiragino Sans GB W3&quot;, &quot;Microsoft YaHei UI&quot;, &quot;Microsoft YaHei&quot;, sans-serif; font-variant-caps: normal; font-variant-ligatures: normal;">元参数是可以与任何资源类型一起使用的特殊属性。 它们指定您的系统应如何对资源采取行动，而不是直接映射到系统状态。 在本课程中，我们将专注于建立资源之间关系的四个常见元参数：之前，要求，通知和订阅。</span></span></div><div style="margin: 0.3em 0px; font-size: 13px; letter-spacing: normal; orphans: 2; text-align: start; text-indent: 0px; text-transform: none; white-space: normal; widows: 2; word-spacing: 0px; -webkit-text-stroke-width: 0px;"><span style="color: rgb(51, 51, 51); font-family: &quot;Helvetica Neue&quot;; font-size: 13px; font-variant-caps: normal; font-variant-ligatures: normal;"><div class="media-placeholder">[图片/附件]</div><br /></span></div><div style="margin: 0.3em 0px; font-size: 13px; letter-spacing: normal; orphans: 2; text-align: start; text-indent: 0px; text-transform: none; white-space: normal; widows: 2; word-spacing: 0px; -webkit-text-stroke-width: 0px;"><span style="font-size: 13px; letter-spacing: normal; orphans: 2; text-indent: 0px; text-transform: none; white-space: normal; widows: 2; word-spacing: 0px; -webkit-text-stroke-width: 0px; color: rgb(51, 51, 51); font-family: &quot;Helvetica Neue&quot;, Helvetica, Arial, &quot;Hiragino Sans GB&quot;, &quot;Hiragino Sans GB W3&quot;, &quot;Microsoft YaHei UI&quot;, &quot;Microsoft YaHei&quot;, sans-serif; font-variant-caps: normal; font-variant-ligatures: normal;">本示例是使用before元参数的包资源的资源声明。 目标资源是一个文件。 在这种情况下，包资源将在目标资源之前应用。</span></div><div style="margin: 0.3em 0px; font-size: 13px; letter-spacing: normal; orphans: 2; text-align: start; text-indent: 0px; text-transform: none; white-space: normal; widows: 2; word-spacing: 0px; -webkit-text-stroke-width: 0px;"><span style="color: rgb(51, 51, 51); font-family: &quot;Helvetica Neue&quot;; font-size: 13px; font-variant-caps: normal; font-variant-ligatures: normal;"><div class="media-placeholder">[图片/附件]</div><br /></span></div><div style="margin: 0.3em 0px; font-size: 13px; letter-spacing: normal; orphans: 2; text-align: start; text-indent: 0px; text-transform: none; white-space: normal; widows: 2; word-spacing: 0px; -webkit-text-stroke-width: 0px;"><span style="font-size: 13px; letter-spacing: normal; orphans: 2; text-indent: 0px; text-transform: none; white-space: normal; widows: 2; word-spacing: 0px; -webkit-text-stroke-width: 0px; color: rgb(51, 51, 51); font-family: &quot;Helvetica Neue&quot;, Helvetica, Arial, &quot;Hiragino Sans GB&quot;, &quot;Hiragino Sans GB W3&quot;, &quot;Microsoft YaHei UI&quot;, &quot;Microsoft YaHei&quot;, sans-serif; font-variant-caps: normal; font-variant-ligatures: normal;">该文件资源完成了与以前的包资源相同的任务，但是它使用了require元参数代替了之前的内容，并且指向了与先前示例中声明的资源相同的资源。 但是在这种情况下，文件资源将在require属性中的目标资源之后应用。</span></div><div style="margin: 0.3em 0px; font-size: 13px; letter-spacing: normal; orphans: 2; text-align: start; text-indent: 0px; text-transform: none; white-space: normal; widows: 2; word-spacing: 0px; -webkit-text-stroke-width: 0px;"><span style="color: rgb(51, 51, 51); font-family: &quot;Helvetica Neue&quot;; font-size: 13px; font-variant-caps: normal; font-variant-ligatures: normal;"><div class="media-placeholder">[图片/附件]</div><br /></span></div><div style="margin: 0.3em 0px; font-size: 13px; letter-spacing: normal; orphans: 2; text-align: start; text-indent: 0px; text-transform: none; white-space: normal; widows: 2; word-spacing: 0px; -webkit-text-stroke-width: 0px;"><span style="font-size: 13px; letter-spacing: normal; orphans: 2; text-indent: 0px; text-transform: none; white-space: normal; widows: 2; word-spacing: 0px; -webkit-text-stroke-width: 0px; color: rgb(51, 51, 51); font-family: &quot;Helvetica Neue&quot;, Helvetica, Arial, &quot;Hiragino Sans GB&quot;, &quot;Hiragino Sans GB W3&quot;, &quot;Microsoft YaHei UI&quot;, &quot;Microsoft YaHei&quot;, sans-serif; font-variant-caps: normal; font-variant-ligatures: normal;">通知元参数的操作方式与之前元参数相同，导致在目标资源之前应用资源。 但是，只有在通知资源发生更改时，目标资源才会刷新。</span></div><div style="margin: 0.3em 0px; font-size: 13px; letter-spacing: normal; orphans: 2; text-align: start; text-indent: 0px; text-transform: none; white-space: normal; widows: 2; word-spacing: 0px; -webkit-text-stroke-width: 0px;"><span style="color: rgb(51, 51, 51); font-family: &quot;Helvetica Neue&quot;; font-size: 13px; font-variant-caps: normal; font-variant-ligatures: normal;"><div class="media-placeholder">[图片/附件]</div><br /></span></div><div style="margin: 0.3em 0px; color: rgb(51, 51, 51); font-family: &quot;Helvetica Neue&quot;, Helvetica, Arial, &quot;Hiragino Sans GB&quot;, &quot;Hiragino Sans GB W3&quot;, &quot;Microsoft YaHei UI&quot;, &quot;Microsoft YaHei&quot;, sans-serif; font-size: 13px; font-variant-ligatures: normal; font-variant-caps: normal; letter-spacing: normal; orphans: 2; text-align: start; text-indent: 0px; text-transform: none; white-space: normal; widows: 2; word-spacing: 0px; -webkit-text-stroke-width: 0px;"></div><div style="margin: 0.3em 0px; font-size: 13px; letter-spacing: normal; orphans: 2; text-align: start; text-indent: 0px; text-transform: none; white-space: normal; widows: 2; word-spacing: 0px; -webkit-text-stroke-width: 0px;"><span style="font-size: 13px; letter-spacing: normal; orphans: 2; text-indent: 0px; text-transform: none; white-space: normal; widows: 2; word-spacing: 0px; -webkit-text-stroke-width: 0px; color: rgb(51, 51, 51); font-family: &quot;Helvetica Neue&quot;, Helvetica, Arial, &quot;Hiragino Sans GB&quot;, &quot;Hiragino Sans GB W3&quot;, &quot;Microsoft YaHei UI&quot;, &quot;Microsoft YaHei&quot;, sans-serif; font-variant-caps: normal; font-variant-ligatures: normal;">最后，订阅的工作方式与require一样，导致将资源应用到目标资源之后。 但是，仅当目标资源更改时，预订资源才会刷新。</span></div><div style="margin: 0.3em 0px; font-size: 13px; letter-spacing: normal; orphans: 2; text-align: start; text-indent: 0px; text-transform: none; white-space: normal; widows: 2; word-spacing: 0px; -webkit-text-stroke-width: 0px;"><span style="font-size: 13px;"><span style="font-size: 13px; letter-spacing: normal; orphans: 2; text-indent: 0px; text-transform: none; white-space: normal; widows: 2; word-spacing: 0px; -webkit-text-stroke-width: 0px; color: rgb(51, 51, 51); font-family: &quot;Helvetica Neue&quot;, Helvetica, Arial, &quot;Hiragino Sans GB&quot;, &quot;Hiragino Sans GB W3&quot;, &quot;Microsoft YaHei UI&quot;, &quot;Microsoft YaHei&quot;, sans-serif; font-variant-caps: normal; font-variant-ligatures: normal;">在Puppet中可以使用更多的元参数。 他们可以将元数据添加到资源，设置何时应该同步资源的限制，防止Puppet进行更改等等。 查看Puppet文档以获取完整列表和有关每个列表的详细信息。</span></span></div>
+</div>
+<a class="back-link" href="../articles.html">← 返回笔记列表</a>
+</body>
+</html>

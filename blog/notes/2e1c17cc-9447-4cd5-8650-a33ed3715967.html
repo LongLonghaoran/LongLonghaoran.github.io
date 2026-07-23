@@ -1,0 +1,581 @@
+<!DOCTYPE html>
+<html lang="zh-CN" data-theme="light">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>NVIDIA GPUDirect Storage O_DIRECT Requirements Guide - NVIDIA Docs — 技术笔记</title>
+<style>
+:root { --bg:#fff; --text:#1a1a1a; --muted:#666; --border:#e0e0e0; --code-bg:#f5f5f5; --link:#0066cc; }
+@media (prefers-color-scheme: dark) { :root { --bg:#1a1a1a; --text:#e0e0e0; --muted:#999; --border:#333; --code-bg:#2a2a2a; --link:#66bbff; } }
+* { box-sizing:border-box; margin:0; padding:0; }
+body { font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Arial,sans-serif; line-height:1.7; color:var(--text); background:var(--bg); max-width:860px; margin:0 auto; padding:2rem 1.5rem; }
+.note-header { border-bottom:2px solid var(--border); padding-bottom:1rem; margin-bottom:2rem; }
+.note-title { font-size:1.6rem; font-weight:700; margin-bottom:0.3rem; }
+.note-meta { color:var(--muted); font-size:0.85rem; }
+.note-content { font-size:0.95rem; }
+.note-content h1 { font-size:1.4rem; margin:1.2rem 0 0.6rem; }
+.note-content h2 { font-size:1.2rem; margin:1rem 0 0.5rem; }
+.note-content h3 { font-size:1.05rem; margin:0.8rem 0 0.4rem; }
+.note-content p { margin:0.5rem 0; }
+.note-content ul,.note-content ol { margin:0.5rem 0 0.5rem 2rem; }
+.note-content li { margin:0.2rem 0; }
+.note-content pre { background:var(--code-bg); padding:1rem; border-radius:6px; overflow-x:auto; margin:0.8rem 0; font-size:0.85rem; }
+.note-content code { background:var(--code-bg); padding:0.1rem 0.3rem; border-radius:3px; font-size:0.88em; }
+.note-content pre code { background:none; padding:0; }
+.note-content blockquote { border-left:3px solid var(--border); padding-left:1rem; color:var(--muted); margin:0.8rem 0; }
+.note-content a { color:var(--link); }
+.note-content img { max-width:100%; height:auto; border-radius:6px; margin:0.5rem 0; }
+.note-content table { border-collapse:collapse; width:100%; margin:0.8rem 0; }
+.note-content th,.note-content td { border:1px solid var(--border); padding:0.5rem; }
+.note-content th { background:var(--code-bg); }
+.media-placeholder { background:var(--code-bg); padding:1rem; text-align:center; color:var(--muted); border-radius:6px; margin:0.5rem 0; font-size:0.85rem; }
+.encrypt-placeholder { background:#fff3cd; padding:0.5rem; text-align:center; color:#856404; border-radius:6px; margin:0.5rem 0; font-size:0.85rem; }
+.back-link { display:inline-block; margin-top:2rem; color:var(--link); text-decoration:none; font-size:0.85rem; }
+</style>
+</head>
+<body>
+<div class="note-header"><div class="note-title">NVIDIA GPUDirect Storage O_DIRECT Requirements Guide - NVIDIA Docs</div><div class="note-meta">笔记本：nvidia</div></div>
+<div class="note-content"><div style="--en-clipped-content:article">
+<div><br/></div><div style="font-size: 16px; display:block; min-width: 100%; position: relative;"> <div style="background-repeat:no-repeat;box-sizing:border-box;cursor:default;font-family:system-ui, -apple-system, &quot;Segoe UI&quot;, Roboto, Ubuntu, Cantarell, Oxygen, sans-serif, &quot;Apple Color Emoji&quot;, &quot;Segoe UI Emoji&quot;, &quot;Segoe UI Symbol&quot;, &quot;Noto Color Emoji&quot;;line-height:1.15;tab-size:4;text-size-adjust:100%;word-break:break-word;font-size:62.5%;scroll-behavior:smooth;scroll-padding-top:90px;"><div style="box-sizing:border-box;-webkit-font-smoothing:antialiased;background:rgb(255, 255, 255) none repeat scroll 0% 0% / auto padding-box border-box;color:rgb(75, 69, 69);font-family:&quot;NVIDIA Sans&quot;, Arial, Helvetica, sans-serif;font-size:18px;line-height:1.5;overflow-x:hidden;"><div style="background-repeat:no-repeat;box-sizing:border-box;"><div style="background-repeat:no-repeat;box-sizing:border-box;gap:120px;"><span style="background-repeat:no-repeat;box-sizing:border-box;background-color:rgba(0, 0, 0, 0);"><div style="background-repeat:no-repeat;box-sizing:border-box;">
+                        <span style="background-repeat:no-repeat;box-sizing:border-box;display:block;font-size:16px;">
+                            
+                                
+                                    <div style="background-repeat:no-repeat;box-sizing:border-box;background-color:rgba(0, 0, 0, 0);position:relative;margin-top:0px;padding-left:0px;padding-right:0px;margin-bottom:1.25em;"><span style="background-repeat:no-repeat;box-sizing:border-box;position:absolute;top:-140px;"></span>
+        <div style="background-repeat:no-repeat;box-sizing:border-box;font-size:16px;">
+            <p style="background-repeat:no-repeat;box-sizing:border-box;font-family:&quot;NVIDIA Sans&quot;;font-size:16px;font-weight:400;line-height:1.5;margin:20px 0px;margin-top:0px;"><a shape="rect" name="abstract" style="background-repeat:no-repeat;box-sizing:border-box;background-color:transparent;touch-action:manipulation;text-decoration:none;font-weight:700;border-bottom:1px solid rgb(116, 185, 0);color:rgb(75, 69, 69);"> </a>
+      </p><h2 style="background-repeat:no-repeat;box-sizing:border-box;margin:15px 0px;font-family:&quot;NVIDIA Sans&quot;;letter-spacing:-0.5px;font-size:24px;">
+    
+    <a href="https://docs.nvidia.com/gpudirect-storage/o-direct-guide/index.html#abstract" shape="rect" name="abstract" style="background-repeat:no-repeat;box-sizing:border-box;background-color:transparent;touch-action:manipulation;text-decoration:none;font-weight:700;border-bottom:1px solid rgb(116, 185, 0);color:rgb(75, 69, 69);font-size:24px;">NVIDIA GPUDirect Storage O_DIRECT Requirements Guide</a>
+    
+</h2>
+<p style="background-repeat:no-repeat;box-sizing:border-box;font-family:&quot;NVIDIA Sans&quot;;font-size:16px;font-weight:400;line-height:1.5;margin:20px 0px;"> 
+       
+       The NVIDIA® GPUDirect Storage® O_DIRECT Requirements Guide helps you understand how GDS can provide significant benefits when it can leverage the O_DIRECT <code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span style="background-repeat:no-repeat;box-sizing:border-box;padding:1px 4px;display:inline;font-size:14px;color:rgb(75, 69, 69);border-radius:4px;position:relative;white-space:nowrap;word-break:break-all;background-color:rgb(238, 238, 238);border:1px solid rgb(204, 204, 204);font-family:&quot;Roboto Mono&quot;, monospace;-webkit-box-decoration-break:clone;">fcntl.h</span></code> file mode for a direct data path between GPU memory and storage. </p><p style="background-repeat:no-repeat;box-sizing:border-box;font-family:&quot;NVIDIA Sans&quot;;font-size:16px;font-weight:400;line-height:1.5;margin:20px 0px;margin-bottom:0px;"> 
+     </p> 
+      
+        <span style="font-size:16px;display:table;clear:both;"></span></div>
+    
+</div>
+                                
+                                    <div style="background-repeat:no-repeat;box-sizing:border-box;background-color:rgba(0, 0, 0, 0);position:relative;margin-top:0px;padding-left:0px;padding-right:0px;margin-bottom:1.25em;"><span style="background-repeat:no-repeat;box-sizing:border-box;position:absolute;top:-140px;"></span>
+    <div style="background-repeat:no-repeat;box-sizing:border-box;width:100%;margin:auto auto 0px;max-width:none;color:rgb(75, 69, 69);"><h2 style="background-repeat:no-repeat;box-sizing:border-box;color:rgb(75, 69, 69);text-align:left;max-width:none;margin:15px 0px;font-family:&quot;NVIDIA Sans&quot;;letter-spacing:-0.5px;font-size:24px;"><a href="https://docs.nvidia.com/gpudirect-storage/o-direct-guide/index.html#intro" style="background-repeat:no-repeat;box-sizing:border-box;background-color:transparent;touch-action:manipulation;text-decoration:none;font-weight:700;border-bottom:1px solid rgb(116, 185, 0);color:rgb(75, 69, 69);font-size:24px;">1. Introduction</a></h2>
+        </div>
+
+        <div style="background-repeat:no-repeat;box-sizing:border-box;font-size:16px;">
+            <p style="background-repeat:no-repeat;box-sizing:border-box;font-family:&quot;NVIDIA Sans&quot;;font-size:16px;font-weight:400;line-height:1.5;margin:20px 0px;margin-top:0px;"><a shape="rect" name="intro" style="background-repeat:no-repeat;box-sizing:border-box;background-color:transparent;touch-action:manipulation;text-decoration:none;font-weight:700;border-bottom:1px solid rgb(116, 185, 0);color:rgb(75, 69, 69);"> </a>
+       
+       
+       This section provides an introduction to the O_DIRECT requirements for GDS.</p>
+    <div style="background-repeat:no-repeat;box-sizing:border-box;position:relative;font-weight:600;margin:20px 0px;padding:18px 95px 26px 53px;background-color:rgb(255, 255, 224);">
+        <div style="background-repeat:no-repeat;box-sizing:border-box;top:20px;left:20px;width:20px;height:20px;position:absolute;"><img style="background-repeat:no-repeat;box-sizing:border-box;vertical-align:middle;fill:currentcolor;top:0px;width:100%;height:100%;position:absolute;object-fit:contain;overflow:hidden;" src="data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' data-evernote-id='476' class='js-evernote-checked'%3e%3cpath d='M1 7.5 7.5 14l13-13' stroke='%23000' stroke-width='2' fill='none' fill-rule='evenodd' data-evernote-id='317' class='js-evernote-checked'%3e%3c/path%3e%3c/svg%3e"/> </div><div style="background-repeat:no-repeat;box-sizing:border-box;font-family:&quot;NVIDIA Sans&quot;;font-size:20px;font-weight:700;margin-bottom:6px;color:rgb(75, 69, 69);line-height:1.2;">Note:</div>
+        <div style="background-repeat:no-repeat;box-sizing:border-box;font-family:&quot;NVIDIA Sans&quot;;font-size:16px;font-weight:400;line-height:1.5;color:rgb(75, 69, 69);"><p style="background-repeat:no-repeat;box-sizing:border-box;">
+         O_DIRECT is the only supported mode before CUDA toolkit 12.2 (GDS version 1.7). CUDA 12.2 (GDS version 1.7) introduces support for non O_DIRECT file descriptors as well. The rest of this guide is still relevant for applications depending upon GDS benefits by expressing intent to use O_DIRECT file mode. 
+       </p></div>
+    </div>
+<p style="background-repeat:no-repeat;box-sizing:border-box;font-family:&quot;NVIDIA Sans&quot;;font-size:16px;font-weight:400;line-height:1.5;margin:20px 0px;"> 
+       </p> 
+       <p style="background-repeat:no-repeat;box-sizing:border-box;font-family:&quot;NVIDIA Sans&quot;;font-size:16px;font-weight:400;line-height:1.5;margin:20px 0px;"></p><p style="background-repeat:no-repeat;box-sizing:border-box;font-family:&quot;NVIDIA Sans&quot;;font-size:16px;font-weight:400;line-height:1.5;margin:20px 0px;">NVIDIA® GPUDirect® Storage (GDS) is the newest addition to the GPUDirect family. GDS enables a direct data path for direct memory access (DMA) transfers between GPU memory and storage, which avoids a bounce buffer through the CPU. This direct path increases system bandwidth and decreases the latency and utilization load on the CPU.  
+       </p><p style="background-repeat:no-repeat;box-sizing:border-box;font-family:&quot;NVIDIA Sans&quot;;font-size:16px;font-weight:400;line-height:1.5;margin:20px 0px;"></p><p style="background-repeat:no-repeat;box-sizing:border-box;font-family:&quot;NVIDIA Sans&quot;;font-size:16px;font-weight:400;line-height:1.5;margin:20px 0px;">GDS can provide significant benefit when it can leverage the O_DIRECT (<a href="https://github.com/torvalds/linux/blob/master/include/uapi/asm-generic/fcntl.h" shape="rect" style="background-repeat:no-repeat;box-sizing:border-box;background-color:transparent;touch-action:manipulation;text-decoration:none;font-weight:700;border-bottom:1px solid rgb(116, 185, 0);color:rgb(75, 69, 69);">fcntl.h</a>) file mode for a direct data path between GPU memory and storage. There are many conditions that must be met to achieve the performance benefits of the O_DIRECT mode, and these conditions are not always met by all file systems. The conditions might depend on the transfer size, whether it’s a read or write, whether the write is to new data (past the end of the file or to a hole in the file), and based on many other conditions such as whether checksums are required. This document describes the conditions where O_DIRECT, on which GDS relies, can be used.  
+       
+        The target audience for this guide includes:<a shape="rect" name="intro__ul_ir1_pry_2nb" style="background-repeat:no-repeat;box-sizing:border-box;background-color:transparent;touch-action:manipulation;text-decoration:none;font-weight:700;border-bottom:1px solid rgb(116, 185, 0);color:rgb(75, 69, 69);"> </a>
+        </p><ul style="background-repeat:no-repeat;box-sizing:border-box;font-family:&quot;NVIDIA Sans&quot;;font-size:16px;font-weight:400;line-height:1.5;margin:10px 0px;list-style:disc;padding:0px 0px 0px 2.5em;display:block;">
+ <li style="background-repeat:no-repeat;box-sizing:border-box;padding:0px 0px 0px 6px;font-weight:400;">End users and administrators who:<a shape="rect" name="intro__ul_bsr_pry_2nb" style="background-repeat:no-repeat;box-sizing:border-box;background-color:transparent;touch-action:manipulation;text-decoration:none;font-weight:700;border-bottom:1px solid rgb(116, 185, 0);color:rgb(75, 69, 69);"> </a> 
+  <ul style="background-repeat:no-repeat;box-sizing:border-box;margin:0px;display:block;list-style:square;padding:0px 0px 0px 20px;"> 
+   <li style="background-repeat:no-repeat;box-sizing:border-box;padding:0px 0px 0px 6px;font-weight:400;">Understand filesystems, so they can carefully consider the implications of features they enable. </li> 
+   <li style="background-repeat:no-repeat;box-sizing:border-box;padding:0px 0px 0px 6px;font-weight:400;">Compare support from different filesystems to determine the appropriate models and how to use them. </li> 
+   <li style="background-repeat:no-repeat;box-sizing:border-box;font-weight:400;padding:0px 0px 0px 6px;">Evaluate the weighted fraction of cases that do or don’t use O_DIRECT effectively.</li> 
+  </ul> </li>
+ <li style="background-repeat:no-repeat;box-sizing:border-box;padding:0px 0px 0px 6px;font-weight:400;">Middleware developers who:<a shape="rect" name="intro__ul_rcc_sry_2nb" style="background-repeat:no-repeat;box-sizing:border-box;background-color:transparent;touch-action:manipulation;text-decoration:none;font-weight:700;border-bottom:1px solid rgb(116, 185, 0);color:rgb(75, 69, 69);"> </a> 
+  <ul style="background-repeat:no-repeat;box-sizing:border-box;margin:0px;display:block;list-style:square;padding:0px 0px 0px 20px;"> 
+   <li style="background-repeat:no-repeat;box-sizing:border-box;font-weight:400;padding:0px 0px 0px 6px;">Consider the design trade-offs that increase the likelihood that the vendor layer can effectively use O_DIRECT. </li> 
+  </ul> </li>
+ <li style="background-repeat:no-repeat;box-sizing:border-box;padding:0px 0px 0px 6px;font-weight:400;">Filesystems vendors and implementers who:<a shape="rect" name="intro__ul_f3n_try_2nb" style="background-repeat:no-repeat;box-sizing:border-box;background-color:transparent;touch-action:manipulation;text-decoration:none;font-weight:700;border-bottom:1px solid rgb(116, 185, 0);color:rgb(75, 69, 69);"> </a> 
+  <ul style="background-repeat:no-repeat;box-sizing:border-box;margin:0px;display:block;list-style:square;padding:0px 0px 0px 20px;"> 
+   <li style="background-repeat:no-repeat;box-sizing:border-box;font-weight:400;padding:0px 0px 0px 6px;">Accelerate their assessment of the various cases to be handled with O_DIRECT as they enable GDS in new or customized filesystems. </li> 
+  </ul> </li>
+</ul><p style="background-repeat:no-repeat;box-sizing:border-box;font-family:&quot;NVIDIA Sans&quot;;font-size:16px;font-weight:400;line-height:1.5;margin:20px 0px;"> 
+      
+       <a shape="rect" name="rel-docs" style="background-repeat:no-repeat;box-sizing:border-box;background-color:transparent;touch-action:manipulation;text-decoration:none;font-weight:700;border-bottom:1px solid rgb(116, 185, 0);color:rgb(75, 69, 69);"> </a>
+       </p> 
+        
+      <h3 style="background-repeat:no-repeat;box-sizing:border-box;margin:15px 0px;font-family:&quot;NVIDIA Sans&quot;;font-weight:700;font-size:21px;">
+    <a href="https://docs.nvidia.com/gpudirect-storage/o-direct-guide/index.html#rel-docs" style="background-repeat:no-repeat;box-sizing:border-box;background-color:transparent;touch-action:manipulation;text-decoration:none;font-weight:700;border-bottom:1px solid rgb(116, 185, 0);color:rgb(75, 69, 69);font-size:21px;">
+    </a><a href="https://docs.nvidia.com/gpudirect-storage/o-direct-guide/index.html#rel-docs" shape="rect" name="rel-docs" style="background-repeat:no-repeat;box-sizing:border-box;background-color:transparent;touch-action:manipulation;text-decoration:none;font-weight:700;border-bottom:1px solid rgb(116, 185, 0);color:rgb(75, 69, 69);font-size:21px;">1.1. Related Documents</a>
+    
+</h3>
+<p style="background-repeat:no-repeat;box-sizing:border-box;font-family:&quot;NVIDIA Sans&quot;;font-size:16px;font-weight:400;line-height:1.5;margin:20px 0px;"> 
+        
+        Since the original creation of this guide, additional GDS documents and online resources have been created which support and provide additional context for the optimal use of and understanding of this specification. </p><p style="background-repeat:no-repeat;box-sizing:border-box;font-family:&quot;NVIDIA Sans&quot;;font-size:16px;font-weight:400;line-height:1.5;margin:20px 0px;"> 
+        
+         Refer to the following guides for more information about GDS:<a shape="rect" name="rel-docs__ul_sl5_qv1_hnb" style="background-repeat:no-repeat;box-sizing:border-box;background-color:transparent;touch-action:manipulation;text-decoration:none;font-weight:700;border-bottom:1px solid rgb(116, 185, 0);color:rgb(75, 69, 69);"> </a>
+         </p><ul style="background-repeat:no-repeat;box-sizing:border-box;font-family:&quot;NVIDIA Sans&quot;;font-size:16px;font-weight:400;line-height:1.5;margin:10px 0px;list-style:disc;padding:0px 0px 0px 2.5em;display:block;">
+ <li style="background-repeat:no-repeat;box-sizing:border-box;padding:0px 0px 0px 6px;font-weight:400;"><a href="https://docs.nvidia.com/gpudirect-storage/design-guide/index.html" shape="rect" style="background-repeat:no-repeat;box-sizing:border-box;background-color:transparent;touch-action:manipulation;text-decoration:none;font-weight:700;border-bottom:1px solid rgb(116, 185, 0);color:rgb(75, 69, 69);">GPUDirect Storage Design Guide</a></li>
+ <li style="background-repeat:no-repeat;box-sizing:border-box;padding:0px 0px 0px 6px;font-weight:400;"><a href="https://docs.nvidia.com/gpudirect-storage/overview-guide/index.html" shape="rect" style="background-repeat:no-repeat;box-sizing:border-box;background-color:transparent;touch-action:manipulation;text-decoration:none;font-weight:700;border-bottom:1px solid rgb(116, 185, 0);color:rgb(75, 69, 69);">GPUDirect Storage Overview Guide</a></li>
+ <li style="background-repeat:no-repeat;box-sizing:border-box;padding:0px 0px 0px 6px;font-weight:400;"><a href="https://docs.nvidia.com/gpudirect-storage/api-reference-guide/index.html" shape="rect" style="background-repeat:no-repeat;box-sizing:border-box;background-color:transparent;touch-action:manipulation;text-decoration:none;font-weight:700;border-bottom:1px solid rgb(116, 185, 0);color:rgb(75, 69, 69);">cuFile API Reference Guide</a></li>
+ <li style="background-repeat:no-repeat;box-sizing:border-box;padding:0px 0px 0px 6px;font-weight:400;"><a href="https://docs.nvidia.com/gpudirect-storage/release-notes/index.html" shape="rect" style="background-repeat:no-repeat;box-sizing:border-box;background-color:transparent;touch-action:manipulation;text-decoration:none;font-weight:700;border-bottom:1px solid rgb(116, 185, 0);color:rgb(75, 69, 69);">GPUDirect Storage Release Notes</a></li>
+ <li style="background-repeat:no-repeat;box-sizing:border-box;padding:0px 0px 0px 6px;font-weight:400;"><a href="https://docs.nvidia.com/gpudirect-storage/best-practices-guide/index.html" shape="rect" style="background-repeat:no-repeat;box-sizing:border-box;background-color:transparent;touch-action:manipulation;text-decoration:none;font-weight:700;border-bottom:1px solid rgb(116, 185, 0);color:rgb(75, 69, 69);">GPUDirect Storage Best Practices Guide</a></li>
+ <li style="background-repeat:no-repeat;box-sizing:border-box;padding:0px 0px 0px 6px;font-weight:400;"><a href="https://docs.nvidia.com/gpudirect-storage/troubleshooting-guide/index.html" shape="rect" style="background-repeat:no-repeat;box-sizing:border-box;background-color:transparent;touch-action:manipulation;text-decoration:none;font-weight:700;border-bottom:1px solid rgb(116, 185, 0);color:rgb(75, 69, 69);">GPUDirect Storage Troubleshooting Guide</a></li>
+</ul><p style="background-repeat:no-repeat;box-sizing:border-box;font-family:&quot;NVIDIA Sans&quot;;font-size:16px;font-weight:400;line-height:1.5;margin:20px 0px;"> 
+        
+         To learn more about GDS, refer to the following blogs:<a shape="rect" name="rel-docs__ul_ydx_wkp_knb" style="background-repeat:no-repeat;box-sizing:border-box;background-color:transparent;touch-action:manipulation;text-decoration:none;font-weight:700;border-bottom:1px solid rgb(116, 185, 0);color:rgb(75, 69, 69);"> </a>
+         </p> 
+        <ul style="background-repeat:no-repeat;box-sizing:border-box;font-family:&quot;NVIDIA Sans&quot;;font-size:16px;font-weight:400;line-height:1.5;margin:10px 0px;list-style:disc;padding:0px 0px 0px 2.5em;display:block;">
+ <li style="background-repeat:no-repeat;box-sizing:border-box;padding:0px 0px 0px 6px;font-weight:400;"><a href="https://devblogs.nvidia.com/gpudirect-storage/" shape="rect" style="background-repeat:no-repeat;box-sizing:border-box;background-color:transparent;touch-action:manipulation;text-decoration:none;font-weight:700;border-bottom:1px solid rgb(116, 185, 0);color:rgb(75, 69, 69);">GPUDirect Storage: A Direct Path Between Storage and GPU Memory</a>. </li>
+ <li style="background-repeat:no-repeat;box-sizing:border-box;padding:0px 0px 0px 6px;font-weight:400;">The <a href="https://developer.nvidia.com/blog/tag/magnum-io/" shape="rect" style="background-repeat:no-repeat;box-sizing:border-box;background-color:transparent;touch-action:manipulation;text-decoration:none;font-weight:700;border-bottom:1px solid rgb(116, 185, 0);color:rgb(75, 69, 69);">Magnum IO</a> series. </li>
+</ul> 
+      <p style="background-repeat:no-repeat;box-sizing:border-box;font-family:&quot;NVIDIA Sans&quot;;font-size:16px;font-weight:400;line-height:1.5;margin:20px 0px;margin-bottom:0px;"> 
+         
+       </p> 
+     
+        <span style="font-size:16px;display:table;clear:both;"></span></div>
+    
+</div>
+                                
+                                    <div style="background-repeat:no-repeat;box-sizing:border-box;background-color:rgba(0, 0, 0, 0);position:relative;margin-top:0px;padding-left:0px;padding-right:0px;margin-bottom:1.25em;"><span style="background-repeat:no-repeat;box-sizing:border-box;position:absolute;top:-140px;"></span>
+    <div style="background-repeat:no-repeat;box-sizing:border-box;width:100%;margin:auto auto 0px;max-width:none;color:rgb(75, 69, 69);"><h2 style="background-repeat:no-repeat;box-sizing:border-box;color:rgb(75, 69, 69);text-align:left;max-width:none;margin:15px 0px;font-family:&quot;NVIDIA Sans&quot;;letter-spacing:-0.5px;font-size:24px;"><a href="https://docs.nvidia.com/gpudirect-storage/o-direct-guide/index.html#gds-req" style="background-repeat:no-repeat;box-sizing:border-box;background-color:transparent;touch-action:manipulation;text-decoration:none;font-weight:700;border-bottom:1px solid rgb(116, 185, 0);color:rgb(75, 69, 69);font-size:24px;">2. GPUDirect Storage Requirements</a></h2>
+        </div>
+
+        <div style="background-repeat:no-repeat;box-sizing:border-box;font-size:16px;">
+            <p style="background-repeat:no-repeat;box-sizing:border-box;font-family:&quot;NVIDIA Sans&quot;;font-size:16px;font-weight:400;line-height:1.5;margin:20px 0px;margin-top:0px;"><a shape="rect" name="gds-req" style="background-repeat:no-repeat;box-sizing:border-box;background-color:transparent;touch-action:manipulation;text-decoration:none;font-weight:700;border-bottom:1px solid rgb(116, 185, 0);color:rgb(75, 69, 69);"> </a>
+       
+       
+       This section provides some basic background on where GDS can be most effectively used. </p> 
+       <p style="background-repeat:no-repeat;box-sizing:border-box;font-family:&quot;NVIDIA Sans&quot;;font-size:16px;font-weight:400;line-height:1.5;margin:20px 0px;"></p><p style="background-repeat:no-repeat;box-sizing:border-box;font-family:&quot;NVIDIA Sans&quot;;font-size:16px;font-weight:400;line-height:1.5;margin:20px 0px;">This information enables readers with varying degrees of technical accuity to get a general sense of whether, and to what degree, GDS can benefit filesystems that make different design choices.  
+       
+      
+       <a shape="rect" name="summ-basic-req" style="background-repeat:no-repeat;box-sizing:border-box;background-color:transparent;touch-action:manipulation;text-decoration:none;font-weight:700;border-bottom:1px solid rgb(116, 185, 0);color:rgb(75, 69, 69);"> </a>
+       </p><h3 style="background-repeat:no-repeat;box-sizing:border-box;margin:15px 0px;font-family:&quot;NVIDIA Sans&quot;;font-weight:700;font-size:21px;">
+    <a href="https://docs.nvidia.com/gpudirect-storage/o-direct-guide/index.html#summ-basic-req" style="background-repeat:no-repeat;box-sizing:border-box;background-color:transparent;touch-action:manipulation;text-decoration:none;font-weight:700;border-bottom:1px solid rgb(116, 185, 0);color:rgb(75, 69, 69);font-size:21px;">
+    </a><a href="https://docs.nvidia.com/gpudirect-storage/o-direct-guide/index.html#summ-basic-req" shape="rect" name="summ-basic-req" style="background-repeat:no-repeat;box-sizing:border-box;background-color:transparent;touch-action:manipulation;text-decoration:none;font-weight:700;border-bottom:1px solid rgb(116, 185, 0);color:rgb(75, 69, 69);font-size:21px;">2.1. Summary of Basic Requirements</a>
+    
+</h3>
+<p style="background-repeat:no-repeat;box-sizing:border-box;font-family:&quot;NVIDIA Sans&quot;;font-size:16px;font-weight:400;line-height:1.5;margin:20px 0px;"> 
+        
+        Here is some information about the O_DIRECT requirements </p><p style="background-repeat:no-repeat;box-sizing:border-box;font-family:&quot;NVIDIA Sans&quot;;font-size:16px;font-weight:400;line-height:1.5;margin:20px 0px;"> 
+        
+         The GDS architecture has the following key requirements:<a shape="rect" name="summ-basic-req__ul_rwq_tty_2nb" style="background-repeat:no-repeat;box-sizing:border-box;background-color:transparent;touch-action:manipulation;text-decoration:none;font-weight:700;border-bottom:1px solid rgb(116, 185, 0);color:rgb(75, 69, 69);"> </a>
+         </p><ul style="background-repeat:no-repeat;box-sizing:border-box;font-family:&quot;NVIDIA Sans&quot;;font-size:16px;font-weight:400;line-height:1.5;margin:10px 0px;list-style:disc;padding:0px 0px 0px 2.5em;display:block;">
+ <li style="background-repeat:no-repeat;box-sizing:border-box;padding:0px 0px 0px 6px;font-weight:400;">The kernel storage driver can perform a DMA of user data to or from GPU memory by using addresses that were obtained from callbacks to the GDS kernel module, nvidia-fs.ko. </li>
+ <li style="background-repeat:no-repeat;box-sizing:border-box;padding:0px 0px 0px 6px;font-weight:400;">The device near the storage has a DMA engine that can reach the GPU memory buffer via PCIe.<a shape="rect" name="summ-basic-req__ul_ers_vty_2nb" style="background-repeat:no-repeat;box-sizing:border-box;background-color:transparent;touch-action:manipulation;text-decoration:none;font-weight:700;border-bottom:1px solid rgb(116, 185, 0);color:rgb(75, 69, 69);"> </a> 
+  <ul style="background-repeat:no-repeat;box-sizing:border-box;margin:0px;display:block;list-style:square;padding:0px 0px 0px 20px;"> 
+   <li style="background-repeat:no-repeat;box-sizing:border-box;padding:0px 0px 0px 6px;font-weight:400;">For local storage, an NVMe device performs DMA. </li> 
+   <li style="background-repeat:no-repeat;box-sizing:border-box;font-weight:400;padding:0px 0px 0px 6px;">For remote storage, a NIC device performs RDMA.</li> 
+  </ul> </li>
+ <li style="background-repeat:no-repeat;box-sizing:border-box;padding:0px 0px 0px 6px;font-weight:400;">The filesystem stack that operates at the user-level, or the kernel-level, or both, and never needs to access the data in CPU system memory. <p style="background-repeat:no-repeat;box-sizing:border-box;margin:0px;">Instead, data is transferred directly between storage and GPU memory, which is achieved by filesystems that exclusively use the O_DIRECT mode for a given file. </p> </li>
+</ul> 
+         
+        <p style="background-repeat:no-repeat;box-sizing:border-box;font-family:&quot;NVIDIA Sans&quot;;font-size:16px;font-weight:400;line-height:1.5;margin:20px 0px;"></p><p style="background-repeat:no-repeat;box-sizing:border-box;font-family:&quot;NVIDIA Sans&quot;;font-size:16px;font-weight:400;line-height:1.5;margin:20px 0px;">Figure 1 illustrates a way to visualize conditions for O_DIRECT. It covers cases where there is, or is not, an operator (<a shape="rect" name="summ-basic-req__image_tlj_hhb_gnb" style="background-repeat:no-repeat;box-sizing:border-box;background-color:transparent;touch-action:manipulation;text-decoration:none;font-weight:700;border-bottom:1px solid rgb(116, 185, 0);color:rgb(75, 69, 69);"> </a></p><div style="background-repeat:no-repeat;box-sizing:border-box;clear:both;width:100%;margin:40px 0px;">
+        <div style="background-repeat:no-repeat;box-sizing:border-box;">
+            
+            
+                
+                    
+                        
+                            
+                                <div style="background-repeat:no-repeat;box-sizing:border-box;margin:0px;">
+    
+
+    
+        <div style="background-repeat:no-repeat;box-sizing:border-box;">
+    
+    
+        
+            
+
+
+
+        
+    
+
+    
+    
+        
+
+    
+            <span style="background-repeat:no-repeat;box-sizing:border-box;"></span>
+
+    
+
+    
+        <span style="background-repeat:no-repeat;box-sizing:border-box;"></span>
+
+    
+
+
+
+    
+    
+
+    <img width="27" height="33" src="https://docscontent.nvidia.com/dims4/default/b48c72d/2147483647/strip/true/crop/27x33+0+0/resize/27x33!/format/webp/quality/90/?url=https%3A%2F%2Fk3-prod-nvidia-docs.s3.us-west-2.amazonaws.com%2Fbrightspot%2Fdita%2F0000018e-a636-d6f5-a5bf-b6b619fb0000%2Fgpudirect-storage%2Fo-direct-guide%2Fgraphics%2Foperator.png" style="background-repeat:no-repeat;box-sizing:border-box;vertical-align:middle;border-style:none;display:block;height:auto;margin:0px auto;width:auto;margin-left:0px;margin-right:auto;max-width:100%;border-radius:0px;"/>
+
+
+
+</div>
+
+    
+
+    
+</div>
+
+                            
+                        
+                    
+                
+            
+        </div>
+    </div><p style="background-repeat:no-repeat;box-sizing:border-box;font-family:&quot;NVIDIA Sans&quot;;font-size:16px;font-weight:400;line-height:1.5;margin:20px 0px;">) in the data path to storage, and whether that operator is in the CPU or GPU. If the operator is in the CPU, you cannot use O_DIRECT.  
+         
+         
+          <a shape="rect" name="summ-basic-req__fig_fpq_rz5_fnb" style="background-repeat:no-repeat;box-sizing:border-box;background-color:transparent;touch-action:manipulation;text-decoration:none;font-weight:700;border-bottom:1px solid rgb(116, 185, 0);color:rgb(75, 69, 69);"> </a></p><p style="background-repeat:no-repeat;box-sizing:border-box;font-family:&quot;NVIDIA Sans&quot;;font-size:16px;font-weight:400;line-height:1.5;margin:20px 0px;"></p><p style="background-repeat:no-repeat;box-sizing:border-box;font-family:&quot;NVIDIA Sans&quot;;font-size:16px;font-weight:400;line-height:1.5;margin:20px 0px;"><i style="background-repeat:no-repeat;box-sizing:border-box;">Figure 1. Summary of Basic Requirements</i></p><p style="background-repeat:no-repeat;box-sizing:border-box;font-family:&quot;NVIDIA Sans&quot;;font-size:16px;font-weight:400;line-height:1.5;margin:20px 0px;"></p>
+          <p style="background-repeat:no-repeat;box-sizing:border-box;font-family:&quot;NVIDIA Sans&quot;;font-size:16px;font-weight:400;line-height:1.5;margin:20px 0px;">
+          </p>
+          <p style="background-repeat:no-repeat;box-sizing:border-box;font-family:&quot;NVIDIA Sans&quot;;font-size:16px;font-weight:400;line-height:1.5;margin:20px 0px;"><a shape="rect" name="summ-basic-req__image_w24_xz5_fnb" style="background-repeat:no-repeat;box-sizing:border-box;background-color:transparent;touch-action:manipulation;text-decoration:none;font-weight:700;border-bottom:1px solid rgb(116, 185, 0);color:rgb(75, 69, 69);"> </a>
+          
+           </p><div style="background-repeat:no-repeat;box-sizing:border-box;clear:both;width:100%;margin:40px 0px;">
+        <div style="background-repeat:no-repeat;box-sizing:border-box;">
+            
+            
+                
+                    
+                        
+                            
+                                <div style="background-repeat:no-repeat;box-sizing:border-box;margin:0px;">
+    
+
+    
+        <div style="background-repeat:no-repeat;box-sizing:border-box;">
+    
+    
+        
+            
+
+
+
+        
+    
+
+    
+    
+        
+
+    
+            <span style="background-repeat:no-repeat;box-sizing:border-box;"></span>
+
+    
+
+    
+        <span style="background-repeat:no-repeat;box-sizing:border-box;"></span>
+
+    
+
+
+
+    
+    
+
+    <img width="584" height="242" src="https://docscontent.nvidia.com/dims4/default/f3bbad3/2147483647/strip/true/crop/584x242+0+0/resize/584x242!/format/webp/quality/90/?url=https%3A%2F%2Fk3-prod-nvidia-docs.s3.us-west-2.amazonaws.com%2Fbrightspot%2Fdita%2F0000018e-a636-d6f5-a5bf-b6b619fb0000%2Fgpudirect-storage%2Fo-direct-guide%2Fgraphics%2Fvisualize-odirect-conditions.png" style="background-repeat:no-repeat;box-sizing:border-box;vertical-align:middle;border-style:none;display:block;height:auto;margin:0px auto;width:auto;margin-left:0px;margin-right:auto;max-width:100%;border-radius:0px;"/>
+
+
+
+</div>
+
+    
+
+    
+</div>
+
+                            
+                        
+                    
+                
+            
+        </div>
+    </div><p style="background-repeat:no-repeat;box-sizing:border-box;font-family:&quot;NVIDIA Sans&quot;;font-size:16px;font-weight:400;line-height:1.5;margin:20px 0px;">
+          </p>
+         <p style="background-repeat:no-repeat;box-sizing:border-box;font-family:&quot;NVIDIA Sans&quot;;font-size:16px;font-weight:400;line-height:1.5;margin:20px 0px;">
+          </p><p style="background-repeat:no-repeat;box-sizing:border-box;font-family:&quot;NVIDIA Sans&quot;;font-size:16px;font-weight:400;line-height:1.5;margin:20px 0px;"> 
+        </p> 
+        <p style="background-repeat:no-repeat;box-sizing:border-box;font-family:&quot;NVIDIA Sans&quot;;font-size:16px;font-weight:400;line-height:1.5;margin:20px 0px;"></p><p style="background-repeat:no-repeat;box-sizing:border-box;font-family:&quot;NVIDIA Sans&quot;;font-size:16px;font-weight:400;line-height:1.5;margin:20px 0px;">The data coming from (or going to) storage cannot use O_DIRECT if it must be processed in the CPU, as symbolized by cross operator. It can use O_DIRECT if it only goes through the GPU whether there’s a transformational operator there as symbolized by a cross operator like checksum on the GPU or there’s no operation at all, as symbolized by a clean arrow.  
+        </p><p style="background-repeat:no-repeat;box-sizing:border-box;font-family:&quot;NVIDIA Sans&quot;;font-size:16px;font-weight:400;line-height:1.5;margin:20px 0px;"></p> 
+       <p style="background-repeat:no-repeat;box-sizing:border-box;font-family:&quot;NVIDIA Sans&quot;;font-size:16px;font-weight:400;line-height:1.5;margin:20px 0px;">Lack of support for RDMA in network filesystems, or network block devices, implies the need to copy data to socket buffers in system memory. This need is incompatible with the basic requirements listed above.  
+        
+         If the conditions for using GDS do not hold, for example, because the mount for the file is not GDS enabled, or the nvidia-fs.ko driver is not available, compatibility mode, a cuFile feature that falls back to copying through a CPU bounce buffer, can be used. You can enable compatibility mode in the <code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span style="background-repeat:no-repeat;box-sizing:border-box;padding:1px 4px;display:inline;font-size:14px;color:rgb(75, 69, 69);border-radius:4px;position:relative;white-space:nowrap;word-break:break-all;background-color:rgb(238, 238, 238);border:1px solid rgb(204, 204, 204);font-family:&quot;Roboto Mono&quot;, monospace;-webkit-box-decoration-break:clone;">cufile.json</span></code> file. Users can override the system’s version of the cufile.json file by creating their own copy and pointing the appropriate environment variable to that user’s copy. Outside of compatibility mode, the APIs will fail if O_DIRECT is not possible. 
+         </p>
+    <div style="background-repeat:no-repeat;box-sizing:border-box;position:relative;font-weight:600;margin:20px 0px;padding:18px 95px 26px 53px;background-color:rgb(255, 255, 224);">
+        <div style="background-repeat:no-repeat;box-sizing:border-box;top:20px;left:20px;width:20px;height:20px;position:absolute;"><img style="background-repeat:no-repeat;box-sizing:border-box;vertical-align:middle;fill:currentcolor;top:0px;width:100%;height:100%;position:absolute;object-fit:contain;overflow:hidden;" src="data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' data-evernote-id='597' class='js-evernote-checked'%3e%3c/svg%3e"/> </div><div style="background-repeat:no-repeat;box-sizing:border-box;font-family:&quot;NVIDIA Sans&quot;;font-size:20px;font-weight:700;margin-bottom:6px;color:rgb(75, 69, 69);line-height:1.2;">Note:</div>
+        <div style="background-repeat:no-repeat;box-sizing:border-box;font-family:&quot;NVIDIA Sans&quot;;font-size:16px;font-weight:400;line-height:1.5;color:rgb(75, 69, 69);"><p style="background-repeat:no-repeat;box-sizing:border-box;">
+           As of CUDA toolkit 12.2 (GDS version 1.7), the APIs would work in compatibility mode, even if the file descriptor that is used with the cuFile APIs is opened in non O_DIRECT mode. Even in such a case, the APIs would leverage the GDS path whenever a direct path between storage and gpu buffer exits. For all other cases the APIs go via the page cache for fds opened in non O_DIRECT mode. This can be viewed as the compatibility mode leveraging the page cache that can typically be used for smaller file I/Os with a high degree of temporal locality, like the case of application headers or metadata. 
+         </p></div>
+    </div>
+<p style="background-repeat:no-repeat;box-sizing:border-box;font-family:&quot;NVIDIA Sans&quot;;font-size:16px;font-weight:400;line-height:1.5;margin:20px 0px;"> 
+        </p><p style="background-repeat:no-repeat;box-sizing:border-box;font-family:&quot;NVIDIA Sans&quot;;font-size:16px;font-weight:400;line-height:1.5;margin:20px 0px;"> 
+      
+       <a shape="rect" name="client-server" style="background-repeat:no-repeat;box-sizing:border-box;background-color:transparent;touch-action:manipulation;text-decoration:none;font-weight:700;border-bottom:1px solid rgb(116, 185, 0);color:rgb(75, 69, 69);"> </a>
+       </p> 
+      <h3 style="background-repeat:no-repeat;box-sizing:border-box;margin:15px 0px;font-family:&quot;NVIDIA Sans&quot;;font-weight:700;font-size:21px;">
+    <a href="https://docs.nvidia.com/gpudirect-storage/o-direct-guide/index.html#client-server" style="background-repeat:no-repeat;box-sizing:border-box;background-color:transparent;touch-action:manipulation;text-decoration:none;font-weight:700;border-bottom:1px solid rgb(116, 185, 0);color:rgb(75, 69, 69);font-size:21px;">
+    </a><a href="https://docs.nvidia.com/gpudirect-storage/o-direct-guide/index.html#client-server" shape="rect" name="client-server" style="background-repeat:no-repeat;box-sizing:border-box;background-color:transparent;touch-action:manipulation;text-decoration:none;font-weight:700;border-bottom:1px solid rgb(116, 185, 0);color:rgb(75, 69, 69);font-size:21px;">2.2. Client and Server</a>
+    
+</h3>
+<p style="background-repeat:no-repeat;box-sizing:border-box;font-family:&quot;NVIDIA Sans&quot;;font-size:16px;font-weight:400;line-height:1.5;margin:20px 0px;"> 
+        
+        Here is some information about how the client and server work with O_DIRECT.</p><p style="background-repeat:no-repeat;box-sizing:border-box;font-family:&quot;NVIDIA Sans&quot;;font-size:16px;font-weight:400;line-height:1.5;margin:20px 0px;"> 
+        
+         In a local file or block systems, a software stack performs all IO. In a distributed file or block system, at least two agents are involved. the client makes a read or write request, and a server services it. There are two types of filesystems: <a shape="rect" name="client-server__ul_qbb_qvy_2nb" style="background-repeat:no-repeat;box-sizing:border-box;background-color:transparent;touch-action:manipulation;text-decoration:none;font-weight:700;border-bottom:1px solid rgb(116, 185, 0);color:rgb(75, 69, 69);"> </a>
+         </p><ul style="background-repeat:no-repeat;box-sizing:border-box;font-family:&quot;NVIDIA Sans&quot;;font-size:16px;font-weight:400;line-height:1.5;margin:10px 0px;list-style:disc;padding:0px 0px 0px 2.5em;display:block;">
+ <li style="background-repeat:no-repeat;box-sizing:border-box;padding:0px 0px 0px 6px;font-weight:400;">Block-based </li>
+ <li style="background-repeat:no-repeat;box-sizing:border-box;padding:0px 0px 0px 6px;font-weight:400;">Network-attached</li>
+</ul> 
+         
+        <p style="background-repeat:no-repeat;box-sizing:border-box;font-family:&quot;NVIDIA Sans&quot;;font-size:16px;font-weight:400;line-height:1.5;margin:20px 0px;"></p><p style="background-repeat:no-repeat;box-sizing:border-box;font-family:&quot;NVIDIA Sans&quot;;font-size:16px;font-weight:400;line-height:1.5;margin:20px 0px;">A block-based system can be serviced locally or remotely, while network-attached filesystems are always remote.  
+        
+         Consider the following interaction between a client and server:<a shape="rect" name="client-server__ul_mt4_vvy_2nb" style="background-repeat:no-repeat;box-sizing:border-box;background-color:transparent;touch-action:manipulation;text-decoration:none;font-weight:700;border-bottom:1px solid rgb(116, 185, 0);color:rgb(75, 69, 69);"> </a>
+         </p><ul style="background-repeat:no-repeat;box-sizing:border-box;font-family:&quot;NVIDIA Sans&quot;;font-size:16px;font-weight:400;line-height:1.5;margin:10px 0px;list-style:disc;padding:0px 0px 0px 2.5em;display:block;">
+ <li style="background-repeat:no-repeat;box-sizing:border-box;padding:0px 0px 0px 6px;font-weight:400;">The direct data path between the NIC and GPU memory happens on the client. <p style="background-repeat:no-repeat;box-sizing:border-box;margin:0px;">To enable this direct path, client-side drivers must first be enabled with GDS. </p> </li>
+ <li style="background-repeat:no-repeat;box-sizing:border-box;padding:0px 0px 0px 6px;font-weight:400;">RDMA is a protocol to access remote data over a network and uses the NIC to DMA directly into client-side memory. <p style="background-repeat:no-repeat;box-sizing:border-box;margin:0px;">Without RDMA, there is no direct path, and GDS for distributed file and block systems relies on GPUDirect RDMA for the direct path between the NIC and GPU memory. </p> </li>
+ <li style="background-repeat:no-repeat;box-sizing:border-box;padding:0px 0px 0px 6px;font-weight:400;">Using RDMA also relies on server-side support. </li>
+</ul> 
+         
+        <p style="background-repeat:no-repeat;box-sizing:border-box;font-family:&quot;NVIDIA Sans&quot;;font-size:16px;font-weight:400;line-height:1.5;margin:20px 0px;"></p> 
+      <p style="background-repeat:no-repeat;box-sizing:border-box;font-family:&quot;NVIDIA Sans&quot;;font-size:16px;font-weight:400;line-height:1.5;margin:20px 0px;">Filesystem implementations that do not support RDMA on the server side will not support GDS. For example, NFS only works with server-side NFS instead of RDMA support, which is not yet available from all NFS vendors.  
+       </p><p style="background-repeat:no-repeat;box-sizing:border-box;font-family:&quot;NVIDIA Sans&quot;;font-size:16px;font-weight:400;line-height:1.5;margin:20px 0px;"><a shape="rect" name="odirect-not-a-fit" style="background-repeat:no-repeat;box-sizing:border-box;background-color:transparent;touch-action:manipulation;text-decoration:none;font-weight:700;border-bottom:1px solid rgb(116, 185, 0);color:rgb(75, 69, 69);"> </a>
+       </p> 
+      
+       <h3 style="background-repeat:no-repeat;box-sizing:border-box;margin:15px 0px;font-family:&quot;NVIDIA Sans&quot;;font-weight:700;font-size:21px;">
+    <a href="https://docs.nvidia.com/gpudirect-storage/o-direct-guide/index.html#odirect-not-a-fit" style="background-repeat:no-repeat;box-sizing:border-box;background-color:transparent;touch-action:manipulation;text-decoration:none;font-weight:700;border-bottom:1px solid rgb(116, 185, 0);color:rgb(75, 69, 69);font-size:21px;">
+    </a><a href="https://docs.nvidia.com/gpudirect-storage/o-direct-guide/index.html#odirect-not-a-fit" shape="rect" name="odirect-not-a-fit" style="background-repeat:no-repeat;box-sizing:border-box;background-color:transparent;touch-action:manipulation;text-decoration:none;font-weight:700;border-bottom:1px solid rgb(116, 185, 0);color:rgb(75, 69, 69);font-size:21px;">2.3. Cases Where O_DIRECT is Not a Fit </a>
+    
+</h3>
+<p style="background-repeat:no-repeat;box-sizing:border-box;font-family:&quot;NVIDIA Sans&quot;;font-size:16px;font-weight:400;line-height:1.5;margin:20px 0px;"> 
+        
+        Here is some information about features that are used by specific filesystems, which might inhibit the use of full GDS benefits. </p> 
+        <p style="background-repeat:no-repeat;box-sizing:border-box;font-family:&quot;NVIDIA Sans&quot;;font-size:16px;font-weight:400;line-height:1.5;margin:20px 0px;"></p><p style="background-repeat:no-repeat;box-sizing:border-box;font-family:&quot;NVIDIA Sans&quot;;font-size:16px;font-weight:400;line-height:1.5;margin:20px 0px;">In POSIX, the mode in which files are opened is controlled by a set of flags. One of these flags, O_DIRECT, indicates a user’s intent to not buffer transfers in CPU system memory but to rather make transfers be more direct. O_DIRECT, for example, generally disables the use of a page cache. Although this flag is an expression of user intention, the implementation can still make its own trade-offs.  
+        </p><p style="background-repeat:no-repeat;box-sizing:border-box;font-family:&quot;NVIDIA Sans&quot;;font-size:16px;font-weight:400;line-height:1.5;margin:20px 0px;"></p><p style="background-repeat:no-repeat;box-sizing:border-box;font-family:&quot;NVIDIA Sans&quot;;font-size:16px;font-weight:400;line-height:1.5;margin:20px 0px;">For example, the implementation might decide to treat small transfers differently from larger transfers that take a more direct path. In another example, a filesystem might offer an option for the user to enable read ahead for the page cache. This option, however, might conflict with the request from the user to use O_DIRECT for a file. In this case, how the implementation treats the competing requests depends on the implementation policy. Therefore, O_DIRECT can be considered a hint.  
+        </p><p style="background-repeat:no-repeat;box-sizing:border-box;font-family:&quot;NVIDIA Sans&quot;;font-size:16px;font-weight:400;line-height:1.5;margin:20px 0px;"></p><p style="background-repeat:no-repeat;box-sizing:border-box;font-family:&quot;NVIDIA Sans&quot;;font-size:16px;font-weight:400;line-height:1.5;margin:20px 0px;">Several cases are listed below where a user’s request to use O_DIRECT is not currently supported in filesystems, is not used in specific cases, or is fundamentally not feasible. The cases are delineated according to the agent that makes choices or trade-offs which impact that option.  
+        
+         Here is some additional information:<a shape="rect" name="odirect-not-a-fit__ul_l3w_vwy_2nb" style="background-repeat:no-repeat;box-sizing:border-box;background-color:transparent;touch-action:manipulation;text-decoration:none;font-weight:700;border-bottom:1px solid rgb(116, 185, 0);color:rgb(75, 69, 69);"> </a>
+         </p><ul style="background-repeat:no-repeat;box-sizing:border-box;font-family:&quot;NVIDIA Sans&quot;;font-size:16px;font-weight:400;line-height:1.5;margin:10px 0px;list-style:disc;padding:0px 0px 0px 2.5em;display:block;">
+ <li style="background-repeat:no-repeat;box-sizing:border-box;padding:0px 0px 0px 6px;font-weight:400;">Possibly relevant for users<a shape="rect" name="odirect-not-a-fit__ul_zm5_xwy_2nb" style="background-repeat:no-repeat;box-sizing:border-box;background-color:transparent;touch-action:manipulation;text-decoration:none;font-weight:700;border-bottom:1px solid rgb(116, 185, 0);color:rgb(75, 69, 69);"> </a> 
+  <ul style="background-repeat:no-repeat;box-sizing:border-box;margin:0px;display:block;list-style:square;padding:0px 0px 0px 20px;"> 
+   <li style="background-repeat:no-repeat;box-sizing:border-box;font-weight:400;padding:0px 0px 0px 6px;">User-buffered IO: Transfers might be buffered in the user space before being transferred to the kernel. <p style="background-repeat:no-repeat;box-sizing:border-box;margin:0px;">This case might be used when many small transactions have good spatial and temporal locality. </p> </li> 
+  </ul> </li>
+ <li style="background-repeat:no-repeat;box-sizing:border-box;padding:0px 0px 0px 6px;font-weight:400;">Possibly relevant for middleware<a shape="rect" name="odirect-not-a-fit__ul_ut1_1xy_2nb" style="background-repeat:no-repeat;box-sizing:border-box;background-color:transparent;touch-action:manipulation;text-decoration:none;font-weight:700;border-bottom:1px solid rgb(116, 185, 0);color:rgb(75, 69, 69);"> </a> 
+  <ul style="background-repeat:no-repeat;box-sizing:border-box;margin:0px;display:block;list-style:square;padding:0px 0px 0px 20px;"> 
+   <li style="background-repeat:no-repeat;box-sizing:border-box;padding:0px 0px 0px 6px;font-weight:400;">Metadata management: There might be metadata with the data payload. <p style="background-repeat:no-repeat;box-sizing:border-box;margin:0px;">Metadata might take many forms, including checksums for the data payload, file sizes that must be updated when lengthening files, and maps of file layout when filling holes. </p> </li> 
+   <li style="background-repeat:no-repeat;box-sizing:border-box;padding:0px 0px 0px 6px;font-weight:400;">Hierarchical storage model: Some implementations used a tiered scheme where some data resides in CPU system memory, and where shorter latency and high bandwidth is possible. <p style="background-repeat:no-repeat;box-sizing:border-box;margin:0px;"> There are outer tiers of progressively slower, but higher-capacity storage. An example of this tiered scheme is flash and then spinning disks. </p> </li> 
+   <li style="background-repeat:no-repeat;box-sizing:border-box;padding:0px 0px 0px 6px;font-weight:400;">Read ahead: An optimization that is sometimes used, especially for buffered IO and many small consecutive transfers, is to anticipate what will be used next and to buffer it in CPU system memory. </li> 
+   <li style="background-repeat:no-repeat;box-sizing:border-box;font-weight:400;padding:0px 0px 0px 6px;">Examining or transforming data: When the CPU examines or transforms data before (or after) IO transactions, this process interferes with direct transfers between the storage and GPU memory. </li> 
+  </ul> </li>
+ <li style="background-repeat:no-repeat;box-sizing:border-box;padding:0px 0px 0px 6px;font-weight:400;">Filesystem only<a shape="rect" name="odirect-not-a-fit__ul_v5q_fxy_2nb" style="background-repeat:no-repeat;box-sizing:border-box;background-color:transparent;touch-action:manipulation;text-decoration:none;font-weight:700;border-bottom:1px solid rgb(116, 185, 0);color:rgb(75, 69, 69);"> </a> 
+  <ul style="background-repeat:no-repeat;box-sizing:border-box;margin:0px;display:block;list-style:square;padding:0px 0px 0px 20px;"> 
+   <li style="background-repeat:no-repeat;box-sizing:border-box;padding:0px 0px 0px 6px;font-weight:400;">Kernel-buffered IO: If there is good temporal and spatial locality, and the bandwidth and latency to copy from kernel memory is significantly better than copying from storage, a mechanism such as fscache might be used to maintain a copy in system memory. </li> 
+   <li style="background-repeat:no-repeat;box-sizing:border-box;padding:0px 0px 0px 6px;font-weight:400;">Inline data: Small files are stored and managed differently than larger files. </li> 
+   <li style="background-repeat:no-repeat;box-sizing:border-box;font-weight:400;padding:0px 0px 0px 6px;">Block allocation: Various policies are available to allocate space in files, and there might be implications for client- and server-side activities. </li> 
+  </ul> </li>
+</ul><p style="background-repeat:no-repeat;box-sizing:border-box;font-family:&quot;NVIDIA Sans&quot;;font-size:16px;font-weight:400;line-height:1.5;margin:20px 0px;"> 
+        
+         There are cases where middleware performs some of the same functions as a filesystem. Middleware might have more contextual information available to it than low-level calls to the file system, and it might take steps to increase the likelihood that the filesystem can use O_DIRECT. Consider the case of computing a checksum. A user might be able to control whether checksums are even used. If checksums are enabled, middleware might intervene in the following ways: <a shape="rect" name="odirect-not-a-fit__ul_zpz_3xy_2nb" style="background-repeat:no-repeat;box-sizing:border-box;background-color:transparent;touch-action:manipulation;text-decoration:none;font-weight:700;border-bottom:1px solid rgb(116, 185, 0);color:rgb(75, 69, 69);"> </a>
+         </p> 
+        <ul style="background-repeat:no-repeat;box-sizing:border-box;font-family:&quot;NVIDIA Sans&quot;;font-size:16px;font-weight:400;line-height:1.5;margin:10px 0px;list-style:disc;padding:0px 0px 0px 2.5em;display:block;">
+ <li style="background-repeat:no-repeat;box-sizing:border-box;padding:0px 0px 0px 6px;font-weight:400;">It could invoke a GPU kernel to compute the checksum and juxtapose the checksum data with the payload so that one cuFileWrite can be used to write back the data to storage. </li>
+ <li style="background-repeat:no-repeat;box-sizing:border-box;padding:0px 0px 0px 6px;font-weight:400;">It could again invoke a GPU kernel to compute the checksum to a different buffer and use two cuFileWrites to write each of the checksum and payload. <p style="background-repeat:no-repeat;box-sizing:border-box;margin:0px;">In these cases, the requests to the filesystem can use O_DIRECT. </p> </li>
+</ul><p style="background-repeat:no-repeat;box-sizing:border-box;font-family:&quot;NVIDIA Sans&quot;;font-size:16px;font-weight:400;line-height:1.5;margin:20px 0px;"> 
+       
+        <a shape="rect" name="buffered-io" style="background-repeat:no-repeat;box-sizing:border-box;background-color:transparent;touch-action:manipulation;text-decoration:none;font-weight:700;border-bottom:1px solid rgb(116, 185, 0);color:rgb(75, 69, 69);"> </a>
+        </p> 
+         
+       <h3 style="background-repeat:no-repeat;box-sizing:border-box;margin:15px 0px;font-family:&quot;NVIDIA Sans&quot;;font-weight:700;font-size:21px;">
+    <a href="https://docs.nvidia.com/gpudirect-storage/o-direct-guide/index.html#buffered-io" style="background-repeat:no-repeat;box-sizing:border-box;background-color:transparent;touch-action:manipulation;text-decoration:none;font-weight:700;border-bottom:1px solid rgb(116, 185, 0);color:rgb(75, 69, 69);font-size:21px;">
+    </a><a href="https://docs.nvidia.com/gpudirect-storage/o-direct-guide/index.html#buffered-io" shape="rect" name="buffered-io" style="background-repeat:no-repeat;box-sizing:border-box;background-color:transparent;touch-action:manipulation;text-decoration:none;font-weight:700;border-bottom:1px solid rgb(116, 185, 0);color:rgb(75, 69, 69);font-size:21px;">2.3.1. Buffered IO</a>
+    
+</h3>
+<p style="background-repeat:no-repeat;box-sizing:border-box;font-family:&quot;NVIDIA Sans&quot;;font-size:16px;font-weight:400;line-height:1.5;margin:20px 0px;"> 
+         
+         Here is some information about buffered IO in GDS.</p> 
+         <p style="background-repeat:no-repeat;box-sizing:border-box;font-family:&quot;NVIDIA Sans&quot;;font-size:16px;font-weight:400;line-height:1.5;margin:20px 0px;"></p><p style="background-repeat:no-repeat;box-sizing:border-box;font-family:&quot;NVIDIA Sans&quot;;font-size:16px;font-weight:400;line-height:1.5;margin:20px 0px;">The Linux virtual file system (VFS) uses a buffered IO when O_DIRECT is not specified, and there are potentially multiple layers of caching. Examples of caching might include the following: <a shape="rect" name="buffered-io__ul_exl_dyy_2nb" style="background-repeat:no-repeat;box-sizing:border-box;background-color:transparent;touch-action:manipulation;text-decoration:none;font-weight:700;border-bottom:1px solid rgb(116, 185, 0);color:rgb(75, 69, 69);"> </a>
+         </p><ul style="background-repeat:no-repeat;box-sizing:border-box;font-family:&quot;NVIDIA Sans&quot;;font-size:16px;font-weight:400;line-height:1.5;margin:10px 0px;list-style:disc;padding:0px 0px 0px 2.5em;display:block;">
+ <li style="background-repeat:no-repeat;box-sizing:border-box;padding:0px 0px 0px 6px;font-weight:400;">Page caching, which is backed by fscache.</li>
+ <li style="background-repeat:no-repeat;box-sizing:border-box;padding:0px 0px 0px 6px;font-weight:400;">File-system-specific page pools, such as ZFS adaptive replay cache (ARC) and Spectrum Storage (GPFS) page pools. </li>
+</ul><p style="background-repeat:no-repeat;box-sizing:border-box;font-family:&quot;NVIDIA Sans&quot;;font-size:16px;font-weight:400;line-height:1.5;margin:20px 0px;"> 
+       
+        <a shape="rect" name="inline-files" style="background-repeat:no-repeat;box-sizing:border-box;background-color:transparent;touch-action:manipulation;text-decoration:none;font-weight:700;border-bottom:1px solid rgb(116, 185, 0);color:rgb(75, 69, 69);"> </a>
+        </p> 
+         
+       <h3 style="background-repeat:no-repeat;box-sizing:border-box;margin:15px 0px;font-family:&quot;NVIDIA Sans&quot;;font-weight:700;font-size:21px;">
+    <a href="https://docs.nvidia.com/gpudirect-storage/o-direct-guide/index.html#inline-files" style="background-repeat:no-repeat;box-sizing:border-box;background-color:transparent;touch-action:manipulation;text-decoration:none;font-weight:700;border-bottom:1px solid rgb(116, 185, 0);color:rgb(75, 69, 69);font-size:21px;">
+    </a><a href="https://docs.nvidia.com/gpudirect-storage/o-direct-guide/index.html#inline-files" shape="rect" name="inline-files" style="background-repeat:no-repeat;box-sizing:border-box;background-color:transparent;touch-action:manipulation;text-decoration:none;font-weight:700;border-bottom:1px solid rgb(116, 185, 0);color:rgb(75, 69, 69);font-size:21px;">2.3.2. Inline Files</a>
+    
+</h3>
+<p style="background-repeat:no-repeat;box-sizing:border-box;font-family:&quot;NVIDIA Sans&quot;;font-size:16px;font-weight:400;line-height:1.5;margin:20px 0px;"> 
+         
+         Here is some information about inline files in GDS.</p><p style="background-repeat:no-repeat;box-sizing:border-box;font-family:&quot;NVIDIA Sans&quot;;font-size:16px;font-weight:400;line-height:1.5;margin:20px 0px;"> 
+         
+          Filesystems that are based on Linux are implemented by using the common VFS interface to open, close, read, and write files. User data is organized in files, which are represented in the following ways: <a shape="rect" name="inline-files__ul_pvp_jyy_2nb" style="background-repeat:no-repeat;box-sizing:border-box;background-color:transparent;touch-action:manipulation;text-decoration:none;font-weight:700;border-bottom:1px solid rgb(116, 185, 0);color:rgb(75, 69, 69);"> </a>
+          </p><ul style="background-repeat:no-repeat;box-sizing:border-box;font-family:&quot;NVIDIA Sans&quot;;font-size:16px;font-weight:400;line-height:1.5;margin:10px 0px;list-style:disc;padding:0px 0px 0px 2.5em;display:block;">
+ <li style="background-repeat:no-repeat;box-sizing:border-box;padding:0px 0px 0px 6px;font-weight:400;">Inodes, whose primary purpose is to store metadata. </li>
+ <li style="background-repeat:no-repeat;box-sizing:border-box;padding:0px 0px 0px 6px;font-weight:400;">Fixed blocks, which are generally referred to as pages that hold user content. <p style="background-repeat:no-repeat;box-sizing:border-box;margin:0px;">A typical block size is 4096 bytes. </p> </li>
+</ul> 
+          
+         <p style="background-repeat:no-repeat;box-sizing:border-box;font-family:&quot;NVIDIA Sans&quot;;font-size:16px;font-weight:400;line-height:1.5;margin:20px 0px;"></p><p style="background-repeat:no-repeat;box-sizing:border-box;font-family:&quot;NVIDIA Sans&quot;;font-size:16px;font-weight:400;line-height:1.5;margin:20px 0px;">Inline files have data that is smaller than a page size and small enough to fit in the inode. Generally, filesystems provide flags to detect whether the inode is inline. Inodes are normally read into system memory, so inline user data is copied into system memory with the metadata.  
+         </p><p style="background-repeat:no-repeat;box-sizing:border-box;font-family:&quot;NVIDIA Sans&quot;;font-size:16px;font-weight:400;line-height:1.5;margin:20px 0px;"></p> 
+       <p style="background-repeat:no-repeat;box-sizing:border-box;font-family:&quot;NVIDIA Sans&quot;;font-size:16px;font-weight:400;line-height:1.5;margin:20px 0px;">In RDMA-based network-attached filesystems, files that are smaller than the specified size threshold are sent inline in the remote procedure calls (RPCs). This process involves buffering in system memory, which requires an additional copy of user data rather than a direct data transfer. For some filesystems, such as ext4 and Lustre, the inline files modes can be disabled at the filesystem level or on a per-inode basis.  
+        </p><p style="background-repeat:no-repeat;box-sizing:border-box;font-family:&quot;NVIDIA Sans&quot;;font-size:16px;font-weight:400;line-height:1.5;margin:20px 0px;"><a shape="rect" name="block-alloc-writes" style="background-repeat:no-repeat;box-sizing:border-box;background-color:transparent;touch-action:manipulation;text-decoration:none;font-weight:700;border-bottom:1px solid rgb(116, 185, 0);color:rgb(75, 69, 69);"> </a>
+        </p> 
+       
+        <h3 style="background-repeat:no-repeat;box-sizing:border-box;margin:15px 0px;font-family:&quot;NVIDIA Sans&quot;;font-weight:700;font-size:21px;">
+    <a href="https://docs.nvidia.com/gpudirect-storage/o-direct-guide/index.html#block-alloc-writes" style="background-repeat:no-repeat;box-sizing:border-box;background-color:transparent;touch-action:manipulation;text-decoration:none;font-weight:700;border-bottom:1px solid rgb(116, 185, 0);color:rgb(75, 69, 69);font-size:21px;">
+    </a><a href="https://docs.nvidia.com/gpudirect-storage/o-direct-guide/index.html#block-alloc-writes" shape="rect" name="block-alloc-writes" style="background-repeat:no-repeat;box-sizing:border-box;background-color:transparent;touch-action:manipulation;text-decoration:none;font-weight:700;border-bottom:1px solid rgb(116, 185, 0);color:rgb(75, 69, 69);font-size:21px;">2.3.3. Block Allocation For Writes</a>
+    
+</h3>
+<p style="background-repeat:no-repeat;box-sizing:border-box;font-family:&quot;NVIDIA Sans&quot;;font-size:16px;font-weight:400;line-height:1.5;margin:20px 0px;"> 
+         
+         Here is some information about block allocation for writes in GDS.</p><p style="background-repeat:no-repeat;box-sizing:border-box;font-family:&quot;NVIDIA Sans&quot;;font-size:16px;font-weight:400;line-height:1.5;margin:20px 0px;"> 
+         
+          Before data can be written to a file, a data block must be allocated. See Inline Files for more information. For filesystems to support the O_DIRECT mode for writing files, free data blocks in storage must be available and ready to be used by the filesystem. Otherwise, as in the following cases, user data can be buffered into the system page cache, which makes direct data transfers impossible. Here is a list of cases where some filesystems need to fall back to buffered mode because of block allocations: 
+          </p>
+    <div style="background-repeat:no-repeat;box-sizing:border-box;position:relative;font-weight:600;margin:20px 0px;padding:18px 95px 26px 53px;background-color:rgb(255, 255, 224);">
+        <div style="background-repeat:no-repeat;box-sizing:border-box;top:20px;left:20px;width:20px;height:20px;position:absolute;"><img style="background-repeat:no-repeat;box-sizing:border-box;vertical-align:middle;fill:currentcolor;top:0px;width:100%;height:100%;position:absolute;object-fit:contain;overflow:hidden;" src="data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' data-evernote-id='702' class='js-evernote-checked'%3e%3c/svg%3e"/> </div><div style="background-repeat:no-repeat;box-sizing:border-box;font-family:&quot;NVIDIA Sans&quot;;font-size:20px;font-weight:700;margin-bottom:6px;color:rgb(75, 69, 69);line-height:1.2;">Note:</div>
+        <div style="background-repeat:no-repeat;box-sizing:border-box;font-family:&quot;NVIDIA Sans&quot;;font-size:16px;font-weight:400;line-height:1.5;color:rgb(75, 69, 69);"><p style="background-repeat:no-repeat;box-sizing:border-box;">
+            These limitations do not apply to distributed filesystems if the features are implemented on the storage server, and the client does not perform buffering. 
+          </p></div>
+    </div>
+<p style="background-repeat:no-repeat;box-sizing:border-box;font-family:&quot;NVIDIA Sans&quot;;font-size:16px;font-weight:400;line-height:1.5;margin:20px 0px;"><a shape="rect" name="block-alloc-writes__ul_jzt_5yy_2nb" style="background-repeat:no-repeat;box-sizing:border-box;background-color:transparent;touch-action:manipulation;text-decoration:none;font-weight:700;border-bottom:1px solid rgb(116, 185, 0);color:rgb(75, 69, 69);"> </a>
+          </p><ul style="background-repeat:no-repeat;box-sizing:border-box;font-family:&quot;NVIDIA Sans&quot;;font-size:16px;font-weight:400;line-height:1.5;margin:10px 0px;list-style:disc;padding:0px 0px 0px 2.5em;display:block;">
+ <li style="background-repeat:no-repeat;box-sizing:border-box;padding:0px 0px 0px 6px;font-weight:400;">Extending writes: writes that are happening to increase the file size. </li>
+ <li style="background-repeat:no-repeat;box-sizing:border-box;padding:0px 0px 0px 6px;font-weight:400;">Allocating writes: writes to a block that has not yet been allocated.</li>
+ <li style="background-repeat:no-repeat;box-sizing:border-box;padding:0px 0px 0px 6px;font-weight:400;">Writes to preallocated blocks: the block was already allocated in storage, but the metadata needs to be updated before the data is written. </li>
+ <li style="background-repeat:no-repeat;box-sizing:border-box;padding:0px 0px 0px 6px;font-weight:400;">Hole filling: writes to a hole in the middle of the file, which was a sparse block.</li>
+ <li style="background-repeat:no-repeat;box-sizing:border-box;padding:0px 0px 0px 6px;font-weight:400;">Copy on write (COW) filesystems: copy operations that are triggered when a write to a data buffer involves caching in the CPU system memory. </li>
+ <li style="background-repeat:no-repeat;box-sizing:border-box;padding:0px 0px 0px 6px;font-weight:400;">Delayed allocation or allocate on flush: allocation is reactive (not proactive) to reduce disk fragmentation on slow random writes or to large sequential writes for spinning disks. </li>
+</ul> 
+          
+         <p style="background-repeat:no-repeat;box-sizing:border-box;font-family:&quot;NVIDIA Sans&quot;;font-size:16px;font-weight:400;line-height:1.5;margin:20px 0px;"></p> 
+       <p style="background-repeat:no-repeat;box-sizing:border-box;font-family:&quot;NVIDIA Sans&quot;;font-size:16px;font-weight:400;line-height:1.5;margin:20px 0px;">For network-attached storage or distributed filesystems, the filesystem architecture determines whether the allocation decision is made locally, on each client, or on the remote server. If the block allocation handling is done on the server side, there is no CPU buffering impediment to direct transfers. If block allocation was handled on the client side, there might be some impediments.  
+        </p><p style="background-repeat:no-repeat;box-sizing:border-box;font-family:&quot;NVIDIA Sans&quot;;font-size:16px;font-weight:400;line-height:1.5;margin:20px 0px;"><a shape="rect" name="examine-transform-data" style="background-repeat:no-repeat;box-sizing:border-box;background-color:transparent;touch-action:manipulation;text-decoration:none;font-weight:700;border-bottom:1px solid rgb(116, 185, 0);color:rgb(75, 69, 69);"> </a>
+        </p> 
+       
+        <h3 style="background-repeat:no-repeat;box-sizing:border-box;margin:15px 0px;font-family:&quot;NVIDIA Sans&quot;;font-weight:700;font-size:21px;">
+    <a href="https://docs.nvidia.com/gpudirect-storage/o-direct-guide/index.html#examine-transform-data" style="background-repeat:no-repeat;box-sizing:border-box;background-color:transparent;touch-action:manipulation;text-decoration:none;font-weight:700;border-bottom:1px solid rgb(116, 185, 0);color:rgb(75, 69, 69);font-size:21px;">
+    </a><a href="https://docs.nvidia.com/gpudirect-storage/o-direct-guide/index.html#examine-transform-data" shape="rect" name="examine-transform-data" style="background-repeat:no-repeat;box-sizing:border-box;background-color:transparent;touch-action:manipulation;text-decoration:none;font-weight:700;border-bottom:1px solid rgb(116, 185, 0);color:rgb(75, 69, 69);font-size:21px;">2.3.4. Examining or Transforming User Data </a>
+    
+</h3>
+<p style="background-repeat:no-repeat;box-sizing:border-box;font-family:&quot;NVIDIA Sans&quot;;font-size:16px;font-weight:400;line-height:1.5;margin:20px 0px;"> 
+         
+         Here is some information about how to examine or transform user data.</p><p style="background-repeat:no-repeat;box-sizing:border-box;font-family:&quot;NVIDIA Sans&quot;;font-size:16px;font-weight:400;line-height:1.5;margin:20px 0px;"> 
+         
+          Here is a list of some cases where the user data needs to be copied into system memory, so that it can be examined or transformed by the filesystems as part of a read or write transfer:<a shape="rect" name="examine-transform-data__ul_ufn_jzy_2nb" style="background-repeat:no-repeat;box-sizing:border-box;background-color:transparent;touch-action:manipulation;text-decoration:none;font-weight:700;border-bottom:1px solid rgb(116, 185, 0);color:rgb(75, 69, 69);"> </a>
+          </p><ul style="background-repeat:no-repeat;box-sizing:border-box;font-family:&quot;NVIDIA Sans&quot;;font-size:16px;font-weight:400;line-height:1.5;margin:10px 0px;list-style:disc;padding:0px 0px 0px 2.5em;display:block;">
+ <li style="background-repeat:no-repeat;box-sizing:border-box;padding:0px 0px 0px 6px;font-weight:400;">Data journaling is used to track changes that are not yet committed to persistent storage. <p style="background-repeat:no-repeat;box-sizing:border-box;margin:0px;">Data journaling typically disables O_DIRECT. In general, the journaling of data is not required with the O_DIRECT use case, unless there is a high-speed journaling media. Metadata journaling does not require access to user data. </p> </li>
+ <li style="background-repeat:no-repeat;box-sizing:border-box;padding:0px 0px 0px 6px;font-weight:400;">Checksums can be computed during writes and checked upon reads. <p style="background-repeat:no-repeat;box-sizing:border-box;margin:0px;">For network filesystems with checksum support, the checksums are typically performed on the client to detect network corruptions, in addition to checksum computation on the server. </p> </li>
+ <li style="background-repeat:no-repeat;box-sizing:border-box;padding:0px 0px 0px 6px;font-weight:400;">Client-side compression and deduplication can be provided on network clients to achieve bandwidth improvements in addition to compression on the server side for data storage. <p style="background-repeat:no-repeat;box-sizing:border-box;margin:0px;">Inline deduplication requires looking at user content to determine the fingerprint by using MD5 or SHA1 algorithms. Similarly, client-side encryption can provide more secure communication from the client to server. </p> </li>
+ <li style="background-repeat:no-repeat;box-sizing:border-box;padding:0px 0px 0px 6px;font-weight:400;">Erasure encoding can be performed by the filesystem or the block device. <p style="background-repeat:no-repeat;box-sizing:border-box;margin:0px;">In such cases, the data is copied to CPU system memory before performing the DMA to the disk pool or network servers. For distributed block devices, the erasure coding decision is performed on the client side. </p> <p style="background-repeat:no-repeat;box-sizing:border-box;margin:0px;">Synchronous replication involves a data copy into system memory before the DMA operation to a remote block device or server, depending on the recovery time objective. </p> </li>
+</ul> 
+       <p style="background-repeat:no-repeat;box-sizing:border-box;font-family:&quot;NVIDIA Sans&quot;;font-size:16px;font-weight:400;line-height:1.5;margin:20px 0px;"> 
+          
+        </p><p style="background-repeat:no-repeat;box-sizing:border-box;font-family:&quot;NVIDIA Sans&quot;;font-size:16px;font-weight:400;line-height:1.5;margin:20px 0px;"><a shape="rect" name="summary" style="background-repeat:no-repeat;box-sizing:border-box;background-color:transparent;touch-action:manipulation;text-decoration:none;font-weight:700;border-bottom:1px solid rgb(116, 185, 0);color:rgb(75, 69, 69);"> </a>
+        </p> 
+       
+        <h3 style="background-repeat:no-repeat;box-sizing:border-box;margin:15px 0px;font-family:&quot;NVIDIA Sans&quot;;font-weight:700;font-size:21px;">
+    <a href="https://docs.nvidia.com/gpudirect-storage/o-direct-guide/index.html#summary" style="background-repeat:no-repeat;box-sizing:border-box;background-color:transparent;touch-action:manipulation;text-decoration:none;font-weight:700;border-bottom:1px solid rgb(116, 185, 0);color:rgb(75, 69, 69);font-size:21px;">
+    </a><a href="https://docs.nvidia.com/gpudirect-storage/o-direct-guide/index.html#summary" shape="rect" name="summary" style="background-repeat:no-repeat;box-sizing:border-box;background-color:transparent;touch-action:manipulation;text-decoration:none;font-weight:700;border-bottom:1px solid rgb(116, 185, 0);color:rgb(75, 69, 69);font-size:21px;">2.3.5. Summary</a>
+    
+</h3>
+<p style="background-repeat:no-repeat;box-sizing:border-box;font-family:&quot;NVIDIA Sans&quot;;font-size:16px;font-weight:400;line-height:1.5;margin:20px 0px;"> 
+         
+         This section contains some final information to consider about O_DIRECT.</p> 
+         <p style="background-repeat:no-repeat;box-sizing:border-box;font-family:&quot;NVIDIA Sans&quot;;font-size:16px;font-weight:400;line-height:1.5;margin:20px 0px;"></p> 
+       <p style="background-repeat:no-repeat;box-sizing:border-box;font-family:&quot;NVIDIA Sans&quot;;font-size:16px;font-weight:400;line-height:1.5;margin:20px 0px;">There are many cases in which the O_DIRECT mode, in which CPU system memory is entirely unused, is not a fit. The relevance of these cases depends on the local or distributed filesystem implementation, and in some cases, on the set of features that were selected by the user. Vendors can provide their own assessments of the relevance of these issues.  
+        </p><p style="background-repeat:no-repeat;box-sizing:border-box;font-family:&quot;NVIDIA Sans&quot;;font-size:16px;font-weight:400;line-height:1.5;margin:20px 0px;margin-bottom:0px;"> 
+     </p> 
+      
+        <span style="font-size:16px;display:table;clear:both;"></span></div>
+    
+</div>
+                                
+                                    <div style="background-repeat:no-repeat;box-sizing:border-box;background-color:rgba(0, 0, 0, 0);position:relative;margin-top:0px;padding-left:0px;padding-right:0px;margin-bottom:0px;"><span style="background-repeat:no-repeat;box-sizing:border-box;position:absolute;top:-140px;"></span>
+    <div style="background-repeat:no-repeat;box-sizing:border-box;width:100%;margin:auto auto 0px;max-width:none;color:rgb(75, 69, 69);"><h2 style="background-repeat:no-repeat;box-sizing:border-box;color:rgb(75, 69, 69);text-align:left;max-width:none;margin:15px 0px;font-family:&quot;NVIDIA Sans&quot;;letter-spacing:-0.5px;font-size:24px;"><a href="https://docs.nvidia.com/gpudirect-storage/o-direct-guide/index.html#notices-header" style="background-repeat:no-repeat;box-sizing:border-box;background-color:transparent;touch-action:manipulation;text-decoration:none;font-weight:700;border-bottom:1px solid rgb(116, 185, 0);color:rgb(75, 69, 69);font-size:24px;">Notices</a></h2>
+        </div>
+
+        <div style="background-repeat:no-repeat;box-sizing:border-box;font-size:16px;">
+            <p style="background-repeat:no-repeat;box-sizing:border-box;font-family:&quot;NVIDIA Sans&quot;;font-size:16px;font-weight:400;line-height:1.5;margin:20px 0px;margin-top:0px;"><a shape="rect" name="notices-header" style="background-repeat:no-repeat;box-sizing:border-box;background-color:transparent;touch-action:manipulation;text-decoration:none;font-weight:700;border-bottom:1px solid rgb(116, 185, 0);color:rgb(75, 69, 69);"> </a>
+       
+      
+       <a shape="rect" name="notice" style="background-repeat:no-repeat;box-sizing:border-box;background-color:transparent;touch-action:manipulation;text-decoration:none;font-weight:700;border-bottom:1px solid rgb(116, 185, 0);color:rgb(75, 69, 69);"> </a>
+       </p><h3 style="background-repeat:no-repeat;box-sizing:border-box;margin:15px 0px;font-family:&quot;NVIDIA Sans&quot;;font-weight:700;font-size:21px;">
+    <a href="https://docs.nvidia.com/gpudirect-storage/o-direct-guide/index.html#notice" style="background-repeat:no-repeat;box-sizing:border-box;background-color:transparent;touch-action:manipulation;text-decoration:none;font-weight:700;border-bottom:1px solid rgb(116, 185, 0);color:rgb(75, 69, 69);font-size:21px;">
+    </a><a href="https://docs.nvidia.com/gpudirect-storage/o-direct-guide/index.html#notice" shape="rect" name="notice" style="background-repeat:no-repeat;box-sizing:border-box;background-color:transparent;touch-action:manipulation;text-decoration:none;font-weight:700;border-bottom:1px solid rgb(116, 185, 0);color:rgb(75, 69, 69);font-size:21px;"></a>
+    
+</h3>
+ 
+        
+         
+         <h3 style="background-repeat:no-repeat;box-sizing:border-box;margin:15px 0px;font-family:&quot;NVIDIA Sans&quot;;font-weight:700;font-size:21px;">
+    
+    Notice
+    
+</h3>
+ 
+         <p style="background-repeat:no-repeat;box-sizing:border-box;font-family:&quot;NVIDIA Sans&quot;;font-size:16px;font-weight:400;line-height:1.5;margin:20px 0px;"></p><p style="background-repeat:no-repeat;box-sizing:border-box;font-family:&quot;NVIDIA Sans&quot;;font-size:16px;font-weight:400;line-height:1.5;margin:20px 0px;"><a shape="rect" name="notice__notice-para-1" style="background-repeat:no-repeat;box-sizing:border-box;background-color:transparent;touch-action:manipulation;text-decoration:none;font-weight:700;border-bottom:1px solid rgb(116, 185, 0);color:rgb(75, 69, 69);"> </a><sub style="background-repeat:no-repeat;box-sizing:border-box;">This document is provided for information purposes only and shall not be regarded as a warranty of a certain functionality, condition, or quality of a product. NVIDIA Corporation (“NVIDIA”) makes no representations or warranties, expressed or implied, as to the accuracy or completeness of the information contained in this document and assumes no responsibility for any errors contained herein. NVIDIA shall have no liability for the consequences or use of such information or for any infringement of patents or other rights of third parties that may result from its use. This document is not a commitment to develop, release, or deliver any Material (defined below), code, or functionality.</sub> 
+         </p><p style="background-repeat:no-repeat;box-sizing:border-box;font-family:&quot;NVIDIA Sans&quot;;font-size:16px;font-weight:400;line-height:1.5;margin:20px 0px;"></p><p style="background-repeat:no-repeat;box-sizing:border-box;font-family:&quot;NVIDIA Sans&quot;;font-size:16px;font-weight:400;line-height:1.5;margin:20px 0px;"><a shape="rect" name="notice__notice-para-2" style="background-repeat:no-repeat;box-sizing:border-box;background-color:transparent;touch-action:manipulation;text-decoration:none;font-weight:700;border-bottom:1px solid rgb(116, 185, 0);color:rgb(75, 69, 69);"> </a><sub style="background-repeat:no-repeat;box-sizing:border-box;">NVIDIA reserves the right to make corrections, modifications, enhancements, improvements, and any other changes to this document, at any time without notice.</sub> 
+         </p><p style="background-repeat:no-repeat;box-sizing:border-box;font-family:&quot;NVIDIA Sans&quot;;font-size:16px;font-weight:400;line-height:1.5;margin:20px 0px;"></p><p style="background-repeat:no-repeat;box-sizing:border-box;font-family:&quot;NVIDIA Sans&quot;;font-size:16px;font-weight:400;line-height:1.5;margin:20px 0px;"><a shape="rect" name="notice__notice-para-3" style="background-repeat:no-repeat;box-sizing:border-box;background-color:transparent;touch-action:manipulation;text-decoration:none;font-weight:700;border-bottom:1px solid rgb(116, 185, 0);color:rgb(75, 69, 69);"> </a><sub style="background-repeat:no-repeat;box-sizing:border-box;">Customer should obtain the latest relevant information before placing orders and should verify that such information is current and complete.</sub> 
+         </p><p style="background-repeat:no-repeat;box-sizing:border-box;font-family:&quot;NVIDIA Sans&quot;;font-size:16px;font-weight:400;line-height:1.5;margin:20px 0px;"></p><p style="background-repeat:no-repeat;box-sizing:border-box;font-family:&quot;NVIDIA Sans&quot;;font-size:16px;font-weight:400;line-height:1.5;margin:20px 0px;"><a shape="rect" name="notice__notice-para-4" style="background-repeat:no-repeat;box-sizing:border-box;background-color:transparent;touch-action:manipulation;text-decoration:none;font-weight:700;border-bottom:1px solid rgb(116, 185, 0);color:rgb(75, 69, 69);"> </a><sub style="background-repeat:no-repeat;box-sizing:border-box;">NVIDIA products are sold subject to the NVIDIA standard terms and conditions of sale supplied at the time of order acknowledgement, unless otherwise agreed in an individual sales agreement signed by authorized representatives of NVIDIA and customer (“Terms of Sale”). NVIDIA hereby expressly objects to applying any customer general terms and conditions with regards to the purchase of the NVIDIA product referenced in this document. No contractual obligations are formed either directly or indirectly by this document.</sub> 
+         </p><p style="background-repeat:no-repeat;box-sizing:border-box;font-family:&quot;NVIDIA Sans&quot;;font-size:16px;font-weight:400;line-height:1.5;margin:20px 0px;"></p><p style="background-repeat:no-repeat;box-sizing:border-box;font-family:&quot;NVIDIA Sans&quot;;font-size:16px;font-weight:400;line-height:1.5;margin:20px 0px;"><a shape="rect" name="notice__notice-para-5" style="background-repeat:no-repeat;box-sizing:border-box;background-color:transparent;touch-action:manipulation;text-decoration:none;font-weight:700;border-bottom:1px solid rgb(116, 185, 0);color:rgb(75, 69, 69);"> </a><sub style="background-repeat:no-repeat;box-sizing:border-box;">NVIDIA products are not designed, authorized, or warranted to be suitable for use in medical, military, aircraft, space, or life support equipment, nor in applications where failure or malfunction of the NVIDIA product can reasonably be expected to result in personal injury, death, or property or environmental damage. NVIDIA accepts no liability for inclusion and/or use of NVIDIA products in such equipment or applications and therefore such inclusion and/or use is at customer’s own risk.</sub> 
+         </p><p style="background-repeat:no-repeat;box-sizing:border-box;font-family:&quot;NVIDIA Sans&quot;;font-size:16px;font-weight:400;line-height:1.5;margin:20px 0px;"></p><p style="background-repeat:no-repeat;box-sizing:border-box;font-family:&quot;NVIDIA Sans&quot;;font-size:16px;font-weight:400;line-height:1.5;margin:20px 0px;"><a shape="rect" name="notice__notice-para-6" style="background-repeat:no-repeat;box-sizing:border-box;background-color:transparent;touch-action:manipulation;text-decoration:none;font-weight:700;border-bottom:1px solid rgb(116, 185, 0);color:rgb(75, 69, 69);"> </a><sub style="background-repeat:no-repeat;box-sizing:border-box;">NVIDIA makes no representation or warranty that products based on this document will be suitable for any specified use. Testing of all parameters of each product is not necessarily performed by NVIDIA. It is customer’s sole responsibility to evaluate and determine the applicability of any information contained in this document, ensure the product is suitable and fit for the application planned by customer, and perform the necessary testing for the application in order to avoid a default of the application or the product. Weaknesses in customer’s product designs may affect the quality and reliability of the NVIDIA product and may result in additional or different conditions and/or requirements beyond those contained in this document. NVIDIA accepts no liability related to any default, damage, costs, or problem which may be based on or attributable to: (i) the use of the NVIDIA product in any manner that is contrary to this document or (ii) customer product designs.</sub> 
+         </p><p style="background-repeat:no-repeat;box-sizing:border-box;font-family:&quot;NVIDIA Sans&quot;;font-size:16px;font-weight:400;line-height:1.5;margin:20px 0px;"></p><p style="background-repeat:no-repeat;box-sizing:border-box;font-family:&quot;NVIDIA Sans&quot;;font-size:16px;font-weight:400;line-height:1.5;margin:20px 0px;"><a shape="rect" name="notice__notice-para-7" style="background-repeat:no-repeat;box-sizing:border-box;background-color:transparent;touch-action:manipulation;text-decoration:none;font-weight:700;border-bottom:1px solid rgb(116, 185, 0);color:rgb(75, 69, 69);"> </a><sub style="background-repeat:no-repeat;box-sizing:border-box;">No license, either expressed or implied, is granted under any NVIDIA patent right, copyright, or other NVIDIA intellectual property right under this document. Information published by NVIDIA regarding third-party products or services does not constitute a license from NVIDIA to use such products or services or a warranty or endorsement thereof. Use of such information may require a license from a third party under the patents or other intellectual property rights of the third party, or a license from NVIDIA under the patents or other intellectual property rights of NVIDIA.</sub> 
+         </p><p style="background-repeat:no-repeat;box-sizing:border-box;font-family:&quot;NVIDIA Sans&quot;;font-size:16px;font-weight:400;line-height:1.5;margin:20px 0px;"></p><p style="background-repeat:no-repeat;box-sizing:border-box;font-family:&quot;NVIDIA Sans&quot;;font-size:16px;font-weight:400;line-height:1.5;margin:20px 0px;"><a shape="rect" name="notice__notice-para-8" style="background-repeat:no-repeat;box-sizing:border-box;background-color:transparent;touch-action:manipulation;text-decoration:none;font-weight:700;border-bottom:1px solid rgb(116, 185, 0);color:rgb(75, 69, 69);"> </a><sub style="background-repeat:no-repeat;box-sizing:border-box;">Reproduction of information in this document is permissible only if approved in advance by NVIDIA in writing, reproduced without alteration and in full compliance with all applicable export laws and regulations, and accompanied by all associated conditions, limitations, and notices.</sub> 
+         </p><p style="background-repeat:no-repeat;box-sizing:border-box;font-family:&quot;NVIDIA Sans&quot;;font-size:16px;font-weight:400;line-height:1.5;margin:20px 0px;"></p> 
+       <p style="background-repeat:no-repeat;box-sizing:border-box;font-family:&quot;NVIDIA Sans&quot;;font-size:16px;font-weight:400;line-height:1.5;margin:20px 0px;"><a shape="rect" name="notice__notice-para-9" style="background-repeat:no-repeat;box-sizing:border-box;background-color:transparent;touch-action:manipulation;text-decoration:none;font-weight:700;border-bottom:1px solid rgb(116, 185, 0);color:rgb(75, 69, 69);"> </a><sub style="background-repeat:no-repeat;box-sizing:border-box;">THIS DOCUMENT AND ALL NVIDIA DESIGN SPECIFICATIONS, REFERENCE BOARDS, FILES, DRAWINGS, DIAGNOSTICS, LISTS, AND OTHER DOCUMENTS (TOGETHER AND SEPARATELY, “MATERIALS”) ARE BEING PROVIDED “AS IS.” NVIDIA MAKES NO WARRANTIES, EXPRESSED, IMPLIED, STATUTORY, OR OTHERWISE WITH RESPECT TO THE MATERIALS, AND EXPRESSLY DISCLAIMS ALL IMPLIED WARRANTIES OF NONINFRINGEMENT, MERCHANTABILITY, AND FITNESS FOR A PARTICULAR PURPOSE. TO THE EXTENT NOT PROHIBITED BY LAW, IN NO EVENT WILL NVIDIA BE LIABLE FOR ANY DAMAGES, INCLUDING WITHOUT LIMITATION ANY DIRECT, INDIRECT, SPECIAL, INCIDENTAL, PUNITIVE, OR CONSEQUENTIAL DAMAGES, HOWEVER CAUSED AND REGARDLESS OF THE THEORY OF LIABILITY, ARISING OUT OF ANY USE OF THIS DOCUMENT, EVEN IF NVIDIA HAS BEEN ADVISED OF THE POSSIBILITY OF SUCH DAMAGES. Notwithstanding any damages that customer might incur for any reason whatsoever, NVIDIA’s aggregate and cumulative liability towards customer for the products described herein shall be limited in accordance with the Terms of Sale for the product.</sub> 
+        </p><p style="background-repeat:no-repeat;box-sizing:border-box;font-family:&quot;NVIDIA Sans&quot;;font-size:16px;font-weight:400;line-height:1.5;margin:20px 0px;"> 
+      
+       <a shape="rect" name="opencl" style="background-repeat:no-repeat;box-sizing:border-box;background-color:transparent;touch-action:manipulation;text-decoration:none;font-weight:700;border-bottom:1px solid rgb(116, 185, 0);color:rgb(75, 69, 69);"> </a>
+       </p> 
+      <h3 style="background-repeat:no-repeat;box-sizing:border-box;margin:15px 0px;font-family:&quot;NVIDIA Sans&quot;;font-weight:700;font-size:21px;">
+    <a href="https://docs.nvidia.com/gpudirect-storage/o-direct-guide/index.html#opencl" style="background-repeat:no-repeat;box-sizing:border-box;background-color:transparent;touch-action:manipulation;text-decoration:none;font-weight:700;border-bottom:1px solid rgb(116, 185, 0);color:rgb(75, 69, 69);font-size:21px;">
+    </a><a href="https://docs.nvidia.com/gpudirect-storage/o-direct-guide/index.html#opencl" shape="rect" name="opencl" style="background-repeat:no-repeat;box-sizing:border-box;background-color:transparent;touch-action:manipulation;text-decoration:none;font-weight:700;border-bottom:1px solid rgb(116, 185, 0);color:rgb(75, 69, 69);font-size:21px;"></a>
+    
+</h3>
+ 
+        
+         
+         <h3 style="background-repeat:no-repeat;box-sizing:border-box;margin:15px 0px;font-family:&quot;NVIDIA Sans&quot;;font-weight:700;font-size:21px;">
+    
+    OpenCL
+    
+</h3>
+ 
+         <p style="background-repeat:no-repeat;box-sizing:border-box;font-family:&quot;NVIDIA Sans&quot;;font-size:16px;font-weight:400;line-height:1.5;margin:20px 0px;"></p> 
+       <p style="background-repeat:no-repeat;box-sizing:border-box;font-family:&quot;NVIDIA Sans&quot;;font-size:16px;font-weight:400;line-height:1.5;margin:20px 0px;">OpenCL is a trademark of Apple Inc. used under license to the Khronos Group Inc. 
+        </p><p style="background-repeat:no-repeat;box-sizing:border-box;font-family:&quot;NVIDIA Sans&quot;;font-size:16px;font-weight:400;line-height:1.5;margin:20px 0px;"> 
+      
+       <a shape="rect" name="trademarks" style="background-repeat:no-repeat;box-sizing:border-box;background-color:transparent;touch-action:manipulation;text-decoration:none;font-weight:700;border-bottom:1px solid rgb(116, 185, 0);color:rgb(75, 69, 69);"> </a>
+       </p> 
+      <h3 style="background-repeat:no-repeat;box-sizing:border-box;margin:15px 0px;font-family:&quot;NVIDIA Sans&quot;;font-weight:700;font-size:21px;">
+    <a href="https://docs.nvidia.com/gpudirect-storage/o-direct-guide/index.html#trademarks" style="background-repeat:no-repeat;box-sizing:border-box;background-color:transparent;touch-action:manipulation;text-decoration:none;font-weight:700;border-bottom:1px solid rgb(116, 185, 0);color:rgb(75, 69, 69);font-size:21px;">
+    </a><a href="https://docs.nvidia.com/gpudirect-storage/o-direct-guide/index.html#trademarks" shape="rect" name="trademarks" style="background-repeat:no-repeat;box-sizing:border-box;background-color:transparent;touch-action:manipulation;text-decoration:none;font-weight:700;border-bottom:1px solid rgb(116, 185, 0);color:rgb(75, 69, 69);font-size:21px;"></a>
+    
+</h3>
+ 
+        
+         
+         <h3 style="background-repeat:no-repeat;box-sizing:border-box;margin:15px 0px;font-family:&quot;NVIDIA Sans&quot;;font-weight:700;font-size:21px;">
+    
+    Trademarks
+    
+</h3>
+ 
+         <p style="background-repeat:no-repeat;box-sizing:border-box;font-family:&quot;NVIDIA Sans&quot;;font-size:16px;font-weight:400;line-height:1.5;margin:20px 0px;"></p> 
+       <p style="background-repeat:no-repeat;box-sizing:border-box;font-family:&quot;NVIDIA Sans&quot;;font-size:16px;font-weight:400;line-height:1.5;margin:20px 0px;">NVIDIA, the NVIDIA logo, DGX, DGX-1, DGX-2, DGX-A100, Tesla, and Quadro are trademarks and/or registered trademarks of NVIDIA Corporation in the United States and other countries. Other company and product names may be trademarks of the respective companies with which they are associated.  
+        </p><p style="background-repeat:no-repeat;box-sizing:border-box;font-family:&quot;NVIDIA Sans&quot;;font-size:16px;font-weight:400;line-height:1.5;margin:20px 0px;margin-bottom:0px;"> 
+       
+     </p> 
+      
+        <span style="font-size:16px;display:table;clear:both;"></span></div>
+    
+</div>
+                                
+                            
+                        <span style="font-size:16px;display:table;clear:both;"></span></span>
+                    </div></span></div></div></div></div></div>
+</div></div>
+<a class="back-link" href="../articles.html">← 返回笔记列表</a>
+</body></html>

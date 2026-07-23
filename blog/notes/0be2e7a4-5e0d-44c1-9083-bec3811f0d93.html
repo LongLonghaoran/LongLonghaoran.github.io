@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="zh-CN" data-theme="light">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>kustomize工具实践 — 技术笔记</title>
+<style>
+:root {
+  --bg: #ffffff;
+  --text: #1a1a1a;
+  --muted: #666;
+  --border: #e0e0e0;
+  --code-bg: #f5f5f5;
+  --link: #0066cc;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #1a1a1a;
+    --text: #e0e0e0;
+    --muted: #999;
+    --border: #333;
+    --code-bg: #2a2a2a;
+    --link: #66bbff;
+  }
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  line-height: 1.7;
+  color: var(--text);
+  background: var(--bg);
+  max-width: 860px;
+  margin: 0 auto;
+  padding: 2rem 1.5rem;
+}
+.note-header {
+  border-bottom: 2px solid var(--border);
+  padding-bottom: 1rem;
+  margin-bottom: 2rem;
+}
+.note-title {
+  font-size: 1.6rem;
+  font-weight: 700;
+  margin-bottom: 0.3rem;
+}
+.note-meta {
+  color: var(--muted);
+  font-size: 0.85rem;
+}
+.note-content {
+  font-size: 0.95rem;
+}
+.note-content h1 { font-size: 1.4rem; margin: 1.2rem 0 0.6rem; }
+.note-content h2 { font-size: 1.2rem; margin: 1rem 0 0.5rem; }
+.note-content h3 { font-size: 1.05rem; margin: 0.8rem 0 0.4rem; }
+.note-content p { margin: 0.5rem 0; }
+.note-content ul, .note-content ol { margin: 0.5rem 0 0.5rem 2rem; }
+.note-content li { margin: 0.2rem 0; }
+.note-content pre {
+  background: var(--code-bg);
+  padding: 1rem;
+  border-radius: 6px;
+  overflow-x: auto;
+  margin: 0.8rem 0;
+  font-size: 0.85rem;
+}
+.note-content code {
+  background: var(--code-bg);
+  padding: 0.1rem 0.3rem;
+  border-radius: 3px;
+  font-size: 0.88em;
+}
+.note-content pre code {
+  background: none;
+  padding: 0;
+}
+.note-content blockquote {
+  border-left: 3px solid var(--border);
+  padding-left: 1rem;
+  color: var(--muted);
+  margin: 0.8rem 0;
+}
+.note-content a { color: var(--link); }
+.note-content img {
+  max-width: 100%;
+  height: auto;
+  border-radius: 6px;
+  margin: 0.5rem 0;
+}
+.note-content table {
+  border-collapse: collapse;
+  width: 100%;
+  margin: 0.8rem 0;
+}
+.note-content th, .note-content td {
+  border: 1px solid var(--border);
+  padding: 0.5rem;
+}
+.note-content th { background: var(--code-bg); }
+.media-placeholder {
+  background: var(--code-bg);
+  padding: 1rem;
+  text-align: center;
+  color: var(--muted);
+  border-radius: 6px;
+  margin: 0.5rem 0;
+  font-size: 0.85rem;
+}
+.encrypt-placeholder {
+  background: #fff3cd;
+  padding: 0.5rem;
+  text-align: center;
+  color: #856404;
+  border-radius: 6px;
+  margin: 0.5rem 0;
+  font-size: 0.85rem;
+}
+.back-link {
+  display: inline-block;
+  margin-top: 2rem;
+  color: var(--link);
+  text-decoration: none;
+  font-size: 0.85rem;
+}
+</style>
+</head>
+<body>
+<div class="note-header">
+  <div class="note-title">kustomize工具实践</div>
+  <div class="note-meta">笔记本：Kubernetes学习笔记</div>
+</div>
+<div class="note-content">
+<div>multibase:</div><div>kustomize鼓励定义多个变种-比如. dev, staging 和prod,作为一个通用基准的覆盖</div><div>创建一个覆盖来组合已有的这些变种是有可能的-只需将这些覆盖声明为新的kustomization的基准就好了</div><div>例子:</div><div>1.先创建一个目录作为基准目录，在其中定义一个单个pod的声明</div><div><div class="media-placeholder">[图片/附件]</div><br /></div><div>2.在与其同级的目录上创建用于覆盖的目录dev和staging等(比如prod)</div><div><div class="media-placeholder">[图片/附件]</div><br /></div><div>3.在覆盖的目录中使用base目录作为基准来进行覆盖,如上定义的kustomization.yaml</div><div>4.再在这些目录共同的根目录下创建一个kustomization.yaml文件以此来这些变种作为基准来定一个新的变种</div><div><div class="media-placeholder">[图片/附件]</div><br /></div><div>5.再使用kustomize build，就会同时生成多个变种的pod的声明</div><div><br /></div><div>行内补丁/patch:</div><div>kustomization目前支持三种类型的补丁:</div><div>patchesStrategicMerge: 补丁文件的列表，其每个文件都被解析为StrategicMergePatch</div><div>pathesJSON6902:补丁和关联目标的列表，每个文件被解析为JSON Patch并且只能应用到一个目标资源上</div><div>patches:补丁和关联目标的列表。补丁可以被应用到多个对象上。会自动检测补丁是Strategic Merge Path还是JSONPatch</div><div>3.2.0版本之后，所有的方式就都支持行内补丁了，补丁内容放在kustomization文件中。有了这个特性，就不需要创建单独的补丁文件了。</div><div>制作一个包含deployment资源的kustomization文件。</div><div>下面演示下几种补丁的使用方式:</div><div>1.patchStrategicMerge:</div><div><div class="media-placeholder">[图片/附件]</div><br /></div><div>创建补丁文件</div><div><div class="media-placeholder">[图片/附件]</div><br /></div><div><div class="media-placeholder">[图片/附件]</div><br /></div><div>2.PatchesJson6902</div><div>创建一个覆盖并且用patchesJSON6902字段给kustomization文件添加一个补丁来把镜像从nginx变为nginx:latest</div><div><div class="media-placeholder">[图片/附件]</div><br /></div><div>bespoke配置定制</div><div><div class="media-placeholder">[图片/附件]</div><br /></div><div><div class="media-placeholder">[图片/附件]</div><br /></div><div>通用配置off-the-shelf configuration(OTS configuration)</div><div><div class="media-placeholder">[图片/附件]</div><br /></div><div><div class="media-placeholder">[图片/附件]</div><br /></div><div><div class="media-placeholder">[图片/附件]</div><br /></div><div>内置插件(生成器和转化器):</div><div>每个插件都可以通过如下两种方式触发:</div><div>通过kustomization文件的字段隐式触发插件,例如AnnotationsTransformer就是由commonAnnotations字段触发的。</div><div>通过generators或transformers字段显式触发插件(通过指定插件的配置文件)。</div><div>使用transformers字段的话（就是额外创建使用插件的配置文件）用户可以指定哪些字段能被修改，而不受默认值的影响。</div><div>下面展示两种使用方式:</div><div>在kustomization.yaml文件中指定</div><div><div class="media-placeholder">[图片/附件]</div><br /></div><div>在transformers字段中指定外部文件:</div><div><div class="media-placeholder">[图片/附件]</div><br /></div><div>ConfigMapGenerator:</div><div><div class="media-placeholder">[图片/附件]</div><br /></div><div><div class="media-placeholder">[图片/附件]</div><br /></div><div><div class="media-placeholder">[图片/附件]</div><br /></div><div><div class="media-placeholder">[图片/附件]</div><br /></div><div>还有ImageTanTransformer:<span style="font-size: 16px; letter-spacing: normal; orphans: 2; text-indent: 0px; text-transform: none; white-space: normal; widows: 2; word-spacing: 0px; -webkit-text-stroke-width: 0px; color: rgb(34, 34, 34); font-family: &quot;open sans&quot;, -apple-system, system-ui, &quot;segoe ui&quot;, Roboto, &quot;helvetica neue&quot;, Arial, sans-serif, &quot;apple color emoji&quot;, &quot;segoe ui emoji&quot;, &quot;segoe ui symbol&quot;; font-variant-caps: normal; font-variant-ligatures: normal;">修改镜像的名称、tag 或 image digest ，而无需使用 patches，可以修改特定名称容器的镜像</span></div><div><span style="font-size: 16px; letter-spacing: normal; orphans: 2; text-indent: 0px; text-transform: none; white-space: normal; widows: 2; word-spacing: 0px; -webkit-text-stroke-width: 0px; color: rgb(34, 34, 34); font-family: &quot;open sans&quot;, -apple-system, system-ui, &quot;segoe ui&quot;, Roboto, &quot;helvetica neue&quot;, Arial, sans-serif, &quot;apple color emoji&quot;, &quot;segoe ui emoji&quot;, &quot;segoe ui symbol&quot;; font-variant-caps: normal; font-variant-ligatures: normal;">LabelTransformer:为所有资源和selectors增加标签。</span></div><div><span style="font-size: 16px; letter-spacing: normal; orphans: 2; text-indent: 0px; text-transform: none; white-space: normal; widows: 2; word-spacing: 0px; -webkit-text-stroke-width: 0px; color: rgb(34, 34, 34); font-family: &quot;open sans&quot;, -apple-system, system-ui, &quot;segoe ui&quot;, Roboto, &quot;helvetica neue&quot;, Arial, sans-serif, &quot;apple color emoji&quot;, &quot;segoe ui emoji&quot;, &quot;segoe ui symbol&quot;; font-variant-caps: normal; font-variant-ligatures: normal;">NamespaceTransformer,</span></div><div><span style="font-size: 16px; letter-spacing: normal; orphans: 2; text-indent: 0px; text-transform: none; white-space: normal; widows: 2; word-spacing: 0px; -webkit-text-stroke-width: 0px; color: rgb(34, 34, 34); font-family: &quot;open sans&quot;, -apple-system, system-ui, &quot;segoe ui&quot;, Roboto, &quot;helvetica neue&quot;, Arial, sans-serif, &quot;apple color emoji&quot;, &quot;segoe ui emoji&quot;, &quot;segoe ui symbol&quot;; font-variant-caps: normal; font-variant-ligatures: normal;">PatchJson6902Transformer,可以以插件的形式来使用，也是放在transformers字段下，或者kustomization文件指定patchesJson6902字段来使用:</span></div><div><span style="font-size: 16px; color: rgb(34, 34, 34); font-family: &quot;open sans&quot;;"><div class="media-placeholder">[图片/附件]</div><br /></span></div><div><span style="font-size: 16px; color: rgb(34, 34, 34); font-family: &quot;open sans&quot;;"><div class="media-placeholder">[图片/附件]</div><br /></span></div><div><span style="caret-color: rgb(34, 34, 34); color: rgb(34, 34, 34); font-family: &quot;open sans&quot;;">插件方式使用:</span></div><div><span style="font-size: 16px; color: rgb(34, 34, 34); font-family: &quot;open sans&quot;;"><div class="media-placeholder">[图片/附件]</div><br /></span></div><div><span style="font-size: 16px; letter-spacing: normal; orphans: 2; text-indent: 0px; text-transform: none; white-space: normal; widows: 2; word-spacing: 0px; -webkit-text-stroke-width: 0px; color: rgb(34, 34, 34); font-family: &quot;open sans&quot;, -apple-system, system-ui, &quot;segoe ui&quot;, Roboto, &quot;helvetica neue&quot;, Arial, sans-serif, &quot;apple color emoji&quot;, &quot;segoe ui emoji&quot;, &quot;segoe ui symbol&quot;; font-variant-caps: normal; font-variant-ligatures: normal;">PatchStrategicMerge:</span></div><div><span style="font-size: 16px; color: rgb(34, 34, 34); font-family: &quot;open sans&quot;;"><div class="media-placeholder">[图片/附件]</div><br /></span></div><div><span style="font-size: 16px; color: rgb(34, 34, 34); font-family: &quot;open sans&quot;;"><div class="media-placeholder">[图片/附件]</div><br /></span></div><div><span style="font-size: 16px; letter-spacing: normal; orphans: 2; text-indent: 0px; text-transform: none; white-space: normal; widows: 2; word-spacing: 0px; -webkit-text-stroke-width: 0px; color: rgb(34, 34, 34); font-family: &quot;open sans&quot;, -apple-system, system-ui, &quot;segoe ui&quot;, Roboto, &quot;helvetica neue&quot;, Arial, sans-serif, &quot;apple color emoji&quot;, &quot;segoe ui emoji&quot;, &quot;segoe ui symbol&quot;; font-variant-caps: normal; font-variant-ligatures: normal;">PatchTransformer:</span></div><div><span style="font-size: 16px; color: rgb(34, 34, 34); font-family: &quot;open sans&quot;;"><div class="media-placeholder">[图片/附件]</div><br /></span></div><div><span style="font-size: 16px; color: rgb(34, 34, 34); font-family: &quot;open sans&quot;;">PrefixSuffixTransformer:为所有资源的名称添加前缀或者后缀</span></div><div><span style="font-size: 16px; color: rgb(34, 34, 34); font-family: &quot;open sans&quot;;"><div class="media-placeholder">[图片/附件]</div><br /></span></div><div><span style="font-size: 16px; color: rgb(34, 34, 34); font-family: &quot;open sans&quot;;">ReplicaCountTransformer:修改资源的副本数</span></div><div><span style="font-size: 16px; color: rgb(34, 34, 34); font-family: &quot;open sans&quot;;"><div class="media-placeholder">[图片/附件]</div><br /></span></div><div><span style="font-size: 16px; color: rgb(34, 34, 34); font-family: &quot;open sans&quot;;"><div class="media-placeholder">[图片/附件]</div><br /></span></div><div><span style="font-size: 16px; color: rgb(34, 34, 34); font-family: &quot;open sans&quot;;">SecretGenerator:放在generators字段中通过额外文件指定，或者直接在secretGenerator字段中指定</span></div><div><span style="font-size: 16px; color: rgb(34, 34, 34); font-family: &quot;open sans&quot;;"><div class="media-placeholder">[图片/附件]</div><br /></span></div><div><span style="font-size: 16px; color: rgb(34, 34, 34); font-family: &quot;open sans&quot;;"><div class="media-placeholder">[图片/附件]</div><br /></span></div><div><span style="font-size: 16px; letter-spacing: normal; orphans: 2; text-indent: 0px; text-transform: none; white-space: normal; widows: 2; word-spacing: 0px; -webkit-text-stroke-width: 0px;"><br /></span></div><div>kustomize插件(用户自行开发生成器和转化器):</div><div><br /></div><div>kustomize命令:</div><div>build 将kustomization.yaml文件构建成为k8s中对应的资源的描述</div><div>cfg 用于读取和写入配置</div><div><span>    kustomize cfg add configmap mycm --literal</span><br /></div><div><span>completion 生成shell的自动补全脚本</span></div><div><span>create 在当前目录创建一个kustomization文件</span></div><div><span><span>    对于kustomization文件中的resources,namespace,nameprefix,namesuffix字段可以直接在命令行通过选项指定</span><br /></span></div><div><div class="media-placeholder">[图片/附件]</div></div><div>edit 可以直接在命令行对kustomization文件进行一些快速的编辑</div><div>fn 针对配置来执行一些函数:</div><div>localize </div><div><br /></div><div>  </div><div><br /></div>
+</div>
+<a class="back-link" href="../articles.html">← 返回笔记列表</a>
+</body>
+</html>

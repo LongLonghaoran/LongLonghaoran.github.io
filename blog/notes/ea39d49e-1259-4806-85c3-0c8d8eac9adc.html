@@ -1,0 +1,232 @@
+<!DOCTYPE html>
+<html lang="zh-CN" data-theme="light">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>使用 acme.sh 给 Nginx 安装 Let’ s Encrypt 提供的免费 SSL 证书 · Ruby China — 技术笔记</title>
+<style>
+:root { --bg:#fff; --text:#1a1a1a; --muted:#666; --border:#e0e0e0; --code-bg:#f5f5f5; --link:#0066cc; }
+@media (prefers-color-scheme: dark) { :root { --bg:#1a1a1a; --text:#e0e0e0; --muted:#999; --border:#333; --code-bg:#2a2a2a; --link:#66bbff; } }
+* { box-sizing:border-box; margin:0; padding:0; }
+body { font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Arial,sans-serif; line-height:1.7; color:var(--text); background:var(--bg); max-width:860px; margin:0 auto; padding:2rem 1.5rem; }
+.note-header { border-bottom:2px solid var(--border); padding-bottom:1rem; margin-bottom:2rem; }
+.note-title { font-size:1.6rem; font-weight:700; margin-bottom:0.3rem; }
+.note-meta { color:var(--muted); font-size:0.85rem; }
+.note-content { font-size:0.95rem; }
+.note-content h1 { font-size:1.4rem; margin:1.2rem 0 0.6rem; }
+.note-content h2 { font-size:1.2rem; margin:1rem 0 0.5rem; }
+.note-content h3 { font-size:1.05rem; margin:0.8rem 0 0.4rem; }
+.note-content p { margin:0.5rem 0; }
+.note-content ul,.note-content ol { margin:0.5rem 0 0.5rem 2rem; }
+.note-content li { margin:0.2rem 0; }
+.note-content pre { background:var(--code-bg); padding:1rem; border-radius:6px; overflow-x:auto; margin:0.8rem 0; font-size:0.85rem; }
+.note-content code { background:var(--code-bg); padding:0.1rem 0.3rem; border-radius:3px; font-size:0.88em; }
+.note-content pre code { background:none; padding:0; }
+.note-content blockquote { border-left:3px solid var(--border); padding-left:1rem; color:var(--muted); margin:0.8rem 0; }
+.note-content a { color:var(--link); }
+.note-content img { max-width:100%; height:auto; border-radius:6px; margin:0.5rem 0; }
+.note-content table { border-collapse:collapse; width:100%; margin:0.8rem 0; }
+.note-content th,.note-content td { border:1px solid var(--border); padding:0.5rem; }
+.note-content th { background:var(--code-bg); }
+.media-placeholder { background:var(--code-bg); padding:1rem; text-align:center; color:var(--muted); border-radius:6px; margin:0.5rem 0; font-size:0.85rem; }
+.encrypt-placeholder { background:#fff3cd; padding:0.5rem; text-align:center; color:#856404; border-radius:6px; margin:0.5rem 0; font-size:0.85rem; }
+.back-link { display:inline-block; margin-top:2rem; color:var(--link); text-decoration:none; font-size:0.85rem; }
+</style>
+</head>
+<body>
+<div class="note-header"><div class="note-title">使用 acme.sh 给 Nginx 安装 Let’ s Encrypt 提供的免费 SSL 证书 · Ruby China</div><div class="note-meta">笔记本：关于加密、解密、签名</div></div>
+<div class="note-content"><div style="--en-clipped-content:simplified; --en-clipped-source-url:https://ruby-china.org/topics/31983; --en-clipped-source-title:使用 acme.sh 给 Nginx 安装 Let’ s Encrypt 提供的免费 SSL 证书 · Ruby China;">
+<div><br/></div><div style="min-height: 5875px; font-size: 16px; display: block; min-width: 100%; position: relative;"> <div style="background-color:transparent;font:inherit;vertical-align:baseline;"><div style="background-color:transparent;font:inherit;vertical-align:baseline;font-family:&quot;PT Serif&quot;;font-size:16px;line-height:1.5em;color:rgb(31, 9, 9);text-align:left;"><div style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;"><div style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;width:36em;z-index:200;padding-left:2em;padding-right:2em;margin-left:auto;margin-right:auto;position:relative;"><div style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;position:relative;margin-left:-25px;margin-right:25px;"><div style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;padding-top:0px;padding-bottom:9em;position:relative;"><div style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;margin-bottom:1.5em;"><div style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;position:relative;margin-bottom:0px;"><div style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;margin-bottom:0px;"><div style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;margin-bottom:0px;"><h1 style="font-family:&quot;PT Serif&quot;;text-align:left;border:0px;font:inherit;vertical-align:baseline;font-size:35px;font-weight:normal;line-height:35px;margin-bottom:20px;padding:0px;margin:0px;"> 部署 使用 acme.sh 给 Nginx 安装 Let’ s Encrypt 提供的免费 SSL 证书 </h1><div style="padding:0px;border:0px;font:inherit;vertical-align:baseline;position:relative;height:1em;line-height:1;text-align:center;margin:0px;padding-top:1.5em;padding-bottom:1.5em;margin-bottom:0px;"><div style="padding:0px;border:0px;font:inherit;vertical-align:baseline;background:-webkit-linear-gradient(0deg, rgb(243, 242, 238) 1%, rgb(31, 9, 9) 50%, rgb(243, 242, 238) 99%);position:absolute;left:-4em;top:50%;z-index:10;width:100%;padding-left:4em;padding-right:4em;height:0.1em;opacity:0.5;margin:0px;margin-bottom:0px;"></div></div></div>
+    <div style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;margin-bottom:1.5em;">
+      <a href="https://ruby-china.org/huacnlee" style="color:rgb(6, 85, 136);margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;text-decoration:none;">huacnlee</a>
+      
+       ·
+      <abbr style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;">2016年12月23日</abbr>
+      
+         ·
+        最后由 <a href="https://ruby-china.org/kikyous" style="color:rgb(6, 85, 136);margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;text-decoration:none;">kikyous</a> 回复于 <abbr style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;">2022年01月23日</abbr>
+      
+       ·
+      49891 次阅读
+    </div>
+  
+  
+
+
+        <div style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;margin-bottom:1.5em;">
+           本帖已被管理员设置为精华贴
+        </div>
+      <div style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;margin-bottom:0px;">
+        
+        <p style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;margin-bottom:1.5em;">最近 Apple 在强推 SSL 了，非 SSL 的网络请求无法通过审核，于是发现有好多的朋友都在给网站配置 HTTPS，同时他们也遇到了好多坑。</p>
+
+<p style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;margin-bottom:1.5em;">其实有更简单的方式，使用 <a href="https://letsencrypt.org/" style="color:rgb(6, 85, 136);margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;text-decoration:none;">Let&apos;s Encrypt</a>，关于这个，这里就不多讲了，之前有人介绍过：</p>
+
+<ul style="padding:0px;border:0px;font:inherit;vertical-align:baseline;margin:0px 0px 1.5em 1.5em;list-style:none;margin-top:-1em;list-style-type:square;">
+<li style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;list-style-type:inherit;list-style-position:outside;"><a href="https://ruby-china.org/topics/28471" style="color:rgb(6, 85, 136);margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;text-decoration:none;">https://ruby-china.org/topics/28471</a></li>
+<li style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;list-style-type:inherit;list-style-position:outside;"><a href="https://ruby-china.org/topics/25543" style="color:rgb(6, 85, 136);margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;text-decoration:none;">https://ruby-china.org/topics/25543</a></li>
+</ul>
+
+<p style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;margin-bottom:1.5em;">以及前面还有一篇介绍用 Let&apos;s Encrypt 官方教程里面的工具安装的文章：<a href="https://ruby-china.org/topics/31942" style="color:rgb(6, 85, 136);margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;text-decoration:none;">https://ruby-china.org/topics/31942</a></p>
+
+<p style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;margin-bottom:1.5em;">我这里要介绍的是另外一个 <a href="https://github.com/Neilpang/acme.sh" style="color:rgb(6, 85, 136);margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;text-decoration:none;">acme.sh</a> 这个是用 Shell 脚本编写的，安装更容易，Let&apos;s Encrypt 那个 <code style="font-family:Inconsolata;margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;font-size:0.875em;line-height:1.71429em;">certbot</code> 工具需要安装一大堆系统库以及 Python 库，Python 的 pip 在国内还会有墙的问题...</p>
+<h2 style="font-family:&quot;PT Serif&quot;;text-align:left;margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;font-weight:bold;font-size:30px;line-height:35px;margin-top:35px;margin-bottom:15px;">安装 acme.sh</h2><pre style="background-color:rgb(243, 242, 238);font-family:Inconsolata;margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;width:auto;font-size:0.875em;line-height:1.71429em;"><code style="font-family:Inconsolata;margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;line-height:1.71429em;font-size:1.15em;">curl https://get.acme.sh | sh
+</code></pre>
+<blockquote style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;quotes:none;margin-bottom:1.5em;font-style:italic;border-left:5px solid;margin-left:2em;padding-left:1em;">
+<p style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;margin-bottom:0px;">PS: 第一次可能会遇到 <code style="font-family:Inconsolata;margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;font-size:0.875em;line-height:1.71429em;">curl: (6) Couldn&apos;t resolve host &apos;get.acme.sh&apos;</code> 重试一下就可以了。</p>
+</blockquote>
+
+<p style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;margin-bottom:1.5em;">然后重新载入一下 <code style="font-family:Inconsolata;margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;font-size:0.875em;line-height:1.71429em;">.bashrc</code> </p>
+<pre style="background-color:rgb(243, 242, 238);font-family:Inconsolata;margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;width:auto;font-size:0.875em;line-height:1.71429em;"><code style="font-family:Inconsolata;margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;line-height:1.71429em;font-size:1.15em;">source ~/.bashrc 
+</code></pre>
+<p style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;margin-bottom:1.5em;">现在你就有了 <code style="font-family:Inconsolata;margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;font-size:0.875em;line-height:1.71429em;">acme.sh</code> 的命令。</p>
+<h2 style="font-family:&quot;PT Serif&quot;;text-align:left;margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;font-weight:bold;font-size:30px;line-height:35px;margin-top:35px;margin-bottom:15px;">申请签发 SSL 证书</h2><pre style="background-color:rgb(243, 242, 238);font-family:Inconsolata;margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;width:auto;font-size:0.875em;line-height:1.71429em;"><code style="font-family:Inconsolata;margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;line-height:1.71429em;font-size:1.15em;">acme.sh --issue -d www.your-app.com -w /home/ubuntu/www/your-app/current/public
+</code></pre>
+<blockquote style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;quotes:none;margin-bottom:1.5em;font-style:italic;border-left:5px solid;margin-left:2em;padding-left:1em;">
+<p style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;margin-bottom:1.5em;">NOTE! 
+上面这段过程将会往 <code style="font-family:Inconsolata;margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;font-size:0.875em;line-height:1.71429em;">/home/ubuntu/www/your-app/current/public</code> 创建一个 <code style="font-family:Inconsolata;margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;font-size:0.875em;line-height:1.71429em;">.well-known</code> 的文件夹，同时 Let’s Encrypt 将会通过你要注册的域名去访问那个文件来确定权限，它可能会去访问 <a href="http://www.your-app.com/.well-known/" style="color:rgb(6, 85, 136);margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;text-decoration:none;">http://www.your-app.com/.well-known/</a> 这个路径。</p>
+
+<p style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;margin-bottom:0px;">所以你需要确保  <code style="font-family:Inconsolata;margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;font-size:0.875em;line-height:1.71429em;">/home/ubuntu/www/your-app/current/public</code> 是在 Nginx 上配置成 root 目录，里面任意文件可以直接域名访问的。</p>
+</blockquote>
+
+<p style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;margin-bottom:1.5em;">如果成功的话，你就会看到这样的结果：</p>
+<pre style="background-color:rgb(243, 242, 238);font-family:Inconsolata;margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;width:auto;font-size:0.875em;line-height:1.71429em;"><code style="font-family:Inconsolata;margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;line-height:1.71429em;font-size:1.15em;">[Fri Dec 23 11:20:15 CST 2016] Renew: &apos;www.your-app.com&apos;
+[Fri Dec 23 11:20:15 CST 2016] Single domain=&apos;www.your-app.com&apos;
+[Fri Dec 23 11:20:15 CST 2016] Getting domain auth token for each domain
+[Fri Dec 23 11:20:15 CST 2016] Getting webroot for domain=&apos;www.your-app.com&apos;
+[Fri Dec 23 11:20:15 CST 2016] _w=&apos;/home/ubuntu/www/your-app/current/public/&apos;
+[Fri Dec 23 11:20:15 CST 2016] Getting new-authz for domain=&apos;www.your-app.com&apos;
+[Fri Dec 23 11:08:57 CST 2016] The new-authz request is ok.
+[Fri Dec 23 11:08:57 CST 2016] Verifying:www.your-app.com
+[Fri Dec 23 11:09:01 CST 2016] Success
+[Fri Dec 23 11:09:01 CST 2016] Verify finished, start to sign.
+[Fri Dec 23 11:09:02 CST 2016] Cert success.
+-----BEGIN CERTIFICATE-----
+...
+-----END CERTIFICATE-----
+[Fri Dec 23 11:09:02 CST 2016] Your cert is in  /home/ubuntu/.acme.sh/www.your-app.com/www.your-app.com.cer 
+[Fri Dec 23 11:09:02 CST 2016] Your cert key is in  /home/ubuntu/.acme.sh/www.your-app.com/www.your-app.com.key 
+[Fri Dec 23 11:09:04 CST 2016] The intermediate CA cert is in  /home/ubuntu/.acme.sh/www.your-app.com/ca.cer 
+[Fri Dec 23 11:09:04 CST 2016] And the full chain certs is there:  /home/ubuntu/.acme.sh/www.your-app.com/fullchain.cer 
+</code></pre>
+<p style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;margin-bottom:1.5em;">你的证书文件已经申请成功了，并放到了 <code style="font-family:Inconsolata;margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;font-size:0.875em;line-height:1.71429em;">~/.acme.sh/</code> 目录里面。</p>
+
+<blockquote style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;quotes:none;margin-bottom:1.5em;font-style:italic;border-left:5px solid;margin-left:2em;padding-left:1em;">
+<p style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;margin-bottom:0px;">TIP: 所有的 acme.sh 配置都记录在 <code style="font-family:Inconsolata;margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;font-size:0.875em;line-height:1.71429em;">~/.acme.sh/</code> 目录里面，acme.sh 有自动的配置读取，并按域名划分，下次你再次执行的时候，它知道你之前是用的那个目录，只需要告诉它域名就好了。</p>
+</blockquote>
+<h2 style="font-family:&quot;PT Serif&quot;;text-align:left;margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;font-weight:bold;font-size:30px;line-height:35px;margin-top:35px;margin-bottom:15px;">将 SSL 证书安装到网站的路径，并配置好 restart Nginx 的动作</h2>
+<blockquote style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;quotes:none;margin-bottom:1.5em;font-style:italic;border-left:5px solid;margin-left:2em;padding-left:1em;">
+<p style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;margin-bottom:0px;">NOTE: 这个比较重要，因为它会让 <code style="font-family:Inconsolata;margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;font-size:0.875em;line-height:1.71429em;">acme.sh</code> 记住重启 Nginx 的命令，以后自动更新证书的动作需要重启 Nginx</p>
+</blockquote>
+<pre style="background-color:rgb(243, 242, 238);font-family:Inconsolata;margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;width:auto;font-size:0.875em;line-height:1.71429em;"><code style="font-family:Inconsolata;margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;line-height:1.71429em;font-size:1.15em;">acme.sh --installcert -d www.your-app.com 
+               --keypath       /home/ubuntu/www/ssl/www.your-app.com.key  
+               --fullchainpath /home/ubuntu/www/ssl/www.your-app.com.key.pem 
+               --reloadcmd     &quot;sudo service nginx force-reload&quot;
+</code></pre>
+<p style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;margin-bottom:1.5em;">然后你会看到结果</p>
+<pre style="background-color:rgb(243, 242, 238);font-family:Inconsolata;margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;width:auto;font-size:0.875em;line-height:1.71429em;"><code style="font-family:Inconsolata;margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;line-height:1.71429em;font-size:1.15em;">[Fri Dec 23 11:59:57 CST 2016] Installing key to:/home/ubuntu/www/ssl/www.your-app.com.key
+[Fri Dec 23 11:59:57 CST 2016] Installing full chain to:/home/ubuntu/www/ssl/www.your-app.com.key.pem
+[Fri Dec 23 11:59:57 CST 2016] Run Le_ReloadCmd: sudo service nginx force-reload
+Restarting nginx: nginx.
+[Fri Dec 23 11:59:58 CST 2016] Reload success
+</code></pre><h2 style="font-family:&quot;PT Serif&quot;;text-align:left;margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;font-weight:bold;font-size:30px;line-height:35px;margin-top:35px;margin-bottom:15px;">修改一下 sudoer 文件，让 <code style="font-family:Inconsolata;margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;font-size:0.875em;line-height:1.71429em;">sudo service nginx force-reload</code> 不需要输入密码</h2><pre style="background-color:rgb(243, 242, 238);font-family:Inconsolata;margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;width:auto;font-size:0.875em;line-height:1.71429em;"><code style="font-family:Inconsolata;margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;line-height:1.71429em;font-size:1.15em;">sudo visudo
+</code></pre>
+<p style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;margin-bottom:1.5em;">打开文件以后新增：</p>
+
+<blockquote style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;quotes:none;margin-bottom:1.5em;font-style:italic;border-left:5px solid;margin-left:2em;padding-left:1em;">
+<p style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;margin-bottom:0px;">NOTE: <code style="font-family:Inconsolata;margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;font-size:0.875em;line-height:1.71429em;">ubuntu</code> 是 acme.sh 安装所用的账号</p>
+</blockquote>
+<pre style="background-color:rgb(243, 242, 238);font-family:Inconsolata;margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;width:auto;font-size:0.875em;line-height:1.71429em;"><code style="font-family:Inconsolata;margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;line-height:1.71429em;font-size:1.15em;">ubuntu  ALL=(ALL) NOPASSWD: /usr/sbin/service nginx force-reload
+</code></pre><h2 style="font-family:&quot;PT Serif&quot;;text-align:left;margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;font-weight:bold;font-size:30px;line-height:35px;margin-top:35px;margin-bottom:15px;">生成 dhparam.pem 文件</h2><pre style="background-color:rgb(243, 242, 238);font-family:Inconsolata;margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;width:auto;font-size:0.875em;line-height:1.71429em;"><code style="font-family:Inconsolata;margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;line-height:1.71429em;font-size:1.15em;">openssl dhparam -out /home/ubuntu/www/ssl/dhparam.pem 2048
+</code></pre><h2 style="font-family:&quot;PT Serif&quot;;text-align:left;margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;font-weight:bold;font-size:30px;line-height:35px;margin-top:35px;margin-bottom:15px;">修改 Nginx 启用 SSL</h2><pre style="background-color:rgb(243, 242, 238);font-family:Inconsolata;margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;width:auto;font-size:0.875em;line-height:1.71429em;"><code style="font-family:Inconsolata;margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;line-height:1.71429em;font-size:1.15em;">http {
+  # 新增
+  ssl_protocols TLSv1 TLSv1.1 TLSv1.2;
+  ssl_prefer_server_ciphers on;
+  # 兼容其他老浏览器的 ssl_ciphers 设置请访问 https://wiki.mozilla.org/Security/Server_Side_TLS
+
+  server {
+    listen 80 default_server;
+    # 新增
+    listen 443 ssl;
+    ssl_certificate         /home/ubuntu/www/ssl/www.your-app.com.key.pem;
+    ssl_certificate_key     /home/ubuntu/www/ssl/www.your-app.com.key;
+    # ssl_dhparam 
+    ssl_dhparam             /home/ubuntu/www/ssl/dhparam.pem;
+
+    # 其他省略
+  }
+}
+</code></pre>
+<p style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;margin-bottom:1.5em;">检查 Nginx 配置是否正确后重启</p>
+<pre style="background-color:rgb(243, 242, 238);font-family:Inconsolata;margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;width:auto;font-size:0.875em;line-height:1.71429em;"><code style="font-family:Inconsolata;margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;line-height:1.71429em;font-size:1.15em;">sudo service nginx configtest
+sudo service nginx restart
+</code></pre><h2 style="font-family:&quot;PT Serif&quot;;text-align:left;margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;font-weight:bold;font-size:30px;line-height:35px;margin-top:35px;margin-bottom:15px;">验证 SSL</h2>
+<p style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;margin-bottom:1.5em;">访问 ssllabs.com 输入你的域名，检查 SSL 的配置是否都正常：</p>
+
+<p style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;margin-bottom:1.5em;"><a href="https://ssllabs.com/ssltest/analyze.html?d=ruby-china.org" style="color:rgb(6, 85, 136);margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;text-decoration:none;">https://ssllabs.com/ssltest/analyze.html?d=ruby-china.org</a></p>
+
+<p style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;margin-bottom:1.5em;">确保验证结果有 A 以上，否则根据提示调整问题</p>
+
+<p style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;margin-bottom:1.5em;"><a href="https://l.ruby-china.com/photo/2016/30b94b5469ec0e8aa5d6e9dd4088f492.png!large" style="color:rgb(6, 85, 136);border:0px;font:inherit;vertical-align:baseline;text-decoration:none;display:block;background-color:transparent;margin:0px;padding:0px;"></a></p><div style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;margin-bottom:1.5em;"><div style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;display:block;text-align:center;margin-top:1em;margin-bottom:0px;"><a href="https://l.ruby-china.com/photo/2016/30b94b5469ec0e8aa5d6e9dd4088f492.png!large" style="color:rgb(6, 85, 136);border:0px;font:inherit;vertical-align:baseline;text-decoration:none;display:block;background-color:transparent;margin:0px;padding:0px;"><div class="media-placeholder">[图片/附件]</div></en-media></a></div></div><p style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;margin-bottom:1.5em;"></p>
+<h2 style="font-family:&quot;PT Serif&quot;;text-align:left;margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;font-weight:bold;font-size:30px;line-height:35px;margin-top:35px;margin-bottom:15px;">后续维护</h2>
+<p style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;margin-bottom:1.5em;">Let&apos;s Encrypt 的证书有效期是 90 天的，你需要定期 <code style="font-family:Inconsolata;margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;font-size:0.875em;line-height:1.71429em;">renew</code> 重新申请，这部分 <code style="font-family:Inconsolata;margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;font-size:0.875em;line-height:1.71429em;">acme.sh</code> 以及帮你做了，在安装的时候往 crontab 增加了一行每天执行的命令 <code style="font-family:Inconsolata;margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;font-size:0.875em;line-height:1.71429em;">acme.sh --cron</code>:</p>
+<pre style="background-color:rgb(243, 242, 238);font-family:Inconsolata;margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;width:auto;font-size:0.875em;line-height:1.71429em;"><code style="font-family:Inconsolata;margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;line-height:1.71429em;font-size:1.15em;">$ crontab -l
+0 0 * * * &quot;/home/ubuntu/.acme.sh&quot;/acme.sh --cron --home &quot;/home/ubuntu/.acme.sh&quot; &gt; /dev/null
+</code></pre>
+<blockquote style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;quotes:none;margin-bottom:1.5em;font-style:italic;border-left:5px solid;margin-left:2em;padding-left:1em;">
+<p style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;margin-bottom:0px;">PS: 下面这段你可以尝试执行一下，看看是否正确</p>
+</blockquote>
+<pre style="background-color:rgb(243, 242, 238);font-family:Inconsolata;margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;width:auto;font-size:0.875em;line-height:1.71429em;"><code style="font-family:Inconsolata;margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;line-height:1.71429em;font-size:1.15em;">&quot;/home/ubuntu/.acme.sh&quot;/acme.sh --cron --home &quot;/home/ubuntu/.acme.sh&quot;
+</code></pre>
+<p style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;margin-bottom:1.5em;">这样就是正常的：</p>
+<pre style="background-color:rgb(243, 242, 238);font-family:Inconsolata;margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;width:auto;font-size:0.875em;line-height:1.71429em;"><code style="font-family:Inconsolata;margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;line-height:1.71429em;font-size:1.15em;">[Fri Dec 23 11:50:30 CST 2016] Renew: &apos;www.your-app.com&apos;
+[Fri Dec 23 11:50:30 CST 2016] Skip, Next renewal time is: Tue Feb 21 03:20:54 UTC 2017
+[Fri Dec 23 11:50:30 CST 2016] Add &apos;--force&apos; to force to renew.
+[Fri Dec 23 11:50:30 CST 2016] Skipped www.your-app.com
+</code></pre>
+<p style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;margin-bottom:1.5em;"><code style="font-family:Inconsolata;margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;font-size:0.875em;line-height:1.71429em;">acme.sh --cron</code> 命令执行以后将会 <strong style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;font-weight:bold;">申请新的证书</strong> 并放到相同的文件路径。由于前面执行 <code style="font-family:Inconsolata;margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;font-size:0.875em;line-height:1.71429em;">--installcert</code> 的时候告知了重新 Nginx 的方法，<code style="font-family:Inconsolata;margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;font-size:0.875em;line-height:1.71429em;">acme.sh</code> 也同时会在证书更新以后重启 Nginx。</p>
+<h2 style="font-family:&quot;PT Serif&quot;;text-align:left;margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;font-weight:bold;font-size:30px;line-height:35px;margin-top:35px;margin-bottom:15px;">最后走一下 acme.sh --cron 的流程看看能否正确执行</h2><pre style="background-color:rgb(243, 242, 238);font-family:Inconsolata;margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;width:auto;font-size:0.875em;line-height:1.71429em;"><code style="font-family:Inconsolata;margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;line-height:1.71429em;font-size:1.15em;">acme.sh --cron -f
+</code></pre>
+<p style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;margin-bottom:1.5em;">这个过程应该会得到这样的结果，并在最后重启 Nginx (不需要输入密码)</p>
+<pre style="background-color:rgb(243, 242, 238);font-family:Inconsolata;margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;width:auto;font-size:0.875em;line-height:1.71429em;"><code style="font-family:Inconsolata;margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;line-height:1.71429em;font-size:1.15em;">[Tue Dec 27 14:28:09 CST 2016] Renew: &apos;www.your-app.com&apos;
+[Tue Dec 27 14:28:09 CST 2016] Single domain=&apos;www.your-app.com&apos;
+[Tue Dec 27 14:28:09 CST 2016] Getting domain auth token for each domain
+[Tue Dec 27 14:28:09 CST 2016] Getting webroot for domain=&apos;www.your-app.com&apos;
+[Tue Dec 27 14:28:09 CST 2016] _w=&apos;/home/ubuntu/www/your-app/current/public/&apos;
+[Tue Dec 27 14:28:09 CST 2016] Getting new-authz for domain=&apos;www.your-app.com&apos;
+[Tue Dec 27 14:28:16 CST 2016] The new-authz request is ok.
+[Tue Dec 27 14:28:16 CST 2016] www.your-app.com is already verified, skip.
+[Tue Dec 27 14:28:16 CST 2016] www.your-app.com is already verified, skip http-01.
+[Tue Dec 27 14:28:16 CST 2016] www.your-app.com is already verified, skip http-01.
+[Tue Dec 27 14:28:16 CST 2016] Verify finished, start to sign.
+[Tue Dec 27 14:28:19 CST 2016] Cert success.
+... 省略
+[Fri Dec 23 11:09:02 CST 2016] Your cert is in  /home/ubuntu/.acme.sh/www.your-app.com/www.your-app.com.cer 
+[Fri Dec 23 11:09:02 CST 2016] Your cert key is in  /home/ubuntu/.acme.sh/www.your-app.com/www.your-app.com.key 
+[Fri Dec 23 11:09:04 CST 2016] The intermediate CA cert is in  /home/ubuntu/.acme.sh/www.your-app.com/ca.cer 
+[Fri Dec 23 11:09:04 CST 2016] And the full chain certs is there:  /home/ubuntu/.acme.sh/www.your-app.com/fullchain.cer 
+[Tue Dec 27 14:28:22 CST 2016] Run Le_ReloadCmd: sudo service nginx force-reload
+ * Reloading nginx nginx                                                                                                                                     [ OK ] 
+[Tue Dec 27 14:28:22 CST 2016] Reload success
+</code></pre><h2 style="font-family:&quot;PT Serif&quot;;text-align:left;margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;font-weight:bold;font-size:30px;line-height:35px;margin-top:35px;margin-bottom:15px;">一些注意事项</h2>
+<ul style="padding:0px;border:0px;font:inherit;vertical-align:baseline;margin:0px 0px 1.5em 1.5em;list-style:none;margin-top:-1em;list-style-type:square;">
+<li style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;list-style-type:inherit;list-style-position:outside;">
+<code style="font-family:Inconsolata;margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;font-size:0.875em;line-height:1.71429em;">ssl_dhparam</code> 未配置，将导致 ssllabs.com 的评分降到 B，并给 <code style="font-family:Inconsolata;margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;font-size:0.875em;line-height:1.71429em;">This server supports weak Diffie-Hellman (DH) key exchange parameters. Grade capped to B.</code> 的警告。</li>
+<li style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;list-style-type:inherit;list-style-position:outside;">
+<code style="font-family:Inconsolata;margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;font-size:0.875em;line-height:1.71429em;">ssl_prefer_server_ciphers on</code> 也是一个必要的配置，否则会 A+ 变成 A-;</li>
+<li style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;list-style-type:inherit;list-style-position:outside;">如果你需要兼容老系统或老浏览器的话，你需要配置 <code style="font-family:Inconsolata;margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;font-size:0.875em;line-height:1.71429em;">ssl_ciphers</code>，详见 <a href="https://wiki.mozilla.org/Security/Server_Side_TLS" style="color:rgb(6, 85, 136);margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;text-decoration:none;">Mozilla Server_Side_TLS 的介绍</a>，Nginx 里面 <code style="font-family:Inconsolata;margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;font-size:0.875em;line-height:1.71429em;">ssl_ciphers</code> 默认值是 <code style="font-family:Inconsolata;margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;font-size:0.875em;line-height:1.71429em;">HIGH:!aNULL:!MD5;</code> <a href="http://nginx.org/en/docs/http/ngx_http_ssl_module.html#ssl_ciphers" style="color:rgb(6, 85, 136);margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;text-decoration:none;">ref</a>
+</li>
+</ul>
+
+<hr style="border-color:rgb(31, 9, 9);border-top:none;border-right:none;border-bottom:1px solid;border-left:none;"/>
+<h2 style="font-family:&quot;PT Serif&quot;;text-align:left;margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;font-weight:bold;font-size:30px;line-height:35px;margin-top:35px;margin-bottom:15px;">2021 年更新</h2>
+<p style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;margin-bottom:1.5em;">现在建议大家使用 Caddy 来实现自动 SSL，会简单很多，目前 Ruby China 已经用这个方式了，不再需要手动维护。</p>
+
+<p style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;margin-bottom:0px;"><a href="https://caddyserver.com/docs/quick-starts/https" style="color:rgb(6, 85, 136);margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;text-decoration:none;">https://caddyserver.com/docs/quick-starts/https</a></p>
+        
+      </div>
+      
+    </div></div></div></div></div></div></div></div></div></div>
+</div></div>
+<a class="back-link" href="../articles.html">← 返回笔记列表</a>
+</body></html>

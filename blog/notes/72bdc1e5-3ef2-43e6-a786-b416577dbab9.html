@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="zh-CN" data-theme="light">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>向量数据库 — 技术笔记</title>
+<style>
+:root {
+  --bg: #ffffff;
+  --text: #1a1a1a;
+  --muted: #666;
+  --border: #e0e0e0;
+  --code-bg: #f5f5f5;
+  --link: #0066cc;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #1a1a1a;
+    --text: #e0e0e0;
+    --muted: #999;
+    --border: #333;
+    --code-bg: #2a2a2a;
+    --link: #66bbff;
+  }
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  line-height: 1.7;
+  color: var(--text);
+  background: var(--bg);
+  max-width: 860px;
+  margin: 0 auto;
+  padding: 2rem 1.5rem;
+}
+.note-header {
+  border-bottom: 2px solid var(--border);
+  padding-bottom: 1rem;
+  margin-bottom: 2rem;
+}
+.note-title {
+  font-size: 1.6rem;
+  font-weight: 700;
+  margin-bottom: 0.3rem;
+}
+.note-meta {
+  color: var(--muted);
+  font-size: 0.85rem;
+}
+.note-content {
+  font-size: 0.95rem;
+}
+.note-content h1 { font-size: 1.4rem; margin: 1.2rem 0 0.6rem; }
+.note-content h2 { font-size: 1.2rem; margin: 1rem 0 0.5rem; }
+.note-content h3 { font-size: 1.05rem; margin: 0.8rem 0 0.4rem; }
+.note-content p { margin: 0.5rem 0; }
+.note-content ul, .note-content ol { margin: 0.5rem 0 0.5rem 2rem; }
+.note-content li { margin: 0.2rem 0; }
+.note-content pre {
+  background: var(--code-bg);
+  padding: 1rem;
+  border-radius: 6px;
+  overflow-x: auto;
+  margin: 0.8rem 0;
+  font-size: 0.85rem;
+}
+.note-content code {
+  background: var(--code-bg);
+  padding: 0.1rem 0.3rem;
+  border-radius: 3px;
+  font-size: 0.88em;
+}
+.note-content pre code {
+  background: none;
+  padding: 0;
+}
+.note-content blockquote {
+  border-left: 3px solid var(--border);
+  padding-left: 1rem;
+  color: var(--muted);
+  margin: 0.8rem 0;
+}
+.note-content a { color: var(--link); }
+.note-content img {
+  max-width: 100%;
+  height: auto;
+  border-radius: 6px;
+  margin: 0.5rem 0;
+}
+.note-content table {
+  border-collapse: collapse;
+  width: 100%;
+  margin: 0.8rem 0;
+}
+.note-content th, .note-content td {
+  border: 1px solid var(--border);
+  padding: 0.5rem;
+}
+.note-content th { background: var(--code-bg); }
+.media-placeholder {
+  background: var(--code-bg);
+  padding: 1rem;
+  text-align: center;
+  color: var(--muted);
+  border-radius: 6px;
+  margin: 0.5rem 0;
+  font-size: 0.85rem;
+}
+.encrypt-placeholder {
+  background: #fff3cd;
+  padding: 0.5rem;
+  text-align: center;
+  color: #856404;
+  border-radius: 6px;
+  margin: 0.5rem 0;
+  font-size: 0.85rem;
+}
+.back-link {
+  display: inline-block;
+  margin-top: 2rem;
+  color: var(--link);
+  text-decoration: none;
+  font-size: 0.85rem;
+}
+</style>
+</head>
+<body>
+<div class="note-header">
+  <div class="note-title">向量数据库</div>
+  <div class="note-meta">笔记本：AI</div>
+</div>
+<div class="note-content">
+<div><div><a href="https://github.com/qdrant/qdrant">https://github.com/qdrant/qdrant</a></div><div style="margin-top: 1em; margin-bottom: 1em;"><span style="-en-paragraph:true;">在端侧（如手机、IoT 设备、车载系统等）调用向量数据库时，</span><span style="font-weight: bold;-en-paragraph:true;">是否多个应用共享一个向量数据库，还是每个应用独立运行自己的向量数据库</span><span style="-en-paragraph:true;">，需根据资源、安全、数据隔离和维护成本等因素综合权衡。以下是详细对比与总结：</span></div><hr/><h2>一、两种模式对比</h2><table style="border-collapse: collapse; min-width: 100%;"><colgroup><col style="width: 130px;"/><col style="width: 130px;"/><col style="width: 130px;"/></colgroup><tbody><tr><td style="width: 130px; padding: 8px; border: 1px solid;"><div>维度</div></td><td style="width: 130px; padding: 8px; border: 1px solid;"><div><span style="font-weight: bold;">共享一个向量数据库</span></div></td><td style="width: 130px; padding: 8px; border: 1px solid;"><div><span style="font-weight: bold;">每个应用独立运行自己的向量数据库</span></div></td></tr><tr><td style="width: 130px; padding: 8px; border: 1px solid;"><div><span style="font-weight: bold;">资源占用</span></div></td><td style="width: 130px; padding: 8px; border: 1px solid;"><div>✅ 更节省存储和内存（避免重复索引）</div><div>❌ 单点负载高，可能成为瓶颈</div></td><td style="width: 130px; padding: 8px; border: 1px solid;"><div>❌ 存储/内存开销大（相同数据可能被多份存储）</div><div>✅ 资源隔离，互不影响</div></td></tr><tr><td style="width: 130px; padding: 8px; border: 1px solid;"><div><span style="font-weight: bold;">数据隔离与安全</span></div></td><td style="width: 130px; padding: 8px; border: 1px solid;"><div>❌ 应用间数据可能交叉访问（需严格权限控制）</div><div>存在隐私泄露风险</div></td><td style="width: 130px; padding: 8px; border: 1px solid;"><div>✅ 完全隔离，符合“最小权限”原则</div><div>适合敏感数据（如健康、金融）</div></td></tr><tr><td style="width: 130px; padding: 8px; border: 1px solid;"><div><span style="font-weight: bold;">部署与维护</span></div></td><td style="width: 130px; padding: 8px; border: 1px solid;"><div>✅ 统一更新、备份、监控</div><div>❌ 升级或故障影响所有应用</div></td><td style="width: 130px; padding: 8px; border: 1px solid;"><div>❌ 每个应用需单独管理索引和版本</div><div>✅ 故障隔离，单个崩溃不影响其他</div></td></tr><tr><td style="width: 130px; padding: 8px; border: 1px solid;"><div><span style="font-weight: bold;">开发复杂度</span></div></td><td style="width: 130px; padding: 8px; border: 1px solid;"><div>❌ 需设计多租户架构、命名空间、访问控制</div></td><td style="width: 130px; padding: 8px; border: 1px solid;"><div>✅ 架构简单，开箱即用</div></td></tr><tr><td style="width: 130px; padding: 8px; border: 1px solid;"><div><span style="font-weight: bold;">适用场景</span></div></td><td style="width: 130px; padding: 8px; border: 1px solid;"><div>同一厂商的多个关联 App（如微信全家桶）</div><div>企业内部设备上的协同应用</div></td><td style="width: 130px; padding: 8px; border: 1px solid;"><div>第三方独立 App（如不同开发者）</div><div>对隐私/合规要求高的场景</div></td></tr></tbody></table><blockquote><div style="margin-top: 1em; margin-bottom: 1em;"><span style="-en-paragraph:true;">📌</span> <span style="font-weight: bold;-en-paragraph:true;">结论倾向</span><span style="-en-paragraph:true;">：</span></div><ul><li><div><span style="font-weight: bold;">移动端（Android/iOS）</span>：通常 <span style="font-weight: bold;">每个应用独立运行自己的向量数据库</span>（因沙盒机制天然隔离，且无法跨 App 共享数据库文件）。</div></li><li><div><span style="font-weight: bold;">边缘服务器/嵌入式 Linux 设备</span>：若为同一系统内多个服务，可考虑 <span style="font-weight: bold;">共享一个轻量向量数据库</span>（如 Qdrant 或 LanceDB 单实例 + 命名空间）。</div></li></ul></blockquote><hr/><h2>二、端侧应用调用向量数据库的典型方式总结</h2><h3>方式 1：<span style="font-weight: bold;">嵌入式本地向量库（最常见）</span></h3><ul><li><div><span style="font-weight: bold;">特点</span>：向量数据库以库（Library）形式嵌入 App，无独立进程。</div></li><li><div><span style="font-weight: bold;">代表工具</span>：FAISS、Annoy、HNSWlib、LanceDB（本地模式）、Chroma（in-memory）</div></li><li><div><span style="font-weight: bold;">调用流程</span>：</div><div># 示例：FAISS in Python (可编译为移动端)</div><div>import faiss</div><div>index = faiss.read_index(&quot;local_index.faiss&quot;)</div><div>D, I = index.search(query_vector, k=5)</div></li><li><div><span style="font-weight: bold;">适用</span>：单应用、离线、小规模索引（&lt; 100 万向量）</div></li><li><div><span style="font-weight: bold;">优缺点</span>：</div></li><ul><li><div>✅ 零网络依赖、启动快、集成简单</div></li><li><div>❌ 无法跨应用共享、不支持并发写入</div></li></ul></ul><hr/><h3>方式 2：<span style="font-weight: bold;">本地轻量级向量数据库服务（边缘设备适用）</span></h3><ul><li><div><span style="font-weight: bold;">特点</span>：在设备上运行一个独立的向量数据库进程（如 Docker 容器或 systemd 服务）。</div></li><li><div><span style="font-weight: bold;">代表工具</span>：Qdrant（单机模式）、Weaviate（嵌入式）、LanceDB（server mode）</div></li><li><div><span style="font-weight: bold;">调用方式</span>：App 通过 HTTP/gRPC 访问 localhost:6333</div></li><li><div><span style="font-weight: bold;">适用</span>：Linux 边缘设备、车载主机、工业网关等</div></li><li><div><span style="font-weight: bold;">优缺点</span>：</div></li><ul><li><div>✅ 可多应用共享、支持 CRUD、有 API 管理</div></li><li><div>❌ 增加系统资源开销、需进程管理</div></li></ul></ul><hr/><h3>方式 3：<span style="font-weight: bold;">混合缓存 + 远程回源</span></h3><ul><li><div><span style="font-weight: bold;">特点</span>：本地缓存热点向量，冷数据请求云端向量数据库。</div></li><li><div><span style="font-weight: bold;">架构</span>：</div></li><ul><li><div>本地：FAISS 缓存 Top-N 高频查询结果</div></li><li><div>远程：调用云上 Milvus/Qdrant 获取完整结果</div></li></ul><li><div><span style="font-weight: bold;">适用</span>：弱网环境、需兼顾性能与数据新鲜度</div></li><li><div><span style="font-weight: bold;">优缺点</span>：</div></li><ul><li><div>✅ 平衡资源与功能</div></li><li><div>❌ 架构复杂，需同步策略</div></li></ul></ul><hr/><h3>方式 4：<span style="font-weight: bold;">WebAssembly（WASM）向量检索（新兴）</span></h3><ul><li><div><span style="font-weight: bold;">特点</span>：将向量检索逻辑编译为 WASM，在浏览器或 App 内运行。</div></li><li><div><span style="font-weight: bold;">代表</span>：Qdrant 正在探索 WASM 支持，FAISS 有 Emscripten 移植版</div></li><li><div><span style="font-weight: bold;">适用</span>：Web App、跨平台桌面/移动应用</div></li><li><div><span style="font-weight: bold;">优缺点</span>：</div></li><ul><li><div>✅ 跨平台、无需原生依赖</div></li><li><div>❌ 性能低于原生、内存限制严格</div></li></ul></ul><hr/><h2>三、推荐实践建议</h2><table style="border-collapse: collapse; min-width: 100%;"><colgroup><col style="width: 130px;"/><col style="width: 130px;"/></colgroup><tbody><tr><td style="width: 130px; padding: 8px; border: 1px solid;"><div>场景</div></td><td style="width: 130px; padding: 8px; border: 1px solid;"><div>推荐方案</div></td></tr><tr><td style="width: 130px; padding: 8px; border: 1px solid;"><div><span style="font-weight: bold;">手机 App（iOS/Android）</span></div></td><td style="width: 130px; padding: 8px; border: 1px solid;"><div>每个 App 嵌入 FAISS 或 LanceDB（本地文件），<span style="font-weight: bold;">不共享</span></div></td></tr><tr><td style="width: 130px; padding: 8px; border: 1px solid;"><div><span style="font-weight: bold;">车载/工控 Linux 设备</span></div></td><td style="width: 130px; padding: 8px; border: 1px solid;"><div>若多服务属同一系统，可部署 <span style="font-weight: bold;">单实例 Qdrant/LanceDB 服务</span>，通过 collection 或 namespace 隔离</div></td></tr><tr><td style="width: 130px; padding: 8px; border: 1px solid;"><div><span style="font-weight: bold;">隐私敏感应用（医疗、金融）</span></div></td><td style="width: 130px; padding: 8px; border: 1px solid;"><div>必须 <span style="font-weight: bold;">独立数据库 + 加密存储</span></div></td></tr><tr><td style="width: 130px; padding: 8px; border: 1px solid;"><div><span style="font-weight: bold;">资源极度受限设备（MCU）</span></div></td><td style="width: 130px; padding: 8px; border: 1px solid;"><div>放弃向量数据库，改用简化匹配算法（如 LSH、余弦阈值）</div></td></tr></tbody></table><hr/><h2>总结一句话：</h2><blockquote><div style="margin-top: 1em; margin-bottom: 1em;"><span style="font-weight: bold;-en-paragraph:true;">在端侧，出于安全、隔离和平台限制（如移动沙盒），绝大多数情况下应让每个应用运行自己的轻量级向量数据库；仅在可控的边缘设备环境中，才考虑多应用共享一个本地向量数据库服务，并需做好权限与资源隔离。</span></div><div style="margin-top: 1em; margin-bottom: 1em;"><span style="font-weight: bold;-en-paragraph:true;"><br/></span></div><div style="margin-top: 1em; margin-bottom: 1em;"/><div><br/></div><table style="border-collapse: collapse; min-width: 100%;"><colgroup><col style="width: 130px;"/><col style="width: 130px;"/><col style="width: 130px;"/><col style="width: 130px;"/></colgroup><tbody><tr><td style="width: 130px; padding: 8px; border: 1px solid;"><div>特性</div></td><td style="width: 130px; padding: 8px; border: 1px solid;"><div>Annoy</div></td><td style="width: 130px; padding: 8px; border: 1px solid;"><div>FAISS</div></td><td style="width: 130px; padding: 8px; border: 1px solid;"><div>HNSWlib</div></td></tr><tr><td style="width: 130px; padding: 8px; border: 1px solid;"><div>动态更新</div></td><td style="width: 130px; padding: 8px; border: 1px solid;"><div>❌ 不支持</div></td><td style="width: 130px; padding: 8px; border: 1px solid;"><div>✅ 支持（部分索引类型）</div></td><td style="width: 130px; padding: 8px; border: 1px solid;"><div>✅ 支持</div></td></tr><tr><td style="width: 130px; padding: 8px; border: 1px solid;"><div>内存映射</div></td><td style="width: 130px; padding: 8px; border: 1px solid;"><div>✅ 原生支持</div></td><td style="width: 130px; padding: 8px; border: 1px solid;"><div>⚠️ 部分支持（需自定义）</div></td><td style="width: 130px; padding: 8px; border: 1px solid;"><div>❌ 不支持</div></td></tr><tr><td style="width: 130px; padding: 8px; border: 1px solid;"><div>移动端友好</div></td><td style="width: 130px; padding: 8px; border: 1px solid;"><div>✅ 极简</div></td><td style="width: 130px; padding: 8px; border: 1px solid;"><div>⚠️ 依赖较多，需裁剪</div></td><td style="width: 130px; padding: 8px; border: 1px solid;"><div>⚠️ C++ 但无官方移动端支持</div></td></tr><tr><td style="width: 130px; padding: 8px; border: 1px solid;"><div>元数据存储</div></td><td style="width: 130px; padding: 8px; border: 1px solid;"><div>❌ 仅 ID</div></td><td style="width: 130px; padding: 8px; border: 1px solid;"><div>❌ 仅 ID（需外挂）</div></td><td style="width: 130px; padding: 8px; border: 1px solid;"><div>❌ 仅 ID</div></td></tr><tr><td style="width: 130px; padding: 8px; border: 1px solid;"><div>构建速度</div></td><td style="width: 130px; padding: 8px; border: 1px solid;"><div>快</div></td><td style="width: 130px; padding: 8px; border: 1px solid;"><div>中～慢（取决于索引类型）</div></td><td style="width: 130px; padding: 8px; border: 1px solid;"><div>慢（HNSW 构建复杂）</div></td></tr><tr><td style="width: 130px; padding: 8px; border: 1px solid;"><div>查询精度（同延迟）</div></td><td style="width: 130px; padding: 8px; border: 1px solid;"><div>中</div></td><td style="width: 130px; padding: 8px; border: 1px solid;"><div>高（可选 IVF/PQ）</div></td><td style="width: 130px; padding: 8px; border: 1px solid;"><div>高</div></td></tr></tbody></table><div style="margin-top: 1em; margin-bottom: 1em;"><br/></div></blockquote></div>
+</div>
+<a class="back-link" href="../articles.html">← 返回笔记列表</a>
+</body>
+</html>

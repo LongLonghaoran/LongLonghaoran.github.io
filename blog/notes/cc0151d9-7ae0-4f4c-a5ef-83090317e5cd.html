@@ -1,0 +1,557 @@
+<!DOCTYPE html>
+<html lang="zh-CN" data-theme="light">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Discourse 出品的 Active Record (半) 代替品 · Ruby China — 技术笔记</title>
+<style>
+:root {
+  --bg: #ffffff;
+  --text: #1a1a1a;
+  --muted: #666;
+  --border: #e0e0e0;
+  --code-bg: #f5f5f5;
+  --link: #0066cc;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #1a1a1a;
+    --text: #e0e0e0;
+    --muted: #999;
+    --border: #333;
+    --code-bg: #2a2a2a;
+    --link: #66bbff;
+  }
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  line-height: 1.7;
+  color: var(--text);
+  background: var(--bg);
+  max-width: 860px;
+  margin: 0 auto;
+  padding: 2rem 1.5rem;
+}
+.note-header {
+  border-bottom: 2px solid var(--border);
+  padding-bottom: 1rem;
+  margin-bottom: 2rem;
+}
+.note-title {
+  font-size: 1.6rem;
+  font-weight: 700;
+  margin-bottom: 0.3rem;
+}
+.note-meta {
+  color: var(--muted);
+  font-size: 0.85rem;
+}
+.note-content {
+  font-size: 0.95rem;
+}
+.note-content h1 { font-size: 1.4rem; margin: 1.2rem 0 0.6rem; }
+.note-content h2 { font-size: 1.2rem; margin: 1rem 0 0.5rem; }
+.note-content h3 { font-size: 1.05rem; margin: 0.8rem 0 0.4rem; }
+.note-content p { margin: 0.5rem 0; }
+.note-content ul, .note-content ol { margin: 0.5rem 0 0.5rem 2rem; }
+.note-content li { margin: 0.2rem 0; }
+.note-content pre {
+  background: var(--code-bg);
+  padding: 1rem;
+  border-radius: 6px;
+  overflow-x: auto;
+  margin: 0.8rem 0;
+  font-size: 0.85rem;
+}
+.note-content code {
+  background: var(--code-bg);
+  padding: 0.1rem 0.3rem;
+  border-radius: 3px;
+  font-size: 0.88em;
+}
+.note-content pre code {
+  background: none;
+  padding: 0;
+}
+.note-content blockquote {
+  border-left: 3px solid var(--border);
+  padding-left: 1rem;
+  color: var(--muted);
+  margin: 0.8rem 0;
+}
+.note-content a { color: var(--link); }
+.note-content img {
+  max-width: 100%;
+  height: auto;
+  border-radius: 6px;
+  margin: 0.5rem 0;
+}
+.note-content table {
+  border-collapse: collapse;
+  width: 100%;
+  margin: 0.8rem 0;
+}
+.note-content th, .note-content td {
+  border: 1px solid var(--border);
+  padding: 0.5rem;
+}
+.note-content th { background: var(--code-bg); }
+.media-placeholder {
+  background: var(--code-bg);
+  padding: 1rem;
+  text-align: center;
+  color: var(--muted);
+  border-radius: 6px;
+  margin: 0.5rem 0;
+  font-size: 0.85rem;
+}
+.encrypt-placeholder {
+  background: #fff3cd;
+  padding: 0.5rem;
+  text-align: center;
+  color: #856404;
+  border-radius: 6px;
+  margin: 0.5rem 0;
+  font-size: 0.85rem;
+}
+.back-link {
+  display: inline-block;
+  margin-top: 2rem;
+  color: var(--link);
+  text-decoration: none;
+  font-size: 0.85rem;
+}
+</style>
+</head>
+<body>
+<div class="note-header">
+  <div class="note-title">Discourse 出品的 Active Record (半) 代替品 · Ruby China</div>
+  <div class="note-meta">笔记本：RubyOnRails</div>
+</div>
+<div class="note-content">
+<div style="--en-clipped-content:simplified; --en-clipped-source-url:https://ruby-china.org/topics/37022; --en-clipped-source-title:Discourse 出品的 Active Record (半) 代替品 · Ruby China;">
+<div><br/></div><div style="min-height: 7709px; font-size: 16px; display:block; min-width: 100%; "> <div style="background-color:transparent;font:inherit;vertical-align:baseline;"><div style="background-color:transparent;font:inherit;vertical-align:baseline;font-family:&quot;PT Serif&quot;;font-size:16px;line-height:1.5em;color:rgb(31, 9, 9);text-align:left;"><div style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;"><div style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;width:36em;z-index:200;padding-left:2em;padding-right:2em;margin-left:auto;margin-right:auto;position:relative;"><div style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;position:relative;margin-left:-25px;margin-right:25px;"><div style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;padding-top:0px;padding-bottom:9em;position:relative;"><div style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;margin-bottom:1.5em;"><div style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;position:relative;margin-bottom:0px;"><div style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;margin-bottom:0px;"><div style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;margin-bottom:0px;"><h1 style="font-family:&quot;PT Serif&quot;;text-align:left;border:0px;font:inherit;vertical-align:baseline;font-size:35px;font-weight:normal;line-height:35px;margin-bottom:20px;padding:0px;margin:0px;"> Rails Discourse 出品的 Active Record (半) 代替品 </h1><div style="padding:0px;border:0px;font:inherit;vertical-align:baseline;position:relative;height:1em;line-height:1;text-align:center;margin:0px;padding-top:1.5em;padding-bottom:1.5em;margin-bottom:0px;"><div style="padding:0px;border:0px;font:inherit;vertical-align:baseline;background:-webkit-linear-gradient(0deg, rgb(243, 242, 238) 1%, rgb(31, 9, 9) 50%, rgb(243, 242, 238) 99%);position:absolute;left:-4em;top:50%;z-index:10;width:100%;padding-left:4em;padding-right:4em;height:0.1em;opacity:0.5;margin:0px;margin-bottom:0px;"><span style="font:inherit;position:absolute;left:-4em;top:50%;z-index:10;width:100%;padding-left:4em;padding-right:4em;height:0.1em;margin:0px;opacity:0.5;background:-webkit-linear-gradient(0deg, rgb(243, 242, 238) 1%, rgb(31, 9, 9) 50%, rgb(243, 242, 238) 99%);"></span></div></div></div>
+    <div style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;margin-bottom:1.5em;">
+      <a href="https://ruby-china.org/ksec" style="color:rgb(6, 85, 136);margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;text-decoration:none;">ksec</a>
+      
+       ·
+      <abbr style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;">2018年06月21日</abbr>
+      
+         ·
+        最后由 <a href="https://ruby-china.org/darkbaby123" style="color:rgb(6, 85, 136);margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;text-decoration:none;">darkbaby123</a> 回复于 <abbr style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;">2018年06月24日</abbr>
+      
+       ·
+      2612 次阅读
+    </div>
+  
+  
+
+
+      <div style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;margin-bottom:1.5em;">
+        
+        <p style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;margin-bottom:1.5em;">数星期前在 twitter,  Discourse 大神 SamSaffron 和 Jeff Atwood 发牢骚对 Rails Performance 的不满. </p>
+
+<p style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;margin-bottom:1.5em;">结果出现了这个 Post.</p>
+
+<p style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;margin-bottom:1.5em;"><a href="https://samsaffron.com/archive/2018/06/01/an-analysis-of-memory-bloat-in-active-record-5-2" style="color:rgb(6, 85, 136);margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;text-decoration:none;">https://samsaffron.com/archive/2018/06/01/an-analysis-of-memory-bloat-in-active-record-5-2</a></p>
+
+<p style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;margin-bottom:1.5em;">及后引发了</p>
+
+<p style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;margin-bottom:1.5em;"><a href="https://mobile.twitter.com/samsaffron/status/1002446941156884480" style="color:rgb(6, 85, 136);margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;text-decoration:none;">https://mobile.twitter.com/samsaffron/status/1002446941156884480</a>
+<a href="https://mobile.twitter.com/codinghorror/status/1002680669925924864" style="color:rgb(6, 85, 136);margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;text-decoration:none;">https://mobile.twitter.com/codinghorror/status/1002680669925924864</a></p>
+
+<p style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;margin-bottom:1.5em;">虽然引起很多人的不满, 不过至少 Ruby / Rails 对 malloc 的问题又再正视了. ( Discourse 现时正赞助 Eric Wong 解决很多 Ruby 速度的问题 )</p>
+
+<p style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;margin-bottom:1.5em;">然后 Jeff Atwood 就出现了个 idea, 加速甚至取替 Active Record. Mini_SQL 就是这个成果 </p>
+
+<p style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;margin-bottom:1.5em;"><a href="https://github.com/discourse/mini_sql" style="color:rgb(6, 85, 136);margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;text-decoration:none;">https://github.com/discourse/mini_sql</a></p>
+
+<p style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;margin-bottom:1.5em;">暂时看来速度快得惊人, 不过只支援 Pg.</p>
+<pre style="background-color:rgb(243, 242, 238);font-family:Inconsolata;margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;width:auto;font-size:0.875em;line-height:1.71429em;"><code style="font-family:Inconsolata;margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;line-height:1.71429em;font-size:1.15em;"> Comparison:
+#  wide topic mini sql:                 7535.8 i/s
+#  wide topic pg:                         7345.1 i/s - same-ish: difference falls within error
+#  wide topic sequel:                   3449.4 i/s - 2.18x  slower
+#  wide topic ar:                          2382.9 i/s - 3.16x  slower
+
+#   sequel title id pluck:                    1181.0 i/s
+#   mini_sql query_single title id:     1171.1 i/s - same-ish: difference falls within error
+#   mini_sql select title id:                1105.6 i/s - 1.07x  slower
+#   pg select title id:                         1002.2 i/s - 1.18x  slower
+#   sequel title id select:                    916.8 i/s - 1.29x  slower
+#   ar select title id pluck:                  696.2 i/s - 1.70x  slower
+#   ar select title id:                            131.6 i/s - 8.98x  slower
+
+</code></pre>
+        
+      </div>
+      
+    
+    
+      <div style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;margin-bottom:1.5em;">
+        <div style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;margin-bottom:0px;">
+            <div style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;margin-bottom:1.5em;">
+    <div style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;margin-bottom:0px;">
+        
+        <div style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;margin-bottom:0px;">
+          
+          
+          <div style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;margin-bottom:1.5em;">
+            <p style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;margin-bottom:1.5em;">不得不说，Sam Saffron 和 Mike Perham 频频对 Ruby 还有 Rails core team 就性能问题发难，而且有理有据，已经成功引起了重视。</p>
+
+<p style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;margin-bottom:0px;">另外我忘了在哪看到的他有提到 Discourse 会出钱赞助 AR 6 的重构，有钱事情应该就好办多了...</p>
+          </div>
+          <div style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;margin-bottom:0px;">
+            
+            <div style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;margin-bottom:0px;">
+              <a href="https://ruby-china.org/topics/37022#" style="color:rgb(6, 85, 136);margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;text-decoration:none;"> 3 个赞</a>
+            </div>
+          </div>
+        </div>
+    </div>
+  </div>
+  <div style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;margin-bottom:1.5em;">
+    <div style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;margin-bottom:0px;">
+        <div style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;margin-bottom:0px;">3 楼 已删除</div>
+    </div>
+  </div>
+  <div style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;margin-bottom:1.5em;">
+    <div style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;margin-bottom:0px;">
+        
+        <div style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;margin-bottom:0px;">
+          
+            <div style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;margin-bottom:1.5em;">
+    <div style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;margin-bottom:0px;">
+      对
+              回复
+    </div>
+  </div>
+
+          <div style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;margin-bottom:1.5em;">
+            <blockquote style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;quotes:none;margin-bottom:1.5em;font-style:italic;border-left:5px solid;margin-left:2em;padding-left:1em;"><span style="font:inherit;quotes:none;font-style:italic;"></span>
+<p style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;margin-bottom:0px;">有錢事情應該就好辦多了</p>
+<span style="font:inherit;quotes:none;font-style:italic;"></span></blockquote>
+
+<p style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;margin-bottom:0px;">我反而觉得这个不是钱的问题, 原因是根本没有人肯去处理. 世界上最难解决的问题就是人们不觉得这是一个问题. 至少 DHH 不觉得是. </p>
+          </div>
+          <div style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;margin-bottom:0px;">
+            
+            <div style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;margin-bottom:0px;">
+              <a href="https://ruby-china.org/topics/37022#" style="color:rgb(6, 85, 136);margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;text-decoration:none;"> 1 个赞</a>
+            </div>
+          </div>
+        </div>
+    </div>
+  </div>
+  <div style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;margin-bottom:1.5em;">
+    <div style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;margin-bottom:0px;">
+        
+        <div style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;margin-bottom:0px;">
+          
+            <div style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;margin-bottom:1.5em;">
+    <div style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;margin-bottom:0px;">
+      对
+              回复
+    </div>
+  </div>
+
+          <div style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;margin-bottom:0px;">
+            <p style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;margin-bottom:1.5em;">DHH 这种架构师角色的人，不会去关注那么细的工作，开源社区，谁行谁上</p>
+
+<p style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;margin-bottom:0px;">很多事情都需要社区推动的，比如 Shopify、Discourse 这种大厂去贡献，Basecamp 说白了还是体量太小，很多场景他们没需求自然也没有意识去做</p>
+          </div>
+          
+        </div>
+    </div>
+  </div>
+  <div style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;margin-bottom:1.5em;">
+    <div style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;margin-bottom:0px;">
+        
+        <div style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;margin-bottom:0px;">
+          
+            <div style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;margin-bottom:1.5em;">
+    <div style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;margin-bottom:0px;">
+      对
+              回复
+    </div>
+  </div>
+
+          <div style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;margin-bottom:1.5em;">
+            <blockquote style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;quotes:none;margin-bottom:1.5em;font-style:italic;border-left:5px solid;margin-left:2em;padding-left:1em;"><span style="font:inherit;quotes:none;font-style:italic;"></span>
+<p style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;margin-bottom:0px;">很多事情都需要社區推動的，比如 Shopify、Discourse 這種大廠去貢獻，<strong style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;font-weight:bold;">Basecamp 說白了還是體量太小，很多場景他們沒需求自然也沒有意識去做</strong></p>
+<span style="font:inherit;quotes:none;font-style:italic;"></span></blockquote>
+
+<p style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;margin-bottom:0px;">感动, <div class="media-placeholder">[图片/附件]</div></en-media> 难得有人有相同想法. 我经常在想怎么能够让 Shopify , Discourse, Cookpad, Github, AirBnB, Bloomberg, 每边找一两个人一同商讨. ( 其实 Apple Music 也是 Ruby Rails, 不过相信要他们派人简直难过登天 ) </p>
+          </div>
+          <div style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;margin-bottom:0px;">
+            
+            <div style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;margin-bottom:0px;">
+              <a href="https://ruby-china.org/topics/37022#" style="color:rgb(6, 85, 136);margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;text-decoration:none;"> 3 个赞</a>
+            </div>
+          </div>
+        </div>
+    </div>
+  </div>
+  <div style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;margin-bottom:1.5em;">
+    <div style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;margin-bottom:0px;">
+        
+        <div style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;margin-bottom:0px;">
+          
+            <div style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;margin-bottom:1.5em;">
+    <div style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;margin-bottom:0px;">
+      对
+              回复
+    </div>
+  </div>
+
+          <div style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;margin-bottom:1.5em;">
+            <p style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;margin-bottom:1.5em;">你看 5.2 的发行注记，已经提到了是 Shopify 引入的 Bootsnap 加速应用启动，还有 SamSaffron 和 Mike Perham 他们 “逼宫” Ruby team 引入一些有利于常驻服务场景的优化，可能之后 Ruby 会引入单独的编译参数把这些优化开启，类似 Java Hotspot VM 分服务器版本和标准版本一样。</p>
+
+<p style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;margin-bottom:0px;">CRuby 发展不如 NodeJS 其实道理也很简单，就是没钱... Ruby Together 算是一个社区组织改善公共基础设施的，但是那些开发也要吃饭，要赞助到一定规模（按月出钱）才能考虑全职去做事情。NodeJS 依赖 V8，Chrome 保持话语权的关键组件，Google 投人投钱去改进 V8，Node 自然坐享其成</p>
+          </div>
+          <div style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;margin-bottom:0px;">
+            
+            <div style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;margin-bottom:0px;">
+              <a href="https://ruby-china.org/topics/37022#" style="color:rgb(6, 85, 136);margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;text-decoration:none;"> 1 个赞</a>
+            </div>
+          </div>
+        </div>
+    </div>
+  </div>
+  
+  <div style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;margin-bottom:1.5em;">
+    <div style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;margin-bottom:0px;">
+        
+        <div style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;margin-bottom:0px;">
+          
+          
+          <div style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;margin-bottom:1.5em;">
+            <p style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;margin-bottom:1.5em;">这个确实很有用，之前用 Rails 做项目遇到统计需求很尴尬，用 AR 来做特别难，一般最终结果就写成了 sql+rails 的合体，导致可维护性特别差。</p>
+
+<p style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;margin-bottom:1.5em;">本质上是统计需求和 ORM 并不是同一个维度上的事情，ORM 解决的是表和对象之间的关系，而统计需求其实是面向主题的。
+另外一个问题是 ORM 做统计的话经常会产生 N+1 查询。所以统计需求我一般都直接纯 sql 的方式来写，不使用任何 AR 相关 API，例如：</p>
+<pre style="background-color:rgb(243, 242, 238);font-family:Inconsolata;margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;width:auto;font-size:0.875em;line-height:1.71429em;"><code style="font-family:Inconsolata;margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;line-height:1.71429em;font-size:1.15em;">AR.connection.execute(&lt;&lt;-SQL)
+  /* 按SKU分组，计算出出仓数量 */
+  WITH shipment_items_by_sku AS (
+      SELECT product_variant_id, SUM(quantity) AS ship_count
+        FROM shipment_items
+       WHERE deleted_at IS NULL AND company_id = 1
+    GROUP BY 1
+  ),
+  /* 按SKU分组，计算出订单数量、最大金额等 */
+  order_items_by_sku AS (
+    SELECT pv.company_id,
+           oi.product_variant_id,
+           sum(oi.quantity)   AS order_count,
+           sum(oi.sum_price)  AS sum_money,
+           max(oi.price)      AS max_money,
+           min(oi.price)      AS min_money,
+           avg(oi.price)      AS avg_money
+      FROM order_items AS oi
+           INNER JOIN product_variants AS pv ON pv.id = oi.product_variant_id
+     WHERE pv.deleted_at IS NULL AND oi.deleted_at IS NULL AND oi.company_id = 1
+  GROUP BY 1,2
+  ORDER BY 3 DESC
+     LIMIT 10
+  )
+
+  SELECT order_items_by_sku.*, 
+         coalesce(sibs.ship_count, 0) AS ship_count
+    FROM order_items_by_sku
+         LEFT JOIN shipment_items_by_sku AS sibs ON order_items_by_sku.product_variant_id = sibs.product_variant_id
+ORDER BY order_items_by_sku.order_count DESC
+SQL
+</code></pre>
+<p style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;margin-bottom:0px;">但这么写的话带来一个问题，用户传参的地方需要自己去防止 sql 注入，不过 mini sql 的出现解决了 sql 注入问题（使用的 prepared statment），我觉得 mini sql 当然不是去和 ORM 比，其实是弥补了 ORM 在统计和 ETL 领域的不足。看了一下 mini sql 在 discourse 的应用，也是用来做统计相关：</p>
+
+
+          </div>
+          <div style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;margin-bottom:0px;">
+            
+            <div style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;margin-bottom:0px;">
+              <a href="https://ruby-china.org/topics/37022#" style="color:rgb(6, 85, 136);margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;text-decoration:none;"> 16 个赞</a>
+            </div>
+          </div>
+        </div>
+    </div>
+  </div>
+  <div style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;margin-bottom:1.5em;">
+    <div style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;margin-bottom:0px;">
+        
+        <div style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;margin-bottom:0px;">
+          
+          
+          <div style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;margin-bottom:0px;">
+            <p style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;margin-bottom:1.5em;"><a title="@hooopo" href="https://ruby-china.org/hooopo" style="color:rgb(6, 85, 136);margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;text-decoration:none;"><i style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;font-style:italic;">@</i>hooopo</a> 用 <code style="font-family:Inconsolata;margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;font-size:0.875em;line-height:1.71429em;">find_by_sql</code> 可以对付注入，就是不大好看，必须用某个具体的 model 来调用该方法。加上结果是该 model 的实例加上从 <code style="font-family:Inconsolata;margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;font-size:0.875em;line-height:1.71429em;">SELECT</code> 部分动态生成的属性就非常奇怪了。这个问题可以通过建立一个专门的 stat model 来解决，避免尴尬。另外 <code style="font-family:Inconsolata;margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;font-size:0.875em;line-height:1.71429em;">sanitize_sql_xxx</code> 的那批方法应该也可以解决注入问题（没试过），不过用起来就非常麻烦了。</p>
+
+<p style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;margin-bottom:0px;">虽然统计不是 ORM 需要解决的问题，一个是 OLAP 一个是 OLTP 。但有时候两者都需要共用一些查询条件和表关联，而且有时候相似的统计 SQL 也会有些代码碎片是重复的，这时候就又回到如何重用的问题上来了。query builder 本身用在构造 SQL 上是合适的，问题是 AR 的 query builder 抽象程度还不够，经常写成了大批的 SQL 片段，也就是你说的 SQL + Rails 的方式。</p>
+          </div>
+          
+        </div>
+    </div>
+  </div>
+  <div style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;margin-bottom:1.5em;">
+    <div style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;margin-bottom:0px;">
+        
+        <div style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;margin-bottom:0px;">
+          
+            <div style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;margin-bottom:1.5em;">
+    <div style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;margin-bottom:0px;">
+      对
+              回复
+    </div>
+  </div>
+
+          <div style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;margin-bottom:0px;">
+            <p style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;margin-bottom:1.5em;">Yes.</p>
+
+<p style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;margin-bottom:1.5em;">对于简单场景，用 ORM 来做 reporting 也是可行的。对复杂场景，不能说 AR 抽象程度不够，本质上每个 gem 有自己的解决的领域。</p>
+
+<blockquote style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;quotes:none;margin-bottom:1.5em;font-style:italic;border-left:5px solid;margin-left:2em;padding-left:1em;"><span style="font:inherit;quotes:none;font-style:italic;"></span>
+<p style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;margin-bottom:0px;"># Sam: complicated reports are really hard in AR</p>
+<span style="font:inherit;quotes:none;font-style:italic;"></span></blockquote>
+
+<p style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;margin-bottom:1.5em;">代码重复问题，其实这就是一个 tradeoff，ORM 里的方法对于 reporting 来说，理论上确实可以共用，但实现上是很难共用，硬要共用的话，必然是写成 N+1 的方式，之前做过一个项目，reporting 部分就是这种思路写的，数据量还不大的时候一个页面就可以达到几十秒。</p>
+
+<p style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;margin-bottom:1.5em;">如果 reporting 部分想共用的话，其实需要写 UDF 和 view，试过几次效果还不错。</p>
+
+<p style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;margin-bottom:1.5em;">刚看了这篇文章，mini sql 的用途写的非常清晰了：<a href="https://meta.discourse.org/t/new-official-direct-sql-access-api-for-discourse-mini-sql/90441" style="color:rgb(6, 85, 136);margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;text-decoration:none;">https://meta.discourse.org/t/new-official-direct-sql-access-api-for-discourse-mini-sql/90441</a></p>
+<pre style="background-color:rgb(243, 242, 238);font-family:Inconsolata;margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;width:auto;font-size:0.875em;line-height:1.71429em;"><code style="font-family:Inconsolata;margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;line-height:1.71429em;font-size:1.15em;"> # Sam: complicated reports are really hard in AR
+ builder = DB.build &lt;&lt;-SQL
+SELECT ftl.url,
+       COALESCE(ft.title, ftl.title) AS title,
+       ftl.link_topic_id,
+       ftl.reflection,
+       ftl.internal,
+       ftl.domain,
+       MIN(ftl.user_id) AS user_id,
+       SUM(clicks) AS clicks
+FROM topic_links AS ftl
+LEFT JOIN topics AS ft ON ftl.link_topic_id = ft.id
+LEFT JOIN categories AS c ON c.id = ft.category_id
+/*where*/
+GROUP BY ftl.url, ft.title, ftl.title, ftl.link_topic_id, ftl.reflection, ftl.internal, ftl.domain
+ORDER BY clicks DESC, count(*) DESC
+LIMIT 50
+SQL
+
+ builder.where('ftl.topic_id = :topic_id', topic_id: topic_id)
+</code></pre>
+          </div>
+          
+        </div>
+    </div>
+  </div>
+  <div style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;margin-bottom:0px;">
+    <div style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;margin-bottom:0px;">
+        
+        <div style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;margin-bottom:0px;">
+          
+            <div style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;margin-bottom:1.5em;">
+    <div style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;margin-bottom:0px;">
+      对
+              回复
+    </div>
+  </div>
+
+          <div style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;margin-bottom:1.5em;">
+            <p style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;margin-bottom:1.5em;">所以呢我说的其实是 query builder 的抽象能力。因为大部分 ORM 都有个 query builder 因此它也算是 ORM 的一部分。如果完全没有抽象的话对查询的共用部分就只能拼接 SQL 字符串了。mini_sql 的 <code style="font-family:Inconsolata;margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;font-size:0.875em;line-height:1.71429em;">builder.where</code> 看起来已经够用了。我再举个 Ecto（Elixir 语言的 data wrapper）的例子，实现 Sam 文中提到的完整 SQL ：</p>
+<pre style="background-color:rgb(243, 242, 238);font-family:Inconsolata;margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;width:auto;font-size:0.875em;line-height:1.71429em;"><code style="font-family:Inconsolata;margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;line-height:1.71429em;font-size:1.15em;">from(
+  ftl in TopicLink,
+  left_join: ft in assoc(ftl, :link_topic),
+  left_join: c in assoc(ft, :category),
+  group_by: [ftl.url, ft.title, ftl.title, ftl.link_topic_id, ftl.reflection, ftl.internal, ftl.domain],
+  order_by: [desc: sum(ftl.clicks), desc: count(ftl.id)],
+  limit: 50,
+  select: %{
+    url: ftl.url,
+    title: coalesce(ft.title, ftl.title),
+    link_topic_id: ftl.link_topic_id,
+    reflection: ftl.reflection,
+    internal: ftl.internal,
+    domain: ftl.domain,
+    user_id: min(ftl.user_id),
+    clicks: sum(clicks)
+  }
+)
+|&gt; where([ftl, ...], ftl.topic_id == ^topic_id)
+|&gt; where([_, ft, ...], is_nil(ft.deleted_at))
+|&gt; where([ftl, ...], not (ilike(ftl.url, "%.png") or ilike(ftl.url, "%.jpg") or ilike(ftl.url, "%.gif")))
+|&gt; where([_, ft, ...], coalesce(ft.archetype, "regular") != ^Archetype.private_message)
+|&gt; secure_category(guardian.secure_category_ids)
+|&gt; Repo.all()
+</code></pre>
+<p style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;margin-bottom:1.5em;">拿它举例并不是抬杠或者吹 Ecto 如何，我相信以 Ruby 的灵活性可以做到同样的事情（只是感觉没多少人觉得它很重要）。只是说明语言层面提供的抽象可以用来更好的组织和重用代码。这点我个人还是觉得很重要的。毕竟 SQL 作为声明式的语言不善于表达过程式的代码，而生成 query 的过程恰好是过程式的，应用层的语言擅长此道。</p>
+
+<p style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;margin-bottom:1.5em;">另外拿我最近做的一个统计做例子：</p>
+<pre style="background-color:rgb(243, 242, 238);font-family:Inconsolata;margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;width:auto;font-size:0.875em;line-height:1.71429em;"><code style="font-family:Inconsolata;margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;line-height:1.71429em;font-size:1.15em;">query_1 =
+  FunnelItem
+  |&gt; filter_by_subject(subject_id)
+  |&gt; filter_by_type(:fam)
+  |&gt; score_btw(3, 4)
+
+query_2 =
+  FunnelItem
+  |&gt; filter_by_subject(subject_id)
+  |&gt; filter_by_type(:ove)
+  |&gt; score_btw(6, 7)
+
+query_3 =
+  FunnelItem
+  |&gt; filter_by_subject(subject_id)
+  |&gt; filter_by_type(:puc)
+  |&gt; score_eq(4)
+
+[query_1, query_2, query_3]
+|&gt; join_queries()
+|&gt; stat_by_filters(filter_key, filter_value_ids)
+</code></pre>
+<p style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;margin-bottom:1.5em;">上面的例子把部分 where 条件抽成了共用的函数，再自定义了一些函数来组合查询，比如 <code style="font-family:Inconsolata;margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;font-size:0.875em;line-height:1.71429em;">join_queries</code> ：</p>
+<pre style="background-color:rgb(243, 242, 238);font-family:Inconsolata;margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;width:auto;font-size:0.875em;line-height:1.71429em;"><code style="font-family:Inconsolata;margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;line-height:1.71429em;font-size:1.15em;">def join_queries(queries) do
+  Enum.reduce(queries, fn query, acc -&gt;
+    from(
+      [f1, ...] in acc,
+      join: ft in ^query,
+      on: ft.sample_id == f1.sample_id and ft.subject_id == f1.subject_id
+    )
+  end)
+end
+</code></pre>
+          </div>
+          <div style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;margin-bottom:0px;">
+            
+            <div style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;margin-bottom:0px;">
+              <a href="https://ruby-china.org/topics/37022#" style="color:rgb(6, 85, 136);margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;text-decoration:none;"> 3 个赞</a>
+            </div>
+          </div>
+        </div>
+    </div>
+  </div>
+  
+
+        </div>
+      </div>
+        <div style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;margin-bottom:0px;">
+          <div style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;margin-bottom:0px;">
+            <div style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;margin-bottom:1.5em;">回复</div>
+              
+
+
+
+  
+  
+  <div style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;margin-bottom:0px;">
+    
+    <kbd style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;">Command</kbd> + <kbd style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;">Enter</kbd>
+
+    
+  </div>
+
+          </div>
+        </div>
+  </div></div></div></div></div></div></div></div></div></div>
+</div>
+</div>
+<a class="back-link" href="../articles.html">← 返回笔记列表</a>
+</body>
+</html>

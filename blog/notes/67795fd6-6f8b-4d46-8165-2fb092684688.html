@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="zh-CN" data-theme="light">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>使用:ruby#load,ruby#require,rubygems#require,bundle#require — 技术笔记</title>
+<style>
+:root { --bg:#fff; --text:#1a1a1a; --muted:#666; --border:#e0e0e0; --code-bg:#f5f5f5; --link:#0066cc; }
+@media (prefers-color-scheme: dark) { :root { --bg:#1a1a1a; --text:#e0e0e0; --muted:#999; --border:#333; --code-bg:#2a2a2a; --link:#66bbff; } }
+* { box-sizing:border-box; margin:0; padding:0; }
+body { font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Arial,sans-serif; line-height:1.7; color:var(--text); background:var(--bg); max-width:860px; margin:0 auto; padding:2rem 1.5rem; }
+.note-header { border-bottom:2px solid var(--border); padding-bottom:1rem; margin-bottom:2rem; }
+.note-title { font-size:1.6rem; font-weight:700; margin-bottom:0.3rem; }
+.note-meta { color:var(--muted); font-size:0.85rem; }
+.note-content { font-size:0.95rem; }
+.note-content h1 { font-size:1.4rem; margin:1.2rem 0 0.6rem; }
+.note-content h2 { font-size:1.2rem; margin:1rem 0 0.5rem; }
+.note-content h3 { font-size:1.05rem; margin:0.8rem 0 0.4rem; }
+.note-content p { margin:0.5rem 0; }
+.note-content ul,.note-content ol { margin:0.5rem 0 0.5rem 2rem; }
+.note-content li { margin:0.2rem 0; }
+.note-content pre { background:var(--code-bg); padding:1rem; border-radius:6px; overflow-x:auto; margin:0.8rem 0; font-size:0.85rem; }
+.note-content code { background:var(--code-bg); padding:0.1rem 0.3rem; border-radius:3px; font-size:0.88em; }
+.note-content pre code { background:none; padding:0; }
+.note-content blockquote { border-left:3px solid var(--border); padding-left:1rem; color:var(--muted); margin:0.8rem 0; }
+.note-content a { color:var(--link); }
+.note-content img { max-width:100%; height:auto; border-radius:6px; margin:0.5rem 0; }
+.note-content table { border-collapse:collapse; width:100%; margin:0.8rem 0; }
+.note-content th,.note-content td { border:1px solid var(--border); padding:0.5rem; }
+.note-content th { background:var(--code-bg); }
+.media-placeholder { background:var(--code-bg); padding:1rem; text-align:center; color:var(--muted); border-radius:6px; margin:0.5rem 0; font-size:0.85rem; }
+.encrypt-placeholder { background:#fff3cd; padding:0.5rem; text-align:center; color:#856404; border-radius:6px; margin:0.5rem 0; font-size:0.85rem; }
+.back-link { display:inline-block; margin-top:2rem; color:var(--link); text-decoration:none; font-size:0.85rem; }
+</style>
+</head>
+<body>
+<div class="note-header"><div class="note-title">使用:ruby#load,ruby#require,rubygems#require,bundle#require</div><div class="note-meta">笔记本：rubygems</div></div>
+<div class="note-content"><div>load方法:</div><div>    load方法用于根据相对路径、绝对路径、LOAD_PATH来加载ruby文件，ruby文件中的方法、类、常量都会导入，但是局部变量不会导入</div><div>    特点：多次load同一个文件，会加载多次，也就是会多次执行被load的文件内的代码</div><div><br /></div><div>$LOAD_PATH:</div><div>    $LOAD_PATH中存储了一组目录的绝对路径，对于load和require方法来说，如果方法参数只是一个不带路径的文件名的话，这时候就会去$LOAD_PATH中定义的路径中去查找</div><div><br /></div><div>require:</div><div>    与load最大的不同是不会加载同一个文件两次，多次require同一个文件只会加载一次,所有被加载过的文件，都会记录在一个全局变量$LOADED_FEATURES中，不论是load还是require，都无法在不加路径（相对路径，绝对路径）的情况下直接加载文件，因为当前路径不在$LOAD_PATH中</div><div><br /></div><div>rubygems中的require， gems是如何加载的呢?:</div><div>    rubygems是安装ruby是会默认一同安装的库，并且在启动ruby时会默认加载，比如启动irb之后，通过查看$LOADED_FEATURES就会发现，已经有很多.rb文件被加载进来了,ruby默认的Kernel#require这个方法已经被rubygems重写了</div><div><div class="media-placeholder">[图片/附件]</div><br /></div><div>打开该文件会发现，该文件正是重写了默认的Kernel#require方法:</div><div><div class="media-placeholder">[图片/附件]</div>这个重写的版本最大的特点，就是可以用来加载已经安装好的gem，加载的流程大致是这样的：</div><div>    当require(‘xx’)的时候，先从$LOAD_PATH中查找，是否能从$LOAD_PATH中定义的路径中直接找到同名文件，如果找到的话，那么就按照默认情况直接加载</div><div>    如果没有找到，那么将会安装gems的目录查找，找到之后，activating(激活),将该gem所在目录(比如 rails-6.0.3.6)添加到$LOAD_PATH，这个gem中的gemspec还会声明该gem需要require的其他路径，按照惯例，一般都只会添加lib这个目录</div><div>    在$LOAD_PATH被添加好之后，再次执行来查找xx这个文件，这次由于gem所在目录的lib也被添加到$LOAD_PATH，所以这次能够加载到了</div><div>    一般来说xx.rb，这个与gem包同名的rb文件中还会继续require该gem所需依赖的其他文件，随便查看一个gem看下,比如tzinfo这个gem:</div><div><div class="media-placeholder">[图片/附件]</div><br /></div><div>    这些require的文件全部都在该gem的lib目录下，所以都能够正常加载，以这个tzinfo为例，再require(‘tzinfo’)之后，$LOADED_FEATURES自然就多了一大堆已加载的文件列表：</div><div><div class="media-placeholder">[图片/附件]</div><br /></div><div><br /></div><div>Kernel#gem方法:</div><div>    如果同时安装了一个gem的多个版本,比如rails-6.0.3.7 和 rails-6.0.3.6，那么通过gem方法，可以将指定的gem的路径存入$LOAD_PATH，这样子之后在require该gem的时候，也就能按照指定的版本来加载了，上面的Kernel#require方法实际也是使用了gem方法，来将gem的路径放入$LOAD_PATH</div><div><br /></div><div>rails中加载gems:</div><div><span>    在rails的初始化加载/启动加载文件中(比如config/boot.rb)，会加载bundler，我这里看到的是加载了</span><br /></div><div><span>bundler/setup这个文件，bundler/setup的目的就是用来加载Gemfile中列出的gem，执行流程大致是：</span></div><div><span><span>    1.读取Gemfile.lock文件，根据Gemfile.lock文件中spec下的描述，获取该项目所需加载的gem的名称以及版本号</span><br /></span></div><div><span><span><span>    2.调用gem方法，来激活该gem，也就是将gem的相关路径加入到$LOAD_PATH</span><br /></span></span></div><div><span><span><span><span>    3.最后在application.rb中，调用Bundler.require，这个时候由于$LOAD_PATH中已经存入了定义好的目录，所以require可以顺利的加载</span><br /></span></span></span></div><div><span>    </span><br /></div><div><span>    </span><br /></div><div><br /></div><div><br /></div></div>
+<a class="back-link" href="../articles.html">← 返回笔记列表</a>
+</body></html>

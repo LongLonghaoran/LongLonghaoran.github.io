@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="zh-CN" data-theme="light">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>20190822 — 技术笔记</title>
+<style>
+:root { --bg:#fff; --text:#1a1a1a; --muted:#666; --border:#e0e0e0; --code-bg:#f5f5f5; --link:#0066cc; }
+@media (prefers-color-scheme: dark) { :root { --bg:#1a1a1a; --text:#e0e0e0; --muted:#999; --border:#333; --code-bg:#2a2a2a; --link:#66bbff; } }
+* { box-sizing:border-box; margin:0; padding:0; }
+body { font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Arial,sans-serif; line-height:1.7; color:var(--text); background:var(--bg); max-width:860px; margin:0 auto; padding:2rem 1.5rem; }
+.note-header { border-bottom:2px solid var(--border); padding-bottom:1rem; margin-bottom:2rem; }
+.note-title { font-size:1.6rem; font-weight:700; margin-bottom:0.3rem; }
+.note-meta { color:var(--muted); font-size:0.85rem; }
+.note-content { font-size:0.95rem; }
+.note-content h1 { font-size:1.4rem; margin:1.2rem 0 0.6rem; }
+.note-content h2 { font-size:1.2rem; margin:1rem 0 0.5rem; }
+.note-content h3 { font-size:1.05rem; margin:0.8rem 0 0.4rem; }
+.note-content p { margin:0.5rem 0; }
+.note-content ul,.note-content ol { margin:0.5rem 0 0.5rem 2rem; }
+.note-content li { margin:0.2rem 0; }
+.note-content pre { background:var(--code-bg); padding:1rem; border-radius:6px; overflow-x:auto; margin:0.8rem 0; font-size:0.85rem; }
+.note-content code { background:var(--code-bg); padding:0.1rem 0.3rem; border-radius:3px; font-size:0.88em; }
+.note-content pre code { background:none; padding:0; }
+.note-content blockquote { border-left:3px solid var(--border); padding-left:1rem; color:var(--muted); margin:0.8rem 0; }
+.note-content a { color:var(--link); }
+.note-content img { max-width:100%; height:auto; border-radius:6px; margin:0.5rem 0; }
+.note-content table { border-collapse:collapse; width:100%; margin:0.8rem 0; }
+.note-content th,.note-content td { border:1px solid var(--border); padding:0.5rem; }
+.note-content th { background:var(--code-bg); }
+.media-placeholder { background:var(--code-bg); padding:1rem; text-align:center; color:var(--muted); border-radius:6px; margin:0.5rem 0; font-size:0.85rem; }
+.encrypt-placeholder { background:#fff3cd; padding:0.5rem; text-align:center; color:#856404; border-radius:6px; margin:0.5rem 0; font-size:0.85rem; }
+.back-link { display:inline-block; margin-top:2rem; color:var(--link); text-decoration:none; font-size:0.85rem; }
+</style>
+</head>
+<body>
+<div class="note-header"><div class="note-title">20190822</div><div class="note-meta">笔记本：前端学习</div></div>
+<div class="note-content"><div>京东项目除了商品列表和侧边电梯导航以外 结束</div><div><br/></div><div>展示一个没有两侧边框的表格:</div><div><span>&nbsp;&nbsp; &nbsp;</span><div class="media-placeholder">[图片/附件]</div><br/></div><div>这个表格用ul&gt;li实现,我们可以用一个父级div包裹一个ul&gt;li，然后给父盒子div一个上边框，并且给li下右边框以及浮动,</div><div>div宽度190px，li宽度47px, 边框1px solid #ccc,这样会有2个问题:</div><div><span>&nbsp; &nbsp; 1.4个li在一排的宽度已经达到191px,已经超过了div,所以一排只会显示3个，第4个则被挤下去</span><br/></div><div><span>&nbsp; &nbsp; 2.最右边以及最下边是不需要边框的,但是现在显示了边框</span><br/></div><div>结果会是这样的:</div><div><div class="media-placeholder">[图片/附件]</div></div><div>要实现目标效果的方法就是:</div><div><span>&nbsp; &nbsp; 我们给li的父盒子ul元素，一个宽高,这个宽高大于div,这样不旦可以容纳进4个li一排，而且设置了div的overflow:hidden之后，超出部分还会被隐藏，</span><br/></div><div><span>&nbsp; &nbsp; 恰好挡住了不需要的边框</span><br/></div><div><span><span>&nbsp; &nbsp; 代码如下:</span><br/></span></div><div><span><span>&nbsp;&nbsp; &nbsp;</span><span>&nbsp; &nbsp; html:</span><br/></span></div><div><div style="box-sizing: border-box; padding: 8px; font-family: Monaco, Menlo, Consolas, &quot;Courier New&quot;, monospace; font-size: 12px; color: rgb(51, 51, 51); border-radius: 4px; background-color: rgb(251, 250, 248); border: 1px solid rgba(0, 0, 0, 0.15);-en-codeblock:true;"><div><span>&lt;div class=&quot;jd-service&quot;&gt;</span></div><div><span>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&lt;ul&gt;</span></div><div><span>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&lt;li&gt;</span></div><div><span>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&lt;a href=&quot;#&quot;&gt;</span></div><div><span>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&lt;i&gt;&lt;/i&gt;</span></div><div><span>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&lt;p&gt;机票&lt;/p&gt;</span></div><div><span>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&lt;/a&gt;</span></div><div><span>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&lt;/li&gt;</span></div><div><span><span>&nbsp;&nbsp; &nbsp;</span><span>&nbsp;&nbsp; &nbsp;</span><span>&nbsp;&nbsp; &nbsp;</span><span>&nbsp;&nbsp; &nbsp;</span><span>&nbsp;&nbsp; &nbsp;</span><span>&nbsp; &nbsp; ...之后11个li</span><br/></span></div><div>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&lt;/ul&gt;</div><div>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&lt;/div&gt;</div></div><br/></div><div><span>css:</span></div><div><span>&nbsp;&nbsp; &nbsp;</span><br/></div><div><div style="box-sizing: border-box; padding: 8px; font-family: Monaco, Menlo, Consolas, &quot;Courier New&quot;, monospace; font-size: 12px; color: rgb(51, 51, 51); border-radius: 4px; background-color: rgb(251, 250, 248); border: 1px solid rgba(0, 0, 0, 0.15);-en-codeblock:true;"><div><span>* {<br/></span></div><div><span>&nbsp;&nbsp;&nbsp;&nbsp;margin: 0;</span></div><div><span>&nbsp;&nbsp;&nbsp;&nbsp;padding: 0;</span></div><div><span>}</span></div><div><span>li {</span></div><div><span>&nbsp;&nbsp;&nbsp;&nbsp;list-style: none;</span></div><div><span>}</span></div><div><span>.jd-service {</span></div><div><span><span>&nbsp; &nbsp; width: 190p;</span><br/></span></div><div>&nbsp;&nbsp;&nbsp;&nbsp;height: 209px;</div><div>&nbsp;&nbsp;&nbsp;&nbsp;overflow: hidden;</div><div>}</div><div>.jd-service ul {</div><div>&nbsp;&nbsp;&nbsp;&nbsp;width: 192px;</div><div>}</div><div>.jd-service li {</div><div>&nbsp;&nbsp;&nbsp;&nbsp;width: 47px;</div><div>&nbsp;&nbsp;&nbsp;&nbsp;height: 69px;</div><div>&nbsp;&nbsp;&nbsp;&nbsp;float: left;</div><div>&nbsp;&nbsp;&nbsp;&nbsp;border-right: 1px solid #ccc;</div><div>&nbsp;&nbsp;&nbsp;&nbsp;border-bottom: 1px solid #ccc;</div><div>}</div></div><br/></div><div><span><span><br/></span><br/></span></div><div><span>&nbsp;&nbsp; &nbsp;</span><br/></div><div><br/></div></div>
+<a class="back-link" href="../articles.html">← 返回笔记列表</a>
+</body></html>

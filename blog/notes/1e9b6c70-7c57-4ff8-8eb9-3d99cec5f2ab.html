@@ -1,0 +1,1120 @@
+<!DOCTYPE html>
+<html lang="zh-CN" data-theme="light">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>[源码解析] PyTorch 如何使用GPU - 罗西的思考 - 博客园 — 技术笔记</title>
+<style>
+:root { --bg:#fff; --text:#1a1a1a; --muted:#666; --border:#e0e0e0; --code-bg:#f5f5f5; --link:#0066cc; }
+@media (prefers-color-scheme: dark) { :root { --bg:#1a1a1a; --text:#e0e0e0; --muted:#999; --border:#333; --code-bg:#2a2a2a; --link:#66bbff; } }
+* { box-sizing:border-box; margin:0; padding:0; }
+body { font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Arial,sans-serif; line-height:1.7; color:var(--text); background:var(--bg); max-width:860px; margin:0 auto; padding:2rem 1.5rem; }
+.note-header { border-bottom:2px solid var(--border); padding-bottom:1rem; margin-bottom:2rem; }
+.note-title { font-size:1.6rem; font-weight:700; margin-bottom:0.3rem; }
+.note-meta { color:var(--muted); font-size:0.85rem; }
+.note-content { font-size:0.95rem; }
+.note-content h1 { font-size:1.4rem; margin:1.2rem 0 0.6rem; }
+.note-content h2 { font-size:1.2rem; margin:1rem 0 0.5rem; }
+.note-content h3 { font-size:1.05rem; margin:0.8rem 0 0.4rem; }
+.note-content p { margin:0.5rem 0; }
+.note-content ul,.note-content ol { margin:0.5rem 0 0.5rem 2rem; }
+.note-content li { margin:0.2rem 0; }
+.note-content pre { background:var(--code-bg); padding:1rem; border-radius:6px; overflow-x:auto; margin:0.8rem 0; font-size:0.85rem; }
+.note-content code { background:var(--code-bg); padding:0.1rem 0.3rem; border-radius:3px; font-size:0.88em; }
+.note-content pre code { background:none; padding:0; }
+.note-content blockquote { border-left:3px solid var(--border); padding-left:1rem; color:var(--muted); margin:0.8rem 0; }
+.note-content a { color:var(--link); }
+.note-content img { max-width:100%; height:auto; border-radius:6px; margin:0.5rem 0; }
+.note-content table { border-collapse:collapse; width:100%; margin:0.8rem 0; }
+.note-content th,.note-content td { border:1px solid var(--border); padding:0.5rem; }
+.note-content th { background:var(--code-bg); }
+.media-placeholder { background:var(--code-bg); padding:1rem; text-align:center; color:var(--muted); border-radius:6px; margin:0.5rem 0; font-size:0.85rem; }
+.encrypt-placeholder { background:#fff3cd; padding:0.5rem; text-align:center; color:#856404; border-radius:6px; margin:0.5rem 0; font-size:0.85rem; }
+.back-link { display:inline-block; margin-top:2rem; color:var(--link); text-decoration:none; font-size:0.85rem; }
+</style>
+</head>
+<body>
+<div class="note-header"><div class="note-title">[源码解析] PyTorch 如何使用GPU - 罗西的思考 - 博客园</div><div class="note-meta">笔记本：nvidia</div></div>
+<div class="note-content"><div style="--en-clipped-content:article">
+<div><br/></div><div style="font-size: 16px; display:block; min-width: 100%; position: relative;"> <div style="--olcb-folder-code-block-max-height:80vh;--cnb-code-bg:rgb(245, 245, 245);--cnb-code-font-size:12px;--cnb-code-color:rgb(68, 68, 68);"><div style="tab-size:4;color:rgb(0, 0, 0);background:rgb(255, 255, 255);line-height:1.5;text-size-adjust:none;font-family:&quot;HanHei SC&quot;, &quot;PingFang SC&quot;, &quot;Helvetica Neue&quot;, Helvetica, STHeitiSC-Light, Arial, sans-serif;font-size:14px;"><div><div><div><div><div><div><div><div style="color:rgb(17, 17, 17);font-size:13px;line-height:1.8;"><div style="word-break:break-word;">
+<h1 style="padding:0px;color:rgb(0, 0, 0);font-size:28px;line-height:1.5;font-weight:bold;margin:10px 0px;">[源码解析] PyTorch 如何使用GPU</h1>
+<p style="padding:0px;margin:10px auto;text-indent:0px;"></p><div style="margin:0px;padding:0px;"><div style="margin:0px;padding:0px;">目录</div><ul style="margin:0px;padding:0px;margin-left:30px;padding-left:0px;list-style-type:disc;"><li style="margin:0px;padding:0px;list-style:inherit;"><a href="https://www.cnblogs.com/rossiXYZ/p/15518457.html#%E6%BA%90%E7%A0%81%E8%A7%A3%E6%9E%90-pytorch-%E5%A6%82%E4%BD%95%E4%BD%BF%E7%94%A8gpu" rel="noopener" style="margin:0px;padding:0px;text-decoration:underline;color:rgb(0, 102, 204);">[源码解析] PyTorch 如何使用GPU</a><ul style="margin:0px;padding:0px;margin-left:30px;padding-left:0px;list-style-type:circle;"><li style="margin:0px;padding:0px;list-style:inherit;"><a href="https://www.cnblogs.com/rossiXYZ/p/15518457.html#0x00-%E6%91%98%E8%A6%81" rel="noopener" style="margin:0px;padding:0px;text-decoration:underline;color:rgb(0, 102, 204);">0x00 摘要</a></li><li style="margin:0px;padding:0px;list-style:inherit;"><a href="https://www.cnblogs.com/rossiXYZ/p/15518457.html#0x01-%E9%97%AE%E9%A2%98" rel="noopener" style="margin:0px;padding:0px;text-decoration:underline;color:rgb(0, 102, 204);">0x01 问题</a></li><li style="margin:0px;padding:0px;list-style:inherit;"><a href="https://www.cnblogs.com/rossiXYZ/p/15518457.html#0x02-%E7%A7%BB%E5%8A%A8%E6%A8%A1%E5%9E%8B%E5%88%B0gpu" rel="noopener" style="margin:0px;padding:0px;text-decoration:underline;color:rgb(0, 102, 204);">0x02 移动模型到GPU</a><ul style="margin:0px;padding:0px;margin-left:30px;padding-left:0px;list-style-type:square;"><li style="margin:0px;padding:0px;list-style:inherit;"><a href="https://www.cnblogs.com/rossiXYZ/p/15518457.html#21-cuda-%E6%93%8D%E4%BD%9C" rel="noopener" style="margin:0px;padding:0px;text-decoration:underline;color:rgb(0, 102, 204);">2.1 cuda 操作</a></li><li style="margin:0px;padding:0px;list-style:inherit;"><a href="https://www.cnblogs.com/rossiXYZ/p/15518457.html#22-module" rel="noopener" style="margin:0px;padding:0px;text-decoration:underline;color:rgb(0, 102, 204);">2.2 Module</a></li><li style="margin:0px;padding:0px;list-style:inherit;"><a href="https://www.cnblogs.com/rossiXYZ/p/15518457.html#23-%E7%A7%BB%E5%8A%A8" rel="noopener" style="margin:0px;padding:0px;text-decoration:underline;color:rgb(0, 102, 204);">2.3 移动</a><ul style="margin:0px;padding:0px;margin-left:30px;padding-left:0px;list-style-type:square;"><li style="margin:0px;padding:0px;list-style:inherit;"><a href="https://www.cnblogs.com/rossiXYZ/p/15518457.html#231-%E7%A4%BA%E4%BE%8B" rel="noopener" style="margin:0px;padding:0px;text-decoration:underline;color:rgb(0, 102, 204);">2.3.1 示例</a></li><li style="margin:0px;padding:0px;list-style:inherit;"><a href="https://www.cnblogs.com/rossiXYZ/p/15518457.html#232-%E6%93%8D%E4%BD%9C" rel="noopener" style="margin:0px;padding:0px;text-decoration:underline;color:rgb(0, 102, 204);">2.3.2 操作</a></li><li style="margin:0px;padding:0px;list-style:inherit;"><a href="https://www.cnblogs.com/rossiXYZ/p/15518457.html#233-_apply-%E6%96%B9%E6%B3%95" rel="noopener" style="margin:0px;padding:0px;text-decoration:underline;color:rgb(0, 102, 204);">2.3.3 _apply 方法</a></li></ul></li><li style="margin:0px;padding:0px;list-style:inherit;"><a href="https://www.cnblogs.com/rossiXYZ/p/15518457.html#24-%E5%B0%8F%E7%BB%93" rel="noopener" style="margin:0px;padding:0px;text-decoration:underline;color:rgb(0, 102, 204);">2.4 小结</a></li></ul></li><li style="margin:0px;padding:0px;list-style:inherit;"><a href="https://www.cnblogs.com/rossiXYZ/p/15518457.html#0x03-%E5%9C%A8gpu%E4%B9%8B%E4%B8%8A%E8%B0%83%E7%94%A8%E5%87%BD%E6%95%B0" rel="noopener" style="margin:0px;padding:0px;text-decoration:underline;color:rgb(0, 102, 204);">0x03 在GPU之上调用函数</a><ul style="margin:0px;padding:0px;margin-left:30px;padding-left:0px;list-style-type:square;"><li style="margin:0px;padding:0px;list-style:inherit;"><a href="https://www.cnblogs.com/rossiXYZ/p/15518457.html#31-cuda%E7%BC%96%E7%A8%8B%E6%A8%A1%E5%9E%8B%E5%9F%BA%E7%A1%80" rel="noopener" style="margin:0px;padding:0px;text-decoration:underline;color:rgb(0, 102, 204);">3.1 CUDA编程模型基础</a><ul style="margin:0px;padding:0px;margin-left:30px;padding-left:0px;list-style-type:square;"><li style="margin:0px;padding:0px;list-style:inherit;"><a href="https://www.cnblogs.com/rossiXYZ/p/15518457.html#311-%E5%BC%82%E6%9E%84%E6%A8%A1%E5%9E%8B" rel="noopener" style="margin:0px;padding:0px;text-decoration:underline;color:rgb(0, 102, 204);">3.1.1 异构模型</a></li><li style="margin:0px;padding:0px;list-style:inherit;"><a href="https://www.cnblogs.com/rossiXYZ/p/15518457.html#312-%E5%B9%B6%E8%A1%8C%E6%80%9D%E6%83%B3" rel="noopener" style="margin:0px;padding:0px;text-decoration:underline;color:rgb(0, 102, 204);">3.1.2 并行思想</a></li><li style="margin:0px;padding:0px;list-style:inherit;"><a href="https://www.cnblogs.com/rossiXYZ/p/15518457.html#313-%E5%A4%84%E7%90%86%E6%B5%81%E7%A8%8B" rel="noopener" style="margin:0px;padding:0px;text-decoration:underline;color:rgb(0, 102, 204);">3.1.3 处理流程</a></li></ul></li><li style="margin:0px;padding:0px;list-style:inherit;"><a href="https://www.cnblogs.com/rossiXYZ/p/15518457.html#32-%E5%87%BD%E6%95%B0" rel="noopener" style="margin:0px;padding:0px;text-decoration:underline;color:rgb(0, 102, 204);">3.2 函数</a><ul style="margin:0px;padding:0px;margin-left:30px;padding-left:0px;list-style-type:square;"><li style="margin:0px;padding:0px;list-style:inherit;"><a href="https://www.cnblogs.com/rossiXYZ/p/15518457.html#321-%E6%A0%B8%E5%87%BD%E6%95%B0" rel="noopener" style="margin:0px;padding:0px;text-decoration:underline;color:rgb(0, 102, 204);">3.2.1 核函数</a></li><li style="margin:0px;padding:0px;list-style:inherit;"><a href="https://www.cnblogs.com/rossiXYZ/p/15518457.html#322-pytorch-%E6%A0%B7%E4%BE%8B" rel="noopener" style="margin:0px;padding:0px;text-decoration:underline;color:rgb(0, 102, 204);">3.2.2 PyTorch 样例</a></li></ul></li><li style="margin:0px;padding:0px;list-style:inherit;"><a href="https://www.cnblogs.com/rossiXYZ/p/15518457.html#33-%E5%B0%8F%E7%BB%93" rel="noopener" style="margin:0px;padding:0px;text-decoration:underline;color:rgb(0, 102, 204);">3.3 小结</a></li></ul></li><li style="margin:0px;padding:0px;list-style:inherit;"><a href="https://www.cnblogs.com/rossiXYZ/p/15518457.html#0x04-%E5%9C%A8gpucpu%E4%B9%8B%E9%97%B4%E5%88%87%E6%8D%A2" rel="noopener" style="margin:0px;padding:0px;text-decoration:underline;color:rgb(0, 102, 204);">0x04 在GPU/CPU之间切换</a><ul style="margin:0px;padding:0px;margin-left:30px;padding-left:0px;list-style-type:square;"><li style="margin:0px;padding:0px;list-style:inherit;"><a href="https://www.cnblogs.com/rossiXYZ/p/15518457.html#41-dispatcher-%E6%9C%BA%E5%88%B6" rel="noopener" style="margin:0px;padding:0px;text-decoration:underline;color:rgb(0, 102, 204);">4.1 Dispatcher 机制</a><ul style="margin:0px;padding:0px;margin-left:30px;padding-left:0px;list-style-type:square;"><li style="margin:0px;padding:0px;list-style:inherit;"><a href="https://www.cnblogs.com/rossiXYZ/p/15518457.html#411-%E9%97%AE%E9%A2%98" rel="noopener" style="margin:0px;padding:0px;text-decoration:underline;color:rgb(0, 102, 204);">4.1.1 问题</a></li><li style="margin:0px;padding:0px;list-style:inherit;"><a href="https://www.cnblogs.com/rossiXYZ/p/15518457.html#412-%E4%BB%80%E4%B9%88%E6%98%AF-dispatcher" rel="noopener" style="margin:0px;padding:0px;text-decoration:underline;color:rgb(0, 102, 204);">4.1.2 什么是 Dispatcher</a></li><li style="margin:0px;padding:0px;list-style:inherit;"><a href="https://www.cnblogs.com/rossiXYZ/p/15518457.html#413-%E5%A6%82%E4%BD%95%E8%AE%A1%E7%AE%97key" rel="noopener" style="margin:0px;padding:0px;text-decoration:underline;color:rgb(0, 102, 204);">4.1.3 如何计算key</a></li><li style="margin:0px;padding:0px;list-style:inherit;"><a href="https://www.cnblogs.com/rossiXYZ/p/15518457.html#414-%E6%B3%A8%E5%86%8C" rel="noopener" style="margin:0px;padding:0px;text-decoration:underline;color:rgb(0, 102, 204);">4.1.4 注册</a></li></ul></li><li style="margin:0px;padding:0px;list-style:inherit;"><a href="https://www.cnblogs.com/rossiXYZ/p/15518457.html#42-dispatcher-%E4%BB%A3%E7%A0%81" rel="noopener" style="margin:0px;padding:0px;text-decoration:underline;color:rgb(0, 102, 204);">4.2 Dispatcher 代码</a><ul style="margin:0px;padding:0px;margin-left:30px;padding-left:0px;list-style-type:square;"><li style="margin:0px;padding:0px;list-style:inherit;"><a href="https://www.cnblogs.com/rossiXYZ/p/15518457.html#421-%E8%99%9A%E5%87%BD%E6%95%B0%E8%A1%A8" rel="noopener" style="margin:0px;padding:0px;text-decoration:underline;color:rgb(0, 102, 204);">4.2.1 虚函数表</a><ul style="margin:0px;padding:0px;margin-left:30px;padding-left:0px;list-style-type:square;"><li style="margin:0px;padding:0px;list-style:inherit;"><a href="https://www.cnblogs.com/rossiXYZ/p/15518457.html#4211-schema-%E4%BE%8B%E5%AD%90" rel="noopener" style="margin:0px;padding:0px;text-decoration:underline;color:rgb(0, 102, 204);">4.2.1.1 Schema 例子</a></li><li style="margin:0px;padding:0px;list-style:inherit;"><a href="https://www.cnblogs.com/rossiXYZ/p/15518457.html#4212-operator%E7%9A%84%E5%AE%9E%E7%8E%B0" rel="noopener" style="margin:0px;padding:0px;text-decoration:underline;color:rgb(0, 102, 204);">4.2.1.2 Operator的实现</a></li></ul></li><li style="margin:0px;padding:0px;list-style:inherit;"><a href="https://www.cnblogs.com/rossiXYZ/p/15518457.html#422-dispatcher-%E5%AE%9A%E4%B9%89" rel="noopener" style="margin:0px;padding:0px;text-decoration:underline;color:rgb(0, 102, 204);">4.2.2 Dispatcher 定义</a></li><li style="margin:0px;padding:0px;list-style:inherit;"><a href="https://www.cnblogs.com/rossiXYZ/p/15518457.html#423-%E6%B3%A8%E5%86%8C" rel="noopener" style="margin:0px;padding:0px;text-decoration:underline;color:rgb(0, 102, 204);">4.2.3 注册</a><ul style="margin:0px;padding:0px;margin-left:30px;padding-left:0px;list-style-type:square;"><li style="margin:0px;padding:0px;list-style:inherit;"><a href="https://www.cnblogs.com/rossiXYZ/p/15518457.html#4231-%E6%B3%A8%E5%86%8C%E8%A1%A8" rel="noopener" style="margin:0px;padding:0px;text-decoration:underline;color:rgb(0, 102, 204);">4.2.3.1 注册表</a></li><li style="margin:0px;padding:0px;list-style:inherit;"><a href="https://www.cnblogs.com/rossiXYZ/p/15518457.html#4232-%E6%B3%A8%E5%86%8C%E8%A1%8C%E4%B8%BA" rel="noopener" style="margin:0px;padding:0px;text-decoration:underline;color:rgb(0, 102, 204);">4.2.3.2 注册行为</a></li></ul></li><li style="margin:0px;padding:0px;list-style:inherit;"><a href="https://www.cnblogs.com/rossiXYZ/p/15518457.html#424-%E5%A6%82%E4%BD%95dispatch" rel="noopener" style="margin:0px;padding:0px;text-decoration:underline;color:rgb(0, 102, 204);">4.2.4 如何dispatch</a><ul style="margin:0px;padding:0px;margin-left:30px;padding-left:0px;list-style-type:square;"><li style="margin:0px;padding:0px;list-style:inherit;"><a href="https://www.cnblogs.com/rossiXYZ/p/15518457.html#4241-%E8%B0%83%E5%BA%A6%E4%BE%9D%E6%8D%AE" rel="noopener" style="margin:0px;padding:0px;text-decoration:underline;color:rgb(0, 102, 204);">4.2.4.1 调度依据</a></li><li style="margin:0px;padding:0px;list-style:inherit;"><a href="https://www.cnblogs.com/rossiXYZ/p/15518457.html#4242-%E8%B0%83%E5%BA%A6%E4%BB%A3%E7%A0%81" rel="noopener" style="margin:0px;padding:0px;text-decoration:underline;color:rgb(0, 102, 204);">4.2.4.2 调度代码</a></li><li style="margin:0px;padding:0px;list-style:inherit;"><a href="https://www.cnblogs.com/rossiXYZ/p/15518457.html#4243-key" rel="noopener" style="margin:0px;padding:0px;text-decoration:underline;color:rgb(0, 102, 204);">4.2.4.3 key</a></li><li style="margin:0px;padding:0px;list-style:inherit;"><a href="https://www.cnblogs.com/rossiXYZ/p/15518457.html#4244-key%E7%9A%84%E4%BD%BF%E7%94%A8" rel="noopener" style="margin:0px;padding:0px;text-decoration:underline;color:rgb(0, 102, 204);">4.2.4.4 key的使用</a></li></ul></li></ul></li><li style="margin:0px;padding:0px;list-style:inherit;"><a href="https://www.cnblogs.com/rossiXYZ/p/15518457.html#43-%E5%B0%8F%E7%BB%93" rel="noopener" style="margin:0px;padding:0px;text-decoration:underline;color:rgb(0, 102, 204);">4.3 小结</a></li></ul></li><li style="margin:0px;padding:0px;list-style:inherit;"><a href="https://www.cnblogs.com/rossiXYZ/p/15518457.html#0xff-%E5%8F%82%E8%80%83" rel="noopener" style="margin:0px;padding:0px;text-decoration:underline;color:rgb(0, 102, 204);">0xFF 参考</a></li></ul></li></ul></div><p style="padding:0px;margin:10px auto;text-indent:0px;"></p>
+<h2 style="padding:0px;color:rgb(0, 0, 0);font-size:21px;line-height:1.5;font-weight:bold;margin:10px 0px;">0x00 摘要</h2>
+<p style="padding:0px;margin:10px auto;text-indent:0px;">在 PyTorch DataParallel 训练过程中，其会在多个GPU之上复制模型副本，然后才开始训练。笔者在分析过程中，发现如果不把一些GPU相关基础知识整理出来，很难理解DataParallel的这个复制模型的过程，遂有此文。</p>
+<p style="padding:0px;margin:10px auto;text-indent:0px;">本系列其他文章如下：</p>
+<p style="padding:0px;margin:10px auto;text-indent:0px;"><a href="https://www.cnblogs.com/rossiXYZ/p/15395742.html" target="_blank" rel="noopener" style="margin:0px;padding:0px;text-decoration:underline;color:rgb(0, 102, 204);">深度学习利器之自动微分(1)</a></p>
+<p style="padding:0px;margin:10px auto;text-indent:0px;"><a href="https://www.cnblogs.com/rossiXYZ/p/15395775.html" target="_blank" rel="noopener" style="margin:0px;padding:0px;text-decoration:underline;color:rgb(0, 102, 204);">深度学习利器之自动微分(2)</a></p>
+<p style="padding:0px;margin:10px auto;text-indent:0px;">[<a href="https://www.cnblogs.com/rossiXYZ/p/15413467.html" target="_blank" rel="noopener" style="margin:0px;padding:0px;text-decoration:underline;color:rgb(0, 102, 204);">源码解析]深度学习利器之自动微分(3) --- 示例解读</a></p>
+<p style="padding:0px;margin:10px auto;text-indent:0px;">[<a href="https://www.cnblogs.com/rossiXYZ/p/15421453.html" target="_blank" rel="noopener" style="margin:0px;padding:0px;text-decoration:underline;color:rgb(0, 102, 204);">源码解析]PyTorch如何实现前向传播(1) --- 基础类(上)</a></p>
+<p style="padding:0px;margin:10px auto;text-indent:0px;">[<a href="https://www.cnblogs.com/rossiXYZ/p/15426719.html" target="_blank" rel="noopener" style="margin:0px;padding:0px;text-decoration:underline;color:rgb(0, 102, 204);">源码解析]PyTorch如何实现前向传播(2) --- 基础类(下)</a></p>
+<p style="padding:0px;margin:10px auto;text-indent:0px;">[<a href="https://www.cnblogs.com/rossiXYZ/p/15436868.html" target="_blank" rel="noopener" style="margin:0px;padding:0px;text-decoration:underline;color:rgb(0, 102, 204);">源码解析] PyTorch如何实现前向传播(3) --- 具体实现</a></p>
+<p style="padding:0px;margin:10px auto;text-indent:0px;">[<a href="https://www.cnblogs.com/rossiXYZ/p/15455546.html" target="_blank" rel="noopener" style="margin:0px;padding:0px;text-decoration:underline;color:rgb(0, 102, 204);">源码解析] Pytorch 如何实现后向传播 (1)---- 调用引擎</a></p>
+<p style="padding:0px;margin:10px auto;text-indent:0px;">[<a href="https://www.cnblogs.com/rossiXYZ/p/15472692.html" target="_blank" rel="noopener" style="margin:0px;padding:0px;text-decoration:underline;color:rgb(0, 102, 204);">源码解析] Pytorch 如何实现后向传播 (2)---- 引擎静态结构</a></p>
+<p style="padding:0px;margin:10px auto;text-indent:0px;">[<a href="https://www.cnblogs.com/rossiXYZ/p/15481235.html" target="_blank" rel="noopener" style="margin:0px;padding:0px;text-decoration:underline;color:rgb(0, 102, 204);">源码解析] Pytorch 如何实现后向传播 (3)---- 引擎动态逻辑</a></p>
+<p style="padding:0px;margin:10px auto;text-indent:0px;">[<a href="https://www.cnblogs.com/rossiXYZ/p/15491941.html" target="_blank" rel="noopener" style="margin:0px;padding:0px;text-decoration:underline;color:rgb(0, 102, 204);">源码解析] PyTorch 如何实现后向传播 (4)---- 具体算法</a></p>
+<p style="padding:0px;margin:10px auto;text-indent:0px;">[<a href="https://www.cnblogs.com/rossiXYZ/p/15496268.html" target="_blank" rel="noopener" style="margin:0px;padding:0px;text-decoration:underline;color:rgb(0, 102, 204);">源码解析] PyTorch 分布式(1)------历史和概述</a></p>
+<h2 style="padding:0px;color:rgb(0, 0, 0);font-size:21px;line-height:1.5;font-weight:bold;margin:10px 0px;">0x01 问题</h2>
+<p style="padding:0px;margin:10px auto;text-indent:0px;">在 DataParallel 进行前向传播之前，需要在GPU之上分散数据，复制模型，具体可见下图。</p>
+<p style="padding:0px;margin:10px auto;text-indent:0px;"><img src="https://img2020.cnblogs.com/blog/1850883/202111/1850883-20211106205804621-1980599929.png" width="761" height="251" style="padding:0px;border:0px;cursor:zoom-in;display:block;margin:auto;height:auto;transition:transform 300ms cubic-bezier(0.2, 0, 0.2, 1) 0s;max-width:100%;"/></p>
+<p style="padding:0px;margin:10px auto;text-indent:0px;">由此我们有几个问题：</p>
+<ol style="margin:0px;padding:0px;padding-left:40px;list-style-type:decimal;">
+<li style="margin:0px;padding:0px;list-style:inherit;">移动模型到GPU这个动作的背后究竟做了哪些操作？</li>
+<li style="margin:0px;padding:0px;list-style:inherit;">如何在 CPU 之上调用 GPU 操作？</li>
+<li style="margin:0px;padding:0px;list-style:inherit;">如何在 CPU，GPU 操作之间无缝切换？</li>
+<li style="margin:0px;padding:0px;list-style:inherit;">是否需要把损失函数移动到 GPU 之上？</li>
+</ol>
+<p style="padding:0px;margin:10px auto;text-indent:0px;">我们接下来就一一分析。</p>
+<p style="padding:0px;margin:10px auto;text-indent:0px;">注，关于CUDA和Dispatcher我们只是大致介绍，目的是可以让读者走通整个流程，有兴趣的读者可以自行深入研究。</p>
+<h2 style="padding:0px;color:rgb(0, 0, 0);font-size:21px;line-height:1.5;font-weight:bold;margin:10px 0px;">0x02 移动模型到GPU</h2>
+<h3 style="padding:0px;color:rgb(0, 0, 0);font-size:16px;line-height:1.5;font-weight:bold;margin:10px 0px;">2.1 cuda 操作</h3>
+<p style="padding:0px;margin:10px auto;text-indent:0px;">CUDA 是NVIDIA公司开发的GPU编程模型，其提供了GPU编程接口，用户可以基于CUDA编程来构建基于GPU计算的应用。</p>
+<p style="padding:0px;margin:10px auto;text-indent:0px;"><code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif">torch.cuda</code>用于设置 cuda 和运行cuda操作。它跟踪当前选定的GPU，默认情况下，用户分配的所有CUDA张量都将在该设备上创建。用户可以使用 <code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif">torch.cuda.device</code>  来修改所选设备。一旦分配了张量，您可以对其执行操作，而不考虑所选设备，PyTorch 会把运行结果与原始张量放在同一设备上。</p>
+<p style="padding:0px;margin:10px auto;text-indent:0px;">默认情况下，除了<code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif">~torch.Tensor.copy_</code>和其他具有类似复制功能的方法（如<code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif">~torch.Tensor.to</code>和<code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif">~torch.Tensor.cuda</code>）之外，不允许跨GPU操作，除非启用对等（peer-to-peer）内存访问。</p>
+<p style="padding:0px;margin:10px auto;text-indent:0px;">我们从源码之中找出一个具体示例如下，大家可以看到，张量可以在设备上被创建，操作。</p>
+<pre style="border-radius:4px;background-color: #fbfaf8;border: 1px solid rgba(0,0,0,.14902);color: #333;font-size: 12px;padding: 8px;font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif;box-sizing: border-box;"><code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif">    cuda = torch.device(<span style="margin:0px;padding:0px;color:rgb(163, 21, 21);">'cuda'</span>)     <span style="margin:0px;padding:0px;color:rgb(0, 128, 0);"># Default CUDA device</span>
+    cuda0 = torch.device(<span style="margin:0px;padding:0px;color:rgb(163, 21, 21);">'cuda:0'</span>)
+    cuda2 = torch.device(<span style="margin:0px;padding:0px;color:rgb(163, 21, 21);">'cuda:2'</span>)  <span style="margin:0px;padding:0px;color:rgb(0, 128, 0);"># GPU 2 (these are 0-indexed)</span>
+
+    x = torch.tensor([<span style="margin:0px;padding:0px;color:rgb(136, 0, 0);">1.</span>, <span style="margin:0px;padding:0px;color:rgb(136, 0, 0);">2.</span>], device=cuda0)
+    <span style="margin:0px;padding:0px;color:rgb(0, 128, 0);"># x.device is device(type='cuda', index=0)</span>
+    y = torch.tensor([<span style="margin:0px;padding:0px;color:rgb(136, 0, 0);">1.</span>, <span style="margin:0px;padding:0px;color:rgb(136, 0, 0);">2.</span>]).cuda()
+    <span style="margin:0px;padding:0px;color:rgb(0, 128, 0);"># y.device is device(type='cuda', index=0)</span>
+
+    <span style="margin:0px;padding:0px;color:rgb(0, 0, 255);">with</span> torch.cuda.device(<span style="margin:0px;padding:0px;color:rgb(136, 0, 0);">1</span>):
+        <span style="margin:0px;padding:0px;color:rgb(0, 128, 0);"># allocates a tensor on GPU 1</span>
+        a = torch.tensor([<span style="margin:0px;padding:0px;color:rgb(136, 0, 0);">1.</span>, <span style="margin:0px;padding:0px;color:rgb(136, 0, 0);">2.</span>], device=cuda)
+
+        <span style="margin:0px;padding:0px;color:rgb(0, 128, 0);"># transfers a tensor from CPU to GPU 1</span>
+        b = torch.tensor([<span style="margin:0px;padding:0px;color:rgb(136, 0, 0);">1.</span>, <span style="margin:0px;padding:0px;color:rgb(136, 0, 0);">2.</span>]).cuda()
+        <span style="margin:0px;padding:0px;color:rgb(0, 128, 0);"># a.device and b.device are device(type='cuda', index=1)</span>
+
+        <span style="margin:0px;padding:0px;color:rgb(0, 128, 0);"># You can also use ``Tensor.to`` to transfer a tensor:</span>
+        b2 = torch.tensor([<span style="margin:0px;padding:0px;color:rgb(136, 0, 0);">1.</span>, <span style="margin:0px;padding:0px;color:rgb(136, 0, 0);">2.</span>]).to(device=cuda)
+        <span style="margin:0px;padding:0px;color:rgb(0, 128, 0);"># b.device and b2.device are device(type='cuda', index=1)</span>
+
+        c = a + b
+        <span style="margin:0px;padding:0px;color:rgb(0, 128, 0);"># c.device is device(type='cuda', index=1)</span>
+
+        z = x + y
+        <span style="margin:0px;padding:0px;color:rgb(0, 128, 0);"># z.device is device(type='cuda', index=0)</span>
+
+        <span style="margin:0px;padding:0px;color:rgb(0, 128, 0);"># even within a context, you can specify the device</span>
+        <span style="margin:0px;padding:0px;color:rgb(0, 128, 0);"># (or give a GPU index to the .cuda call)</span>
+        d = torch.randn(<span style="margin:0px;padding:0px;color:rgb(136, 0, 0);">2</span>, device=cuda2)
+        e = torch.randn(<span style="margin:0px;padding:0px;color:rgb(136, 0, 0);">2</span>).to(cuda2)
+        f = torch.randn(<span style="margin:0px;padding:0px;color:rgb(136, 0, 0);">2</span>).cuda(cuda2)
+        <span style="margin:0px;padding:0px;color:rgb(0, 128, 0);"># d.device, e.device, and f.device are all device(type='cuda', index=2)</span>
+</code></pre>
+<h3 style="padding:0px;color:rgb(0, 0, 0);font-size:16px;line-height:1.5;font-weight:bold;margin:10px 0px;">2.2 Module</h3>
+<p style="padding:0px;margin:10px auto;text-indent:0px;">深度学习的模型可以看做是一种参数的容器，运行模型其实就是对输入参数做了一些基本的矩阵运算。一般来说，用户定义的模型都是派生自 nn.modules.module 类。而分布式训练涉及到同步更新参数和把模型拷贝到多个worker之上，所以我们首先需要看看Module的状况。从定义中可以看出来，Module的成员变量主要分为状态参数和hooks函数。</p>
+<pre style="border-radius:4px;background-color: #fbfaf8;border: 1px solid rgba(0,0,0,.14902);color: #333;font-size: 12px;padding: 8px;font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif;box-sizing: border-box;"><code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span style="margin:0px;padding:0px;color:rgb(0, 0, 255);">class</span> <span style="margin:0px;padding:0px;color:rgb(163, 21, 21);">Module</span>:
+    dump_patches: <span style="margin:0px;padding:0px;color:rgb(0, 0, 255);">bool</span> = <span style="margin:0px;padding:0px;color:rgb(163, 21, 21);">False</span>
+    _version: <span style="margin:0px;padding:0px;color:rgb(0, 0, 255);">int</span> = <span style="margin:0px;padding:0px;color:rgb(136, 0, 0);">1</span>
+    training: <span style="margin:0px;padding:0px;color:rgb(0, 0, 255);">bool</span>
+    _is_full_backward_hook: <span style="margin:0px;padding:0px;color:rgb(163, 21, 21);">Optional</span>[<span style="margin:0px;padding:0px;color:rgb(0, 0, 255);">bool</span>]
+
+    <span style="margin:0px;padding:0px;color:rgb(0, 0, 255);">def</span> <span style="margin:0px;padding:0px;color:rgb(163, 21, 21);">__init__</span>(<span style="margin:0px;padding:0px;">self</span>):
+        <span style="margin:0px;padding:0px;color:rgb(163, 21, 21);">"""
+        Initializes internal Module state, shared by both nn.Module and ScriptModule.
+        """</span>
+        torch._C._log_api_usage_once(<span style="margin:0px;padding:0px;color:rgb(163, 21, 21);">"python.nn_module"</span>)
+
+        self.training = <span style="margin:0px;padding:0px;color:rgb(163, 21, 21);">True</span>
+        self._parameters = OrderedDict() <span style="margin:0px;padding:0px;color:rgb(0, 128, 0);"># 在训练过程中会随着 BP 而更新的参数</span>
+        self._buffers = OrderedDict() <span style="margin:0px;padding:0px;color:rgb(0, 128, 0);"># 在训练过程中不会随着 BP 而更新的参数</span>
+        self._non_persistent_buffers_set = <span style="margin:0px;padding:0px;color:rgb(0, 0, 255);">set</span>()
+        self._backward_hooks = OrderedDict()
+        self._is_full_backward_hook = <span style="margin:0px;padding:0px;color:rgb(163, 21, 21);">None</span>
+        self._forward_hooks = OrderedDict()
+        self._forward_pre_hooks = OrderedDict()
+        self._state_dict_hooks = OrderedDict()
+        self._load_state_dict_pre_hooks = OrderedDict()
+        self._modules = OrderedDict()
+</code></pre>
+<p style="padding:0px;margin:10px auto;text-indent:0px;">我们主要对状态参数进行说明。状态参数之中，主要有四种：</p>
+<ul style="margin:0px;padding:0px;margin-left:30px;padding-left:0px;list-style-type:disc;">
+<li style="margin:0px;padding:0px;list-style:inherit;">
+<p style="padding:0px;margin:10px auto;text-indent:0px;">self.training</p>
+<ul style="margin:0px;padding:0px;margin-left:30px;padding-left:0px;list-style-type:circle;">
+<li style="margin:0px;padding:0px;list-style:inherit;">本网络是否正在训练。</li>
+</ul>
+</li>
+<li style="margin:0px;padding:0px;list-style:inherit;">
+<p style="padding:0px;margin:10px auto;text-indent:0px;">self._modules</p>
+<ul style="margin:0px;padding:0px;margin-left:30px;padding-left:0px;list-style-type:circle;">
+<li style="margin:0px;padding:0px;list-style:inherit;">是本网络下属的子模块，采取迭代的方式进行定义。</li>
+</ul>
+</li>
+<li style="margin:0px;padding:0px;list-style:inherit;">
+<p style="padding:0px;margin:10px auto;text-indent:0px;">self._parameters</p>
+<ul style="margin:0px;padding:0px;margin-left:30px;padding-left:0px;list-style-type:circle;">
+<li style="margin:0px;padding:0px;list-style:inherit;">网络的参数。是在训练过程中会随着 BP 而更新的参数，就是梯度更新的对象。</li>
+</ul>
+</li>
+<li style="margin:0px;padding:0px;list-style:inherit;">
+<p style="padding:0px;margin:10px auto;text-indent:0px;">self._buffers</p>
+<ul style="margin:0px;padding:0px;margin-left:30px;padding-left:0px;list-style-type:circle;">
+<li style="margin:0px;padding:0px;list-style:inherit;">在训练过程中，不会随着BP更新的参数，但需要被保存，比如BatchNorm中的moving mean and variance，其优化不是通过梯度反向传播而是通过其他途径。</li>
+</ul>
+</li>
+</ul>
+<p style="padding:0px;margin:10px auto;text-indent:0px;">从本质上讲，当一个模型的网络结构被定义之后，<code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif">self._parameters</code> 和 <code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif">self._buffers</code>的组合是一个模型的具体状态。如果需要拷贝一个模型：</p>
+<ul style="margin:0px;padding:0px;margin-left:30px;padding-left:0px;list-style-type:disc;">
+<li style="margin:0px;padding:0px;list-style:inherit;"><code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif">self._modules</code>属于网络结构的一部分，当我们拷贝模型到其他workers时，会一起拷贝过来。</li>
+<li style="margin:0px;padding:0px;list-style:inherit;">而<code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif">self._parameters</code> 和 <code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif">self._buffers</code> 都需要显式拷贝到其他worker，这样才能在不同的Python进程之中维持相同的状态。</li>
+</ul>
+<p style="padding:0px;margin:10px auto;text-indent:0px;">那么，这是不是意味着我们只需要拷贝 <code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif">self._modules</code>，<code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif">self._parameters</code> 和 <code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif">self._buffers</code> 这些就可以了？让我们继续往下看。</p>
+<h3 style="padding:0px;color:rgb(0, 0, 0);font-size:16px;line-height:1.5;font-weight:bold;margin:10px 0px;">2.3 移动</h3>
+<h4 style="padding:0px;color:rgb(0, 0, 0);font-size:14px;font-weight:bold;margin:10px 0px;">2.3.1 示例</h4>
+<p style="padding:0px;margin:10px auto;text-indent:0px;">前面看到了如何在 GPU 上操作张量，我们接下来看看如何把模型放置到 GPU 之上。</p>
+<p style="padding:0px;margin:10px auto;text-indent:0px;">首先我们定义了一个模型。</p>
+<pre style="border-radius:4px;background-color: #fbfaf8;border: 1px solid rgba(0,0,0,.14902);color: #333;font-size: 12px;padding: 8px;font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif;box-sizing: border-box;"><code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span style="margin:0px;padding:0px;color:rgb(0, 0, 255);">class</span> <span style="margin:0px;padding:0px;color:rgb(163, 21, 21);">ToyModel</span>(nn.Module):
+    <span style="margin:0px;padding:0px;color:rgb(0, 0, 255);">def</span> <span style="margin:0px;padding:0px;color:rgb(163, 21, 21);">__init__</span>(<span style="margin:0px;padding:0px;">self</span>):
+        <span style="margin:0px;padding:0px;color:rgb(0, 0, 255);">super</span>(ToyModel, self).__init__()
+        self.net1 = nn.Linear(<span style="margin:0px;padding:0px;color:rgb(136, 0, 0);">10</span>, <span style="margin:0px;padding:0px;color:rgb(136, 0, 0);">10</span>)
+        self.relu = nn.ReLU()
+        self.net2 = nn.Linear(<span style="margin:0px;padding:0px;color:rgb(136, 0, 0);">10</span>, <span style="margin:0px;padding:0px;color:rgb(136, 0, 0);">5</span>)
+
+    <span style="margin:0px;padding:0px;color:rgb(0, 0, 255);">def</span> <span style="margin:0px;padding:0px;color:rgb(163, 21, 21);">forward</span>(<span style="margin:0px;padding:0px;">self, x</span>):
+        <span style="margin:0px;padding:0px;color:rgb(0, 0, 255);">return</span> self.net2(self.relu(self.net1(x)))
+</code></pre>
+<p style="padding:0px;margin:10px auto;text-indent:0px;">然后通过如下方式使用模型。</p>
+<pre style="border-radius:4px;background-color: #fbfaf8;border: 1px solid rgba(0,0,0,.14902);color: #333;font-size: 12px;padding: 8px;font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif;box-sizing: border-box;"><code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif">model = ToyModel().cuda(device_ids[<span style="margin:0px;padding:0px;color:rgb(136, 0, 0);">0</span>]) <span style="margin:0px;padding:0px;color:rgb(0, 128, 0);"># 这里复制模型到 GPU 之上</span>
+ddp_model = DDP(model, device_ids)
+
+loss_fn = nn.MSELoss() <span style="margin:0px;padding:0px;color:rgb(0, 128, 0);"># 接着进行训练</span>
+optimizer = optim.SGD(ddp_model.parameters(), lr=<span style="margin:0px;padding:0px;color:rgb(136, 0, 0);">0.001</span>)
+
+optimizer.zero_grad()
+outputs = ddp_model(torch.randn(<span style="margin:0px;padding:0px;color:rgb(136, 0, 0);">20</span>, <span style="margin:0px;padding:0px;color:rgb(136, 0, 0);">10</span>))
+labels = torch.randn(<span style="margin:0px;padding:0px;color:rgb(136, 0, 0);">20</span>, <span style="margin:0px;padding:0px;color:rgb(136, 0, 0);">5</span>).to(device_ids[<span style="margin:0px;padding:0px;color:rgb(136, 0, 0);">0</span>])
+loss_fn(outputs, labels).backward()
+optimizer.step()
+</code></pre>
+<h4 style="padding:0px;color:rgb(0, 0, 0);font-size:14px;font-weight:bold;margin:10px 0px;">2.3.2 操作</h4>
+<p style="padding:0px;margin:10px auto;text-indent:0px;">示例之中使用了 cuda 方法把模型复制到 GPU 之上，注释中指出了是<u style="margin:0px;padding:0px;">把模型的 parameters 和 buffers 移动到 GPU 之上</u>。代码中实际就是使用 self._apply 来调用 cuda(device)。</p>
+<pre style="border-radius:4px;background-color: #fbfaf8;border: 1px solid rgba(0,0,0,.14902);color: #333;font-size: 12px;padding: 8px;font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif;box-sizing: border-box;"><code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span style="margin:0px;padding:0px;color:rgb(0, 0, 255);">def</span> <span style="margin:0px;padding:0px;color:rgb(163, 21, 21);">cuda</span>(<span style="margin:0px;padding:0px;">self: T, device: <span style="margin:0px;padding:0px;color:rgb(163, 21, 21);">Optional</span>[<span style="margin:0px;padding:0px;color:rgb(163, 21, 21);">Union</span>[<span style="margin:0px;padding:0px;color:rgb(0, 0, 255);">int</span>, device]] = <span style="margin:0px;padding:0px;color:rgb(163, 21, 21);">None</span></span>) -&gt; T:
+    <span style="margin:0px;padding:0px;color:rgb(163, 21, 21);">r"""Moves all model parameters and buffers to the GPU.
+
+    This also makes associated parameters and buffers different objects. So
+    it should be called before constructing optimizer if the module will
+    live on GPU while being optimized.
+
+    .. note::
+        This method modifies the module in-place.
+
+    Args:
+        device (int, optional): if specified, all parameters will be
+            copied to that device
+
+    Returns:
+        Module: self
+    """</span>
+    <span style="margin:0px;padding:0px;color:rgb(0, 0, 255);">return</span> self._apply(<span style="margin:0px;padding:0px;color:rgb(0, 0, 255);">lambda</span> t: t.cuda(device))
+</code></pre>
+<p style="padding:0px;margin:10px auto;text-indent:0px;">我们再看大家熟悉的另外一些函数。</p>
+<p style="padding:0px;margin:10px auto;text-indent:0px;">首先，to 方法其实本质也是使用 self._apply 来调用 to(device)，我们省略了一些检验代码。</p>
+<pre style="border-radius:4px;background-color: #fbfaf8;border: 1px solid rgba(0,0,0,.14902);color: #333;font-size: 12px;padding: 8px;font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif;box-sizing: border-box;"><code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span style="margin:0px;padding:0px;color:rgb(0, 0, 255);">def</span> <span style="margin:0px;padding:0px;color:rgb(163, 21, 21);">to</span>(<span style="margin:0px;padding:0px;">self, *args, **kwargs</span>):
+    <span style="margin:0px;padding:0px;color:rgb(163, 21, 21);">r"""Moves and/or casts the parameters and buffers.
+
+    This can be called as
+
+    .. function:: to(device=None, dtype=None, non_blocking=False)
+    .. function:: to(dtype, non_blocking=False)
+    .. function:: to(tensor, non_blocking=False)
+    .. function:: to(memory_format=torch.channels_last)
+
+    Its signature is similar to :meth:`torch.Tensor.to`, but only accepts
+    floating point or complex :attr:`dtype`s. In addition, this method will
+    only cast the floating point or complex parameters and buffers to :attr:`dtype`
+    (if given). The integral parameters and buffers will be moved
+    :attr:`device`, if that is given, but with dtypes unchanged. When
+    :attr:`non_blocking` is set, it tries to convert/move asynchronously
+    with respect to the host if possible, e.g., moving CPU Tensors with
+    pinned memory to CUDA devices.
+
+    See below for examples.
+
+    .. note::
+        This method modifies the module in-place.
+
+    Args:
+        device (:class:`torch.device`): the desired device of the parameters
+            and buffers in this module
+        dtype (:class:`torch.dtype`): the desired floating point or complex dtype of
+            the parameters and buffers in this module
+        tensor (torch.Tensor): Tensor whose dtype and device are the desired
+            dtype and device for all parameters and buffers in this module
+        memory_format (:class:`torch.memory_format`): the desired memory
+            format for 4D parameters and buffers in this module (keyword
+            only argument)
+
+    Returns:
+        Module: self
+    """</span>
+
+    device, dtype, non_blocking, convert_to_format = torch._C._nn._parse_to(*args, **kwargs)
+
+    <span style="margin:0px;padding:0px;color:rgb(0, 0, 255);">def</span> <span style="margin:0px;padding:0px;color:rgb(163, 21, 21);">convert</span>(<span style="margin:0px;padding:0px;">t</span>):
+        <span style="margin:0px;padding:0px;color:rgb(0, 0, 255);">if</span> convert_to_format <span style="margin:0px;padding:0px;color:rgb(0, 0, 255);">is</span> <span style="margin:0px;padding:0px;color:rgb(0, 0, 255);">not</span> <span style="margin:0px;padding:0px;color:rgb(163, 21, 21);">None</span> <span style="margin:0px;padding:0px;color:rgb(0, 0, 255);">and</span> t.dim() <span style="margin:0px;padding:0px;color:rgb(0, 0, 255);">in</span> (<span style="margin:0px;padding:0px;color:rgb(136, 0, 0);">4</span>, <span style="margin:0px;padding:0px;color:rgb(136, 0, 0);">5</span>):
+            <span style="margin:0px;padding:0px;color:rgb(0, 0, 255);">return</span> t.to(device, dtype <span style="margin:0px;padding:0px;color:rgb(0, 0, 255);">if</span> t.is_floating_point() <span style="margin:0px;padding:0px;color:rgb(0, 0, 255);">or</span> t.is_complex() <span style="margin:0px;padding:0px;color:rgb(0, 0, 255);">else</span> <span style="margin:0px;padding:0px;color:rgb(163, 21, 21);">None</span>,
+                        non_blocking, memory_format=convert_to_format)
+        <span style="margin:0px;padding:0px;color:rgb(0, 0, 255);">return</span> t.to(device, dtype <span style="margin:0px;padding:0px;color:rgb(0, 0, 255);">if</span> t.is_floating_point() <span style="margin:0px;padding:0px;color:rgb(0, 0, 255);">or</span> t.is_complex() <span style="margin:0px;padding:0px;color:rgb(0, 0, 255);">else</span> <span style="margin:0px;padding:0px;color:rgb(163, 21, 21);">None</span>, non_blocking)
+
+    <span style="margin:0px;padding:0px;color:rgb(0, 0, 255);">return</span> self._apply(convert)
+</code></pre>
+<p style="padding:0px;margin:10px auto;text-indent:0px;">其次，cpu 方法也是使用 self._apply 来调用 cpu(device)。</p>
+<pre style="border-radius:4px;background-color: #fbfaf8;border: 1px solid rgba(0,0,0,.14902);color: #333;font-size: 12px;padding: 8px;font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif;box-sizing: border-box;"><code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span style="margin:0px;padding:0px;color:rgb(0, 0, 255);">def</span> <span style="margin:0px;padding:0px;color:rgb(163, 21, 21);">cpu</span>(<span style="margin:0px;padding:0px;">self: T</span>) -&gt; T:
+    <span style="margin:0px;padding:0px;color:rgb(163, 21, 21);">r"""Moves all model parameters and buffers to the CPU.
+
+    .. note::
+        This method modifies the module in-place.
+
+    Returns:
+        Module: self
+    """</span>
+    <span style="margin:0px;padding:0px;color:rgb(0, 0, 255);">return</span> self._apply(<span style="margin:0px;padding:0px;color:rgb(0, 0, 255);">lambda</span> t: t.cpu())
+</code></pre>
+<p style="padding:0px;margin:10px auto;text-indent:0px;">因此，我们需要分析一下 _apply 方法。</p>
+<h4 style="padding:0px;color:rgb(0, 0, 0);font-size:14px;font-weight:bold;margin:10px 0px;">2.3.3 _apply 方法</h4>
+<p style="padding:0px;margin:10px auto;text-indent:0px;">我们可以看到其主要逻辑是：</p>
+<ul style="margin:0px;padding:0px;margin-left:30px;padding-left:0px;list-style-type:disc;">
+<li style="margin:0px;padding:0px;list-style:inherit;">遍历 _parameters：
+<ul style="margin:0px;padding:0px;margin-left:30px;padding-left:0px;list-style-type:circle;">
+<li style="margin:0px;padding:0px;list-style:inherit;">对参数调用fn进行处理，得到param_applied。
+<ul style="margin:0px;padding:0px;margin-left:30px;padding-left:0px;list-style-type:square;">
+<li style="margin:0px;padding:0px;list-style:inherit;">用 param_applied 重新设置参数。</li>
+</ul>
+</li>
+<li style="margin:0px;padding:0px;list-style:inherit;">如果参数有梯度，则：
+<ul style="margin:0px;padding:0px;margin-left:30px;padding-left:0px;list-style-type:square;">
+<li style="margin:0px;padding:0px;list-style:inherit;">对参数的grad调用fn进行处理，得到grad_applied。</li>
+<li style="margin:0px;padding:0px;list-style:inherit;">用 grad_applied 重新设置参数的梯度。</li>
+</ul>
+</li>
+</ul>
+</li>
+<li style="margin:0px;padding:0px;list-style:inherit;">遍历 _buffers：
+<ul style="margin:0px;padding:0px;margin-left:30px;padding-left:0px;list-style-type:circle;">
+<li style="margin:0px;padding:0px;list-style:inherit;">对buf调用fn进行处理。</li>
+</ul>
+</li>
+</ul>
+<pre style="border-radius:4px;background-color: #fbfaf8;border: 1px solid rgba(0,0,0,.14902);color: #333;font-size: 12px;padding: 8px;font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif;box-sizing: border-box;"><code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span style="margin:0px;padding:0px;color:rgb(0, 0, 255);">def</span> <span style="margin:0px;padding:0px;color:rgb(163, 21, 21);">_apply</span>(<span style="margin:0px;padding:0px;">self, fn</span>):
+    <span style="margin:0px;padding:0px;color:rgb(0, 0, 255);">for</span> module <span style="margin:0px;padding:0px;color:rgb(0, 0, 255);">in</span> self.children():
+        module._apply(fn)
+
+    <span style="margin:0px;padding:0px;color:rgb(0, 0, 255);">def</span> <span style="margin:0px;padding:0px;color:rgb(163, 21, 21);">compute_should_use_set_data</span>(<span style="margin:0px;padding:0px;">tensor, tensor_applied</span>):
+        <span style="margin:0px;padding:0px;color:rgb(0, 0, 255);">if</span> torch._has_compatible_shallow_copy_type(tensor, tensor_applied):
+            <span style="margin:0px;padding:0px;color:rgb(0, 128, 0);"># If the new tensor has compatible tensor type as the existing tensor,</span>
+            <span style="margin:0px;padding:0px;color:rgb(0, 128, 0);"># the current behavior is to change the tensor in-place using `.data =`,</span>
+            <span style="margin:0px;padding:0px;color:rgb(0, 128, 0);"># and the future behavior is to overwrite the existing tensor. However,</span>
+            <span style="margin:0px;padding:0px;color:rgb(0, 128, 0);"># changing the current behavior is a BC-breaking change, and we want it</span>
+            <span style="margin:0px;padding:0px;color:rgb(0, 128, 0);"># to happen in future releases. So for now we introduce the</span>
+            <span style="margin:0px;padding:0px;color:rgb(0, 128, 0);"># `torch.__future__.get_overwrite_module_params_on_conversion()`</span>
+            <span style="margin:0px;padding:0px;color:rgb(0, 128, 0);"># global flag to let the user control whether they want the future</span>
+            <span style="margin:0px;padding:0px;color:rgb(0, 128, 0);"># behavior of overwriting the existing tensor or not.</span>
+            <span style="margin:0px;padding:0px;color:rgb(0, 0, 255);">return</span> <span style="margin:0px;padding:0px;color:rgb(0, 0, 255);">not</span> torch.__future__.get_overwrite_module_params_on_conversion()
+        <span style="margin:0px;padding:0px;color:rgb(0, 0, 255);">else</span>:
+            <span style="margin:0px;padding:0px;color:rgb(0, 0, 255);">return</span> <span style="margin:0px;padding:0px;color:rgb(163, 21, 21);">False</span>
+
+    <span style="margin:0px;padding:0px;color:rgb(0, 128, 0);"># 遍历 _parameters</span>
+    <span style="margin:0px;padding:0px;color:rgb(0, 0, 255);">for</span> key, param <span style="margin:0px;padding:0px;color:rgb(0, 0, 255);">in</span> self._parameters.items():
+        <span style="margin:0px;padding:0px;color:rgb(0, 0, 255);">if</span> param <span style="margin:0px;padding:0px;color:rgb(0, 0, 255);">is</span> <span style="margin:0px;padding:0px;color:rgb(0, 0, 255);">not</span> <span style="margin:0px;padding:0px;color:rgb(163, 21, 21);">None</span>:
+            <span style="margin:0px;padding:0px;color:rgb(0, 128, 0);"># Tensors stored in modules are graph leaves, and we don't want to</span>
+            <span style="margin:0px;padding:0px;color:rgb(0, 128, 0);"># track autograd history of `param_applied`, so we have to use</span>
+            <span style="margin:0px;padding:0px;color:rgb(0, 128, 0);"># `with torch.no_grad():`</span>
+            <span style="margin:0px;padding:0px;color:rgb(0, 0, 255);">with</span> torch.no_grad():
+                param_applied = fn(param) <span style="margin:0px;padding:0px;color:rgb(0, 128, 0);"># 对参数调用fn进行处理，得到param_applied</span>
+            should_use_set_data = compute_should_use_set_data(param, param_applied)
+            <span style="margin:0px;padding:0px;color:rgb(0, 0, 255);">if</span> should_use_set_data:
+                param.data = param_applied <span style="margin:0px;padding:0px;color:rgb(0, 128, 0);"># 用 param_applied 重新设置</span>
+            <span style="margin:0px;padding:0px;color:rgb(0, 0, 255);">else</span>:
+                <span style="margin:0px;padding:0px;color:rgb(0, 0, 255);">assert</span> <span style="margin:0px;padding:0px;color:rgb(0, 0, 255);">isinstance</span>(param, Parameter)
+                <span style="margin:0px;padding:0px;color:rgb(0, 0, 255);">assert</span> param.is_leaf
+                <span style="margin:0px;padding:0px;color:rgb(0, 128, 0);"># # 用 param_applied 重新设置</span>
+                self._parameters[key] = Parameter(param_applied, param.requires_grad)
+
+            <span style="margin:0px;padding:0px;color:rgb(0, 0, 255);">if</span> param.grad <span style="margin:0px;padding:0px;color:rgb(0, 0, 255);">is</span> <span style="margin:0px;padding:0px;color:rgb(0, 0, 255);">not</span> <span style="margin:0px;padding:0px;color:rgb(163, 21, 21);">None</span>: <span style="margin:0px;padding:0px;color:rgb(0, 128, 0);"># 如果参数有梯度</span>
+                <span style="margin:0px;padding:0px;color:rgb(0, 0, 255);">with</span> torch.no_grad():
+                    grad_applied = fn(param.grad) <span style="margin:0px;padding:0px;color:rgb(0, 128, 0);"># 对参数的grad调用fn进行处理</span>
+                should_use_set_data = compute_should_use_set_data(param.grad, grad_applied)
+                <span style="margin:0px;padding:0px;color:rgb(0, 0, 255);">if</span> should_use_set_data:
+                    param.grad.data = grad_applied <span style="margin:0px;padding:0px;color:rgb(0, 128, 0);"># 用 grad_applied 重新设置</span>
+                <span style="margin:0px;padding:0px;color:rgb(0, 0, 255);">else</span>:
+                    <span style="margin:0px;padding:0px;color:rgb(0, 0, 255);">assert</span> param.grad.is_leaf
+                    self._parameters[key].grad = grad_applied.requires_grad_(param.grad.requires_grad) <span style="margin:0px;padding:0px;color:rgb(0, 128, 0);"># 用 grad_applied 重新设置</span>
+
+    <span style="margin:0px;padding:0px;color:rgb(0, 128, 0);"># 遍历 _buffers                </span>
+    <span style="margin:0px;padding:0px;color:rgb(0, 0, 255);">for</span> key, buf <span style="margin:0px;padding:0px;color:rgb(0, 0, 255);">in</span> self._buffers.items():
+        <span style="margin:0px;padding:0px;color:rgb(0, 0, 255);">if</span> buf <span style="margin:0px;padding:0px;color:rgb(0, 0, 255);">is</span> <span style="margin:0px;padding:0px;color:rgb(0, 0, 255);">not</span> <span style="margin:0px;padding:0px;color:rgb(163, 21, 21);">None</span>:
+            self._buffers[key] = fn(buf) <span style="margin:0px;padding:0px;color:rgb(0, 128, 0);"># 对buf调用fn进行处理</span>
+
+    <span style="margin:0px;padding:0px;color:rgb(0, 0, 255);">return</span> self
+</code></pre>
+<p style="padding:0px;margin:10px auto;text-indent:0px;">因此我们可以看到，移动模型到GPU，其实就是把模型的<code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif">self._parameters</code> 和 <code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif">self._buffers</code> 移动到 GPU，并没有对 <code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif">self._modules</code> 进行移动。我们对模型进行 .cuda() 处理，是将模型的参数放到显存上去（实际使用的时候也是通过这些参数做运算）。</p>
+<p style="padding:0px;margin:10px auto;text-indent:0px;">比如原来模型在下图左侧，进行 Module.cuda() 操作之后，模型如右边所示。</p>
+<pre style="border-radius:4px;background-color: #fbfaf8;border: 1px solid rgba(0,0,0,.14902);color: #333;font-size: 12px;padding: 8px;font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif;box-sizing: border-box;"><code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif">                                        +
+                                        |
++---------------------------------+     |     +----------------------------------+
+| CPU                             |     |     | CPU                              |
+|  +--------------+               |     |     |       +--------------------+     |
+|  |Module        |               |     |     |       | Module             |     |
+|  |              |               |     |     |       |                    |     |
+|  | _parameters+----&gt; Parameters |     |     |       |     _parameters ------+  |
+|  |              |               |     |     |       |                    |  |  |
+|  | _buffers +------&gt; Buffers    |     |     |     +-----+ _buffers       |  |  |
+|  |              |               |     |     |     | |                    |  |  |
+|  | _modules     |               |     |     |     | |     _modules       |  |  |
+|  |              |               |     |     |     | |                    |  |  |
+|  +--------------+               |     |     |     | +--------------------+  |  |
+|                                 |     |     |     |                         |  |
++---------------------------------+     |     +----------------------------------+
+                                        |           |                         |
+                                        +           |                         |
++-------------------------------&gt;  Module.<span style="margin:0px;padding:0px;color:rgb(0, 0, 255);">cuda</span>() +---------------------------------&gt; Time
+                                        +           |                         |
+                                        |           |                         |
++---------------------------------+     |     +----------------------------------+
+| GPU                             |     |     | GPU |                         |  |
+|                                 |     |     |     |                         |  |
+|                                 |     |     |     |       Parameters  &lt;-----+  |
+|                                 |     |     |     |                            |
+|                                 |     |     |     |                            |
+|                                 |     |     |     +----&gt;  Buffers              |
+|                                 |     |     |                                  |
+|                                 |     |     |                                  |
++---------------------------------+     |     +----------------------------------+
+                                        |
+                                        +
+</code></pre>
+<p style="padding:0px;margin:10px auto;text-indent:0px;">为什么  <code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif">self._modules</code>  没有被移动？这是因为没有必要，因为_modules 可以认为是一个list，其主要起到了桥梁作用，对其递归遍历可以被用来获取网络所有的 parameters。而这个功能在后续操作之中不是必须的。</p>
+<p style="padding:0px;margin:10px auto;text-indent:0px;">DP 就是在每次网络传播开始前，会把master节点上的parameters和buffer广播给其他节点，以此来维持状态的统一。</p>
+<h3 style="padding:0px;color:rgb(0, 0, 0);font-size:16px;line-height:1.5;font-weight:bold;margin:10px 0px;">2.4 小结</h3>
+<p style="padding:0px;margin:10px auto;text-indent:0px;">现在我们可以回答了第一个问题：移动模型到GPU这个动作的背后究竟做了哪些操作？</p>
+<p style="padding:0px;margin:10px auto;text-indent:0px;">答案时：调用 cuda 或者 to 方法来移动模型到GPU，其实就是把模型的<code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif">self._parameters</code> 和 <code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif">self._buffers</code> 移动到 GPU，并没有对 <code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif">self._modules</code> 进行移动。这个移动过程是递归调用的，是把模型每个叶子都移动到了 GPU 之上。</p>
+<h2 style="padding:0px;color:rgb(0, 0, 0);font-size:21px;line-height:1.5;font-weight:bold;margin:10px 0px;">0x03 在GPU之上调用函数</h2>
+<h3 style="padding:0px;color:rgb(0, 0, 0);font-size:16px;line-height:1.5;font-weight:bold;margin:10px 0px;">3.1 CUDA编程模型基础</h3>
+<p style="padding:0px;margin:10px auto;text-indent:0px;">我们首先介绍一下CUDA编程模型基础。</p>
+<h4 style="padding:0px;color:rgb(0, 0, 0);font-size:14px;font-weight:bold;margin:10px 0px;">3.1.1 异构模型</h4>
+<p style="padding:0px;margin:10px auto;text-indent:0px;">CUDA编程模型是一个异构模型。程序运行在一个异构系统之上，这个异构系统由CPU和GPU构成，它们之间由总线分开，程序运行时候是由CPU和GPU协同工作。</p>
+<p style="padding:0px;margin:10px auto;text-indent:0px;">在CUDA之中，有两个重要概念：host和device。</p>
+<ul style="margin:0px;padding:0px;margin-left:30px;padding-left:0px;list-style-type:disc;">
+<li style="margin:0px;padding:0px;list-style:inherit;">
+<p style="padding:0px;margin:10px auto;text-indent:0px;">Host ：CPU及其内存。</p>
+</li>
+<li style="margin:0px;padding:0px;list-style:inherit;">
+<p style="padding:0px;margin:10px auto;text-indent:0px;">Device ：GPU及其内存。</p>
+</li>
+</ul>
+<p style="padding:0px;margin:10px auto;text-indent:0px;">因此，CUDA 架构下的一个程序也对应分为两个部份：Host 代码和Device代码，它们分别在CPU和GPU上运行。host与device之间可以通信进行数据拷贝。</p>
+<ul style="margin:0px;padding:0px;margin-left:30px;padding-left:0px;list-style-type:disc;">
+<li style="margin:0px;padding:0px;list-style:inherit;">主机代码（Host Code）：在 CPU 上执行的部份，使用Linux（GNU gcc）和Windows（Microsoft Visual C）编译器来编译。大致可以认为认为C语言工作对象是CPU和内存条。</li>
+<li style="margin:0px;padding:0px;list-style:inherit;">设备代码（Device Code）：在GPU上执行的部份，使用 NVIDIA NVCC 编译器来编译。大致可以认为 CUDA C工作对象是GPU及GPU上内存（也叫设备内存）。</li>
+</ul>
+<pre style="border-radius:4px;background-color: #fbfaf8;border: 1px solid rgba(0,0,0,.14902);color: #333;font-size: 12px;padding: 8px;font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif;box-sizing: border-box;"><code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif">+-------------------+        +--------------------+
+|                   |        |                    |
+|   +----------+    |        |    +----------+    |
+|   |          |    |        |    |          |    |
+|   |   RAM    |    |        |    |   RAM    |    |
+|   |          |    |        |    |          |    |
+|   +----+-----+    |        |    +----+-----+    |
+|        |          +--------+         |          |
+|        |          |        |         |          |
+|   +----+-----+    |        |    +----+-----+    |
+|   |          |    |        |    |          |    |
+|   |   CPU    |    |        |    |   GPU    |    |
+|   |          |    |        |    |          |    |
+|   +----------+    |        |    +----------+    |
+|                   |        |                    |
++-------------------+        +--------------------+
+
+      Host                           Device
+
+</code></pre>
+<h4 style="padding:0px;color:rgb(0, 0, 0);font-size:14px;font-weight:bold;margin:10px 0px;">3.1.2 并行思想</h4>
+<p style="padding:0px;margin:10px auto;text-indent:0px;">CUDA 编程的思路是并行思想，大致如下：</p>
+<ul style="margin:0px;padding:0px;margin-left:30px;padding-left:0px;list-style-type:disc;">
+<li style="margin:0px;padding:0px;list-style:inherit;">把一个很大的执行任务划分成若干个简单的可以重复的操作，然后使用若干个线程来分别执行这些操作，达到并行的目的。</li>
+<li style="margin:0px;padding:0px;list-style:inherit;">执行任务处理的数据也要对应分组成多个小数据块。比如一个大数据分成若干个GPU组，每个GPU组要再次分成多个线程组，线程组内的张量可能需要再细分为张量处理器能处理的小组。</li>
+</ul>
+<p style="padding:0px;margin:10px auto;text-indent:0px;"><img src="https://img2020.cnblogs.com/blog/1850883/202111/1850883-20211106205857346-47120320.png" width="562" height="525" style="padding:0px;border:0px;cursor:zoom-in;display:block;margin:auto;height:auto;transition:transform 300ms cubic-bezier(0.2, 0, 0.2, 1) 0s;max-width:100%;"/></p>
+<p style="padding:0px;margin:10px auto;text-indent:0px;">因此，一个典型的CUDA程序包括串行代码和并行代码。</p>
+<ul style="margin:0px;padding:0px;margin-left:30px;padding-left:0px;list-style-type:disc;">
+<li style="margin:0px;padding:0px;list-style:inherit;">串行代码是标准C代码，由host执行。</li>
+<li style="margin:0px;padding:0px;list-style:inherit;">并行代码是CUDA C代码，在device中执行。</li>
+</ul>
+<p style="padding:0px;margin:10px auto;text-indent:0px;">CUDA 主程序由CPU开始，即程序由host执行串行代码开始，当遇到需要数据并行处理的部分，则由device执行并行代码来作为补足。device可以独立于host进行大部分操作。当一个device代码启动之后，控制权会立刻返还给CPU来执行其他任务，所以这是一个异步过程。</p>
+<p style="padding:0px;margin:10px auto;text-indent:0px;"><img src="https://img2020.cnblogs.com/blog/1850883/202111/1850883-20211106205922879-653846926.png" width="432" height="596" style="padding:0px;border:0px;cursor:zoom-in;display:block;margin:auto;height:auto;transition:transform 300ms cubic-bezier(0.2, 0, 0.2, 1) 0s;max-width:100%;"/></p>
+<p style="padding:0px;margin:10px auto;text-indent:0px;">图来自 <a href="https://docs.nvidia.com/cuda/cuda-c-programming-guide/index.html%E3%80%82" target="_blank" rel="noopener" style="margin:0px;padding:0px;text-decoration:underline;color:rgb(0, 102, 204);">https://docs.nvidia.com/cuda/cuda-c-programming-guide/index.html。</a></p>
+<h4 style="padding:0px;color:rgb(0, 0, 0);font-size:14px;font-weight:bold;margin:10px 0px;">3.1.3 处理流程</h4>
+<p style="padding:0px;margin:10px auto;text-indent:0px;">典型的CUDA程序的执行流程如下：</p>
+<ul style="margin:0px;padding:0px;margin-left:30px;padding-left:0px;list-style-type:disc;">
+<li style="margin:0px;padding:0px;list-style:inherit;">分配host内存空间并且初始化数据。</li>
+<li style="margin:0px;padding:0px;list-style:inherit;">分配device显存空间。</li>
+<li style="margin:0px;padding:0px;list-style:inherit;">将要计算的数据从Host内存之上复制到device显存之上。</li>
+<li style="margin:0px;padding:0px;list-style:inherit;">调用CUDA核函数在device上完成用户指定的运算。</li>
+<li style="margin:0px;padding:0px;list-style:inherit;">将计算后GPU内存上的结果复制到Host内存上。</li>
+<li style="margin:0px;padding:0px;list-style:inherit;">释放device和host上分配的内存。</li>
+</ul>
+<p style="padding:0px;margin:10px auto;text-indent:0px;">具体可以参见下图。</p>
+<p style="padding:0px;margin:10px auto;text-indent:0px;"><div class="media-placeholder">[图片/附件]</div></en-media></p>
+<h3 style="padding:0px;color:rgb(0, 0, 0);font-size:16px;line-height:1.5;font-weight:bold;margin:10px 0px;">3.2 函数</h3>
+<h4 style="padding:0px;color:rgb(0, 0, 0);font-size:14px;font-weight:bold;margin:10px 0px;">3.2.1 核函数</h4>
+<p style="padding:0px;margin:10px auto;text-indent:0px;">核函数是在device线程中并行执行的函数。在 CUDA 程序中，主程序在调用GPU内核之前需要对核进行执行配置，以确定线程块数，每个线程块中线程数和共享内存大小。比如在调用时需要用<code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif">&lt;&lt;参数1,参数2&gt;&gt;</code>来指定核函数需要的线程数量以及线程是如何组织，这样在GPU之中就会启动若干个线程来并行执行这个核函数，每个线程被分配一个唯一的线程号。</p>
+<p style="padding:0px;margin:10px auto;text-indent:0px;">CUDA通过函数类型限定词来区别host和device上的函数，主要的三个函数类型限定词为：</p>
+<div style="margin:0px;padding:0px;display:block;overflow-x:auto;"><table style="font-size:inherit;font-weight:inherit;font-style:inherit;font-variant:inherit;margin:0px;padding:0px;border-collapse:collapse;word-break:break-word;display:block;overflow-x:scroll;max-height:800px;">
+<thead style="margin:0px;padding:0px;">
+<tr style="margin:0px;padding:0px;">
+<th style="margin:0px;font-weight:bold;color:rgb(0, 0, 0);border:1px solid rgb(192, 192, 192);border-collapse:collapse;min-width:50px;padding:8px 14px;background-color:rgb(250, 250, 250);text-align:center;">限定符</th>
+<th style="margin:0px;font-weight:bold;color:rgb(0, 0, 0);border:1px solid rgb(192, 192, 192);border-collapse:collapse;min-width:50px;padding:8px 14px;background-color:rgb(250, 250, 250);text-align:center;">执行</th>
+<th style="margin:0px;font-weight:bold;color:rgb(0, 0, 0);border:1px solid rgb(192, 192, 192);border-collapse:collapse;min-width:50px;padding:8px 14px;background-color:rgb(250, 250, 250);text-align:center;">调用</th>
+<th style="margin:0px;font-weight:bold;color:rgb(0, 0, 0);border:1px solid rgb(192, 192, 192);border-collapse:collapse;min-width:50px;padding:8px 14px;background-color:rgb(250, 250, 250);text-align:center;">备注</th>
+</tr>
+</thead>
+<tbody style="margin:0px;padding:0px;">
+<tr style="margin:0px;padding:0px;">
+<td style="margin:0px;border:1px solid rgb(192, 192, 192);border-collapse:collapse;min-width:50px;padding:8px 14px;text-align:center;"><code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif">__global__</code></td>
+<td style="margin:0px;border:1px solid rgb(192, 192, 192);border-collapse:collapse;min-width:50px;padding:8px 14px;text-align:center;">设备端执行</td>
+<td style="margin:0px;border:1px solid rgb(192, 192, 192);border-collapse:collapse;min-width:50px;padding:8px 14px;text-align:center;">可以从主机调用也可以从某些特定设备调用</td>
+<td style="margin:0px;border:1px solid rgb(192, 192, 192);border-collapse:collapse;min-width:50px;padding:8px 14px;text-align:center;">异步操作，host 将并行计算任务发射到GPU的任务调用单之后，不会等待kernel执行完就执行下一步</td>
+</tr>
+<tr style="margin:0px;padding:0px;">
+<td style="margin:0px;border:1px solid rgb(192, 192, 192);border-collapse:collapse;min-width:50px;padding:8px 14px;text-align:center;"><code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif">__device__</code></td>
+<td style="margin:0px;border:1px solid rgb(192, 192, 192);border-collapse:collapse;min-width:50px;padding:8px 14px;text-align:center;">设备端执行</td>
+<td style="margin:0px;border:1px solid rgb(192, 192, 192);border-collapse:collapse;min-width:50px;padding:8px 14px;text-align:center;">设备端调用</td>
+<td style="margin:0px;border:1px solid rgb(192, 192, 192);border-collapse:collapse;min-width:50px;padding:8px 14px;text-align:center;">不可以和<code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif">__global__</code>同时用</td>
+</tr>
+<tr style="margin:0px;padding:0px;">
+<td style="margin:0px;border:1px solid rgb(192, 192, 192);border-collapse:collapse;min-width:50px;padding:8px 14px;text-align:center;"><code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif">__host__</code></td>
+<td style="margin:0px;border:1px solid rgb(192, 192, 192);border-collapse:collapse;min-width:50px;padding:8px 14px;text-align:center;">主机端执行</td>
+<td style="margin:0px;border:1px solid rgb(192, 192, 192);border-collapse:collapse;min-width:50px;padding:8px 14px;text-align:center;">主机调用</td>
+<td style="margin:0px;border:1px solid rgb(192, 192, 192);border-collapse:collapse;min-width:50px;padding:8px 14px;text-align:center;">可省略，不可和<code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif">__global__</code>同时用，可和<code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif">__device__</code>同时用，此时函数在device和host都编译。</td>
+</tr>
+</tbody>
+</table></div>
+<p style="padding:0px;margin:10px auto;text-indent:0px;">具体如下：</p>
+<p style="padding:0px;margin:10px auto;text-indent:0px;">具体如下：</p>
+<pre style="border-radius:4px;background-color: #fbfaf8;border: 1px solid rgba(0,0,0,.14902);color: #333;font-size: 12px;padding: 8px;font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif;box-sizing: border-box;"><code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif">+------------------------+   +------------------------+
+|                        |   |                        |
+|                        |   |                        |
+| __host__   __global__  |   |          __device__    |
+|    +           +       |   |                        |
+|    |           |       |   |              +         |
+|    |           |       |   |              |         |
+|    |           v---------------&gt;          |         |
+|    |                   |   |   |          |         |
+|    |                   |   |   |          |         |
+|    |                   |   |   |          |         |
+|    |                   |   |   |          |         |
+|    |                   |   |   |          |         |
+|    |                   |   |   |          |         |
+|    |                   |   |   |          |         |
+|    |                   |   |   |          |         |
+|    |                   |   |   |          |         |
+|    |           +&lt;--------------v          |         |
+|    |           |       |   |              |         |
+|    |           |       |   |              |         |
+|    |           |       |   |              |         |
+|    v           v       |   |              v         |
+|                        |   |                        |
++------------------------+   +------------------------+
+
+      Host                           Device
+
+</code></pre>
+<p style="padding:0px;margin:10px auto;text-indent:0px;">这三个限定词其实也是 CUDA 中常见的三种运行场景。其中，device 函数和global函数因为需要在GPU上运行，因此不能调用常见的一些 C/C++ 函数（因为这些函数没有对应的 GPU 实现）。</p>
+<p style="padding:0px;margin:10px auto;text-indent:0px;">如下代码是 NVIDIA 的例子，使用内置的 threadIdx 变量，把 A 和 B 两个张量进行相加，得到 C。因此，N 个线程之中每个都会执行 VecAdd() 。</p>
+<pre style="border-radius:4px;background-color: #fbfaf8;border: 1px solid rgba(0,0,0,.14902);color: #333;font-size: 12px;padding: 8px;font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif;box-sizing: border-box;"><code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span style="margin:0px;padding:0px;color:rgb(0, 128, 0);">// Kernel definition</span>
+<span style="margin:0px;padding:0px;">__global__ <span style="margin:0px;padding:0px;color:rgb(163, 21, 21);">void</span> <span style="margin:0px;padding:0px;color:rgb(163, 21, 21);">VecAdd</span><span style="margin:0px;padding:0px;">(<span style="margin:0px;padding:0px;color:rgb(163, 21, 21);">float</span>* A, <span style="margin:0px;padding:0px;color:rgb(163, 21, 21);">float</span>* B, <span style="margin:0px;padding:0px;color:rgb(163, 21, 21);">float</span>* C)</span>
+</span>{
+    <span style="margin:0px;padding:0px;color:rgb(163, 21, 21);">int</span> i = threadIdx.x;
+    C[i] = A[i] + B[i];
+}
+
+<span style="margin:0px;padding:0px;"><span style="margin:0px;padding:0px;color:rgb(163, 21, 21);">int</span> <span style="margin:0px;padding:0px;color:rgb(163, 21, 21);">main</span><span style="margin:0px;padding:0px;">()</span>
+</span>{
+    ...
+    <span style="margin:0px;padding:0px;color:rgb(0, 128, 0);">// Kernel invocation with N threads</span>
+    VecAdd&lt;&lt;&lt;<span style="margin:0px;padding:0px;color:rgb(136, 0, 0);">1</span>, N&gt;&gt;&gt;(A, B, C);
+    ...
+}
+</code></pre>
+<h4 style="padding:0px;color:rgb(0, 0, 0);font-size:14px;font-weight:bold;margin:10px 0px;">3.2.2 PyTorch 样例</h4>
+<p style="padding:0px;margin:10px auto;text-indent:0px;">我们从 third_party/cub/cub/device/dispatch/dispatch_reduce.cuh 找一个核函数例子来看看。</p>
+<pre style="border-radius:4px;background-color: #fbfaf8;border: 1px solid rgba(0,0,0,.14902);color: #333;font-size: 12px;padding: 8px;font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif;box-sizing: border-box;"><code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span style="margin:0px;padding:0px;color:rgb(0, 128, 0);">/**
+ * Reduce region kernel entry point (multi-block).  Computes privatized reductions, one per thread block.
+ */</span>
+<span style="margin:0px;padding:0px;color:rgb(0, 0, 255);">template</span> &lt;
+    <span style="margin:0px;padding:0px;color:rgb(0, 0, 255);">typename</span>                ChainedPolicyT,             <span style="margin:0px;padding:0px;color:rgb(0, 128, 0);">///&lt; Chained tuning policy</span>
+    <span style="margin:0px;padding:0px;color:rgb(0, 0, 255);">typename</span>                InputIteratorT,             <span style="margin:0px;padding:0px;color:rgb(0, 128, 0);">///&lt; Random-access input iterator type for reading input items \iterator</span>
+    <span style="margin:0px;padding:0px;color:rgb(0, 0, 255);">typename</span>                OutputIteratorT,            <span style="margin:0px;padding:0px;color:rgb(0, 128, 0);">///&lt; Output iterator type for recording the reduced aggregate \iterator</span>
+    <span style="margin:0px;padding:0px;color:rgb(0, 0, 255);">typename</span>                OffsetT,                    <span style="margin:0px;padding:0px;color:rgb(0, 128, 0);">///&lt; Signed integer type for global offsets</span>
+    <span style="margin:0px;padding:0px;color:rgb(0, 0, 255);">typename</span>                ReductionOpT&gt;               <span style="margin:0px;padding:0px;color:rgb(0, 128, 0);">///&lt; Binary reduction functor type having member &lt;tt&gt;T operator()(const T &amp;a, const T &amp;b)&lt;/tt&gt;</span>
+__launch_bounds__ (<span style="margin:0px;padding:0px;color:rgb(0, 0, 255);">int</span>(ChainedPolicyT::ActivePolicy::ReducePolicy::BLOCK_THREADS))
+<span style="margin:0px;padding:0px;">__global__ <span style="margin:0px;padding:0px;color:rgb(163, 21, 21);">void</span> <span style="margin:0px;padding:0px;color:rgb(163, 21, 21);">DeviceReduceKernel</span><span style="margin:0px;padding:0px;">(
+    InputIteratorT          d_in,                       <span style="margin:0px;padding:0px;color:rgb(0, 128, 0);">///&lt; [in] Pointer to the input sequence of data items</span>
+    OutputIteratorT         d_out,                      <span style="margin:0px;padding:0px;color:rgb(0, 128, 0);">///&lt; [out] Pointer to the output aggregate</span>
+    OffsetT                 num_items,                  <span style="margin:0px;padding:0px;color:rgb(0, 128, 0);">///&lt; [in] Total number of input data items</span>
+    GridEvenShare&lt;OffsetT&gt;  even_share,                 <span style="margin:0px;padding:0px;color:rgb(0, 128, 0);">///&lt; [in] Even-share descriptor for mapping an equal number of tiles onto each thread block</span>
+    ReductionOpT            reduction_op)</span>               <span style="margin:0px;padding:0px;color:rgb(0, 128, 0);">///&lt; [in] Binary reduction functor</span>
+</span>{
+    <span style="margin:0px;padding:0px;color:rgb(0, 128, 0);">// The output value type</span>
+    <span style="margin:0px;padding:0px;color:rgb(0, 0, 255);">typedef</span> <span style="margin:0px;padding:0px;color:rgb(0, 0, 255);">typename</span> If&lt;(Equals&lt;<span style="margin:0px;padding:0px;color:rgb(0, 0, 255);">typename</span> std::iterator_traits&lt;OutputIteratorT&gt;::value_type, <span style="margin:0px;padding:0px;color:rgb(163, 21, 21);">void</span>&gt;::VALUE),  <span style="margin:0px;padding:0px;color:rgb(0, 128, 0);">// OutputT =  (if output iterator's value type is void) ?</span>
+        <span style="margin:0px;padding:0px;color:rgb(0, 0, 255);">typename</span> std::iterator_traits&lt;InputIteratorT&gt;::value_type,                                          <span style="margin:0px;padding:0px;color:rgb(0, 128, 0);">// ... then the input iterator's value type,</span>
+        <span style="margin:0px;padding:0px;color:rgb(0, 0, 255);">typename</span> std::iterator_traits&lt;OutputIteratorT&gt;::value_type&gt;::Type OutputT;                          <span style="margin:0px;padding:0px;color:rgb(0, 128, 0);">// ... else the output iterator's value type</span>
+
+    <span style="margin:0px;padding:0px;color:rgb(0, 128, 0);">// Thread block type for reducing input tiles</span>
+    <span style="margin:0px;padding:0px;color:rgb(0, 0, 255);">typedef</span> AgentReduce&lt;
+            <span style="margin:0px;padding:0px;color:rgb(0, 0, 255);">typename</span> ChainedPolicyT::ActivePolicy::ReducePolicy,
+            InputIteratorT,
+            OutputIteratorT,
+            OffsetT,
+            ReductionOpT&gt;
+        AgentReduceT;
+
+    <span style="margin:0px;padding:0px;color:rgb(0, 128, 0);">// Shared memory storage</span>
+    __shared__ <span style="margin:0px;padding:0px;color:rgb(0, 0, 255);">typename</span> AgentReduceT::TempStorage temp_storage;
+
+    <span style="margin:0px;padding:0px;color:rgb(0, 128, 0);">// Consume input tiles</span>
+    OutputT block_aggregate = <span style="margin:0px;padding:0px;color:rgb(0, 0, 255);">AgentReduceT</span>(temp_storage, d_in, reduction_op).<span style="margin:0px;padding:0px;color:rgb(0, 0, 255);">ConsumeTiles</span>(even_share);
+
+    <span style="margin:0px;padding:0px;color:rgb(0, 128, 0);">// Output result</span>
+    <span style="margin:0px;padding:0px;color:rgb(0, 0, 255);">if</span> (threadIdx.x == <span style="margin:0px;padding:0px;color:rgb(136, 0, 0);">0</span>)
+        d_out[blockIdx.x] = block_aggregate;
+}
+</code></pre>
+<h3 style="padding:0px;color:rgb(0, 0, 0);font-size:16px;line-height:1.5;font-weight:bold;margin:10px 0px;">3.3 小结</h3>
+<p style="padding:0px;margin:10px auto;text-indent:0px;">目前我们知道了，PyTorch 其实可以通过调用 <code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif">__global__</code> 方法来在GPU之上执行并行操作。这回答了我们的第二个问题：如何在 CPU 之上调用 GPU 操作？</p>
+<h2 style="padding:0px;color:rgb(0, 0, 0);font-size:21px;line-height:1.5;font-weight:bold;margin:10px 0px;">0x04 在GPU/CPU之间切换</h2>
+<p style="padding:0px;margin:10px auto;text-indent:0px;">我们接下来分析如何在GPU/CPU之间切换。</p>
+<p style="padding:0px;margin:10px auto;text-indent:0px;">由示例代码可以知道，只要调用了 cuda 函数把模型移动到 GPU 之上，我们就可以使用 CUDA global 核函数在GPU上进行并行运算。</p>
+<pre style="border-radius:4px;background-color: #fbfaf8;border: 1px solid rgba(0,0,0,.14902);color: #333;font-size: 12px;padding: 8px;font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif;box-sizing: border-box;"><code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif">model = ToyModel().cuda(device_ids[<span style="margin:0px;padding:0px;color:rgb(136, 0, 0);">0</span>]) <span style="margin:0px;padding:0px;color:rgb(0, 128, 0);"># 这里复制模型到 GPU 之上</span>
+ddp_model = DDP(model, device_ids)
+
+loss_fn = nn.MSELoss()
+optimizer = optim.SGD(ddp_model.parameters(), lr=<span style="margin:0px;padding:0px;color:rgb(136, 0, 0);">0.001</span>)
+
+optimizer.zero_grad()
+outputs = ddp_model(torch.randn(<span style="margin:0px;padding:0px;color:rgb(136, 0, 0);">20</span>, <span style="margin:0px;padding:0px;color:rgb(136, 0, 0);">10</span>))
+</code></pre>
+<p style="padding:0px;margin:10px auto;text-indent:0px;">但是我们忽略了一个问题，就是 PyTorch 怎么知道此时应该调用GPU对应的 global 核函数？为什么 PyTorch 就不调用 CPU 函数或者其他设备的函数了？这就是我们接下来需要分析的。</p>
+<h3 style="padding:0px;color:rgb(0, 0, 0);font-size:16px;line-height:1.5;font-weight:bold;margin:10px 0px;">4.1 Dispatcher 机制</h3>
+<p style="padding:0px;margin:10px auto;text-indent:0px;">此处我们主要借鉴 <a href="http://blog.ezyang.com/2020/09/lets-talk-about-the-pytorch-dispatcher/%E3%80%82" target="_blank" rel="noopener" style="margin:0px;padding:0px;text-decoration:underline;color:rgb(0, 102, 204);">http://blog.ezyang.com/2020/09/lets-talk-about-the-pytorch-dispatcher/。</a></p>
+<h4 style="padding:0px;color:rgb(0, 0, 0);font-size:14px;font-weight:bold;margin:10px 0px;">4.1.1 问题</h4>
+<p style="padding:0px;margin:10px auto;text-indent:0px;">在PyTorch中，operator 所表现出预期行为是由很多机制共同作用导致的，比如：</p>
+<ul style="margin:0px;padding:0px;margin-left:30px;padding-left:0px;list-style-type:disc;">
+<li style="margin:0px;padding:0px;list-style:inherit;">做实际工作的kernel。</li>
+<li style="margin:0px;padding:0px;list-style:inherit;">是否支持反向自动微分，例如，使 loss.backward() 正常工作的标记位。</li>
+<li style="margin:0px;padding:0px;list-style:inherit;">是否启用了torch.jit.trace。</li>
+<li style="margin:0px;padding:0px;list-style:inherit;">如果你正在vmap调用中，所运行operator将会表现出不同的批处理行为。</li>
+</ul>
+<p style="padding:0px;margin:10px auto;text-indent:0px;">因此，我们知道有太多不同的方式可以对PyTorch operator进行不同的解释，如果我们试图在一个名为add的单一函数里面处理所有的行为，我们的实现代码会很快演变成一个不可维护的混乱局面。</p>
+<p style="padding:0px;margin:10px auto;text-indent:0px;">所以我们需要有一个机制来解决这个问题，这个机制不仅仅是一个if语句这么简单，而是PyTorch内部一个非常重要的抽象，而且它必须在尽可能不降低PyTorch性能的情况下做到这一点。这个机制就是 Dispatcher。</p>
+<p style="padding:0px;margin:10px auto;text-indent:0px;"><img src="https://img2020.cnblogs.com/blog/1850883/202111/1850883-20211106210002234-69475650.jpg" width="720" height="540" style="padding:0px;border:0px;cursor:zoom-in;display:block;margin:auto;height:auto;transition:transform 300ms cubic-bezier(0.2, 0, 0.2, 1) 0s;max-width:100%;"/></p>
+<h4 style="padding:0px;color:rgb(0, 0, 0);font-size:14px;font-weight:bold;margin:10px 0px;">4.1.2 什么是 Dispatcher</h4>
+<p style="padding:0px;margin:10px auto;text-indent:0px;">什么是dispatcher？dispatcher对于每个operator都会维护一个函数指针表，这些函数为每个dispatch key提供了对应的实现，这套机制大致对应于PyTorch中的一个横切关注点。在上图中，你可以看到在这个表中有针对不同后端（CPU、CUDA、XLA）以及更高级概念（例如 autograd 和跟踪）的dispatch条目。<u style="margin:0px;padding:0px;">dispatcher的工作是根据输入的tensor和其他一些东西（比如参数个数，返回值类型等等）来计算出一个dispatch key，然后跳转到函数指针表所指向的函数</u>。</p>
+<p style="padding:0px;margin:10px auto;text-indent:0px;">熟悉 C++ 的人可能会注意到，这个函数指针表与C++中的虚表非常相似。在C++中，对象的虚函数是通过将每个对象与一个虚表的指针相关联来实现的，该虚表包含了有关对象上每个虚函数的实现。在PyTorch中，我们基本上重新实现了虚拟表，但有一些区别。</p>
+<ul style="margin:0px;padding:0px;margin-left:30px;padding-left:0px;list-style-type:disc;">
+<li style="margin:0px;padding:0px;list-style:inherit;">dispatch表之中包括了 dispatch key 和其对应的函数指针，我们可以发现，dispatch key不仅仅有后端（CPU、CUDA、XLA），也有一些更高级的概念（例如 autograd 和跟踪）。</li>
+<li style="margin:0px;padding:0px;list-style:inherit;">dispatch表是按operator分配的，而虚表是按类分配的。这意味着我们可以通过分配一个新的dispatch表来扩展所支持的operator集。与其不同的是，对于一个C++对象，你可以通过继承子类来扩展类型，但你不能轻易添加虚函数。与普通的面向对象系统不同，PyTorch大部分的可扩展性在于定义新的operator（而不是新的子类），所以这种权衡是合理的。此外，dispatch key的种类不是公开可扩展的，我们希望那些想添加新dispatch key的使用者通过向PyTorch核心团队提交一个补丁来添加他们的dispatch key。</li>
+<li style="margin:0px;padding:0px;list-style:inherit;">我们的dispatch key的计算考虑了operator的所有参数（multiple dispatch）以及线程本地状态（TLS）。这与虚表不同，在虚表中只有第一个对象（this指针）很重要。</li>
+<li style="margin:0px;padding:0px;list-style:inherit;">最后，dispatcher支持boxing和unboxing作为op的调用约定的一部分。在文章的最后部分会有更多关于这个的内容。</li>
+</ul>
+<p style="padding:0px;margin:10px auto;text-indent:0px;">有趣的历史笔记：我们曾经使用虚函数来实现动态dispatch，当我们意识到需要比虚表更多的能力时，我们重新实现了动态dispatch。</p>
+<p style="padding:0px;margin:10px auto;text-indent:0px;"><img src="https://img2020.cnblogs.com/blog/1850883/202111/1850883-20211106210030648-2103316606.png" width="1061" height="796" style="padding:0px;border:0px;cursor:zoom-in;display:block;margin:auto;height:auto;transition:transform 300ms cubic-bezier(0.2, 0, 0.2, 1) 0s;max-width:100%;"/></p>
+<h4 style="padding:0px;color:rgb(0, 0, 0);font-size:14px;font-weight:bold;margin:10px 0px;">4.1.3 如何计算key</h4>
+<p style="padding:0px;margin:10px auto;text-indent:0px;">那么，我们究竟是如何计算dispatch key的呢？我们是基于dispatch key set来完成的，dispatch key set是一个基本抽象，它是dispatch key的一个bitset。大致来讲，我们综合来自不同来源的dispatch key sets（在某些情况下屏蔽一些key）来得到一个最终的dispatch key set。然后我们在这个set中挑选优先级最高的key（dispatch keys按某些优先级隐式排序），这就是我们这次应该调用的结果。那么，这些dispatch key sets的来源是什么？</p>
+<ul style="margin:0px;padding:0px;margin-left:30px;padding-left:0px;list-style-type:disc;">
+<li style="margin:0px;padding:0px;list-style:inherit;">每个张量输入都有一个由该张量上的所有dispatch key组成的dispatch key set（直观地说，这些dispatch key的值会是类似 “CPU”字符串这样的东西，这告诉我们该张量是一个CPU张量，所以应该由dispatch表中的CPU handler来处理）。</li>
+<li style="margin:0px;padding:0px;list-style:inherit;">我们还有一个local include set，用于 "模态（modal） "功能，例如tracing，它不与任何张量关联，而是某种线程的本地模态，用户可以在某些范围内打开或关闭。</li>
+<li style="margin:0px;padding:0px;list-style:inherit;">最后，我们有一个global set，它包含了始终应该被考虑的dispatch key（自从写下这张PPT以来，Autograd已经从global set转移到了张量之上。然而系统的高级结构并没有改变）。</li>
+</ul>
+<p style="padding:0px;margin:10px auto;text-indent:0px;">除了这些，还有一个local exclude set，其用从dispatch排除某些dispatch key。一个常见的场景是一个handler负责处理一个key，然后通过local exclude set将自己屏蔽掉，这样我们以后就不会尝试重新处理这个key。</p>
+<p style="padding:0px;margin:10px auto;text-indent:0px;"><img src="https://img2020.cnblogs.com/blog/1850883/202111/1850883-20211106210055746-281799638.jpg" width="720" height="540" style="padding:0px;border:0px;cursor:zoom-in;display:block;margin:auto;height:auto;transition:transform 300ms cubic-bezier(0.2, 0, 0.2, 1) 0s;max-width:100%;"/></p>
+<h4 style="padding:0px;color:rgb(0, 0, 0);font-size:14px;font-weight:bold;margin:10px 0px;">4.1.4 注册</h4>
+<p style="padding:0px;margin:10px auto;text-indent:0px;">我们接下来看看如何注册这个dispatch key 到 dispatch 表之中。这个过程通过operator registration API来实现。操作符注册 API 有三种主要方式：</p>
+<ul style="margin:0px;padding:0px;margin-left:30px;padding-left:0px;list-style-type:disc;">
+<li style="margin:0px;padding:0px;list-style:inherit;">为operator定义模式。</li>
+<li style="margin:0px;padding:0px;list-style:inherit;">然后在对应的key上注册实现。</li>
+<li style="margin:0px;padding:0px;list-style:inherit;">最后，有一个 fallback 方法，用户可以使用它为某个key对应的<em style="margin:0px;padding:0px;">所有</em>运算符定义同一个处理程序。</li>
+</ul>
+<p style="padding:0px;margin:10px auto;text-indent:0px;"><img src="https://img2020.cnblogs.com/blog/1850883/202111/1850883-20211106210123784-2083674405.jpg" width="720" height="540" style="padding:0px;border:0px;cursor:zoom-in;display:block;margin:auto;height:auto;transition:transform 300ms cubic-bezier(0.2, 0, 0.2, 1) 0s;max-width:100%;"/></p>
+<p style="padding:0px;margin:10px auto;text-indent:0px;">为了可视化 operator registration的工作，让我们想象一下，所有op的dispatch表共同形成一个二维网格，像这样：</p>
+<ul style="margin:0px;padding:0px;margin-left:30px;padding-left:0px;list-style-type:disc;">
+<li style="margin:0px;padding:0px;list-style:inherit;">纵轴上是PyTorch中支持的每个op。</li>
+<li style="margin:0px;padding:0px;list-style:inherit;">横轴上是系统支持的每个dispatch key。</li>
+</ul>
+<p style="padding:0px;margin:10px auto;text-indent:0px;">operator registration 行为就是在这两个轴定义出的单元格中填写对应的实现。</p>
+<p style="padding:0px;margin:10px auto;text-indent:0px;"><img src="https://img2020.cnblogs.com/blog/1850883/202111/1850883-20211106210157628-304705603.png" width="1061" height="796" style="padding:0px;border:0px;cursor:zoom-in;display:block;margin:auto;height:auto;transition:transform 300ms cubic-bezier(0.2, 0, 0.2, 1) 0s;max-width:100%;"/></p>
+<p style="padding:0px;margin:10px auto;text-indent:0px;">在一个特定的dispatch key上为一个operator注册kernel函数时，我们会填写一个单元格（下面的蓝色）的内容。比如下图就是一个 cpu kernel mul 算子。</p>
+<p style="padding:0px;margin:10px auto;text-indent:0px;"><img src="https://img2020.cnblogs.com/blog/1850883/202111/1850883-20211106210225747-821296730.jpg" width="720" height="540" style="padding:0px;border:0px;cursor:zoom-in;display:block;margin:auto;height:auto;transition:transform 300ms cubic-bezier(0.2, 0, 0.2, 1) 0s;max-width:100%;"/></p>
+<p style="padding:0px;margin:10px auto;text-indent:0px;">用户也可以使用 "catch-all" 来为所有的 dispatch keys 注册同一个kernel，比如下图的红色行。</p>
+<p style="padding:0px;margin:10px auto;text-indent:0px;"><img src="https://img2020.cnblogs.com/blog/1850883/202111/1850883-20211109230431379-222705518.png" width="1061" height="713" style="padding:0px;border:0px;cursor:zoom-in;display:block;margin:auto;height:auto;transition:transform 300ms cubic-bezier(0.2, 0, 0.2, 1) 0s;max-width:100%;"/></p>
+<p style="padding:0px;margin:10px auto;text-indent:0px;">用户也可以为下图的 "aten::add"，"aten::mul"，"aten::sub" 这样的kernel 指定同一个 dispatch key，如下图绿色列。</p>
+<p style="padding:0px;margin:10px auto;text-indent:0px;"><img src="https://img2020.cnblogs.com/blog/1850883/202111/1850883-20211109230453547-431252092.png" width="1061" height="703" style="padding:0px;border:0px;cursor:zoom-in;display:block;margin:auto;height:auto;transition:transform 300ms cubic-bezier(0.2, 0, 0.2, 1) 0s;max-width:100%;"/></p>
+<p style="padding:0px;margin:10px auto;text-indent:0px;">这些注册形式有一个优先级：特定的内核实现具有最高优先级，然后是 catch，最后是 fallback，如下图的 1，2，3 顺序，首先选择1，然后是 2，最后是 3。</p>
+<p style="padding:0px;margin:10px auto;text-indent:0px;"><img src="https://img2020.cnblogs.com/blog/1850883/202111/1850883-20211109230508275-1642852144.png" width="1061" height="777" style="padding:0px;border:0px;cursor:zoom-in;display:block;margin:auto;height:auto;transition:transform 300ms cubic-bezier(0.2, 0, 0.2, 1) 0s;max-width:100%;"/></p>
+<h3 style="padding:0px;color:rgb(0, 0, 0);font-size:16px;line-height:1.5;font-weight:bold;margin:10px 0px;">4.2 Dispatcher 代码</h3>
+<p style="padding:0px;margin:10px auto;text-indent:0px;">我们接下来通过源码来看看。</p>
+<h4 style="padding:0px;color:rgb(0, 0, 0);font-size:14px;font-weight:bold;margin:10px 0px;">4.2.1 虚函数表</h4>
+<h5 style="padding:0px;color:rgb(0, 0, 0);font-size:12px;font-weight:bold;margin:10px 0px;">4.2.1.1 Schema 例子</h5>
+<p style="padding:0px;margin:10px auto;text-indent:0px;">每个kernel 算子（虚函数）都有一个对应的schema，我们可以从 aten/src/ATen/native/native_functions.yaml 之中找到一些虚函数 schema 的例子，这些都是以字符串的形式呈现。我们可以看到，schema 包括算子名称（比如zero_sparse_），输入参数个数和类型，返回值类型，是否需要check，如何分发等等。</p>
+<pre style="border-radius:4px;background-color: #fbfaf8;border: 1px solid rgba(0,0,0,.14902);color: #333;font-size: 12px;padding: 8px;font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif;box-sizing: border-box;"><code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span style="margin:0px;padding:0px;color:rgb(0, 128, 0);"># zero 操作对应的虚函数表</span>
+<span style="margin:0px;padding:0px;color:rgb(0, 176, 232);">-</span> <span style="margin:0px;padding:0px;color:rgb(255, 0, 0);">func:</span> <span style="margin:0px;padding:0px;color:rgb(163, 21, 21);">zero_(Tensor(a!)</span> <span style="margin:0px;padding:0px;color:rgb(163, 21, 21);">self)</span> <span style="margin:0px;padding:0px;color:rgb(163, 21, 21);">-&gt;</span> <span style="margin:0px;padding:0px;color:rgb(163, 21, 21);">Tensor(a!)</span> 
+  <span style="margin:0px;padding:0px;color:rgb(255, 0, 0);">device_check:</span> <span style="margin:0px;padding:0px;color:rgb(163, 21, 21);">NoCheck</span>   <span style="margin:0px;padding:0px;color:rgb(0, 128, 0);"># TensorIterator</span>
+  <span style="margin:0px;padding:0px;color:rgb(255, 0, 0);">variants:</span> <span style="margin:0px;padding:0px;color:rgb(163, 21, 21);">method,</span> <span style="margin:0px;padding:0px;color:rgb(163, 21, 21);">function</span>
+  <span style="margin:0px;padding:0px;color:rgb(255, 0, 0);">dispatch:</span>
+    <span style="margin:0px;padding:0px;color:rgb(163, 21, 21);">CPU,</span> <span style="margin:0px;padding:0px;color:rgb(255, 0, 0);">CUDA:</span> <span style="margin:0px;padding:0px;color:rgb(163, 21, 21);">zero_</span>
+    <span style="margin:0px;padding:0px;color:rgb(255, 0, 0);">Meta:</span> <span style="margin:0px;padding:0px;color:rgb(163, 21, 21);">zero_meta_</span>
+    <span style="margin:0px;padding:0px;color:rgb(163, 21, 21);">SparseCPU,</span> <span style="margin:0px;padding:0px;color:rgb(255, 0, 0);">SparseCUDA:</span> <span style="margin:0px;padding:0px;color:rgb(163, 21, 21);">zero_sparse_</span>
+    <span style="margin:0px;padding:0px;color:rgb(255, 0, 0);">MkldnnCPU:</span> <span style="margin:0px;padding:0px;color:rgb(163, 21, 21);">mkldnn_zero_</span>
+
+<span style="margin:0px;padding:0px;color:rgb(0, 128, 0);"># sub.out 对应的虚函数表</span>
+<span style="margin:0px;padding:0px;color:rgb(0, 176, 232);">-</span> <span style="margin:0px;padding:0px;color:rgb(255, 0, 0);">func:</span> <span style="margin:0px;padding:0px;color:rgb(163, 21, 21);">sub.out(Tensor</span> <span style="margin:0px;padding:0px;color:rgb(163, 21, 21);">self,</span> <span style="margin:0px;padding:0px;color:rgb(163, 21, 21);">Tensor</span> <span style="margin:0px;padding:0px;color:rgb(163, 21, 21);">other,</span> <span style="margin:0px;padding:0px;color:rgb(163, 21, 21);">*,</span> <span style="margin:0px;padding:0px;color:rgb(163, 21, 21);">Scalar</span> <span style="margin:0px;padding:0px;color:rgb(163, 21, 21);">alpha=1,</span> <span style="margin:0px;padding:0px;color:rgb(163, 21, 21);">Tensor(a!)</span> <span style="margin:0px;padding:0px;color:rgb(163, 21, 21);">out)</span> <span style="margin:0px;padding:0px;color:rgb(163, 21, 21);">-&gt;</span> <span style="margin:0px;padding:0px;color:rgb(163, 21, 21);">Tensor(a!)</span>
+  <span style="margin:0px;padding:0px;color:rgb(255, 0, 0);">device_check:</span> <span style="margin:0px;padding:0px;color:rgb(163, 21, 21);">NoCheck</span>   <span style="margin:0px;padding:0px;color:rgb(0, 128, 0);"># TensorIterator</span>
+  <span style="margin:0px;padding:0px;color:rgb(255, 0, 0);">structured:</span> <span style="margin:0px;padding:0px;color:rgb(163, 21, 21);">True</span>
+  <span style="margin:0px;padding:0px;color:rgb(255, 0, 0);">structured_inherits:</span> <span style="margin:0px;padding:0px;color:rgb(163, 21, 21);">TensorIteratorBase</span>
+  <span style="margin:0px;padding:0px;color:rgb(255, 0, 0);">dispatch:</span>
+    <span style="margin:0px;padding:0px;color:rgb(163, 21, 21);">CPU,</span> <span style="margin:0px;padding:0px;color:rgb(255, 0, 0);">CUDA:</span> <span style="margin:0px;padding:0px;color:rgb(163, 21, 21);">sub_out</span>
+    <span style="margin:0px;padding:0px;color:rgb(163, 21, 21);">SparseCPU,</span> <span style="margin:0px;padding:0px;color:rgb(255, 0, 0);">SparseCUDA:</span> <span style="margin:0px;padding:0px;color:rgb(163, 21, 21);">sub_out_sparse</span>
+
+<span style="margin:0px;padding:0px;color:rgb(0, 128, 0);"># sub.Tensor 对应的虚函数表</span>
+<span style="margin:0px;padding:0px;color:rgb(0, 176, 232);">-</span> <span style="margin:0px;padding:0px;color:rgb(255, 0, 0);">func:</span> <span style="margin:0px;padding:0px;color:rgb(163, 21, 21);">sub.Tensor(Tensor</span> <span style="margin:0px;padding:0px;color:rgb(163, 21, 21);">self,</span> <span style="margin:0px;padding:0px;color:rgb(163, 21, 21);">Tensor</span> <span style="margin:0px;padding:0px;color:rgb(163, 21, 21);">other,</span> <span style="margin:0px;padding:0px;color:rgb(163, 21, 21);">*,</span> <span style="margin:0px;padding:0px;color:rgb(163, 21, 21);">Scalar</span> <span style="margin:0px;padding:0px;color:rgb(163, 21, 21);">alpha=1)</span> <span style="margin:0px;padding:0px;color:rgb(163, 21, 21);">-&gt;</span> <span style="margin:0px;padding:0px;color:rgb(163, 21, 21);">Tensor</span>
+  <span style="margin:0px;padding:0px;color:rgb(255, 0, 0);">device_check:</span> <span style="margin:0px;padding:0px;color:rgb(163, 21, 21);">NoCheck</span>   <span style="margin:0px;padding:0px;color:rgb(0, 128, 0);"># TensorIterator</span>
+  <span style="margin:0px;padding:0px;color:rgb(255, 0, 0);">variants:</span> <span style="margin:0px;padding:0px;color:rgb(163, 21, 21);">function,</span> <span style="margin:0px;padding:0px;color:rgb(163, 21, 21);">method</span>
+  <span style="margin:0px;padding:0px;color:rgb(255, 0, 0);">structured_delegate:</span> <span style="margin:0px;padding:0px;color:rgb(163, 21, 21);">sub.out</span>
+  <span style="margin:0px;padding:0px;color:rgb(255, 0, 0);">dispatch:</span>
+    <span style="margin:0px;padding:0px;color:rgb(163, 21, 21);">SparseCPU,</span> <span style="margin:0px;padding:0px;color:rgb(255, 0, 0);">SparseCUDA:</span> <span style="margin:0px;padding:0px;color:rgb(163, 21, 21);">sub_sparse</span>
+</code></pre>
+<h5 style="padding:0px;color:rgb(0, 0, 0);font-size:12px;font-weight:bold;margin:10px 0px;">4.2.1.2 Operator的实现</h5>
+<p style="padding:0px;margin:10px auto;text-indent:0px;">我们可以看看 zero 的两个实现，下面是MkldnnCPU的实现。</p>
+<pre style="border-radius:4px;background-color: #fbfaf8;border: 1px solid rgba(0,0,0,.14902);color: #333;font-size: 12px;padding: 8px;font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif;box-sizing: border-box;"><code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span style="margin:0px;padding:0px;">Tensor&amp; <span style="margin:0px;padding:0px;color:rgb(163, 21, 21);">mkldnn_zero_</span><span style="margin:0px;padding:0px;">(Tensor&amp; self)</span> </span>{
+  <span style="margin:0px;padding:0px;color:rgb(0, 0, 255);">using</span> Vec = vec::Vectorized&lt;<span style="margin:0px;padding:0px;color:rgb(163, 21, 21);">float</span>&gt;;
+
+  ideep::tensor&amp; x = <span style="margin:0px;padding:0px;color:rgb(0, 0, 255);">itensor_from_mkldnn</span>(self);
+
+  <span style="margin:0px;padding:0px;color:rgb(0, 0, 255);">auto</span> n = x.<span style="margin:0px;padding:0px;color:rgb(0, 0, 255);">get_nelems</span>();
+  <span style="margin:0px;padding:0px;color:rgb(0, 0, 255);">auto</span>* x_ = <span style="margin:0px;padding:0px;color:rgb(0, 0, 255);">static_cast</span>&lt;<span style="margin:0px;padding:0px;color:rgb(163, 21, 21);">float</span>*&gt;(x.<span style="margin:0px;padding:0px;color:rgb(0, 0, 255);">get_data_handle</span>());
+  <span style="margin:0px;padding:0px;color:rgb(0, 0, 255);">parallel_for</span>(<span style="margin:0px;padding:0px;color:rgb(136, 0, 0);">0</span>, n, <span style="margin:0px;padding:0px;color:rgb(136, 0, 0);">2048</span>, [x_](<span style="margin:0px;padding:0px;color:rgb(163, 21, 21);">int64_t</span> begin, <span style="margin:0px;padding:0px;color:rgb(163, 21, 21);">int64_t</span> end) {
+    vec::<span style="margin:0px;padding:0px;color:rgb(0, 0, 255);">map</span>(
+        [](Vec <span style="margin:0px;padding:0px;color:rgb(0, 128, 0);">/* unused */</span>) { <span style="margin:0px;padding:0px;color:rgb(0, 0, 255);">return</span> <span style="margin:0px;padding:0px;color:rgb(136, 0, 0);">0.0</span>; },
+        x_ + begin,
+        x_ + begin,
+        end - begin);
+  });
+
+  <span style="margin:0px;padding:0px;color:rgb(0, 0, 255);">return</span> self;
+}
+</code></pre>
+<p style="padding:0px;margin:10px auto;text-indent:0px;">又比如下面是SparseCPU, SparseCUDA 的对应实现：</p>
+<pre style="border-radius:4px;background-color: #fbfaf8;border: 1px solid rgba(0,0,0,.14902);color: #333;font-size: 12px;padding: 8px;font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif;box-sizing: border-box;"><code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span style="margin:0px;padding:0px;color:rgb(0, 128, 0);">// --------------------------------------------------------------------</span>
+<span style="margin:0px;padding:0px;color:rgb(0, 128, 0);">// zero_(SparseTensor)</span>
+<span style="margin:0px;padding:0px;color:rgb(0, 128, 0);">// --------------------------------------------------------------------</span>
+<span style="margin:0px;padding:0px;color:rgb(0, 128, 0);">// hummu hummu</span>
+<span style="margin:0px;padding:0px;">SparseTensor&amp; <span style="margin:0px;padding:0px;color:rgb(163, 21, 21);">zero_sparse_</span><span style="margin:0px;padding:0px;">(SparseTensor&amp; self)</span> </span>{
+  <span style="margin:0px;padding:0px;color:rgb(0, 0, 255);">AT_ASSERT</span>(self.<span style="margin:0px;padding:0px;color:rgb(0, 0, 255);">is_sparse</span>());
+  at::<span style="margin:0px;padding:0px;color:rgb(0, 0, 255);">zeros_out</span>(self, <span style="margin:0px;padding:0px;color:rgb(0, 0, 255);">get_sparse_impl</span>(self)-&gt;<span style="margin:0px;padding:0px;color:rgb(0, 0, 255);">sizes</span>());
+  <span style="margin:0px;padding:0px;color:rgb(0, 0, 255);">return</span> self._coalesced_(<span style="margin:0px;padding:0px;color:rgb(163, 21, 21);">true</span>);
+}
+</code></pre>
+<h4 style="padding:0px;color:rgb(0, 0, 0);font-size:14px;font-weight:bold;margin:10px 0px;">4.2.2 Dispatcher 定义</h4>
+<p style="padding:0px;margin:10px auto;text-indent:0px;">我们接下来看看Dispatcher的定义，这里只给出部分成员变量。</p>
+<pre style="border-radius:4px;background-color: #fbfaf8;border: 1px solid rgba(0,0,0,.14902);color: #333;font-size: 12px;padding: 8px;font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif;box-sizing: border-box;"><code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span style="margin:0px;padding:0px;color:rgb(0, 0, 255);">class</span> <span style="margin:0px;padding:0px;color:rgb(163, 21, 21);">TORCH_API</span> Dispatcher <span style="margin:0px;padding:0px;color:rgb(0, 0, 255);">final</span> {
+<span style="margin:0px;padding:0px;color:rgb(0, 0, 255);">private</span>:
+  <span style="margin:0px;padding:0px;color:rgb(0, 128, 0);">// For direct access to backend fallback information</span>
+  <span style="margin:0px;padding:0px;color:rgb(0, 0, 255);">friend</span> <span style="margin:0px;padding:0px;color:rgb(0, 0, 255);">class</span> <span style="margin:0px;padding:0px;color:rgb(163, 21, 21);">impl</span>::OperatorEntry;
+
+  <span style="margin:0px;padding:0px;color:rgb(0, 0, 255);">struct</span> <span style="margin:0px;padding:0px;color:rgb(163, 21, 21);">OperatorDef</span> <span style="margin:0px;padding:0px;color:rgb(0, 0, 255);">final</span> {
+    <span style="margin:0px;padding:0px;"><span style="margin:0px;padding:0px;color:rgb(0, 0, 255);">explicit</span> <span style="margin:0px;padding:0px;color:rgb(163, 21, 21);">OperatorDef</span><span style="margin:0px;padding:0px;">(OperatorName&amp;&amp; op_name)</span>
+    : op(std::move(op_name)) {</span>}
+    impl::OperatorEntry op;
+    <span style="margin:0px;padding:0px;color:rgb(163, 21, 21);">size_t</span> def_count = <span style="margin:0px;padding:0px;color:rgb(136, 0, 0);">0</span>;
+    <span style="margin:0px;padding:0px;color:rgb(163, 21, 21);">size_t</span> def_and_impl_count = <span style="margin:0px;padding:0px;color:rgb(136, 0, 0);">0</span>;
+  };
+  <span style="margin:0px;padding:0px;color:rgb(0, 0, 255);">friend</span> <span style="margin:0px;padding:0px;color:rgb(0, 0, 255);">class</span> <span style="margin:0px;padding:0px;color:rgb(163, 21, 21);">OperatorHandle</span>;
+  <span style="margin:0px;padding:0px;color:rgb(0, 0, 255);">template</span>&lt;<span style="margin:0px;padding:0px;color:rgb(0, 0, 255);">class</span>&gt; <span style="margin:0px;padding:0px;color:rgb(0, 0, 255);">friend</span> <span style="margin:0px;padding:0px;color:rgb(0, 0, 255);">class</span> <span style="margin:0px;padding:0px;color:rgb(163, 21, 21);">TypedOperatorHandle</span>;
+
+<span style="margin:0px;padding:0px;color:rgb(0, 0, 255);">public</span>:
+
+  <span style="margin:0px;padding:0px;"><span style="margin:0px;padding:0px;color:rgb(163, 21, 21);">static</span> Dispatcher&amp; <span style="margin:0px;padding:0px;color:rgb(163, 21, 21);">realSingleton</span><span style="margin:0px;padding:0px;">()</span></span>;
+
+  <span style="margin:0px;padding:0px;color:rgb(0, 128, 0);">//存储所有的算子，并在其成员变量中存储了每个算子的不同版本，比如cpu，cuda，autograd....</span>
+  std::list&lt;OperatorDef&gt; operators_;
+  <span style="margin:0px;padding:0px;color:rgb(0, 128, 0);">//注册算子时会将算子名称和方法也存储在这个里面, 这样就可以快速的通过名字查找到算子方法(其中包含了成员OperatorDef) </span>
+  LeftRight&lt;ska::flat_hash_map&lt;OperatorName, OperatorHandle&gt;&gt; operatorLookupTable_;
+  <span style="margin:0px;padding:0px;color:rgb(0, 128, 0);">// Map from namespace to debug string (saying, e.g., where the library was defined)</span>
+  ska::flat_hash_map&lt;std::string, std::string&gt; libraries_;
+  std::array&lt;impl::AnnotatedKernel, <span style="margin:0px;padding:0px;color:rgb(0, 0, 255);">static_cast</span>&lt;<span style="margin:0px;padding:0px;color:rgb(163, 21, 21);">uint8_t</span>&gt;(DispatchKey::NumDispatchKeys)&gt; backendFallbackKernels_;
+  std::unique_ptr&lt;detail::RegistrationListenerList&gt; listeners_;
+  std::mutex mutex_;
+};
+</code></pre>
+<p style="padding:0px;margin:10px auto;text-indent:0px;">逻辑大致如下，operators_ 存储了所有的算子：</p>
+<pre style="border-radius:4px;background-color: #fbfaf8;border: 1px solid rgba(0,0,0,.14902);color: #333;font-size: 12px;padding: 8px;font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif;box-sizing: border-box;"><code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif">+--------------------------------------------+
+| Dispatcher                                 |
+|                                            |
+|                                            |
+|                                            |
+|     std::<span style="margin:0px;padding:0px;color:rgb(0, 0, 255);">list</span>&lt;OperatorDef&gt; operators_      |
+|                                            |
+|     operatorLookupTable_                   |
+|                                            |
++--------------------------------------------+
+</code></pre>
+<h4 style="padding:0px;color:rgb(0, 0, 0);font-size:14px;font-weight:bold;margin:10px 0px;">4.2.3 注册</h4>
+<p style="padding:0px;margin:10px auto;text-indent:0px;">我们接下来给出注册虚函数表的方法。</p>
+<pre style="border-radius:4px;background-color: #fbfaf8;border: 1px solid rgba(0,0,0,.14902);color: #333;font-size: 12px;padding: 8px;font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif;box-sizing: border-box;"><code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span style="margin:0px;padding:0px;">RegistrationHandleRAII <span style="margin:0px;padding:0px;color:rgb(163, 21, 21);">Dispatcher::registerImpl</span><span style="margin:0px;padding:0px;">(
+  OperatorName op_name,
+  c10::optional&lt;DispatchKey&gt; dispatch_key,
+  KernelFunction kernel,
+  c10::optional&lt;impl::CppSignature&gt; cpp_signature,
+  std::unique_ptr&lt;FunctionSchema&gt; inferred_function_schema,
+  std::string debug
+)</span> </span>{
+  <span style="margin:0px;padding:0px;">std::lock_guard&lt;std::mutex&gt; <span style="margin:0px;padding:0px;color:rgb(163, 21, 21);">lock</span><span style="margin:0px;padding:0px;">(mutex_)</span></span>;
+  <span style="margin:0px;padding:0px;color:rgb(0, 0, 255);">auto</span> op = <span style="margin:0px;padding:0px;color:rgb(0, 0, 255);">findOrRegisterName_</span>(op_name);
+  <span style="margin:0px;padding:0px;color:rgb(0, 0, 255);">auto</span> handle = op.operatorDef_-&gt;op.<span style="margin:0px;padding:0px;color:rgb(0, 0, 255);">registerKernel</span>( <span style="margin:0px;padding:0px;color:rgb(0, 128, 0);">// 进行注册</span>
+    *<span style="margin:0px;padding:0px;color:rgb(0, 0, 255);">this</span>,
+    dispatch_key,
+    std::<span style="margin:0px;padding:0px;color:rgb(0, 0, 255);">move</span>(kernel),
+    std::<span style="margin:0px;padding:0px;color:rgb(0, 0, 255);">move</span>(cpp_signature),
+    std::<span style="margin:0px;padding:0px;color:rgb(0, 0, 255);">move</span>(inferred_function_schema),
+    std::<span style="margin:0px;padding:0px;color:rgb(0, 0, 255);">move</span>(debug)
+  );
+
+  ++op.operatorDef_-&gt;def_and_impl_count;
+
+  <span style="margin:0px;padding:0px;color:rgb(0, 0, 255);">return</span> <span style="margin:0px;padding:0px;color:rgb(0, 0, 255);">RegistrationHandleRAII</span>([<span style="margin:0px;padding:0px;color:rgb(0, 0, 255);">this</span>, op, op_name, dispatch_key, handle] {
+    <span style="margin:0px;padding:0px;color:rgb(0, 0, 255);">deregisterImpl_</span>(op, op_name, dispatch_key, handle);
+  });
+}
+</code></pre>
+<h5 style="padding:0px;color:rgb(0, 0, 0);font-size:12px;font-weight:bold;margin:10px 0px;">4.2.3.1 注册表</h5>
+<p style="padding:0px;margin:10px auto;text-indent:0px;">OperatorEntry代表了一个算子，以及该算子的dispatch table，这里只给出成员变量。</p>
+<pre style="border-radius:4px;background-color: #fbfaf8;border: 1px solid rgba(0,0,0,.14902);color: #333;font-size: 12px;padding: 8px;font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif;box-sizing: border-box;"><code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span style="margin:0px;padding:0px;color:rgb(0, 0, 255);">class</span> <span style="margin:0px;padding:0px;color:rgb(163, 21, 21);">TORCH_API</span> OperatorEntry <span style="margin:0px;padding:0px;color:rgb(0, 0, 255);">final</span> { <span style="margin:0px;padding:0px;color:rgb(0, 128, 0);">//代表了一个算子，以及该算子的dispatch table</span>
+<span style="margin:0px;padding:0px;color:rgb(0, 0, 255);">public</span>:
+  OperatorName name_;
+  c10::optional&lt;AnnotatedSchema&gt; schema_;
+  <span style="margin:0px;padding:0px;color:rgb(0, 128, 0);">//存储了不同key对应的算子实现版本，比如cpu，cuda，autograd 等等，所有的算子版本都会在这个table里面</span>
+  std::array&lt;KernelFunction, <span style="margin:0px;padding:0px;color:rgb(0, 0, 255);">static_cast</span>&lt;<span style="margin:0px;padding:0px;color:rgb(163, 21, 21);">uint8_t</span>&gt;(DispatchKey::NumDispatchKeys)&gt; dispatchTable_;
+  DispatchKeyExtractor dispatchKeyExtractor_;
+  <span style="margin:0px;padding:0px;color:rgb(0, 128, 0);">//不同 DispatchKey对应了不同的版本的kernel算子实现版本</span>
+  ska::flat_hash_map&lt;DispatchKey, std::list&lt;AnnotatedKernel&gt;&gt; kernels_;
+};
+</code></pre>
+<p style="padding:0px;margin:10px auto;text-indent:0px;">逻辑如下：</p>
+<pre style="border-radius:4px;background-color: #fbfaf8;border: 1px solid rgba(0,0,0,.14902);color: #333;font-size: 12px;padding: 8px;font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif;box-sizing: border-box;"><code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif">+---------------------------+     +------------------------------------------+
+| OperatorEntry             |     |                                          |
+|                           |     | std::array&lt;KernelFunction, uint8_t&gt;      |
+|                           |     |                                          |
+|                           |     |                                          |
+|                           |     |           <span style="margin:0px;padding:0px;color:rgb(0, 0, 255);">int</span>(<span style="margin:0px;padding:0px;color:rgb(163, 21, 21);">'CPU'</span>) : CPU_kernel        |
+|        dispatchTable_ +-------&gt; |                                          |
+|                           |     |           <span style="margin:0px;padding:0px;color:rgb(0, 0, 255);">int</span>(<span style="margin:0px;padding:0px;color:rgb(163, 21, 21);">'GPU'</span>) : GPU_kernel        |
+|                           |     |                                          |
+|                           |     |           ......                         |
+|                           |     |                                          |
+|                           |     |           <span style="margin:0px;padding:0px;color:rgb(0, 0, 255);">int</span>(<span style="margin:0px;padding:0px;color:rgb(163, 21, 21);">'Metal'</span>) : Metal_kernel    |
+|                           |     |                                          |
++---------------------------+     +------------------------------------------+
+
+</code></pre>
+<h5 style="padding:0px;color:rgb(0, 0, 0);font-size:12px;font-weight:bold;margin:10px 0px;">4.2.3.2 注册行为</h5>
+<p style="padding:0px;margin:10px auto;text-indent:0px;">最终注册行为就是往 dispatchTable_ 之中设置。</p>
+<pre style="border-radius:4px;background-color: #fbfaf8;border: 1px solid rgba(0,0,0,.14902);color: #333;font-size: 12px;padding: 8px;font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif;box-sizing: border-box;"><code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span style="margin:0px;padding:0px;"><span style="margin:0px;padding:0px;color:rgb(163, 21, 21);">void</span> <span style="margin:0px;padding:0px;color:rgb(163, 21, 21);">OperatorEntry::updateDispatchTableEntry_</span><span style="margin:0px;padding:0px;">(<span style="margin:0px;padding:0px;color:rgb(163, 21, 21);">const</span> c10::Dispatcher&amp; dispatcher, DispatchKey dispatch_key)</span> </span>{
+  <span style="margin:0px;padding:0px;color:rgb(0, 0, 255);">auto</span> dispatch_ix = <span style="margin:0px;padding:0px;color:rgb(0, 0, 255);">static_cast</span>&lt;<span style="margin:0px;padding:0px;color:rgb(163, 21, 21);">uint8_t</span>&gt;(dispatch_key);
+  dispatchTable_[dispatch_ix] = <span style="margin:0px;padding:0px;color:rgb(0, 0, 255);">computeDispatchTableEntry</span>(dispatcher, dispatch_key);
+  dispatchKeyExtractor_.<span style="margin:0px;padding:0px;color:rgb(0, 0, 255);">setOperatorHasFallthroughForKey</span>(dispatch_key, dispatchTable_[dispatch_ix].<span style="margin:0px;padding:0px;color:rgb(0, 0, 255);">isFallthrough</span>());
+}
+</code></pre>
+<p style="padding:0px;margin:10px auto;text-indent:0px;">所以 Dispatcher 数据结构拓展近似如下，这里包含了两个OperatorEntry，分别对应了op1和op2，就是说，目前系统中一共有两个operator，每个 operator 有4个kernel函数，分别对应了CPU，GPU等四个后端。</p>
+<pre style="border-radius:4px;background-color: #fbfaf8;border: 1px solid rgba(0,0,0,.14902);color: #333;font-size: 12px;padding: 8px;font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif;box-sizing: border-box;"><code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif">+-----------------------------------------+
+| Dispatcher                              |
+|                                         |
+|                                         |
+|   std::<span style="margin:0px;padding:0px;color:rgb(0, 0, 255);">list</span>&lt;OperatorDef&gt; operators_ +--------+
+|                                         |    |
+|                                         |    |
+|   operatorLookupTable_                  |    |
+|                                         |    |
++-----------------------------------------+    |
+                                               |
+                                               |
+                                               v
+           +-----------------------------------+------------------------------------------+
+           |  +---------------------------+     +--------------------------------------+  |
+           |  | OperatorEntry             |     |                                      |  |
+           |  |                           |     | std::array&lt;KernelFunction, uint8_t&gt;  |  |
+           |  |                           |     |                                      |  |
+           |  |        name_ = op1        |     |                                      |  |
+           |  |                           |     |           <span style="margin:0px;padding:0px;color:rgb(0, 0, 255);">int</span>(<span style="margin:0px;padding:0px;color:rgb(163, 21, 21);">'CPU'</span>) : op1_cpu       |  |
+           |  |        dispatchTable_ +-------&gt; |                                      |  |
+           |  |                           |     |           <span style="margin:0px;padding:0px;color:rgb(0, 0, 255);">int</span>(<span style="margin:0px;padding:0px;color:rgb(163, 21, 21);">'GPU'</span>) : op1_gpu       |  |
+           |  |                           |     |                                      |  |
+           |  |                           |     |           <span style="margin:0px;padding:0px;color:rgb(0, 0, 255);">int</span>(<span style="margin:0px;padding:0px;color:rgb(163, 21, 21);">'XLA'</span>) : op1_xla       |  |
+           |  |                           |     |                                      |  |
+           |  |                           |     |           <span style="margin:0px;padding:0px;color:rgb(0, 0, 255);">int</span>(<span style="margin:0px;padding:0px;color:rgb(163, 21, 21);">'Metal'</span>) : op1_metal   |  |
+           |  |                           |     |                                      |  |
+           |  +---------------------------+     +--------------------------------------+  |
+           |                                                                              |
+           |                                                                              |
+           |  +---------------------------+     +--------------------------------------+  |
+           |  | OperatorEntry             |     |                                      |  |
+           |  |                           |     | std::array&lt;KernelFunction, uint8_t&gt;  |  |
+           |  |                           |     |                                      |  |
+           |  |        name_ = op2        |     |                                      |  |
+           |  |                           |     |           <span style="margin:0px;padding:0px;color:rgb(0, 0, 255);">int</span>(<span style="margin:0px;padding:0px;color:rgb(163, 21, 21);">'CPU'</span>) : op2_cpu       |  |
+           |  |        dispatchTable_ +-------&gt; |                                      |  |
+           |  |                           |     |           <span style="margin:0px;padding:0px;color:rgb(0, 0, 255);">int</span>(<span style="margin:0px;padding:0px;color:rgb(163, 21, 21);">'GPU'</span>) : op2_gpu       |  |
+           |  |                           |     |                                      |  |
+           |  |                           |     |           <span style="margin:0px;padding:0px;color:rgb(0, 0, 255);">int</span>(<span style="margin:0px;padding:0px;color:rgb(163, 21, 21);">'XLA'</span>) : op2_xla       |  |
+           |  |                           |     |                                      |  |
+           |  |                           |     |           <span style="margin:0px;padding:0px;color:rgb(0, 0, 255);">int</span>(<span style="margin:0px;padding:0px;color:rgb(163, 21, 21);">'Metal'</span>) : op2_metal   |  |
+           |  |                           |     |                                      |  |
+           |  +---------------------------+     +--------------------------------------+  |
+           +------------------------------------------------------------------------------+
+</code></pre>
+<h4 style="padding:0px;color:rgb(0, 0, 0);font-size:14px;font-weight:bold;margin:10px 0px;">4.2.4 如何dispatch</h4>
+<h5 style="padding:0px;color:rgb(0, 0, 0);font-size:12px;font-weight:bold;margin:10px 0px;">4.2.4.1 调度依据</h5>
+<p style="padding:0px;margin:10px auto;text-indent:0px;">PyTorch 之中会依据dtype、device和layout的不同来调度不同的operator。</p>
+<ul style="margin:0px;padding:0px;margin-left:30px;padding-left:0px;list-style-type:disc;">
+<li style="margin:0px;padding:0px;list-style:inherit;">大多数类型（比如int32）可以使用模版方式直接进行映射，但是某些operator 不支持模版功能，就需要dispatcher这样的动态调度器。</li>
+<li style="margin:0px;padding:0px;list-style:inherit;">PyTorch的tensor不仅可以运行在CPU上，还可以跑在GPU，mkldnn和xla等设备，这也需要动态调度。</li>
+<li style="margin:0px;padding:0px;list-style:inherit;">layout是指tensor中元素的排布，这就有strided layout和sparse layout的区别，所以也需要动态调度。</li>
+</ul>
+<h5 style="padding:0px;color:rgb(0, 0, 0);font-size:12px;font-weight:bold;margin:10px 0px;">4.2.4.2 调度代码</h5>
+<p style="padding:0px;margin:10px auto;text-indent:0px;">我们这里这是给出部分代码，有兴趣的读者继续继续深入。</p>
+<p style="padding:0px;margin:10px auto;text-indent:0px;">算子调度的逻辑是：</p>
+<ol style="margin:0px;padding:0px;padding-left:40px;list-style-type:decimal;">
+<li style="margin:0px;padding:0px;list-style:inherit;">通过 dispatcher 类 + operator name + 操作类型等联合的形式来查找对应的算子 schema，算子的schema 定义了本算子的输入/输出/参数等等的相关信息。</li>
+<li style="margin:0px;padding:0px;list-style:inherit;">调用 dispatcher::call 完成算子操作。
+<ol style="margin:0px;padding:0px;padding-left:40px;list-style-type:decimal;">
+<li style="margin:0px;padding:0px;list-style:inherit;">得到 dispatcher 中的 dispatchKetSet。</li>
+<li style="margin:0px;padding:0px;list-style:inherit;">利用 op.lookup 找到最高优先级的 key，并且依据 key 找到对应的 KernelFunction。</li>
+<li style="margin:0px;padding:0px;list-style:inherit;">调用 kernel。</li>
+</ol>
+</li>
+</ol>
+<p style="padding:0px;margin:10px auto;text-indent:0px;">首先，具体以range的定义来看看如何查找schema，具体在 findSchemaOrThrow 内部是通过operatorLookupTable_来查找op：</p>
+<pre style="border-radius:4px;background-color: #fbfaf8;border: 1px solid rgba(0,0,0,.14902);color: #333;font-size: 12px;padding: 8px;font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif;box-sizing: border-box;"><code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span style="margin:0px;padding:0px;">at::Tensor <span style="margin:0px;padding:0px;color:rgb(163, 21, 21);">range::call</span><span style="margin:0px;padding:0px;">(<span style="margin:0px;padding:0px;color:rgb(163, 21, 21);">const</span> at::Scalar &amp; start, <span style="margin:0px;padding:0px;color:rgb(163, 21, 21);">const</span> at::Scalar &amp; end, c10::optional&lt;at::ScalarType&gt; dtype, c10::optional&lt;at::Layout&gt; layout, c10::optional&lt;at::Device&gt; device, c10::optional&lt;<span style="margin:0px;padding:0px;color:rgb(163, 21, 21);">bool</span>&gt; pin_memory)</span> </span>{
+    <span style="margin:0px;padding:0px;color:rgb(163, 21, 21);">static</span> <span style="margin:0px;padding:0px;color:rgb(0, 0, 255);">auto</span> op = c10::Dispatcher::<span style="margin:0px;padding:0px;color:rgb(0, 0, 255);">singleton</span>()
+        .<span style="margin:0px;padding:0px;color:rgb(0, 0, 255);">findSchemaOrThrow</span>(<span style="margin:0px;padding:0px;color:rgb(163, 21, 21);">"aten::range"</span>, <span style="margin:0px;padding:0px;color:rgb(163, 21, 21);">""</span>)
+        .typed&lt;at::<span style="margin:0px;padding:0px;color:rgb(0, 0, 255);">Tensor</span> (<span style="margin:0px;padding:0px;color:rgb(163, 21, 21);">const</span> at::Scalar &amp;, <span style="margin:0px;padding:0px;color:rgb(163, 21, 21);">const</span> at::Scalar &amp;, c10::optional&lt;at::ScalarType&gt;, c10::optional&lt;at::Layout&gt;, c10::optional&lt;at::Device&gt;, c10::optional&lt;<span style="margin:0px;padding:0px;color:rgb(163, 21, 21);">bool</span>&gt;)&gt;();
+    <span style="margin:0px;padding:0px;color:rgb(0, 0, 255);">return</span> op.<span style="margin:0px;padding:0px;color:rgb(0, 0, 255);">call</span>(start, end, dtype, layout, device, pin_memory);
+}
+</code></pre>
+<p style="padding:0px;margin:10px auto;text-indent:0px;">其次，Dispatcher::call 定义如下：</p>
+<pre style="border-radius:4px;background-color: #fbfaf8;border: 1px solid rgba(0,0,0,.14902);color: #333;font-size: 12px;padding: 8px;font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif;box-sizing: border-box;"><code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span style="margin:0px;padding:0px;"><span style="margin:0px;padding:0px;color:rgb(0, 0, 255);">template</span>&lt;<span style="margin:0px;padding:0px;color:rgb(0, 0, 255);">class</span> Return, <span style="margin:0px;padding:0px;color:rgb(0, 0, 255);">class</span>... Args&gt;
+C10_DISPATCHER_INLINE_UNLESS_MOBILE Return <span style="margin:0px;padding:0px;color:rgb(163, 21, 21);">Dispatcher::call</span><span style="margin:0px;padding:0px;">(<span style="margin:0px;padding:0px;color:rgb(163, 21, 21);">const</span> TypedOperatorHandle&lt;Return(Args...)&gt;&amp; op, Args... args)</span> <span style="margin:0px;padding:0px;color:rgb(163, 21, 21);">const</span> </span>{
+  detail::<span style="margin:0px;padding:0px;color:rgb(0, 0, 255);">unused_arg_</span>(args...);  
+ 
+  <span style="margin:0px;padding:0px;color:rgb(0, 128, 0);">// 得到key set</span>
+  <span style="margin:0px;padding:0px;color:rgb(0, 0, 255);">auto</span> dispatchKeySet = op.operatorDef_-&gt;op.<span style="margin:0px;padding:0px;color:rgb(0, 0, 255);">dispatchKeyExtractor</span>()
+    .<span style="margin:0px;padding:0px;color:rgb(0, 0, 255);">template</span> <span style="margin:0px;padding:0px;color:rgb(0, 0, 255);">getDispatchKeySetUnboxed</span>&lt;Args...&gt;(args...);
+  <span style="margin:0px;padding:0px;color:rgb(0, 0, 255);">TORCH_INTERNAL_ASSERT_DEBUG_ONLY</span>(!c10::<span style="margin:0px;padding:0px;color:rgb(0, 0, 255);">isAliasDispatchKey</span>(dispatchKeySet.<span style="margin:0px;padding:0px;color:rgb(0, 0, 255);">highestPriorityTypeId</span>()));
+  
+  <span style="margin:0px;padding:0px;color:rgb(0, 128, 0);">// 得到算子</span>
+  <span style="margin:0px;padding:0px;color:rgb(163, 21, 21);">const</span> KernelFunction&amp; kernel = op.operatorDef_-&gt;op.<span style="margin:0px;padding:0px;color:rgb(0, 0, 255);">lookup</span>(dispatchKeySet.<span style="margin:0px;padding:0px;color:rgb(0, 0, 255);">highestPriorityTypeId</span>());
+  
+  <span style="margin:0px;padding:0px;color:rgb(0, 128, 0);">// 进行调度</span>
+<span style="margin:0px;padding:0px;color:rgb(43, 145, 175);">#<span style="margin:0px;padding:0px;color:rgb(0, 0, 255);">ifndef</span> PYTORCH_DISABLE_PER_OP_PROFILING</span>
+  <span style="margin:0px;padding:0px;color:rgb(163, 21, 21);">bool</span> pre_sampled = <span style="margin:0px;padding:0px;color:rgb(163, 21, 21);">false</span>;
+  <span style="margin:0px;padding:0px;color:rgb(0, 0, 255);">if</span> (<span style="margin:0px;padding:0px;color:rgb(0, 0, 255);">C10_UNLIKELY</span>(at::<span style="margin:0px;padding:0px;color:rgb(0, 0, 255);">shouldRunRecordFunction</span>(&amp;pre_sampled))) {
+    <span style="margin:0px;padding:0px;color:rgb(0, 0, 255);">return</span> <span style="margin:0px;padding:0px;color:rgb(0, 0, 255);">callWithDispatchKeySlowPath</span>&lt;Return, Args...&gt;(op, pre_sampled, dispatchKeySet, kernel, std::forward&lt;Args&gt;(args)...);
+  }
+<span style="margin:0px;padding:0px;color:rgb(43, 145, 175);">#<span style="margin:0px;padding:0px;color:rgb(0, 0, 255);">endif</span>  <span style="margin:0px;padding:0px;color:rgb(0, 128, 0);">// PYTORCH_DISABLE_PER_OP_PROFILING</span></span>
+  <span style="margin:0px;padding:0px;color:rgb(0, 0, 255);">return</span> kernel.<span style="margin:0px;padding:0px;color:rgb(0, 0, 255);">template</span> <span style="margin:0px;padding:0px;color:rgb(0, 0, 255);">call</span>&lt;Return, Args...&gt;(op, dispatchKeySet, std::forward&lt;Args&gt;(args)...);
+}
+</code></pre>
+<h5 style="padding:0px;color:rgb(0, 0, 0);font-size:12px;font-weight:bold;margin:10px 0px;">4.2.4.3 key</h5>
+<p style="padding:0px;margin:10px auto;text-indent:0px;">我们接下来看看key的定义，因为太多，所以我们只给出部分数值。</p>
+<pre style="border-radius:4px;background-color: #fbfaf8;border: 1px solid rgba(0,0,0,.14902);color: #333;font-size: 12px;padding: 8px;font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif;box-sizing: border-box;"><code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span style="margin:0px;padding:0px;color:rgb(0, 0, 255);">enum class</span> <span style="margin:0px;padding:0px;color:rgb(163, 21, 21);">DispatchKey</span> : <span style="margin:0px;padding:0px;color:rgb(163, 21, 21);">uint8_t</span> {
+  CPU, <span style="margin:0px;padding:0px;color:rgb(0, 128, 0);">// registered at build/aten/src/ATen/RegisterCPU.cpp</span>
+  CUDA, <span style="margin:0px;padding:0px;color:rgb(0, 128, 0);">// registered at build/aten/src/ATen/RegisterCUDA.cpp</span>
+  HIP, <span style="margin:0px;padding:0px;color:rgb(0, 128, 0);">// NB: I think this is not actually used, due to Note [Masquerading as</span>
+  <span style="margin:0px;padding:0px;color:rgb(0, 128, 0);">// CUDA]</span>
+  FPGA, <span style="margin:0px;padding:0px;color:rgb(0, 128, 0);">// Xilinx support lives out of tree at</span>
+  <span style="margin:0px;padding:0px;color:rgb(0, 128, 0);">// https://gitlab.com/pytorch-complex/vitis_kernels</span>
+  MSNPU, <span style="margin:0px;padding:0px;color:rgb(0, 128, 0);">// unused externally, but tested at</span>
+  <span style="margin:0px;padding:0px;color:rgb(0, 128, 0);">// test/cpp_extensions/msnpu_extension.cpp</span>
+  XLA, <span style="margin:0px;padding:0px;color:rgb(0, 128, 0);">// lives out of tree at https://github.com/pytorch/xla</span>
+  MLC, <span style="margin:0px;padding:0px;color:rgb(0, 128, 0);">// lives out of tree at https://github.com/pytorch/MLCompute</span>
+  Vulkan,
+  Metal,
+  XPU, <span style="margin:0px;padding:0px;color:rgb(0, 128, 0);">// For out of tree Intel's heterogeneous computing plug-in</span>
+  HPU, <span style="margin:0px;padding:0px;color:rgb(0, 128, 0);">// For out of tree &amp; closed source integration of HPU / Habana</span>
+  VE, <span style="margin:0px;padding:0px;color:rgb(0, 128, 0);">// For out of tree &amp; closed source integration of SX-Aurora / NEC</span>
+  Lazy, <span style="margin:0px;padding:0px;color:rgb(0, 128, 0);">// For lazy tensor backends</span>
+  <span style="margin:0px;padding:0px;color:rgb(0, 128, 0);">// A meta tensor is a tensor without any data associated with it.  (They</span>
+  <span style="margin:0px;padding:0px;color:rgb(0, 128, 0);">// have also colloquially been referred to as tensors on the "null" device).</span>
+  <span style="margin:0px;padding:0px;color:rgb(0, 128, 0);">// A meta tensor can be used to dry run operators without actually doing any</span>
+  <span style="margin:0px;padding:0px;color:rgb(0, 128, 0);">// computation, e.g., add on two meta tensors would give you another meta</span>
+  <span style="margin:0px;padding:0px;color:rgb(0, 128, 0);">// tensor with the output shape and dtype, but wouldn't actually add anything.</span>
+  Meta,
+  <span style="margin:0px;padding:0px;color:rgb(0, 128, 0);">// Here are backends which specify more specialized operators</span>
+  <span style="margin:0px;padding:0px;color:rgb(0, 128, 0);">// based on the dtype of the tensor.</span>
+  QuantizedCPU, <span style="margin:0px;padding:0px;color:rgb(0, 128, 0);">// registered at build/aten/src/ATen/RegisterQuantizedCPU.cpp</span>
+  QuantizedCUDA, <span style="margin:0px;padding:0px;color:rgb(0, 128, 0);">// registered at build/aten/src/ATen/RegisterQuantizedCUDA.cpp</span>
+  QuantizedXPU, <span style="margin:0px;padding:0px;color:rgb(0, 128, 0);">// For out of tree Intel's heterogeneous computing plug-in</span>
+  <span style="margin:0px;padding:0px;color:rgb(0, 128, 0);">// This backend is to support custom RNGs; it lets you go</span>
+  <span style="margin:0px;padding:0px;color:rgb(0, 128, 0);">// to a different kernel if you pass in a generator that is not a</span>
+  <span style="margin:0px;padding:0px;color:rgb(0, 128, 0);">// traditional CPUGeneratorImpl/CUDAGeneratorImpl.  To make use of this</span>
+  <span style="margin:0px;padding:0px;color:rgb(0, 128, 0);">// key:</span>
+  <span style="margin:0px;padding:0px;color:rgb(0, 128, 0);">//  1) set it as a second parameter of at::Generator constructor call in</span>
+  <span style="margin:0px;padding:0px;color:rgb(0, 128, 0);">//     the user-defined PRNG class.</span>
+  <span style="margin:0px;padding:0px;color:rgb(0, 128, 0);">//  2) use it as a dispatch key while registering custom kernels</span>
+  <span style="margin:0px;padding:0px;color:rgb(0, 128, 0);">//     (templatized kernels specialized for user-defined PRNG class)</span>
+  <span style="margin:0px;padding:0px;color:rgb(0, 128, 0);">// intended for out of tree use; tested by aten/src/ATen/test/rng_test.cpp</span>
+  CustomRNGKeyId,
+
+  <span style="margin:0px;padding:0px;color:rgb(0, 128, 0);">// Here are backends which specify more specialized operators</span>
+  <span style="margin:0px;padding:0px;color:rgb(0, 128, 0);">// based on the layout of the tensor.  Note that the sparse backends</span>
+  <span style="margin:0px;padding:0px;color:rgb(0, 128, 0);">// are one case where ordering matters: sparse multi-dispatches with</span>
+  <span style="margin:0px;padding:0px;color:rgb(0, 128, 0);">// the corresponding dense tensors, and must be handled before them.</span>
+  MkldnnCPU, <span style="margin:0px;padding:0px;color:rgb(0, 128, 0);">// registered at build/aten/src/ATen/RegisterMkldnnCPU.cpp</span>
+  <span style="margin:0px;padding:0px;color:rgb(0, 128, 0);">// NB: not to be confused with MKLDNN, which is Caffe2 only</span>
+  SparseCPU, <span style="margin:0px;padding:0px;color:rgb(0, 128, 0);">// registered at build/aten/src/ATen/RegisterSparseCPU.cpp</span>
+  SparseCUDA, <span style="margin:0px;padding:0px;color:rgb(0, 128, 0);">// registered at build/aten/src/ATen/RegisterSparseCUDA.cpp</span>
+  SparseHIP, <span style="margin:0px;padding:0px;color:rgb(0, 128, 0);">// <span style="margin:0px;padding:0px;color:rgb(128, 128, 128);">TODO:</span> I think this is not actually used, due to Note</span>
+  <span style="margin:0px;padding:0px;color:rgb(0, 128, 0);">// [Masquerading as CUDA]</span>
+  SparseXPU, <span style="margin:0px;padding:0px;color:rgb(0, 128, 0);">// For out of tree Intel's heterogeneous computing plug-in</span>
+  SparseVE, <span style="margin:0px;padding:0px;color:rgb(0, 128, 0);">// For out of tree &amp; closed source integration of SX-Aurora / NEC</span>
+  SparseCsrCPU,
+  SparseCsrCUDA,
+
+  AutogradOther,
+  AutogradCPU,
+  AutogradCUDA,
+  AutogradXLA,
+  AutogradLazy,
+  AutogradXPU,
+  AutogradMLC,
+  AutogradHPU,
+
+  ......
+};
+</code></pre>
+<h5 style="padding:0px;color:rgb(0, 0, 0);font-size:12px;font-weight:bold;margin:10px 0px;">4.2.4.4 key的使用</h5>
+<p style="padding:0px;margin:10px auto;text-indent:0px;">因为篇幅所限，我们无法深入分析每一种情况，这里只给出从 DeviceType 出发的情景。我们从下面函数可以看到，如何从 DeviceType 映射到 DispatchKey 类型。</p>
+<pre style="border-radius:4px;background-color: #fbfaf8;border: 1px solid rgba(0,0,0,.14902);color: #333;font-size: 12px;padding: 8px;font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif;box-sizing: border-box;"><code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span style="margin:0px;padding:0px;color:rgb(0, 0, 255);">template</span> &lt;<span style="margin:0px;padding:0px;color:rgb(0, 0, 255);">typename</span> Func&gt;
+<span style="margin:0px;padding:0px;"><span style="margin:0px;padding:0px;color:rgb(0, 0, 255);">inline</span> CppFunction <span style="margin:0px;padding:0px;color:rgb(163, 21, 21);">dispatch</span><span style="margin:0px;padding:0px;">(c10::DeviceType type, Func&amp;&amp; raw_f)</span> </span>{
+  <span style="margin:0px;padding:0px;color:rgb(0, 0, 255);">auto</span> deviceTypeToDispatchKey = [](c10::DeviceType t){
+    <span style="margin:0px;padding:0px;color:rgb(0, 0, 255);">switch</span> (t) {
+      <span style="margin:0px;padding:0px;color:rgb(0, 128, 0);">// This list is synchronized with the k-constants in c10/core/DeviceType.h</span>
+      <span style="margin:0px;padding:0px;color:rgb(0, 0, 255);">case</span> c10::DeviceType::CPU:
+        <span style="margin:0px;padding:0px;color:rgb(0, 0, 255);">return</span> c10::DispatchKey::CPU;
+      <span style="margin:0px;padding:0px;color:rgb(0, 0, 255);">case</span> c10::DeviceType::CUDA:
+        <span style="margin:0px;padding:0px;color:rgb(0, 0, 255);">return</span> c10::DispatchKey::CUDA;
+      <span style="margin:0px;padding:0px;color:rgb(0, 0, 255);">case</span> c10::DeviceType::XLA:
+        <span style="margin:0px;padding:0px;color:rgb(0, 0, 255);">return</span> c10::DispatchKey::XLA;
+      <span style="margin:0px;padding:0px;color:rgb(0, 0, 255);">case</span> c10::DeviceType::Lazy:
+        <span style="margin:0px;padding:0px;color:rgb(0, 0, 255);">return</span> c10::DispatchKey::Lazy;
+      <span style="margin:0px;padding:0px;color:rgb(0, 0, 255);">case</span> c10::DeviceType::MLC:
+        <span style="margin:0px;padding:0px;color:rgb(0, 0, 255);">return</span> c10::DispatchKey::MLC;
+      <span style="margin:0px;padding:0px;color:rgb(0, 0, 255);">case</span> c10::DeviceType::Meta:
+        <span style="margin:0px;padding:0px;color:rgb(0, 0, 255);">return</span> c10::DispatchKey::Meta;
+      <span style="margin:0px;padding:0px;color:rgb(0, 0, 255);">case</span> c10::DeviceType::HIP:
+        <span style="margin:0px;padding:0px;color:rgb(0, 0, 255);">return</span> c10::DispatchKey::HIP;
+      <span style="margin:0px;padding:0px;color:rgb(0, 0, 255);">case</span> c10::DeviceType::MSNPU:
+        <span style="margin:0px;padding:0px;color:rgb(0, 0, 255);">return</span> c10::DispatchKey::MSNPU;
+      <span style="margin:0px;padding:0px;color:rgb(0, 0, 255);">case</span> c10::DeviceType::HPU:
+        <span style="margin:0px;padding:0px;color:rgb(0, 0, 255);">return</span> c10::DispatchKey::HPU;
+      <span style="margin:0px;padding:0px;color:rgb(0, 0, 255);">default</span>:
+        <span style="margin:0px;padding:0px;color:rgb(0, 0, 255);">TORCH_CHECK</span>(<span style="margin:0px;padding:0px;color:rgb(163, 21, 21);">false</span>,
+          <span style="margin:0px;padding:0px;color:rgb(163, 21, 21);">"Device type "</span>, t, <span style="margin:0px;padding:0px;color:rgb(163, 21, 21);">" cannot be overloaded at dispatch time, "</span>
+          <span style="margin:0px;padding:0px;color:rgb(163, 21, 21);">"please file a bug report explaining what you were trying to do."</span>);
+    }
+  };
+  <span style="margin:0px;padding:0px;color:rgb(0, 0, 255);">return</span> <span style="margin:0px;padding:0px;color:rgb(0, 0, 255);">dispatch</span>(<span style="margin:0px;padding:0px;color:rgb(0, 0, 255);">deviceTypeToDispatchKey</span>(type), std::forward&lt;Func&gt;(raw_f));
+}
+</code></pre>
+<h3 style="padding:0px;color:rgb(0, 0, 0);font-size:16px;line-height:1.5;font-weight:bold;margin:10px 0px;">4.3 小结</h3>
+<p style="padding:0px;margin:10px auto;text-indent:0px;">至此，我们知道，通过 Dispatcher 机制，PyTorch 可以依据dtype、device和layout的不同来调度不同的operator。这就解答了我们第三个问题：如何在 CPU，GPU 操作之间无缝切换？</p>
+<p style="padding:0px;margin:10px auto;text-indent:0px;">关于第四个问题：是否需要把损失函数移动到 GPU 之上？，我们也有了解答：</p>
+<p style="padding:0px;margin:10px auto;text-indent:0px;">损失函数的参数是前向传播的outputs和label，outputs已经在GPU之上（因为训练数据已经在GPU之上），label 也被用户手动设置到GPU之上。所以损失函数的参数都已经在GPU之上，这样 Dispather 就依据device会调用到GPU对应的operator，所以不需要把损失函数移动到GPU之上。</p>
+<p style="padding:0px;margin:10px auto;text-indent:0px;">我们整理一个总体逻辑如下，序列是：</p>
+<ol style="margin:0px;padding:0px;padding-left:40px;list-style-type:decimal;">
+<li style="margin:0px;padding:0px;list-style:inherit;">把训练数据 inputs 移动到GPU。</li>
+<li style="margin:0px;padding:0px;list-style:inherit;">进行前向操作，假设只有一个operator，就是 op1，使用 device='GPU' 这个 dispatch key 去 Dispatcher 查找。</li>
+<li style="margin:0px;padding:0px;list-style:inherit;">找到了 op1-gpu 这个operator，进行计算，得出 outputs。</li>
+<li style="margin:0px;padding:0px;list-style:inherit;">outputs 就自动存在于 GPU 之上。</li>
+<li style="margin:0px;padding:0px;list-style:inherit;">把 Labels 也放到 GPU 之上。</li>
+<li style="margin:0px;padding:0px;list-style:inherit;">进行损失函数运算，假设只有一个 operator，就是 op2，此时损失函数的参数都在GPU之上，所以使用 device= 'GPU' 这个 dispatch key 去 Dispatcher 查找。</li>
+<li style="margin:0px;padding:0px;list-style:inherit;">找到了 op2-gpu 这个operator，进行计算，得出 loss。</li>
+</ol>
+<pre style="border-radius:4px;background-color: #fbfaf8;border: 1px solid rgba(0,0,0,.14902);color: #333;font-size: 12px;padding: 8px;font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif;box-sizing: border-box;"><code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif">                           +--------------------+
+         +-----------+     | Forward            |      +------------+     +------------------+
+         | GPU       |     |                    |      | GPU        |     | Loss Function    |
+         |           +---&gt; |    op1   op1-<span style="margin:0px;padding:0px;color:rgb(0, 0, 255);">gpu</span>() +----&gt; |            +---&gt; |                  |   +--------+
+         |   Inputs  | <span style="margin:0px;padding:0px;color:rgb(136, 0, 0);">1</span>   |                    |  <span style="margin:0px;padding:0px;color:rgb(136, 0, 0);">4</span>   |   Outputs  |     |                  |   | GPU    |
+         |           |     |     +        ^     |      |            |     |                  |   |        |
+         +-----------+     |     |        |     |      +------------+     |  op2   op2-<span style="margin:0px;padding:0px;color:rgb(0, 0, 255);">gpu</span>() +--&gt;+  loss  |
+                           |     |        |     |                         |                  |   |        |
+                           +--------------------+      +------------+     |   +        ^     |   |        |
+                                 |        |            | GPU        | <span style="margin:0px;padding:0px;color:rgb(136, 0, 0);">5</span>   |   |        |     |   +--------+
+                                 |        |            |            +---&gt; |   | <span style="margin:0px;padding:0px;color:rgb(136, 0, 0);">6</span>      | <span style="margin:0px;padding:0px;color:rgb(136, 0, 0);">7</span>   |
+                               <span style="margin:0px;padding:0px;color:rgb(136, 0, 0);">2</span> |        | <span style="margin:0px;padding:0px;color:rgb(136, 0, 0);">3</span>          |   Labels   |     |   |        |     |
+                                 |        |            |            |     |   |        |     |
+                                 |        |            +------------+     +------------------+
+    +----------------------------+        +--------------------------------+  |        |
+    |                                                                      |  |        |
++-----------------------------------------------------------------------------+        |
+|   |                                                                      |           |
+|   |          +-------------------------------------------------------+   |           |
+|   |          | Dispather                                             |   |           |
+|   |          |       +          +          +            +            |   |           |
+|   |          |       |   XLA    |   CPU    |    Metal   |    GPU     |   |           |
+|   |          | +---------------------------------------------------+ |   |           |
+|   |          |       |          |          |            |            |   |           |
+|   +--------&gt; |   OP1 | op1-xla  | op1-cpu  |  op1-metal |  op1-gpu   +---+           |
+| <span style="margin:0px;padding:0px;color:rgb(163, 21, 21);">'device=GPU'</span> |       |          |          |            |  +------+  |               |
+|              | +---------------------------------------------------+ |               |
+|              |       |          |          |            |            |               |
++------------&gt; |   OP2 | op2-xla  | op2-cpu  |  op2-metal |  op2-gpu   +---------------+
+  <span style="margin:0px;padding:0px;color:rgb(163, 21, 21);">'device=GPU'</span> |       |          |          |            |  +------+  |
+               | +---------------------------------------------------+ |
+               |       |          |          |            |            |
+               |   OP3 | op3-xla  | op3-cpu  |  op3-metal |  op3-gpu   |
+               |       |          |          |            |            |
+               | +---------------------------------------------------+ |
+               +-------------------------------------------------------+
+
+</code></pre>
+<p style="padding:0px;margin:10px auto;text-indent:0px;">手机如下：</p>
+<p style="padding:0px;margin:10px auto;text-indent:0px;"><img src="https://img2020.cnblogs.com/blog/1850883/202111/1850883-20211106210302126-278214823.png" width="1061" height="670" style="padding:0px;border:0px;cursor:zoom-in;display:block;margin:auto;height:auto;transition:transform 300ms cubic-bezier(0.2, 0, 0.2, 1) 0s;max-width:100%;"/></p>
+<p style="padding:0px;margin:10px auto;text-indent:0px;">至此，GPU相关分析结束，下一篇我们开始分析DataParallel，敬请期待。</p>
+<h2 style="padding:0px;color:rgb(0, 0, 0);font-size:21px;line-height:1.5;font-weight:bold;margin:10px 0px;">0xFF 参考</h2>
+<p style="padding:0px;margin:10px auto;text-indent:0px;"><a href="http://blog.ezyang.com/2020/09/lets-talk-about-the-pytorch-dispatcher/" target="_blank" rel="noopener" style="margin:0px;padding:0px;text-decoration:underline;color:rgb(0, 102, 204);">http://blog.ezyang.com/2020/09/lets-talk-about-the-pytorch-dispatcher/</a></p>
+<p style="padding:0px;margin:10px auto;text-indent:0px;"><a href="https://pytorch.org/tutorials/advanced/dispatcher.html" target="_blank" rel="noopener" style="margin:0px;padding:0px;text-decoration:underline;color:rgb(0, 102, 204);">https://pytorch.org/tutorials/advanced/dispatcher.html</a></p>
+<p style="padding:0px;margin:10px auto;text-indent:0px;"><a href="https://zhuanlan.zhihu.com/p/402198819" target="_blank" rel="noopener" style="margin:0px;padding:0px;text-decoration:underline;color:rgb(0, 102, 204);">GPU多卡并行训练总结（以pytorch为例）</a></p>
+<p style="padding:0px;margin:10px auto;text-indent:0px;"><a href="https://zhuanlan.zhihu.com/p/98535650" target="_blank" rel="noopener" style="margin:0px;padding:0px;text-decoration:underline;color:rgb(0, 102, 204);">当代研究生应当掌握的并行训练方法（单机多卡）</a></p>
+<p style="padding:0px;margin:10px auto;text-indent:0px;"><a href="https://zhuanlan.zhihu.com/p/52596192" target="_blank" rel="noopener" style="margin:0px;padding:0px;text-decoration:underline;color:rgb(0, 102, 204);">分布式训练从入门到放弃</a></p>
+<p style="padding:0px;margin:10px auto;text-indent:0px;"><a href="https://zhuanlan.zhihu.com/p/62481975" target="_blank" rel="noopener" style="margin:0px;padding:0px;text-decoration:underline;color:rgb(0, 102, 204);">再谈PyTorch的初始化（上）</a></p>
+<p style="padding:0px;margin:10px auto;text-indent:0px;"><a href="https://zhuanlan.zhihu.com/p/390049109" target="_blank" rel="noopener" style="margin:0px;padding:0px;text-decoration:underline;color:rgb(0, 102, 204);">pytorch中的dispatcher</a></p>
+<p style="padding:0px;margin:10px auto;text-indent:0px;"><a href="https://zhuanlan.zhihu.com/p/376495783" target="_blank" rel="noopener" style="margin:0px;padding:0px;text-decoration:underline;color:rgb(0, 102, 204);">【译】聊聊Pytorch Dispatcher</a></p>
+<p style="padding:0px;margin:10px auto;text-indent:0px;"><a href="https://zhuanlan.zhihu.com/p/350849116" target="_blank" rel="noopener" style="margin:0px;padding:0px;text-decoration:underline;color:rgb(0, 102, 204);">扩展Pytorch：利用CUDA实现算子（二）</a></p>
+<p style="padding:0px;margin:10px auto;text-indent:0px;"><a href="https://zhuanlan.zhihu.com/p/55966063" target="_blank" rel="noopener" style="margin:0px;padding:0px;text-decoration:underline;color:rgb(0, 102, 204);">PyTorch ATen代码的动态生成</a></p>
+<p style="padding:0px;margin:10px auto;text-indent:0px;"><a href="https://blog.csdn.net/qq_23858785/article/details/96476740" target="_blank" rel="noopener" style="margin:0px;padding:0px;text-decoration:underline;color:rgb(0, 102, 204);">https://blog.csdn.net/qq_23858785/article/details/96476740</a></p>
+<p style="padding:0px;margin:10px auto;text-indent:0px;"><a href="https://murphypei.github.io/blog/2019/09/cuda-function-prefix" target="_blank" rel="noopener" style="margin:0px;padding:0px;text-decoration:underline;color:rgb(0, 102, 204);">CUDA 函数前缀</a></p>
+<p style="padding:0px;margin:10px auto;text-indent:0px;"><a href="https://www.cnblogs.com/tweed/p/10915400.html" target="_blank" rel="noopener" style="margin:0px;padding:0px;text-decoration:underline;color:rgb(0, 102, 204);">CUDA C编程入门</a></p>
+<p style="padding:0px;margin:10px auto;text-indent:0px;"><a href="https://blog.csdn.net/qq_44605933/article/details/104729157" target="_blank" rel="noopener" style="margin:0px;padding:0px;text-decoration:underline;color:rgb(0, 102, 204);">CPU—GPU并行处理—CUDA编程从想入门到放弃</a></p>
+<p style="padding:0px;margin:10px auto;text-indent:0px;"><a href="https://blog.csdn.net/weixin_42236014/article/details/116747358" target="_blank" rel="noopener" style="margin:0px;padding:0px;text-decoration:underline;color:rgb(0, 102, 204);">https://blog.csdn.net/weixin_42236014/article/details/116747358</a></p>
+<p style="padding:0px;margin:10px auto;text-indent:0px;"><a href="https://blog.csdn.net/crazy_sunshine/article/details/97920534" target="_blank" rel="noopener" style="margin:0px;padding:0px;text-decoration:underline;color:rgb(0, 102, 204);">https://blog.csdn.net/crazy_sunshine/article/details/97920534</a></p>
+<p style="padding:0px;margin:10px auto;text-indent:0px;"><a href="https://blog.csdn.net/beizhengren/article/details/79554152" target="_blank" rel="noopener" style="margin:0px;padding:0px;text-decoration:underline;color:rgb(0, 102, 204);">CPU、GPU、CUDA，CuDNN 介绍</a></p>
+<p style="padding:0px;margin:10px auto;text-indent:0px;"><a href="https://www.jianshu.com/p/87cf95b1faa0" target="_blank" rel="noopener" style="margin:0px;padding:0px;text-decoration:underline;color:rgb(0, 102, 204);">CUDA编程(三): GPU架构了解一下!</a></p>
+<p style="padding:0px;margin:10px auto;text-indent:0px;"><a href="https://zhuanlan.zhihu.com/p/34587739" target="_blank" rel="noopener" style="margin:0px;padding:0px;text-decoration:underline;color:rgb(0, 102, 204);">CUDA编程入门极简教程</a></p>
+<p style="padding:0px;margin:10px auto;text-indent:0px;"><a href="https://www.zhihu.com/question/437131193/answer/1685402769" target="_blank" rel="noopener" style="margin:0px;padding:0px;text-decoration:underline;color:rgb(0, 102, 204);">写CUDA到底难在哪？</a></p>
+<p style="padding:0px;margin:10px auto;text-indent:0px;"><a href="https://www.cnblogs.com/huangshuang/p/13179494.html" target="_blank" rel="noopener" style="margin:0px;padding:0px;text-decoration:underline;color:rgb(0, 102, 204);">深入浅出PyTorch（算子篇）</a></p>
+<p style="padding:0px;margin:10px auto;text-indent:0px;"><a href="https://www.jianshu.com/p/c498343b5959" target="_blank" rel="noopener" style="margin:0px;padding:0px;text-decoration:underline;color:rgb(0, 102, 204);">深入浅出全连接层（fully connected layer）</a></p>
+<p style="padding:0px;margin:10px auto;text-indent:0px;"><a href="https://oldpan.me/archives/pytorch-cuda-c-plus-plus" target="_blank" rel="noopener" style="margin:0px;padding:0px;text-decoration:underline;color:rgb(0, 102, 204);">Pytorch拓展进阶(二)：Pytorch结合C++以及Cuda拓展</a></p>
+<p style="padding:0px;margin:10px auto;text-indent:0px;"><a href="https://oldpan.me/archives/pytorch-combine-c-and-cuda" target="_blank" rel="noopener" style="margin:0px;padding:0px;text-decoration:underline;color:rgb(0, 102, 204);">Pytorch拓展进阶(一)：Pytorch结合C以及Cuda语言</a></p>
+<p style="padding:0px;margin:10px auto;text-indent:0px;"><a href="https://zhuanlan.zhihu.com/p/348555597" target="_blank" rel="noopener" style="margin:0px;padding:0px;text-decoration:underline;color:rgb(0, 102, 204);">PyTorch 源码解读之 cpp_extension：揭秘 C++/CUDA 算子实现和调用全流程</a></p>
+<p style="padding:0px;margin:10px auto;text-indent:0px;"><a href="https://zhuanlan.zhihu.com/p/390049109" target="_blank" rel="noopener" style="margin:0px;padding:0px;text-decoration:underline;color:rgb(0, 102, 204);">pytorch中的dispatcher</a></p>
+<p style="padding:0px;margin:10px auto;text-indent:0px;"><a href="https://blog.csdn.net/Chris_zhangrx/article/details/119489853" target="_blank" rel="noopener" style="margin:0px;padding:0px;text-decoration:underline;color:rgb(0, 102, 204);">[Pytorch 源码阅读] —— 谈谈 dispatcher（一）</a></p>
+<p style="padding:0px;margin:10px auto;text-indent:0px;"><a href="https://blog.csdn.net/Chris_zhangrx/article/details/119512418" target="_blank" rel="noopener" style="margin:0px;padding:0px;text-decoration:underline;color:rgb(0, 102, 204);">[Pytorch 源码阅读] —— 谈谈 dispatcher（二）</a></p>
+
+</div></div></div></div></div></div></div></div></div></div></div></div>
+</div></div>
+<a class="back-link" href="../articles.html">← 返回笔记列表</a>
+</body></html>

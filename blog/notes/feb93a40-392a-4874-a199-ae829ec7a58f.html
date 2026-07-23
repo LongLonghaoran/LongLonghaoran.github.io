@@ -1,0 +1,232 @@
+<!DOCTYPE html>
+<html lang="zh-CN" data-theme="light">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>关于URL编码 - 阮一峰的网络日志 — 技术笔记</title>
+<style>
+:root { --bg:#fff; --text:#1a1a1a; --muted:#666; --border:#e0e0e0; --code-bg:#f5f5f5; --link:#0066cc; }
+@media (prefers-color-scheme: dark) { :root { --bg:#1a1a1a; --text:#e0e0e0; --muted:#999; --border:#333; --code-bg:#2a2a2a; --link:#66bbff; } }
+* { box-sizing:border-box; margin:0; padding:0; }
+body { font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Arial,sans-serif; line-height:1.7; color:var(--text); background:var(--bg); max-width:860px; margin:0 auto; padding:2rem 1.5rem; }
+.note-header { border-bottom:2px solid var(--border); padding-bottom:1rem; margin-bottom:2rem; }
+.note-title { font-size:1.6rem; font-weight:700; margin-bottom:0.3rem; }
+.note-meta { color:var(--muted); font-size:0.85rem; }
+.note-content { font-size:0.95rem; }
+.note-content h1 { font-size:1.4rem; margin:1.2rem 0 0.6rem; }
+.note-content h2 { font-size:1.2rem; margin:1rem 0 0.5rem; }
+.note-content h3 { font-size:1.05rem; margin:0.8rem 0 0.4rem; }
+.note-content p { margin:0.5rem 0; }
+.note-content ul,.note-content ol { margin:0.5rem 0 0.5rem 2rem; }
+.note-content li { margin:0.2rem 0; }
+.note-content pre { background:var(--code-bg); padding:1rem; border-radius:6px; overflow-x:auto; margin:0.8rem 0; font-size:0.85rem; }
+.note-content code { background:var(--code-bg); padding:0.1rem 0.3rem; border-radius:3px; font-size:0.88em; }
+.note-content pre code { background:none; padding:0; }
+.note-content blockquote { border-left:3px solid var(--border); padding-left:1rem; color:var(--muted); margin:0.8rem 0; }
+.note-content a { color:var(--link); }
+.note-content img { max-width:100%; height:auto; border-radius:6px; margin:0.5rem 0; }
+.note-content table { border-collapse:collapse; width:100%; margin:0.8rem 0; }
+.note-content th,.note-content td { border:1px solid var(--border); padding:0.5rem; }
+.note-content th { background:var(--code-bg); }
+.media-placeholder { background:var(--code-bg); padding:1rem; text-align:center; color:var(--muted); border-radius:6px; margin:0.5rem 0; font-size:0.85rem; }
+.encrypt-placeholder { background:#fff3cd; padding:0.5rem; text-align:center; color:#856404; border-radius:6px; margin:0.5rem 0; font-size:0.85rem; }
+.back-link { display:inline-block; margin-top:2rem; color:var(--link); text-decoration:none; font-size:0.85rem; }
+</style>
+</head>
+<body>
+<div class="note-header"><div class="note-title">关于URL编码 - 阮一峰的网络日志</div><div class="note-meta">笔记本：前端学习</div></div>
+<div class="note-content"><div style="--en-clipped-content:article; --en-clipped-source-url:http://www.ruanyifeng.com/blog/2010/02/url_encoding.html; --en-clipped-source-title:关于URL编码 - 阮一峰的网络日志;">
+<div><br/></div><div style="font-size: 16px; display:block; min-width: 100%; position: relative;"> <div style="list-style-type:none;text-align:left;text-decoration:none;font-weight:normal;font-style:normal;color:rgb(17, 17, 17);"><div style="list-style-type:none;text-align:left;text-decoration:none;font-weight:normal;font-style:normal;font-family:Georgia, serif;letter-spacing:-0.01em;word-spacing:0.2em;line-height:1.8em;font-size:62.5%;background-color:rgb(245, 245, 213);color:rgb(17, 17, 17);"><div style="list-style-type:none;text-align:left;text-decoration:none;font-weight:normal;font-style:normal;color:rgb(17, 17, 17);background-color:rgb(245, 245, 213);min-width:640px;"><div style="list-style-type:none;text-align:left;text-decoration:none;font-weight:normal;font-style:normal;color:rgb(17, 17, 17);"><div style="list-style-type:none;text-align:left;text-decoration:none;font-weight:normal;font-style:normal;color:rgb(17, 17, 17);"><div style="list-style-type:none;text-align:left;text-decoration:none;font-weight:normal;font-style:normal;color:rgb(17, 17, 17);"><div style="list-style-type:none;text-align:left;text-decoration:none;font-weight:normal;font-style:normal;color:rgb(17, 17, 17);"><div style="list-style-type:none;text-align:left;text-decoration:none;font-weight:normal;font-style:normal;color:rgb(17, 17, 17);"><div style="list-style-type:none;text-align:left;text-decoration:none;font-weight:normal;font-style:normal;color:rgb(17, 17, 17);"><div>
+                                    <h1 style="list-style-type:none;text-align:left;text-decoration:none;font-style:normal;border:none;font-size:2.88em;letter-spacing:-0.03em;border-bottom:1px solid rgb(211, 211, 211);margin:0.4em 0px 0.2em;padding:0px 0px 0.2em;font-weight:500;color:rgb(0, 0, 0);line-height:250%;font-family:&quot;Trebuchet MS&quot;, Arial, &quot;Lucida Grande&quot;, Verdana, Lucida, Helvetica, sans-serif;">关于URL编码</h1>
+                                            <div style="margin:0px;padding:0px;list-style-type:none;text-align:left;text-decoration:none;font-weight:normal;font-style:normal;border:none;color:rgb(17, 17, 17);float:right;padding-right:2em;padding-top:1em;">
+<a href="http://www.bshare.cn/share" style="margin:0px;padding:0px;list-style-type:none;text-align:left;text-decoration:none;font-weight:normal;font-style:normal;background:none;font:12px / 14px Helvetica, Calibri, Tahoma, Arial, 宋体, sans-serif;border:none;overflow:hidden;padding-left:0px;color:rgb(85, 102, 119);height:21px;line-height:18px;font-size:12px;display:block;width:51px;"><div style="list-style-type:none;margin:0px;padding:0px;text-align:center;font-style:normal;zoom:1;display:inline-block;line-height:1.2;text-decoration:none;font-weight:bold;border:none;color:#333;background:transparent url(http://static.bshare.cn/frame/images/button_custom10-zh-Orange.gif) no-repeat;cursor:pointer;height:21px;width:51px;"></div><div style="list-style-type:none;text-align:left;font-weight:normal;font-style:normal;color:rgb(17, 17, 17);zoom:1;display:inline-block;background:none;line-height:1.2;margin:0px;padding:0px;text-decoration:none;border:none;clear:both;"></div></a>
+
+
+
+
+
+</div>
+
+<div style="padding:0px;list-style-type:none;text-align:left;text-decoration:none;font-weight:normal;font-style:normal;border:none;color:rgb(17, 17, 17);line-height:0.8;margin:1.5em auto 2em;">
+                                        
+
+                                            <p style="margin:0px;padding:0px;list-style-type:none;text-align:left;text-decoration:none;font-weight:normal;font-style:normal;border:none;font-size:1.6em;margin-top:1em;margin-left:0.8em;line-height:180%;color:rgb(85, 102, 119);">作者： <a href="http://www.ruanyifeng.com/" style="margin:0px;padding:0px;list-style-type:none;text-align:left;text-decoration:none;font-weight:normal;font-style:normal;border:none;color:rgb(85, 102, 119);">阮一峰</a></p>
+                                    <p style="margin:0px;padding:0px;list-style-type:none;text-align:left;text-decoration:none;font-weight:normal;font-style:normal;border:none;font-size:1.6em;margin-top:1em;margin-left:0.8em;line-height:180%;color:rgb(85, 102, 119);">日期： <a href="http://www.ruanyifeng.com/blog/2010/02/" style="margin:0px;padding:0px;list-style-type:none;text-align:left;text-decoration:none;font-weight:normal;font-style:normal;border:none;color:rgb(85, 102, 119);"><abbr title="2010-02-11T18:06:52+08:00" style="margin:0px;padding:0px;list-style-type:none;text-align:left;text-decoration:none;font-weight:normal;font-style:normal;border:none;color:rgb(85, 102, 119);">2010年2月11日</abbr></a></p>
+
+
+</div>
+
+
+
+
+
+
+
+
+                                
+                                <div style="margin:0px;padding:0px;list-style-type:none;text-align:left;text-decoration:none;font-weight:normal;font-style:normal;border:none;color:rgb(17, 17, 17);">
+
+                                    
+                                        <p style="margin:0px;padding:0px;list-style-type:none;text-align:left;text-decoration:none;font-weight:normal;font-style:normal;border:none;color:rgb(17, 17, 17);font-size:1.6em;margin-top:1em;margin-left:0.8em;line-height:180%;"><strong style="font-weight:800;">一、问题的由来</strong></p>
+
+<p style="margin:0px;padding:0px;list-style-type:none;text-align:left;text-decoration:none;font-weight:normal;font-style:normal;border:none;color:rgb(17, 17, 17);font-size:1.6em;margin-top:1em;margin-left:0.8em;line-height:180%;">URL就是网址，只要上网，就一定会用到。</p>
+                                    
+
+
+                                    
+                                        <p style="margin:0px;padding:0px;list-style-type:none;text-align:left;text-decoration:none;font-weight:normal;font-style:normal;border:none;color:rgb(17, 17, 17);font-size:1.6em;margin-top:1em;margin-left:0.8em;line-height:180%;"><div class="media-placeholder">[图片/附件]</div></en-media></p>
+
+<p style="margin:0px;padding:0px;list-style-type:none;text-align:left;text-decoration:none;font-weight:normal;font-style:normal;border:none;color:rgb(17, 17, 17);font-size:1.6em;margin-top:1em;margin-left:0.8em;line-height:180%;">一般来说，URL只能使用英文字母、阿拉伯数字和某些标点符号，不能使用其他文字和符号。比如，世界上有英文字母的网址"http://www.abc.com"，但是没有希腊字母的网址"http://www.aβγ.com"（读作阿尔法-贝塔-伽玛.com）。这是因为网络标准<a href="http://www.ietf.org/rfc/rfc1738.txt" target="_blank" style="margin:0px;padding:0px;list-style-type:none;text-align:left;font-weight:normal;font-style:normal;border:none;text-decoration:underline;color:rgb(34, 52, 114);">RFC 1738</a>做了硬性规定：</p>
+
+<blockquote style="list-style-type:none;text-align:left;text-decoration:none;font-weight:normal;font-style:normal;border:none;color:rgb(17, 17, 17);background-color:rgb(245, 242, 240);border-radius:1em;font-family:Consolas, Monaco, &quot;Andale Mono&quot;, monospace;border-width:0.3em;border-color:rgb(224, 223, 204);border-style:solid;text-shadow:white 0px 1px;overflow:auto;margin:2em;padding:1em;"><div style="margin:0px;padding:0px;list-style-type:none;text-align:left;text-decoration:none;font-weight:normal;font-style:normal;border:none;color:rgb(17, 17, 17);">
+
+<p style="margin:0px;padding:0px;list-style-type:none;text-align:left;text-decoration:none;font-weight:normal;font-style:normal;border:none;color:rgb(17, 17, 17);font-size:1.6em;margin-top:1em;margin-left:0.8em;line-height:180%;">"...Only alphanumerics [0-9a-zA-Z], the special characters "$-_.+!*'()," [not including the quotes - ed], and reserved characters used for their reserved purposes may be used unencoded within a URL."</p>
+
+<p style="margin:0px;padding:0px;list-style-type:none;text-align:left;text-decoration:none;font-weight:normal;font-style:normal;border:none;color:rgb(17, 17, 17);font-size:1.6em;margin-top:1em;margin-left:0.8em;line-height:180%;">"只有字母和数字[0-9a-zA-Z]、一些特殊符号"$-_.+!*'(),"[不包括双引号]、以及某些保留字，才可以不经过编码直接用于URL。"</p>
+
+</div></blockquote>
+
+<p style="margin:0px;padding:0px;list-style-type:none;text-align:left;text-decoration:none;font-weight:normal;font-style:normal;border:none;color:rgb(17, 17, 17);font-size:1.6em;margin-top:1em;margin-left:0.8em;line-height:180%;">这意味着，如果URL中有汉字，就必须编码后使用。但是麻烦的是，RFC 1738没有规定具体的编码方法，而是交给应用程序（浏览器）自己决定。这导致"URL编码"成为了一个混乱的领域。</p>
+
+<p style="margin:0px;padding:0px;list-style-type:none;text-align:left;text-decoration:none;font-weight:normal;font-style:normal;border:none;color:rgb(17, 17, 17);font-size:1.6em;margin-top:1em;margin-left:0.8em;line-height:180%;">下面就让我们看看，"URL编码"到底有多混乱。我会依次分析四种不同的情况，在每一种情况中，浏览器的URL编码方法都不一样。把它们的差异解释清楚之后，我再说如何用Javascript找到一个统一的编码方法。</p>
+
+<p style="margin:0px;padding:0px;list-style-type:none;text-align:left;text-decoration:none;font-weight:normal;font-style:normal;border:none;color:rgb(17, 17, 17);font-size:1.6em;margin-top:1em;margin-left:0.8em;line-height:180%;"><strong style="font-weight:800;">二、情况1：网址路径中包含汉字</strong></p>
+
+<p style="margin:0px;padding:0px;list-style-type:none;text-align:left;text-decoration:none;font-weight:normal;font-style:normal;border:none;color:rgb(17, 17, 17);font-size:1.6em;margin-top:1em;margin-left:0.8em;line-height:180%;">打开IE（我用的是8.0版），输入网址"<strong style="font-weight:800;">http://zh.wikipedia.org/wiki/春节</strong>"。注意，"春节"这两个字此时是网址路径的一部分。</p>
+
+<p style="margin:0px;padding:0px;list-style-type:none;text-align:left;text-decoration:none;font-weight:normal;font-style:normal;border:none;color:rgb(17, 17, 17);font-size:1.6em;margin-top:1em;margin-left:0.8em;line-height:180%;"><div class="media-placeholder">[图片/附件]</div></en-media></p>
+
+<p style="margin:0px;padding:0px;list-style-type:none;text-align:left;text-decoration:none;font-weight:normal;font-style:normal;border:none;color:rgb(17, 17, 17);font-size:1.6em;margin-top:1em;margin-left:0.8em;line-height:180%;">查看HTTP请求的头信息，会发现IE实际查询的网址是"<strong style="font-weight:800;">http://zh.wikipedia.org/wiki/%E6%98%A5%E8%8A%82</strong>"。也就是说，IE自动将"春节"编码成了"%E6%98%A5%E8%8A%82"。</p>
+
+<p style="margin:0px;padding:0px;list-style-type:none;text-align:left;text-decoration:none;font-weight:normal;font-style:normal;border:none;color:rgb(17, 17, 17);font-size:1.6em;margin-top:1em;margin-left:0.8em;line-height:180%;"><div class="media-placeholder">[图片/附件]</div></en-media></p>
+
+<p style="margin:0px;padding:0px;list-style-type:none;text-align:left;text-decoration:none;font-weight:normal;font-style:normal;border:none;color:rgb(17, 17, 17);font-size:1.6em;margin-top:1em;margin-left:0.8em;line-height:180%;">我们知道，"春"和"节"的utf-8编码分别是"E6 98 A5"和"E8 8A 82"，因此，"%E6%98%A5%E8%8A%82"就是按照顺序，在每个字节前加上%而得到的。（具体的转码方法，请参考我写的<a href="http://www.ruanyifeng.com/blog/2007/10/ascii_unicode_and_utf-8.html" target="_blank" style="margin:0px;padding:0px;list-style-type:none;text-align:left;font-weight:normal;font-style:normal;border:none;text-decoration:underline;color:rgb(34, 52, 114);">《字符编码笔记》</a>。）</p>
+
+<p style="margin:0px;padding:0px;list-style-type:none;text-align:left;text-decoration:none;font-weight:normal;font-style:normal;border:none;color:rgb(17, 17, 17);font-size:1.6em;margin-top:1em;margin-left:0.8em;line-height:180%;">在Firefox中测试，也得到了同样的结果。所以，<strong style="font-weight:800;">结论1就是，网址路径的编码，用的是utf-8编码。</strong></p>
+
+<p style="margin:0px;padding:0px;list-style-type:none;text-align:left;text-decoration:none;font-weight:normal;font-style:normal;border:none;color:rgb(17, 17, 17);font-size:1.6em;margin-top:1em;margin-left:0.8em;line-height:180%;"><strong style="font-weight:800;">三、情况2：查询字符串包含汉字</strong></p>
+
+<p style="margin:0px;padding:0px;list-style-type:none;text-align:left;text-decoration:none;font-weight:normal;font-style:normal;border:none;color:rgb(17, 17, 17);font-size:1.6em;margin-top:1em;margin-left:0.8em;line-height:180%;">在IE中输入网址"<strong style="font-weight:800;">http://www.baidu.com/s?wd=春节</strong>"。注意，"春节"这两个字此时属于查询字符串，不属于网址路径，不要与情况1混淆。</p>
+
+<p style="margin:0px;padding:0px;list-style-type:none;text-align:left;text-decoration:none;font-weight:normal;font-style:normal;border:none;color:rgb(17, 17, 17);font-size:1.6em;margin-top:1em;margin-left:0.8em;line-height:180%;"><div class="media-placeholder">[图片/附件]</div></en-media></p>
+
+<p style="margin:0px;padding:0px;list-style-type:none;text-align:left;text-decoration:none;font-weight:normal;font-style:normal;border:none;color:rgb(17, 17, 17);font-size:1.6em;margin-top:1em;margin-left:0.8em;line-height:180%;">查看HTTP请求的头信息，会发现IE将"春节"转化成了一个乱码。</p>
+
+<p style="margin:0px;padding:0px;list-style-type:none;text-align:left;text-decoration:none;font-weight:normal;font-style:normal;border:none;color:rgb(17, 17, 17);font-size:1.6em;margin-top:1em;margin-left:0.8em;line-height:180%;"><div class="media-placeholder">[图片/附件]</div></en-media></p>
+
+<p style="margin:0px;padding:0px;list-style-type:none;text-align:left;text-decoration:none;font-weight:normal;font-style:normal;border:none;color:rgb(17, 17, 17);font-size:1.6em;margin-top:1em;margin-left:0.8em;line-height:180%;">切换到十六进制方式，才能清楚地看到，"春节"被转成了"B4 BA BD DA"。</p>
+
+<p style="margin:0px;padding:0px;list-style-type:none;text-align:left;text-decoration:none;font-weight:normal;font-style:normal;border:none;color:rgb(17, 17, 17);font-size:1.6em;margin-top:1em;margin-left:0.8em;line-height:180%;"><div class="media-placeholder">[图片/附件]</div></en-media></p>
+
+<p style="margin:0px;padding:0px;list-style-type:none;text-align:left;text-decoration:none;font-weight:normal;font-style:normal;border:none;color:rgb(17, 17, 17);font-size:1.6em;margin-top:1em;margin-left:0.8em;line-height:180%;">我们知道，"春"和"节"的GB2312编码（我的操作系统"Windows XP"中文版的默认编码）分别是"B4 BA"和"BD DA"。因此，IE实际上就是将查询字符串，以GB2312编码的格式发送出去。</p>
+
+<p style="margin:0px;padding:0px;list-style-type:none;text-align:left;text-decoration:none;font-weight:normal;font-style:normal;border:none;color:rgb(17, 17, 17);font-size:1.6em;margin-top:1em;margin-left:0.8em;line-height:180%;">Firefox的处理方法，略有不同。它发送的HTTP Head是"wd=%B4%BA%BD%DA"。也就是说，同样采用GB2312编码，但是在每个字节前加上了%。</p>
+
+<p style="margin:0px;padding:0px;list-style-type:none;text-align:left;text-decoration:none;font-weight:normal;font-style:normal;border:none;color:rgb(17, 17, 17);font-size:1.6em;margin-top:1em;margin-left:0.8em;line-height:180%;"><div class="media-placeholder">[图片/附件]</div></en-media></p>
+
+<p style="margin:0px;padding:0px;list-style-type:none;text-align:left;text-decoration:none;font-weight:normal;font-style:normal;border:none;color:rgb(17, 17, 17);font-size:1.6em;margin-top:1em;margin-left:0.8em;line-height:180%;">所以，<strong style="font-weight:800;">结论2就是，查询字符串的编码，用的是操作系统的默认编码。</strong></p>
+
+<p style="margin:0px;padding:0px;list-style-type:none;text-align:left;text-decoration:none;font-weight:normal;font-style:normal;border:none;color:rgb(17, 17, 17);font-size:1.6em;margin-top:1em;margin-left:0.8em;line-height:180%;"><strong style="font-weight:800;">四、情况3：Get方法生成的URL包含汉字</strong></p>
+
+<p style="margin:0px;padding:0px;list-style-type:none;text-align:left;text-decoration:none;font-weight:normal;font-style:normal;border:none;color:rgb(17, 17, 17);font-size:1.6em;margin-top:1em;margin-left:0.8em;line-height:180%;">前面说的是直接输入网址的情况，但是更常见的情况是，在已打开的网页上，直接用Get或Post方法发出HTTP请求。</p>
+
+<p style="margin:0px;padding:0px;list-style-type:none;text-align:left;text-decoration:none;font-weight:normal;font-style:normal;border:none;color:rgb(17, 17, 17);font-size:1.6em;margin-top:1em;margin-left:0.8em;line-height:180%;">根据台湾中兴大学<a href="http://web.nchu.edu.tw/~jlu/classes/xml/ajax/urlencoding.shtml" target="_blank" style="margin:0px;padding:0px;list-style-type:none;text-align:left;font-weight:normal;font-style:normal;border:none;text-decoration:underline;color:rgb(34, 52, 114);">吕瑞麟老师的试验</a>，这时的编码方法由网页的编码决定，也就是由HTML源码中字符集的设定决定。</p>
+
+<p style="margin:0px;padding:0px;list-style-type:none;text-align:left;text-decoration:none;font-weight:normal;font-style:normal;border:none;color:rgb(17, 17, 17);font-size:1.6em;margin-top:1em;margin-left:0.8em;line-height:180%;">　　&lt;meta http-equiv="Content-Type" content="text/html;charset=xxxx"&gt;</p>
+
+<p style="margin:0px;padding:0px;list-style-type:none;text-align:left;text-decoration:none;font-weight:normal;font-style:normal;border:none;color:rgb(17, 17, 17);font-size:1.6em;margin-top:1em;margin-left:0.8em;line-height:180%;">如果上面这一行最后的charset是UTF-8，则URL就以UTF-8编码；如果是GB2312，URL就以GB2312编码。</p>
+
+<p style="margin:0px;padding:0px;list-style-type:none;text-align:left;text-decoration:none;font-weight:normal;font-style:normal;border:none;color:rgb(17, 17, 17);font-size:1.6em;margin-top:1em;margin-left:0.8em;line-height:180%;">举例来说，百度是GB2312编码，Google是UTF-8编码。因此，从它们的搜索框中搜索同一个词"春节"，生成的查询字符串是不一样的。</p>
+
+<p style="margin:0px;padding:0px;list-style-type:none;text-align:left;text-decoration:none;font-weight:normal;font-style:normal;border:none;color:rgb(17, 17, 17);font-size:1.6em;margin-top:1em;margin-left:0.8em;line-height:180%;">百度生成的是%B4%BA%BD%DA，这是GB2312编码。</p>
+
+<p style="margin:0px;padding:0px;list-style-type:none;text-align:left;text-decoration:none;font-weight:normal;font-style:normal;border:none;color:rgb(17, 17, 17);font-size:1.6em;margin-top:1em;margin-left:0.8em;line-height:180%;"><div class="media-placeholder">[图片/附件]</div></en-media></p>
+
+<p style="margin:0px;padding:0px;list-style-type:none;text-align:left;text-decoration:none;font-weight:normal;font-style:normal;border:none;color:rgb(17, 17, 17);font-size:1.6em;margin-top:1em;margin-left:0.8em;line-height:180%;">Google生成的是%E6%98%A5%E8%8A%82，这是UTF-8编码。</p>
+
+<p style="margin:0px;padding:0px;list-style-type:none;text-align:left;text-decoration:none;font-weight:normal;font-style:normal;border:none;color:rgb(17, 17, 17);font-size:1.6em;margin-top:1em;margin-left:0.8em;line-height:180%;"><div class="media-placeholder">[图片/附件]</div></en-media></p>
+
+<p style="margin:0px;padding:0px;list-style-type:none;text-align:left;text-decoration:none;font-weight:normal;font-style:normal;border:none;color:rgb(17, 17, 17);font-size:1.6em;margin-top:1em;margin-left:0.8em;line-height:180%;">所以，<strong style="font-weight:800;">结论3就是，GET和POST方法的编码，用的是网页的编码。</strong></p>
+
+<p style="margin:0px;padding:0px;list-style-type:none;text-align:left;text-decoration:none;font-weight:normal;font-style:normal;border:none;color:rgb(17, 17, 17);font-size:1.6em;margin-top:1em;margin-left:0.8em;line-height:180%;"><strong style="font-weight:800;">五、情况4：Ajax调用的URL包含汉字</strong></p>
+
+<p style="margin:0px;padding:0px;list-style-type:none;text-align:left;text-decoration:none;font-weight:normal;font-style:normal;border:none;color:rgb(17, 17, 17);font-size:1.6em;margin-top:1em;margin-left:0.8em;line-height:180%;">前面三种情况都是由浏览器发出HTTP请求，最后一种情况则是由Javascript生成HTTP请求，也就是Ajax调用。还是根据吕瑞麟老师的文章，在这种情况下，IE和Firefox的处理方式完全不一样。</p>
+
+<p style="margin:0px;padding:0px;list-style-type:none;text-align:left;text-decoration:none;font-weight:normal;font-style:normal;border:none;color:rgb(17, 17, 17);font-size:1.6em;margin-top:1em;margin-left:0.8em;line-height:180%;">举例来说，有这样两行代码：</p>
+
+<p style="margin:0px;padding:0px;list-style-type:none;text-align:left;text-decoration:none;font-weight:normal;font-style:normal;border:none;color:rgb(17, 17, 17);font-size:1.6em;margin-top:1em;margin-left:0.8em;line-height:180%;">　　url = url + "?q=" +document.myform.elements[0].value; // 假定用户在表单中提交的值是"春节"这两个字</p>
+
+<p style="margin:0px;padding:0px;list-style-type:none;text-align:left;text-decoration:none;font-weight:normal;font-style:normal;border:none;color:rgb(17, 17, 17);font-size:1.6em;margin-top:1em;margin-left:0.8em;line-height:180%;">　　http_request.open('GET', url, true);</p>
+
+<p style="margin:0px;padding:0px;list-style-type:none;text-align:left;text-decoration:none;font-weight:normal;font-style:normal;border:none;color:rgb(17, 17, 17);font-size:1.6em;margin-top:1em;margin-left:0.8em;line-height:180%;">那么，无论网页使用什么字符集，IE传送给服务器的总是"q=%B4%BA%BD%DA"，而Firefox传送给服务器的总是"q=%E6%98%A5%E8%8A%82"。也就是说，<strong style="font-weight:800;">在Ajax调用中，IE总是采用GB2312编码（操作系统的默认编码），而Firefox总是采用utf-8编码。这就是我们的结论4。</strong></p>
+
+<p style="margin:0px;padding:0px;list-style-type:none;text-align:left;text-decoration:none;font-weight:normal;font-style:normal;border:none;color:rgb(17, 17, 17);font-size:1.6em;margin-top:1em;margin-left:0.8em;line-height:180%;"><strong style="font-weight:800;">六、Javascript函数：escape()</strong></p>
+
+<p style="margin:0px;padding:0px;list-style-type:none;text-align:left;text-decoration:none;font-weight:normal;font-style:normal;border:none;color:rgb(17, 17, 17);font-size:1.6em;margin-top:1em;margin-left:0.8em;line-height:180%;">好了，到此为止，四种情况都说完了。</p>
+
+<p style="margin:0px;padding:0px;list-style-type:none;text-align:left;text-decoration:none;font-weight:normal;font-style:normal;border:none;color:rgb(17, 17, 17);font-size:1.6em;margin-top:1em;margin-left:0.8em;line-height:180%;">假定前面你都看懂了，那么此时你应该会感到很头痛。因为，实在太混乱了。不同的操作系统、不同的浏览器、不同的网页字符集，将导致完全不同的编码结果。如果程序员要把每一种结果都考虑进去，是不是太恐怖了？有没有办法，能够保证客户端只用一种编码方法向服务器发出请求？</p>
+
+<p style="margin:0px;padding:0px;list-style-type:none;text-align:left;text-decoration:none;font-weight:normal;font-style:normal;border:none;color:rgb(17, 17, 17);font-size:1.6em;margin-top:1em;margin-left:0.8em;line-height:180%;">回答是有的，就是使用Javascript先对URL编码，然后再向服务器提交，不要给浏览器插手的机会。因为Javascript的输出总是一致的，所以就保证了服务器得到的数据是格式统一的。</p>
+
+<p style="margin:0px;padding:0px;list-style-type:none;text-align:left;text-decoration:none;font-weight:normal;font-style:normal;border:none;color:rgb(17, 17, 17);font-size:1.6em;margin-top:1em;margin-left:0.8em;line-height:180%;">Javascript语言用于编码的函数，一共有三个，最古老的一个就是escape()。虽然这个函数现在已经不提倡使用了，但是由于历史原因，很多地方还在使用它，所以有必要先从它讲起。</p>
+
+<p style="margin:0px;padding:0px;list-style-type:none;text-align:left;text-decoration:none;font-weight:normal;font-style:normal;border:none;color:rgb(17, 17, 17);font-size:1.6em;margin-top:1em;margin-left:0.8em;line-height:180%;">实际上，escape()不能直接用于URL编码，它的真正作用是返回一个字符的Unicode编码值。比如"春节"的返回结果是%u6625%u8282，也就是说在Unicode字符集中，"春"是第6625个（十六进制）字符，"节"是第8282个（十六进制）字符。</p>
+
+<p style="margin:0px;padding:0px;list-style-type:none;text-align:left;text-decoration:none;font-weight:normal;font-style:normal;border:none;color:rgb(17, 17, 17);font-size:1.6em;margin-top:1em;margin-left:0.8em;line-height:180%;"><div class="media-placeholder">[图片/附件]</div></en-media></p>
+
+<p style="margin:0px;padding:0px;list-style-type:none;text-align:left;text-decoration:none;font-weight:normal;font-style:normal;border:none;color:rgb(17, 17, 17);font-size:1.6em;margin-top:1em;margin-left:0.8em;line-height:180%;">它的具体规则是，除了ASCII字母、数字、标点符号"@ * _ + - . /"以外，对其他所有字符进行编码。在\u0000到\u00ff之间的符号被转成%xx的形式，其余符号被转成%uxxxx的形式。对应的解码函数是unescape()。</p>
+
+<p style="margin:0px;padding:0px;list-style-type:none;text-align:left;text-decoration:none;font-weight:normal;font-style:normal;border:none;color:rgb(17, 17, 17);font-size:1.6em;margin-top:1em;margin-left:0.8em;line-height:180%;">所以，"Hello World"的escape()编码就是"Hello%20World"。因为空格的Unicode值是20（十六进制）。</p>
+
+<p style="margin:0px;padding:0px;list-style-type:none;text-align:left;text-decoration:none;font-weight:normal;font-style:normal;border:none;color:rgb(17, 17, 17);font-size:1.6em;margin-top:1em;margin-left:0.8em;line-height:180%;"><div class="media-placeholder">[图片/附件]</div></en-media></p>
+
+<p style="margin:0px;padding:0px;list-style-type:none;text-align:left;text-decoration:none;font-weight:normal;font-style:normal;border:none;color:rgb(17, 17, 17);font-size:1.6em;margin-top:1em;margin-left:0.8em;line-height:180%;">还有两个地方需要注意。</p>
+
+<p style="margin:0px;padding:0px;list-style-type:none;text-align:left;text-decoration:none;font-weight:normal;font-style:normal;border:none;color:rgb(17, 17, 17);font-size:1.6em;margin-top:1em;margin-left:0.8em;line-height:180%;">首先，无论网页的原始编码是什么，一旦被Javascript编码，就都变为unicode字符。也就是说，Javascipt函数的输入和输出，默认都是Unicode字符。这一点对下面两个函数也适用。</p>
+
+<p style="margin:0px;padding:0px;list-style-type:none;text-align:left;text-decoration:none;font-weight:normal;font-style:normal;border:none;color:rgb(17, 17, 17);font-size:1.6em;margin-top:1em;margin-left:0.8em;line-height:180%;"><div class="media-placeholder">[图片/附件]</div></en-media></p>
+
+<p style="margin:0px;padding:0px;list-style-type:none;text-align:left;text-decoration:none;font-weight:normal;font-style:normal;border:none;color:rgb(17, 17, 17);font-size:1.6em;margin-top:1em;margin-left:0.8em;line-height:180%;">其次，escape()不对"+"编码。但是我们知道，网页在提交表单的时候，如果有空格，则会被转化为+字符。服务器处理数据的时候，会把+号处理成空格。所以，使用的时候要小心。</p>
+
+<p style="margin:0px;padding:0px;list-style-type:none;text-align:left;text-decoration:none;font-weight:normal;font-style:normal;border:none;color:rgb(17, 17, 17);font-size:1.6em;margin-top:1em;margin-left:0.8em;line-height:180%;"><strong style="font-weight:800;">七、Javascript函数：encodeURI()</strong></p>
+
+<p style="margin:0px;padding:0px;list-style-type:none;text-align:left;text-decoration:none;font-weight:normal;font-style:normal;border:none;color:rgb(17, 17, 17);font-size:1.6em;margin-top:1em;margin-left:0.8em;line-height:180%;">encodeURI()是Javascript中真正用来对URL编码的函数。</p>
+
+<p style="margin:0px;padding:0px;list-style-type:none;text-align:left;text-decoration:none;font-weight:normal;font-style:normal;border:none;color:rgb(17, 17, 17);font-size:1.6em;margin-top:1em;margin-left:0.8em;line-height:180%;">它着眼于对整个URL进行编码，因此除了常见的符号以外，对其他一些在网址中有特殊含义的符号"; / ? : @ &amp; = + $ , #"，也不进行编码。编码后，它输出符号的utf-8形式，并且在每个字节前加上%。</p>
+
+<p style="margin:0px;padding:0px;list-style-type:none;text-align:left;text-decoration:none;font-weight:normal;font-style:normal;border:none;color:rgb(17, 17, 17);font-size:1.6em;margin-top:1em;margin-left:0.8em;line-height:180%;"><div class="media-placeholder">[图片/附件]</div></en-media></p>
+
+<p style="margin:0px;padding:0px;list-style-type:none;text-align:left;text-decoration:none;font-weight:normal;font-style:normal;border:none;color:rgb(17, 17, 17);font-size:1.6em;margin-top:1em;margin-left:0.8em;line-height:180%;">它对应的解码函数是decodeURI()。 </p>
+
+<p style="margin:0px;padding:0px;list-style-type:none;text-align:left;text-decoration:none;font-weight:normal;font-style:normal;border:none;color:rgb(17, 17, 17);font-size:1.6em;margin-top:1em;margin-left:0.8em;line-height:180%;"><div class="media-placeholder">[图片/附件]</div></en-media></p>
+
+<p style="margin:0px;padding:0px;list-style-type:none;text-align:left;text-decoration:none;font-weight:normal;font-style:normal;border:none;color:rgb(17, 17, 17);font-size:1.6em;margin-top:1em;margin-left:0.8em;line-height:180%;">需要注意的是，它不对单引号'编码。</p>
+
+<p style="margin:0px;padding:0px;list-style-type:none;text-align:left;text-decoration:none;font-weight:normal;font-style:normal;border:none;color:rgb(17, 17, 17);font-size:1.6em;margin-top:1em;margin-left:0.8em;line-height:180%;"><strong style="font-weight:800;">八、Javascript函数：encodeURIComponent()</strong></p>
+
+<p style="margin:0px;padding:0px;list-style-type:none;text-align:left;text-decoration:none;font-weight:normal;font-style:normal;border:none;color:rgb(17, 17, 17);font-size:1.6em;margin-top:1em;margin-left:0.8em;line-height:180%;">最后一个Javascript编码函数是encodeURIComponent()。与encodeURI()的区别是，它用于对URL的组成部分进行个别编码，而不用于对整个URL进行编码。</p>
+
+<p style="margin:0px;padding:0px;list-style-type:none;text-align:left;text-decoration:none;font-weight:normal;font-style:normal;border:none;color:rgb(17, 17, 17);font-size:1.6em;margin-top:1em;margin-left:0.8em;line-height:180%;">因此，"; / ? : @ &amp; = + $ , #"，这些在encodeURI()中不被编码的符号，在encodeURIComponent()中统统会被编码。至于具体的编码方法，两者是一样。</p>
+
+<p style="margin:0px;padding:0px;list-style-type:none;text-align:left;text-decoration:none;font-weight:normal;font-style:normal;border:none;color:rgb(17, 17, 17);font-size:1.6em;margin-top:1em;margin-left:0.8em;line-height:180%;"><div class="media-placeholder">[图片/附件]</div></en-media></p>
+
+<p style="margin:0px;padding:0px;list-style-type:none;text-align:left;text-decoration:none;font-weight:normal;font-style:normal;border:none;color:rgb(17, 17, 17);font-size:1.6em;margin-top:1em;margin-left:0.8em;line-height:180%;">它对应的解码函数是decodeURIComponent()。</p>
+
+<p style="margin:0px;padding:0px;list-style-type:none;text-align:left;text-decoration:none;font-weight:normal;font-style:normal;border:none;color:rgb(17, 17, 17);font-size:1.6em;margin-top:1em;margin-left:0.8em;line-height:180%;">（完）</p>
+                                    
+
+                                </div>
+    
+                                <div style="list-style-type:none;text-align:left;text-decoration:none;font-style:normal;border-radius:1em;box-shadow:rgb(238, 238, 238) 0px 1px 0px 0px inset;background:-webkit-gradient(linear, 0% 0%, 0% 100%, color-stop(0.05, rgb(170, 210, 240)), to(rgb(139, 193, 237))) rgb(170, 210, 240);text-shadow:rgb(238, 238, 238) 1px 1px 0px;margin:0px 0px 1em;font-weight:bold;color:rgb(252, 178, 151);margin-top:2em;background-color:rgb(222, 235, 247);padding:1.5em;border:1px solid rgb(211, 211, 211);">
+
+<h3 style="list-style-type:none;text-align:left;text-decoration:none;font-style:normal;border:none;letter-spacing:-0.03em;margin:0.4em 0px 0.2em;padding:0px 0px 0.2em;font-weight:bold;color:rgb(85, 102, 119);font-size:1.92em;border-bottom:1px solid gray;">文档信息</h3>
+<ul style="margin:0px;padding:0px;list-style-type:none;text-align:left;text-decoration:none;font-weight:normal;font-style:normal;border:none;color:rgb(17, 17, 17);padding-left:2em;padding-right:2em;">
+<li style="margin:0px;padding:0px;text-align:left;text-decoration:none;font-weight:normal;font-style:normal;border:none;font-size:1.6em;line-height:220%;list-style-type:square;color:rgb(85, 102, 119);">版权声明：自由转载-非商用-非衍生-保持署名（<a href="http://creativecommons.org/licenses/by-nc-nd/3.0/deed.zh" style="margin:0px;padding:0px;list-style-type:none;text-align:left;text-decoration:none;font-weight:normal;font-style:normal;border:none;color:rgb(85, 102, 119);">创意共享3.0许可证</a>）</li>
+<li style="margin:0px;padding:0px;text-align:left;text-decoration:none;font-weight:normal;font-style:normal;border:none;font-size:1.6em;line-height:220%;list-style-type:square;color:rgb(85, 102, 119);">发表日期： <abbr title="2010-02-11T18:06:52+08:00" style="margin:0px;padding:0px;list-style-type:none;text-align:left;text-decoration:none;font-weight:normal;font-style:normal;border:none;color:rgb(61, 61, 61);">2010年2月11日</abbr></li>
+
+</ul>
+                                </div>
+</div></div></div></div></div></div></div></div></div></div></div>
+</div></div>
+<a class="back-link" href="../articles.html">← 返回笔记列表</a>
+</body></html>

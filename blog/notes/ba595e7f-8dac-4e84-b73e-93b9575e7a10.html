@@ -1,0 +1,378 @@
+<!DOCTYPE html>
+<html lang="zh-CN" data-theme="light">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>2021年，用更现代的方法使用PGP（下） - C的博客 |UlyC — 技术笔记</title>
+<style>
+:root { --bg:#fff; --text:#1a1a1a; --muted:#666; --border:#e0e0e0; --code-bg:#f5f5f5; --link:#0066cc; }
+@media (prefers-color-scheme: dark) { :root { --bg:#1a1a1a; --text:#e0e0e0; --muted:#999; --border:#333; --code-bg:#2a2a2a; --link:#66bbff; } }
+* { box-sizing:border-box; margin:0; padding:0; }
+body { font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Arial,sans-serif; line-height:1.7; color:var(--text); background:var(--bg); max-width:860px; margin:0 auto; padding:2rem 1.5rem; }
+.note-header { border-bottom:2px solid var(--border); padding-bottom:1rem; margin-bottom:2rem; }
+.note-title { font-size:1.6rem; font-weight:700; margin-bottom:0.3rem; }
+.note-meta { color:var(--muted); font-size:0.85rem; }
+.note-content { font-size:0.95rem; }
+.note-content h1 { font-size:1.4rem; margin:1.2rem 0 0.6rem; }
+.note-content h2 { font-size:1.2rem; margin:1rem 0 0.5rem; }
+.note-content h3 { font-size:1.05rem; margin:0.8rem 0 0.4rem; }
+.note-content p { margin:0.5rem 0; }
+.note-content ul,.note-content ol { margin:0.5rem 0 0.5rem 2rem; }
+.note-content li { margin:0.2rem 0; }
+.note-content pre { background:var(--code-bg); padding:1rem; border-radius:6px; overflow-x:auto; margin:0.8rem 0; font-size:0.85rem; }
+.note-content code { background:var(--code-bg); padding:0.1rem 0.3rem; border-radius:3px; font-size:0.88em; }
+.note-content pre code { background:none; padding:0; }
+.note-content blockquote { border-left:3px solid var(--border); padding-left:1rem; color:var(--muted); margin:0.8rem 0; }
+.note-content a { color:var(--link); }
+.note-content img { max-width:100%; height:auto; border-radius:6px; margin:0.5rem 0; }
+.note-content table { border-collapse:collapse; width:100%; margin:0.8rem 0; }
+.note-content th,.note-content td { border:1px solid var(--border); padding:0.5rem; }
+.note-content th { background:var(--code-bg); }
+.media-placeholder { background:var(--code-bg); padding:1rem; text-align:center; color:var(--muted); border-radius:6px; margin:0.5rem 0; font-size:0.85rem; }
+.encrypt-placeholder { background:#fff3cd; padding:0.5rem; text-align:center; color:#856404; border-radius:6px; margin:0.5rem 0; font-size:0.85rem; }
+.back-link { display:inline-block; margin-top:2rem; color:var(--link); text-decoration:none; font-size:0.85rem; }
+</style>
+</head>
+<body>
+<div class="note-header"><div class="note-title">2021年，用更现代的方法使用PGP（下） - C的博客 |UlyC</div><div class="note-meta">笔记本：关于加密、解密、签名</div></div>
+<div class="note-content"><div style="--en-clipped-content:article">
+<div><br/></div><div style="font-size: 16px; display:block; min-width: 100%; position: relative;"> <div style="font-family:sans-serif;text-size-adjust:100%;box-sizing:border-box;font-size:10px;-webkit-tap-highlight-color:rgba(0, 0, 0, 0);"><div style="box-sizing:border-box;background-color:rgb(255, 255, 255);overflow-x:hidden;text-rendering:auto;-webkit-font-smoothing:antialiased;font-family:-apple-system, BlinkMacSystemFont, &quot;Helvetica Neue&quot;, Arial, &quot;PingFang SC&quot;, &quot;Hiragino Sans GB&quot;, STHeiti, &quot;Microsoft YaHei&quot;, &quot;Microsoft JhengHei&quot;, &quot;Source Han Sans SC&quot;, &quot;Noto Sans CJK SC&quot;, &quot;Source Han Sans CN&quot;, &quot;Noto Sans SC&quot;, &quot;Source Han Sans TC&quot;, &quot;Noto Sans CJK TC&quot;, &quot;WenQuanYi Micro Hei&quot;, SimSun, sans-serif;font-size:16px;line-height:1.7;color:rgb(64, 64, 64);"><div style="box-sizing:border-box;overflow:hidden;"><div style="box-sizing:border-box;"><div style="box-sizing:border-box;"><div style="box-sizing:border-box;">
+
+                <blockquote style="box-sizing:border-box;padding:10px 20px;border-left:5px solid rgb(238, 238, 238);color:gray;font-style:italic;margin:20px 0px;font-size:0.95em;">
+  <p style="box-sizing:border-box;margin:0px;">世界上有两种密码:一种是防止你的小妹妹偷看你的文件;另一种是防止当局阅读你的文件.</p>
+
+  <p style="box-sizing:border-box;margin:0px;margin-bottom:0px;">​																												—— Bruce Schneier《应用密码学》</p>
+</blockquote>
+
+<h1 style="box-sizing:border-box;color:inherit;font-size:36px;font-family:-apple-system, BlinkMacSystemFont, &quot;Helvetica Neue&quot;, Arial, &quot;PingFang SC&quot;, &quot;Hiragino Sans GB&quot;, STHeiti, &quot;Microsoft YaHei&quot;, &quot;Microsoft JhengHei&quot;, &quot;Source Han Sans SC&quot;, &quot;Noto Sans CJK SC&quot;, &quot;Source Han Sans CN&quot;, &quot;Noto Sans SC&quot;, &quot;Source Han Sans TC&quot;, &quot;Noto Sans CJK TC&quot;, &quot;WenQuanYi Micro Hei&quot;, SimSun, sans-serif;font-weight:700;margin:50px 0px 20px;line-height:1.4;">2021年，用更现代的方法使用PGP（下）<a href="https://ulyc.github.io/2021/01/26/2021%E5%B9%B4-%E7%94%A8%E6%9B%B4%E7%8E%B0%E4%BB%A3%E7%9A%84%E6%96%B9%E6%B3%95%E4%BD%BF%E7%94%A8PGP-%E4%B8%8B/#2021%E5%B9%B4%E7%94%A8%E6%9B%B4%E7%8E%B0%E4%BB%A3%E7%9A%84%E6%96%B9%E6%B3%95%E4%BD%BF%E7%94%A8pgp%E4%B8%8B" style="opacity:1;background-color:transparent;box-sizing:border-box;-webkit-font-smoothing:antialiased;color:rgb(51, 122, 183);left:-0.75em;font-size:1.1em;margin-top:-0.1em;position:absolute;text-decoration:none;padding-left:0.375em;"><span style="color:rgb(51, 122, 183);font-size:1.1em;">#</span></a></h1>
+
+<h4 style="box-sizing:border-box;font-family:-apple-system, BlinkMacSystemFont, &quot;Helvetica Neue&quot;, Arial, &quot;PingFang SC&quot;, &quot;Hiragino Sans GB&quot;, STHeiti, &quot;Microsoft YaHei&quot;, &quot;Microsoft JhengHei&quot;, &quot;Source Han Sans SC&quot;, &quot;Noto Sans CJK SC&quot;, &quot;Source Han Sans CN&quot;, &quot;Noto Sans SC&quot;, &quot;Source Han Sans TC&quot;, &quot;Noto Sans CJK TC&quot;, &quot;WenQuanYi Micro Hei&quot;, SimSun, sans-serif;margin:50px 0px 20px;line-height:1.4;font-weight:600;color:gray;font-size:22px;">上篇链接:<a href="https://ulyc.github.io/2021/01/26/2021%E5%B9%B4-%E7%94%A8%E6%9B%B4%E7%8E%B0%E4%BB%A3%E7%9A%84%E6%96%B9%E6%B3%95%E4%BD%BF%E7%94%A8PGP-%E4%B8%8B/#%E4%B8%8A%E7%AF%87%E9%93%BE%E6%8E%A5" style="opacity:1;background-color:transparent;box-sizing:border-box;-webkit-font-smoothing:antialiased;color:rgb(51, 122, 183);left:-0.75em;font-size:1.1em;margin-top:-0.1em;position:absolute;text-decoration:none;padding-left:0.375em;"><span style="color:rgb(51, 122, 183);font-size:1.1em;">#</span></a></h4>
+
+<p style="box-sizing:border-box;margin:30px 0px;margin-top:10px;"><a href="https://ulyc.github.io/2021/01/13/2021%E5%B9%B4-%E7%94%A8%E6%9B%B4%E7%8E%B0%E4%BB%A3%E7%9A%84%E6%96%B9%E6%B3%95%E4%BD%BF%E7%94%A8PGP-%E4%B8%8A/" style="background-color:transparent;box-sizing:border-box;text-decoration:none;color:rgb(51, 122, 183);">2021年，用更现代的方法使用PGP（上）</a>
+<a href="https://ulyc.github.io/2021/01/18/2021%E5%B9%B4-%E7%94%A8%E6%9B%B4%E7%8E%B0%E4%BB%A3%E7%9A%84%E6%96%B9%E6%B3%95%E4%BD%BF%E7%94%A8PGP-%E4%B8%AD/" style="background-color:transparent;box-sizing:border-box;text-decoration:none;color:rgb(51, 122, 183);">2021年，用更现代的方法使用PGP（中）</a></p>
+
+<h1 style="box-sizing:border-box;color:inherit;font-size:36px;font-family:-apple-system, BlinkMacSystemFont, &quot;Helvetica Neue&quot;, Arial, &quot;PingFang SC&quot;, &quot;Hiragino Sans GB&quot;, STHeiti, &quot;Microsoft YaHei&quot;, &quot;Microsoft JhengHei&quot;, &quot;Source Han Sans SC&quot;, &quot;Noto Sans CJK SC&quot;, &quot;Source Han Sans CN&quot;, &quot;Noto Sans SC&quot;, &quot;Source Han Sans TC&quot;, &quot;Noto Sans CJK TC&quot;, &quot;WenQuanYi Micro Hei&quot;, SimSun, sans-serif;font-weight:700;margin:50px 0px 20px;line-height:1.4;">PGP 公钥的 发布 与 交换<a href="https://ulyc.github.io/2021/01/26/2021%E5%B9%B4-%E7%94%A8%E6%9B%B4%E7%8E%B0%E4%BB%A3%E7%9A%84%E6%96%B9%E6%B3%95%E4%BD%BF%E7%94%A8PGP-%E4%B8%8B/#pgp-%E5%85%AC%E9%92%A5%E7%9A%84-%E5%8F%91%E5%B8%83-%E4%B8%8E-%E4%BA%A4%E6%8D%A2" style="opacity:1;background-color:transparent;box-sizing:border-box;-webkit-font-smoothing:antialiased;color:rgb(51, 122, 183);left:-0.75em;font-size:1.1em;margin-top:-0.1em;position:absolute;text-decoration:none;padding-left:0.375em;"><span style="color:rgb(51, 122, 183);font-size:1.1em;">#</span></a></h1>
+
+<p style="box-sizing:border-box;margin:30px 0px;margin-top:20px;">讨论公钥安全交换的中文文章比较少，而这一环是整个加密体系的重中之重。 大部分的PGP教程最后一步就是让小白用户将公钥上传，这是非常过时，且不负责任的，所以这里来详细介绍下PGP 公钥的 发布 与 交换。</p>
+
+<h2 style="box-sizing:border-box;color:inherit;font-size:30px;font-family:-apple-system, BlinkMacSystemFont, &quot;Helvetica Neue&quot;, Arial, &quot;PingFang SC&quot;, &quot;Hiragino Sans GB&quot;, STHeiti, &quot;Microsoft YaHei&quot;, &quot;Microsoft JhengHei&quot;, &quot;Source Han Sans SC&quot;, &quot;Noto Sans CJK SC&quot;, &quot;Source Han Sans CN&quot;, &quot;Noto Sans SC&quot;, &quot;Source Han Sans TC&quot;, &quot;Noto Sans CJK TC&quot;, &quot;WenQuanYi Micro Hei&quot;, SimSun, sans-serif;font-weight:700;margin:50px 0px 20px;line-height:1.4;"><span style="font-family:-apple-system, BlinkMacSystemFont, Helvetica Neue, Arial, PingFang SC, Hiragino Sans GB, STHeiti, Microsoft YaHei, Microsoft JhengHei, Source Han Sans SC, Noto Sans CJK SC, Source Han Sans CN, Noto Sans SC, Source Han Sans TC, Noto Sans CJK TC, WenQuanYi Micro Hei, SimSun, sans-serif;font-weight:700;line-height:1.4;color:inherit;font-size:30px;display:block;border-bottom:1px solid rgb(236, 236, 236);margin-top:44px;margin-bottom:30px;"> </span>原则<a href="https://ulyc.github.io/2021/01/26/2021%E5%B9%B4-%E7%94%A8%E6%9B%B4%E7%8E%B0%E4%BB%A3%E7%9A%84%E6%96%B9%E6%B3%95%E4%BD%BF%E7%94%A8PGP-%E4%B8%8B/#%E5%8E%9F%E5%88%99" style="opacity:1;background-color:transparent;box-sizing:border-box;-webkit-font-smoothing:antialiased;color:rgb(51, 122, 183);left:-0.75em;font-size:1.1em;margin-top:-0.1em;position:absolute;text-decoration:none;padding-left:0.375em;"><span style="color:rgb(51, 122, 183);font-size:1.1em;">#</span></a></h2>
+
+<p style="box-sizing:border-box;margin:30px 0px;margin-top:20px;">首先明确一点： 上传公钥到 公钥服务器 <strong style="font-weight:700;box-sizing:border-box;">不是</strong>必要的，甚至是<strong style="font-weight:700;box-sizing:border-box;">危险</strong>的。</p>
+
+<p style="box-sizing:border-box;margin:30px 0px;">如果你是新手，请不要发布你的公钥到 公钥服务器。</p>
+
+<h2 style="box-sizing:border-box;color:inherit;font-size:30px;font-family:-apple-system, BlinkMacSystemFont, &quot;Helvetica Neue&quot;, Arial, &quot;PingFang SC&quot;, &quot;Hiragino Sans GB&quot;, STHeiti, &quot;Microsoft YaHei&quot;, &quot;Microsoft JhengHei&quot;, &quot;Source Han Sans SC&quot;, &quot;Noto Sans CJK SC&quot;, &quot;Source Han Sans CN&quot;, &quot;Noto Sans SC&quot;, &quot;Source Han Sans TC&quot;, &quot;Noto Sans CJK TC&quot;, &quot;WenQuanYi Micro Hei&quot;, SimSun, sans-serif;font-weight:700;margin:50px 0px 20px;line-height:1.4;"><span style="font-family:-apple-system, BlinkMacSystemFont, Helvetica Neue, Arial, PingFang SC, Hiragino Sans GB, STHeiti, Microsoft YaHei, Microsoft JhengHei, Source Han Sans SC, Noto Sans CJK SC, Source Han Sans CN, Noto Sans SC, Source Han Sans TC, Noto Sans CJK TC, WenQuanYi Micro Hei, SimSun, sans-serif;font-weight:700;line-height:1.4;color:inherit;font-size:30px;display:block;border-bottom:1px solid rgb(236, 236, 236);margin-top:44px;margin-bottom:30px;"> </span>引子<a href="https://ulyc.github.io/2021/01/26/2021%E5%B9%B4-%E7%94%A8%E6%9B%B4%E7%8E%B0%E4%BB%A3%E7%9A%84%E6%96%B9%E6%B3%95%E4%BD%BF%E7%94%A8PGP-%E4%B8%8B/#%E5%BC%95%E5%AD%90" style="opacity:1;background-color:transparent;box-sizing:border-box;-webkit-font-smoothing:antialiased;color:rgb(51, 122, 183);left:-0.75em;font-size:1.1em;margin-top:-0.1em;position:absolute;text-decoration:none;padding-left:0.375em;"><span style="color:rgb(51, 122, 183);font-size:1.1em;">#</span></a></h2>
+
+<p style="box-sizing:border-box;margin:30px 0px;margin-top:20px;">通过前文，你已经熟悉了gpg的本地使用， 并且生成了自己的PGP 密钥对。</p>
+
+<p style="box-sizing:border-box;margin:30px 0px;">想象一下， 如果你生活在1980年代， 想和远方的朋友加密通信，需要先交换彼此的公钥，又没有一个统一的可信的认证机构，这时会有什么问题？</p>
+
+<p style="box-sizing:border-box;margin:30px 0px;">当面交换吗？当然是个办法，但是相信你不会想要将下列</p>
+
+<p style="box-sizing:border-box;margin:30px 0px;"><div class="media-placeholder">[图片/附件]</div></en-media></p>
+
+<p style="box-sizing:border-box;margin:30px 0px;">这么长的公钥抄写到纸上，然后开车送到朋友那里，再让朋友照着这个输入他的电脑。如果中间有变动，需要重复以上过程n次。</p>
+
+<p style="box-sizing:border-box;margin:30px 0px;">那么还有其他办法吗？</p>
+
+<p style="box-sizing:border-box;margin:30px 0px;">那个时代还没有line、wechat这类即时通讯软件，而邮件提供商默认是不可靠的，不然也不会有PGP的诞生。 并且彼时https还未出现，用邮件交换PGP交换公钥显然不太安全。</p>
+
+<p style="box-sizing:border-box;margin:30px 0px;">你们双方都需要便捷地交换公玥， 并且确认彼此得到的公钥确实是未经篡改过的，真实有效的，就成了一个难题，这样，公钥服务器也就呼之欲出了。</p>
+
+<h2 style="box-sizing:border-box;color:inherit;font-size:30px;font-family:-apple-system, BlinkMacSystemFont, &quot;Helvetica Neue&quot;, Arial, &quot;PingFang SC&quot;, &quot;Hiragino Sans GB&quot;, STHeiti, &quot;Microsoft YaHei&quot;, &quot;Microsoft JhengHei&quot;, &quot;Source Han Sans SC&quot;, &quot;Noto Sans CJK SC&quot;, &quot;Source Han Sans CN&quot;, &quot;Noto Sans SC&quot;, &quot;Source Han Sans TC&quot;, &quot;Noto Sans CJK TC&quot;, &quot;WenQuanYi Micro Hei&quot;, SimSun, sans-serif;font-weight:700;margin:50px 0px 20px;line-height:1.4;"><span style="font-family:-apple-system, BlinkMacSystemFont, Helvetica Neue, Arial, PingFang SC, Hiragino Sans GB, STHeiti, Microsoft YaHei, Microsoft JhengHei, Source Han Sans SC, Noto Sans CJK SC, Source Han Sans CN, Noto Sans SC, Source Han Sans TC, Noto Sans CJK TC, WenQuanYi Micro Hei, SimSun, sans-serif;font-weight:700;line-height:1.4;color:inherit;font-size:30px;display:block;border-bottom:1px solid rgb(236, 236, 236);margin-top:44px;margin-bottom:30px;"> </span>公钥服务器 KeyServer<a href="https://ulyc.github.io/2021/01/26/2021%E5%B9%B4-%E7%94%A8%E6%9B%B4%E7%8E%B0%E4%BB%A3%E7%9A%84%E6%96%B9%E6%B3%95%E4%BD%BF%E7%94%A8PGP-%E4%B8%8B/#%E5%85%AC%E9%92%A5%E6%9C%8D%E5%8A%A1%E5%99%A8-keyserver" style="opacity:1;background-color:transparent;box-sizing:border-box;-webkit-font-smoothing:antialiased;color:rgb(51, 122, 183);left:-0.75em;font-size:1.1em;margin-top:-0.1em;position:absolute;text-decoration:none;padding-left:0.375em;"><span style="color:rgb(51, 122, 183);font-size:1.1em;">#</span></a></h2>
+
+<p style="box-sizing:border-box;margin:30px 0px;margin-top:20px;">公钥服务器使得人们只需要交换他们短短的key id 或者user id就可以方便地从公钥服务器下载公钥。</p>
+
+<h3 style="box-sizing:border-box;color:inherit;font-size:24px;font-family:-apple-system, BlinkMacSystemFont, &quot;Helvetica Neue&quot;, Arial, &quot;PingFang SC&quot;, &quot;Hiragino Sans GB&quot;, STHeiti, &quot;Microsoft YaHei&quot;, &quot;Microsoft JhengHei&quot;, &quot;Source Han Sans SC&quot;, &quot;Noto Sans CJK SC&quot;, &quot;Source Han Sans CN&quot;, &quot;Noto Sans SC&quot;, &quot;Source Han Sans TC&quot;, &quot;Noto Sans CJK TC&quot;, &quot;WenQuanYi Micro Hei&quot;, SimSun, sans-serif;font-weight:700;margin:50px 0px 20px;line-height:1.4;">历史与设计初衷<a href="https://ulyc.github.io/2021/01/26/2021%E5%B9%B4-%E7%94%A8%E6%9B%B4%E7%8E%B0%E4%BB%A3%E7%9A%84%E6%96%B9%E6%B3%95%E4%BD%BF%E7%94%A8PGP-%E4%B8%8B/#%E5%8E%86%E5%8F%B2%E4%B8%8E%E8%AE%BE%E8%AE%A1%E5%88%9D%E8%A1%B7" style="opacity:1;background-color:transparent;box-sizing:border-box;-webkit-font-smoothing:antialiased;color:rgb(51, 122, 183);left:-0.75em;font-size:1.1em;margin-top:-0.1em;position:absolute;text-decoration:none;padding-left:0.375em;"><span style="color:rgb(51, 122, 183);font-size:1.1em;">#</span></a></h3>
+
+<p style="box-sizing:border-box;margin:30px 0px;margin-top:20px;">第一个KeyServer  叫做 HKP（ web-based OpenPGP HTTP Keyserver Protocol） Keyserver ，  诞生在上世纪90年代，是Marc Horowitz在麻省理工学习时为了他的论文而搭建的。在此之前， 虽然不是那么安全， 但是大部分人依靠电子邮件来交换公钥。</p>
+
+<p style="box-sizing:border-box;margin:30px 0px;">虽然服务器有了， 但开发者们担心政府会试图强迫密钥服务器运营商用政府选择的各种证书来替换证书。</p>
+
+<p style="box-sizing:border-box;margin:30px 0px;">所以他们做出了一个决定：公钥服务器永远不会删除信息。公钥服务器可以为现有的证书添加信息（比如可以revoke/sign或者调整expire时间），但永远永远永远不会删除证书或证书的信息。</p>
+
+<p style="box-sizing:border-box;margin:30px 0px;">为了达到这个目标，他们开始运行一个<strong style="font-weight:700;box-sizing:border-box;">分布式</strong>的国际公钥服务器网络，这就是现在的KeyServer。世界各地的公钥服务器会定期相互通信，同步，比较目录。如果政府强迫公钥服务器运营商删除或修改证书，那么在比较步骤中就会被发现。残缺的公钥服务器会用完好密钥服务器目录中的内容更新自己。</p>
+
+<p style="box-sizing:border-box;margin:30px 0px;">任何东西都不会被删除，听起来很美好，也是解决政府审查问题的一个简单而有效的办法，可是正是这个原则后来给KeyServer带来了无穷无尽的问题。</p>
+
+<h3 style="box-sizing:border-box;color:inherit;font-size:24px;font-family:-apple-system, BlinkMacSystemFont, &quot;Helvetica Neue&quot;, Arial, &quot;PingFang SC&quot;, &quot;Hiragino Sans GB&quot;, STHeiti, &quot;Microsoft YaHei&quot;, &quot;Microsoft JhengHei&quot;, &quot;Source Han Sans SC&quot;, &quot;Noto Sans CJK SC&quot;, &quot;Source Han Sans CN&quot;, &quot;Noto Sans SC&quot;, &quot;Source Han Sans TC&quot;, &quot;Noto Sans CJK TC&quot;, &quot;WenQuanYi Micro Hei&quot;, SimSun, sans-serif;font-weight:700;margin:50px 0px 20px;line-height:1.4;">信任网络 (Web of Trust)<a href="https://ulyc.github.io/2021/01/26/2021%E5%B9%B4-%E7%94%A8%E6%9B%B4%E7%8E%B0%E4%BB%A3%E7%9A%84%E6%96%B9%E6%B3%95%E4%BD%BF%E7%94%A8PGP-%E4%B8%8B/#%E4%BF%A1%E4%BB%BB%E7%BD%91%E7%BB%9C-web-of-trust" style="opacity:1;background-color:transparent;box-sizing:border-box;-webkit-font-smoothing:antialiased;color:rgb(51, 122, 183);left:-0.75em;font-size:1.1em;margin-top:-0.1em;position:absolute;text-decoration:none;padding-left:0.375em;"><span style="color:rgb(51, 122, 183);font-size:1.1em;">#</span></a></h3>
+
+<p style="box-sizing:border-box;margin:30px 0px;margin-top:20px;">好了，现在我们有了一个可以方便地上传和下载公钥的地方， 这样是不是就万事大吉了呢？</p>
+
+<p style="box-sizing:border-box;margin:30px 0px;">对于KeyServer 来说，任何人都可以上传公钥并声称自己是Linus, 是Zuckerberg,或是任何其他人，而KeyServer并不会去验证你是否是你所声称的人（因为KeyServer本来就没有一个中心化的运营者）。</p>
+
+<p style="box-sizing:border-box;margin:30px 0px;">如果你有一些密码学的基础， 那么就会知道， PGP协议依靠的非对称加密算法， 最脆弱的点就在于公钥的交换这一步。公钥交换时最容易收到中间人攻击，你一定要确定你接收到的公钥确实是你想交流的人的，由此TSL引入了CA证书认证体系，由一个可信的权威第三方来认证并颁发证书来解决身份的认证问题。 （具体可参见https系列<a href="https://ulyc.github.io/2018/09/21/%E6%B2%A1%E9%82%A3%E4%B9%88%E6%B5%85%E5%9C%B0%E8%B0%88%E8%B0%88HTTP%E4%B8%8EHTTPS-%E4%BA%8C.html" style="background-color:transparent;box-sizing:border-box;text-decoration:none;color:rgb(51, 122, 183);">没那么浅地谈谈HTTP与HTTPS</a>）。</p>
+
+<p style="box-sizing:border-box;margin:30px 0px;">“信任一个权威的第三方” 对于最初的极具有hack精神的开发者们来说， 显然是无法接受的。</p>
+
+<p style="box-sizing:border-box;margin:30px 0px;">当然，你可以说下载公钥后，通过电话等手段验证下公钥的指纹（fingerprint），就可以确认正确与否。 但是想象一下， 如果你在公钥服务器找到一个声称自己Linus Torvalds 的人, 你并没有他的其他联系方式，将永远无法确定这个公钥持有者到底是谁、这个公钥可信与否 ， 这样无疑是低效的，并且使整个系统沦为了熟人之间的小网络。</p>
+
+<p style="box-sizing:border-box;margin:30px 0px;">要知道，根据六度分隔理论（Six Degrees of Separation），世界上任何互不相识的两人，平均通过六个人就可以产生联系。 那么可以不可以这么思考， 假设我和小A见过面并检查过他的公钥，因而知道小A的公钥的的确确属于他本人，我选择信任小A。而小A同样验证了小B的证书并为小B的证书签名背书——小A的证书的持有人在此证明该证书是真实属于小B。那么我无须见亲见小B本人，也可以通过小A的背书而接受小B的证书。</p>
+
+<p style="box-sizing:border-box;margin:30px 0px;">如此循环下去，就形成了一张网， 这就是信任网络。</p>
+
+<h3 style="box-sizing:border-box;color:inherit;font-size:24px;font-family:-apple-system, BlinkMacSystemFont, &quot;Helvetica Neue&quot;, Arial, &quot;PingFang SC&quot;, &quot;Hiragino Sans GB&quot;, STHeiti, &quot;Microsoft YaHei&quot;, &quot;Microsoft JhengHei&quot;, &quot;Source Han Sans SC&quot;, &quot;Noto Sans CJK SC&quot;, &quot;Source Han Sans CN&quot;, &quot;Noto Sans SC&quot;, &quot;Source Han Sans TC&quot;, &quot;Noto Sans CJK TC&quot;, &quot;WenQuanYi Micro Hei&quot;, SimSun, sans-serif;font-weight:700;margin:50px 0px 20px;line-height:1.4;">主流公钥服务器<a href="https://ulyc.github.io/2021/01/26/2021%E5%B9%B4-%E7%94%A8%E6%9B%B4%E7%8E%B0%E4%BB%A3%E7%9A%84%E6%96%B9%E6%B3%95%E4%BD%BF%E7%94%A8PGP-%E4%B8%8B/#%E4%B8%BB%E6%B5%81%E5%85%AC%E9%92%A5%E6%9C%8D%E5%8A%A1%E5%99%A8" style="opacity:1;background-color:transparent;box-sizing:border-box;-webkit-font-smoothing:antialiased;color:rgb(51, 122, 183);left:-0.75em;font-size:1.1em;margin-top:-0.1em;position:absolute;text-decoration:none;padding-left:0.375em;"><span style="color:rgb(51, 122, 183);font-size:1.1em;">#</span></a></h3>
+
+<h4 style="box-sizing:border-box;font-family:-apple-system, BlinkMacSystemFont, &quot;Helvetica Neue&quot;, Arial, &quot;PingFang SC&quot;, &quot;Hiragino Sans GB&quot;, STHeiti, &quot;Microsoft YaHei&quot;, &quot;Microsoft JhengHei&quot;, &quot;Source Han Sans SC&quot;, &quot;Noto Sans CJK SC&quot;, &quot;Source Han Sans CN&quot;, &quot;Noto Sans SC&quot;, &quot;Source Han Sans TC&quot;, &quot;Noto Sans CJK TC&quot;, &quot;WenQuanYi Micro Hei&quot;, SimSun, sans-serif;margin:50px 0px 20px;line-height:1.4;font-weight:600;color:gray;font-size:22px;">1.   <a href="http://sks-keyservers.net/" style="background-color:transparent;box-sizing:border-box;text-decoration:none;color:rgb(51, 122, 183);">SKS Keyserver Pool</a><a href="https://ulyc.github.io/2021/01/26/2021%E5%B9%B4-%E7%94%A8%E6%9B%B4%E7%8E%B0%E4%BB%A3%E7%9A%84%E6%96%B9%E6%B3%95%E4%BD%BF%E7%94%A8PGP-%E4%B8%8B/#1---sks-keyserver-pool" style="opacity:1;background-color:transparent;box-sizing:border-box;-webkit-font-smoothing:antialiased;color:rgb(51, 122, 183);left:-0.75em;font-size:1.1em;margin-top:-0.1em;position:absolute;text-decoration:none;padding-left:0.375em;"><span style="color:rgb(51, 122, 183);font-size:1.1em;">#</span></a></h4>
+
+<p style="box-sizing:border-box;margin:30px 0px;margin-top:10px;">当今世界最大的Key Server 池， 符合它的标准的世界各地的公钥服务器会定期相互通信，同步，比较目录，数据完全开放下载。 现在一般说起KeyServer说的就是这个。</p>
+
+<p style="box-sizing:border-box;margin:30px 0px;">KeyServer虽然一直是PGP的重要基础设置 ,但SKS Keyserver Pool 其实目前只有不到20台服务器，GnuPG默认用的服务器是其中的 <a href="https://hkps.pool.sks-keyservers.net/" style="background-color:transparent;box-sizing:border-box;text-decoration:none;color:rgb(51, 122, 183);">HKPS pool</a>,只有四台服务器。</p>
+
+<h4 style="box-sizing:border-box;font-family:-apple-system, BlinkMacSystemFont, &quot;Helvetica Neue&quot;, Arial, &quot;PingFang SC&quot;, &quot;Hiragino Sans GB&quot;, STHeiti, &quot;Microsoft YaHei&quot;, &quot;Microsoft JhengHei&quot;, &quot;Source Han Sans SC&quot;, &quot;Noto Sans CJK SC&quot;, &quot;Source Han Sans CN&quot;, &quot;Noto Sans SC&quot;, &quot;Source Han Sans TC&quot;, &quot;Noto Sans CJK TC&quot;, &quot;WenQuanYi Micro Hei&quot;, SimSun, sans-serif;margin:50px 0px 20px;line-height:1.4;font-weight:600;color:gray;font-size:22px;">2. Base  Modern Software KeyServer<a href="https://ulyc.github.io/2021/01/26/2021%E5%B9%B4-%E7%94%A8%E6%9B%B4%E7%8E%B0%E4%BB%A3%E7%9A%84%E6%96%B9%E6%B3%95%E4%BD%BF%E7%94%A8PGP-%E4%B8%8B/#2-base--modern-software-keyserver" style="opacity:1;background-color:transparent;box-sizing:border-box;-webkit-font-smoothing:antialiased;color:rgb(51, 122, 183);left:-0.75em;font-size:1.1em;margin-top:-0.1em;position:absolute;text-decoration:none;padding-left:0.375em;"><span style="color:rgb(51, 122, 183);font-size:1.1em;">#</span></a></h4>
+
+<p style="box-sizing:border-box;margin:30px 0px;margin-top:10px;">有一些KeyServer 没有用SKS的软件，运行的是更下现代和稳定的软件，比较有代表性的是 <strong style="font-weight:700;box-sizing:border-box;"><a href="http://keyserver.ubuntu.com/" style="background-color:transparent;box-sizing:border-box;text-decoration:none;color:rgb(51, 122, 183);">Ubuntu keyserver</a></strong>,  基于Hockeypuck ， 这些服务器仍然会和SKS pool保持同步。</p>
+
+<h4 style="box-sizing:border-box;font-family:-apple-system, BlinkMacSystemFont, &quot;Helvetica Neue&quot;, Arial, &quot;PingFang SC&quot;, &quot;Hiragino Sans GB&quot;, STHeiti, &quot;Microsoft YaHei&quot;, &quot;Microsoft JhengHei&quot;, &quot;Source Han Sans SC&quot;, &quot;Noto Sans CJK SC&quot;, &quot;Source Han Sans CN&quot;, &quot;Noto Sans SC&quot;, &quot;Source Han Sans TC&quot;, &quot;Noto Sans CJK TC&quot;, &quot;WenQuanYi Micro Hei&quot;, SimSun, sans-serif;margin:50px 0px 20px;line-height:1.4;font-weight:600;color:gray;font-size:22px;">3.  独立KeyServer<a href="https://ulyc.github.io/2021/01/26/2021%E5%B9%B4-%E7%94%A8%E6%9B%B4%E7%8E%B0%E4%BB%A3%E7%9A%84%E6%96%B9%E6%B3%95%E4%BD%BF%E7%94%A8PGP-%E4%B8%8B/#3--%E7%8B%AC%E7%AB%8Bkeyserver" style="opacity:1;background-color:transparent;box-sizing:border-box;-webkit-font-smoothing:antialiased;color:rgb(51, 122, 183);left:-0.75em;font-size:1.1em;margin-top:-0.1em;position:absolute;text-decoration:none;padding-left:0.375em;"><span style="color:rgb(51, 122, 183);font-size:1.1em;">#</span></a></h4>
+
+<p style="box-sizing:border-box;margin:30px 0px;margin-top:10px;">这些服务器不与SKS pool同步数据，由中心化的运营者运行， 会对公钥上传者做一定的认证， 并且支持删除自己的公钥。</p>
+
+<p style="box-sizing:border-box;margin:30px 0px;">比较有代表性的有， <strong style="font-weight:700;box-sizing:border-box;"><a href="https://keys.openpgp.org/" style="background-color:transparent;box-sizing:border-box;text-decoration:none;color:rgb(51, 122, 183);">keys.openpgp.org</a></strong> ，KeyBase等等。</p>
+
+<h3 style="box-sizing:border-box;color:inherit;font-size:24px;font-family:-apple-system, BlinkMacSystemFont, &quot;Helvetica Neue&quot;, Arial, &quot;PingFang SC&quot;, &quot;Hiragino Sans GB&quot;, STHeiti, &quot;Microsoft YaHei&quot;, &quot;Microsoft JhengHei&quot;, &quot;Source Han Sans SC&quot;, &quot;Noto Sans CJK SC&quot;, &quot;Source Han Sans CN&quot;, &quot;Noto Sans SC&quot;, &quot;Source Han Sans TC&quot;, &quot;Noto Sans CJK TC&quot;, &quot;WenQuanYi Micro Hei&quot;, SimSun, sans-serif;font-weight:700;margin:50px 0px 20px;line-height:1.4;">在gpg中使用<a href="https://ulyc.github.io/2021/01/26/2021%E5%B9%B4-%E7%94%A8%E6%9B%B4%E7%8E%B0%E4%BB%A3%E7%9A%84%E6%96%B9%E6%B3%95%E4%BD%BF%E7%94%A8PGP-%E4%B8%8B/#%E5%9C%A8gpg%E4%B8%AD%E4%BD%BF%E7%94%A8" style="opacity:1;background-color:transparent;box-sizing:border-box;-webkit-font-smoothing:antialiased;color:rgb(51, 122, 183);left:-0.75em;font-size:1.1em;margin-top:-0.1em;position:absolute;text-decoration:none;padding-left:0.375em;"><span style="color:rgb(51, 122, 183);font-size:1.1em;">#</span></a></h3>
+
+<h4 style="box-sizing:border-box;font-family:-apple-system, BlinkMacSystemFont, &quot;Helvetica Neue&quot;, Arial, &quot;PingFang SC&quot;, &quot;Hiragino Sans GB&quot;, STHeiti, &quot;Microsoft YaHei&quot;, &quot;Microsoft JhengHei&quot;, &quot;Source Han Sans SC&quot;, &quot;Noto Sans CJK SC&quot;, &quot;Source Han Sans CN&quot;, &quot;Noto Sans SC&quot;, &quot;Source Han Sans TC&quot;, &quot;Noto Sans CJK TC&quot;, &quot;WenQuanYi Micro Hei&quot;, SimSun, sans-serif;margin:50px 0px 20px;line-height:1.4;font-weight:600;color:gray;font-size:22px;">发布<a href="https://ulyc.github.io/2021/01/26/2021%E5%B9%B4-%E7%94%A8%E6%9B%B4%E7%8E%B0%E4%BB%A3%E7%9A%84%E6%96%B9%E6%B3%95%E4%BD%BF%E7%94%A8PGP-%E4%B8%8B/#%E5%8F%91%E5%B8%83" style="opacity:1;background-color:transparent;box-sizing:border-box;-webkit-font-smoothing:antialiased;color:rgb(51, 122, 183);left:-0.75em;font-size:1.1em;margin-top:-0.1em;position:absolute;text-decoration:none;padding-left:0.375em;"><span style="color:rgb(51, 122, 183);font-size:1.1em;">#</span></a></h4>
+
+<div style="box-sizing:border-box;"><div style="box-sizing:border-box;background:rgb(42, 41, 41);color:rgb(241, 241, 2);margin-bottom:10px;border-radius:6px;"><pre style="border-radius:4px;background-color: #fbfaf8;border: 1px solid rgba(0,0,0,.14902);color: #333;font-size: 12px;padding: 8px;font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif;box-sizing: border-box;"><code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif">gpg   <span style="box-sizing:border-box;color:rgb(249, 38, 114);">--send-keys</span>  <span style="box-sizing:border-box;color:rgb(249, 38, 114);">{</span>keyid/uid<span style="box-sizing:border-box;color:rgb(249, 38, 114);">}</span>
+</code></pre></div></div>
+
+<h4 style="box-sizing:border-box;font-family:-apple-system, BlinkMacSystemFont, &quot;Helvetica Neue&quot;, Arial, &quot;PingFang SC&quot;, &quot;Hiragino Sans GB&quot;, STHeiti, &quot;Microsoft YaHei&quot;, &quot;Microsoft JhengHei&quot;, &quot;Source Han Sans SC&quot;, &quot;Noto Sans CJK SC&quot;, &quot;Source Han Sans CN&quot;, &quot;Noto Sans SC&quot;, &quot;Source Han Sans TC&quot;, &quot;Noto Sans CJK TC&quot;, &quot;WenQuanYi Micro Hei&quot;, SimSun, sans-serif;margin:50px 0px 20px;line-height:1.4;font-weight:600;color:gray;font-size:22px;">下载<a href="https://ulyc.github.io/2021/01/26/2021%E5%B9%B4-%E7%94%A8%E6%9B%B4%E7%8E%B0%E4%BB%A3%E7%9A%84%E6%96%B9%E6%B3%95%E4%BD%BF%E7%94%A8PGP-%E4%B8%8B/#%E4%B8%8B%E8%BD%BD" style="opacity:1;background-color:transparent;box-sizing:border-box;-webkit-font-smoothing:antialiased;color:rgb(51, 122, 183);left:-0.75em;font-size:1.1em;margin-top:-0.1em;position:absolute;text-decoration:none;padding-left:0.375em;"><span style="color:rgb(51, 122, 183);font-size:1.1em;">#</span></a></h4>
+
+<div style="box-sizing:border-box;"><div style="box-sizing:border-box;background:rgb(42, 41, 41);color:rgb(241, 241, 2);margin-bottom:10px;border-radius:6px;"><pre style="border-radius:4px;background-color: #fbfaf8;border: 1px solid rgba(0,0,0,.14902);color: #333;font-size: 12px;padding: 8px;font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif;box-sizing: border-box;"><code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif">gpg <span style="box-sizing:border-box;color:rgb(249, 38, 114);">--recv-keys</span> <span style="box-sizing:border-box;color:rgb(249, 38, 114);">{</span>keyid/uid<span style="box-sizing:border-box;color:rgb(249, 38, 114);">}</span>
+</code></pre></div></div>
+
+<p style="box-sizing:border-box;margin:30px 0px;">此时有可能报错</p>
+
+<div style="box-sizing:border-box;"><div style="box-sizing:border-box;background:rgb(42, 41, 41);color:rgb(241, 241, 2);margin-bottom:10px;border-radius:6px;"><pre style="border-radius:4px;background-color: #fbfaf8;border: 1px solid rgba(0,0,0,.14902);color: #333;font-size: 12px;padding: 8px;font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif;box-sizing: border-box;"><code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif">gpg: <span style="box-sizing:border-box;color:rgb(230, 219, 116);">"xxxxxr"</span> not a key ID: skipping
+</code></pre></div></div>
+
+<p style="box-sizing:border-box;margin:30px 0px;">这时换个KeyServer就行：</p>
+
+<div style="box-sizing:border-box;"><div style="box-sizing:border-box;background:rgb(42, 41, 41);color:rgb(241, 241, 2);margin-bottom:10px;border-radius:6px;"><pre style="border-radius:4px;background-color: #fbfaf8;border: 1px solid rgba(0,0,0,.14902);color: #333;font-size: 12px;padding: 8px;font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif;box-sizing: border-box;"><code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif">gpg  <span style="box-sizing:border-box;color:rgb(249, 38, 114);">--keyserver</span> hkps://keyserver.ubuntu.com <span style="box-sizing:border-box;color:rgb(249, 38, 114);">--recv-keys</span> <span style="box-sizing:border-box;color:rgb(249, 38, 114);">{</span>keyid/uid<span style="box-sizing:border-box;color:rgb(249, 38, 114);">}</span>
+</code></pre></div></div>
+
+<h4 style="box-sizing:border-box;font-family:-apple-system, BlinkMacSystemFont, &quot;Helvetica Neue&quot;, Arial, &quot;PingFang SC&quot;, &quot;Hiragino Sans GB&quot;, STHeiti, &quot;Microsoft YaHei&quot;, &quot;Microsoft JhengHei&quot;, &quot;Source Han Sans SC&quot;, &quot;Noto Sans CJK SC&quot;, &quot;Source Han Sans CN&quot;, &quot;Noto Sans SC&quot;, &quot;Source Han Sans TC&quot;, &quot;Noto Sans CJK TC&quot;, &quot;WenQuanYi Micro Hei&quot;, SimSun, sans-serif;margin:50px 0px 20px;line-height:1.4;font-weight:600;color:gray;font-size:22px;">签名和验证 他人公钥<a href="https://ulyc.github.io/2021/01/26/2021%E5%B9%B4-%E7%94%A8%E6%9B%B4%E7%8E%B0%E4%BB%A3%E7%9A%84%E6%96%B9%E6%B3%95%E4%BD%BF%E7%94%A8PGP-%E4%B8%8B/#%E7%AD%BE%E5%90%8D%E5%92%8C%E9%AA%8C%E8%AF%81-%E4%BB%96%E4%BA%BA%E5%85%AC%E9%92%A5" style="opacity:1;background-color:transparent;box-sizing:border-box;-webkit-font-smoothing:antialiased;color:rgb(51, 122, 183);left:-0.75em;font-size:1.1em;margin-top:-0.1em;position:absolute;text-decoration:none;padding-left:0.375em;"><span style="color:rgb(51, 122, 183);font-size:1.1em;">#</span></a></h4>
+
+<p style="box-sizing:border-box;margin:30px 0px;margin-top:10px;">验证公钥真实性 依靠多渠道确认的 公钥指纹。</p>
+
+<p style="box-sizing:border-box;margin:30px 0px;">一般来说为别人的公钥签名后，需要发还给他，或者发到公钥服务器(最好经过本人同意)。</p>
+
+<div style="box-sizing:border-box;"><div style="box-sizing:border-box;background:rgb(42, 41, 41);color:rgb(241, 241, 2);margin-bottom:10px;border-radius:6px;"><pre style="border-radius:4px;background-color: #fbfaf8;border: 1px solid rgba(0,0,0,.14902);color: #333;font-size: 12px;padding: 8px;font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif;box-sizing: border-box;"><code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif">gpg <span style="box-sizing:border-box;color:rgb(249, 38, 114);">--sign-key</span>  <span style="box-sizing:border-box;color:rgb(249, 38, 114);">{</span>keyid/uid<span style="box-sizing:border-box;color:rgb(249, 38, 114);">}</span>   <span style="box-sizing:border-box;font-style:italic;color:rgb(245, 242, 235);"># 为已经导入的 他人钥签名， 你为他签名，意味着你将为他的身份真实性背书，请谨慎 </span>
+</code></pre></div></div>
+
+<h4 style="box-sizing:border-box;font-family:-apple-system, BlinkMacSystemFont, &quot;Helvetica Neue&quot;, Arial, &quot;PingFang SC&quot;, &quot;Hiragino Sans GB&quot;, STHeiti, &quot;Microsoft YaHei&quot;, &quot;Microsoft JhengHei&quot;, &quot;Source Han Sans SC&quot;, &quot;Noto Sans CJK SC&quot;, &quot;Source Han Sans CN&quot;, &quot;Noto Sans SC&quot;, &quot;Source Han Sans TC&quot;, &quot;Noto Sans CJK TC&quot;, &quot;WenQuanYi Micro Hei&quot;, SimSun, sans-serif;margin:50px 0px 20px;line-height:1.4;font-weight:600;color:gray;font-size:22px;">高级设置<a href="https://ulyc.github.io/2021/01/26/2021%E5%B9%B4-%E7%94%A8%E6%9B%B4%E7%8E%B0%E4%BB%A3%E7%9A%84%E6%96%B9%E6%B3%95%E4%BD%BF%E7%94%A8PGP-%E4%B8%8B/#%E9%AB%98%E7%BA%A7%E8%AE%BE%E7%BD%AE" style="opacity:1;background-color:transparent;box-sizing:border-box;-webkit-font-smoothing:antialiased;color:rgb(51, 122, 183);left:-0.75em;font-size:1.1em;margin-top:-0.1em;position:absolute;text-decoration:none;padding-left:0.375em;"><span style="color:rgb(51, 122, 183);font-size:1.1em;">#</span></a></h4>
+
+<p style="box-sizing:border-box;margin:30px 0px;margin-top:10px;">因为并不推荐大家使用KeyServer，所以这里只列举了基础操作。</p>
+
+<p style="box-sizing:border-box;margin:30px 0px;">如果你决定使用KeyServer的话，可以参考 <a href="https://nova.moe/openpgp-best-practices-keyserver-and-configuration/" style="background-color:transparent;box-sizing:border-box;text-decoration:none;color:rgb(51, 122, 183);">OpenPGP 最佳实践 - 密钥服务器</a>设置你的客户端与服务器通信使用 HKPS (HKP On SSL)协议， 并定期更新从服务器下载的公钥。</p>
+
+<h3 style="box-sizing:border-box;color:inherit;font-size:24px;font-family:-apple-system, BlinkMacSystemFont, &quot;Helvetica Neue&quot;, Arial, &quot;PingFang SC&quot;, &quot;Hiragino Sans GB&quot;, STHeiti, &quot;Microsoft YaHei&quot;, &quot;Microsoft JhengHei&quot;, &quot;Source Han Sans SC&quot;, &quot;Noto Sans CJK SC&quot;, &quot;Source Han Sans CN&quot;, &quot;Noto Sans SC&quot;, &quot;Source Han Sans TC&quot;, &quot;Noto Sans CJK TC&quot;, &quot;WenQuanYi Micro Hei&quot;, SimSun, sans-serif;font-weight:700;margin:50px 0px 20px;line-height:1.4;">安全风险和争议， 被玩坏的KeyServer<a href="https://ulyc.github.io/2021/01/26/2021%E5%B9%B4-%E7%94%A8%E6%9B%B4%E7%8E%B0%E4%BB%A3%E7%9A%84%E6%96%B9%E6%B3%95%E4%BD%BF%E7%94%A8PGP-%E4%B8%8B/#%E5%AE%89%E5%85%A8%E9%A3%8E%E9%99%A9%E5%92%8C%E4%BA%89%E8%AE%AE-%E8%A2%AB%E7%8E%A9%E5%9D%8F%E7%9A%84keyserver" style="opacity:1;background-color:transparent;box-sizing:border-box;-webkit-font-smoothing:antialiased;color:rgb(51, 122, 183);left:-0.75em;font-size:1.1em;margin-top:-0.1em;position:absolute;text-decoration:none;padding-left:0.375em;"><span style="color:rgb(51, 122, 183);font-size:1.1em;">#</span></a></h3>
+
+<p style="box-sizing:border-box;margin:30px 0px;margin-top:20px;">在20世纪90年代初，开发者们怀着对技术的信心和人性的希望，期望创建一个友善 、纯粹、没有审查的净土， 在当时背景下，KeyServer不能删除任何已上传的东西，听起来是美好的，设计似乎是合理的。</p>
+
+<p style="box-sizing:border-box;margin:30px 0px;">但是事实是，网络匿名环境中充满了不那么友好的， 甚至是恶意的使用者，在当今看来 ，KeyServer这个系统并不健壮，问题重重，许多问题已经被发现十多年，而且无望解决。</p>
+
+<h4 style="box-sizing:border-box;font-family:-apple-system, BlinkMacSystemFont, &quot;Helvetica Neue&quot;, Arial, &quot;PingFang SC&quot;, &quot;Hiragino Sans GB&quot;, STHeiti, &quot;Microsoft YaHei&quot;, &quot;Microsoft JhengHei&quot;, &quot;Source Han Sans SC&quot;, &quot;Noto Sans CJK SC&quot;, &quot;Source Han Sans CN&quot;, &quot;Noto Sans SC&quot;, &quot;Source Han Sans TC&quot;, &quot;Noto Sans CJK TC&quot;, &quot;WenQuanYi Micro Hei&quot;, SimSun, sans-serif;margin:50px 0px 20px;line-height:1.4;font-weight:600;color:gray;font-size:22px;">滥用<a href="https://ulyc.github.io/2021/01/26/2021%E5%B9%B4-%E7%94%A8%E6%9B%B4%E7%8E%B0%E4%BB%A3%E7%9A%84%E6%96%B9%E6%B3%95%E4%BD%BF%E7%94%A8PGP-%E4%B8%8B/#%E6%BB%A5%E7%94%A8" style="opacity:1;background-color:transparent;box-sizing:border-box;-webkit-font-smoothing:antialiased;color:rgb(51, 122, 183);left:-0.75em;font-size:1.1em;margin-top:-0.1em;position:absolute;text-decoration:none;padding-left:0.375em;"><span style="color:rgb(51, 122, 183);font-size:1.1em;">#</span></a></h4>
+
+<p style="box-sizing:border-box;margin:30px 0px;margin-top:10px;">按照官方推荐， UID （User ID） 是用来存储用户信息的，应该在里面填上你的名字和邮箱，一个 GPG 帐号下可以有若干个 UID。</p>
+
+<p style="box-sizing:border-box;margin:30px 0px;">而其实这个UID是没有任何强制限制的，也就是说你可以在UID中放入任何东西，可以是小说片段，可以是磁力链接,可是以编码后的图像、音频或视频……</p>
+
+<p style="box-sizing:border-box;margin:30px 0px;"><div class="media-placeholder">[图片/附件]</div></en-media></p>
+
+<p style="box-sizing:border-box;margin:30px 0px;">当上传到KeyServer时, UID限制了2k的字符 . 以至于有人写了个用KeyServer<a href="https://github.com/yakamok/keyserver-fs" style="background-color:transparent;box-sizing:border-box;text-decoration:none;color:rgb(51, 122, 183);">存文件的项目keyserver-fs)</a>。</p>
+
+<p style="box-sizing:border-box;margin:30px 0px;">再次想象一下，你往网盘传了一个文件，共享给其他人，全世界的人都可以往这个网盘文件中添加文件，而且永远无法删除，情况会变得有多糟糕。</p>
+
+<h4 style="box-sizing:border-box;font-family:-apple-system, BlinkMacSystemFont, &quot;Helvetica Neue&quot;, Arial, &quot;PingFang SC&quot;, &quot;Hiragino Sans GB&quot;, STHeiti, &quot;Microsoft YaHei&quot;, &quot;Microsoft JhengHei&quot;, &quot;Source Han Sans SC&quot;, &quot;Noto Sans CJK SC&quot;, &quot;Source Han Sans CN&quot;, &quot;Noto Sans SC&quot;, &quot;Source Han Sans TC&quot;, &quot;Noto Sans CJK TC&quot;, &quot;WenQuanYi Micro Hei&quot;, SimSun, sans-serif;margin:50px 0px 20px;line-height:1.4;font-weight:600;color:gray;font-size:22px;">脆弱的KeyID<a href="https://ulyc.github.io/2021/01/26/2021%E5%B9%B4-%E7%94%A8%E6%9B%B4%E7%8E%B0%E4%BB%A3%E7%9A%84%E6%96%B9%E6%B3%95%E4%BD%BF%E7%94%A8PGP-%E4%B8%8B/#%E8%84%86%E5%BC%B1%E7%9A%84keyid" style="opacity:1;background-color:transparent;box-sizing:border-box;-webkit-font-smoothing:antialiased;color:rgb(51, 122, 183);left:-0.75em;font-size:1.1em;margin-top:-0.1em;position:absolute;text-decoration:none;padding-left:0.375em;"><span style="color:rgb(51, 122, 183);font-size:1.1em;">#</span></a></h4>
+
+<p style="box-sizing:border-box;margin:30px 0px;margin-top:10px;">见过一些生成 PGP“靓号”的工具，就是指定你喜欢的ID规则，工具会暴力生成PGP密钥， 从中返回给你想要的密钥。</p>
+
+<p style="box-sizing:border-box;margin:30px 0px;">由此很容易想到，若攻击者知道了目标的KeyID， 完全可以通过工具来生成完全一样的KeyID（这就是碰撞）, 并上传到KeyServer，来冒充目标。</p>
+
+<p style="box-sizing:border-box;margin:30px 0px;">而伪造一个KeyID有多容易呢，有研究人员借助<a href="https://github.com/lachesis/scallion" style="background-color:transparent;box-sizing:border-box;text-decoration:none;color:rgb(51, 122, 183);">scallion</a>程序，使用了普通的GPU（<a href="http://www.geforce.com/hardware" style="background-color:transparent;box-sizing:border-box;text-decoration:none;color:rgb(51, 122, 183);">Nvidia GeForce GTX</a>）进行碰撞，花了4秒的时间就生成了一个指定的32 bit的 KeyID。</p>
+
+<p style="box-sizing:border-box;margin:30px 0px;">官方推荐公布自己的KeyID时，最少应该公布64 bit（也就是长16位16进制数啦 ），但是<a href="http://thread.gmane.org/gmane.ietf.openpgp/7413" style="background-color:transparent;box-sizing:border-box;text-decoration:none;color:rgb(51, 122, 183);">研究</a>表明64 bit的KeyID也是可以 被碰撞的。</p>
+
+<h4 style="box-sizing:border-box;font-family:-apple-system, BlinkMacSystemFont, &quot;Helvetica Neue&quot;, Arial, &quot;PingFang SC&quot;, &quot;Hiragino Sans GB&quot;, STHeiti, &quot;Microsoft YaHei&quot;, &quot;Microsoft JhengHei&quot;, &quot;Source Han Sans SC&quot;, &quot;Noto Sans CJK SC&quot;, &quot;Source Han Sans CN&quot;, &quot;Noto Sans SC&quot;, &quot;Source Han Sans TC&quot;, &quot;Noto Sans CJK TC&quot;, &quot;WenQuanYi Micro Hei&quot;, SimSun, sans-serif;margin:50px 0px 20px;line-height:1.4;font-weight:600;color:gray;font-size:22px;">投毒<a href="https://ulyc.github.io/2021/01/26/2021%E5%B9%B4-%E7%94%A8%E6%9B%B4%E7%8E%B0%E4%BB%A3%E7%9A%84%E6%96%B9%E6%B3%95%E4%BD%BF%E7%94%A8PGP-%E4%B8%8B/#%E6%8A%95%E6%AF%92" style="opacity:1;background-color:transparent;box-sizing:border-box;-webkit-font-smoothing:antialiased;color:rgb(51, 122, 183);left:-0.75em;font-size:1.1em;margin-top:-0.1em;position:absolute;text-decoration:none;padding-left:0.375em;"><span style="color:rgb(51, 122, 183);font-size:1.1em;">#</span></a></h4>
+
+<p style="box-sizing:border-box;margin:30px 0px;margin-top:10px;">公钥服务器任何人都可以上传公钥，甚至你可以上传别人的公钥，比如你可以将自己签名过的别人的公钥，再次上传到KeyServer。</p>
+
+<h5 style="box-sizing:border-box;font-family:-apple-system, BlinkMacSystemFont, &quot;Helvetica Neue&quot;, Arial, &quot;PingFang SC&quot;, &quot;Hiragino Sans GB&quot;, STHeiti, &quot;Microsoft YaHei&quot;, &quot;Microsoft JhengHei&quot;, &quot;Source Han Sans SC&quot;, &quot;Noto Sans CJK SC&quot;, &quot;Source Han Sans CN&quot;, &quot;Noto Sans SC&quot;, &quot;Source Han Sans TC&quot;, &quot;Noto Sans CJK TC&quot;, &quot;WenQuanYi Micro Hei&quot;, SimSun, sans-serif;margin:50px 0px 20px;line-height:1.4;font-weight:600;color:gray;font-size:20px;">签名Dos<a href="https://ulyc.github.io/2021/01/26/2021%E5%B9%B4-%E7%94%A8%E6%9B%B4%E7%8E%B0%E4%BB%A3%E7%9A%84%E6%96%B9%E6%B3%95%E4%BD%BF%E7%94%A8PGP-%E4%B8%8B/#%E7%AD%BE%E5%90%8Ddos" style="opacity:1;background-color:transparent;box-sizing:border-box;-webkit-font-smoothing:antialiased;color:rgb(51, 122, 183);left:-0.75em;font-size:1.1em;margin-top:-0.1em;position:absolute;text-decoration:none;padding-left:0.375em;"><span style="color:rgb(51, 122, 183);font-size:1.1em;">#</span></a></h5>
+
+<p style="box-sizing:border-box;margin:30px 0px;margin-top:10px;">在WOT认证体系的设计中， 当客户端收到一份未知证书时，它应当从公钥服务器拉取所有为这张证书签过名的人的证书，逐层上溯，看看是否能够找到一张已经被用户信任的证书。如果能的话，就视信任这张为可信的。</p>
+
+<p style="box-sizing:border-box;margin:30px 0px;">2019年6月，有攻击者恶意向公钥服务器提交了对两个著名网友的签名背书。此事件中的受害者 Robert J. Hansen 的证书就被签名了 15000  次。因而任何人的 GPG 在尝试验证他的证书时，都会拉取 15000 个签名。而 GPG 在验证这么多签名的过程中会卡住很久。</p>
+
+<p style="box-sizing:border-box;margin:30px 0px;">由于被攻击的两个人在 GPG 社区中中地位很高，他们在 GPG  信任网络中处于相当核心的位置。这意味着——当你验证任意一份证书的时候，有不小的概率你会不小心拉取到他们俩的证书，然后你的 GPG  就会卡住。不但他们俩的证书没法用了，他们俩签名过的证书也都面临危险，乃至于他们俩签名过的证书所签名的证书……</p>
+
+<p style="box-sizing:border-box;margin:30px 0px;">而上传到KeyServer的所有东西都是不可删除的…为了解决这个问题， <a href="https://lwn.net/Articles/793288/" style="background-color:transparent;box-sizing:border-box;text-decoration:none;color:rgb(51, 122, 183);">GnuPG 2.2.17  LWN.net</a> 开始， 从KeyServer下载公钥时默认不再下载关联的公钥， 如果你想要感受证书DoS攻击的话，可以在设置中开启：</p>
+
+<div style="box-sizing:border-box;"><div style="box-sizing:border-box;background:rgb(42, 41, 41);color:rgb(241, 241, 2);margin-bottom:10px;border-radius:6px;"><pre style="border-radius:4px;background-color: #fbfaf8;border: 1px solid rgba(0,0,0,.14902);color: #333;font-size: 12px;padding: 8px;font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif;box-sizing: border-box;"><code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span style="box-sizing:border-box;font-style:italic;color:rgb(117, 113, 94);"># ~/.gnupg/gpg.conf</span>
+<span style="box-sizing:border-box;color:rgb(230, 219, 116);">keyserver-options no-self-sigs-only,no-import-clean</span>
+</code></pre></div></div>
+
+<h5 style="box-sizing:border-box;font-family:-apple-system, BlinkMacSystemFont, &quot;Helvetica Neue&quot;, Arial, &quot;PingFang SC&quot;, &quot;Hiragino Sans GB&quot;, STHeiti, &quot;Microsoft YaHei&quot;, &quot;Microsoft JhengHei&quot;, &quot;Source Han Sans SC&quot;, &quot;Noto Sans CJK SC&quot;, &quot;Source Han Sans CN&quot;, &quot;Noto Sans SC&quot;, &quot;Source Han Sans TC&quot;, &quot;Noto Sans CJK TC&quot;, &quot;WenQuanYi Micro Hei&quot;, SimSun, sans-serif;margin:50px 0px 20px;line-height:1.4;font-weight:600;color:gray;font-size:20px;">爆破<a href="https://ulyc.github.io/2021/01/26/2021%E5%B9%B4-%E7%94%A8%E6%9B%B4%E7%8E%B0%E4%BB%A3%E7%9A%84%E6%96%B9%E6%B3%95%E4%BD%BF%E7%94%A8PGP-%E4%B8%8B/#%E7%88%86%E7%A0%B4" style="opacity:1;background-color:transparent;box-sizing:border-box;-webkit-font-smoothing:antialiased;color:rgb(51, 122, 183);left:-0.75em;font-size:1.1em;margin-top:-0.1em;position:absolute;text-decoration:none;padding-left:0.375em;"><span style="color:rgb(51, 122, 183);font-size:1.1em;">#</span></a></h5>
+
+<p style="box-sizing:border-box;margin:30px 0px;margin-top:10px;">有个很厉害的程序媛Yegor Timoshenko（前面的SKS文件存储项目也是她的杰作），写了个工具<a href="https://github.com/yegortimoshenko/sks-exploit" style="background-color:transparent;box-sizing:border-box;text-decoration:none;color:rgb(51, 122, 183);">SKS-Exploit</a>，可以将任何人的PGP公钥<a href="https://keyserver.2ndquadrant.com/pks/lookup?search=0x41259773973A612A&amp;op=vindex" style="background-color:transparent;box-sizing:border-box;text-decoration:none;color:rgb(51, 122, 183);">损坏</a>，变得不可导入。</p>
+
+<p style="box-sizing:border-box;margin:30px 0px;">这个工具同时还可以给任意人的公钥 追加伪造的UID（不是KeyID），并骗过KeyServer。</p>
+
+<p style="box-sizing:border-box;margin:30px 0px;"><div class="media-placeholder">[图片/附件]</div></en-media></p>
+
+<p style="box-sizing:border-box;margin:30px 0px;">另外能直接让KeyServer宕机。</p>
+
+<p style="box-sizing:border-box;margin:30px 0px;"><div class="media-placeholder">[图片/附件]</div></en-media></p>
+
+<h4 style="box-sizing:border-box;font-family:-apple-system, BlinkMacSystemFont, &quot;Helvetica Neue&quot;, Arial, &quot;PingFang SC&quot;, &quot;Hiragino Sans GB&quot;, STHeiti, &quot;Microsoft YaHei&quot;, &quot;Microsoft JhengHei&quot;, &quot;Source Han Sans SC&quot;, &quot;Noto Sans CJK SC&quot;, &quot;Source Han Sans CN&quot;, &quot;Noto Sans SC&quot;, &quot;Source Han Sans TC&quot;, &quot;Noto Sans CJK TC&quot;, &quot;WenQuanYi Micro Hei&quot;, SimSun, sans-serif;margin:50px 0px 20px;line-height:1.4;font-weight:600;color:gray;font-size:22px;">隐私问题<a href="https://ulyc.github.io/2021/01/26/2021%E5%B9%B4-%E7%94%A8%E6%9B%B4%E7%8E%B0%E4%BB%A3%E7%9A%84%E6%96%B9%E6%B3%95%E4%BD%BF%E7%94%A8PGP-%E4%B8%8B/#%E9%9A%90%E7%A7%81%E9%97%AE%E9%A2%98" style="opacity:1;background-color:transparent;box-sizing:border-box;-webkit-font-smoothing:antialiased;color:rgb(51, 122, 183);left:-0.75em;font-size:1.1em;margin-top:-0.1em;position:absolute;text-decoration:none;padding-left:0.375em;"><span style="color:rgb(51, 122, 183);font-size:1.1em;">#</span></a></h4>
+
+<p style="box-sizing:border-box;margin:30px 0px;margin-top:10px;">讽刺的是， 最初为了保护人们隐私而生的PGP , 却因为不能满足保护隐私的法规GDPR ，而使一个公开的 SKS 公钥服务器在欧洲处于违法状态（GDPR规定： 服务商必须提供删除个人信息的选项）。</p>
+
+<p style="box-sizing:border-box;margin:30px 0px;">许多新手按照教程提示的在创建PGP 密钥的时候填上了自己的真实姓名，并按照那些教程将公钥上传到了KeyServer，在人肉社工猖獗的今天，简直是个灾难。</p>
+
+<p style="box-sizing:border-box;margin:30px 0px;">我试着在KeyServer搜过一些博客作者留下的PGP Key， 不乏有些比较注重自身隐私的，可是他们大部分都将自己真实的名字（汉字或拼音）和邮箱一起发到了服务器上，要知道那里的数据是公开且永远不能删除的。 也有些人意识到问题之后revoke了带有真实姓名的公钥，可是仍然可以查到，并且变得更加显眼（revoke过的key会变红）。</p>
+
+<h2 style="box-sizing:border-box;color:inherit;font-size:30px;font-family:-apple-system, BlinkMacSystemFont, &quot;Helvetica Neue&quot;, Arial, &quot;PingFang SC&quot;, &quot;Hiragino Sans GB&quot;, STHeiti, &quot;Microsoft YaHei&quot;, &quot;Microsoft JhengHei&quot;, &quot;Source Han Sans SC&quot;, &quot;Noto Sans CJK SC&quot;, &quot;Source Han Sans CN&quot;, &quot;Noto Sans SC&quot;, &quot;Source Han Sans TC&quot;, &quot;Noto Sans CJK TC&quot;, &quot;WenQuanYi Micro Hei&quot;, SimSun, sans-serif;font-weight:700;margin:50px 0px 20px;line-height:1.4;"><span style="font-family:-apple-system, BlinkMacSystemFont, Helvetica Neue, Arial, PingFang SC, Hiragino Sans GB, STHeiti, Microsoft YaHei, Microsoft JhengHei, Source Han Sans SC, Noto Sans CJK SC, Source Han Sans CN, Noto Sans SC, Source Han Sans TC, Noto Sans CJK TC, WenQuanYi Micro Hei, SimSun, sans-serif;font-weight:700;line-height:1.4;color:inherit;font-size:30px;display:block;border-bottom:1px solid rgb(236, 236, 236);margin-top:44px;margin-bottom:30px;"> </span>其他发布公钥的方法<a href="https://ulyc.github.io/2021/01/26/2021%E5%B9%B4-%E7%94%A8%E6%9B%B4%E7%8E%B0%E4%BB%A3%E7%9A%84%E6%96%B9%E6%B3%95%E4%BD%BF%E7%94%A8PGP-%E4%B8%8B/#%E5%85%B6%E4%BB%96%E5%8F%91%E5%B8%83%E5%85%AC%E9%92%A5%E7%9A%84%E6%96%B9%E6%B3%95" style="opacity:1;background-color:transparent;box-sizing:border-box;-webkit-font-smoothing:antialiased;color:rgb(51, 122, 183);left:-0.75em;font-size:1.1em;margin-top:-0.1em;position:absolute;text-decoration:none;padding-left:0.375em;"><span style="color:rgb(51, 122, 183);font-size:1.1em;">#</span></a></h2>
+
+<h3 style="box-sizing:border-box;color:inherit;font-size:24px;font-family:-apple-system, BlinkMacSystemFont, &quot;Helvetica Neue&quot;, Arial, &quot;PingFang SC&quot;, &quot;Hiragino Sans GB&quot;, STHeiti, &quot;Microsoft YaHei&quot;, &quot;Microsoft JhengHei&quot;, &quot;Source Han Sans SC&quot;, &quot;Noto Sans CJK SC&quot;, &quot;Source Han Sans CN&quot;, &quot;Noto Sans SC&quot;, &quot;Source Han Sans TC&quot;, &quot;Noto Sans CJK TC&quot;, &quot;WenQuanYi Micro Hei&quot;, SimSun, sans-serif;font-weight:700;margin:50px 0px 20px;line-height:1.4;">1. WKD（Web Key Directory）<a href="https://ulyc.github.io/2021/01/26/2021%E5%B9%B4-%E7%94%A8%E6%9B%B4%E7%8E%B0%E4%BB%A3%E7%9A%84%E6%96%B9%E6%B3%95%E4%BD%BF%E7%94%A8PGP-%E4%B8%8B/#1-wkdweb-key-directory" style="opacity:1;background-color:transparent;box-sizing:border-box;-webkit-font-smoothing:antialiased;color:rgb(51, 122, 183);left:-0.75em;font-size:1.1em;margin-top:-0.1em;position:absolute;text-decoration:none;padding-left:0.375em;"><span style="color:rgb(51, 122, 183);font-size:1.1em;">#</span></a></h3>
+
+<p style="box-sizing:border-box;margin:30px 0px;margin-top:20px;">WKD 的工作过程是 ，通过邮箱客户端 在域名服务器检查一个”well known” 的URL， 如果匹配到了邮箱地址对应的公钥，会使用https下载，并且不需要用户进行其他操作。用户不需要gpg 命令行等等复杂操作，让PGP加密回归单纯的邮件加密本身，用起来有些像S/MIME,但其实不一样。</p>
+
+<p style="box-sizing:border-box;margin:30px 0px;">比如这样一个URL: <code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif">https://intevation.de/.well-known/openPGPkey/hu/g8td9rsyatrazsoiho37j9n3g5ypp34h</code> 就对应 “aheinecke@intevation.de”这个邮箱地址。</p>
+
+<p style="box-sizing:border-box;margin:30px 0px;">这是通过Gpg4win的使用的一个示例，</p>
+
+<p style="box-sizing:border-box;margin:30px 0px;"><img src="https://files.intevation.de/users/aheinecke/wkd-autoencrypt.gif" width="707" height="571" style="border:0px;box-sizing:border-box;vertical-align:middle;display:block;max-width:100%;height:auto;margin:1.5em auto 1.6em;"/></p>
+
+<p style="box-sizing:border-box;margin:30px 0px;">这种方法不会泄露自己的邮箱，也不需要验证指纹， 但是需要你的邮件服务商提供支持。</p>
+
+<p style="box-sizing:border-box;margin:30px 0px;">proton邮箱是原生支持 WKD的， 但是它使用的是自己私钥，似乎没办法使用使用自己本地的公钥，其他也有支持。</p>
+
+<p style="box-sizing:border-box;margin:30px 0px;">如果你有自己的邮箱服务器，并且想折腾的话，可以参照<a href="https://wiki.gnupg.org/WKDHosting" style="background-color:transparent;box-sizing:border-box;text-decoration:none;color:rgb(51, 122, 183);">WKD Hosting</a>。</p>
+
+<h3 style="box-sizing:border-box;color:inherit;font-size:24px;font-family:-apple-system, BlinkMacSystemFont, &quot;Helvetica Neue&quot;, Arial, &quot;PingFang SC&quot;, &quot;Hiragino Sans GB&quot;, STHeiti, &quot;Microsoft YaHei&quot;, &quot;Microsoft JhengHei&quot;, &quot;Source Han Sans SC&quot;, &quot;Noto Sans CJK SC&quot;, &quot;Source Han Sans CN&quot;, &quot;Noto Sans SC&quot;, &quot;Source Han Sans TC&quot;, &quot;Noto Sans CJK TC&quot;, &quot;WenQuanYi Micro Hei&quot;, SimSun, sans-serif;font-weight:700;margin:50px 0px 20px;line-height:1.4;">2. 当面交换<a href="https://ulyc.github.io/2021/01/26/2021%E5%B9%B4-%E7%94%A8%E6%9B%B4%E7%8E%B0%E4%BB%A3%E7%9A%84%E6%96%B9%E6%B3%95%E4%BD%BF%E7%94%A8PGP-%E4%B8%8B/#2-%E5%BD%93%E9%9D%A2%E4%BA%A4%E6%8D%A2" style="opacity:1;background-color:transparent;box-sizing:border-box;-webkit-font-smoothing:antialiased;color:rgb(51, 122, 183);left:-0.75em;font-size:1.1em;margin-top:-0.1em;position:absolute;text-decoration:none;padding-left:0.375em;"><span style="color:rgb(51, 122, 183);font-size:1.1em;">#</span></a></h3>
+
+<p style="box-sizing:border-box;margin:30px 0px;margin-top:20px;">如果是和熟识的朋友，你可以约在任何合适地方，用你喜欢的方式交换密钥， 比如交换纸条，交换TF卡 或者usb设备，互相签名认证，互相得到公钥。</p>
+
+<p style="box-sizing:border-box;margin:30px 0px;">如果是想认识更多的人，并让自己的公钥被更多的人认证， 你可以参加「公钥签名派对（<a href="https://en.wikipedia.org/wiki/Key_signing_party" style="background-color:transparent;box-sizing:border-box;text-decoration:none;color:rgb(51, 122, 183);">Key signing party</a>）」。参与派对的人们相互交换公钥的指纹（公钥一般是存在服务器或是一个别人可以下载到的地方，这里只交换指纹），甚至需要相互出示身份证、护照、驾照、出身证明，以验明正身。</p>
+
+<p style="box-sizing:border-box;margin:30px 0px;"><div class="media-placeholder">[图片/附件]</div></en-media></p>
+
+<h3 style="box-sizing:border-box;color:inherit;font-size:24px;font-family:-apple-system, BlinkMacSystemFont, &quot;Helvetica Neue&quot;, Arial, &quot;PingFang SC&quot;, &quot;Hiragino Sans GB&quot;, STHeiti, &quot;Microsoft YaHei&quot;, &quot;Microsoft JhengHei&quot;, &quot;Source Han Sans SC&quot;, &quot;Noto Sans CJK SC&quot;, &quot;Source Han Sans CN&quot;, &quot;Noto Sans SC&quot;, &quot;Source Han Sans TC&quot;, &quot;Noto Sans CJK TC&quot;, &quot;WenQuanYi Micro Hei&quot;, SimSun, sans-serif;font-weight:700;margin:50px 0px 20px;line-height:1.4;">3. DNS<a href="https://ulyc.github.io/2021/01/26/2021%E5%B9%B4-%E7%94%A8%E6%9B%B4%E7%8E%B0%E4%BB%A3%E7%9A%84%E6%96%B9%E6%B3%95%E4%BD%BF%E7%94%A8PGP-%E4%B8%8B/#3-dns" style="opacity:1;background-color:transparent;box-sizing:border-box;-webkit-font-smoothing:antialiased;color:rgb(51, 122, 183);left:-0.75em;font-size:1.1em;margin-top:-0.1em;position:absolute;text-decoration:none;padding-left:0.375em;"><span style="color:rgb(51, 122, 183);font-size:1.1em;">#</span></a></h3>
+
+<p style="box-sizing:border-box;margin:30px 0px;margin-top:20px;">有很多种方法将你的公钥通过DNS服务发布，但是有些一些方法只适用于老版本的GnuPG，有些方法只适用与新版本的GnuPG，兼容性不佳，而且搞起来比较繁琐，有兴趣的可以自行查找资料。在这里并不推荐使用。</p>
+
+<h3 style="box-sizing:border-box;color:inherit;font-size:24px;font-family:-apple-system, BlinkMacSystemFont, &quot;Helvetica Neue&quot;, Arial, &quot;PingFang SC&quot;, &quot;Hiragino Sans GB&quot;, STHeiti, &quot;Microsoft YaHei&quot;, &quot;Microsoft JhengHei&quot;, &quot;Source Han Sans SC&quot;, &quot;Noto Sans CJK SC&quot;, &quot;Source Han Sans CN&quot;, &quot;Noto Sans SC&quot;, &quot;Source Han Sans TC&quot;, &quot;Noto Sans CJK TC&quot;, &quot;WenQuanYi Micro Hei&quot;, SimSun, sans-serif;font-weight:700;margin:50px 0px 20px;line-height:1.4;">4.个人网站 或 社交软件中<a href="https://ulyc.github.io/2021/01/26/2021%E5%B9%B4-%E7%94%A8%E6%9B%B4%E7%8E%B0%E4%BB%A3%E7%9A%84%E6%96%B9%E6%B3%95%E4%BD%BF%E7%94%A8PGP-%E4%B8%8B/#4%E4%B8%AA%E4%BA%BA%E7%BD%91%E7%AB%99-%E6%88%96-%E7%A4%BE%E4%BA%A4%E8%BD%AF%E4%BB%B6%E4%B8%AD" style="opacity:1;background-color:transparent;box-sizing:border-box;-webkit-font-smoothing:antialiased;color:rgb(51, 122, 183);left:-0.75em;font-size:1.1em;margin-top:-0.1em;position:absolute;text-decoration:none;padding-left:0.375em;"><span style="color:rgb(51, 122, 183);font-size:1.1em;">#</span></a></h3>
+
+<p style="box-sizing:border-box;margin:30px 0px;margin-top:20px;">现在中文世界， PGP的使用者中 有很多都是 独立的博客作者， 如果你拥有自己的博客或者个人网站，当然可以选择将自己的公钥发布在上面，最好给你的网站上一个Https 。</p>
+
+<p style="box-sizing:border-box;margin:30px 0px;">很多社交网站的个人展示页，可以自由编辑你的信息，你可以将PGP的 公钥发布在这里，  或者将 指纹 放在这， 这样通过其他渠道下载到公钥的人，也可以确认身份。</p>
+
+<h3 style="box-sizing:border-box;color:inherit;font-size:24px;font-family:-apple-system, BlinkMacSystemFont, &quot;Helvetica Neue&quot;, Arial, &quot;PingFang SC&quot;, &quot;Hiragino Sans GB&quot;, STHeiti, &quot;Microsoft YaHei&quot;, &quot;Microsoft JhengHei&quot;, &quot;Source Han Sans SC&quot;, &quot;Noto Sans CJK SC&quot;, &quot;Source Han Sans CN&quot;, &quot;Noto Sans SC&quot;, &quot;Source Han Sans TC&quot;, &quot;Noto Sans CJK TC&quot;, &quot;WenQuanYi Micro Hei&quot;, SimSun, sans-serif;font-weight:700;margin:50px 0px 20px;line-height:1.4;">5. 代码仓库或Gist<a href="https://ulyc.github.io/2021/01/26/2021%E5%B9%B4-%E7%94%A8%E6%9B%B4%E7%8E%B0%E4%BB%A3%E7%9A%84%E6%96%B9%E6%B3%95%E4%BD%BF%E7%94%A8PGP-%E4%B8%8B/#5-%E4%BB%A3%E7%A0%81%E4%BB%93%E5%BA%93%E6%88%96gist" style="opacity:1;background-color:transparent;box-sizing:border-box;-webkit-font-smoothing:antialiased;color:rgb(51, 122, 183);left:-0.75em;font-size:1.1em;margin-top:-0.1em;position:absolute;text-decoration:none;padding-left:0.375em;"><span style="color:rgb(51, 122, 183);font-size:1.1em;">#</span></a></h3>
+
+<p style="box-sizing:border-box;margin:30px 0px;margin-top:20px;">无论你是不是开发者， 都可以拥有一个Github账号， 你可以开一个仓库专门用来发布自己的公钥，或者将公钥发布到Gist。</p>
+
+<h3 style="box-sizing:border-box;color:inherit;font-size:24px;font-family:-apple-system, BlinkMacSystemFont, &quot;Helvetica Neue&quot;, Arial, &quot;PingFang SC&quot;, &quot;Hiragino Sans GB&quot;, STHeiti, &quot;Microsoft YaHei&quot;, &quot;Microsoft JhengHei&quot;, &quot;Source Han Sans SC&quot;, &quot;Noto Sans CJK SC&quot;, &quot;Source Han Sans CN&quot;, &quot;Noto Sans SC&quot;, &quot;Source Han Sans TC&quot;, &quot;Noto Sans CJK TC&quot;, &quot;WenQuanYi Micro Hei&quot;, SimSun, sans-serif;font-weight:700;margin:50px 0px 20px;line-height:1.4;">6. 共享笔记<a href="https://ulyc.github.io/2021/01/26/2021%E5%B9%B4-%E7%94%A8%E6%9B%B4%E7%8E%B0%E4%BB%A3%E7%9A%84%E6%96%B9%E6%B3%95%E4%BD%BF%E7%94%A8PGP-%E4%B8%8B/#6-%E5%85%B1%E4%BA%AB%E7%AC%94%E8%AE%B0" style="opacity:1;background-color:transparent;box-sizing:border-box;-webkit-font-smoothing:antialiased;color:rgb(51, 122, 183);left:-0.75em;font-size:1.1em;margin-top:-0.1em;position:absolute;text-decoration:none;padding-left:0.375em;"><span style="color:rgb(51, 122, 183);font-size:1.1em;">#</span></a></h3>
+
+<p style="box-sizing:border-box;margin:30px 0px;margin-top:20px;">Notion或者印象笔记等可以共享笔记的地方，都可以贴出你的公钥。</p>
+
+<h2 style="box-sizing:border-box;color:inherit;font-size:30px;font-family:-apple-system, BlinkMacSystemFont, &quot;Helvetica Neue&quot;, Arial, &quot;PingFang SC&quot;, &quot;Hiragino Sans GB&quot;, STHeiti, &quot;Microsoft YaHei&quot;, &quot;Microsoft JhengHei&quot;, &quot;Source Han Sans SC&quot;, &quot;Noto Sans CJK SC&quot;, &quot;Source Han Sans CN&quot;, &quot;Noto Sans SC&quot;, &quot;Source Han Sans TC&quot;, &quot;Noto Sans CJK TC&quot;, &quot;WenQuanYi Micro Hei&quot;, SimSun, sans-serif;font-weight:700;margin:50px 0px 20px;line-height:1.4;"><span style="font-family:-apple-system, BlinkMacSystemFont, Helvetica Neue, Arial, PingFang SC, Hiragino Sans GB, STHeiti, Microsoft YaHei, Microsoft JhengHei, Source Han Sans SC, Noto Sans CJK SC, Source Han Sans CN, Noto Sans SC, Source Han Sans TC, Noto Sans CJK TC, WenQuanYi Micro Hei, SimSun, sans-serif;font-weight:700;line-height:1.4;color:inherit;font-size:30px;display:block;border-bottom:1px solid rgb(236, 236, 236);margin-top:44px;margin-bottom:30px;"> </span>最后<a href="https://ulyc.github.io/2021/01/26/2021%E5%B9%B4-%E7%94%A8%E6%9B%B4%E7%8E%B0%E4%BB%A3%E7%9A%84%E6%96%B9%E6%B3%95%E4%BD%BF%E7%94%A8PGP-%E4%B8%8B/#%E6%9C%80%E5%90%8E" style="opacity:1;background-color:transparent;box-sizing:border-box;-webkit-font-smoothing:antialiased;color:rgb(51, 122, 183);left:-0.75em;font-size:1.1em;margin-top:-0.1em;position:absolute;text-decoration:none;padding-left:0.375em;"><span style="color:rgb(51, 122, 183);font-size:1.1em;">#</span></a></h2>
+
+<p style="box-sizing:border-box;margin:30px 0px;margin-top:20px;">使用分散的、多渠道的、可能是线下的方式来交换和确认公钥 ，不要相信在放一处的 公钥 和指纹。</p>
+
+<p style="box-sizing:border-box;margin:30px 0px;">去验证紧跟在公钥后面的指纹 ， 就像你去问一个诈骗者，他是不是一个诈骗者一样无用。</p>
+
+<p style="box-sizing:border-box;margin:30px 0px;">如果不是当面，请至少从两个渠道进行验证，比如你从一个渠道（比如<a href="https://ulyc.github.io/pgp_keys.asc/" style="background-color:transparent;box-sizing:border-box;text-decoration:none;color:rgb(51, 122, 183);">这里</a>）得到了我的公钥 ,  你想和我安全通信的话，导入前一定要从另一处（比如我公布的其他账号的简介）得到我的指纹， 验证是否一致后再进行操作。</p>
+
+<p style="box-sizing:border-box;margin:30px 0px;">而且每次使用前，请重复以上步骤，确保你手上的公钥是最新的。</p>
+
+<h2 style="box-sizing:border-box;color:inherit;font-size:30px;font-family:-apple-system, BlinkMacSystemFont, &quot;Helvetica Neue&quot;, Arial, &quot;PingFang SC&quot;, &quot;Hiragino Sans GB&quot;, STHeiti, &quot;Microsoft YaHei&quot;, &quot;Microsoft JhengHei&quot;, &quot;Source Han Sans SC&quot;, &quot;Noto Sans CJK SC&quot;, &quot;Source Han Sans CN&quot;, &quot;Noto Sans SC&quot;, &quot;Source Han Sans TC&quot;, &quot;Noto Sans CJK TC&quot;, &quot;WenQuanYi Micro Hei&quot;, SimSun, sans-serif;font-weight:700;margin:50px 0px 20px;line-height:1.4;"><span style="font-family:-apple-system, BlinkMacSystemFont, Helvetica Neue, Arial, PingFang SC, Hiragino Sans GB, STHeiti, Microsoft YaHei, Microsoft JhengHei, Source Han Sans SC, Noto Sans CJK SC, Source Han Sans CN, Noto Sans SC, Source Han Sans TC, Noto Sans CJK TC, WenQuanYi Micro Hei, SimSun, sans-serif;font-weight:700;line-height:1.4;color:inherit;font-size:30px;display:block;border-bottom:1px solid rgb(236, 236, 236);margin-top:44px;margin-bottom:30px;"> </span>参考链接<a href="https://ulyc.github.io/2021/01/26/2021%E5%B9%B4-%E7%94%A8%E6%9B%B4%E7%8E%B0%E4%BB%A3%E7%9A%84%E6%96%B9%E6%B3%95%E4%BD%BF%E7%94%A8PGP-%E4%B8%8B/#%E5%8F%82%E8%80%83%E9%93%BE%E6%8E%A5" style="opacity:1;background-color:transparent;box-sizing:border-box;-webkit-font-smoothing:antialiased;color:rgb(51, 122, 183);left:-0.75em;font-size:1.1em;margin-top:-0.1em;position:absolute;text-decoration:none;padding-left:0.375em;"><span style="color:rgb(51, 122, 183);font-size:1.1em;">#</span></a></h2>
+
+<p style="box-sizing:border-box;margin:30px 0px;margin-top:20px;">[1]. <a href="https://www.linux.com/news/protecting-code-integrity-PGP-part-1-basic-PGP-concepts-and-tools/" style="background-color:transparent;box-sizing:border-box;text-decoration:none;color:rgb(51, 122, 183);">用 PGP 保护代码完整性系列 </a></p>
+
+<p style="box-sizing:border-box;margin:30px 0px;">[2]. <a href="http://www.gnupg.org/gph/en/manual.html" style="background-color:transparent;box-sizing:border-box;text-decoration:none;color:rgb(51, 122, 183);">The GNU Privacy Handbook</a></p>
+
+<div style="box-sizing:border-box;min-height:0.01%;overflow-x:auto;"><table style="font-size:inherit;font-weight:inherit;font-style:inherit;font-variant:inherit;border-spacing:0px;border-collapse:collapse;box-sizing:border-box;background-color:transparent;margin-top:10px;width:100%;max-width:100%;margin-bottom:20px;">
+  <tbody style="box-sizing:border-box;">
+    <tr style="box-sizing:border-box;">
+      <td style="box-sizing:border-box;line-height:1.42857;vertical-align:top;border-top:1px solid rgb(221, 221, 221);padding:8px;border:1px solid rgb(238, 238, 238);">[3]. [GnuPG: 用多个sub keys保护primary key</td>
+      <td style="box-sizing:border-box;line-height:1.42857;vertical-align:top;border-top:1px solid rgb(221, 221, 221);padding:8px;border:1px solid rgb(238, 238, 238);">missing idea (wordpress.com)](https://jackqqcn.wordpress.com/2008/06/22/gnupg-用多个sub-keys保护primary-key/)</td>
+    </tr>
+  </tbody>
+</table></div>
+
+<p style="box-sizing:border-box;margin:30px 0px;">[4]. <a href="https://blog.lancitou.net/PGP-tutorial/" style="background-color:transparent;box-sizing:border-box;text-decoration:none;color:rgb(51, 122, 183);">PGP 自我扫盲</a></p>
+
+<p style="box-sizing:border-box;margin:30px 0px;">[5]. <a href="https://mogeko.me/2019/068/" style="background-color:transparent;box-sizing:border-box;text-decoration:none;color:rgb(51, 122, 183);">GPG 的正确使用姿势</a></p>
+
+<p style="box-sizing:border-box;margin:30px 0px;">[6]. <a href="https://emailselfdefense.fsf.org/zh-hans/windows.html" style="background-color:transparent;box-sizing:border-box;text-decoration:none;color:rgb(51, 122, 183);">电子邮件加密指南</a></p>
+
+<p style="box-sizing:border-box;margin:30px 0px;">[7]. <a href="http://www.asheesh.org/note/debian/short-key-ids-are-bad-news.html" style="background-color:transparent;box-sizing:border-box;text-decoration:none;color:rgb(51, 122, 183);">Short key IDs are bad news (with OpenPGP and GNU Privacy Guard) </a></p>
+
+<p style="box-sizing:border-box;margin:30px 0px;">[8]. <a href="http://blog.shell909090.org/blog/archives/1903/" style="background-color:transparent;box-sizing:border-box;text-decoration:none;color:rgb(51, 122, 183);">gnupg密钥签署原理和过程 // Shell’s Home (shell909090.org)</a></p>
+
+<div style="box-sizing:border-box;min-height:0.01%;overflow-x:auto;"><table style="font-size:inherit;font-weight:inherit;font-style:inherit;font-variant:inherit;border-spacing:0px;border-collapse:collapse;box-sizing:border-box;background-color:transparent;margin-top:10px;width:100%;max-width:100%;margin-bottom:20px;">
+  <tbody style="box-sizing:border-box;">
+    <tr style="box-sizing:border-box;">
+      <td style="box-sizing:border-box;line-height:1.42857;vertical-align:top;border-top:1px solid rgb(221, 221, 221);padding:8px;border:1px solid rgb(238, 238, 238);">[9]. [PGP Key Server</td>
+      <td style="box-sizing:border-box;line-height:1.42857;vertical-align:top;border-top:1px solid rgb(221, 221, 221);padding:8px;border:1px solid rgb(238, 238, 238);">Roll Your Own Network](https://roll.urown.net/server/PGP-keyserver.html#a-public-key-shelf)</td>
+    </tr>
+  </tbody>
+</table></div>
+
+<p style="box-sizing:border-box;margin:30px 0px;">[10]. <a href="https://medium.com/@mdrahony/are-sks-keyservers-safe-do-we-need-them-7056b495101c" style="background-color:transparent;box-sizing:border-box;text-decoration:none;color:rgb(51, 122, 183);">Are SKS keyservers safe? Do we need them?</a></p>
+
+<p style="box-sizing:border-box;margin:30px 0px;">[11]. <a href="https://gist.github.com/rjhansen/67ab921ffb4084c865b3618d6955275f" style="background-color:transparent;box-sizing:border-box;text-decoration:none;color:rgb(51, 122, 183);">SKS Keyserver Network Under Attack</a></p>
+
+<p style="box-sizing:border-box;margin:30px 0px;">[12]. <a href="https://nova.moe/openPGP-best-practices-keyserver-and-configuration/" style="background-color:transparent;box-sizing:border-box;text-decoration:none;color:rgb(51, 122, 183);">OpenPGP 最佳实践 - 公钥服务器</a></p>
+
+<p style="box-sizing:border-box;margin:30px 0px;">[13]. <a href="https://blog.wangxuan.name/2019/11/30/gpg-sks-network-poisoned/" style="background-color:transparent;box-sizing:border-box;text-decoration:none;color:rgb(51, 122, 183);">GPG SKS 同步网络被投毒事件及其影响</a></p>
+
+<p style="box-sizing:border-box;margin:30px 0px;">[14]. <a href="https://superuser.com/questions/227991/where-to-upload-PGP-public-key-are-keyservers-still-surviving" style="background-color:transparent;box-sizing:border-box;text-decoration:none;color:rgb(51, 122, 183);">where-to-upload-PGP-public-key-are-keyservers-still-surviving</a></p>
+
+<p style="box-sizing:border-box;margin:30px 0px;">[15]. <a href="https://zhuanlan.zhihu.com/p/137801979" style="background-color:transparent;box-sizing:border-box;text-decoration:none;color:rgb(51, 122, 183);">GPG简明介绍</a></p>
+
+
+                <hr style="height:0px;box-sizing:border-box;margin-top:20px;margin-bottom:20px;border-width:1px 0px 0px;border-right-style:initial;border-bottom-style:initial;border-left-style:initial;border-right-color:initial;border-bottom-color:initial;border-left-color:initial;border-image:initial;border-top-style:solid;border-top-color:rgb(238, 238, 238);visibility:hidden;"/>
+
+                <ul style="box-sizing:border-box;text-align:center;list-style:none;padding:0px;margin:20px 0px 0px;"><span style="text-align:center;list-style:none;display:table;"> </span>
+                    
+                    <li style="box-sizing:border-box;display:inline;width:48%;float:left;">
+                        <a href="https://ulyc.github.io/2021/01/18/2021%E5%B9%B4-%E7%94%A8%E6%9B%B4%E7%8E%B0%E4%BB%A3%E7%9A%84%E6%96%B9%E6%B3%95%E4%BD%BF%E7%94%A8PGP-%E4%B8%AD/" title="2021年，用更现代的方法使用PGP（中）" style="box-sizing:border-box;text-decoration:none;display:inline-block;border:1px solid rgb(221, 221, 221);font-family:-apple-system, BlinkMacSystemFont, &quot;Helvetica Neue&quot;, Arial, &quot;PingFang SC&quot;, &quot;Hiragino Sans GB&quot;, STHeiti, &quot;Microsoft YaHei&quot;, &quot;Microsoft JhengHei&quot;, &quot;Source Han Sans SC&quot;, &quot;Noto Sans CJK SC&quot;, &quot;Source Han Sans CN&quot;, &quot;Noto Sans SC&quot;, &quot;Source Han Sans TC&quot;, &quot;Noto Sans CJK TC&quot;, &quot;WenQuanYi Micro Hei&quot;, SimSun, sans-serif;line-height:1.7;text-transform:uppercase;font-weight:800;letter-spacing:1px;background-color:rgb(255, 255, 255);border-radius:0px;padding:15px 25px;font-size:14px;color:rgb(64, 64, 64);float:left;width:100%;">
+                            Previous<br style="box-sizing:border-box;"/>
+                            <span style="box-sizing:border-box;color:rgb(163, 163, 163);font-weight:400;letter-spacing:0.5px;">2021年，用更现代的方法使用PGP（中）</span>
+                        </a>
+                    </li>
+                    
+                    
+                    <li style="box-sizing:border-box;display:inline;width:48%;float:right;">
+                        <a href="https://ulyc.github.io/2021/02/25/Examining-the-differences-and-similarities-of-Yuanxiao-dumplings/" title="元宵汤圆异同考" style="box-sizing:border-box;text-decoration:none;display:inline-block;border:1px solid rgb(221, 221, 221);font-family:-apple-system, BlinkMacSystemFont, &quot;Helvetica Neue&quot;, Arial, &quot;PingFang SC&quot;, &quot;Hiragino Sans GB&quot;, STHeiti, &quot;Microsoft YaHei&quot;, &quot;Microsoft JhengHei&quot;, &quot;Source Han Sans SC&quot;, &quot;Noto Sans CJK SC&quot;, &quot;Source Han Sans CN&quot;, &quot;Noto Sans SC&quot;, &quot;Source Han Sans TC&quot;, &quot;Noto Sans CJK TC&quot;, &quot;WenQuanYi Micro Hei&quot;, SimSun, sans-serif;line-height:1.7;text-transform:uppercase;font-weight:800;letter-spacing:1px;background-color:rgb(255, 255, 255);border-radius:0px;padding:15px 25px;font-size:14px;color:rgb(64, 64, 64);float:right;width:100%;">
+                            Next<br style="box-sizing:border-box;"/>
+                            <span style="box-sizing:border-box;color:rgb(163, 163, 163);font-weight:400;letter-spacing:0.5px;">元宵汤圆异同考</span>
+                        </a>
+                    </li>
+                    
+                <span style="text-align:center;list-style:none;display:table;clear:both;"> </span></ul>
+
+                
+                
+                
+
+                
+                
+                <div style="box-sizing:border-box;"><div style="box-sizing:border-box;width:100%;border:0px;height:588px;position:relative;"><div style="-evernote-clipper-iframe:timeout;"></div></div></div>
+
+                
+                
+                
+
+                
+                
+                
+
+                
+
+            </div></div></div></div></div></div></div>
+</div></div>
+<a class="back-link" href="../articles.html">← 返回笔记列表</a>
+</body></html>

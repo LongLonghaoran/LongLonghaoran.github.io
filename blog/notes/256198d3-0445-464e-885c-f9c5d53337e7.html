@@ -1,0 +1,1110 @@
+<!DOCTYPE html>
+<html lang="zh-CN" data-theme="light">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Go 每日一库之 flag — 技术笔记</title>
+<style>
+:root {
+  --bg: #ffffff;
+  --text: #1a1a1a;
+  --muted: #666;
+  --border: #e0e0e0;
+  --code-bg: #f5f5f5;
+  --link: #0066cc;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #1a1a1a;
+    --text: #e0e0e0;
+    --muted: #999;
+    --border: #333;
+    --code-bg: #2a2a2a;
+    --link: #66bbff;
+  }
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  line-height: 1.7;
+  color: var(--text);
+  background: var(--bg);
+  max-width: 860px;
+  margin: 0 auto;
+  padding: 2rem 1.5rem;
+}
+.note-header {
+  border-bottom: 2px solid var(--border);
+  padding-bottom: 1rem;
+  margin-bottom: 2rem;
+}
+.note-title {
+  font-size: 1.6rem;
+  font-weight: 700;
+  margin-bottom: 0.3rem;
+}
+.note-meta {
+  color: var(--muted);
+  font-size: 0.85rem;
+}
+.note-content {
+  font-size: 0.95rem;
+}
+.note-content h1 { font-size: 1.4rem; margin: 1.2rem 0 0.6rem; }
+.note-content h2 { font-size: 1.2rem; margin: 1rem 0 0.5rem; }
+.note-content h3 { font-size: 1.05rem; margin: 0.8rem 0 0.4rem; }
+.note-content p { margin: 0.5rem 0; }
+.note-content ul, .note-content ol { margin: 0.5rem 0 0.5rem 2rem; }
+.note-content li { margin: 0.2rem 0; }
+.note-content pre {
+  background: var(--code-bg);
+  padding: 1rem;
+  border-radius: 6px;
+  overflow-x: auto;
+  margin: 0.8rem 0;
+  font-size: 0.85rem;
+}
+.note-content code {
+  background: var(--code-bg);
+  padding: 0.1rem 0.3rem;
+  border-radius: 3px;
+  font-size: 0.88em;
+}
+.note-content pre code {
+  background: none;
+  padding: 0;
+}
+.note-content blockquote {
+  border-left: 3px solid var(--border);
+  padding-left: 1rem;
+  color: var(--muted);
+  margin: 0.8rem 0;
+}
+.note-content a { color: var(--link); }
+.note-content img {
+  max-width: 100%;
+  height: auto;
+  border-radius: 6px;
+  margin: 0.5rem 0;
+}
+.note-content table {
+  border-collapse: collapse;
+  width: 100%;
+  margin: 0.8rem 0;
+}
+.note-content th, .note-content td {
+  border: 1px solid var(--border);
+  padding: 0.5rem;
+}
+.note-content th { background: var(--code-bg); }
+.media-placeholder {
+  background: var(--code-bg);
+  padding: 1rem;
+  text-align: center;
+  color: var(--muted);
+  border-radius: 6px;
+  margin: 0.5rem 0;
+  font-size: 0.85rem;
+}
+.encrypt-placeholder {
+  background: #fff3cd;
+  padding: 0.5rem;
+  text-align: center;
+  color: #856404;
+  border-radius: 6px;
+  margin: 0.5rem 0;
+  font-size: 0.85rem;
+}
+.back-link {
+  display: inline-block;
+  margin-top: 2rem;
+  color: var(--link);
+  text-decoration: none;
+  font-size: 0.85rem;
+}
+</style>
+</head>
+<body>
+<div class="note-header">
+  <div class="note-title">Go 每日一库之 flag</div>
+  <div class="note-meta">笔记本：Go语言</div>
+</div>
+<div class="note-content">
+<div style="--en-clipped-content:article">
+<div><br/></div><div style="font-size: 16px; display:block; min-width: 100%; position: relative;"> <div style="font-family:sans-serif;text-size-adjust:100%;font-size:18px;box-sizing:border-box;"><div style="font-family:&quot;source sans pro&quot;, &quot;helvetica neue&quot;, Arial, sans-serif;font-weight:400;-webkit-font-smoothing:antialiased;line-height:1.8;color:rgba(0, 0, 0, 0.84);background:rgb(254, 254, 254);scroll-behavior:smooth;"><div><span style="background-color:rgb(242, 242, 245);"><div><div><div style="background-color:rgb(255, 255, 255);">
+    
+    <div style="display:block;margin-bottom:20px;text-align:center;padding-bottom:10px;border-bottom:2px solid lightgrey;">
+      <h1 style="font-weight:400;font-size:1.8em;margin:0px;font-family:Athelas, STHeiti, &quot;Microsoft Yahei&quot;, serif;">Go 每日一库之 flag</h1>
+      
+      <div style="font-size:14px;color:rgb(138, 138, 138);">
+        <span style="font-size:15px;">
+          2020-01-10
+        </span>
+        <div style="display:inline;">
+            <a href="https://darjun.github.io/categories/go/" style="background-color:transparent;text-decoration:none;color:inherit;"><span style="color:inherit;">·</span> Go </a>
+            
+          </div>
+        <span><span style="">·</span> 约 4480 字 </span>
+          <span><span style="">·</span> 预计阅读 9 分钟 </span>
+
+        
+        
+          <span style="display:inline;">
+            | 阅读 <span>20340</span>
+          </span>
+        
+
+        
+        
+      </div>
+    </div>
+
+    
+    
+
+
+    
+    <div style="overflow-wrap:break-word;">
+      <h2 style="font-size:1.5em;font-weight:600;font-family:Athelas, STHeiti, &quot;Microsoft Yahei&quot;, serif;border-bottom:1px solid rgb(221, 221, 221);margin-top:2em;">缘起</h2>
+<p>我一直在想，有什么方式可以让人比较轻易地保持每日学习，持续输出的状态。写博客是一种方式，但不是每天都有想写的，值得写的东西。
+有时候一个技术比较复杂，写博客的时候经常会写着写着发现自己的理解有偏差，或者细节还没有完全掌握，要去查资料，了解了之后又继续写，如此反复。
+这样会导致一篇博客的耗时过长。</p>
+<p>我在每天浏览<a href="https://segmentfault.com/" style="background-color:transparent;text-decoration:none;color:rgb(192, 91, 77);">思否</a>、<a href="https://juejin.im/" style="background-color:transparent;text-decoration:none;color:rgb(192, 91, 77);">掘金</a>和<a href="https://github.com/" style="background-color:transparent;text-decoration:none;color:rgb(192, 91, 77);">Github</a>的过程中，发现一些比较好的想法，有<strong style="font-weight:700;">JS 每日一题</strong>，<strong style="font-weight:700;">NodeJS 每日一库</strong>，<strong style="font-weight:700;">每天一道面试题</strong>等等等等。
+<a href="https://github.com/parro-it/awesome-micro-npm-packages" style="background-color:transparent;text-decoration:none;color:rgb(192, 91, 77);">https://github.com/parro-it/awesome-micro-npm-packages</a>这个仓库收集 NodeJS 小型库，一天看一个不是梦！这也是我这个系列的灵感。
+我计划每天学习一个 Go 语言的库，输出一篇介绍型的博文。每天一库当然是理想状态，我心中的预期是一周 3-5 个。</p>
+<p>今天是第一天，我们从一个基础库聊起————Go 标准库中的<code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif">flag</code>。</p>
+<h2 style="font-size:1.5em;font-weight:600;font-family:Athelas, STHeiti, &quot;Microsoft Yahei&quot;, serif;border-bottom:1px solid rgb(221, 221, 221);margin-top:2em;">简介</h2>
+<p><code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif">flag</code>用于解析命令行选项。有过类 Unix 系统使用经验的童鞋对命令行选项应该不陌生。例如命令<code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif">ls -al</code>列出当前目录下所有文件和目录的详细信息，其中<code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif">-al</code>就是命令行选项。</p>
+<p>命令行选项在实际开发中很常用，特别是在写工具的时候。</p>
+<ul>
+<li>指定配置文件的路径，如<code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif">redis-server ./redis.conf</code>以当前目录下的配置文件<code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif">redis.conf</code>启动 Redis 服务器；</li>
+<li>自定义某些参数，如<code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif">python -m SimpleHTTPServer 8080</code>启动一个 HTTP 服务器，监听 8080 端口。如果不指定，则默认监听 8000 端口。</li>
+</ul>
+<h2 style="font-size:1.5em;font-weight:600;font-family:Athelas, STHeiti, &quot;Microsoft Yahei&quot;, serif;border-bottom:1px solid rgb(221, 221, 221);margin-top:2em;">快速使用</h2>
+<p>学习一个库的第一步当然是使用它。我们先看看<code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif">flag</code>库的基本使用：</p>
+<div><div style="color:rgb(88, 110, 117);background-color:rgb(248, 245, 236);margin:1em 0px;overflow-x:auto;position:relative;border:2px solid rgb(221, 221, 221);line-height:1.6;">
+<table style="font-size:inherit;font-weight:inherit;font-style:inherit;font-variant:inherit;border-collapse:collapse;position:relative;margin:0px;border:0px;width:auto;overflow:auto;display:block;border-spacing:0px;padding:0px;"><tbody><tr><td style="vertical-align:top;margin:0px;border:0px;margin-right:0.4em;padding:0px 0.8em 0px 0.4em;">
+<pre style="border-radius:4px;background-color: #fbfaf8;border: 1px solid rgba(0,0,0,.14902);color: #333;font-size: 12px;padding: 8px;font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif;box-sizing: border-box;"><code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span style="color:rgb(202, 202, 202);"> 1
+</span><span style="color:rgb(202, 202, 202);"> 2
+</span><span style="color:rgb(202, 202, 202);"> 3
+</span><span style="color:rgb(202, 202, 202);"> 4
+</span><span style="color:rgb(202, 202, 202);"> 5
+</span><span style="color:rgb(202, 202, 202);"> 6
+</span><span style="color:rgb(202, 202, 202);"> 7
+</span><span style="color:rgb(202, 202, 202);"> 8
+</span><span style="color:rgb(202, 202, 202);"> 9
+</span><span style="color:rgb(202, 202, 202);">10
+</span><span style="color:rgb(202, 202, 202);">11
+</span><span style="color:rgb(202, 202, 202);">12
+</span><span style="color:rgb(202, 202, 202);">13
+</span><span style="color:rgb(202, 202, 202);">14
+</span><span style="color:rgb(202, 202, 202);">15
+</span><span style="color:rgb(202, 202, 202);">16
+</span><span style="color:rgb(202, 202, 202);">17
+</span><span style="color:rgb(202, 202, 202);">18
+</span><span style="color:rgb(202, 202, 202);">19
+</span><span style="color:rgb(202, 202, 202);">20
+</span><span style="color:rgb(202, 202, 202);">21
+</span><span style="color:rgb(202, 202, 202);">22
+</span><span style="color:rgb(202, 202, 202);">23
+</span><span style="color:rgb(202, 202, 202);">24
+</span><span style="color:rgb(202, 202, 202);">25
+</span><span style="color:rgb(202, 202, 202);">26
+</span></code></pre></td>
+<td style="vertical-align:top;margin:0px;border:0px;padding:0px;">
+<pre style="border-radius:4px;background-color: #fbfaf8;border: 1px solid rgba(0,0,0,.14902);color: #333;font-size: 12px;padding: 8px;font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif;box-sizing: border-box;"><code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span><span><span style="color:rgb(220, 50, 47);font-weight:700;">package</span> <span style="color:rgb(38, 139, 210);">main</span>
+</span></span><span><span>
+</span></span><span><span><span style="color:rgb(220, 50, 47);font-weight:700;">import</span> <span>(</span>
+</span></span><span><span>  <span style="color:rgb(42, 161, 152);">"fmt"</span>
+</span></span><span><span>  <span style="color:rgb(42, 161, 152);">"flag"</span>
+</span></span><span><span><span>)</span>
+</span></span><span><span>
+</span></span><span><span><span style="color:rgb(133, 153, 0);">var</span> <span>(</span>
+</span></span><span><span>  <span style="color:rgb(38, 139, 210);">intflag</span> <span style="color:rgb(133, 153, 0);font-weight:700;">int</span>
+</span></span><span><span>  <span style="color:rgb(38, 139, 210);">boolflag</span> <span style="color:rgb(133, 153, 0);font-weight:700;">bool</span>
+</span></span><span><span>  <span style="color:rgb(38, 139, 210);">stringflag</span> <span style="color:rgb(133, 153, 0);font-weight:700;">string</span>
+</span></span><span><span><span>)</span>
+</span></span><span><span>
+</span></span><span><span><span style="color:rgb(133, 153, 0);">func</span> <span style="color:rgb(38, 139, 210);">init</span><span>()</span> <span>{</span>
+</span></span><span><span>  <span style="color:rgb(38, 139, 210);">flag</span><span>.</span><span style="color:rgb(38, 139, 210);">IntVar</span><span>(</span><span>&amp;</span><span style="color:rgb(38, 139, 210);">intflag</span><span>,</span> <span style="color:rgb(42, 161, 152);">"intflag"</span><span>,</span> <span style="color:rgb(42, 161, 152);font-weight:700;">0</span><span>,</span> <span style="color:rgb(42, 161, 152);">"int flag value"</span><span>)</span>
+</span></span><span><span>  <span style="color:rgb(38, 139, 210);">flag</span><span>.</span><span style="color:rgb(38, 139, 210);">BoolVar</span><span>(</span><span>&amp;</span><span style="color:rgb(38, 139, 210);">boolflag</span><span>,</span> <span style="color:rgb(42, 161, 152);">"boolflag"</span><span>,</span> <span style="color:rgb(133, 153, 0);font-weight:700;">false</span><span>,</span> <span style="color:rgb(42, 161, 152);">"bool flag value"</span><span>)</span>
+</span></span><span><span>  <span style="color:rgb(38, 139, 210);">flag</span><span>.</span><span style="color:rgb(38, 139, 210);">StringVar</span><span>(</span><span>&amp;</span><span style="color:rgb(38, 139, 210);">stringflag</span><span>,</span> <span style="color:rgb(42, 161, 152);">"stringflag"</span><span>,</span> <span style="color:rgb(42, 161, 152);">"default"</span><span>,</span> <span style="color:rgb(42, 161, 152);">"string flag value"</span><span>)</span>
+</span></span><span><span><span>}</span>
+</span></span><span><span>
+</span></span><span><span><span style="color:rgb(133, 153, 0);">func</span> <span style="color:rgb(38, 139, 210);">main</span><span>()</span> <span>{</span>
+</span></span><span><span>  <span style="color:rgb(38, 139, 210);">flag</span><span>.</span><span style="color:rgb(38, 139, 210);">Parse</span><span>()</span>
+</span></span><span><span>
+</span></span><span><span>  <span style="color:rgb(38, 139, 210);">fmt</span><span>.</span><span style="color:rgb(38, 139, 210);">Println</span><span>(</span><span style="color:rgb(42, 161, 152);">"int flag:"</span><span>,</span> <span style="color:rgb(38, 139, 210);">intflag</span><span>)</span>
+</span></span><span><span>  <span style="color:rgb(38, 139, 210);">fmt</span><span>.</span><span style="color:rgb(38, 139, 210);">Println</span><span>(</span><span style="color:rgb(42, 161, 152);">"bool flag:"</span><span>,</span> <span style="color:rgb(38, 139, 210);">boolflag</span><span>)</span>
+</span></span><span><span>  <span style="color:rgb(38, 139, 210);">fmt</span><span>.</span><span style="color:rgb(38, 139, 210);">Println</span><span>(</span><span style="color:rgb(42, 161, 152);">"string flag:"</span><span>,</span> <span style="color:rgb(38, 139, 210);">stringflag</span><span>)</span>
+</span></span><span><span><span>}</span>
+</span></span></code></pre></td></tr></tbody><span style="font-size:inherit;font-weight:inherit;font-style:inherit;font-variant:inherit;border-collapse:collapse;border-spacing:0px;position:absolute;top:0px;right:0px;padding:0px 7px;color:rgb(177, 177, 177);text-transform:capitalize;"></span></table>
+</div>
+</div><p>可以先编译程序，然后运行（我使用的是 Win10 + Git Bash）：</p>
+<div><div style="color:rgb(88, 110, 117);background-color:rgb(248, 245, 236);margin:1em 0px;overflow-x:auto;position:relative;border:2px solid rgb(221, 221, 221);line-height:1.6;">
+<table style="font-size:inherit;font-weight:inherit;font-style:inherit;font-variant:inherit;border-collapse:collapse;position:relative;margin:0px;border:0px;width:auto;overflow:auto;display:block;border-spacing:0px;padding:0px;"><tbody><tr><td style="vertical-align:top;margin:0px;border:0px;margin-right:0.4em;padding:0px 0.8em 0px 0.4em;">
+<pre style="border-radius:4px;background-color: #fbfaf8;border: 1px solid rgba(0,0,0,.14902);color: #333;font-size: 12px;padding: 8px;font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif;box-sizing: border-box;"><code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span style="color:rgb(202, 202, 202);">1
+</span><span style="color:rgb(202, 202, 202);">2
+</span></code></pre></td>
+<td style="vertical-align:top;margin:0px;border:0px;padding:0px;">
+<pre style="border-radius:4px;background-color: #fbfaf8;border: 1px solid rgba(0,0,0,.14902);color: #333;font-size: 12px;padding: 8px;font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif;box-sizing: border-box;"><code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span><span>$ go build -o main.exe main.go
+</span></span><span><span>$ ./main.exe -intflag 12 -boolflag 1 -stringflag test
+</span></span></code></pre></td></tr></tbody><span style="font-size:inherit;font-weight:inherit;font-style:inherit;font-variant:inherit;border-collapse:collapse;border-spacing:0px;position:absolute;top:0px;right:0px;padding:0px 7px;color:rgb(177, 177, 177);text-transform:capitalize;"></span></table>
+</div>
+</div><p>输出：</p>
+<div><div style="color:rgb(88, 110, 117);background-color:rgb(248, 245, 236);margin:1em 0px;overflow-x:auto;position:relative;border:2px solid rgb(221, 221, 221);line-height:1.6;">
+<table style="font-size:inherit;font-weight:inherit;font-style:inherit;font-variant:inherit;border-collapse:collapse;position:relative;margin:0px;border:0px;width:auto;overflow:auto;display:block;border-spacing:0px;padding:0px;"><tbody><tr><td style="vertical-align:top;margin:0px;border:0px;margin-right:0.4em;padding:0px 0.8em 0px 0.4em;">
+<pre style="border-radius:4px;background-color: #fbfaf8;border: 1px solid rgba(0,0,0,.14902);color: #333;font-size: 12px;padding: 8px;font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif;box-sizing: border-box;"><code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span style="color:rgb(202, 202, 202);">1
+</span><span style="color:rgb(202, 202, 202);">2
+</span><span style="color:rgb(202, 202, 202);">3
+</span></code></pre></td>
+<td style="vertical-align:top;margin:0px;border:0px;padding:0px;">
+<pre style="border-radius:4px;background-color: #fbfaf8;border: 1px solid rgba(0,0,0,.14902);color: #333;font-size: 12px;padding: 8px;font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif;box-sizing: border-box;"><code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span><span>int flag: 12
+</span></span><span><span>bool flag: true
+</span></span><span><span>string flag: test
+</span></span></code></pre></td></tr></tbody><span style="font-size:inherit;font-weight:inherit;font-style:inherit;font-variant:inherit;border-collapse:collapse;border-spacing:0px;position:absolute;top:0px;right:0px;padding:0px 7px;color:rgb(177, 177, 177);text-transform:capitalize;"></span></table>
+</div>
+</div><p>如果不设置某个选项，相应变量会取默认值：</p>
+<div><div style="color:rgb(88, 110, 117);background-color:rgb(248, 245, 236);margin:1em 0px;overflow-x:auto;position:relative;border:2px solid rgb(221, 221, 221);line-height:1.6;">
+<table style="font-size:inherit;font-weight:inherit;font-style:inherit;font-variant:inherit;border-collapse:collapse;position:relative;margin:0px;border:0px;width:auto;overflow:auto;display:block;border-spacing:0px;padding:0px;"><tbody><tr><td style="vertical-align:top;margin:0px;border:0px;margin-right:0.4em;padding:0px 0.8em 0px 0.4em;">
+<pre style="border-radius:4px;background-color: #fbfaf8;border: 1px solid rgba(0,0,0,.14902);color: #333;font-size: 12px;padding: 8px;font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif;box-sizing: border-box;"><code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span style="color:rgb(202, 202, 202);">1
+</span></code></pre></td>
+<td style="vertical-align:top;margin:0px;border:0px;padding:0px;">
+<pre style="border-radius:4px;background-color: #fbfaf8;border: 1px solid rgba(0,0,0,.14902);color: #333;font-size: 12px;padding: 8px;font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif;box-sizing: border-box;"><code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span><span>$ ./main.exe -intflag 12 -boolflag 1
+</span></span></code></pre></td></tr></tbody><span style="font-size:inherit;font-weight:inherit;font-style:inherit;font-variant:inherit;border-collapse:collapse;border-spacing:0px;position:absolute;top:0px;right:0px;padding:0px 7px;color:rgb(177, 177, 177);text-transform:capitalize;"></span></table>
+</div>
+</div><p>输出：</p>
+<div><div style="color:rgb(88, 110, 117);background-color:rgb(248, 245, 236);margin:1em 0px;overflow-x:auto;position:relative;border:2px solid rgb(221, 221, 221);line-height:1.6;">
+<table style="font-size:inherit;font-weight:inherit;font-style:inherit;font-variant:inherit;border-collapse:collapse;position:relative;margin:0px;border:0px;width:auto;overflow:auto;display:block;border-spacing:0px;padding:0px;"><tbody><tr><td style="vertical-align:top;margin:0px;border:0px;margin-right:0.4em;padding:0px 0.8em 0px 0.4em;">
+<pre style="border-radius:4px;background-color: #fbfaf8;border: 1px solid rgba(0,0,0,.14902);color: #333;font-size: 12px;padding: 8px;font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif;box-sizing: border-box;"><code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span style="color:rgb(202, 202, 202);">1
+</span><span style="color:rgb(202, 202, 202);">2
+</span><span style="color:rgb(202, 202, 202);">3
+</span></code></pre></td>
+<td style="vertical-align:top;margin:0px;border:0px;padding:0px;">
+<pre style="border-radius:4px;background-color: #fbfaf8;border: 1px solid rgba(0,0,0,.14902);color: #333;font-size: 12px;padding: 8px;font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif;box-sizing: border-box;"><code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span><span>int flag: 12
+</span></span><span><span>bool flag: true
+</span></span><span><span>string flag: default
+</span></span></code></pre></td></tr></tbody><span style="font-size:inherit;font-weight:inherit;font-style:inherit;font-variant:inherit;border-collapse:collapse;border-spacing:0px;position:absolute;top:0px;right:0px;padding:0px 7px;color:rgb(177, 177, 177);text-transform:capitalize;"></span></table>
+</div>
+</div><p>可以看到没有设置的选项<code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif">stringflag</code>为默认值<code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif">default</code>。</p>
+<p>还可以直接使用<code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif">go run</code>，这个命令会先编译程序生成可执行文件，然后执行该文件，将命令行中的其它选项传给这个程序。</p>
+<div><div style="color:rgb(88, 110, 117);background-color:rgb(248, 245, 236);margin:1em 0px;overflow-x:auto;position:relative;border:2px solid rgb(221, 221, 221);line-height:1.6;">
+<table style="font-size:inherit;font-weight:inherit;font-style:inherit;font-variant:inherit;border-collapse:collapse;position:relative;margin:0px;border:0px;width:auto;overflow:auto;display:block;border-spacing:0px;padding:0px;"><tbody><tr><td style="vertical-align:top;margin:0px;border:0px;margin-right:0.4em;padding:0px 0.8em 0px 0.4em;">
+<pre style="border-radius:4px;background-color: #fbfaf8;border: 1px solid rgba(0,0,0,.14902);color: #333;font-size: 12px;padding: 8px;font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif;box-sizing: border-box;"><code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span style="color:rgb(202, 202, 202);">1
+</span></code></pre></td>
+<td style="vertical-align:top;margin:0px;border:0px;padding:0px;">
+<pre style="border-radius:4px;background-color: #fbfaf8;border: 1px solid rgba(0,0,0,.14902);color: #333;font-size: 12px;padding: 8px;font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif;box-sizing: border-box;"><code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span><span>$ go run main.go -intflag 12 -boolflag 1
+</span></span></code></pre></td></tr></tbody><span style="font-size:inherit;font-weight:inherit;font-style:inherit;font-variant:inherit;border-collapse:collapse;border-spacing:0px;position:absolute;top:0px;right:0px;padding:0px 7px;color:rgb(177, 177, 177);text-transform:capitalize;"></span></table>
+</div>
+</div><p>可以使用<code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif">-h</code>显示选项帮助信息：</p>
+<div><div style="color:rgb(88, 110, 117);background-color:rgb(248, 245, 236);margin:1em 0px;overflow-x:auto;position:relative;border:2px solid rgb(221, 221, 221);line-height:1.6;">
+<table style="font-size:inherit;font-weight:inherit;font-style:inherit;font-variant:inherit;border-collapse:collapse;position:relative;margin:0px;border:0px;width:auto;overflow:auto;display:block;border-spacing:0px;padding:0px;"><tbody><tr><td style="vertical-align:top;margin:0px;border:0px;margin-right:0.4em;padding:0px 0.8em 0px 0.4em;">
+<pre style="border-radius:4px;background-color: #fbfaf8;border: 1px solid rgba(0,0,0,.14902);color: #333;font-size: 12px;padding: 8px;font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif;box-sizing: border-box;"><code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span style="color:rgb(202, 202, 202);">1
+</span><span style="color:rgb(202, 202, 202);">2
+</span><span style="color:rgb(202, 202, 202);">3
+</span><span style="color:rgb(202, 202, 202);">4
+</span><span style="color:rgb(202, 202, 202);">5
+</span><span style="color:rgb(202, 202, 202);">6
+</span><span style="color:rgb(202, 202, 202);">7
+</span><span style="color:rgb(202, 202, 202);">8
+</span></code></pre></td>
+<td style="vertical-align:top;margin:0px;border:0px;padding:0px;">
+<pre style="border-radius:4px;background-color: #fbfaf8;border: 1px solid rgba(0,0,0,.14902);color: #333;font-size: 12px;padding: 8px;font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif;box-sizing: border-box;"><code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span><span>$ ./main.exe -h
+</span></span><span><span>Usage of D:\code\golang\src\github.com\darjun\cmd\flag\main.exe:
+</span></span><span><span>  -boolflag
+</span></span><span><span>        bool flag value
+</span></span><span><span>  -intflag int
+</span></span><span><span>        int flag value
+</span></span><span><span>  -stringflag string
+</span></span><span><span>        string flag value (default "default")
+</span></span></code></pre></td></tr></tbody><span style="font-size:inherit;font-weight:inherit;font-style:inherit;font-variant:inherit;border-collapse:collapse;border-spacing:0px;position:absolute;top:0px;right:0px;padding:0px 7px;color:rgb(177, 177, 177);text-transform:capitalize;"></span></table>
+</div>
+</div><p>总结一下，使用<code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif">flag</code>库的一般步骤：</p>
+<ul>
+<li>定义一些全局变量存储选项的值，如这里的<code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif">intflag/boolflag/stringflag</code>；</li>
+<li>在<code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif">init</code>方法中使用<code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif">flag.TypeVar</code>方法定义选项，这里的<code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif">Type</code>可以为基本类型<code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif">Int/Uint/Float64/Bool</code>，还可以是时间间隔<code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif">time.Duration</code>。定义时传入变量的地址、选项名、默认值和帮助信息；</li>
+<li>在<code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif">main</code>方法中调用<code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif">flag.Parse</code>从<code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif">os.Args[1:]</code>中解析选项。因为<code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif">os.Args[0]</code>为可执行程序路径，会被剔除。</li>
+</ul>
+<p>注意点：</p>
+<p><code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif">flag.Parse</code>方法必须在所有选项都定义之后调用，且<code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif">flag.Parse</code>调用之后不能再定义选项。如果按照前面的步骤，基本不会出现问题。
+因为<code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif">init</code>在所有代码之前执行，将选项定义都放在<code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif">init</code>中，<code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif">main</code>函数中执行<code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif">flag.Parse</code>时所有选项都已经定义了。</p>
+<h2 style="font-size:1.5em;font-weight:600;font-family:Athelas, STHeiti, &quot;Microsoft Yahei&quot;, serif;border-bottom:1px solid rgb(221, 221, 221);margin-top:2em;">选项格式</h2>
+<p><code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif">flag</code>库支持三种命令行选项格式。</p>
+<div><div style="color:rgb(88, 110, 117);background-color:rgb(248, 245, 236);margin:1em 0px;overflow-x:auto;position:relative;border:2px solid rgb(221, 221, 221);line-height:1.6;">
+<table style="font-size:inherit;font-weight:inherit;font-style:inherit;font-variant:inherit;border-collapse:collapse;position:relative;margin:0px;border:0px;width:auto;overflow:auto;display:block;border-spacing:0px;padding:0px;"><tbody><tr><td style="vertical-align:top;margin:0px;border:0px;margin-right:0.4em;padding:0px 0.8em 0px 0.4em;">
+<pre style="border-radius:4px;background-color: #fbfaf8;border: 1px solid rgba(0,0,0,.14902);color: #333;font-size: 12px;padding: 8px;font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif;box-sizing: border-box;"><code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span style="color:rgb(202, 202, 202);">1
+</span><span style="color:rgb(202, 202, 202);">2
+</span><span style="color:rgb(202, 202, 202);">3
+</span></code></pre></td>
+<td style="vertical-align:top;margin:0px;border:0px;padding:0px;">
+<pre style="border-radius:4px;background-color: #fbfaf8;border: 1px solid rgba(0,0,0,.14902);color: #333;font-size: 12px;padding: 8px;font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif;box-sizing: border-box;"><code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span><span>-flag
+</span></span><span><span>-flag=x
+</span></span><span><span>-flag x
+</span></span></code></pre></td></tr></tbody><span style="font-size:inherit;font-weight:inherit;font-style:inherit;font-variant:inherit;border-collapse:collapse;border-spacing:0px;position:absolute;top:0px;right:0px;padding:0px 7px;color:rgb(177, 177, 177);text-transform:capitalize;"></span></table>
+</div>
+</div><p><code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif">-</code>和<code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif">--</code>都可以使用，它们的作用是一样的。有些库使用<code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif">-</code>表示短选项，<code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif">--</code>表示长选项。相对而言，<code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif">flag</code>使用起来更简单。</p>
+<p>第一种形式只支持布尔类型的选项，出现即为<code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif">true</code>，不出现为默认值。
+第三种形式不支持布尔类型的选项。因为这种形式的布尔选项在类 Unix 系统中可能会出现意想不到的行为。看下面的命令：</p>
+<div><div style="color:rgb(88, 110, 117);background-color:rgb(248, 245, 236);margin:1em 0px;overflow-x:auto;position:relative;border:2px solid rgb(221, 221, 221);line-height:1.6;">
+<table style="font-size:inherit;font-weight:inherit;font-style:inherit;font-variant:inherit;border-collapse:collapse;position:relative;margin:0px;border:0px;width:auto;overflow:auto;display:block;border-spacing:0px;padding:0px;"><tbody><tr><td style="vertical-align:top;margin:0px;border:0px;margin-right:0.4em;padding:0px 0.8em 0px 0.4em;">
+<pre style="border-radius:4px;background-color: #fbfaf8;border: 1px solid rgba(0,0,0,.14902);color: #333;font-size: 12px;padding: 8px;font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif;box-sizing: border-box;"><code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span style="color:rgb(202, 202, 202);">1
+</span></code></pre></td>
+<td style="vertical-align:top;margin:0px;border:0px;padding:0px;">
+<pre style="border-radius:4px;background-color: #fbfaf8;border: 1px solid rgba(0,0,0,.14902);color: #333;font-size: 12px;padding: 8px;font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif;box-sizing: border-box;"><code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span><span>cmd -x *
+</span></span></code></pre></td></tr></tbody><span style="font-size:inherit;font-weight:inherit;font-style:inherit;font-variant:inherit;border-collapse:collapse;border-spacing:0px;position:absolute;top:0px;right:0px;padding:0px 7px;color:rgb(177, 177, 177);text-transform:capitalize;"></span></table>
+</div>
+</div><p>其中，<code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif">*</code>是 shell 通配符。如果有名字为 0、false的文件，布尔选项<code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif">-x</code>将会取<code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif">false</code>。反之，布尔选项<code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif">-x</code>将会取<code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif">true</code>。而且这个选项消耗了一个参数。
+如果要显示设置一个布尔选项为<code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif">false</code>，只能使用<code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif">-flag=false</code>这种形式。</p>
+<p>遇到第一个非选项参数（即不是以<code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif">-</code>和<code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif">--</code>开头的）或终止符<code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif">--</code>，解析停止。运行下面程序：</p>
+<div><div style="color:rgb(88, 110, 117);background-color:rgb(248, 245, 236);margin:1em 0px;overflow-x:auto;position:relative;border:2px solid rgb(221, 221, 221);line-height:1.6;">
+<table style="font-size:inherit;font-weight:inherit;font-style:inherit;font-variant:inherit;border-collapse:collapse;position:relative;margin:0px;border:0px;width:auto;overflow:auto;display:block;border-spacing:0px;padding:0px;"><tbody><tr><td style="vertical-align:top;margin:0px;border:0px;margin-right:0.4em;padding:0px 0.8em 0px 0.4em;">
+<pre style="border-radius:4px;background-color: #fbfaf8;border: 1px solid rgba(0,0,0,.14902);color: #333;font-size: 12px;padding: 8px;font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif;box-sizing: border-box;"><code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span style="color:rgb(202, 202, 202);">1
+</span></code></pre></td>
+<td style="vertical-align:top;margin:0px;border:0px;padding:0px;">
+<pre style="border-radius:4px;background-color: #fbfaf8;border: 1px solid rgba(0,0,0,.14902);color: #333;font-size: 12px;padding: 8px;font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif;box-sizing: border-box;"><code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span><span>$ ./main.exe noflag -intflag 12
+</span></span></code></pre></td></tr></tbody><span style="font-size:inherit;font-weight:inherit;font-style:inherit;font-variant:inherit;border-collapse:collapse;border-spacing:0px;position:absolute;top:0px;right:0px;padding:0px 7px;color:rgb(177, 177, 177);text-transform:capitalize;"></span></table>
+</div>
+</div><p>将会输出：</p>
+<div><div style="color:rgb(88, 110, 117);background-color:rgb(248, 245, 236);margin:1em 0px;overflow-x:auto;position:relative;border:2px solid rgb(221, 221, 221);line-height:1.6;">
+<table style="font-size:inherit;font-weight:inherit;font-style:inherit;font-variant:inherit;border-collapse:collapse;position:relative;margin:0px;border:0px;width:auto;overflow:auto;display:block;border-spacing:0px;padding:0px;"><tbody><tr><td style="vertical-align:top;margin:0px;border:0px;margin-right:0.4em;padding:0px 0.8em 0px 0.4em;">
+<pre style="border-radius:4px;background-color: #fbfaf8;border: 1px solid rgba(0,0,0,.14902);color: #333;font-size: 12px;padding: 8px;font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif;box-sizing: border-box;"><code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span style="color:rgb(202, 202, 202);">1
+</span><span style="color:rgb(202, 202, 202);">2
+</span><span style="color:rgb(202, 202, 202);">3
+</span></code></pre></td>
+<td style="vertical-align:top;margin:0px;border:0px;padding:0px;">
+<pre style="border-radius:4px;background-color: #fbfaf8;border: 1px solid rgba(0,0,0,.14902);color: #333;font-size: 12px;padding: 8px;font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif;box-sizing: border-box;"><code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span><span>int flag: 0
+</span></span><span><span>bool flag: false
+</span></span><span><span>string flag: default
+</span></span></code></pre></td></tr></tbody><span style="font-size:inherit;font-weight:inherit;font-style:inherit;font-variant:inherit;border-collapse:collapse;border-spacing:0px;position:absolute;top:0px;right:0px;padding:0px 7px;color:rgb(177, 177, 177);text-transform:capitalize;"></span></table>
+</div>
+</div><p>因为解析遇到<code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif">noflag</code>就停止了，后面的选项<code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif">-intflag</code>没有被解析到。所以所有选项都取的默认值。</p>
+<p>运行下面的程序：</p>
+<div><div style="color:rgb(88, 110, 117);background-color:rgb(248, 245, 236);margin:1em 0px;overflow-x:auto;position:relative;border:2px solid rgb(221, 221, 221);line-height:1.6;">
+<table style="font-size:inherit;font-weight:inherit;font-style:inherit;font-variant:inherit;border-collapse:collapse;position:relative;margin:0px;border:0px;width:auto;overflow:auto;display:block;border-spacing:0px;padding:0px;"><tbody><tr><td style="vertical-align:top;margin:0px;border:0px;margin-right:0.4em;padding:0px 0.8em 0px 0.4em;">
+<pre style="border-radius:4px;background-color: #fbfaf8;border: 1px solid rgba(0,0,0,.14902);color: #333;font-size: 12px;padding: 8px;font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif;box-sizing: border-box;"><code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span style="color:rgb(202, 202, 202);">1
+</span></code></pre></td>
+<td style="vertical-align:top;margin:0px;border:0px;padding:0px;">
+<pre style="border-radius:4px;background-color: #fbfaf8;border: 1px solid rgba(0,0,0,.14902);color: #333;font-size: 12px;padding: 8px;font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif;box-sizing: border-box;"><code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span><span>$ ./main.exe -intflag 12 -- -boolflag=true
+</span></span></code></pre></td></tr></tbody><span style="font-size:inherit;font-weight:inherit;font-style:inherit;font-variant:inherit;border-collapse:collapse;border-spacing:0px;position:absolute;top:0px;right:0px;padding:0px 7px;color:rgb(177, 177, 177);text-transform:capitalize;"></span></table>
+</div>
+</div><p>将会输出：</p>
+<div><div style="color:rgb(88, 110, 117);background-color:rgb(248, 245, 236);margin:1em 0px;overflow-x:auto;position:relative;border:2px solid rgb(221, 221, 221);line-height:1.6;">
+<table style="font-size:inherit;font-weight:inherit;font-style:inherit;font-variant:inherit;border-collapse:collapse;position:relative;margin:0px;border:0px;width:auto;overflow:auto;display:block;border-spacing:0px;padding:0px;"><tbody><tr><td style="vertical-align:top;margin:0px;border:0px;margin-right:0.4em;padding:0px 0.8em 0px 0.4em;">
+<pre style="border-radius:4px;background-color: #fbfaf8;border: 1px solid rgba(0,0,0,.14902);color: #333;font-size: 12px;padding: 8px;font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif;box-sizing: border-box;"><code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span style="color:rgb(202, 202, 202);">1
+</span><span style="color:rgb(202, 202, 202);">2
+</span><span style="color:rgb(202, 202, 202);">3
+</span></code></pre></td>
+<td style="vertical-align:top;margin:0px;border:0px;padding:0px;">
+<pre style="border-radius:4px;background-color: #fbfaf8;border: 1px solid rgba(0,0,0,.14902);color: #333;font-size: 12px;padding: 8px;font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif;box-sizing: border-box;"><code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span><span>int flag: 12
+</span></span><span><span>bool flag: false
+</span></span><span><span>string flag: default
+</span></span></code></pre></td></tr></tbody><span style="font-size:inherit;font-weight:inherit;font-style:inherit;font-variant:inherit;border-collapse:collapse;border-spacing:0px;position:absolute;top:0px;right:0px;padding:0px 7px;color:rgb(177, 177, 177);text-transform:capitalize;"></span></table>
+</div>
+</div><p>首先解析了选项<code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif">intflag</code>，设置其值为 12。遇到<code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif">--</code>后解析终止了，后面的<code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif">--boolflag=true</code>没有被解析到，所以<code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif">boolflag</code>选项取默认值<code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif">false</code>。</p>
+<p>解析终止之后如果还有命令行参数，<code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif">flag</code>库会存储下来，通过<code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif">flag.Args</code>方法返回这些参数的切片。
+可以通过<code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif">flag.NArg</code>方法获取未解析的参数数量，<code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif">flag.Arg(i)</code>访问位置<code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif">i</code>（从 0 开始）上的参数。
+选项个数也可以通过调用<code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif">flag.NFlag</code>方法获取。</p>
+<p>稍稍修改一下上面的程序：</p>
+<div><div style="color:rgb(88, 110, 117);background-color:rgb(248, 245, 236);margin:1em 0px;overflow-x:auto;position:relative;border:2px solid rgb(221, 221, 221);line-height:1.6;">
+<table style="font-size:inherit;font-weight:inherit;font-style:inherit;font-variant:inherit;border-collapse:collapse;position:relative;margin:0px;border:0px;width:auto;overflow:auto;display:block;border-spacing:0px;padding:0px;"><tbody><tr><td style="vertical-align:top;margin:0px;border:0px;margin-right:0.4em;padding:0px 0.8em 0px 0.4em;">
+<pre style="border-radius:4px;background-color: #fbfaf8;border: 1px solid rgba(0,0,0,.14902);color: #333;font-size: 12px;padding: 8px;font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif;box-sizing: border-box;"><code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span style="color:rgb(202, 202, 202);"> 1
+</span><span style="color:rgb(202, 202, 202);"> 2
+</span><span style="color:rgb(202, 202, 202);"> 3
+</span><span style="color:rgb(202, 202, 202);"> 4
+</span><span style="color:rgb(202, 202, 202);"> 5
+</span><span style="color:rgb(202, 202, 202);"> 6
+</span><span style="color:rgb(202, 202, 202);"> 7
+</span><span style="color:rgb(202, 202, 202);"> 8
+</span><span style="color:rgb(202, 202, 202);"> 9
+</span><span style="color:rgb(202, 202, 202);">10
+</span><span style="color:rgb(202, 202, 202);">11
+</span></code></pre></td>
+<td style="vertical-align:top;margin:0px;border:0px;padding:0px;">
+<pre style="border-radius:4px;background-color: #fbfaf8;border: 1px solid rgba(0,0,0,.14902);color: #333;font-size: 12px;padding: 8px;font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif;box-sizing: border-box;"><code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span><span><span style="color:rgb(133, 153, 0);">func</span> <span style="color:rgb(38, 139, 210);">main</span><span>()</span> <span>{</span>
+</span></span><span><span>  <span style="color:rgb(38, 139, 210);">flag</span><span>.</span><span style="color:rgb(38, 139, 210);">Parse</span><span>()</span>
+</span></span><span><span>    
+</span></span><span><span>  <span style="color:rgb(38, 139, 210);">fmt</span><span>.</span><span style="color:rgb(38, 139, 210);">Println</span><span>(</span><span style="color:rgb(38, 139, 210);">flag</span><span>.</span><span style="color:rgb(38, 139, 210);">Args</span><span>())</span>
+</span></span><span><span>  <span style="color:rgb(38, 139, 210);">fmt</span><span>.</span><span style="color:rgb(38, 139, 210);">Println</span><span>(</span><span style="color:rgb(42, 161, 152);">"Non-Flag Argument Count:"</span><span>,</span> <span style="color:rgb(38, 139, 210);">flag</span><span>.</span><span style="color:rgb(38, 139, 210);">NArg</span><span>())</span>
+</span></span><span><span>  <span style="color:rgb(133, 153, 0);">for</span> <span style="color:rgb(38, 139, 210);">i</span> <span>:=</span> <span style="color:rgb(42, 161, 152);font-weight:700;">0</span><span>;</span> <span style="color:rgb(38, 139, 210);">i</span> <span>&lt;</span> <span style="color:rgb(38, 139, 210);">flag</span><span>.</span><span style="color:rgb(38, 139, 210);">NArg</span><span>();</span> <span style="color:rgb(38, 139, 210);">i</span><span>++</span> <span>{</span>
+</span></span><span><span>    <span style="color:rgb(38, 139, 210);">fmt</span><span>.</span><span style="color:rgb(38, 139, 210);">Printf</span><span>(</span><span style="color:rgb(42, 161, 152);">"Argument %d: %s\n"</span><span>,</span> <span style="color:rgb(38, 139, 210);">i</span><span>,</span> <span style="color:rgb(38, 139, 210);">flag</span><span>.</span><span style="color:rgb(38, 139, 210);">Arg</span><span>(</span><span style="color:rgb(38, 139, 210);">i</span><span>))</span>
+</span></span><span><span>  <span>}</span>
+</span></span><span><span>  
+</span></span><span><span>  <span style="color:rgb(38, 139, 210);">fmt</span><span>.</span><span style="color:rgb(38, 139, 210);">Println</span><span>(</span><span style="color:rgb(42, 161, 152);">"Flag Count:"</span><span>,</span> <span style="color:rgb(38, 139, 210);">flag</span><span>.</span><span style="color:rgb(38, 139, 210);">NFlag</span><span>())</span>
+</span></span><span><span><span>}</span>
+</span></span></code></pre></td></tr></tbody><span style="font-size:inherit;font-weight:inherit;font-style:inherit;font-variant:inherit;border-collapse:collapse;border-spacing:0px;position:absolute;top:0px;right:0px;padding:0px 7px;color:rgb(177, 177, 177);text-transform:capitalize;"></span></table>
+</div>
+</div><p>编译运行该程序：</p>
+<div><div style="color:rgb(88, 110, 117);background-color:rgb(248, 245, 236);margin:1em 0px;overflow-x:auto;position:relative;border:2px solid rgb(221, 221, 221);line-height:1.6;">
+<table style="font-size:inherit;font-weight:inherit;font-style:inherit;font-variant:inherit;border-collapse:collapse;position:relative;margin:0px;border:0px;width:auto;overflow:auto;display:block;border-spacing:0px;padding:0px;"><tbody><tr><td style="vertical-align:top;margin:0px;border:0px;margin-right:0.4em;padding:0px 0.8em 0px 0.4em;">
+<pre style="border-radius:4px;background-color: #fbfaf8;border: 1px solid rgba(0,0,0,.14902);color: #333;font-size: 12px;padding: 8px;font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif;box-sizing: border-box;"><code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span style="color:rgb(202, 202, 202);">1
+</span><span style="color:rgb(202, 202, 202);">2
+</span></code></pre></td>
+<td style="vertical-align:top;margin:0px;border:0px;padding:0px;">
+<pre style="border-radius:4px;background-color: #fbfaf8;border: 1px solid rgba(0,0,0,.14902);color: #333;font-size: 12px;padding: 8px;font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif;box-sizing: border-box;"><code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span><span>$ go build -o main.exe main.go
+</span></span><span><span>$ ./main.exe -intflag 12 -- -stringflag test
+</span></span></code></pre></td></tr></tbody><span style="font-size:inherit;font-weight:inherit;font-style:inherit;font-variant:inherit;border-collapse:collapse;border-spacing:0px;position:absolute;top:0px;right:0px;padding:0px 7px;color:rgb(177, 177, 177);text-transform:capitalize;"></span></table>
+</div>
+</div><p>输出：</p>
+<div><div style="color:rgb(88, 110, 117);background-color:rgb(248, 245, 236);margin:1em 0px;overflow-x:auto;position:relative;border:2px solid rgb(221, 221, 221);line-height:1.6;">
+<table style="font-size:inherit;font-weight:inherit;font-style:inherit;font-variant:inherit;border-collapse:collapse;position:relative;margin:0px;border:0px;width:auto;overflow:auto;display:block;border-spacing:0px;padding:0px;"><tbody><tr><td style="vertical-align:top;margin:0px;border:0px;margin-right:0.4em;padding:0px 0.8em 0px 0.4em;">
+<pre style="border-radius:4px;background-color: #fbfaf8;border: 1px solid rgba(0,0,0,.14902);color: #333;font-size: 12px;padding: 8px;font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif;box-sizing: border-box;"><code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span style="color:rgb(202, 202, 202);">1
+</span><span style="color:rgb(202, 202, 202);">2
+</span><span style="color:rgb(202, 202, 202);">3
+</span><span style="color:rgb(202, 202, 202);">4
+</span></code></pre></td>
+<td style="vertical-align:top;margin:0px;border:0px;padding:0px;">
+<pre style="border-radius:4px;background-color: #fbfaf8;border: 1px solid rgba(0,0,0,.14902);color: #333;font-size: 12px;padding: 8px;font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif;box-sizing: border-box;"><code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span><span>[-stringflag test]
+</span></span><span><span>Non-Flag Argument Count: 2
+</span></span><span><span>Argument 0: -stringflag
+</span></span><span><span>Argument 1: test
+</span></span></code></pre></td></tr></tbody><span style="font-size:inherit;font-weight:inherit;font-style:inherit;font-variant:inherit;border-collapse:collapse;border-spacing:0px;position:absolute;top:0px;right:0px;padding:0px 7px;color:rgb(177, 177, 177);text-transform:capitalize;"></span></table>
+</div>
+</div><p>解析遇到<code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif">--</code>终止后，剩余参数<code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif">-stringflag test</code>保存在<code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif">flag</code>中，可以通过<code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif">Args/NArg/Arg</code>等方法访问。</p>
+<p>整数选项值可以接受 1234（十进制）、0664（八进制）和 0x1234（十六进制）的形式，并且可以是负数。实际上<code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif">flag</code>在内部使用<code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif">strconv.ParseInt</code>方法将字符串解析成<code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif">int</code>。
+所以理论上，<code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif">ParseInt</code>接受的格式都可以。</p>
+<p>布尔类型的选项值可以为：</p>
+<ul>
+<li>取值为<code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif">true</code>的：1、t、T、true、TRUE、True；</li>
+<li>取值为<code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif">false</code>的：0、f、F、false、FALSE、False。</li>
+</ul>
+<h2 style="font-size:1.5em;font-weight:600;font-family:Athelas, STHeiti, &quot;Microsoft Yahei&quot;, serif;border-bottom:1px solid rgb(221, 221, 221);margin-top:2em;">另一种定义选项的方式</h2>
+<p>上面我们介绍了使用<code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif">flag.TypeVar</code>定义选项，这种方式需要我们先定义变量，然后变量的地址。
+还有一种方式，调用<code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif">flag.Type</code>（其中<code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif">Type</code>可以为<code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif">Int/Uint/Bool/Float64/String/Duration</code>等）会自动为我们分配变量，返回该变量的地址。用法与前一种方式类似：</p>
+<div><div style="color:rgb(88, 110, 117);background-color:rgb(248, 245, 236);margin:1em 0px;overflow-x:auto;position:relative;border:2px solid rgb(221, 221, 221);line-height:1.6;">
+<table style="font-size:inherit;font-weight:inherit;font-style:inherit;font-variant:inherit;border-collapse:collapse;position:relative;margin:0px;border:0px;width:auto;overflow:auto;display:block;border-spacing:0px;padding:0px;"><tbody><tr><td style="vertical-align:top;margin:0px;border:0px;margin-right:0.4em;padding:0px 0.8em 0px 0.4em;">
+<pre style="border-radius:4px;background-color: #fbfaf8;border: 1px solid rgba(0,0,0,.14902);color: #333;font-size: 12px;padding: 8px;font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif;box-sizing: border-box;"><code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span style="color:rgb(202, 202, 202);"> 1
+</span><span style="color:rgb(202, 202, 202);"> 2
+</span><span style="color:rgb(202, 202, 202);"> 3
+</span><span style="color:rgb(202, 202, 202);"> 4
+</span><span style="color:rgb(202, 202, 202);"> 5
+</span><span style="color:rgb(202, 202, 202);"> 6
+</span><span style="color:rgb(202, 202, 202);"> 7
+</span><span style="color:rgb(202, 202, 202);"> 8
+</span><span style="color:rgb(202, 202, 202);"> 9
+</span><span style="color:rgb(202, 202, 202);">10
+</span><span style="color:rgb(202, 202, 202);">11
+</span><span style="color:rgb(202, 202, 202);">12
+</span><span style="color:rgb(202, 202, 202);">13
+</span><span style="color:rgb(202, 202, 202);">14
+</span><span style="color:rgb(202, 202, 202);">15
+</span><span style="color:rgb(202, 202, 202);">16
+</span><span style="color:rgb(202, 202, 202);">17
+</span><span style="color:rgb(202, 202, 202);">18
+</span><span style="color:rgb(202, 202, 202);">19
+</span><span style="color:rgb(202, 202, 202);">20
+</span><span style="color:rgb(202, 202, 202);">21
+</span><span style="color:rgb(202, 202, 202);">22
+</span><span style="color:rgb(202, 202, 202);">23
+</span><span style="color:rgb(202, 202, 202);">24
+</span><span style="color:rgb(202, 202, 202);">25
+</span><span style="color:rgb(202, 202, 202);">26
+</span></code></pre></td>
+<td style="vertical-align:top;margin:0px;border:0px;padding:0px;">
+<pre style="border-radius:4px;background-color: #fbfaf8;border: 1px solid rgba(0,0,0,.14902);color: #333;font-size: 12px;padding: 8px;font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif;box-sizing: border-box;"><code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span><span><span style="color:rgb(220, 50, 47);font-weight:700;">package</span> <span style="color:rgb(38, 139, 210);">main</span>
+</span></span><span><span>
+</span></span><span><span><span style="color:rgb(220, 50, 47);font-weight:700;">import</span> <span>(</span>
+</span></span><span><span>  <span style="color:rgb(42, 161, 152);">"fmt"</span>
+</span></span><span><span>  <span style="color:rgb(42, 161, 152);">"flag"</span>
+</span></span><span><span><span>)</span>
+</span></span><span><span>
+</span></span><span><span><span style="color:rgb(133, 153, 0);">var</span> <span>(</span>
+</span></span><span><span>  <span style="color:rgb(38, 139, 210);">intflag</span> <span>*</span><span style="color:rgb(133, 153, 0);font-weight:700;">int</span>
+</span></span><span><span>  <span style="color:rgb(38, 139, 210);">boolflag</span> <span>*</span><span style="color:rgb(133, 153, 0);font-weight:700;">bool</span>
+</span></span><span><span>  <span style="color:rgb(38, 139, 210);">stringflag</span> <span>*</span><span style="color:rgb(133, 153, 0);font-weight:700;">string</span>
+</span></span><span><span><span>)</span>
+</span></span><span><span>
+</span></span><span><span><span style="color:rgb(133, 153, 0);">func</span> <span style="color:rgb(38, 139, 210);">init</span><span>()</span> <span>{</span>
+</span></span><span><span>  <span style="color:rgb(38, 139, 210);">intflag</span> <span>=</span> <span style="color:rgb(38, 139, 210);">flag</span><span>.</span><span style="color:rgb(38, 139, 210);">Int</span><span>(</span><span style="color:rgb(42, 161, 152);">"intflag"</span><span>,</span> <span style="color:rgb(42, 161, 152);font-weight:700;">0</span><span>,</span> <span style="color:rgb(42, 161, 152);">"int flag value"</span><span>)</span>
+</span></span><span><span>  <span style="color:rgb(38, 139, 210);">boolflag</span> <span>=</span> <span style="color:rgb(38, 139, 210);">flag</span><span>.</span><span style="color:rgb(38, 139, 210);">Bool</span><span>(</span><span style="color:rgb(42, 161, 152);">"boolflag"</span><span>,</span> <span style="color:rgb(133, 153, 0);font-weight:700;">false</span><span>,</span> <span style="color:rgb(42, 161, 152);">"bool flag value"</span><span>)</span>
+</span></span><span><span>  <span style="color:rgb(38, 139, 210);">stringflag</span> <span>=</span> <span style="color:rgb(38, 139, 210);">flag</span><span>.</span><span style="color:rgb(38, 139, 210);">String</span><span>(</span><span style="color:rgb(42, 161, 152);">"stringflag"</span><span>,</span> <span style="color:rgb(42, 161, 152);">"default"</span><span>,</span> <span style="color:rgb(42, 161, 152);">"string flag value"</span><span>)</span>
+</span></span><span><span><span>}</span>
+</span></span><span><span>
+</span></span><span><span><span style="color:rgb(133, 153, 0);">func</span> <span style="color:rgb(38, 139, 210);">main</span><span>()</span> <span>{</span>
+</span></span><span><span>  <span style="color:rgb(38, 139, 210);">flag</span><span>.</span><span style="color:rgb(38, 139, 210);">Parse</span><span>()</span>
+</span></span><span><span>    
+</span></span><span><span>  <span style="color:rgb(38, 139, 210);">fmt</span><span>.</span><span style="color:rgb(38, 139, 210);">Println</span><span>(</span><span style="color:rgb(42, 161, 152);">"int flag:"</span><span>,</span> <span>*</span><span style="color:rgb(38, 139, 210);">intflag</span><span>)</span>
+</span></span><span><span>  <span style="color:rgb(38, 139, 210);">fmt</span><span>.</span><span style="color:rgb(38, 139, 210);">Println</span><span>(</span><span style="color:rgb(42, 161, 152);">"bool flag:"</span><span>,</span> <span>*</span><span style="color:rgb(38, 139, 210);">boolflag</span><span>)</span>
+</span></span><span><span>  <span style="color:rgb(38, 139, 210);">fmt</span><span>.</span><span style="color:rgb(38, 139, 210);">Println</span><span>(</span><span style="color:rgb(42, 161, 152);">"string flag:"</span><span>,</span> <span>*</span><span style="color:rgb(38, 139, 210);">stringflag</span><span>)</span>
+</span></span><span><span><span>}</span>
+</span></span></code></pre></td></tr></tbody><span style="font-size:inherit;font-weight:inherit;font-style:inherit;font-variant:inherit;border-collapse:collapse;border-spacing:0px;position:absolute;top:0px;right:0px;padding:0px 7px;color:rgb(177, 177, 177);text-transform:capitalize;"></span></table>
+</div>
+</div><p>编译并运行程序：</p>
+<div><div style="color:rgb(88, 110, 117);background-color:rgb(248, 245, 236);margin:1em 0px;overflow-x:auto;position:relative;border:2px solid rgb(221, 221, 221);line-height:1.6;">
+<table style="font-size:inherit;font-weight:inherit;font-style:inherit;font-variant:inherit;border-collapse:collapse;position:relative;margin:0px;border:0px;width:auto;overflow:auto;display:block;border-spacing:0px;padding:0px;"><tbody><tr><td style="vertical-align:top;margin:0px;border:0px;margin-right:0.4em;padding:0px 0.8em 0px 0.4em;">
+<pre style="border-radius:4px;background-color: #fbfaf8;border: 1px solid rgba(0,0,0,.14902);color: #333;font-size: 12px;padding: 8px;font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif;box-sizing: border-box;"><code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span style="color:rgb(202, 202, 202);">1
+</span><span style="color:rgb(202, 202, 202);">2
+</span></code></pre></td>
+<td style="vertical-align:top;margin:0px;border:0px;padding:0px;">
+<pre style="border-radius:4px;background-color: #fbfaf8;border: 1px solid rgba(0,0,0,.14902);color: #333;font-size: 12px;padding: 8px;font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif;box-sizing: border-box;"><code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span><span>$ go build -o main.exe main.go
+</span></span><span><span>$ ./main.exe -intflag 12
+</span></span></code></pre></td></tr></tbody><span style="font-size:inherit;font-weight:inherit;font-style:inherit;font-variant:inherit;border-collapse:collapse;border-spacing:0px;position:absolute;top:0px;right:0px;padding:0px 7px;color:rgb(177, 177, 177);text-transform:capitalize;"></span></table>
+</div>
+</div><p>将输出：</p>
+<div><div style="color:rgb(88, 110, 117);background-color:rgb(248, 245, 236);margin:1em 0px;overflow-x:auto;position:relative;border:2px solid rgb(221, 221, 221);line-height:1.6;">
+<table style="font-size:inherit;font-weight:inherit;font-style:inherit;font-variant:inherit;border-collapse:collapse;position:relative;margin:0px;border:0px;width:auto;overflow:auto;display:block;border-spacing:0px;padding:0px;"><tbody><tr><td style="vertical-align:top;margin:0px;border:0px;margin-right:0.4em;padding:0px 0.8em 0px 0.4em;">
+<pre style="border-radius:4px;background-color: #fbfaf8;border: 1px solid rgba(0,0,0,.14902);color: #333;font-size: 12px;padding: 8px;font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif;box-sizing: border-box;"><code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span style="color:rgb(202, 202, 202);">1
+</span><span style="color:rgb(202, 202, 202);">2
+</span><span style="color:rgb(202, 202, 202);">3
+</span></code></pre></td>
+<td style="vertical-align:top;margin:0px;border:0px;padding:0px;">
+<pre style="border-radius:4px;background-color: #fbfaf8;border: 1px solid rgba(0,0,0,.14902);color: #333;font-size: 12px;padding: 8px;font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif;box-sizing: border-box;"><code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span><span>int flag: 12
+</span></span><span><span>bool flag: false
+</span></span><span><span>string flag: default
+</span></span></code></pre></td></tr></tbody><span style="font-size:inherit;font-weight:inherit;font-style:inherit;font-variant:inherit;border-collapse:collapse;border-spacing:0px;position:absolute;top:0px;right:0px;padding:0px 7px;color:rgb(177, 177, 177);text-transform:capitalize;"></span></table>
+</div>
+</div><p>除了使用时需要解引用，其它与前一种方式基本相同。</p>
+<h2 style="font-size:1.5em;font-weight:600;font-family:Athelas, STHeiti, &quot;Microsoft Yahei&quot;, serif;border-bottom:1px solid rgb(221, 221, 221);margin-top:2em;">高级用法</h2>
+<h3 style="font-size:1.3em;font-weight:600;font-family:Athelas, STHeiti, &quot;Microsoft Yahei&quot;, serif;margin-top:1.5em;">定义短选项</h3>
+<p><code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif">flag</code>库并没有显示支持短选项，但是可以通过给某个相同的变量设置不同的选项来实现。即两个选项共享同一个变量。
+由于初始化顺序不确定，必须保证它们拥有相同的默认值。否则不传该选项时，行为是不确定的。</p>
+<div><div style="color:rgb(88, 110, 117);background-color:rgb(248, 245, 236);margin:1em 0px;overflow-x:auto;position:relative;border:2px solid rgb(221, 221, 221);line-height:1.6;">
+<table style="font-size:inherit;font-weight:inherit;font-style:inherit;font-variant:inherit;border-collapse:collapse;position:relative;margin:0px;border:0px;width:auto;overflow:auto;display:block;border-spacing:0px;padding:0px;"><tbody><tr><td style="vertical-align:top;margin:0px;border:0px;margin-right:0.4em;padding:0px 0.8em 0px 0.4em;">
+<pre style="border-radius:4px;background-color: #fbfaf8;border: 1px solid rgba(0,0,0,.14902);color: #333;font-size: 12px;padding: 8px;font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif;box-sizing: border-box;"><code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span style="color:rgb(202, 202, 202);"> 1
+</span><span style="color:rgb(202, 202, 202);"> 2
+</span><span style="color:rgb(202, 202, 202);"> 3
+</span><span style="color:rgb(202, 202, 202);"> 4
+</span><span style="color:rgb(202, 202, 202);"> 5
+</span><span style="color:rgb(202, 202, 202);"> 6
+</span><span style="color:rgb(202, 202, 202);"> 7
+</span><span style="color:rgb(202, 202, 202);"> 8
+</span><span style="color:rgb(202, 202, 202);"> 9
+</span><span style="color:rgb(202, 202, 202);">10
+</span><span style="color:rgb(202, 202, 202);">11
+</span><span style="color:rgb(202, 202, 202);">12
+</span><span style="color:rgb(202, 202, 202);">13
+</span><span style="color:rgb(202, 202, 202);">14
+</span><span style="color:rgb(202, 202, 202);">15
+</span><span style="color:rgb(202, 202, 202);">16
+</span><span style="color:rgb(202, 202, 202);">17
+</span><span style="color:rgb(202, 202, 202);">18
+</span><span style="color:rgb(202, 202, 202);">19
+</span><span style="color:rgb(202, 202, 202);">20
+</span><span style="color:rgb(202, 202, 202);">21
+</span><span style="color:rgb(202, 202, 202);">22
+</span><span style="color:rgb(202, 202, 202);">23
+</span><span style="color:rgb(202, 202, 202);">24
+</span></code></pre></td>
+<td style="vertical-align:top;margin:0px;border:0px;padding:0px;">
+<pre style="border-radius:4px;background-color: #fbfaf8;border: 1px solid rgba(0,0,0,.14902);color: #333;font-size: 12px;padding: 8px;font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif;box-sizing: border-box;"><code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span><span><span style="color:rgb(220, 50, 47);font-weight:700;">package</span> <span style="color:rgb(38, 139, 210);">main</span>
+</span></span><span><span>
+</span></span><span><span><span style="color:rgb(220, 50, 47);font-weight:700;">import</span> <span>(</span>
+</span></span><span><span>  <span style="color:rgb(42, 161, 152);">"fmt"</span>
+</span></span><span><span>  <span style="color:rgb(42, 161, 152);">"flag"</span>
+</span></span><span><span><span>)</span>
+</span></span><span><span>
+</span></span><span><span><span style="color:rgb(133, 153, 0);">var</span> <span style="color:rgb(38, 139, 210);">logLevel</span> <span style="color:rgb(133, 153, 0);font-weight:700;">string</span>
+</span></span><span><span>
+</span></span><span><span><span style="color:rgb(133, 153, 0);">func</span> <span style="color:rgb(38, 139, 210);">init</span><span>()</span> <span>{</span>
+</span></span><span><span>  <span style="color:rgb(133, 153, 0);">const</span> <span>(</span>
+</span></span><span><span>    <span style="color:rgb(38, 139, 210);">defaultLogLevel</span> <span>=</span> <span style="color:rgb(42, 161, 152);">"DEBUG"</span>
+</span></span><span><span>    <span style="color:rgb(38, 139, 210);">usage</span> <span>=</span> <span style="color:rgb(42, 161, 152);">"set log level value"</span>
+</span></span><span><span>  <span>)</span>
+</span></span><span><span>  
+</span></span><span><span>  <span style="color:rgb(38, 139, 210);">flag</span><span>.</span><span style="color:rgb(38, 139, 210);">StringVar</span><span>(</span><span>&amp;</span><span style="color:rgb(38, 139, 210);">logLevel</span><span>,</span> <span style="color:rgb(42, 161, 152);">"log_type"</span><span>,</span> <span style="color:rgb(38, 139, 210);">defaultLogLevel</span><span>,</span> <span style="color:rgb(38, 139, 210);">usage</span><span>)</span>
+</span></span><span><span>  <span style="color:rgb(38, 139, 210);">flag</span><span>.</span><span style="color:rgb(38, 139, 210);">StringVar</span><span>(</span><span>&amp;</span><span style="color:rgb(38, 139, 210);">logLevel</span><span>,</span> <span style="color:rgb(42, 161, 152);">"l"</span><span>,</span> <span style="color:rgb(38, 139, 210);">defaultLogLevel</span><span>,</span> <span style="color:rgb(38, 139, 210);">usage</span> <span>+</span> <span style="color:rgb(42, 161, 152);">"(shorthand)"</span><span>)</span>
+</span></span><span><span><span>}</span>
+</span></span><span><span>
+</span></span><span><span><span style="color:rgb(133, 153, 0);">func</span> <span style="color:rgb(38, 139, 210);">main</span><span>()</span> <span>{</span>
+</span></span><span><span>  <span style="color:rgb(38, 139, 210);">flag</span><span>.</span><span style="color:rgb(38, 139, 210);">Parse</span><span>()</span>
+</span></span><span><span>
+</span></span><span><span>  <span style="color:rgb(38, 139, 210);">fmt</span><span>.</span><span style="color:rgb(38, 139, 210);">Println</span><span>(</span><span style="color:rgb(42, 161, 152);">"log level:"</span><span>,</span> <span style="color:rgb(38, 139, 210);">logLevel</span><span>)</span>
+</span></span><span><span><span>}</span>
+</span></span></code></pre></td></tr></tbody><span style="font-size:inherit;font-weight:inherit;font-style:inherit;font-variant:inherit;border-collapse:collapse;border-spacing:0px;position:absolute;top:0px;right:0px;padding:0px 7px;color:rgb(177, 177, 177);text-transform:capitalize;"></span></table>
+</div>
+</div><p>编译、运行程序：</p>
+<div><div style="color:rgb(88, 110, 117);background-color:rgb(248, 245, 236);margin:1em 0px;overflow-x:auto;position:relative;border:2px solid rgb(221, 221, 221);line-height:1.6;">
+<table style="font-size:inherit;font-weight:inherit;font-style:inherit;font-variant:inherit;border-collapse:collapse;position:relative;margin:0px;border:0px;width:auto;overflow:auto;display:block;border-spacing:0px;padding:0px;"><tbody><tr><td style="vertical-align:top;margin:0px;border:0px;margin-right:0.4em;padding:0px 0.8em 0px 0.4em;">
+<pre style="border-radius:4px;background-color: #fbfaf8;border: 1px solid rgba(0,0,0,.14902);color: #333;font-size: 12px;padding: 8px;font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif;box-sizing: border-box;"><code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span style="color:rgb(202, 202, 202);">1
+</span><span style="color:rgb(202, 202, 202);">2
+</span><span style="color:rgb(202, 202, 202);">3
+</span></code></pre></td>
+<td style="vertical-align:top;margin:0px;border:0px;padding:0px;">
+<pre style="border-radius:4px;background-color: #fbfaf8;border: 1px solid rgba(0,0,0,.14902);color: #333;font-size: 12px;padding: 8px;font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif;box-sizing: border-box;"><code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span><span>$ go build -o main.exe main.go
+</span></span><span><span>$ ./main.exe -log_type WARNING
+</span></span><span><span>$ ./main.exe -l WARNING
+</span></span></code></pre></td></tr></tbody><span style="font-size:inherit;font-weight:inherit;font-style:inherit;font-variant:inherit;border-collapse:collapse;border-spacing:0px;position:absolute;top:0px;right:0px;padding:0px 7px;color:rgb(177, 177, 177);text-transform:capitalize;"></span></table>
+</div>
+</div><p>使用长、短选项均输出：</p>
+<div><div style="color:rgb(88, 110, 117);background-color:rgb(248, 245, 236);margin:1em 0px;overflow-x:auto;position:relative;border:2px solid rgb(221, 221, 221);line-height:1.6;">
+<table style="font-size:inherit;font-weight:inherit;font-style:inherit;font-variant:inherit;border-collapse:collapse;position:relative;margin:0px;border:0px;width:auto;overflow:auto;display:block;border-spacing:0px;padding:0px;"><tbody><tr><td style="vertical-align:top;margin:0px;border:0px;margin-right:0.4em;padding:0px 0.8em 0px 0.4em;">
+<pre style="border-radius:4px;background-color: #fbfaf8;border: 1px solid rgba(0,0,0,.14902);color: #333;font-size: 12px;padding: 8px;font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif;box-sizing: border-box;"><code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span style="color:rgb(202, 202, 202);">1
+</span></code></pre></td>
+<td style="vertical-align:top;margin:0px;border:0px;padding:0px;">
+<pre style="border-radius:4px;background-color: #fbfaf8;border: 1px solid rgba(0,0,0,.14902);color: #333;font-size: 12px;padding: 8px;font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif;box-sizing: border-box;"><code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span><span>log level: WARNING
+</span></span></code></pre></td></tr></tbody><span style="font-size:inherit;font-weight:inherit;font-style:inherit;font-variant:inherit;border-collapse:collapse;border-spacing:0px;position:absolute;top:0px;right:0px;padding:0px 7px;color:rgb(177, 177, 177);text-transform:capitalize;"></span></table>
+</div>
+</div><p>不传入该选项，输出默认值：</p>
+<div><div style="color:rgb(88, 110, 117);background-color:rgb(248, 245, 236);margin:1em 0px;overflow-x:auto;position:relative;border:2px solid rgb(221, 221, 221);line-height:1.6;">
+<table style="font-size:inherit;font-weight:inherit;font-style:inherit;font-variant:inherit;border-collapse:collapse;position:relative;margin:0px;border:0px;width:auto;overflow:auto;display:block;border-spacing:0px;padding:0px;"><tbody><tr><td style="vertical-align:top;margin:0px;border:0px;margin-right:0.4em;padding:0px 0.8em 0px 0.4em;">
+<pre style="border-radius:4px;background-color: #fbfaf8;border: 1px solid rgba(0,0,0,.14902);color: #333;font-size: 12px;padding: 8px;font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif;box-sizing: border-box;"><code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span style="color:rgb(202, 202, 202);">1
+</span><span style="color:rgb(202, 202, 202);">2
+</span></code></pre></td>
+<td style="vertical-align:top;margin:0px;border:0px;padding:0px;">
+<pre style="border-radius:4px;background-color: #fbfaf8;border: 1px solid rgba(0,0,0,.14902);color: #333;font-size: 12px;padding: 8px;font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif;box-sizing: border-box;"><code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span><span>$ ./main.exe
+</span></span><span><span>log level: DEBUG
+</span></span></code></pre></td></tr></tbody><span style="font-size:inherit;font-weight:inherit;font-style:inherit;font-variant:inherit;border-collapse:collapse;border-spacing:0px;position:absolute;top:0px;right:0px;padding:0px 7px;color:rgb(177, 177, 177);text-transform:capitalize;"></span></table>
+</div>
+</div><h3 style="font-size:1.3em;font-weight:600;font-family:Athelas, STHeiti, &quot;Microsoft Yahei&quot;, serif;margin-top:1.5em;">解析时间间隔</h3>
+<p>除了能使用基本类型作为选项，<code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif">flag</code>库还支持<code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif">time.Duration</code>类型，即时间间隔。时间间隔支持的格式非常之多，例如"300ms"、"-1.5h"、“2h45m"等等等等。
+时间单位可以是 ns/us/ms/s/m/h/day 等。实际上<code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif">flag</code>内部会调用<code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif">time.ParseDuration</code>。具体支持的格式可以参见<a href="https://golang.org/pkg/time/#ParseDuration" style="background-color:transparent;text-decoration:none;color:rgb(192, 91, 77);">time</a>（需fq）库的文档。</p>
+<div><div style="color:rgb(88, 110, 117);background-color:rgb(248, 245, 236);margin:1em 0px;overflow-x:auto;position:relative;border:2px solid rgb(221, 221, 221);line-height:1.6;">
+<table style="font-size:inherit;font-weight:inherit;font-style:inherit;font-variant:inherit;border-collapse:collapse;position:relative;margin:0px;border:0px;width:auto;overflow:auto;display:block;border-spacing:0px;padding:0px;"><tbody><tr><td style="vertical-align:top;margin:0px;border:0px;margin-right:0.4em;padding:0px 0.8em 0px 0.4em;">
+<pre style="border-radius:4px;background-color: #fbfaf8;border: 1px solid rgba(0,0,0,.14902);color: #333;font-size: 12px;padding: 8px;font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif;box-sizing: border-box;"><code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span style="color:rgb(202, 202, 202);"> 1
+</span><span style="color:rgb(202, 202, 202);"> 2
+</span><span style="color:rgb(202, 202, 202);"> 3
+</span><span style="color:rgb(202, 202, 202);"> 4
+</span><span style="color:rgb(202, 202, 202);"> 5
+</span><span style="color:rgb(202, 202, 202);"> 6
+</span><span style="color:rgb(202, 202, 202);"> 7
+</span><span style="color:rgb(202, 202, 202);"> 8
+</span><span style="color:rgb(202, 202, 202);"> 9
+</span><span style="color:rgb(202, 202, 202);">10
+</span><span style="color:rgb(202, 202, 202);">11
+</span><span style="color:rgb(202, 202, 202);">12
+</span><span style="color:rgb(202, 202, 202);">13
+</span><span style="color:rgb(202, 202, 202);">14
+</span><span style="color:rgb(202, 202, 202);">15
+</span><span style="color:rgb(202, 202, 202);">16
+</span><span style="color:rgb(202, 202, 202);">17
+</span><span style="color:rgb(202, 202, 202);">18
+</span><span style="color:rgb(202, 202, 202);">19
+</span><span style="color:rgb(202, 202, 202);">20
+</span><span style="color:rgb(202, 202, 202);">21
+</span><span style="color:rgb(202, 202, 202);">22
+</span></code></pre></td>
+<td style="vertical-align:top;margin:0px;border:0px;padding:0px;">
+<pre style="border-radius:4px;background-color: #fbfaf8;border: 1px solid rgba(0,0,0,.14902);color: #333;font-size: 12px;padding: 8px;font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif;box-sizing: border-box;"><code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span><span><span style="color:rgb(220, 50, 47);font-weight:700;">package</span> <span style="color:rgb(38, 139, 210);">main</span>
+</span></span><span><span>
+</span></span><span><span><span style="color:rgb(220, 50, 47);font-weight:700;">import</span> <span>(</span>
+</span></span><span><span>  <span style="color:rgb(42, 161, 152);">"flag"</span>
+</span></span><span><span>  <span style="color:rgb(42, 161, 152);">"fmt"</span>
+</span></span><span><span>  <span style="color:rgb(42, 161, 152);">"time"</span>
+</span></span><span><span><span>)</span>
+</span></span><span><span>
+</span></span><span><span><span style="color:rgb(133, 153, 0);">var</span> <span>(</span>
+</span></span><span><span>  <span style="color:rgb(38, 139, 210);">period</span> <span style="color:rgb(38, 139, 210);">time</span><span>.</span><span style="color:rgb(38, 139, 210);">Duration</span>
+</span></span><span><span><span>)</span>
+</span></span><span><span>
+</span></span><span><span><span style="color:rgb(133, 153, 0);">func</span> <span style="color:rgb(38, 139, 210);">init</span><span>()</span> <span>{</span>
+</span></span><span><span>  <span style="color:rgb(38, 139, 210);">flag</span><span>.</span><span style="color:rgb(38, 139, 210);">DurationVar</span><span>(</span><span>&amp;</span><span style="color:rgb(38, 139, 210);">period</span><span>,</span> <span style="color:rgb(42, 161, 152);">"period"</span><span>,</span> <span style="color:rgb(42, 161, 152);font-weight:700;">1</span><span>*</span><span style="color:rgb(38, 139, 210);">time</span><span>.</span><span style="color:rgb(38, 139, 210);">Second</span><span>,</span> <span style="color:rgb(42, 161, 152);">"sleep period"</span><span>)</span>
+</span></span><span><span><span>}</span>
+</span></span><span><span>
+</span></span><span><span><span style="color:rgb(133, 153, 0);">func</span> <span style="color:rgb(38, 139, 210);">main</span><span>()</span> <span>{</span>
+</span></span><span><span>  <span style="color:rgb(38, 139, 210);">flag</span><span>.</span><span style="color:rgb(38, 139, 210);">Parse</span><span>()</span>
+</span></span><span><span>  <span style="color:rgb(38, 139, 210);">fmt</span><span>.</span><span style="color:rgb(38, 139, 210);">Printf</span><span>(</span><span style="color:rgb(42, 161, 152);">"Sleeping for %v..."</span><span>,</span> <span style="color:rgb(38, 139, 210);">period</span><span>)</span>
+</span></span><span><span>  <span style="color:rgb(38, 139, 210);">time</span><span>.</span><span style="color:rgb(38, 139, 210);">Sleep</span><span>(</span><span style="color:rgb(38, 139, 210);">period</span><span>)</span>
+</span></span><span><span>  <span style="color:rgb(38, 139, 210);">fmt</span><span>.</span><span style="color:rgb(38, 139, 210);">Println</span><span>()</span>
+</span></span><span><span><span>}</span>
+</span></span></code></pre></td></tr></tbody><span style="font-size:inherit;font-weight:inherit;font-style:inherit;font-variant:inherit;border-collapse:collapse;border-spacing:0px;position:absolute;top:0px;right:0px;padding:0px 7px;color:rgb(177, 177, 177);text-transform:capitalize;"></span></table>
+</div>
+</div><p>根据传入的命令行选项<code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif">period</code>，程序睡眠相应的时间，默认 1 秒。编译、运行程序：</p>
+<div><div style="color:rgb(88, 110, 117);background-color:rgb(248, 245, 236);margin:1em 0px;overflow-x:auto;position:relative;border:2px solid rgb(221, 221, 221);line-height:1.6;">
+<table style="font-size:inherit;font-weight:inherit;font-style:inherit;font-variant:inherit;border-collapse:collapse;position:relative;margin:0px;border:0px;width:auto;overflow:auto;display:block;border-spacing:0px;padding:0px;"><tbody><tr><td style="vertical-align:top;margin:0px;border:0px;margin-right:0.4em;padding:0px 0.8em 0px 0.4em;">
+<pre style="border-radius:4px;background-color: #fbfaf8;border: 1px solid rgba(0,0,0,.14902);color: #333;font-size: 12px;padding: 8px;font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif;box-sizing: border-box;"><code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span style="color:rgb(202, 202, 202);">1
+</span><span style="color:rgb(202, 202, 202);">2
+</span><span style="color:rgb(202, 202, 202);">3
+</span><span style="color:rgb(202, 202, 202);">4
+</span><span style="color:rgb(202, 202, 202);">5
+</span><span style="color:rgb(202, 202, 202);">6
+</span></code></pre></td>
+<td style="vertical-align:top;margin:0px;border:0px;padding:0px;">
+<pre style="border-radius:4px;background-color: #fbfaf8;border: 1px solid rgba(0,0,0,.14902);color: #333;font-size: 12px;padding: 8px;font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif;box-sizing: border-box;"><code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span><span>$ go build -o main.exe main.go
+</span></span><span><span>$ ./main.exe
+</span></span><span><span>Sleeping for 1s...
+</span></span><span><span>
+</span></span><span><span>$ ./main.exe -period 1m30s
+</span></span><span><span>Sleeping for 1m30s...
+</span></span></code></pre></td></tr></tbody><span style="font-size:inherit;font-weight:inherit;font-style:inherit;font-variant:inherit;border-collapse:collapse;border-spacing:0px;position:absolute;top:0px;right:0px;padding:0px 7px;color:rgb(177, 177, 177);text-transform:capitalize;"></span></table>
+</div>
+</div><h3 style="font-size:1.3em;font-weight:600;font-family:Athelas, STHeiti, &quot;Microsoft Yahei&quot;, serif;margin-top:1.5em;">自定义选项</h3>
+<p>除了使用<code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif">flag</code>库提供的选项类型，我们还可以自定义选项类型。我们分析一下标准库中提供的案例：</p>
+<div><div style="color:rgb(88, 110, 117);background-color:rgb(248, 245, 236);margin:1em 0px;overflow-x:auto;position:relative;border:2px solid rgb(221, 221, 221);line-height:1.6;">
+<table style="font-size:inherit;font-weight:inherit;font-style:inherit;font-variant:inherit;border-collapse:collapse;position:relative;margin:0px;border:0px;width:auto;overflow:auto;display:block;border-spacing:0px;padding:0px;"><tbody><tr><td style="vertical-align:top;margin:0px;border:0px;margin-right:0.4em;padding:0px 0.8em 0px 0.4em;">
+<pre style="border-radius:4px;background-color: #fbfaf8;border: 1px solid rgba(0,0,0,.14902);color: #333;font-size: 12px;padding: 8px;font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif;box-sizing: border-box;"><code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span style="color:rgb(202, 202, 202);"> 1
+</span><span style="color:rgb(202, 202, 202);"> 2
+</span><span style="color:rgb(202, 202, 202);"> 3
+</span><span style="color:rgb(202, 202, 202);"> 4
+</span><span style="color:rgb(202, 202, 202);"> 5
+</span><span style="color:rgb(202, 202, 202);"> 6
+</span><span style="color:rgb(202, 202, 202);"> 7
+</span><span style="color:rgb(202, 202, 202);"> 8
+</span><span style="color:rgb(202, 202, 202);"> 9
+</span><span style="color:rgb(202, 202, 202);">10
+</span><span style="color:rgb(202, 202, 202);">11
+</span><span style="color:rgb(202, 202, 202);">12
+</span><span style="color:rgb(202, 202, 202);">13
+</span><span style="color:rgb(202, 202, 202);">14
+</span><span style="color:rgb(202, 202, 202);">15
+</span><span style="color:rgb(202, 202, 202);">16
+</span><span style="color:rgb(202, 202, 202);">17
+</span><span style="color:rgb(202, 202, 202);">18
+</span><span style="color:rgb(202, 202, 202);">19
+</span><span style="color:rgb(202, 202, 202);">20
+</span><span style="color:rgb(202, 202, 202);">21
+</span><span style="color:rgb(202, 202, 202);">22
+</span><span style="color:rgb(202, 202, 202);">23
+</span><span style="color:rgb(202, 202, 202);">24
+</span><span style="color:rgb(202, 202, 202);">25
+</span><span style="color:rgb(202, 202, 202);">26
+</span><span style="color:rgb(202, 202, 202);">27
+</span><span style="color:rgb(202, 202, 202);">28
+</span><span style="color:rgb(202, 202, 202);">29
+</span><span style="color:rgb(202, 202, 202);">30
+</span><span style="color:rgb(202, 202, 202);">31
+</span><span style="color:rgb(202, 202, 202);">32
+</span><span style="color:rgb(202, 202, 202);">33
+</span><span style="color:rgb(202, 202, 202);">34
+</span><span style="color:rgb(202, 202, 202);">35
+</span><span style="color:rgb(202, 202, 202);">36
+</span><span style="color:rgb(202, 202, 202);">37
+</span><span style="color:rgb(202, 202, 202);">38
+</span><span style="color:rgb(202, 202, 202);">39
+</span><span style="color:rgb(202, 202, 202);">40
+</span><span style="color:rgb(202, 202, 202);">41
+</span><span style="color:rgb(202, 202, 202);">42
+</span><span style="color:rgb(202, 202, 202);">43
+</span></code></pre></td>
+<td style="vertical-align:top;margin:0px;border:0px;padding:0px;">
+<pre style="border-radius:4px;background-color: #fbfaf8;border: 1px solid rgba(0,0,0,.14902);color: #333;font-size: 12px;padding: 8px;font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif;box-sizing: border-box;"><code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span><span><span style="color:rgb(220, 50, 47);font-weight:700;">package</span> <span style="color:rgb(38, 139, 210);">main</span>
+</span></span><span><span>
+</span></span><span><span><span style="color:rgb(220, 50, 47);font-weight:700;">import</span> <span>(</span>
+</span></span><span><span>  <span style="color:rgb(42, 161, 152);">"errors"</span>
+</span></span><span><span>  <span style="color:rgb(42, 161, 152);">"flag"</span>
+</span></span><span><span>  <span style="color:rgb(42, 161, 152);">"fmt"</span>
+</span></span><span><span>  <span style="color:rgb(42, 161, 152);">"strings"</span>
+</span></span><span><span>  <span style="color:rgb(42, 161, 152);">"time"</span>
+</span></span><span><span><span>)</span>
+</span></span><span><span>
+</span></span><span><span><span style="color:rgb(133, 153, 0);">type</span> <span style="color:rgb(38, 139, 210);">interval</span> <span>[]</span><span style="color:rgb(38, 139, 210);">time</span><span>.</span><span style="color:rgb(38, 139, 210);">Duration</span>
+</span></span><span><span>
+</span></span><span><span><span style="color:rgb(133, 153, 0);">func</span> <span>(</span><span style="color:rgb(38, 139, 210);">i</span> <span>*</span><span style="color:rgb(38, 139, 210);">interval</span><span>)</span> <span style="color:rgb(38, 139, 210);">String</span><span>()</span> <span style="color:rgb(133, 153, 0);font-weight:700;">string</span> <span>{</span>
+</span></span><span><span>  <span style="color:rgb(133, 153, 0);">return</span> <span style="color:rgb(38, 139, 210);">fmt</span><span>.</span><span style="color:rgb(38, 139, 210);">Sprint</span><span>(</span><span>*</span><span style="color:rgb(38, 139, 210);">i</span><span>)</span>
+</span></span><span><span><span>}</span>
+</span></span><span><span>
+</span></span><span><span><span style="color:rgb(133, 153, 0);">func</span> <span>(</span><span style="color:rgb(38, 139, 210);">i</span> <span>*</span><span style="color:rgb(38, 139, 210);">interval</span><span>)</span> <span style="color:rgb(38, 139, 210);">Set</span><span>(</span><span style="color:rgb(38, 139, 210);">value</span> <span style="color:rgb(133, 153, 0);font-weight:700;">string</span><span>)</span> <span style="color:rgb(133, 153, 0);font-weight:700;">error</span> <span>{</span>
+</span></span><span><span>  <span style="color:rgb(133, 153, 0);">if</span> <span style="color:rgb(203, 75, 22);">len</span><span>(</span><span>*</span><span style="color:rgb(38, 139, 210);">i</span><span>)</span> <span>&gt;</span> <span style="color:rgb(42, 161, 152);font-weight:700;">0</span> <span>{</span>
+</span></span><span><span>    <span style="color:rgb(133, 153, 0);">return</span> <span style="color:rgb(38, 139, 210);">errors</span><span>.</span><span style="color:rgb(38, 139, 210);">New</span><span>(</span><span style="color:rgb(42, 161, 152);">"interval flag already set"</span><span>)</span>
+</span></span><span><span>  <span>}</span>
+</span></span><span><span>  <span style="color:rgb(133, 153, 0);">for</span> <span style="color:rgb(38, 139, 210);">_</span><span>,</span> <span style="color:rgb(38, 139, 210);">dt</span> <span>:=</span> <span style="color:rgb(133, 153, 0);">range</span> <span style="color:rgb(38, 139, 210);">strings</span><span>.</span><span style="color:rgb(38, 139, 210);">Split</span><span>(</span><span style="color:rgb(38, 139, 210);">value</span><span>,</span> <span style="color:rgb(42, 161, 152);">","</span><span>)</span> <span>{</span>
+</span></span><span><span>    <span style="color:rgb(38, 139, 210);">duration</span><span>,</span> <span style="color:rgb(38, 139, 210);">err</span> <span>:=</span> <span style="color:rgb(38, 139, 210);">time</span><span>.</span><span style="color:rgb(38, 139, 210);">ParseDuration</span><span>(</span><span style="color:rgb(38, 139, 210);">dt</span><span>)</span>
+</span></span><span><span>    <span style="color:rgb(133, 153, 0);">if</span> <span style="color:rgb(38, 139, 210);">err</span> <span>!=</span> <span style="color:rgb(133, 153, 0);font-weight:700;">nil</span> <span>{</span>
+</span></span><span><span>      <span style="color:rgb(133, 153, 0);">return</span> <span style="color:rgb(38, 139, 210);">err</span>
+</span></span><span><span>    <span>}</span>
+</span></span><span><span>    <span>*</span><span style="color:rgb(38, 139, 210);">i</span> <span>=</span> <span style="color:rgb(203, 75, 22);">append</span><span>(</span><span>*</span><span style="color:rgb(38, 139, 210);">i</span><span>,</span> <span style="color:rgb(38, 139, 210);">duration</span><span>)</span>
+</span></span><span><span>  <span>}</span>
+</span></span><span><span>  <span style="color:rgb(133, 153, 0);">return</span> <span style="color:rgb(133, 153, 0);font-weight:700;">nil</span>
+</span></span><span><span><span>}</span>
+</span></span><span><span>
+</span></span><span><span><span style="color:rgb(133, 153, 0);">var</span> <span>(</span>
+</span></span><span><span>  <span style="color:rgb(38, 139, 210);">intervalFlag</span> <span style="color:rgb(38, 139, 210);">interval</span>
+</span></span><span><span><span>)</span>
+</span></span><span><span>
+</span></span><span><span><span style="color:rgb(133, 153, 0);">func</span> <span style="color:rgb(38, 139, 210);">init</span><span>()</span> <span>{</span>
+</span></span><span><span>  <span style="color:rgb(38, 139, 210);">flag</span><span>.</span><span style="color:rgb(38, 139, 210);">Var</span><span>(</span><span>&amp;</span><span style="color:rgb(38, 139, 210);">intervalFlag</span><span>,</span> <span style="color:rgb(42, 161, 152);">"deltaT"</span><span>,</span> <span style="color:rgb(42, 161, 152);">"comma-seperated list of intervals to use between events"</span><span>)</span>
+</span></span><span><span><span>}</span>
+</span></span><span><span>
+</span></span><span><span><span style="color:rgb(133, 153, 0);">func</span> <span style="color:rgb(38, 139, 210);">main</span><span>()</span> <span>{</span>
+</span></span><span><span>  <span style="color:rgb(38, 139, 210);">flag</span><span>.</span><span style="color:rgb(38, 139, 210);">Parse</span><span>()</span>
+</span></span><span><span>
+</span></span><span><span>  <span style="color:rgb(38, 139, 210);">fmt</span><span>.</span><span style="color:rgb(38, 139, 210);">Println</span><span>(</span><span style="color:rgb(38, 139, 210);">intervalFlag</span><span>)</span>
+</span></span><span><span><span>}</span>
+</span></span></code></pre></td></tr></tbody><span style="font-size:inherit;font-weight:inherit;font-style:inherit;font-variant:inherit;border-collapse:collapse;border-spacing:0px;position:absolute;top:0px;right:0px;padding:0px 7px;color:rgb(177, 177, 177);text-transform:capitalize;"></span></table>
+</div>
+</div><p>首先定义一个新类型，这里定义类型<code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif">interval</code>。</p>
+<p>新类型必须实现<code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif">flag.Value</code>接口：</p>
+<div><div style="color:rgb(88, 110, 117);background-color:rgb(248, 245, 236);margin:1em 0px;overflow-x:auto;position:relative;border:2px solid rgb(221, 221, 221);line-height:1.6;">
+<table style="font-size:inherit;font-weight:inherit;font-style:inherit;font-variant:inherit;border-collapse:collapse;position:relative;margin:0px;border:0px;width:auto;overflow:auto;display:block;border-spacing:0px;padding:0px;"><tbody><tr><td style="vertical-align:top;margin:0px;border:0px;margin-right:0.4em;padding:0px 0.8em 0px 0.4em;">
+<pre style="border-radius:4px;background-color: #fbfaf8;border: 1px solid rgba(0,0,0,.14902);color: #333;font-size: 12px;padding: 8px;font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif;box-sizing: border-box;"><code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span style="color:rgb(202, 202, 202);">1
+</span><span style="color:rgb(202, 202, 202);">2
+</span><span style="color:rgb(202, 202, 202);">3
+</span><span style="color:rgb(202, 202, 202);">4
+</span><span style="color:rgb(202, 202, 202);">5
+</span></code></pre></td>
+<td style="vertical-align:top;margin:0px;border:0px;padding:0px;">
+<pre style="border-radius:4px;background-color: #fbfaf8;border: 1px solid rgba(0,0,0,.14902);color: #333;font-size: 12px;padding: 8px;font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif;box-sizing: border-box;"><code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span><span><span style="color:rgb(147, 161, 161);font-style:italic;">// src/flag/flag.go
+</span></span></span><span><span><span style="color:rgb(147, 161, 161);font-style:italic;"></span><span style="color:rgb(133, 153, 0);">type</span> <span style="color:rgb(38, 139, 210);">Value</span> <span style="color:rgb(133, 153, 0);">interface</span> <span>{</span>
+</span></span><span><span>  <span style="color:rgb(38, 139, 210);">String</span><span>()</span> <span style="color:rgb(133, 153, 0);font-weight:700;">string</span>
+</span></span><span><span>  <span style="color:rgb(38, 139, 210);">Set</span><span>(</span><span style="color:rgb(133, 153, 0);font-weight:700;">string</span><span>)</span> <span style="color:rgb(133, 153, 0);font-weight:700;">error</span>
+</span></span><span><span><span>}</span>
+</span></span></code></pre></td></tr></tbody><span style="font-size:inherit;font-weight:inherit;font-style:inherit;font-variant:inherit;border-collapse:collapse;border-spacing:0px;position:absolute;top:0px;right:0px;padding:0px 7px;color:rgb(177, 177, 177);text-transform:capitalize;"></span></table>
+</div>
+</div><p>其中<code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif">String</code>方法格式化该类型的值，<code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif">flag.Parse</code>方法在执行时遇到自定义类型的选项会将选项值作为参数调用该类型变量的<code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif">Set</code>方法。
+这里将以<code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif">,</code>分隔的时间间隔解析出来存入一个切片中。</p>
+<p>自定义类型选项的定义必须使用<code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif">flag.Var</code>方法。</p>
+<p>编译、执行程序：</p>
+<div><div style="color:rgb(88, 110, 117);background-color:rgb(248, 245, 236);margin:1em 0px;overflow-x:auto;position:relative;border:2px solid rgb(221, 221, 221);line-height:1.6;">
+<table style="font-size:inherit;font-weight:inherit;font-style:inherit;font-variant:inherit;border-collapse:collapse;position:relative;margin:0px;border:0px;width:auto;overflow:auto;display:block;border-spacing:0px;padding:0px;"><tbody><tr><td style="vertical-align:top;margin:0px;border:0px;margin-right:0.4em;padding:0px 0.8em 0px 0.4em;">
+<pre style="border-radius:4px;background-color: #fbfaf8;border: 1px solid rgba(0,0,0,.14902);color: #333;font-size: 12px;padding: 8px;font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif;box-sizing: border-box;"><code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span style="color:rgb(202, 202, 202);">1
+</span><span style="color:rgb(202, 202, 202);">2
+</span><span style="color:rgb(202, 202, 202);">3
+</span><span style="color:rgb(202, 202, 202);">4
+</span><span style="color:rgb(202, 202, 202);">5
+</span></code></pre></td>
+<td style="vertical-align:top;margin:0px;border:0px;padding:0px;">
+<pre style="border-radius:4px;background-color: #fbfaf8;border: 1px solid rgba(0,0,0,.14902);color: #333;font-size: 12px;padding: 8px;font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif;box-sizing: border-box;"><code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span><span>$ go build -o main.exe main.go
+</span></span><span><span>$ ./main.exe -deltaT 30s
+</span></span><span><span>[30s]
+</span></span><span><span>$ ./main.exe -deltaT 30s,1m,1m30s
+</span></span><span><span>[30s 1m0s 1m30s]
+</span></span></code></pre></td></tr></tbody><span style="font-size:inherit;font-weight:inherit;font-style:inherit;font-variant:inherit;border-collapse:collapse;border-spacing:0px;position:absolute;top:0px;right:0px;padding:0px 7px;color:rgb(177, 177, 177);text-transform:capitalize;"></span></table>
+</div>
+</div><p>如果指定的选项值非法，<code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif">Set</code>方法返回一个<code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif">error</code>类型的值，<code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif">Parse</code>执行终止，打印错误和使用帮助。</p>
+<div><div style="color:rgb(88, 110, 117);background-color:rgb(248, 245, 236);margin:1em 0px;overflow-x:auto;position:relative;border:2px solid rgb(221, 221, 221);line-height:1.6;">
+<table style="font-size:inherit;font-weight:inherit;font-style:inherit;font-variant:inherit;border-collapse:collapse;position:relative;margin:0px;border:0px;width:auto;overflow:auto;display:block;border-spacing:0px;padding:0px;"><tbody><tr><td style="vertical-align:top;margin:0px;border:0px;margin-right:0.4em;padding:0px 0.8em 0px 0.4em;">
+<pre style="border-radius:4px;background-color: #fbfaf8;border: 1px solid rgba(0,0,0,.14902);color: #333;font-size: 12px;padding: 8px;font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif;box-sizing: border-box;"><code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span style="color:rgb(202, 202, 202);">1
+</span><span style="color:rgb(202, 202, 202);">2
+</span><span style="color:rgb(202, 202, 202);">3
+</span><span style="color:rgb(202, 202, 202);">4
+</span><span style="color:rgb(202, 202, 202);">5
+</span></code></pre></td>
+<td style="vertical-align:top;margin:0px;border:0px;padding:0px;">
+<pre style="border-radius:4px;background-color: #fbfaf8;border: 1px solid rgba(0,0,0,.14902);color: #333;font-size: 12px;padding: 8px;font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif;box-sizing: border-box;"><code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span><span>$ ./main.exe -deltaT 30x
+</span></span><span><span>invalid value "30x" for flag -deltaT: time: unknown unit x in duration 30x
+</span></span><span><span>Usage of D:\code\golang\src\github.com\darjun\go-daily-lib\flag\self-defined\main.exe:
+</span></span><span><span>  -deltaT value
+</span></span><span><span>        comma-seperated list of intervals to use between events
+</span></span></code></pre></td></tr></tbody><span style="font-size:inherit;font-weight:inherit;font-style:inherit;font-variant:inherit;border-collapse:collapse;border-spacing:0px;position:absolute;top:0px;right:0px;padding:0px 7px;color:rgb(177, 177, 177);text-transform:capitalize;"></span></table>
+</div>
+</div><h3 style="font-size:1.3em;font-weight:600;font-family:Athelas, STHeiti, &quot;Microsoft Yahei&quot;, serif;margin-top:1.5em;">解析程序中的字符串</h3>
+<p>有时候选项并不是通过命令行传递的。例如，从配置表中读取或程序生成的。这时候可以使用<code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif">flag.FlagSet</code>结构的相关方法来解析这些选项。</p>
+<p>实际上，我们前面调用的<code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif">flag</code>库的方法，都会间接调用<code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif">FlagSet</code>结构的方法。<code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif">flag</code>库中定义了一个<code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif">FlagSet</code>类型的全局变量<code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif">CommandLine</code>专门用于解析命令行选项。
+前面调用的<code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif">flag</code>库的方法只是为了提供便利，它们内部都是调用的<code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif">CommandLine</code>的相应方法：</p>
+<div><div style="color:rgb(88, 110, 117);background-color:rgb(248, 245, 236);margin:1em 0px;overflow-x:auto;position:relative;border:2px solid rgb(221, 221, 221);line-height:1.6;">
+<table style="font-size:inherit;font-weight:inherit;font-style:inherit;font-variant:inherit;border-collapse:collapse;position:relative;margin:0px;border:0px;width:auto;overflow:auto;display:block;border-spacing:0px;padding:0px;"><tbody><tr><td style="vertical-align:top;margin:0px;border:0px;margin-right:0.4em;padding:0px 0.8em 0px 0.4em;">
+<pre style="border-radius:4px;background-color: #fbfaf8;border: 1px solid rgba(0,0,0,.14902);color: #333;font-size: 12px;padding: 8px;font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif;box-sizing: border-box;"><code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span style="color:rgb(202, 202, 202);"> 1
+</span><span style="color:rgb(202, 202, 202);"> 2
+</span><span style="color:rgb(202, 202, 202);"> 3
+</span><span style="color:rgb(202, 202, 202);"> 4
+</span><span style="color:rgb(202, 202, 202);"> 5
+</span><span style="color:rgb(202, 202, 202);"> 6
+</span><span style="color:rgb(202, 202, 202);"> 7
+</span><span style="color:rgb(202, 202, 202);"> 8
+</span><span style="color:rgb(202, 202, 202);"> 9
+</span><span style="color:rgb(202, 202, 202);">10
+</span><span style="color:rgb(202, 202, 202);">11
+</span><span style="color:rgb(202, 202, 202);">12
+</span><span style="color:rgb(202, 202, 202);">13
+</span><span style="color:rgb(202, 202, 202);">14
+</span><span style="color:rgb(202, 202, 202);">15
+</span><span style="color:rgb(202, 202, 202);">16
+</span><span style="color:rgb(202, 202, 202);">17
+</span><span style="color:rgb(202, 202, 202);">18
+</span><span style="color:rgb(202, 202, 202);">19
+</span><span style="color:rgb(202, 202, 202);">20
+</span><span style="color:rgb(202, 202, 202);">21
+</span><span style="color:rgb(202, 202, 202);">22
+</span></code></pre></td>
+<td style="vertical-align:top;margin:0px;border:0px;padding:0px;">
+<pre style="border-radius:4px;background-color: #fbfaf8;border: 1px solid rgba(0,0,0,.14902);color: #333;font-size: 12px;padding: 8px;font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif;box-sizing: border-box;"><code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span><span><span style="color:rgb(147, 161, 161);font-style:italic;">// src/flag/flag.go
+</span></span></span><span><span><span style="color:rgb(147, 161, 161);font-style:italic;"></span><span style="color:rgb(133, 153, 0);">var</span> <span style="color:rgb(38, 139, 210);">CommandLine</span> <span>=</span> <span style="color:rgb(38, 139, 210);">NewFlagSet</span><span>(</span><span style="color:rgb(38, 139, 210);">os</span><span>.</span><span style="color:rgb(38, 139, 210);">Args</span><span>[</span><span style="color:rgb(42, 161, 152);font-weight:700;">0</span><span>],</span> <span style="color:rgb(38, 139, 210);">ExitOnError</span><span>)</span>
+</span></span><span><span>
+</span></span><span><span><span style="color:rgb(133, 153, 0);">func</span> <span style="color:rgb(38, 139, 210);">Parse</span><span>()</span> <span>{</span>
+</span></span><span><span>  <span style="color:rgb(38, 139, 210);">CommandLine</span><span>.</span><span style="color:rgb(38, 139, 210);">Parse</span><span>(</span><span style="color:rgb(38, 139, 210);">os</span><span>.</span><span style="color:rgb(38, 139, 210);">Args</span><span>[</span><span style="color:rgb(42, 161, 152);font-weight:700;">1</span><span>:])</span>
+</span></span><span><span><span>}</span>
+</span></span><span><span>
+</span></span><span><span><span style="color:rgb(133, 153, 0);">func</span> <span style="color:rgb(38, 139, 210);">IntVar</span><span>(</span><span style="color:rgb(38, 139, 210);">p</span> <span>*</span><span style="color:rgb(133, 153, 0);font-weight:700;">int</span><span>,</span> <span style="color:rgb(38, 139, 210);">name</span> <span style="color:rgb(133, 153, 0);font-weight:700;">string</span><span>,</span> <span style="color:rgb(38, 139, 210);">value</span> <span style="color:rgb(133, 153, 0);font-weight:700;">int</span><span>,</span> <span style="color:rgb(38, 139, 210);">usage</span> <span style="color:rgb(133, 153, 0);font-weight:700;">string</span><span>)</span> <span>{</span>
+</span></span><span><span>  <span style="color:rgb(38, 139, 210);">CommandLine</span><span>.</span><span style="color:rgb(38, 139, 210);">Var</span><span>(</span><span style="color:rgb(38, 139, 210);">newIntValue</span><span>(</span><span style="color:rgb(38, 139, 210);">value</span><span>,</span> <span style="color:rgb(38, 139, 210);">p</span><span>),</span> <span style="color:rgb(38, 139, 210);">name</span><span>,</span> <span style="color:rgb(38, 139, 210);">usage</span><span>)</span>
+</span></span><span><span><span>}</span>
+</span></span><span><span>
+</span></span><span><span><span style="color:rgb(133, 153, 0);">func</span> <span style="color:rgb(38, 139, 210);">Int</span><span>(</span><span style="color:rgb(38, 139, 210);">name</span> <span style="color:rgb(133, 153, 0);font-weight:700;">string</span><span>,</span> <span style="color:rgb(38, 139, 210);">value</span> <span style="color:rgb(133, 153, 0);font-weight:700;">int</span><span>,</span> <span style="color:rgb(38, 139, 210);">usage</span> <span style="color:rgb(133, 153, 0);font-weight:700;">string</span><span>)</span> <span>*</span><span style="color:rgb(133, 153, 0);font-weight:700;">int</span> <span>{</span>
+</span></span><span><span>  <span style="color:rgb(133, 153, 0);">return</span> <span style="color:rgb(38, 139, 210);">CommandLine</span><span>.</span><span style="color:rgb(38, 139, 210);">Int</span><span>(</span><span style="color:rgb(38, 139, 210);">name</span><span>,</span> <span style="color:rgb(38, 139, 210);">value</span><span>,</span> <span style="color:rgb(38, 139, 210);">usage</span><span>)</span>
+</span></span><span><span><span>}</span>
+</span></span><span><span>
+</span></span><span><span><span style="color:rgb(133, 153, 0);">func</span> <span style="color:rgb(38, 139, 210);">NFlag</span><span>()</span> <span style="color:rgb(133, 153, 0);font-weight:700;">int</span> <span>{</span> <span style="color:rgb(133, 153, 0);">return</span> <span style="color:rgb(203, 75, 22);">len</span><span>(</span><span style="color:rgb(38, 139, 210);">CommandLine</span><span>.</span><span style="color:rgb(38, 139, 210);">actual</span><span>)</span> <span>}</span>
+</span></span><span><span>
+</span></span><span><span><span style="color:rgb(133, 153, 0);">func</span> <span style="color:rgb(38, 139, 210);">Arg</span><span>(</span><span style="color:rgb(38, 139, 210);">i</span> <span style="color:rgb(133, 153, 0);font-weight:700;">int</span><span>)</span> <span style="color:rgb(133, 153, 0);font-weight:700;">string</span> <span>{</span>
+</span></span><span><span>  <span style="color:rgb(133, 153, 0);">return</span> <span style="color:rgb(38, 139, 210);">CommandLine</span><span>.</span><span style="color:rgb(38, 139, 210);">Arg</span><span>(</span><span style="color:rgb(38, 139, 210);">i</span><span>)</span>
+</span></span><span><span><span>}</span>
+</span></span><span><span>
+</span></span><span><span><span style="color:rgb(133, 153, 0);">func</span> <span style="color:rgb(38, 139, 210);">NArg</span><span>()</span> <span style="color:rgb(133, 153, 0);font-weight:700;">int</span> <span>{</span> <span style="color:rgb(133, 153, 0);">return</span> <span style="color:rgb(203, 75, 22);">len</span><span>(</span><span style="color:rgb(38, 139, 210);">CommandLine</span><span>.</span><span style="color:rgb(38, 139, 210);">args</span><span>)</span> <span>}</span>
+</span></span></code></pre></td></tr></tbody><span style="font-size:inherit;font-weight:inherit;font-style:inherit;font-variant:inherit;border-collapse:collapse;border-spacing:0px;position:absolute;top:0px;right:0px;padding:0px 7px;color:rgb(177, 177, 177);text-transform:capitalize;"></span></table>
+</div>
+</div><p>同样的，我们也可以自己创建<code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif">FlagSet</code>类型变量来解析选项。</p>
+<div><div style="color:rgb(88, 110, 117);background-color:rgb(248, 245, 236);margin:1em 0px;overflow-x:auto;position:relative;border:2px solid rgb(221, 221, 221);line-height:1.6;">
+<table style="font-size:inherit;font-weight:inherit;font-style:inherit;font-variant:inherit;border-collapse:collapse;position:relative;margin:0px;border:0px;width:auto;overflow:auto;display:block;border-spacing:0px;padding:0px;"><tbody><tr><td style="vertical-align:top;margin:0px;border:0px;margin-right:0.4em;padding:0px 0.8em 0px 0.4em;">
+<pre style="border-radius:4px;background-color: #fbfaf8;border: 1px solid rgba(0,0,0,.14902);color: #333;font-size: 12px;padding: 8px;font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif;box-sizing: border-box;"><code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span style="color:rgb(202, 202, 202);"> 1
+</span><span style="color:rgb(202, 202, 202);"> 2
+</span><span style="color:rgb(202, 202, 202);"> 3
+</span><span style="color:rgb(202, 202, 202);"> 4
+</span><span style="color:rgb(202, 202, 202);"> 5
+</span><span style="color:rgb(202, 202, 202);"> 6
+</span><span style="color:rgb(202, 202, 202);"> 7
+</span><span style="color:rgb(202, 202, 202);"> 8
+</span><span style="color:rgb(202, 202, 202);"> 9
+</span><span style="color:rgb(202, 202, 202);">10
+</span><span style="color:rgb(202, 202, 202);">11
+</span><span style="color:rgb(202, 202, 202);">12
+</span><span style="color:rgb(202, 202, 202);">13
+</span><span style="color:rgb(202, 202, 202);">14
+</span><span style="color:rgb(202, 202, 202);">15
+</span><span style="color:rgb(202, 202, 202);">16
+</span><span style="color:rgb(202, 202, 202);">17
+</span><span style="color:rgb(202, 202, 202);">18
+</span><span style="color:rgb(202, 202, 202);">19
+</span><span style="color:rgb(202, 202, 202);">20
+</span><span style="color:rgb(202, 202, 202);">21
+</span><span style="color:rgb(202, 202, 202);">22
+</span><span style="color:rgb(202, 202, 202);">23
+</span><span style="color:rgb(202, 202, 202);">24
+</span><span style="color:rgb(202, 202, 202);">25
+</span></code></pre></td>
+<td style="vertical-align:top;margin:0px;border:0px;padding:0px;">
+<pre style="border-radius:4px;background-color: #fbfaf8;border: 1px solid rgba(0,0,0,.14902);color: #333;font-size: 12px;padding: 8px;font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif;box-sizing: border-box;"><code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span><span><span style="color:rgb(220, 50, 47);font-weight:700;">package</span> <span style="color:rgb(38, 139, 210);">main</span>
+</span></span><span><span>
+</span></span><span><span><span style="color:rgb(220, 50, 47);font-weight:700;">import</span> <span>(</span>
+</span></span><span><span>  <span style="color:rgb(42, 161, 152);">"flag"</span>
+</span></span><span><span>  <span style="color:rgb(42, 161, 152);">"fmt"</span>
+</span></span><span><span><span>)</span>
+</span></span><span><span>
+</span></span><span><span><span style="color:rgb(133, 153, 0);">func</span> <span style="color:rgb(38, 139, 210);">main</span><span>()</span> <span>{</span>
+</span></span><span><span>  <span style="color:rgb(38, 139, 210);">args</span> <span>:=</span> <span>[]</span><span style="color:rgb(133, 153, 0);font-weight:700;">string</span><span>{</span><span style="color:rgb(42, 161, 152);">"-intflag"</span><span>,</span> <span style="color:rgb(42, 161, 152);">"12"</span><span>,</span> <span style="color:rgb(42, 161, 152);">"-stringflag"</span><span>,</span> <span style="color:rgb(42, 161, 152);">"test"</span><span>}</span>
+</span></span><span><span>
+</span></span><span><span>  <span style="color:rgb(133, 153, 0);">var</span> <span style="color:rgb(38, 139, 210);">intflag</span> <span style="color:rgb(133, 153, 0);font-weight:700;">int</span>
+</span></span><span><span>  <span style="color:rgb(133, 153, 0);">var</span> <span style="color:rgb(38, 139, 210);">boolflag</span> <span style="color:rgb(133, 153, 0);font-weight:700;">bool</span>
+</span></span><span><span>  <span style="color:rgb(133, 153, 0);">var</span> <span style="color:rgb(38, 139, 210);">stringflag</span> <span style="color:rgb(133, 153, 0);font-weight:700;">string</span>
+</span></span><span><span>
+</span></span><span><span>  <span style="color:rgb(38, 139, 210);">fs</span> <span>:=</span> <span style="color:rgb(38, 139, 210);">flag</span><span>.</span><span style="color:rgb(38, 139, 210);">NewFlagSet</span><span>(</span><span style="color:rgb(42, 161, 152);">"MyFlagSet"</span><span>,</span> <span style="color:rgb(38, 139, 210);">flag</span><span>.</span><span style="color:rgb(38, 139, 210);">ContinueOnError</span><span>)</span>
+</span></span><span><span>  <span style="color:rgb(38, 139, 210);">fs</span><span>.</span><span style="color:rgb(38, 139, 210);">IntVar</span><span>(</span><span>&amp;</span><span style="color:rgb(38, 139, 210);">intflag</span><span>,</span> <span style="color:rgb(42, 161, 152);">"intflag"</span><span>,</span> <span style="color:rgb(42, 161, 152);font-weight:700;">0</span><span>,</span> <span style="color:rgb(42, 161, 152);">"int flag value"</span><span>)</span>
+</span></span><span><span>  <span style="color:rgb(38, 139, 210);">fs</span><span>.</span><span style="color:rgb(38, 139, 210);">BoolVar</span><span>(</span><span>&amp;</span><span style="color:rgb(38, 139, 210);">boolflag</span><span>,</span> <span style="color:rgb(42, 161, 152);">"boolflag"</span><span>,</span> <span style="color:rgb(133, 153, 0);font-weight:700;">false</span><span>,</span> <span style="color:rgb(42, 161, 152);">"bool flag value"</span><span>)</span>
+</span></span><span><span>  <span style="color:rgb(38, 139, 210);">fs</span><span>.</span><span style="color:rgb(38, 139, 210);">StringVar</span><span>(</span><span>&amp;</span><span style="color:rgb(38, 139, 210);">stringflag</span><span>,</span> <span style="color:rgb(42, 161, 152);">"stringflag"</span><span>,</span> <span style="color:rgb(42, 161, 152);">"default"</span><span>,</span> <span style="color:rgb(42, 161, 152);">"string flag value"</span><span>)</span>
+</span></span><span><span>
+</span></span><span><span>  <span style="color:rgb(38, 139, 210);">fs</span><span>.</span><span style="color:rgb(38, 139, 210);">Parse</span><span>(</span><span style="color:rgb(38, 139, 210);">args</span><span>)</span>
+</span></span><span><span>  
+</span></span><span><span>  <span style="color:rgb(38, 139, 210);">fmt</span><span>.</span><span style="color:rgb(38, 139, 210);">Println</span><span>(</span><span style="color:rgb(42, 161, 152);">"int flag:"</span><span>,</span> <span style="color:rgb(38, 139, 210);">intflag</span><span>)</span>
+</span></span><span><span>  <span style="color:rgb(38, 139, 210);">fmt</span><span>.</span><span style="color:rgb(38, 139, 210);">Println</span><span>(</span><span style="color:rgb(42, 161, 152);">"bool flag:"</span><span>,</span> <span style="color:rgb(38, 139, 210);">boolflag</span><span>)</span>
+</span></span><span><span>  <span style="color:rgb(38, 139, 210);">fmt</span><span>.</span><span style="color:rgb(38, 139, 210);">Println</span><span>(</span><span style="color:rgb(42, 161, 152);">"string flag:"</span><span>,</span> <span style="color:rgb(38, 139, 210);">stringflag</span><span>)</span>
+</span></span><span><span><span>}</span>
+</span></span></code></pre></td></tr></tbody><span style="font-size:inherit;font-weight:inherit;font-style:inherit;font-variant:inherit;border-collapse:collapse;border-spacing:0px;position:absolute;top:0px;right:0px;padding:0px 7px;color:rgb(177, 177, 177);text-transform:capitalize;"></span></table>
+</div>
+</div><p><code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif">NewFlagSet</code>方法有两个参数，第一个参数是程序名称，输出帮助或出错时会显示该信息。第二个参数是解析出错时如何处理，有几个选项：</p>
+<ul>
+<li><code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif">ContinueOnError</code>：发生错误后继续解析，<code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif">CommandLine</code>就是使用这个选项；</li>
+<li><code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif">ExitOnError</code>：出错时调用<code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif">os.Exit(2)</code>退出程序；</li>
+<li><code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif">PanicOnError</code>：出错时产生 panic。</li>
+</ul>
+<p>随便看一眼<code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif">flag</code>库中的相关代码：</p>
+<div><div style="color:rgb(88, 110, 117);background-color:rgb(248, 245, 236);margin:1em 0px;overflow-x:auto;position:relative;border:2px solid rgb(221, 221, 221);line-height:1.6;">
+<table style="font-size:inherit;font-weight:inherit;font-style:inherit;font-variant:inherit;border-collapse:collapse;position:relative;margin:0px;border:0px;width:auto;overflow:auto;display:block;border-spacing:0px;padding:0px;"><tbody><tr><td style="vertical-align:top;margin:0px;border:0px;margin-right:0.4em;padding:0px 0.8em 0px 0.4em;">
+<pre style="border-radius:4px;background-color: #fbfaf8;border: 1px solid rgba(0,0,0,.14902);color: #333;font-size: 12px;padding: 8px;font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif;box-sizing: border-box;"><code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span style="color:rgb(202, 202, 202);"> 1
+</span><span style="color:rgb(202, 202, 202);"> 2
+</span><span style="color:rgb(202, 202, 202);"> 3
+</span><span style="color:rgb(202, 202, 202);"> 4
+</span><span style="color:rgb(202, 202, 202);"> 5
+</span><span style="color:rgb(202, 202, 202);"> 6
+</span><span style="color:rgb(202, 202, 202);"> 7
+</span><span style="color:rgb(202, 202, 202);"> 8
+</span><span style="color:rgb(202, 202, 202);"> 9
+</span><span style="color:rgb(202, 202, 202);">10
+</span><span style="color:rgb(202, 202, 202);">11
+</span><span style="color:rgb(202, 202, 202);">12
+</span><span style="color:rgb(202, 202, 202);">13
+</span><span style="color:rgb(202, 202, 202);">14
+</span><span style="color:rgb(202, 202, 202);">15
+</span><span style="color:rgb(202, 202, 202);">16
+</span><span style="color:rgb(202, 202, 202);">17
+</span><span style="color:rgb(202, 202, 202);">18
+</span><span style="color:rgb(202, 202, 202);">19
+</span><span style="color:rgb(202, 202, 202);">20
+</span><span style="color:rgb(202, 202, 202);">21
+</span><span style="color:rgb(202, 202, 202);">22
+</span><span style="color:rgb(202, 202, 202);">23
+</span></code></pre></td>
+<td style="vertical-align:top;margin:0px;border:0px;padding:0px;">
+<pre style="border-radius:4px;background-color: #fbfaf8;border: 1px solid rgba(0,0,0,.14902);color: #333;font-size: 12px;padding: 8px;font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif;box-sizing: border-box;"><code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span><span><span style="color:rgb(147, 161, 161);font-style:italic;">// src/flag/flag.go
+</span></span></span><span><span><span style="color:rgb(147, 161, 161);font-style:italic;"></span><span style="color:rgb(133, 153, 0);">func</span> <span>(</span><span style="color:rgb(38, 139, 210);">f</span> <span>*</span><span style="color:rgb(38, 139, 210);">FlagSet</span><span>)</span> <span style="color:rgb(38, 139, 210);">Parse</span><span>(</span><span style="color:rgb(38, 139, 210);">arguments</span> <span>[]</span><span style="color:rgb(133, 153, 0);font-weight:700;">string</span><span>)</span> <span style="color:rgb(133, 153, 0);font-weight:700;">error</span> <span>{</span>
+</span></span><span><span>  <span style="color:rgb(38, 139, 210);">f</span><span>.</span><span style="color:rgb(38, 139, 210);">parsed</span> <span>=</span> <span style="color:rgb(133, 153, 0);font-weight:700;">true</span>
+</span></span><span><span>  <span style="color:rgb(38, 139, 210);">f</span><span>.</span><span style="color:rgb(38, 139, 210);">args</span> <span>=</span> <span style="color:rgb(38, 139, 210);">arguments</span>
+</span></span><span><span>  <span style="color:rgb(133, 153, 0);">for</span> <span>{</span>
+</span></span><span><span>    <span style="color:rgb(38, 139, 210);">seen</span><span>,</span> <span style="color:rgb(38, 139, 210);">err</span> <span>:=</span> <span style="color:rgb(38, 139, 210);">f</span><span>.</span><span style="color:rgb(38, 139, 210);">parseOne</span><span>()</span>
+</span></span><span><span>    <span style="color:rgb(133, 153, 0);">if</span> <span style="color:rgb(38, 139, 210);">seen</span> <span>{</span>
+</span></span><span><span>      <span style="color:rgb(133, 153, 0);">continue</span>
+</span></span><span><span>    <span>}</span>
+</span></span><span><span>    <span style="color:rgb(133, 153, 0);">if</span> <span style="color:rgb(38, 139, 210);">err</span> <span>==</span> <span style="color:rgb(133, 153, 0);font-weight:700;">nil</span> <span>{</span>
+</span></span><span><span>      <span style="color:rgb(133, 153, 0);">break</span>
+</span></span><span><span>    <span>}</span>
+</span></span><span><span>    <span style="color:rgb(133, 153, 0);">switch</span> <span style="color:rgb(38, 139, 210);">f</span><span>.</span><span style="color:rgb(38, 139, 210);">errorHandling</span> <span>{</span>
+</span></span><span><span>    <span style="color:rgb(133, 153, 0);">case</span> <span style="color:rgb(38, 139, 210);">ContinueOnError</span><span>:</span>
+</span></span><span><span>      <span style="color:rgb(133, 153, 0);">return</span> <span style="color:rgb(38, 139, 210);">err</span>
+</span></span><span><span>    <span style="color:rgb(133, 153, 0);">case</span> <span style="color:rgb(38, 139, 210);">ExitOnError</span><span>:</span>
+</span></span><span><span>      <span style="color:rgb(38, 139, 210);">os</span><span>.</span><span style="color:rgb(38, 139, 210);">Exit</span><span>(</span><span style="color:rgb(42, 161, 152);font-weight:700;">2</span><span>)</span>
+</span></span><span><span>    <span style="color:rgb(133, 153, 0);">case</span> <span style="color:rgb(38, 139, 210);">PanicOnError</span><span>:</span>
+</span></span><span><span>      <span style="color:rgb(203, 75, 22);">panic</span><span>(</span><span style="color:rgb(38, 139, 210);">err</span><span>)</span>
+</span></span><span><span>    <span>}</span>
+</span></span><span><span>  <span>}</span>
+</span></span><span><span>  <span style="color:rgb(133, 153, 0);">return</span> <span style="color:rgb(133, 153, 0);font-weight:700;">nil</span>
+</span></span><span><span><span>}</span>
+</span></span></code></pre></td></tr></tbody><span style="font-size:inherit;font-weight:inherit;font-style:inherit;font-variant:inherit;border-collapse:collapse;border-spacing:0px;position:absolute;top:0px;right:0px;padding:0px 7px;color:rgb(177, 177, 177);text-transform:capitalize;"></span></table>
+</div>
+</div><p>与直接使用<code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif">flag</code>库的方法有一点不同，<code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif">FlagSet</code>调用<code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif">Parse</code>方法时需要显示传入字符串切片作为参数。因为<code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif">flag.Parse</code>在内部调用了<code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif">CommandLine.Parse(os.Args[1:])</code>。
+示例代码都放在<a href="https://github.com/darjun/go-daily-lib" style="background-color:transparent;text-decoration:none;color:rgb(192, 91, 77);">GitHub</a>上了。</p>
+<h2 style="font-size:1.5em;font-weight:600;font-family:Athelas, STHeiti, &quot;Microsoft Yahei&quot;, serif;border-bottom:1px solid rgb(221, 221, 221);margin-top:2em;">参考</h2>
+<ol>
+<li><a href="https://golang.org/pkg/flag/" style="background-color:transparent;text-decoration:none;color:rgb(192, 91, 77);">flag</a>库文档</li>
+</ol>
+<h2 style="font-size:1.5em;font-weight:600;font-family:Athelas, STHeiti, &quot;Microsoft Yahei&quot;, serif;border-bottom:1px solid rgb(221, 221, 221);margin-top:2em;">我</h2>
+<p><a href="https://darjun.github.io/" style="background-color:transparent;text-decoration:none;color:rgb(192, 91, 77);">我的博客</a></p>
+<p>欢迎关注我的微信公众号【GoUpUp】，共同学习，一起进步~</p>
+<p><div class="media-placeholder">[图片/附件]</div></en-media></p>
+
+    </div>
+
+    
+    
+<div style="padding:10px;background-color:rgba(181, 181, 181, 0.1);border-top:1px solid rgb(225, 225, 225);border-right:1px solid rgb(225, 225, 225);border-bottom:1px solid rgb(225, 225, 225);border-image:initial;border-left:solid;margin-top:3em;width:100%;">
+  <p style="margin:5px 0px;">
+    <span style="display:table-cell;min-width:90px;text-align:right;font-weight:700;">文章作者<span style="text-align:right;font-weight:700;"> :</span></span>
+    <span style="display:table-cell;padding-left:9px;">darjun</span>
+  </p>
+  <p style="margin:5px 0px;">
+    <span style="display:table-cell;min-width:90px;text-align:right;font-weight:700;">上次更新<span style="text-align:right;font-weight:700;"> :</span></span>
+    <span style="display:table-cell;padding-left:9px;">
+      2020-01-10
+      
+    </span>
+  </p>
+  
+  <p style="margin:5px 0px;">
+    <span style="display:table-cell;min-width:90px;text-align:right;font-weight:700;">许可协议<span style="text-align:right;font-weight:700;"> :</span></span>
+    <span style="display:table-cell;padding-left:9px;"><a rel="license noopener" href="https://creativecommons.org/licenses/by-nc-nd/4.0/" target="_blank" style="background-color:transparent;text-decoration:none;overflow-wrap:break-word;color:rgb(192, 91, 77);">CC BY-NC-ND 4.0</a></span>
+  </p>
+</div>
+
+
+    
+    
+
+    <div style="display:block;font-family:Athelas, STHeiti, &quot;Microsoft Yahei&quot;, serif;">
+      <div style="margin-top:1em;">
+          
+        </div>
+
+      
+      <div style="display:block;margin-top:1em;"><span style="display:table;"> </span>
+        
+          <a href="https://darjun.github.io/2020/01/10/godailylib/go-flags/" style="background-color:transparent;color:rgba(0, 0, 0, 0.84);text-decoration:none;font-weight:600;font-size:18px;font-family:Athelas, STHeiti, &quot;Microsoft Yahei&quot;, serif;transition-property:transform;transition-timing-function:ease-out;transition-duration:0.3s;float:left;">
+            
+            <i>
+              <img style="overflow:hidden;" src="data:image/svg+xml,%3csvg class='icon js-evernote-checked' viewBox='0 0 1024 1024' version='1.1' xmlns='http://www.w3.org/2000/svg' xmlns:xlink='http://www.w3.org/1999/xlink' width='18' height='18' data-evernote-id='76'%3e %3cpath d='M691.908486 949.511495l75.369571-89.491197c10.963703-12.998035 10.285251-32.864502-1.499144-44.378743L479.499795 515.267417 757.434875 204.940602c11.338233-12.190647 11.035334-32.285311-0.638543-44.850487l-80.46666-86.564541c-11.680017-12.583596-30.356378-12.893658-41.662889-0.716314L257.233596 494.235404c-11.332093 12.183484-11.041474 32.266891 0.657986 44.844348l80.46666 86.564541c1.772366 1.910513 3.706415 3.533476 5.750981 4.877077l306.620399 321.703933C662.505829 963.726242 680.945807 962.528973 691.908486 949.511495z'%3e%3c/path%3e %3c/svg%3e"/>
+
+            </i>
+            <span>Go 每日一库之 go-flags</span>
+            
+          </a>
+        
+          <a href="https://darjun.github.io/2020/01/09/goweb/template2/" style="background-color:transparent;color:rgba(0, 0, 0, 0.84);text-decoration:none;font-weight:600;font-size:18px;font-family:Athelas, STHeiti, &quot;Microsoft Yahei&quot;, serif;transition-property:transform;transition-timing-function:ease-out;transition-duration:0.3s;float:right;">
+            <span>Go Web 编程之 模板（二）</span>
+            
+            
+            <i>
+              <img style="overflow:hidden;" src="data:image/svg+xml,%3csvg class='icon js-evernote-checked' viewBox='0 0 1024 1024' version='1.1' xmlns='http://www.w3.org/2000/svg' xmlns:xlink='http://www.w3.org/1999/xlink' width='18' height='18' data-evernote-id='77'%3e %3cpath d='M332.091514 74.487481l-75.369571 89.491197c-10.963703 12.998035-10.285251 32.864502 1.499144 44.378743l286.278095 300.375162L266.565125 819.058374c-11.338233 12.190647-11.035334 32.285311 0.638543 44.850487l80.46666 86.564541c11.680017 12.583596 30.356378 12.893658 41.662889 0.716314l377.434212-421.426145c11.332093-12.183484 11.041474-32.266891-0.657986-44.844348l-80.46666-86.564541c-1.772366-1.910513-3.706415-3.533476-5.750981-4.877077L373.270379 71.774697C361.493148 60.273758 343.054193 61.470003 332.091514 74.487481z'%3e%3c/path%3e %3c/svg%3e"/>
+
+            </i>
+          </a>
+      <span style="display:table;clear:both;"> </span></div>
+    </div>
+  </div></div></div></span></div></div></div></div>
+</div>
+</div>
+<a class="back-link" href="../articles.html">← 返回笔记列表</a>
+</body>
+</html>

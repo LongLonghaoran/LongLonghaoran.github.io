@@ -1,0 +1,312 @@
+<!DOCTYPE html>
+<html lang="zh-CN" data-theme="light">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>containernetworking/cni: Container Network Interface - networking for Linux containers — 技术笔记</title>
+<style>
+:root {
+  --bg: #ffffff;
+  --text: #1a1a1a;
+  --muted: #666;
+  --border: #e0e0e0;
+  --code-bg: #f5f5f5;
+  --link: #0066cc;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #1a1a1a;
+    --text: #e0e0e0;
+    --muted: #999;
+    --border: #333;
+    --code-bg: #2a2a2a;
+    --link: #66bbff;
+  }
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  line-height: 1.7;
+  color: var(--text);
+  background: var(--bg);
+  max-width: 860px;
+  margin: 0 auto;
+  padding: 2rem 1.5rem;
+}
+.note-header {
+  border-bottom: 2px solid var(--border);
+  padding-bottom: 1rem;
+  margin-bottom: 2rem;
+}
+.note-title {
+  font-size: 1.6rem;
+  font-weight: 700;
+  margin-bottom: 0.3rem;
+}
+.note-meta {
+  color: var(--muted);
+  font-size: 0.85rem;
+}
+.note-content {
+  font-size: 0.95rem;
+}
+.note-content h1 { font-size: 1.4rem; margin: 1.2rem 0 0.6rem; }
+.note-content h2 { font-size: 1.2rem; margin: 1rem 0 0.5rem; }
+.note-content h3 { font-size: 1.05rem; margin: 0.8rem 0 0.4rem; }
+.note-content p { margin: 0.5rem 0; }
+.note-content ul, .note-content ol { margin: 0.5rem 0 0.5rem 2rem; }
+.note-content li { margin: 0.2rem 0; }
+.note-content pre {
+  background: var(--code-bg);
+  padding: 1rem;
+  border-radius: 6px;
+  overflow-x: auto;
+  margin: 0.8rem 0;
+  font-size: 0.85rem;
+}
+.note-content code {
+  background: var(--code-bg);
+  padding: 0.1rem 0.3rem;
+  border-radius: 3px;
+  font-size: 0.88em;
+}
+.note-content pre code {
+  background: none;
+  padding: 0;
+}
+.note-content blockquote {
+  border-left: 3px solid var(--border);
+  padding-left: 1rem;
+  color: var(--muted);
+  margin: 0.8rem 0;
+}
+.note-content a { color: var(--link); }
+.note-content img {
+  max-width: 100%;
+  height: auto;
+  border-radius: 6px;
+  margin: 0.5rem 0;
+}
+.note-content table {
+  border-collapse: collapse;
+  width: 100%;
+  margin: 0.8rem 0;
+}
+.note-content th, .note-content td {
+  border: 1px solid var(--border);
+  padding: 0.5rem;
+}
+.note-content th { background: var(--code-bg); }
+.media-placeholder {
+  background: var(--code-bg);
+  padding: 1rem;
+  text-align: center;
+  color: var(--muted);
+  border-radius: 6px;
+  margin: 0.5rem 0;
+  font-size: 0.85rem;
+}
+.encrypt-placeholder {
+  background: #fff3cd;
+  padding: 0.5rem;
+  text-align: center;
+  color: #856404;
+  border-radius: 6px;
+  margin: 0.5rem 0;
+  font-size: 0.85rem;
+}
+.back-link {
+  display: inline-block;
+  margin-top: 2rem;
+  color: var(--link);
+  text-decoration: none;
+  font-size: 0.85rem;
+}
+</style>
+</head>
+<body>
+<div class="note-header">
+  <div class="note-title">containernetworking/cni: Container Network Interface - networking for Linux containers</div>
+  <div class="note-meta">笔记本：Kubernetes学习笔记</div>
+</div>
+<div class="note-content">
+<div style="--en-clipped-content:article; --en-clipped-source-url:https://github.com/containernetworking/cni; --en-clipped-source-title:containernetworking/cni: Container Network Interface - networking for Linux containers;">
+<div><br/></div><div style="min-height: 5454px; font-size: 16px; display: block; min-width: 100%; position: relative;"> <div style="font-family:sans-serif;text-size-adjust:100%;box-sizing:border-box;color:rgb(36, 41, 47);background-color:rgb(255, 255, 255);color-scheme:light;--octotree-sidebar-width:232px;"><div style="box-sizing:border-box;font-family:-apple-system, BlinkMacSystemFont, &quot;Segoe UI&quot;, &quot;Noto Sans&quot;, Helvetica, Arial, sans-serif, &quot;Apple Color Emoji&quot;, &quot;Segoe UI Emoji&quot;;font-size:14px;line-height:1.5;color:rgb(36, 41, 47);background-color:rgb(255, 255, 255);word-wrap:break-word;"><div style="box-sizing:border-box;"><div style="box-sizing:border-box;"><span style="box-sizing:border-box;"><span style="box-sizing:border-box;"><div style="box-sizing:border-box;"><div style="box-sizing:border-box;"><div style="box-sizing:border-box;"><div style="box-sizing:border-box;"><div style="box-sizing:border-box;min-width:0px;"><span style="box-sizing:border-box;"><div style="box-sizing:border-box;background-color:rgb(255, 255, 255);border-radius:6px;"><div style="box-sizing:border-box;border-bottom-left-radius:6px;border-bottom-right-radius:6px;"><div style="box-sizing:border-box;font-family:-apple-system, BlinkMacSystemFont, &quot;Segoe UI&quot;, &quot;Noto Sans&quot;, Helvetica, Arial, sans-serif, &quot;Apple Color Emoji&quot;, &quot;Segoe UI Emoji&quot;;font-size:16px;line-height:1.5;overflow-wrap:break-word;"><p dir="auto" style="box-sizing:border-box;margin-bottom:16px;margin-top:0px;"><a target="_blank" rel="noopener noreferrer" href="https://github.com/containernetworking/cni/blob/main/logo.png" style="background-color:transparent;box-sizing:border-box;color:rgb(9, 105, 218);text-decoration:none;"><img src="https://github.com/containernetworking/cni/raw/main/logo.png" style="border-style:none;box-sizing:content-box;max-width:100%;background-color:rgb(255, 255, 255);"/></a></p>
+<hr style="box-sizing:border-box;background:transparent;border-top:0px;border-right:0px;border-left:0px;border-image:initial;border-bottom:0px none rgb(36, 41, 47);overflow:hidden;padding:0px;background-color:rgb(208, 215, 222);border:0px;height:0.25em;margin:24px 0px;"/>
+<h1 dir="auto" style="margin:0.67em 0px;box-sizing:border-box;line-height:1.25;margin-top:24px;margin-bottom:16px;font-weight:600;padding-bottom:0.3em;border-bottom:1px solid rgb(216, 222, 228);font-size:2em;"><a href="https://github.com/containernetworking/cni#cni---the-container-network-interface" style="background-color:transparent;box-sizing:border-box;color:rgb(9, 105, 218);text-decoration:none;float:left;padding-right:4px;margin-left:-20px;line-height:1;"><div class="media-placeholder">[图片/附件]</div></en-media></a>CNI - the Container Network Interface</h1>
+<h2 dir="auto" style="box-sizing:border-box;line-height:1.25;margin-top:24px;margin-bottom:16px;font-weight:600;padding-bottom:0.3em;border-bottom:1px solid rgb(216, 222, 228);font-size:1.5em;"><a href="https://github.com/containernetworking/cni#what-is-cni" style="background-color:transparent;box-sizing:border-box;color:rgb(9, 105, 218);text-decoration:none;float:left;padding-right:4px;margin-left:-20px;line-height:1;"><div class="media-placeholder">[图片/附件]</div></en-media></a>What is CNI?</h2>
+<p dir="auto" style="box-sizing:border-box;margin-top:0px;margin-bottom:16px;">CNI (<em style="box-sizing:border-box;">Container Network Interface</em>), a <a href="https://cncf.io/" rel="nofollow" style="background-color:transparent;box-sizing:border-box;color:rgb(9, 105, 218);text-decoration:none;">Cloud Native Computing Foundation</a> project, consists of a specification and libraries for writing plugins to configure network interfaces in Linux containers, along with a number of supported plugins.
+CNI concerns itself only with network connectivity of containers and removing allocated resources when the container is deleted.
+Because of this focus, CNI has a wide range of support and the specification is simple to implement.</p>
+<p dir="auto" style="box-sizing:border-box;margin-top:0px;margin-bottom:16px;">As well as the <a href="https://github.com/containernetworking/cni/blob/main/SPEC.md" style="background-color:transparent;box-sizing:border-box;color:rgb(9, 105, 218);text-decoration:none;">specification</a>, this repository contains the Go source code of a <a href="https://github.com/containernetworking/cni/blob/main/libcni" style="background-color:transparent;box-sizing:border-box;color:rgb(9, 105, 218);text-decoration:none;">library for integrating CNI into applications</a> and an <a href="https://github.com/containernetworking/cni/blob/main/cnitool" style="background-color:transparent;box-sizing:border-box;color:rgb(9, 105, 218);text-decoration:none;">example command-line tool</a> for executing CNI plugins.  A <a href="https://github.com/containernetworking/plugins" style="background-color:transparent;box-sizing:border-box;color:rgb(9, 105, 218);text-decoration:none;">separate repository contains reference plugins</a> and a template for making new plugins.</p>
+<p dir="auto" style="box-sizing:border-box;margin-top:0px;margin-bottom:16px;">The template code makes it straight-forward to create a CNI plugin for an existing container networking project.
+CNI also makes a good framework for creating a new container networking project from scratch.</p>
+<p dir="auto" style="box-sizing:border-box;margin-top:0px;margin-bottom:16px;">Here are the recordings of two sessions that the CNI maintainers hosted at KubeCon/CloudNativeCon 2019:</p>
+<ul dir="auto" style="box-sizing:border-box;margin-top:0px;margin-bottom:16px;padding-left:2em;">
+<li style="box-sizing:border-box;"><a href="https://youtu.be/YjjrQiJOyME" rel="nofollow" style="background-color:transparent;box-sizing:border-box;color:rgb(9, 105, 218);text-decoration:none;">Introduction to CNI</a></li>
+<li style="box-sizing:border-box;margin-top:0.25em;"><a href="https://youtu.be/zChkx-AB5Xc" rel="nofollow" style="background-color:transparent;box-sizing:border-box;color:rgb(9, 105, 218);text-decoration:none;">CNI deep dive</a></li>
+</ul>
+<h2 dir="auto" style="box-sizing:border-box;line-height:1.25;margin-top:24px;margin-bottom:16px;font-weight:600;padding-bottom:0.3em;border-bottom:1px solid rgb(216, 222, 228);font-size:1.5em;"><a href="https://github.com/containernetworking/cni#why-develop-cni" style="background-color:transparent;box-sizing:border-box;color:rgb(9, 105, 218);text-decoration:none;float:left;padding-right:4px;margin-left:-20px;line-height:1;"><div class="media-placeholder">[图片/附件]</div></en-media></a>Why develop CNI?</h2>
+<p dir="auto" style="box-sizing:border-box;margin-top:0px;margin-bottom:16px;">Application containers on Linux are a rapidly evolving area, and within this area networking is not well addressed as it is highly environment-specific.
+We believe that many container runtimes and orchestrators will seek to solve the same problem of making the network layer pluggable.</p>
+<p dir="auto" style="box-sizing:border-box;margin-top:0px;margin-bottom:16px;">To avoid duplication, we think it is prudent to define a common interface between the network plugins and container execution: hence we put forward this specification, along with libraries for Go and a set of plugins.</p>
+<h2 dir="auto" style="box-sizing:border-box;line-height:1.25;margin-top:24px;margin-bottom:16px;font-weight:600;padding-bottom:0.3em;border-bottom:1px solid rgb(216, 222, 228);font-size:1.5em;"><a href="https://github.com/containernetworking/cni#who-is-using-cni" style="background-color:transparent;box-sizing:border-box;color:rgb(9, 105, 218);text-decoration:none;float:left;padding-right:4px;margin-left:-20px;line-height:1;"><div class="media-placeholder">[图片/附件]</div></en-media></a>Who is using CNI?</h2>
+<h3 dir="auto" style="box-sizing:border-box;line-height:1.25;margin-top:24px;margin-bottom:16px;font-weight:600;font-size:1.25em;"><a href="https://github.com/containernetworking/cni#container-runtimes" style="background-color:transparent;box-sizing:border-box;color:rgb(9, 105, 218);text-decoration:none;float:left;padding-right:4px;margin-left:-20px;line-height:1;"><div class="media-placeholder">[图片/附件]</div></en-media></a>Container runtimes</h3>
+<ul dir="auto" style="box-sizing:border-box;margin-top:0px;margin-bottom:16px;padding-left:2em;">
+<li style="box-sizing:border-box;"><a href="https://coreos.com/blog/rkt-cni-networking.html" rel="nofollow" style="background-color:transparent;box-sizing:border-box;color:rgb(9, 105, 218);text-decoration:none;">rkt - container engine</a></li>
+<li style="box-sizing:border-box;margin-top:0.25em;"><a href="https://kubernetes.io/docs/admin/network-plugins/" rel="nofollow" style="background-color:transparent;box-sizing:border-box;color:rgb(9, 105, 218);text-decoration:none;">Kubernetes - a system to simplify container operations</a></li>
+<li style="box-sizing:border-box;margin-top:0.25em;"><a href="https://github.com/openshift/origin/blob/master/docs/openshift_networking_requirements.md" style="background-color:transparent;box-sizing:border-box;color:rgb(9, 105, 218);text-decoration:none;">OpenShift - Kubernetes with additional enterprise features</a></li>
+<li style="box-sizing:border-box;margin-top:0.25em;"><a href="https://github.com/cloudfoundry-incubator/cf-networking-release" style="background-color:transparent;box-sizing:border-box;color:rgb(9, 105, 218);text-decoration:none;">Cloud Foundry - a platform for cloud applications</a></li>
+<li style="box-sizing:border-box;margin-top:0.25em;"><a href="https://github.com/apache/mesos/blob/master/docs/cni.md" style="background-color:transparent;box-sizing:border-box;color:rgb(9, 105, 218);text-decoration:none;">Apache Mesos - a distributed systems kernel</a></li>
+<li style="box-sizing:border-box;margin-top:0.25em;"><a href="https://aws.amazon.com/ecs/" rel="nofollow" style="background-color:transparent;box-sizing:border-box;color:rgb(9, 105, 218);text-decoration:none;">Amazon ECS - a highly scalable, high performance container management service</a></li>
+<li style="box-sizing:border-box;margin-top:0.25em;"><a href="https://github.com/sylabs/singularity" style="background-color:transparent;box-sizing:border-box;color:rgb(9, 105, 218);text-decoration:none;">Singularity - container platform optimized for HPC, EPC, and AI</a></li>
+<li style="box-sizing:border-box;margin-top:0.25em;"><a href="https://docs.opensvc.com/latest/fr/agent.configure.cni.html" rel="nofollow" style="background-color:transparent;box-sizing:border-box;color:rgb(9, 105, 218);text-decoration:none;">OpenSVC - orchestrator for legacy and containerized application stacks</a></li>
+</ul>
+<h3 dir="auto" style="box-sizing:border-box;line-height:1.25;margin-top:24px;margin-bottom:16px;font-weight:600;font-size:1.25em;"><a href="https://github.com/containernetworking/cni#3rd-party-plugins" style="background-color:transparent;box-sizing:border-box;color:rgb(9, 105, 218);text-decoration:none;float:left;padding-right:4px;margin-left:-20px;line-height:1;"><div class="media-placeholder">[图片/附件]</div></en-media></a>3rd party plugins</h3>
+<ul dir="auto" style="box-sizing:border-box;margin-top:0px;margin-bottom:16px;padding-left:2em;">
+<li style="box-sizing:border-box;"><a href="https://github.com/projectcalico/calico" style="background-color:transparent;box-sizing:border-box;color:rgb(9, 105, 218);text-decoration:none;">Project Calico - a layer 3 virtual network</a></li>
+<li style="box-sizing:border-box;margin-top:0.25em;"><a href="https://github.com/weaveworks/weave" style="background-color:transparent;box-sizing:border-box;color:rgb(9, 105, 218);text-decoration:none;">Weave - a multi-host Docker network</a></li>
+<li style="box-sizing:border-box;margin-top:0.25em;"><a href="https://github.com/contiv/netplugin" style="background-color:transparent;box-sizing:border-box;color:rgb(9, 105, 218);text-decoration:none;">Contiv Networking - policy networking for various use cases</a></li>
+<li style="box-sizing:border-box;margin-top:0.25em;"><a href="https://github.com/hustcat/sriov-cni" style="background-color:transparent;box-sizing:border-box;color:rgb(9, 105, 218);text-decoration:none;">SR-IOV</a></li>
+<li style="box-sizing:border-box;margin-top:0.25em;"><a href="https://github.com/cilium/cilium" style="background-color:transparent;box-sizing:border-box;color:rgb(9, 105, 218);text-decoration:none;">Cilium - BPF &amp; XDP for containers</a></li>
+<li style="box-sizing:border-box;margin-top:0.25em;"><a href="https://github.com/infobloxopen/cni-infoblox" style="background-color:transparent;box-sizing:border-box;color:rgb(9, 105, 218);text-decoration:none;">Infoblox - enterprise IP address management for containers</a></li>
+<li style="box-sizing:border-box;margin-top:0.25em;"><a href="https://github.com/k8snetworkplumbingwg/multus-cni" style="background-color:transparent;box-sizing:border-box;color:rgb(9, 105, 218);text-decoration:none;">Multus - a Multi plugin</a></li>
+<li style="box-sizing:border-box;margin-top:0.25em;"><a href="https://github.com/romana/kube" style="background-color:transparent;box-sizing:border-box;color:rgb(9, 105, 218);text-decoration:none;">Romana - Layer 3 CNI plugin supporting network policy for Kubernetes</a></li>
+<li style="box-sizing:border-box;margin-top:0.25em;"><a href="https://github.com/Huawei-PaaS/CNI-Genie" style="background-color:transparent;box-sizing:border-box;color:rgb(9, 105, 218);text-decoration:none;">CNI-Genie - generic CNI network plugin</a></li>
+<li style="box-sizing:border-box;margin-top:0.25em;"><a href="https://github.com/nuagenetworks/nuage-cni" style="background-color:transparent;box-sizing:border-box;color:rgb(9, 105, 218);text-decoration:none;">Nuage CNI - Nuage Networks SDN plugin for network policy kubernetes support </a></li>
+<li style="box-sizing:border-box;margin-top:0.25em;"><a href="https://github.com/cloudfoundry-incubator/silk" style="background-color:transparent;box-sizing:border-box;color:rgb(9, 105, 218);text-decoration:none;">Silk - a CNI plugin designed for Cloud Foundry</a></li>
+<li style="box-sizing:border-box;margin-top:0.25em;"><a href="https://github.com/John-Lin/linen-cni" style="background-color:transparent;box-sizing:border-box;color:rgb(9, 105, 218);text-decoration:none;">Linen - a CNI plugin designed for overlay networks with Open vSwitch and fit in SDN/OpenFlow network environment</a></li>
+<li style="box-sizing:border-box;margin-top:0.25em;"><a href="https://github.com/intel/vhost-user-net-plugin" style="background-color:transparent;box-sizing:border-box;color:rgb(9, 105, 218);text-decoration:none;">Vhostuser - a Dataplane network plugin - Supports OVS-DPDK &amp; VPP</a></li>
+<li style="box-sizing:border-box;margin-top:0.25em;"><a href="https://github.com/aws/amazon-ecs-cni-plugins" style="background-color:transparent;box-sizing:border-box;color:rgb(9, 105, 218);text-decoration:none;">Amazon ECS CNI Plugins - a collection of CNI Plugins to configure containers with Amazon EC2 elastic network interfaces (ENIs)</a></li>
+<li style="box-sizing:border-box;margin-top:0.25em;"><a href="https://github.com/Intel-Corp/bond-cni" style="background-color:transparent;box-sizing:border-box;color:rgb(9, 105, 218);text-decoration:none;">Bonding CNI - a Link aggregating plugin to address failover and high availability network</a></li>
+<li style="box-sizing:border-box;margin-top:0.25em;"><a href="https://github.com/openvswitch/ovn-kubernetes" style="background-color:transparent;box-sizing:border-box;color:rgb(9, 105, 218);text-decoration:none;">ovn-kubernetes - an container network plugin built on Open vSwitch (OVS) and Open Virtual Networking (OVN) with support for both Linux and Windows</a></li>
+<li style="box-sizing:border-box;margin-top:0.25em;"><a href="https://www.juniper.net/cloud" rel="nofollow" style="background-color:transparent;box-sizing:border-box;color:rgb(9, 105, 218);text-decoration:none;">Juniper Contrail</a> / <a href="https://tungstenfabric.io/" rel="nofollow" style="background-color:transparent;box-sizing:border-box;color:rgb(9, 105, 218);text-decoration:none;">TungstenFabric</a> -  Provides overlay SDN solution, delivering multicloud networking, hybrid cloud networking, simultaneous overlay-underlay support, network policy enforcement, network isolation, service chaining and flexible load balancing</li>
+<li style="box-sizing:border-box;margin-top:0.25em;"><a href="https://github.com/ZTE/Knitter" style="background-color:transparent;box-sizing:border-box;color:rgb(9, 105, 218);text-decoration:none;">Knitter - a CNI plugin supporting multiple networking for Kubernetes</a></li>
+<li style="box-sizing:border-box;margin-top:0.25em;"><a href="https://github.com/nokia/danm" style="background-color:transparent;box-sizing:border-box;color:rgb(9, 105, 218);text-decoration:none;">DANM - a CNI-compliant networking solution for TelCo workloads running on Kubernetes</a></li>
+<li style="box-sizing:border-box;margin-top:0.25em;"><a href="https://docs.vmware.com/en/VMware-NSX-T/2.2/com.vmware.nsxt.ncp_kubernetes.doc/GUID-6AFA724E-BB62-4693-B95C-321E8DDEA7E1.html" rel="nofollow" style="background-color:transparent;box-sizing:border-box;color:rgb(9, 105, 218);text-decoration:none;">VMware NSX – a CNI plugin that enables automated NSX L2/L3 networking and L4/L7 Load Balancing; network isolation at the pod, node, and cluster level; and zero-trust security policy for your Kubernetes cluster.</a></li>
+<li style="box-sizing:border-box;margin-top:0.25em;"><a href="https://github.com/redhat-nfvpe/cni-route-override" style="background-color:transparent;box-sizing:border-box;color:rgb(9, 105, 218);text-decoration:none;">cni-route-override - a meta CNI plugin that override route information</a></li>
+<li style="box-sizing:border-box;margin-top:0.25em;"><a href="https://github.com/AliyunContainerService/terway" style="background-color:transparent;box-sizing:border-box;color:rgb(9, 105, 218);text-decoration:none;">Terway - a collection of CNI Plugins based on alibaba cloud VPC/ECS network product</a></li>
+<li style="box-sizing:border-box;margin-top:0.25em;"><a href="https://github.com/noironetworks/aci-containers" style="background-color:transparent;box-sizing:border-box;color:rgb(9, 105, 218);text-decoration:none;">Cisco ACI CNI - for on-prem and cloud container networking with consistent policy and security model.</a></li>
+<li style="box-sizing:border-box;margin-top:0.25em;"><a href="https://github.com/kubeovn/kube-ovn" style="background-color:transparent;box-sizing:border-box;color:rgb(9, 105, 218);text-decoration:none;">Kube-OVN - a CNI plugin that bases on OVN/OVS and provides advanced features like subnet, static ip, ACL, QoS, etc.</a></li>
+<li style="box-sizing:border-box;margin-top:0.25em;"><a href="https://github.com/vmware-tanzu/antrea" style="background-color:transparent;box-sizing:border-box;color:rgb(9, 105, 218);text-decoration:none;">Project Antrea - an Open vSwitch k8s CNI</a></li>
+<li style="box-sizing:border-box;margin-top:0.25em;"><a href="https://github.com/opnfv/ovn4nfv-k8s-plugin" style="background-color:transparent;box-sizing:border-box;color:rgb(9, 105, 218);text-decoration:none;">OVN4NFV-K8S-Plugin - a OVN based CNI controller plugin to provide cloud native based Service function chaining (SFC), Multiple OVN overlay networking</a></li>
+<li style="box-sizing:border-box;margin-top:0.25em;"><a href="https://github.com/Azure/azure-container-networking" style="background-color:transparent;box-sizing:border-box;color:rgb(9, 105, 218);text-decoration:none;">Azure CNI - a CNI plugin that natively extends Azure Virtual Networks to containers</a></li>
+<li style="box-sizing:border-box;margin-top:0.25em;"><a href="https://github.com/alibaba/hybridnet" style="background-color:transparent;box-sizing:border-box;color:rgb(9, 105, 218);text-decoration:none;">Hybridnet - a CNI plugin designed for hybrid clouds which provides both overlay and underlay networking for containers in one or more clusters. Overlay and underlay containers can run on the same node and have cluster-wide bidirectional network connectivity.</a></li>
+</ul>
+<p dir="auto" style="box-sizing:border-box;margin-top:0px;margin-bottom:16px;">The CNI team also maintains some <a href="https://github.com/containernetworking/plugins" style="background-color:transparent;box-sizing:border-box;color:rgb(9, 105, 218);text-decoration:none;">core plugins in a separate repository</a>.</p>
+<h2 dir="auto" style="box-sizing:border-box;line-height:1.25;margin-top:24px;margin-bottom:16px;font-weight:600;padding-bottom:0.3em;border-bottom:1px solid rgb(216, 222, 228);font-size:1.5em;"><a href="https://github.com/containernetworking/cni#contributing-to-cni" style="background-color:transparent;box-sizing:border-box;color:rgb(9, 105, 218);text-decoration:none;float:left;padding-right:4px;margin-left:-20px;line-height:1;"><div class="media-placeholder">[图片/附件]</div></en-media></a>Contributing to CNI</h2>
+<p dir="auto" style="box-sizing:border-box;margin-top:0px;margin-bottom:16px;">We welcome contributions, including <a href="https://github.com/containernetworking/cni/issues" style="background-color:transparent;box-sizing:border-box;color:rgb(9, 105, 218);text-decoration:none;">bug reports</a>, and code and documentation improvements.
+If you intend to contribute to code or documentation, please read <a href="https://github.com/containernetworking/cni/blob/main/CONTRIBUTING.md" style="background-color:transparent;box-sizing:border-box;color:rgb(9, 105, 218);text-decoration:none;">CONTRIBUTING.md</a>. Also see the <a href="https://github.com/containernetworking/cni#contact" style="background-color:transparent;box-sizing:border-box;color:rgb(9, 105, 218);text-decoration:none;">contact section</a> in this README.</p>
+<h2 dir="auto" style="box-sizing:border-box;line-height:1.25;margin-top:24px;margin-bottom:16px;font-weight:600;padding-bottom:0.3em;border-bottom:1px solid rgb(216, 222, 228);font-size:1.5em;"><a href="https://github.com/containernetworking/cni#how-do-i-use-cni" style="background-color:transparent;box-sizing:border-box;color:rgb(9, 105, 218);text-decoration:none;float:left;padding-right:4px;margin-left:-20px;line-height:1;"><div class="media-placeholder">[图片/附件]</div></en-media></a>How do I use CNI?</h2>
+<h3 dir="auto" style="box-sizing:border-box;line-height:1.25;margin-top:24px;margin-bottom:16px;font-weight:600;font-size:1.25em;"><a href="https://github.com/containernetworking/cni#requirements" style="background-color:transparent;box-sizing:border-box;color:rgb(9, 105, 218);text-decoration:none;float:left;padding-right:4px;margin-left:-20px;line-height:1;"><div class="media-placeholder">[图片/附件]</div></en-media></a>Requirements</h3>
+<p dir="auto" style="box-sizing:border-box;margin-top:0px;margin-bottom:16px;">The CNI spec is language agnostic.  To use the Go language libraries in this repository, you'll need a recent version of Go.  You can find the Go versions covered by our <a href="https://travis-ci.org/containernetworking/cni/builds" rel="nofollow" style="background-color:transparent;box-sizing:border-box;color:rgb(9, 105, 218);text-decoration:none;">automated tests</a> in <a href="https://github.com/containernetworking/cni/blob/main/.travis.yml" style="background-color:transparent;box-sizing:border-box;color:rgb(9, 105, 218);text-decoration:none;">.travis.yaml</a>.</p>
+<h3 dir="auto" style="box-sizing:border-box;line-height:1.25;margin-top:24px;margin-bottom:16px;font-weight:600;font-size:1.25em;"><a href="https://github.com/containernetworking/cni#reference-plugins" style="background-color:transparent;box-sizing:border-box;color:rgb(9, 105, 218);text-decoration:none;float:left;padding-right:4px;margin-left:-20px;line-height:1;"><div class="media-placeholder">[图片/附件]</div></en-media></a>Reference Plugins</h3>
+<p dir="auto" style="box-sizing:border-box;margin-top:0px;margin-bottom:16px;">The CNI project maintains a set of <a href="https://github.com/containernetworking/plugins" style="background-color:transparent;box-sizing:border-box;color:rgb(9, 105, 218);text-decoration:none;">reference plugins</a> that implement the CNI specification.
+NOTE: the reference plugins used to live in this repository but have been split out into a <a href="https://github.com/containernetworking/plugins" style="background-color:transparent;box-sizing:border-box;color:rgb(9, 105, 218);text-decoration:none;">separate repository</a> as of May 2017.</p>
+<h3 dir="auto" style="box-sizing:border-box;line-height:1.25;margin-top:24px;margin-bottom:16px;font-weight:600;font-size:1.25em;"><a href="https://github.com/containernetworking/cni#running-the-plugins" style="background-color:transparent;box-sizing:border-box;color:rgb(9, 105, 218);text-decoration:none;float:left;padding-right:4px;margin-left:-20px;line-height:1;"><div class="media-placeholder">[图片/附件]</div></en-media></a>Running the plugins</h3>
+<p dir="auto" style="box-sizing:border-box;margin-top:0px;margin-bottom:16px;">After building and installing the <a href="https://github.com/containernetworking/plugins" style="background-color:transparent;box-sizing:border-box;color:rgb(9, 105, 218);text-decoration:none;">reference plugins</a>, you can use the <code style="box-sizing:border-box;font-family:ui-monospace, SFMono-Regular, &quot;SF Mono&quot;, Menlo, Consolas, &quot;Liberation Mono&quot;, monospace;padding:0.2em 0.4em;margin:0px;background-color:rgba(175, 184, 193, 0.2);border-radius:6px;font-size:85%;">priv-net-run.sh</code> and <code style="box-sizing:border-box;font-family:ui-monospace, SFMono-Regular, &quot;SF Mono&quot;, Menlo, Consolas, &quot;Liberation Mono&quot;, monospace;padding:0.2em 0.4em;margin:0px;background-color:rgba(175, 184, 193, 0.2);border-radius:6px;font-size:85%;">docker-run.sh</code> scripts in the <code style="box-sizing:border-box;font-family:ui-monospace, SFMono-Regular, &quot;SF Mono&quot;, Menlo, Consolas, &quot;Liberation Mono&quot;, monospace;padding:0.2em 0.4em;margin:0px;background-color:rgba(175, 184, 193, 0.2);border-radius:6px;font-size:85%;">scripts/</code> directory to exercise the plugins.</p>
+<p dir="auto" style="box-sizing:border-box;margin-top:0px;margin-bottom:16px;"><strong style="box-sizing:border-box;font-weight:600;">note - priv-net-run.sh depends on <code style="box-sizing:border-box;font-family:ui-monospace, SFMono-Regular, &quot;SF Mono&quot;, Menlo, Consolas, &quot;Liberation Mono&quot;, monospace;padding:0.2em 0.4em;margin:0px;background-color:rgba(175, 184, 193, 0.2);border-radius:6px;font-size:85%;">jq</code></strong></p>
+<p dir="auto" style="box-sizing:border-box;margin-top:0px;margin-bottom:16px;">Start out by creating a netconf file to describe a network:</p>
+<div dir="auto" style="box-sizing:border-box;margin-bottom:16px;position:relative;overflow:auto;"><pre style="box-sizing:border-box;font-family:ui-monospace, SFMono-Regular, &quot;SF Mono&quot;, Menlo, Consolas, &quot;Liberation Mono&quot;, monospace;margin-top:0px;overflow-wrap:normal;word-break:normal;margin-bottom:0px;padding:16px;overflow:auto;line-height:1.45;background-color:rgb(246, 248, 250);border-radius:6px;font-size:85%;">$ mkdir -p /etc/cni/net.d
+$ cat <span style="box-sizing:border-box;color:rgb(207, 34, 46);">&gt;</span>/etc/cni/net.d/10-mynet.conf <span style="box-sizing:border-box;color:rgb(10, 48, 105);"><span style="box-sizing:border-box;color:rgb(207, 34, 46);">&lt;&lt;</span><span style="box-sizing:border-box;color:rgb(207, 34, 46);">EOF</span></span>
+<span style="box-sizing:border-box;color:rgb(10, 48, 105);">{</span>
+<span style="box-sizing:border-box;color:rgb(10, 48, 105);">	"cniVersion": "0.2.0",</span>
+<span style="box-sizing:border-box;color:rgb(10, 48, 105);">	"name": "mynet",</span>
+<span style="box-sizing:border-box;color:rgb(10, 48, 105);">	"type": "bridge",</span>
+<span style="box-sizing:border-box;color:rgb(10, 48, 105);">	"bridge": "cni0",</span>
+<span style="box-sizing:border-box;color:rgb(10, 48, 105);">	"isGateway": true,</span>
+<span style="box-sizing:border-box;color:rgb(10, 48, 105);">	"ipMasq": true,</span>
+<span style="box-sizing:border-box;color:rgb(10, 48, 105);">	"ipam": {</span>
+<span style="box-sizing:border-box;color:rgb(10, 48, 105);">		"type": "host-local",</span>
+<span style="box-sizing:border-box;color:rgb(10, 48, 105);">		"subnet": "10.22.0.0/16",</span>
+<span style="box-sizing:border-box;color:rgb(10, 48, 105);">		"routes": [</span>
+<span style="box-sizing:border-box;color:rgb(10, 48, 105);">			{ "dst": "0.0.0.0/0" }</span>
+<span style="box-sizing:border-box;color:rgb(10, 48, 105);">		]</span>
+<span style="box-sizing:border-box;color:rgb(10, 48, 105);">	}</span>
+<span style="box-sizing:border-box;color:rgb(10, 48, 105);">}</span>
+<span style="box-sizing:border-box;color:rgb(10, 48, 105);"><span style="box-sizing:border-box;color:rgb(207, 34, 46);">EOF</span></span>
+$ cat <span style="box-sizing:border-box;color:rgb(207, 34, 46);">&gt;</span>/etc/cni/net.d/99-loopback.conf <span style="box-sizing:border-box;color:rgb(10, 48, 105);"><span style="box-sizing:border-box;color:rgb(207, 34, 46);">&lt;&lt;</span><span style="box-sizing:border-box;color:rgb(207, 34, 46);">EOF</span></span>
+<span style="box-sizing:border-box;color:rgb(10, 48, 105);">{</span>
+<span style="box-sizing:border-box;color:rgb(10, 48, 105);">	"cniVersion": "0.2.0",</span>
+<span style="box-sizing:border-box;color:rgb(10, 48, 105);">	"name": "lo",</span>
+<span style="box-sizing:border-box;color:rgb(10, 48, 105);">	"type": "loopback"</span>
+<span style="box-sizing:border-box;color:rgb(10, 48, 105);">}</span>
+<span style="box-sizing:border-box;color:rgb(10, 48, 105);"><span style="box-sizing:border-box;color:rgb(207, 34, 46);">EOF</span></span></pre></div>
+<p dir="auto" style="box-sizing:border-box;margin-top:0px;margin-bottom:16px;">The directory <code style="box-sizing:border-box;font-family:ui-monospace, SFMono-Regular, &quot;SF Mono&quot;, Menlo, Consolas, &quot;Liberation Mono&quot;, monospace;padding:0.2em 0.4em;margin:0px;background-color:rgba(175, 184, 193, 0.2);border-radius:6px;font-size:85%;">/etc/cni/net.d</code> is the default location in which the scripts will look for net configurations.</p>
+<p dir="auto" style="box-sizing:border-box;margin-top:0px;margin-bottom:16px;">Next, build the plugins:</p>
+<div dir="auto" style="box-sizing:border-box;margin-bottom:16px;position:relative;overflow:auto;"><pre style="box-sizing:border-box;font-family:ui-monospace, SFMono-Regular, &quot;SF Mono&quot;, Menlo, Consolas, &quot;Liberation Mono&quot;, monospace;margin-top:0px;overflow-wrap:normal;word-break:normal;margin-bottom:0px;padding:16px;overflow:auto;line-height:1.45;background-color:rgb(246, 248, 250);border-radius:6px;font-size:85%;">$ <span style="box-sizing:border-box;color:rgb(5, 80, 174);">cd</span> <span style="box-sizing:border-box;color:rgb(36, 41, 47);">$GOPATH</span>/src/github.com/containernetworking/plugins
+$ ./build_linux.sh <span style="box-sizing:border-box;color:rgb(110, 119, 129);"><span style="box-sizing:border-box;color:rgb(110, 119, 129);">#</span> or build_windows.sh</span></pre></div>
+<p dir="auto" style="box-sizing:border-box;margin-top:0px;margin-bottom:16px;">Finally, execute a command (<code style="box-sizing:border-box;font-family:ui-monospace, SFMono-Regular, &quot;SF Mono&quot;, Menlo, Consolas, &quot;Liberation Mono&quot;, monospace;padding:0.2em 0.4em;margin:0px;background-color:rgba(175, 184, 193, 0.2);border-radius:6px;font-size:85%;">ifconfig</code> in this example) in a private network namespace that has joined the <code style="box-sizing:border-box;font-family:ui-monospace, SFMono-Regular, &quot;SF Mono&quot;, Menlo, Consolas, &quot;Liberation Mono&quot;, monospace;padding:0.2em 0.4em;margin:0px;background-color:rgba(175, 184, 193, 0.2);border-radius:6px;font-size:85%;">mynet</code> network:</p>
+<div dir="auto" style="box-sizing:border-box;margin-bottom:16px;position:relative;overflow:auto;"><pre style="box-sizing:border-box;font-family:ui-monospace, SFMono-Regular, &quot;SF Mono&quot;, Menlo, Consolas, &quot;Liberation Mono&quot;, monospace;margin-top:0px;overflow-wrap:normal;word-break:normal;margin-bottom:0px;padding:16px;overflow:auto;line-height:1.45;background-color:rgb(246, 248, 250);border-radius:6px;font-size:85%;">$ CNI_PATH=<span style="box-sizing:border-box;color:rgb(36, 41, 47);">$GOPATH</span>/src/github.com/containernetworking/plugins/bin
+$ <span style="box-sizing:border-box;color:rgb(5, 80, 174);">cd</span> <span style="box-sizing:border-box;color:rgb(36, 41, 47);">$GOPATH</span>/src/github.com/containernetworking/cni/scripts
+$ sudo CNI_PATH=<span style="box-sizing:border-box;color:rgb(36, 41, 47);">$CNI_PATH</span> ./priv-net-run.sh ifconfig
+eth0      Link encap:Ethernet  HWaddr f2:c2:6f:54:b8:2b  
+          inet addr:10.22.0.2  Bcast:0.0.0.0  Mask:255.255.0.0
+          inet6 addr: fe80::f0c2:6fff:fe54:b82b/64 Scope:Link
+          UP BROADCAST MULTICAST  MTU:1500  Metric:1
+          RX packets:1 errors:0 dropped:0 overruns:0 frame:0
+          TX packets:0 errors:0 dropped:1 overruns:0 carrier:0
+          collisions:0 txqueuelen:0
+          RX bytes:90 (90.0 B)  TX bytes:0 (0.0 B)
+
+lo        Link encap:Local Loopback  
+          inet addr:127.0.0.1  Mask:255.0.0.0
+          inet6 addr: ::1/128 Scope:Host
+          UP LOOPBACK RUNNING  MTU:65536  Metric:1
+          RX packets:0 errors:0 dropped:0 overruns:0 frame:0
+          TX packets:0 errors:0 dropped:0 overruns:0 carrier:0
+          collisions:0 txqueuelen:0
+          RX bytes:0 (0.0 B)  TX bytes:0 (0.0 B)</pre></div>
+<p dir="auto" style="box-sizing:border-box;margin-top:0px;margin-bottom:16px;">The environment variable <code style="box-sizing:border-box;font-family:ui-monospace, SFMono-Regular, &quot;SF Mono&quot;, Menlo, Consolas, &quot;Liberation Mono&quot;, monospace;padding:0.2em 0.4em;margin:0px;background-color:rgba(175, 184, 193, 0.2);border-radius:6px;font-size:85%;">CNI_PATH</code> tells the scripts and library where to look for plugin executables.</p>
+<h2 dir="auto" style="box-sizing:border-box;line-height:1.25;margin-top:24px;margin-bottom:16px;font-weight:600;padding-bottom:0.3em;border-bottom:1px solid rgb(216, 222, 228);font-size:1.5em;"><a href="https://github.com/containernetworking/cni#running-a-docker-container-with-network-namespace-set-up-by-cni-plugins" style="background-color:transparent;box-sizing:border-box;color:rgb(9, 105, 218);text-decoration:none;float:left;padding-right:4px;margin-left:-20px;line-height:1;"><div class="media-placeholder">[图片/附件]</div></en-media></a>Running a Docker container with network namespace set up by CNI plugins</h2>
+<p dir="auto" style="box-sizing:border-box;margin-top:0px;margin-bottom:16px;">Use the instructions in the previous section to define a netconf and build the plugins.
+Next, docker-run.sh script wraps <code style="box-sizing:border-box;font-family:ui-monospace, SFMono-Regular, &quot;SF Mono&quot;, Menlo, Consolas, &quot;Liberation Mono&quot;, monospace;padding:0.2em 0.4em;margin:0px;background-color:rgba(175, 184, 193, 0.2);border-radius:6px;font-size:85%;">docker run</code>, to execute the plugins prior to entering the container:</p>
+<div dir="auto" style="box-sizing:border-box;margin-bottom:16px;position:relative;overflow:auto;"><pre style="box-sizing:border-box;font-family:ui-monospace, SFMono-Regular, &quot;SF Mono&quot;, Menlo, Consolas, &quot;Liberation Mono&quot;, monospace;margin-top:0px;overflow-wrap:normal;word-break:normal;margin-bottom:0px;padding:16px;overflow:auto;line-height:1.45;background-color:rgb(246, 248, 250);border-radius:6px;font-size:85%;">$ CNI_PATH=<span style="box-sizing:border-box;color:rgb(36, 41, 47);">$GOPATH</span>/src/github.com/containernetworking/plugins/bin
+$ <span style="box-sizing:border-box;color:rgb(5, 80, 174);">cd</span> <span style="box-sizing:border-box;color:rgb(36, 41, 47);">$GOPATH</span>/src/github.com/containernetworking/cni/scripts
+$ sudo CNI_PATH=<span style="box-sizing:border-box;color:rgb(36, 41, 47);">$CNI_PATH</span> ./docker-run.sh --rm busybox:latest ifconfig
+eth0      Link encap:Ethernet  HWaddr fa:60:70:aa:07:d1  
+          inet addr:10.22.0.2  Bcast:0.0.0.0  Mask:255.255.0.0
+          inet6 addr: fe80::f860:70ff:feaa:7d1/64 Scope:Link
+          UP BROADCAST MULTICAST  MTU:1500  Metric:1
+          RX packets:1 errors:0 dropped:0 overruns:0 frame:0
+          TX packets:0 errors:0 dropped:1 overruns:0 carrier:0
+          collisions:0 txqueuelen:0
+          RX bytes:90 (90.0 B)  TX bytes:0 (0.0 B)
+
+lo        Link encap:Local Loopback  
+          inet addr:127.0.0.1  Mask:255.0.0.0
+          inet6 addr: ::1/128 Scope:Host
+          UP LOOPBACK RUNNING  MTU:65536  Metric:1
+          RX packets:0 errors:0 dropped:0 overruns:0 frame:0
+          TX packets:0 errors:0 dropped:0 overruns:0 carrier:0
+          collisions:0 txqueuelen:0
+          RX bytes:0 (0.0 B)  TX bytes:0 (0.0 B)</pre></div>
+<h2 dir="auto" style="box-sizing:border-box;line-height:1.25;margin-top:24px;margin-bottom:16px;font-weight:600;padding-bottom:0.3em;border-bottom:1px solid rgb(216, 222, 228);font-size:1.5em;"><a href="https://github.com/containernetworking/cni#what-might-cni-do-in-the-future" style="background-color:transparent;box-sizing:border-box;color:rgb(9, 105, 218);text-decoration:none;float:left;padding-right:4px;margin-left:-20px;line-height:1;"><div class="media-placeholder">[图片/附件]</div></en-media></a>What might CNI do in the future?</h2>
+<p dir="auto" style="box-sizing:border-box;margin-top:0px;margin-bottom:16px;">CNI currently covers a wide range of needs for network configuration due to its simple model and API.
+However, in the future CNI might want to branch out into other directions:</p>
+<ul dir="auto" style="box-sizing:border-box;margin-top:0px;margin-bottom:16px;padding-left:2em;">
+<li style="box-sizing:border-box;">Dynamic updates to existing network configuration</li>
+<li style="box-sizing:border-box;margin-top:0.25em;">Dynamic policies for network bandwidth and firewall rules</li>
+</ul>
+<p dir="auto" style="box-sizing:border-box;margin-top:0px;margin-bottom:16px;">If these topics are of interest, please contact the team via the mailing list or IRC and find some like-minded people in the community to put a proposal together.</p>
+<h2 dir="auto" style="box-sizing:border-box;line-height:1.25;margin-top:24px;margin-bottom:16px;font-weight:600;padding-bottom:0.3em;border-bottom:1px solid rgb(216, 222, 228);font-size:1.5em;"><a href="https://github.com/containernetworking/cni#where-are-the-binaries" style="background-color:transparent;box-sizing:border-box;color:rgb(9, 105, 218);text-decoration:none;float:left;padding-right:4px;margin-left:-20px;line-height:1;"><div class="media-placeholder">[图片/附件]</div></en-media></a>Where are the binaries?</h2>
+<p dir="auto" style="box-sizing:border-box;margin-top:0px;margin-bottom:16px;">The plugins moved to a separate repo:
+<a href="https://github.com/containernetworking/plugins" style="background-color:transparent;box-sizing:border-box;color:rgb(9, 105, 218);text-decoration:none;">https://github.com/containernetworking/plugins</a>, and the releases there
+include binaries and checksums.</p>
+<p dir="auto" style="box-sizing:border-box;margin-top:0px;margin-bottom:16px;">Prior to release 0.7.0 the <code style="box-sizing:border-box;font-family:ui-monospace, SFMono-Regular, &quot;SF Mono&quot;, Menlo, Consolas, &quot;Liberation Mono&quot;, monospace;padding:0.2em 0.4em;margin:0px;background-color:rgba(175, 184, 193, 0.2);border-radius:6px;font-size:85%;">cni</code> release also included a <code style="box-sizing:border-box;font-family:ui-monospace, SFMono-Regular, &quot;SF Mono&quot;, Menlo, Consolas, &quot;Liberation Mono&quot;, monospace;padding:0.2em 0.4em;margin:0px;background-color:rgba(175, 184, 193, 0.2);border-radius:6px;font-size:85%;">cnitool</code>
+binary; as this is a developer tool we suggest you build it yourself.</p>
+<h2 dir="auto" style="box-sizing:border-box;line-height:1.25;margin-top:24px;margin-bottom:16px;font-weight:600;padding-bottom:0.3em;border-bottom:1px solid rgb(216, 222, 228);font-size:1.5em;"><a href="https://github.com/containernetworking/cni#contact" style="background-color:transparent;box-sizing:border-box;color:rgb(9, 105, 218);text-decoration:none;float:left;padding-right:4px;margin-left:-20px;line-height:1;"><div class="media-placeholder">[图片/附件]</div></en-media></a>Contact</h2>
+<p dir="auto" style="box-sizing:border-box;margin-top:0px;margin-bottom:16px;">For any questions about CNI, please reach out via:</p>
+<ul dir="auto" style="box-sizing:border-box;margin-top:0px;margin-bottom:16px;padding-left:2em;">
+<li style="box-sizing:border-box;">Email: <a href="https://groups.google.com/forum/#!forum/cni-dev" rel="nofollow" style="background-color:transparent;box-sizing:border-box;color:rgb(9, 105, 218);text-decoration:none;">cni-dev</a></li>
+<li style="box-sizing:border-box;margin-top:0.25em;">IRC: #containernetworking channel on <a href="https://freenode.net/" rel="nofollow" style="background-color:transparent;box-sizing:border-box;color:rgb(9, 105, 218);text-decoration:none;">freenode.net</a></li>
+<li style="box-sizing:border-box;margin-top:0.25em;">Slack: #cni on the <a href="https://slack.cncf.io/" rel="nofollow" style="background-color:transparent;box-sizing:border-box;color:rgb(9, 105, 218);text-decoration:none;">CNCF slack</a>.  NOTE: the previous CNI Slack (containernetworking.slack.com) has been sunsetted.</li>
+</ul>
+<h2 dir="auto" style="box-sizing:border-box;line-height:1.25;margin-top:24px;margin-bottom:16px;font-weight:600;padding-bottom:0.3em;border-bottom:1px solid rgb(216, 222, 228);font-size:1.5em;"><a href="https://github.com/containernetworking/cni#security" style="background-color:transparent;box-sizing:border-box;color:rgb(9, 105, 218);text-decoration:none;float:left;padding-right:4px;margin-left:-20px;line-height:1;"><div class="media-placeholder">[图片/附件]</div></en-media></a>Security</h2>
+<p dir="auto" style="box-sizing:border-box;margin-top:0px;margin-bottom:0px;">If you have a <em style="box-sizing:border-box;">security</em> issue to report, please do so privately to the email addresses listed in the <a href="https://github.com/containernetworking/cni/blob/main/MAINTAINERS" style="background-color:transparent;box-sizing:border-box;color:rgb(9, 105, 218);text-decoration:none;">MAINTAINERS</a> file.</p>
+</div></div></div></span></div></div></div></div></div></span></span></div></div></div></div></div>
+</div>
+</div>
+<a class="back-link" href="../articles.html">← 返回笔记列表</a>
+</body>
+</html>

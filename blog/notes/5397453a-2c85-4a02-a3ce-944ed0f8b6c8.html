@@ -1,0 +1,1273 @@
+<!DOCTYPE html>
+<html lang="zh-CN" data-theme="light">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>[源码解析] PyTorch 分布式之弹性训练(3)---代理 - 罗西的思考 - 博客园 — 技术笔记</title>
+<style>
+:root {
+  --bg: #ffffff;
+  --text: #1a1a1a;
+  --muted: #666;
+  --border: #e0e0e0;
+  --code-bg: #f5f5f5;
+  --link: #0066cc;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #1a1a1a;
+    --text: #e0e0e0;
+    --muted: #999;
+    --border: #333;
+    --code-bg: #2a2a2a;
+    --link: #66bbff;
+  }
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  line-height: 1.7;
+  color: var(--text);
+  background: var(--bg);
+  max-width: 860px;
+  margin: 0 auto;
+  padding: 2rem 1.5rem;
+}
+.note-header {
+  border-bottom: 2px solid var(--border);
+  padding-bottom: 1rem;
+  margin-bottom: 2rem;
+}
+.note-title {
+  font-size: 1.6rem;
+  font-weight: 700;
+  margin-bottom: 0.3rem;
+}
+.note-meta {
+  color: var(--muted);
+  font-size: 0.85rem;
+}
+.note-content {
+  font-size: 0.95rem;
+}
+.note-content h1 { font-size: 1.4rem; margin: 1.2rem 0 0.6rem; }
+.note-content h2 { font-size: 1.2rem; margin: 1rem 0 0.5rem; }
+.note-content h3 { font-size: 1.05rem; margin: 0.8rem 0 0.4rem; }
+.note-content p { margin: 0.5rem 0; }
+.note-content ul, .note-content ol { margin: 0.5rem 0 0.5rem 2rem; }
+.note-content li { margin: 0.2rem 0; }
+.note-content pre {
+  background: var(--code-bg);
+  padding: 1rem;
+  border-radius: 6px;
+  overflow-x: auto;
+  margin: 0.8rem 0;
+  font-size: 0.85rem;
+}
+.note-content code {
+  background: var(--code-bg);
+  padding: 0.1rem 0.3rem;
+  border-radius: 3px;
+  font-size: 0.88em;
+}
+.note-content pre code {
+  background: none;
+  padding: 0;
+}
+.note-content blockquote {
+  border-left: 3px solid var(--border);
+  padding-left: 1rem;
+  color: var(--muted);
+  margin: 0.8rem 0;
+}
+.note-content a { color: var(--link); }
+.note-content img {
+  max-width: 100%;
+  height: auto;
+  border-radius: 6px;
+  margin: 0.5rem 0;
+}
+.note-content table {
+  border-collapse: collapse;
+  width: 100%;
+  margin: 0.8rem 0;
+}
+.note-content th, .note-content td {
+  border: 1px solid var(--border);
+  padding: 0.5rem;
+}
+.note-content th { background: var(--code-bg); }
+.media-placeholder {
+  background: var(--code-bg);
+  padding: 1rem;
+  text-align: center;
+  color: var(--muted);
+  border-radius: 6px;
+  margin: 0.5rem 0;
+  font-size: 0.85rem;
+}
+.encrypt-placeholder {
+  background: #fff3cd;
+  padding: 0.5rem;
+  text-align: center;
+  color: #856404;
+  border-radius: 6px;
+  margin: 0.5rem 0;
+  font-size: 0.85rem;
+}
+.back-link {
+  display: inline-block;
+  margin-top: 2rem;
+  color: var(--link);
+  text-decoration: none;
+  font-size: 0.85rem;
+}
+</style>
+</head>
+<body>
+<div class="note-header">
+  <div class="note-title">[源码解析] PyTorch 分布式之弹性训练(3)---代理 - 罗西的思考 - 博客园</div>
+  <div class="note-meta">笔记本：AI</div>
+</div>
+<div class="note-content">
+<div style="--en-clipped-content:article">
+<div><br/></div><div style="font-size: 16px; display:block; min-width: 100%; position: relative;"> <div style="--olcb-folder-code-block-max-height:80vh;--cnb-code-bg:rgb(245, 245, 245);--cnb-code-font-size:12px;--cnb-code-color:rgb(68, 68, 68);"><div style="tab-size:4;color:rgb(0, 0, 0);background:rgb(255, 255, 255);line-height:1.5;text-size-adjust:none;font-family:&quot;HanHei SC&quot;, &quot;PingFang SC&quot;, &quot;Helvetica Neue&quot;, Helvetica, STHeitiSC-Light, Arial, sans-serif;font-size:14px;"><div><div><div><div><div><div><div><div style="color:rgb(17, 17, 17);font-size:13px;line-height:1.8;"><div style="word-break:break-word;">
+<h1 style="padding:0px;color:rgb(0, 0, 0);font-size:28px;line-height:1.5;font-weight:bold;margin:10px 0px;">[源码解析] PyTorch 分布式之弹性训练(3)---代理</h1>
+<p style="padding:0px;margin:10px auto;text-indent:0px;"></p><div style="margin:0px;padding:0px;"><div style="margin:0px;padding:0px;">目录</div><ul style="margin:0px;padding:0px;margin-left:30px;padding-left:0px;list-style-type:disc;"><li style="margin:0px;padding:0px;list-style:inherit;"><a href="https://www.cnblogs.com/rossiXYZ/p/15728861.html#%E6%BA%90%E7%A0%81%E8%A7%A3%E6%9E%90-pytorch-%E5%88%86%E5%B8%83%E5%BC%8F%E4%B9%8B%E5%BC%B9%E6%80%A7%E8%AE%AD%E7%BB%833---%E4%BB%A3%E7%90%86" rel="noopener" style="margin:0px;padding:0px;text-decoration:underline;color:rgb(0, 102, 204);">[源码解析] PyTorch 分布式之弹性训练(3)---代理</a><ul style="margin:0px;padding:0px;margin-left:30px;padding-left:0px;list-style-type:circle;"><li style="margin:0px;padding:0px;list-style:inherit;"><a href="https://www.cnblogs.com/rossiXYZ/p/15728861.html#0x00-%E6%91%98%E8%A6%81" rel="noopener" style="margin:0px;padding:0px;text-decoration:underline;color:rgb(0, 102, 204);">0x00 摘要</a></li><li style="margin:0px;padding:0px;list-style:inherit;"><a href="https://www.cnblogs.com/rossiXYZ/p/15728861.html#0x01-%E6%80%BB%E4%BD%93%E8%83%8C%E6%99%AF" rel="noopener" style="margin:0px;padding:0px;text-decoration:underline;color:rgb(0, 102, 204);">0x01 总体背景</a><ul style="margin:0px;padding:0px;margin-left:30px;padding-left:0px;list-style-type:square;"><li style="margin:0px;padding:0px;list-style:inherit;"><a href="https://www.cnblogs.com/rossiXYZ/p/15728861.html#11-%E5%8A%9F%E8%83%BD%E5%88%86%E7%A6%BB" rel="noopener" style="margin:0px;padding:0px;text-decoration:underline;color:rgb(0, 102, 204);">1.1 功能分离</a></li><li style="margin:0px;padding:0px;list-style:inherit;"><a href="https://www.cnblogs.com/rossiXYZ/p/15728861.html#12-rendezvous" rel="noopener" style="margin:0px;padding:0px;text-decoration:underline;color:rgb(0, 102, 204);">1.2 Rendezvous</a></li></ul></li><li style="margin:0px;padding:0px;list-style:inherit;"><a href="https://www.cnblogs.com/rossiXYZ/p/15728861.html#0x02-agent-%E6%80%BB%E4%BD%93%E9%80%BB%E8%BE%91" rel="noopener" style="margin:0px;padding:0px;text-decoration:underline;color:rgb(0, 102, 204);">0x02 Agent 总体逻辑</a><ul style="margin:0px;padding:0px;margin-left:30px;padding-left:0px;list-style-type:square;"><li style="margin:0px;padding:0px;list-style:inherit;"><a href="https://www.cnblogs.com/rossiXYZ/p/15728861.html#21-%E5%8A%9F%E8%83%BD" rel="noopener" style="margin:0px;padding:0px;text-decoration:underline;color:rgb(0, 102, 204);">2.1 功能</a></li><li style="margin:0px;padding:0px;list-style:inherit;"><a href="https://www.cnblogs.com/rossiXYZ/p/15728861.html#22-%E5%B7%A5%E4%BD%9C%E5%9F%BA%E7%A1%80" rel="noopener" style="margin:0px;padding:0px;text-decoration:underline;color:rgb(0, 102, 204);">2.2 工作基础</a></li><li style="margin:0px;padding:0px;list-style:inherit;"><a href="https://www.cnblogs.com/rossiXYZ/p/15728861.html#23-%E9%83%A8%E7%BD%B2" rel="noopener" style="margin:0px;padding:0px;text-decoration:underline;color:rgb(0, 102, 204);">2.3 部署</a></li><li style="margin:0px;padding:0px;list-style:inherit;"><a href="https://www.cnblogs.com/rossiXYZ/p/15728861.html#24-%E5%9F%BA%E7%B1%BB" rel="noopener" style="margin:0px;padding:0px;text-decoration:underline;color:rgb(0, 102, 204);">2.4 基类</a></li></ul></li><li style="margin:0px;padding:0px;list-style:inherit;"><a href="https://www.cnblogs.com/rossiXYZ/p/15728861.html#0x03-worker" rel="noopener" style="margin:0px;padding:0px;text-decoration:underline;color:rgb(0, 102, 204);">0x03 Worker</a><ul style="margin:0px;padding:0px;margin-left:30px;padding-left:0px;list-style-type:square;"><li style="margin:0px;padding:0px;list-style:inherit;"><a href="https://www.cnblogs.com/rossiXYZ/p/15728861.html#31-worker-%E5%AE%9A%E4%B9%89" rel="noopener" style="margin:0px;padding:0px;text-decoration:underline;color:rgb(0, 102, 204);">3.1 Worker 定义</a></li><li style="margin:0px;padding:0px;list-style:inherit;"><a href="https://www.cnblogs.com/rossiXYZ/p/15728861.html#32-workergroup" rel="noopener" style="margin:0px;padding:0px;text-decoration:underline;color:rgb(0, 102, 204);">3.2 WorkerGroup</a></li><li style="margin:0px;padding:0px;list-style:inherit;"><a href="https://www.cnblogs.com/rossiXYZ/p/15728861.html#33-workerstate" rel="noopener" style="margin:0px;padding:0px;text-decoration:underline;color:rgb(0, 102, 204);">3.3 WorkerState</a></li></ul></li><li style="margin:0px;padding:0px;list-style:inherit;"><a href="https://www.cnblogs.com/rossiXYZ/p/15728861.html#0x04-simpleelasticagent" rel="noopener" style="margin:0px;padding:0px;text-decoration:underline;color:rgb(0, 102, 204);">0x04 SimpleElasticAgent</a><ul style="margin:0px;padding:0px;margin-left:30px;padding-left:0px;list-style-type:square;"><li style="margin:0px;padding:0px;list-style:inherit;"><a href="https://www.cnblogs.com/rossiXYZ/p/15728861.html#41-%E6%80%BB%E4%BD%93%E8%BF%90%E8%A1%8C" rel="noopener" style="margin:0px;padding:0px;text-decoration:underline;color:rgb(0, 102, 204);">4.1 总体运行</a></li><li style="margin:0px;padding:0px;list-style:inherit;"><a href="https://www.cnblogs.com/rossiXYZ/p/15728861.html#42-%E5%88%9D%E5%A7%8B%E5%8C%96workers" rel="noopener" style="margin:0px;padding:0px;text-decoration:underline;color:rgb(0, 102, 204);">4.2 初始化workers</a><ul style="margin:0px;padding:0px;margin-left:30px;padding-left:0px;list-style-type:square;"><li style="margin:0px;padding:0px;list-style:inherit;"><a href="https://www.cnblogs.com/rossiXYZ/p/15728861.html#421-_rendezvous" rel="noopener" style="margin:0px;padding:0px;text-decoration:underline;color:rgb(0, 102, 204);">4.2.1 _rendezvous</a><ul style="margin:0px;padding:0px;margin-left:30px;padding-left:0px;list-style-type:square;"><li style="margin:0px;padding:0px;list-style:inherit;"><a href="https://www.cnblogs.com/rossiXYZ/p/15728861.html#4221-%E5%A4%84%E7%90%86%E6%88%90%E5%91%98%E5%85%B3%E7%B3%BB%E5%8F%98%E5%8C%96" rel="noopener" style="margin:0px;padding:0px;text-decoration:underline;color:rgb(0, 102, 204);">4.2.2.1 处理成员关系变化</a></li><li style="margin:0px;padding:0px;list-style:inherit;"><a href="https://www.cnblogs.com/rossiXYZ/p/15728861.html#4232-%E4%B8%BA-worker-%E5%88%86%E9%85%8D-ranks" rel="noopener" style="margin:0px;padding:0px;text-decoration:underline;color:rgb(0, 102, 204);">4.2.3.2 为 worker 分配 ranks</a></li></ul></li><li style="margin:0px;padding:0px;list-style:inherit;"><a href="https://www.cnblogs.com/rossiXYZ/p/15728861.html#424-%E5%90%AF%E5%8A%A8-workers-%E8%BF%9B%E7%A8%8B" rel="noopener" style="margin:0px;padding:0px;text-decoration:underline;color:rgb(0, 102, 204);">4.2.4 启动 workers 进程</a></li></ul></li><li style="margin:0px;padding:0px;list-style:inherit;"><a href="https://www.cnblogs.com/rossiXYZ/p/15728861.html#43-ranks%E7%9B%B8%E5%85%B3" rel="noopener" style="margin:0px;padding:0px;text-decoration:underline;color:rgb(0, 102, 204);">4.3 ranks相关</a><ul style="margin:0px;padding:0px;margin-left:30px;padding-left:0px;list-style-type:square;"><li style="margin:0px;padding:0px;list-style:inherit;"><a href="https://www.cnblogs.com/rossiXYZ/p/15728861.html#431-_roleinstanceinfo" rel="noopener" style="margin:0px;padding:0px;text-decoration:underline;color:rgb(0, 102, 204);">4.3.1 _RoleInstanceInfo</a></li><li style="margin:0px;padding:0px;list-style:inherit;"><a href="https://www.cnblogs.com/rossiXYZ/p/15728861.html#432-_share_and_gather" rel="noopener" style="margin:0px;padding:0px;text-decoration:underline;color:rgb(0, 102, 204);">4.3.2 _share_and_gather</a></li><li style="margin:0px;padding:0px;list-style:inherit;"><a href="https://www.cnblogs.com/rossiXYZ/p/15728861.html#433-_get_ranks" rel="noopener" style="margin:0px;padding:0px;text-decoration:underline;color:rgb(0, 102, 204);">4.3.3 _get_ranks</a></li></ul></li><li style="margin:0px;padding:0px;list-style:inherit;"><a href="https://www.cnblogs.com/rossiXYZ/p/15728861.html#44-worker-%E7%9B%B8%E5%85%B3" rel="noopener" style="margin:0px;padding:0px;text-decoration:underline;color:rgb(0, 102, 204);">4.4 Worker 相关</a><ul style="margin:0px;padding:0px;margin-left:30px;padding-left:0px;list-style-type:square;"><li style="margin:0px;padding:0px;list-style:inherit;"><a href="https://www.cnblogs.com/rossiXYZ/p/15728861.html#441-%E9%87%8D%E5%90%AF" rel="noopener" style="margin:0px;padding:0px;text-decoration:underline;color:rgb(0, 102, 204);">4.4.1 重启</a></li><li style="margin:0px;padding:0px;list-style:inherit;"><a href="https://www.cnblogs.com/rossiXYZ/p/15728861.html#442--barrier" rel="noopener" style="margin:0px;padding:0px;text-decoration:underline;color:rgb(0, 102, 204);">4.4.2  barrier</a></li></ul></li></ul></li><li style="margin:0px;padding:0px;list-style:inherit;"><a href="https://www.cnblogs.com/rossiXYZ/p/15728861.html#0x05-localelasticagent" rel="noopener" style="margin:0px;padding:0px;text-decoration:underline;color:rgb(0, 102, 204);">0x05 LocalElasticAgent</a><ul style="margin:0px;padding:0px;margin-left:30px;padding-left:0px;list-style-type:square;"><li style="margin:0px;padding:0px;list-style:inherit;"><a href="https://www.cnblogs.com/rossiXYZ/p/15728861.html#51-%E4%BD%BF%E7%94%A8" rel="noopener" style="margin:0px;padding:0px;text-decoration:underline;color:rgb(0, 102, 204);">5.1 使用</a></li><li style="margin:0px;padding:0px;list-style:inherit;"><a href="https://www.cnblogs.com/rossiXYZ/p/15728861.html#52-%E5%81%9C%E6%AD%A2" rel="noopener" style="margin:0px;padding:0px;text-decoration:underline;color:rgb(0, 102, 204);">5.2 停止</a></li><li style="margin:0px;padding:0px;list-style:inherit;"><a href="https://www.cnblogs.com/rossiXYZ/p/15728861.html#53-%E5%88%9D%E5%A7%8B%E5%8C%96" rel="noopener" style="margin:0px;padding:0px;text-decoration:underline;color:rgb(0, 102, 204);">5.3 初始化</a></li><li style="margin:0px;padding:0px;list-style:inherit;"><a href="https://www.cnblogs.com/rossiXYZ/p/15728861.html#54-%E5%90%AF%E5%8A%A8-worker-%E8%BF%9B%E7%A8%8B" rel="noopener" style="margin:0px;padding:0px;text-decoration:underline;color:rgb(0, 102, 204);">5.4 启动 worker 进程</a></li><li style="margin:0px;padding:0px;list-style:inherit;"><a href="https://www.cnblogs.com/rossiXYZ/p/15728861.html#55-%E7%9B%91%E6%8E%A7" rel="noopener" style="margin:0px;padding:0px;text-decoration:underline;color:rgb(0, 102, 204);">5.5 监控</a></li></ul></li><li style="margin:0px;padding:0px;list-style:inherit;"><a href="https://www.cnblogs.com/rossiXYZ/p/15728861.html#0xff-%E5%8F%82%E8%80%83" rel="noopener" style="margin:0px;padding:0px;text-decoration:underline;color:rgb(0, 102, 204);">0xFF 参考</a></li></ul></li></ul></div><p style="padding:0px;margin:10px auto;text-indent:0px;"></p>
+<h2 style="padding:0px;color:rgb(0, 0, 0);font-size:21px;line-height:1.5;font-weight:bold;margin:10px 0px;">0x00 摘要</h2>
+<p style="padding:0px;margin:10px auto;text-indent:0px;">在前面的文章之中，我们已经学习了PyTorch 分布式的基本模块，介绍了官方的几个例子，我们接下来会介绍PyTorch的弹性训练，本文是第三篇，看看弹性代理的基本功能。</p>
+<p style="padding:0px;margin:10px auto;text-indent:0px;">弹性训练系列文章如下：</p>
+<p style="padding:0px;margin:10px auto;text-indent:0px;">[<a href="https://www.cnblogs.com/rossiXYZ/p/15718043.html" target="_blank" rel="noopener" style="margin:0px;padding:0px;text-decoration:underline;color:rgb(0, 102, 204);">源码解析] PyTorch 分布式之弹性训练(1) --- 总体思路</a></p>
+<p style="padding:0px;margin:10px auto;text-indent:0px;">[<a href="https://www.cnblogs.com/rossiXYZ/p/15725911.html" target="_blank" rel="noopener" style="margin:0px;padding:0px;text-decoration:underline;color:rgb(0, 102, 204);">源码解析] PyTorch 分布式之弹性训练(2)---启动&amp;单节点流程</a></p>
+<h2 style="padding:0px;color:rgb(0, 0, 0);font-size:21px;line-height:1.5;font-weight:bold;margin:10px 0px;">0x01 总体背景</h2>
+<p style="padding:0px;margin:10px auto;text-indent:0px;">我们先总述一下，TE 最重要的是 Agent 和 Rendezvous 这两个概念。</p>
+<ul style="margin:0px;padding:0px;margin-left:30px;padding-left:0px;list-style-type:disc;">
+<li style="margin:0px;padding:0px;list-style:inherit;">Agent是运行在单节点上的独立后台进程，可以认为是 <u style="margin:0px;padding:0px;">worker manager 或者 process supervisor，</u>其负责启动worker，监控 worker 运行，捕获woker异常，通过 <code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif">rendezvous</code> 实现 worker 间的相互发现，当有成员变动时候负责基于  <code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif">rendezvous</code>  进行变更同步。</li>
+<li style="margin:0px;padding:0px;list-style:inherit;">为了实现弹性训练，需要有一个节点/进程之间彼此发现的机制。<u style="margin:0px;padding:0px;">rendezvous就是这个发现机制或者说同步组件</u>。当系统启动或者成员变更时候，所有worker会（重新）集合（rendezvous）以建立一个新的进程组。</li>
+</ul>
+<h3 style="padding:0px;color:rgb(0, 0, 0);font-size:16px;line-height:1.5;font-weight:bold;margin:10px 0px;">1.1 功能分离</h3>
+<p style="padding:0px;margin:10px auto;text-indent:0px;">TE 是<u style="margin:0px;padding:0px;">围绕在 Rendezvous 基础之上的多个elastic agent构成</u>，这是一种功能分离，让我们对比一下看看。</p>
+<ul style="margin:0px;padding:0px;margin-left:30px;padding-left:0px;list-style-type:disc;">
+<li style="margin:0px;padding:0px;list-style:inherit;">Agent 偏重具体<u style="margin:0px;padding:0px;">节点上的逻辑</u>。
+<ul style="margin:0px;padding:0px;margin-left:30px;padding-left:0px;list-style-type:circle;">
+<li style="margin:0px;padding:0px;list-style:inherit;">Agent 负责具体<u style="margin:0px;padding:0px;">业务逻辑</u>相关操作，比如启动进程执行用户程序，监控用户程序运行情况，如果有异常就通知 Rendezvous。</li>
+<li style="margin:0px;padding:0px;list-style:inherit;">Agent 是一个 worker manager，负责启动/管理 workers 进程，组成一个 worker group，监控 workers 运行状态，捕获失效 workers，如果有故障/新加入worker，则重启 worker group。</li>
+<li style="margin:0px;padding:0px;list-style:inherit;">Agent负责维护 WORLD_SIZE 以及 RANK 信息。用户不需要再手动提供，Agent会自动处理这些。</li>
+<li style="margin:0px;padding:0px;list-style:inherit;">Agent 是具体节点上的后台进程，是独立个体。Agent自己无法实现整体上的弹性训练，所以需要一个机制来完成 worker 之间的相互发现，变更同步等等（WORLD_SIZE 和 RANK 这些信息其实也需要多个节点同步才能确定），这就是下面的 Rendezvous 概念。</li>
+</ul>
+</li>
+<li style="margin:0px;padding:0px;list-style:inherit;">Rendezvous 负责<u style="margin:0px;padding:0px;">集群逻辑</u>，保证节点之间对于""有哪些节点参与训练"达成强一致共识。
+<ul style="margin:0px;padding:0px;margin-left:30px;padding-left:0px;list-style-type:circle;">
+<li style="margin:0px;padding:0px;list-style:inherit;">每一个 Agent 内部包括一个 Rendezvous handler，这些 handler 总体上构成了一个 Rendezvous 集群，从而构成了一个 Agent 集群。</li>
+<li style="margin:0px;padding:0px;list-style:inherit;">Rendezvous 完成之后，会创建一个共享键值存储（shared key-value store），这个store实现了一个<code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif">torch.distributed.Store</code> API。此存储仅由已完成Rendezvous的成员共享，它旨在让Torch Distributed Elastic在初始化作业过程之中交换控制和数据信息。</li>
+<li style="margin:0px;padding:0px;list-style:inherit;">Rendezvous 负责在每个agent之上维护当前 group 所有相关信息。每个 agent 之上有一个 rendezvous，它们会互相通信，总体维护一套信息，这些信息存储在上面提到的Store 之中。</li>
+<li style="margin:0px;padding:0px;list-style:inherit;">Rendezvous 负责集群逻辑相关，比如新加入节点，移除节点，分配rank等等。</li>
+</ul>
+</li>
+</ul>
+<p style="padding:0px;margin:10px auto;text-indent:0px;">我们首先从源码中取出示意图看看，大家先有一个总体概念。</p>
+<p style="padding:0px;margin:10px auto;text-indent:0px;"><div class="media-placeholder">[图片/附件]</div></en-media></p>
+<h3 style="padding:0px;color:rgb(0, 0, 0);font-size:16px;line-height:1.5;font-weight:bold;margin:10px 0px;">1.2 Rendezvous</h3>
+<p style="padding:0px;margin:10px auto;text-indent:0px;">我们本文只是简单介绍一下 rendezvous，重点在于介绍 agent。</p>
+<p style="padding:0px;margin:10px auto;text-indent:0px;">在 Torch Distributed Elastic 上下文之中，我们使用 rendezvous 这个术语来特指一个特定功能：一个结合了对等发现（peer discovery）的分布式同步（distributed synchronization）原语。</p>
+<p style="padding:0px;margin:10px auto;text-indent:0px;">Rendezvous 被Torch Distributed Elastic用来收集一个训练job的参与者（节点），这样，参与者们可以商议得到参与者列表和每个参与者的角色，也可以对训练何时开始/恢复做出一致的集体决定。</p>
+<p style="padding:0px;margin:10px auto;text-indent:0px;">Rendezvous 把功能分割解耦，业务逻辑被抽象成为一系列算子，比如 <code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif">_RendevzousJoinOp</code>。而 Rendezvous 内部维护了一套状态机，由算子决定下一步操作。比如 <code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif">_RendezvousOpExecutor</code> 来执行各种算子，依据算子结果得到下一步应该执行的 Action，从而对本身进行操作。</p>
+<p style="padding:0px;margin:10px auto;text-indent:0px;">比如在 <code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif">_DistributedRendezvousOpExecutor</code>  之中，如果发现了当前 action 是 ADD_TO_WAIT_LIST，会执行  <code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif">_add_to_wait_list</code>，进而调用 <code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif">self._state.wait_list.add(self._node)</code></p>
+<pre style="border-radius:4px;background-color: #fbfaf8;border: 1px solid rgba(0,0,0,.14902);color: #333;font-size: 12px;padding: 8px;font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif;box-sizing: border-box;"><code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span style="margin:0px;padding:0px;color:rgb(0, 0, 255);">if</span> action == _Action.KEEP_ALIVE:
+    self._keep_alive()
+<span style="margin:0px;padding:0px;color:rgb(0, 0, 255);">elif</span> action == _Action.ADD_TO_PARTICIPANTS:
+    self._add_to_participants()
+<span style="margin:0px;padding:0px;color:rgb(0, 0, 255);">elif</span> action == _Action.ADD_TO_WAIT_LIST: <span style="margin:0px;padding:0px;color:rgb(0, 128, 0);"># 发现当前Action</span>
+    self._add_to_wait_list() <span style="margin:0px;padding:0px;color:rgb(0, 128, 0);"># 然后执行</span>
+<span style="margin:0px;padding:0px;color:rgb(0, 0, 255);">elif</span> action == _Action.REMOVE_FROM_PARTICIPANTS:
+    self._remove_from_participants()
+<span style="margin:0px;padding:0px;color:rgb(0, 0, 255);">elif</span> action == _Action.REMOVE_FROM_WAIT_LIST:
+    self._remove_from_wait_list()
+<span style="margin:0px;padding:0px;color:rgb(0, 0, 255);">elif</span> action == _Action.MARK_RENDEZVOUS_COMPLETE:
+    self._mark_rendezvous_complete()
+<span style="margin:0px;padding:0px;color:rgb(0, 0, 255);">elif</span> action == _Action.MARK_RENDEZVOUS_CLOSED:
+    self._mark_rendezvous_closed()
+</code></pre>
+<h2 style="padding:0px;color:rgb(0, 0, 0);font-size:21px;line-height:1.5;font-weight:bold;margin:10px 0px;">0x02 Agent 总体逻辑</h2>
+<h3 style="padding:0px;color:rgb(0, 0, 0);font-size:16px;line-height:1.5;font-weight:bold;margin:10px 0px;">2.1 功能</h3>
+<p style="padding:0px;margin:10px auto;text-indent:0px;">Elastic agent 是 torchelastic 的控制台（control plane），他是一个独立进程，负责启动和管理底层 worker 进程，代理具体负责：</p>
+<ul style="margin:0px;padding:0px;margin-left:30px;padding-left:0px;list-style-type:disc;">
+<li style="margin:0px;padding:0px;list-style:inherit;">与PyTorch原生分布式协同工作：使每个worker都能获得所有需要的信息，以便成功调用 <code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif">torch.distributed.init_process_group()</code>。</li>
+<li style="margin:0px;padding:0px;list-style:inherit;">容错：监控每个worker，当出现错误或者异常时能及时终止所有worker并重启它们。</li>
+<li style="margin:0px;padding:0px;list-style:inherit;">弹性：对成员更改作出反应，并使用新的成员来重启所有workers。</li>
+</ul>
+<p style="padding:0px;margin:10px auto;text-indent:0px;">下图来自知乎，算是对上一个图的细化。</p>
+<p style="padding:0px;margin:10px auto;text-indent:0px;"><div class="media-placeholder">[图片/附件]</div></en-media></p>
+<h3 style="padding:0px;color:rgb(0, 0, 0);font-size:16px;line-height:1.5;font-weight:bold;margin:10px 0px;">2.2 工作基础</h3>
+<p style="padding:0px;margin:10px auto;text-indent:0px;">Torchelast agent 和 用户worker 依据故障切换契约来工作：</p>
+<ul style="margin:0px;padding:0px;margin-left:30px;padding-left:0px;list-style-type:disc;">
+<li style="margin:0px;padding:0px;list-style:inherit;">TE（torchelastic）希望用户worker以5分钟为误差完成工作。</li>
+<li style="margin:0px;padding:0px;list-style:inherit;">设计DDP应用程序时，最好让所有worker都失败，而不只是一个worker失败。</li>
+<li style="margin:0px;padding:0px;list-style:inherit;">TE不会在代理之间同步重启次数。</li>
+<li style="margin:0px;padding:0px;list-style:inherit;">TE re-rendezvous不会减少重启次数。</li>
+<li style="margin:0px;padding:0px;list-style:inherit;">当单个代理完成其工作（成功或失败）时，它将关闭rendezvous。如果其他代理仍有worker在工作，他们将被终止。</li>
+<li style="margin:0px;padding:0px;list-style:inherit;">基于上述情况，如果至少有一个代理完成了任务，则缩容（scale down）不起作用。</li>
+<li style="margin:0px;padding:0px;list-style:inherit;">当代理检测到Scale up时，它不会减少 "max_restarts"。</li>
+<li style="margin:0px;padding:0px;list-style:inherit;">Torchelast agent 之间通过etcd或者类似后端来保持协同工作。</li>
+</ul>
+<h3 style="padding:0px;color:rgb(0, 0, 0);font-size:16px;line-height:1.5;font-weight:bold;margin:10px 0px;">2.3 部署</h3>
+<p style="padding:0px;margin:10px auto;text-indent:0px;">简单的agent部署在每个节点上，并与本地进程协同工作。更高级的agent可以远程启动和管理workers。Agent可以做到彻底的去中心化，与其他agents（管理同一个job的workers）进行沟通协调做出一个集体性决策，决策是基于其管理的  workers 情况来完成。</p>
+<p style="padding:0px;margin:10px auto;text-indent:0px;">对于如何配置，源码中也给出了示例，如果在GPU上启动训练一个拥有 8 个 trainer（每GPU一个trainer）的 job，我们可以做如下配置。</p>
+<pre style="border-radius:4px;background-color: #fbfaf8;border: 1px solid rgba(0,0,0,.14902);color: #333;font-size: 12px;padding: 8px;font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif;box-sizing: border-box;"><code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span style="margin:0px;padding:0px;color:rgb(136, 0, 0);">1.</span> Use <span style="margin:0px;padding:0px;color:rgb(136, 0, 0);">8</span> x single GPU instances, place an agent per instance, managing <span style="margin:0px;padding:0px;color:rgb(136, 0, 0);">1</span> worker per agent.
+<span style="margin:0px;padding:0px;color:rgb(136, 0, 0);">2.</span> Use <span style="margin:0px;padding:0px;color:rgb(136, 0, 0);">4</span> x double GPU instances, place an agent per instance, managing <span style="margin:0px;padding:0px;color:rgb(136, 0, 0);">2</span> workers per agent.
+<span style="margin:0px;padding:0px;color:rgb(136, 0, 0);">3.</span> Use <span style="margin:0px;padding:0px;color:rgb(136, 0, 0);">2</span> x quad GPU instances, place an agent per instance, managing <span style="margin:0px;padding:0px;color:rgb(136, 0, 0);">4</span> workers per agent.
+<span style="margin:0px;padding:0px;color:rgb(136, 0, 0);">4.</span> Use <span style="margin:0px;padding:0px;color:rgb(136, 0, 0);">1</span> x <span style="margin:0px;padding:0px;color:rgb(136, 0, 0);">8</span> GPU instance, place an agent per instance, managing <span style="margin:0px;padding:0px;color:rgb(136, 0, 0);">8</span> workers per agent.
+</code></pre>
+<h3 style="padding:0px;color:rgb(0, 0, 0);font-size:16px;line-height:1.5;font-weight:bold;margin:10px 0px;">2.4 基类</h3>
+<p style="padding:0px;margin:10px auto;text-indent:0px;">基类<code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif">ElasticAgent</code> 是一个 Abstract Class，真正运行的代理都需要由此派生。从 ElasticAgent 的注释可知，代理进程负责管理一个或多个worker 进程。工作进程被假定为常规分布式PyTorch脚本。当worker进程由代理创建时，代理将为worker进程提供必要的信息，以便正确初始化torch进程组。部署时，精确的拓扑和 agent-to-worker 比率取决于代理的具体实现和用户作业放置偏好。</p>
+<pre style="border-radius:4px;background-color: #fbfaf8;border: 1px solid rgba(0,0,0,.14902);color: #333;font-size: 12px;padding: 8px;font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif;box-sizing: border-box;"><code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span style="margin:0px;padding:0px;color:rgb(0, 0, 255);">class</span> <span style="margin:0px;padding:0px;color:rgb(163, 21, 21);">ElasticAgent</span>(abc.ABC):
+    <span style="margin:0px;padding:0px;color:rgb(163, 21, 21);">"""
+    Agent process responsible for managing one or more worker processes.
+    The worker processes are assumed to be regular distributed PyTorch scripts.
+    When the worker process is created by the agent, the agent provides the
+    necessary information for the worker processes to properly initialize
+    a torch process group.
+
+    The exact deployment topology and ratio of agent-to-worker is dependent
+    on the specific implementation of the agent and the user's job placement
+    preferences. 
+
+    Usage
+    ::
+
+     group_result = agent.run()
+      if group_result.is_failed():
+        # workers failed
+        failure = group_result.failures[0]
+        log.exception(f"worker 0 failed with exit code : {failure.exit_code}")
+      else:
+        return group_result.return_values[0] # return rank 0's results
+
+    """</span>
+
+<span style="margin:0px;padding:0px;color:rgb(43, 145, 175);">    @abc.abstractmethod</span>
+    <span style="margin:0px;padding:0px;color:rgb(0, 0, 255);">def</span> <span style="margin:0px;padding:0px;color:rgb(163, 21, 21);">run</span>(<span style="margin:0px;padding:0px;">self, role: <span style="margin:0px;padding:0px;color:rgb(0, 0, 255);">str</span> = DEFAULT_ROLE</span>) -&gt; RunResult:
+        <span style="margin:0px;padding:0px;color:rgb(163, 21, 21);">"""
+        Runs the agent, retrying the worker group on failures up to
+        ``max_restarts``.
+
+        Returns:
+            The result of the execution, containing the return values or
+            failure details for each worker mapped by the worker's global rank.
+
+        Raises:
+            Exception - any other failures NOT related to worker process
+        """</span>
+        <span style="margin:0px;padding:0px;color:rgb(0, 0, 255);">raise</span> NotImplementedError()
+
+<span style="margin:0px;padding:0px;color:rgb(43, 145, 175);">    @abc.abstractmethod</span>
+    <span style="margin:0px;padding:0px;color:rgb(0, 0, 255);">def</span> <span style="margin:0px;padding:0px;color:rgb(163, 21, 21);">get_worker_group</span>(<span style="margin:0px;padding:0px;">self, role: <span style="margin:0px;padding:0px;color:rgb(0, 0, 255);">str</span> = DEFAULT_ROLE</span>) -&gt; WorkerGroup:
+        <span style="margin:0px;padding:0px;color:rgb(163, 21, 21);">"""
+        Returns:
+            The ``WorkerGroup`` for the given ``role``.
+            Note that the worker group is a mutable object and hence in a
+            multi-threaded/process environment it may change state.
+            Implementors are encouraged (but not required) to return
+            a defensive read-only copy.
+        """</span>
+        <span style="margin:0px;padding:0px;color:rgb(0, 0, 255);">raise</span> NotImplementedError()
+</code></pre>
+<p style="padding:0px;margin:10px auto;text-indent:0px;">ElasticAgent 有两个派生类：</p>
+<ul style="margin:0px;padding:0px;margin-left:30px;padding-left:0px;list-style-type:disc;">
+<li style="margin:0px;padding:0px;list-style:inherit;"><code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif">SimpleElasticAgent</code> 实现了基类的部分函数，其目的是为了方便扩展新代理的实现。</li>
+<li style="margin:0px;padding:0px;list-style:inherit;"><code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif">LocalElasticAgent</code>  派生了<code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif">SimpleElasticAgent</code> ，是目前弹性训练最终使用的代理，主要用于在本地进行操作，负责管理单机上所有的worker进程。</li>
+</ul>
+<h2 style="padding:0px;color:rgb(0, 0, 0);font-size:21px;line-height:1.5;font-weight:bold;margin:10px 0px;">0x03 Worker</h2>
+<p style="padding:0px;margin:10px auto;text-indent:0px;">我们首先要看看 worker，这是 Agent 所管理的主体。</p>
+<h3 style="padding:0px;color:rgb(0, 0, 0);font-size:16px;line-height:1.5;font-weight:bold;margin:10px 0px;">3.1 Worker 定义</h3>
+<p style="padding:0px;margin:10px auto;text-indent:0px;">Worker 类代表了一个worker实例，我们上文介绍了<code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif">WorkerSpec</code>，Worker 就是依据 <code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif">WorkerSpec</code> 构建出来的，其重点成员变量如下：</p>
+<ul style="margin:0px;padding:0px;margin-left:30px;padding-left:0px;list-style-type:disc;">
+<li style="margin:0px;padding:0px;list-style:inherit;">
+<p style="padding:0px;margin:10px auto;text-indent:0px;">id（任意）：唯一标识一个worker，具体是由ElasticAgent的特定实现来解释，对于本地代理，它可以是worker的<code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif">pid（int）</code>，对于远程代理，它可以被编码为``host:port（string）`。</p>
+</li>
+<li style="margin:0px;padding:0px;list-style:inherit;">
+<p style="padding:0px;margin:10px auto;text-indent:0px;">local_rank ：worker的local rank。</p>
+</li>
+<li style="margin:0px;padding:0px;list-style:inherit;">
+<p style="padding:0px;margin:10px auto;text-indent:0px;">global_rank：worker的global rank。</p>
+</li>
+<li style="margin:0px;padding:0px;list-style:inherit;">
+<p style="padding:0px;margin:10px auto;text-indent:0px;">role_rank：具有相同角色的所有worker的rank。</p>
+</li>
+<li style="margin:0px;padding:0px;list-style:inherit;">
+<p style="padding:0px;margin:10px auto;text-indent:0px;">world_size：全局worker数量。</p>
+</li>
+<li style="margin:0px;padding:0px;list-style:inherit;">
+<p style="padding:0px;margin:10px auto;text-indent:0px;">role_world_size：具有相同角色的worker数量。</p>
+</li>
+</ul>
+<pre style="border-radius:4px;background-color: #fbfaf8;border: 1px solid rgba(0,0,0,.14902);color: #333;font-size: 12px;padding: 8px;font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif;box-sizing: border-box;"><code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span style="margin:0px;padding:0px;color:rgb(0, 0, 255);">class</span> <span style="margin:0px;padding:0px;color:rgb(163, 21, 21);">Worker</span>:
+    <span style="margin:0px;padding:0px;color:rgb(163, 21, 21);">"""
+    Represents a worker instance. Contrast this with ``WorkerSpec`` that
+    represents the specifications of a worker. A ``Worker`` is created from
+    a ``WorkerSpec``. A ``Worker`` is to a ``WorkerSpec`` as an object is to
+    a class.
+
+    The ``id`` of the worker is interpreted
+    by the specific implementation of ``ElasticAgent``. For a local
+    agent, it could be the ``pid (int)`` of the worker, for a remote
+    agent it could be encoded as ``host:port (string)``.
+
+    Args:
+        id (Any): uniquely identifies a worker (interpreted by the agent)
+        local_rank (int): local rank of the worker
+        global_rank (int): global rank of the worker
+        role_rank (int): rank of the worker across all workers that have the same role
+        world_size (int): number of workers (globally)
+        role_world_size (int): number of workers that have the same role
+    """</span>
+
+    <span style="margin:0px;padding:0px;color:rgb(0, 0, 255);">def</span> <span style="margin:0px;padding:0px;color:rgb(163, 21, 21);">__init__</span>(<span style="margin:0px;padding:0px;">
+        self,
+        local_rank: <span style="margin:0px;padding:0px;color:rgb(0, 0, 255);">int</span>,
+        global_rank: <span style="margin:0px;padding:0px;color:rgb(0, 0, 255);">int</span> = -<span style="margin:0px;padding:0px;color:rgb(136, 0, 0);">1</span>,
+        role_rank: <span style="margin:0px;padding:0px;color:rgb(0, 0, 255);">int</span> = -<span style="margin:0px;padding:0px;color:rgb(136, 0, 0);">1</span>,
+        world_size: <span style="margin:0px;padding:0px;color:rgb(0, 0, 255);">int</span> = -<span style="margin:0px;padding:0px;color:rgb(136, 0, 0);">1</span>,
+        role_world_size: <span style="margin:0px;padding:0px;color:rgb(0, 0, 255);">int</span> = -<span style="margin:0px;padding:0px;color:rgb(136, 0, 0);">1</span>,
+    </span>):
+        <span style="margin:0px;padding:0px;color:rgb(0, 128, 0);"># unique identifier for this worker</span>
+        self.<span style="margin:0px;padding:0px;color:rgb(0, 0, 255);">id</span>: <span style="margin:0px;padding:0px;color:rgb(163, 21, 21);">Any</span> = <span style="margin:0px;padding:0px;color:rgb(163, 21, 21);">None</span>
+
+        <span style="margin:0px;padding:0px;color:rgb(0, 128, 0);"># rank of the worker among workers with the same role being monitored</span>
+        <span style="margin:0px;padding:0px;color:rgb(0, 128, 0);"># by the same ``agent`` instance.</span>
+        self.local_rank: <span style="margin:0px;padding:0px;color:rgb(0, 0, 255);">int</span> = local_rank
+
+        <span style="margin:0px;padding:0px;color:rgb(0, 128, 0);">#  rank of the worker among all the workers across all roles</span>
+        <span style="margin:0px;padding:0px;color:rgb(0, 128, 0);">#  across all ``agent`` instances.</span>
+        <span style="margin:0px;padding:0px;color:rgb(0, 128, 0);">#  Global rank is not stable between re-rendezvous.</span>
+        self.global_rank: <span style="margin:0px;padding:0px;color:rgb(0, 0, 255);">int</span> = global_rank
+
+        <span style="margin:0px;padding:0px;color:rgb(0, 128, 0);">#  rank of the worker among all the workers with the same role</span>
+        <span style="margin:0px;padding:0px;color:rgb(0, 128, 0);">#  across all ``agent`` instances.</span>
+        <span style="margin:0px;padding:0px;color:rgb(0, 128, 0);">#  Global rank is not stable between re-rendezvous.</span>
+        self.role_rank: <span style="margin:0px;padding:0px;color:rgb(0, 0, 255);">int</span> = role_rank
+
+        <span style="margin:0px;padding:0px;color:rgb(0, 128, 0);"># total number of workers (globally). Due to elasticity</span>
+        <span style="margin:0px;padding:0px;color:rgb(0, 128, 0);"># the world size may change between re-rendezvous.</span>
+        self.world_size: <span style="margin:0px;padding:0px;color:rgb(0, 0, 255);">int</span> = world_size
+
+        <span style="margin:0px;padding:0px;color:rgb(0, 128, 0);"># total number of workers that share the same role. Due to elasticity</span>
+        <span style="margin:0px;padding:0px;color:rgb(0, 128, 0);"># the role world size may change between re-rendezvous.</span>
+        self.role_world_size: <span style="margin:0px;padding:0px;color:rgb(0, 0, 255);">int</span> = role_world_size
+</code></pre>
+<h3 style="padding:0px;color:rgb(0, 0, 0);font-size:16px;line-height:1.5;font-weight:bold;margin:10px 0px;">3.2 WorkerGroup</h3>
+<p style="padding:0px;margin:10px auto;text-indent:0px;">WorkerGroup 代表了一个工作组，作为一个整体来管理多个 workers，进行批量处理。</p>
+<pre style="border-radius:4px;background-color: #fbfaf8;border: 1px solid rgba(0,0,0,.14902);color: #333;font-size: 12px;padding: 8px;font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif;box-sizing: border-box;"><code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span style="margin:0px;padding:0px;color:rgb(0, 0, 255);">class</span> <span style="margin:0px;padding:0px;color:rgb(163, 21, 21);">WorkerGroup</span>:
+    <span style="margin:0px;padding:0px;color:rgb(163, 21, 21);">"""
+    Represents the set of ``Worker`` instances for the given ``WorkerSpec``
+    managed by ``ElasticAgent``. Whether the worker group contains cross
+    instance workers or not depends on the implementation of the agent.
+    """</span>
+    <span style="margin:0px;padding:0px;color:rgb(0, 0, 255);">def</span> <span style="margin:0px;padding:0px;color:rgb(163, 21, 21);">__init__</span>(<span style="margin:0px;padding:0px;">self, spec: WorkerSpec</span>):
+        self.spec = spec
+        self.workers = [Worker(local_rank=i) <span style="margin:0px;padding:0px;color:rgb(0, 0, 255);">for</span> i <span style="margin:0px;padding:0px;color:rgb(0, 0, 255);">in</span> <span style="margin:0px;padding:0px;color:rgb(0, 0, 255);">range</span>(self.spec.local_world_size)]
+
+        <span style="margin:0px;padding:0px;color:rgb(0, 128, 0);"># assigned after rdzv</span>
+        self.store = <span style="margin:0px;padding:0px;color:rgb(163, 21, 21);">None</span>
+        self.group_rank = <span style="margin:0px;padding:0px;color:rgb(163, 21, 21);">None</span>
+        self.group_world_size = <span style="margin:0px;padding:0px;color:rgb(163, 21, 21);">None</span>
+
+        self.state = WorkerState.INIT
+</code></pre>
+<p style="padding:0px;margin:10px auto;text-indent:0px;">在SimpleElasticAgent 初始化之中，会建立一个 WorkerGroup。</p>
+<pre style="border-radius:4px;background-color: #fbfaf8;border: 1px solid rgba(0,0,0,.14902);color: #333;font-size: 12px;padding: 8px;font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif;box-sizing: border-box;"><code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span style="margin:0px;padding:0px;color:rgb(0, 0, 255);">class</span> <span style="margin:0px;padding:0px;color:rgb(163, 21, 21);">SimpleElasticAgent</span>(<span style="margin:0px;padding:0px;color:rgb(163, 21, 21);">ElasticAgent</span>):
+    <span style="margin:0px;padding:0px;color:rgb(163, 21, 21);">"""
+    An ``ElasticAgent`` that manages workers (``WorkerGroup``)
+    for a single ``WorkerSpec`` (e.g. one particular type of worker role).
+    """</span>
+
+    <span style="margin:0px;padding:0px;color:rgb(0, 0, 255);">def</span> <span style="margin:0px;padding:0px;color:rgb(163, 21, 21);">__init__</span>(<span style="margin:0px;padding:0px;">self, spec: WorkerSpec, exit_barrier_timeout: <span style="margin:0px;padding:0px;color:rgb(0, 0, 255);">float</span> = <span style="margin:0px;padding:0px;color:rgb(136, 0, 0);">300</span></span>):
+        self._worker_group = WorkerGroup(spec)
+        self._remaining_restarts = self._worker_group.spec.max_restarts
+        self._store = <span style="margin:0px;padding:0px;color:rgb(163, 21, 21);">None</span>
+        self._exit_barrier_timeout = exit_barrier_timeout
+        self._total_execution_time = <span style="margin:0px;padding:0px;color:rgb(136, 0, 0);">0</span>
+</code></pre>
+<h3 style="padding:0px;color:rgb(0, 0, 0);font-size:16px;line-height:1.5;font-weight:bold;margin:10px 0px;">3.3 WorkerState</h3>
+<p style="padding:0px;margin:10px auto;text-indent:0px;">WorkerState 表示 <code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif">WorkerGroup</code>的状态。工作组中的所有工作人员作为一个整体来维护/更改状态。如果工作组中的一个worker失败，则整个工作组被认为是失败：</p>
+<pre style="border-radius:4px;background-color: #fbfaf8;border: 1px solid rgba(0,0,0,.14902);color: #333;font-size: 12px;padding: 8px;font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif;box-sizing: border-box;"><code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif">  UNKNOWN - agent lost track of worker group state, unrecoverable
+  INIT - worker group <span style="margin:0px;padding:0px;color:rgb(0, 0, 255);">object</span> created <span style="margin:0px;padding:0px;color:rgb(0, 0, 255);">not</span> yet started
+  HEALTHY - workers running <span style="margin:0px;padding:0px;color:rgb(0, 0, 255);">and</span> healthy
+  UNHEALTHY - workers running <span style="margin:0px;padding:0px;color:rgb(0, 0, 255);">and</span> unhealthy
+  STOPPED - workers stopped (interruped) by the agent
+  SUCCEEDED - workers finished running (exit <span style="margin:0px;padding:0px;color:rgb(136, 0, 0);">0</span>)
+  FAILED - workers failed to successfully finish (exit !<span style="margin:0px;padding:0px;color:rgb(136, 0, 0);">0</span>)
+</code></pre>
+<p style="padding:0px;margin:10px auto;text-indent:0px;">具体这些状态意义如下：</p>
+<ul style="margin:0px;padding:0px;margin-left:30px;padding-left:0px;list-style-type:disc;">
+<li style="margin:0px;padding:0px;list-style:inherit;">
+<p style="padding:0px;margin:10px auto;text-indent:0px;">UNKNOWN-代理丢失了对工作组状态的跟踪，无法恢复</p>
+</li>
+<li style="margin:0px;padding:0px;list-style:inherit;">
+<p style="padding:0px;margin:10px auto;text-indent:0px;">INIT-创建的工作组对象尚未启动</p>
+</li>
+<li style="margin:0px;padding:0px;list-style:inherit;">
+<p style="padding:0px;margin:10px auto;text-indent:0px;">HEALTHY-worker健康运行</p>
+</li>
+<li style="margin:0px;padding:0px;list-style:inherit;">
+<p style="padding:0px;margin:10px auto;text-indent:0px;">UNHEALTHY-worker在运行但是不健康</p>
+</li>
+<li style="margin:0px;padding:0px;list-style:inherit;">
+<p style="padding:0px;margin:10px auto;text-indent:0px;">STOPPED-代理停止（中断）worker</p>
+</li>
+<li style="margin:0px;padding:0px;list-style:inherit;">
+<p style="padding:0px;margin:10px auto;text-indent:0px;">SUCCEEDED-worker已完成运行（exit数值为0）</p>
+</li>
+<li style="margin:0px;padding:0px;list-style:inherit;">
+<p style="padding:0px;margin:10px auto;text-indent:0px;">FAILED-worker未能成功完成（exit数值不等于0)</p>
+</li>
+</ul>
+<p style="padding:0px;margin:10px auto;text-indent:0px;">工作组从初始的<code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif">INIT</code>状态开始，然后进入"健康"或"不健康"状态，最后到达终端"成功"或"失败"状态。工作组可以被代理打断并且临时置于"停止"状态。处于"已停止"状态的工作进程可以在不久的将来被调度重启，被设置为<code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif">已停止的</code>状态的例子为：</p>
+<ul style="margin:0px;padding:0px;margin-left:30px;padding-left:0px;list-style-type:disc;">
+<li style="margin:0px;padding:0px;list-style:inherit;">观察到工作组故障|不健康</li>
+<li style="margin:0px;padding:0px;list-style:inherit;">检测到成员更改</li>
+</ul>
+<p style="padding:0px;margin:10px auto;text-indent:0px;">当工作组上的操作（启动、停止、rdzv、重试等）失败，并导致操作部分应用于工作组时，状态将为"未知"。这通常发生在状态改变期间发生异常，而且异常未捕获/未处理的情况下。当工作组处于"未知"状态，代理不会恢复工作组，因此最好终止作业，并且由job manager重试节点。</p>
+<p style="padding:0px;margin:10px auto;text-indent:0px;">WorkerState 具体定义如下：</p>
+<pre style="border-radius:4px;background-color: #fbfaf8;border: 1px solid rgba(0,0,0,.14902);color: #333;font-size: 12px;padding: 8px;font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif;box-sizing: border-box;"><code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span style="margin:0px;padding:0px;color:rgb(0, 0, 255);">class</span> <span style="margin:0px;padding:0px;color:rgb(163, 21, 21);">WorkerState</span>(<span style="margin:0px;padding:0px;color:rgb(0, 0, 255);">str</span>, Enum):
+    <span style="margin:0px;padding:0px;color:rgb(163, 21, 21);">"""
+    State of the ``WorkerGroup``. Workers in a worker group change state as a unit.
+    If a single worker in a worker group fails the entire set is considered
+    failed::
+
+      UNKNOWN - agent lost track of worker group state, unrecoverable
+      INIT - worker group object created not yet started
+      HEALTHY - workers running and healthy
+      UNHEALTHY - workers running and unhealthy
+      STOPPED - workers stopped (interruped) by the agent
+      SUCCEEDED - workers finished running (exit 0)
+      FAILED - workers failed to successfully finish (exit !0)
+
+
+    A worker group starts from an initial ``INIT`` state,
+    then progresses to ``HEALTHY`` or ``UNHEALTHY`` states,
+    and finally reaches a terminal ``SUCCEEDED`` or ``FAILED`` state.
+
+    Worker groups can be interrupted and temporarily put into ``STOPPED`` state
+    by the agent. Workers in ``STOPPED`` state are scheduled to be restarted
+    in the near future by the agent. Some examples of workers being put into
+    ``STOPPED`` state are:
+
+    1. Worker group failure|unhealthy observed
+    2. Membership change detected
+
+    When actions (start, stop, rdzv, retry, etc) on worker group fails
+    and results in the action being partially applied to the worker group
+    the state will be ``UNKNOWN``. Typically this happens on uncaught/unhandled
+    exceptions during state change events on the agent. The agent is not
+    expected to recover worker groups in ``UNKNOWN`` state and is better off
+    self terminating and allowing the job manager to retry the node.
+    """</span>
+
+    UNKNOWN = <span style="margin:0px;padding:0px;color:rgb(163, 21, 21);">"UNKNOWN"</span>
+    INIT = <span style="margin:0px;padding:0px;color:rgb(163, 21, 21);">"INIT"</span>
+    HEALTHY = <span style="margin:0px;padding:0px;color:rgb(163, 21, 21);">"HEALTHY"</span>
+    UNHEALTHY = <span style="margin:0px;padding:0px;color:rgb(163, 21, 21);">"UNHEALTHY"</span>
+    STOPPED = <span style="margin:0px;padding:0px;color:rgb(163, 21, 21);">"STOPPED"</span>
+    SUCCEEDED = <span style="margin:0px;padding:0px;color:rgb(163, 21, 21);">"SUCCEEDED"</span>
+    FAILED = <span style="margin:0px;padding:0px;color:rgb(163, 21, 21);">"FAILED"</span>
+
+<span style="margin:0px;padding:0px;color:rgb(43, 145, 175);">    @staticmethod</span>
+    <span style="margin:0px;padding:0px;color:rgb(0, 0, 255);">def</span> <span style="margin:0px;padding:0px;color:rgb(163, 21, 21);">is_running</span>(<span style="margin:0px;padding:0px;">state: <span style="margin:0px;padding:0px;color:rgb(163, 21, 21);">"WorkerState"</span></span>) -&gt; <span style="margin:0px;padding:0px;color:rgb(0, 0, 255);">bool</span>:
+        <span style="margin:0px;padding:0px;color:rgb(163, 21, 21);">"""
+        Returns:
+             True if the worker state represents workers still running
+             (e.g. that the process exists but not necessarily healthy).
+        """</span>
+        <span style="margin:0px;padding:0px;color:rgb(0, 0, 255);">return</span> state <span style="margin:0px;padding:0px;color:rgb(0, 0, 255);">in</span> {WorkerState.HEALTHY, WorkerState.UNHEALTHY}
+</code></pre>
+<h2 style="padding:0px;color:rgb(0, 0, 0);font-size:21px;line-height:1.5;font-weight:bold;margin:10px 0px;">0x04 SimpleElasticAgent</h2>
+<p style="padding:0px;margin:10px auto;text-indent:0px;">SimpleElasticAgent 是 Agent 的实现类之一。此抽象是为了方便扩展新的 agent 实现。从后面可知，目前内置的 <code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif">LocalElasticAgent</code> 负责管理单机上的所有 worker 进程，如果用户希望只用一个代理就管理多机上所有的 worker，而不仅仅是本机 worker，那么可以通过扩展 <code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif">SimpleElasticAgent</code> 来实现一个自定义 Agent。</p>
+<pre style="border-radius:4px;background-color: #fbfaf8;border: 1px solid rgba(0,0,0,.14902);color: #333;font-size: 12px;padding: 8px;font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif;box-sizing: border-box;"><code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span style="margin:0px;padding:0px;color:rgb(0, 0, 255);">class</span> <span style="margin:0px;padding:0px;color:rgb(163, 21, 21);">SimpleElasticAgent</span>(<span style="margin:0px;padding:0px;color:rgb(163, 21, 21);">ElasticAgent</span>):
+    <span style="margin:0px;padding:0px;color:rgb(163, 21, 21);">"""
+    An ``ElasticAgent`` that manages workers (``WorkerGroup``)
+    for a single ``WorkerSpec`` (e.g. one particular type of worker role).
+    """</span>
+
+    <span style="margin:0px;padding:0px;color:rgb(0, 0, 255);">def</span> <span style="margin:0px;padding:0px;color:rgb(163, 21, 21);">__init__</span>(<span style="margin:0px;padding:0px;">self, spec: WorkerSpec, exit_barrier_timeout: <span style="margin:0px;padding:0px;color:rgb(0, 0, 255);">float</span> = <span style="margin:0px;padding:0px;color:rgb(136, 0, 0);">300</span></span>):
+        self._worker_group = WorkerGroup(spec)
+        self._remaining_restarts = self._worker_group.spec.max_restarts
+        self._store = <span style="margin:0px;padding:0px;color:rgb(163, 21, 21);">None</span>
+        self._exit_barrier_timeout = exit_barrier_timeout
+        self._total_execution_time = <span style="margin:0px;padding:0px;color:rgb(136, 0, 0);">0</span>
+</code></pre>
+<h3 style="padding:0px;color:rgb(0, 0, 0);font-size:16px;line-height:1.5;font-weight:bold;margin:10px 0px;">4.1 总体运行</h3>
+<p style="padding:0px;margin:10px auto;text-indent:0px;">SimpleElasticAgent 主循环 _invoke_run 是核心逻辑（这里默认代理和worker在同一个机器之上），其中做如下操作：</p>
+<ul style="margin:0px;padding:0px;margin-left:30px;padding-left:0px;list-style-type:disc;">
+<li style="margin:0px;padding:0px;list-style:inherit;">使用 <code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif">self._initialize_workers(self._worker_group)</code> 完成初始化工作，比如来启动 worker，为每个worker 分配 rank 等等。</li>
+<li style="margin:0px;padding:0px;list-style:inherit;">然后进入 while True 循环，在循环之中通过 _monitor_workers 定期轮训用户程序运行情况，得到 worker 进程运行结果，然后依据情况进行不同处理。
+<ul style="margin:0px;padding:0px;margin-left:30px;padding-left:0px;list-style-type:circle;">
+<li style="margin:0px;padding:0px;list-style:inherit;">如果程序正常结束，则返回。</li>
+<li style="margin:0px;padding:0px;list-style:inherit;">如果程序出错，则重试，如果重试次数达到，结束workers。</li>
+<li style="margin:0px;padding:0px;list-style:inherit;">如果节点成员关系有变化，比如scale up就会有新的节点在waiting，这时候就重启所有workers。</li>
+</ul>
+</li>
+</ul>
+<pre style="border-radius:4px;background-color: #fbfaf8;border: 1px solid rgba(0,0,0,.14902);color: #333;font-size: 12px;padding: 8px;font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif;box-sizing: border-box;"><code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif">    <span style="margin:0px;padding:0px;color:rgb(0, 0, 255);">def</span> <span style="margin:0px;padding:0px;color:rgb(163, 21, 21);">_invoke_run</span>(<span style="margin:0px;padding:0px;">self, role: <span style="margin:0px;padding:0px;color:rgb(0, 0, 255);">str</span> = DEFAULT_ROLE</span>) -&gt; RunResult:
+        <span style="margin:0px;padding:0px;color:rgb(0, 128, 0);"># <span style="margin:0px;padding:0px;color:rgb(128, 128, 128);">NOTE:</span> currently only works for a single role</span>
+
+        spec = self._worker_group.spec
+        role = spec.role
+
+        self._initialize_workers(self._worker_group) <span style="margin:0px;padding:0px;color:rgb(0, 128, 0);"># 启动worker</span>
+        monitor_interval = spec.monitor_interval
+        rdzv_handler = spec.rdzv_handler
+
+        <span style="margin:0px;padding:0px;color:rgb(0, 0, 255);">while</span> <span style="margin:0px;padding:0px;color:rgb(163, 21, 21);">True</span>:
+            <span style="margin:0px;padding:0px;color:rgb(0, 0, 255);">assert</span> self._worker_group.state != WorkerState.INIT
+            <span style="margin:0px;padding:0px;color:rgb(0, 128, 0);"># 定期监控</span>
+            time.sleep(monitor_interval)
+            <span style="margin:0px;padding:0px;color:rgb(0, 128, 0);"># 监控客户程序运行情况</span>
+            run_result = self._monitor_workers(self._worker_group) <span style="margin:0px;padding:0px;color:rgb(0, 128, 0);"># 得到进程运行结果</span>
+            state = run_result.state
+            self._worker_group.state = state
+
+            put_metric(<span style="margin:0px;padding:0px;color:rgb(163, 21, 21);">f"workers.<span style="margin:0px;padding:0px;">{role}</span>.remaining_restarts"</span>, self._remaining_restarts)
+            put_metric(<span style="margin:0px;padding:0px;color:rgb(163, 21, 21);">f"workers.<span style="margin:0px;padding:0px;">{role}</span>.<span style="margin:0px;padding:0px;">{state.name.lower()}</span>"</span>, <span style="margin:0px;padding:0px;color:rgb(136, 0, 0);">1</span>)
+
+            <span style="margin:0px;padding:0px;color:rgb(0, 0, 255);">if</span> state == WorkerState.SUCCEEDED:
+                <span style="margin:0px;padding:0px;color:rgb(0, 128, 0);"># 程序正常结束</span>
+                self._exit_barrier()
+                <span style="margin:0px;padding:0px;color:rgb(0, 0, 255);">return</span> run_result
+            <span style="margin:0px;padding:0px;color:rgb(0, 0, 255);">elif</span> state <span style="margin:0px;padding:0px;color:rgb(0, 0, 255);">in</span> {WorkerState.UNHEALTHY, WorkerState.FAILED}:
+                <span style="margin:0px;padding:0px;color:rgb(0, 128, 0);"># 程序出错</span>
+                <span style="margin:0px;padding:0px;color:rgb(0, 0, 255);">if</span> self._remaining_restarts &gt; <span style="margin:0px;padding:0px;color:rgb(136, 0, 0);">0</span>: <span style="margin:0px;padding:0px;color:rgb(0, 128, 0);"># 重试</span>
+                    self._remaining_restarts -= <span style="margin:0px;padding:0px;color:rgb(136, 0, 0);">1</span>
+                    self._restart_workers(self._worker_group)
+                <span style="margin:0px;padding:0px;color:rgb(0, 0, 255);">else</span>:
+                    self._stop_workers(self._worker_group) <span style="margin:0px;padding:0px;color:rgb(0, 128, 0);"># 重试次数达到，结束workers</span>
+                    self._worker_group.state = WorkerState.FAILED
+                    self._exit_barrier()
+                    <span style="margin:0px;padding:0px;color:rgb(0, 0, 255);">return</span> run_result
+            <span style="margin:0px;padding:0px;color:rgb(0, 0, 255);">elif</span> state == WorkerState.HEALTHY:
+                <span style="margin:0px;padding:0px;color:rgb(0, 128, 0);"># 节点成员关系有变化，比如scale up，就会有新节点waiting</span>
+                <span style="margin:0px;padding:0px;color:rgb(0, 128, 0);"># membership changes do not count as retries</span>
+                num_nodes_waiting = rdzv_handler.num_nodes_waiting()
+                group_rank = self._worker_group.group_rank
+                <span style="margin:0px;padding:0px;color:rgb(0, 128, 0);"># 如果有新的节点在waiting，就重启所有workers</span>
+                <span style="margin:0px;padding:0px;color:rgb(0, 0, 255);">if</span> num_nodes_waiting &gt; <span style="margin:0px;padding:0px;color:rgb(136, 0, 0);">0</span>:
+                    self._restart_workers(self._worker_group)
+            <span style="margin:0px;padding:0px;color:rgb(0, 0, 255);">else</span>:
+                <span style="margin:0px;padding:0px;color:rgb(0, 0, 255);">raise</span> Exception(<span style="margin:0px;padding:0px;color:rgb(163, 21, 21);">f"[<span style="margin:0px;padding:0px;">{role}</span>] Worker group in <span style="margin:0px;padding:0px;">{state.name}</span> state"</span>)
+</code></pre>
+<p style="padding:0px;margin:10px auto;text-indent:0px;">上面只是大概讲了下这个总体流程，我们接下来对这个总体流程逐一分析。</p>
+<h3 style="padding:0px;color:rgb(0, 0, 0);font-size:16px;line-height:1.5;font-weight:bold;margin:10px 0px;">4.2 初始化workers</h3>
+<p style="padding:0px;margin:10px auto;text-indent:0px;">代理主循环之中，首先使用 <code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif">self._initialize_workers(self._worker_group)</code> 来启动 worker。在 <code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif">_initialize_workers</code>之中：</p>
+<ul style="margin:0px;padding:0px;margin-left:30px;padding-left:0px;list-style-type:disc;">
+<li style="margin:0px;padding:0px;list-style:inherit;">首先使用 <code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif">self._rendezvous(worker_group)</code> 进行节点之间的同步共识操作以及rank处理等等。</li>
+<li style="margin:0px;padding:0px;list-style:inherit;">其次调用 <code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif">_start_workers</code> 启动 workers。这里的 <code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif">_start_workers</code>  是虚函数，需要派生类实现。</li>
+</ul>
+<pre style="border-radius:4px;background-color: #fbfaf8;border: 1px solid rgba(0,0,0,.14902);color: #333;font-size: 12px;padding: 8px;font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif;box-sizing: border-box;"><code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span style="margin:0px;padding:0px;color:rgb(43, 145, 175);">    @prof</span>
+    <span style="margin:0px;padding:0px;color:rgb(0, 0, 255);">def</span> <span style="margin:0px;padding:0px;color:rgb(163, 21, 21);">_initialize_workers</span>(<span style="margin:0px;padding:0px;">self, worker_group: WorkerGroup</span>) -&gt; <span style="margin:0px;padding:0px;color:rgb(163, 21, 21);">None</span>:
+        <span style="margin:0px;padding:0px;color:rgb(163, 21, 21);">r"""
+        Starts a fresh set of workers for the worker_group.
+        Essentially a rendezvous followed by a start_workers.
+
+        The caller should first call ``_stop_workers()`` to stop running workers
+        prior to calling this method.
+
+        Optimistically sets the state of the worker group that
+        just started as ``HEALTHY`` and delegates the actual monitoring
+        of state to ``_monitor_workers()`` method
+        """</span>
+        role = worker_group.spec.role
+
+        <span style="margin:0px;padding:0px;color:rgb(0, 128, 0);"># TODO after stopping workers, wait at least monitor_interval*2 for</span>
+        <span style="margin:0px;padding:0px;color:rgb(0, 128, 0);"># workers on different nodes to fail on a collective op before waiting</span>
+        <span style="margin:0px;padding:0px;color:rgb(0, 128, 0);"># on the rdzv barrier, this way we ensure that nodes enter rdzv</span>
+        <span style="margin:0px;padding:0px;color:rgb(0, 128, 0);"># at around the same time and reduce false positive rdzv timeout errors</span>
+        self._rendezvous(worker_group) <span style="margin:0px;padding:0px;color:rgb(0, 128, 0);"># 同步共识操作 </span>
+
+        worker_ids = self._start_workers(worker_group) <span style="margin:0px;padding:0px;color:rgb(0, 128, 0);"># 启动worker</span>
+        <span style="margin:0px;padding:0px;color:rgb(0, 0, 255);">for</span> local_rank, w_id <span style="margin:0px;padding:0px;color:rgb(0, 0, 255);">in</span> worker_ids.items():
+            worker = worker_group.workers[local_rank]
+            worker.<span style="margin:0px;padding:0px;color:rgb(0, 0, 255);">id</span> = w_id
+
+        worker_group.state = WorkerState.HEALTHY
+</code></pre>
+<h4 style="padding:0px;color:rgb(0, 0, 0);font-size:14px;font-weight:bold;margin:10px 0px;">4.2.1 _rendezvous</h4>
+<p style="padding:0px;margin:10px auto;text-indent:0px;">我们首先看看_rendezvous，其做如下操作：</p>
+<ul style="margin:0px;padding:0px;margin-left:30px;padding-left:0px;list-style-type:disc;">
+<li style="margin:0px;padding:0px;list-style:inherit;">调用 next_rendezvous() 来处理成员关系变化，其会返回 world size，store等。</li>
+<li style="margin:0px;padding:0px;list-style:inherit;">会把 store 配置到 workgroup 之中，<u style="margin:0px;padding:0px;">后续worker 之间就可以通过这个kvstore进行沟通</u>。</li>
+<li style="margin:0px;padding:0px;list-style:inherit;">调用 _assign_worker_ranks 会生成 worker，并且为 worker 建立 ranks，返回的 workers 都赋值在代理的 worker_group.workers  之中。</li>
+</ul>
+<p style="padding:0px;margin:10px auto;text-indent:0px;">以上两点都是利用 rendezvous 的信息来进行处理，比如从 rendezvous 之中提取 ranks。</p>
+<pre style="border-radius:4px;background-color: #fbfaf8;border: 1px solid rgba(0,0,0,.14902);color: #333;font-size: 12px;padding: 8px;font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif;box-sizing: border-box;"><code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span style="margin:0px;padding:0px;color:rgb(43, 145, 175);">    @prof</span>
+    <span style="margin:0px;padding:0px;color:rgb(0, 0, 255);">def</span> <span style="margin:0px;padding:0px;color:rgb(163, 21, 21);">_rendezvous</span>(<span style="margin:0px;padding:0px;">self, worker_group: WorkerGroup</span>) -&gt; <span style="margin:0px;padding:0px;color:rgb(163, 21, 21);">None</span>:
+        <span style="margin:0px;padding:0px;color:rgb(163, 21, 21);">r"""
+        Runs rendezvous for the workers specified by worker spec.
+        Assigns workers a new global rank and world size.
+        Updates the rendezvous store for the worker group.
+        """</span>
+
+        spec = worker_group.spec
+
+        <span style="margin:0px;padding:0px;color:rgb(0, 128, 0);"># 处理成员关系变化，注意，这里得到的是 group rank!</span>
+        store, group_rank, group_world_size = spec.rdzv_handler.next_rendezvous()
+        self._store = store <span style="margin:0px;padding:0px;color:rgb(0, 128, 0);"># store被设置到 Agent之中，store可以被认为是远端KV存储</span>
+
+        <span style="margin:0px;padding:0px;color:rgb(0, 128, 0);"># 依据 group rank 为 worker 建立 ranks</span>
+        workers = self._assign_worker_ranks(store, group_rank, group_world_size, spec)
+        worker_group.workers = workers
+        worker_group.store = store
+        worker_group.group_rank = group_rank
+        worker_group.group_world_size = group_world_size
+
+        <span style="margin:0px;padding:0px;color:rgb(0, 0, 255);">if</span> group_rank == <span style="margin:0px;padding:0px;color:rgb(136, 0, 0);">0</span>:
+            self._set_master_addr_port(store, spec.master_addr, spec.master_port)
+        master_addr, master_port = self._get_master_addr_port(store)
+        restart_count = spec.max_restarts - self._remaining_restarts
+</code></pre>
+<h5 style="padding:0px;color:rgb(0, 0, 0);font-size:12px;font-weight:bold;margin:10px 0px;">4.2.2.1 处理成员关系变化</h5>
+<p style="padding:0px;margin:10px auto;text-indent:0px;">Elastic 调用 rdzv_handler.next_rendezvous() 来处理成员关系变化，目的是启动下一轮 rendezvous 操作（因为本worker已经启动，需要加入集群）。</p>
+<p style="padding:0px;margin:10px auto;text-indent:0px;"><u style="margin:0px;padding:0px;">注意，next_rendezvous 是 RendezvousHandler 的内部函数</u>。这一函数调用会被阻塞，直到 worker 的数量达到了要求。在 worker 被初始化，或者重启的时候，这一函数都会被调用。当函数返回时，不同的 <strong style="margin:0px;padding:0px;">worker group</strong> 会以返回中的 rank 作为唯一的标示。其内部逻辑是：</p>
+<ul style="margin:0px;padding:0px;margin-left:30px;padding-left:0px;list-style-type:disc;">
+<li style="margin:0px;padding:0px;list-style:inherit;">先使用<code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif">_RendezvousExitOp</code>让该node退出。</li>
+<li style="margin:0px;padding:0px;list-style:inherit;">然后再使用<code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif">_RendezvousJoinOp</code>把该node重新加入。</li>
+<li style="margin:0px;padding:0px;list-style:inherit;">最后启动心跳，返回world size，store等。</li>
+</ul>
+<pre style="border-radius:4px;background-color: #fbfaf8;border: 1px solid rgba(0,0,0,.14902);color: #333;font-size: 12px;padding: 8px;font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif;box-sizing: border-box;"><code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif">    <span style="margin:0px;padding:0px;color:rgb(0, 0, 255);">def</span> <span style="margin:0px;padding:0px;color:rgb(163, 21, 21);">next_rendezvous</span>(<span style="margin:0px;padding:0px;">self</span>) -&gt; <span style="margin:0px;padding:0px;color:rgb(163, 21, 21);">Tuple</span>[Store, <span style="margin:0px;padding:0px;color:rgb(0, 0, 255);">int</span>, <span style="margin:0px;padding:0px;color:rgb(0, 0, 255);">int</span>]:
+        <span style="margin:0px;padding:0px;color:rgb(163, 21, 21);">"""See base class."""</span>
+
+        self._stop_heartbeats()
+
+        <span style="margin:0px;padding:0px;color:rgb(0, 128, 0);"># Delay the execution for a small random amount of time if this is our</span>
+        <span style="margin:0px;padding:0px;color:rgb(0, 128, 0);"># first run. This will slightly skew the rendezvous attempts across the</span>
+        <span style="margin:0px;padding:0px;color:rgb(0, 128, 0);"># nodes and reduce the load on the backend.</span>
+        <span style="margin:0px;padding:0px;color:rgb(0, 0, 255);">if</span> self._state_holder.state.<span style="margin:0px;padding:0px;color:rgb(0, 0, 255);">round</span> == <span style="margin:0px;padding:0px;color:rgb(136, 0, 0);">0</span>:
+            _delay(seconds=(<span style="margin:0px;padding:0px;color:rgb(136, 0, 0);">0</span>, <span style="margin:0px;padding:0px;color:rgb(136, 0, 0);">0.3</span>))
+
+        exit_op = _RendezvousExitOp()
+        join_op = _RendezvousJoinOp()
+
+        deadline = self._get_deadline(self._settings.timeout.join)
+
+        self._op_executor.run(exit_op, deadline)
+        self._op_executor.run(join_op, deadline)
+
+        self._start_heartbeats()
+
+        rank, world_size = self._get_world()
+        store = self._get_store()
+
+        <span style="margin:0px;padding:0px;color:rgb(0, 0, 255);">return</span> store, rank, world_size <span style="margin:0px;padding:0px;color:rgb(0, 128, 0);"># 返回的是 worker group 的rank</span>
+</code></pre>
+<h5 style="padding:0px;color:rgb(0, 0, 0);font-size:12px;font-weight:bold;margin:10px 0px;">4.2.3.2 为 worker 分配 ranks</h5>
+<p style="padding:0px;margin:10px auto;text-indent:0px;">接着是调用 _assign_worker_ranks 为 worker 建立 ranks。分配 rank 算法如下：</p>
+<ol style="margin:0px;padding:0px;padding-left:40px;list-style-type:decimal;">
+<li style="margin:0px;padding:0px;list-style:inherit;">每个代理将其配置（group_rank, group_world_size , num_workers）<u style="margin:0px;padding:0px;">写入公共存储</u>。</li>
+<li style="margin:0px;padding:0px;list-style:inherit;">每个代理检索所有代理的配置，并使用角色和rank执行两级排序。</li>
+<li style="margin:0px;padding:0px;list-style:inherit;">确定全局rank：当前代理的global rank是 本代理 的 group_rank 在infos数组的偏移量（offset）。偏移量的计算方法是，排名低于group_rank的所有代理的local_world之和。workers 的等级为：[offset, offset+local_world_size]。</li>
+<li style="margin:0px;padding:0px;list-style:inherit;">确定role rank：使用第3点中的算法确定role rank，不同之处是：偏移量计算是从与当前角色相同且具有最小 group rank 的第一个代理开始。</li>
+<li style="margin:0px;padding:0px;list-style:inherit;">因为所有代理都使用同样算法，所以其计算出的 ranks 数组都是相同的。</li>
+</ol>
+<p style="padding:0px;margin:10px auto;text-indent:0px;">然后生成 workers，把 worker 都赋值在 worker_group.workers 之中。</p>
+<pre style="border-radius:4px;background-color: #fbfaf8;border: 1px solid rgba(0,0,0,.14902);color: #333;font-size: 12px;padding: 8px;font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif;box-sizing: border-box;"><code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span style="margin:0px;padding:0px;color:rgb(43, 145, 175);">@prof</span>
+<span style="margin:0px;padding:0px;color:rgb(0, 0, 255);">def</span> <span style="margin:0px;padding:0px;color:rgb(163, 21, 21);">_assign_worker_ranks</span>(<span style="margin:0px;padding:0px;">
+    self, store, group_rank: <span style="margin:0px;padding:0px;color:rgb(0, 0, 255);">int</span>, group_world_size: <span style="margin:0px;padding:0px;color:rgb(0, 0, 255);">int</span>, spec: WorkerSpec
+</span>) -&gt; <span style="margin:0px;padding:0px;color:rgb(163, 21, 21);">List</span>[Worker]:
+    <span style="margin:0px;padding:0px;color:rgb(163, 21, 21);">"""
+    Determines proper ranks for worker processes. The rank assignment
+    is done according to the following algorithm:
+
+    1. Each agent writes its configuration(group_rank, group_world_size
+       , num_workers) to the common store.
+    2. Each agent retrieves configuration for all agents
+       and performs two level sort using role and rank.
+    3. Determine the global rank: the global rank of the workers for the current
+       agent is the offset of the infos array up to group_rank of the agent.
+       The offset is computed as a sum of local_world_size of all agents that
+       have rank less than the group_rank. The workers would have the ranks:
+       [offset, offset+local_world_size)
+    4. Determine the role rank: The role rank is determined using the algorithms
+       in the point 3 with the exception that the offset is done from the first
+       agent that has the same role as current one and has the minimum group rank.
+    """</span>
+
+    <span style="margin:0px;padding:0px;color:rgb(0, 128, 0);"># 每个代理将其配置（group_rank, group_world_size, num_workers）写入公共存储。</span>
+    role_infos = self._share_and_gather(store, group_rank, group_world_size, spec)
+    <span style="margin:0px;padding:0px;color:rgb(0, 128, 0);"># 每个代理检索所有代理的配置，并使用角色和rank执行两级排序。</span>
+    my_role_info = role_infos[group_rank]
+    <span style="margin:0px;padding:0px;color:rgb(0, 128, 0);"># 确定全局rank：当前代理的global rank是 本代理 的 group_rank 在infos数组的偏移量（offset）。偏移量的计算方法是，排名低于group_rank的所有代理的local_world之和。workers 的等级为：[offset, offset+local_world_size]。</span>
+    worker_world_size, worker_global_ranks = self._get_ranks(role_infos, group_rank)
+    role_infos = <span style="margin:0px;padding:0px;color:rgb(0, 0, 255);">sorted</span>(
+        role_infos, key=functools.cmp_to_key(_RoleInstanceInfo.compare)
+    )
+    role_start_idx, role_end_idx = _RoleInstanceInfo.find_role_boundaries(
+        role_infos, my_role_info.role
+    )
+    role_pos = <span style="margin:0px;padding:0px;color:rgb(0, 0, 255);">next</span>(
+        idx
+        <span style="margin:0px;padding:0px;color:rgb(0, 0, 255);">for</span> idx, role_info <span style="margin:0px;padding:0px;color:rgb(0, 0, 255);">in</span> <span style="margin:0px;padding:0px;color:rgb(0, 0, 255);">enumerate</span>(role_infos)
+        <span style="margin:0px;padding:0px;color:rgb(0, 0, 255);">if</span> _RoleInstanceInfo.compare(role_info, my_role_info) == <span style="margin:0px;padding:0px;color:rgb(136, 0, 0);">0</span>
+    )
+    <span style="margin:0px;padding:0px;color:rgb(0, 128, 0);"># 确定role rank：使用第3点中的算法确定role rank，不同之处是：偏移量计算是从与当前角色相同且具有最小 group rank 的第一个代理开始。</span>
+    role_world_size, role_ranks = self._get_ranks(
+        role_infos, role_pos, role_start_idx, role_end_idx + <span style="margin:0px;padding:0px;color:rgb(136, 0, 0);">1</span>
+    )
+    <span style="margin:0px;padding:0px;color:rgb(0, 128, 0);"># 生成 workers，把 worker 都赋值在 worker_group.workers 之中。</span>
+    workers = []
+    <span style="margin:0px;padding:0px;color:rgb(0, 0, 255);">for</span> ind <span style="margin:0px;padding:0px;color:rgb(0, 0, 255);">in</span> <span style="margin:0px;padding:0px;color:rgb(0, 0, 255);">range</span>(spec.local_world_size):
+        worker = Worker(
+            local_rank=ind,
+            global_rank=worker_global_ranks[ind],
+            role_rank=role_ranks[ind],
+            world_size=worker_world_size,
+            role_world_size=role_world_size,
+        )
+        workers.append(worker)
+    <span style="margin:0px;padding:0px;color:rgb(0, 0, 255);">return</span> workers
+</code></pre>
+<h4 style="padding:0px;color:rgb(0, 0, 0);font-size:14px;font-weight:bold;margin:10px 0px;">4.2.4 启动 workers 进程</h4>
+<p style="padding:0px;margin:10px auto;text-indent:0px;">调用 派生类的 _start_workers 来启动 worker 进程，因此基类这里没有实现，我们后续会看到派生类如何实现。</p>
+<pre style="border-radius:4px;background-color: #fbfaf8;border: 1px solid rgba(0,0,0,.14902);color: #333;font-size: 12px;padding: 8px;font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif;box-sizing: border-box;"><code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span style="margin:0px;padding:0px;color:rgb(43, 145, 175);">    @abc.abstractmethod</span>
+    <span style="margin:0px;padding:0px;color:rgb(0, 0, 255);">def</span> <span style="margin:0px;padding:0px;color:rgb(163, 21, 21);">_start_workers</span>(<span style="margin:0px;padding:0px;">self, worker_group: WorkerGroup</span>) -&gt; <span style="margin:0px;padding:0px;color:rgb(163, 21, 21);">Dict</span>[<span style="margin:0px;padding:0px;color:rgb(0, 0, 255);">int</span>, <span style="margin:0px;padding:0px;color:rgb(163, 21, 21);">Any</span>]:
+        <span style="margin:0px;padding:0px;color:rgb(163, 21, 21);">r"""
+        Starts ``worker_group.spec.local_world_size`` number of workers
+        according to worker spec for the worker group .
+
+        Returns a map of ``local_rank`` to worker ``id``.
+        """</span>
+        <span style="margin:0px;padding:0px;color:rgb(0, 0, 255);">raise</span> NotImplementedError()
+</code></pre>
+<p style="padding:0px;margin:10px auto;text-indent:0px;">目前逻辑如下，具体是：</p>
+<ol style="margin:0px;padding:0px;padding-left:40px;list-style-type:decimal;">
+<li style="margin:0px;padding:0px;list-style:inherit;">调用 rdzv_handler.next_rendezvous 来与其他 Node 进行同步。</li>
+<li style="margin:0px;padding:0px;list-style:inherit;">rdzv_handler.next_rendezvous 返回 ranks 等信息给_assign_worker_ranks。</li>
+<li style="margin:0px;padding:0px;list-style:inherit;">_assign_worker_ranks会生成一些Workers，其中每个 Worker都被自动分配了 rank。这些 workers 被 Agent的worker_group.workers所指向。</li>
+</ol>
+<pre style="border-radius:4px;background-color: #fbfaf8;border: 1px solid rgba(0,0,0,.14902);color: #333;font-size: 12px;padding: 8px;font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif;box-sizing: border-box;"><code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif">+--------------------------------------------------+
+| LocalElasticAgent                                |         _initialize_workers
+|                                                  |                 +
+|                                                  |                 |
+|                                                  |                 |
+|   +----------------------+                       |                 v
+|   |WorkerGroup           |                       |         _rendezvous(worker_group)
+|   |                      |                       |                 +
+|   |     spec             |                       |                 |
+|   |                      |                       |                 | <span style="margin:0px;padding:0px;color:rgb(136, 0, 0);">1</span>
+|   |     group_world_size |                       |                 v
+|   |                      |                       |        rdzv_handler.next_rendezvous()
+|   |     store            |                       |                 +
+|   |                      |    +----------------+ |                 |
+|   |     group_rank       |    | Worker0(rank <span style="margin:0px;padding:0px;color:rgb(136, 0, 0);">0</span>)| |               <span style="margin:0px;padding:0px;color:rgb(136, 0, 0);">2</span> | ranks
+|   |                      |    | Worker1(rank <span style="margin:0px;padding:0px;color:rgb(136, 0, 0);">1</span>)| |  Workers        v
+|   |     workers  +----------&gt; | ...            | | &lt;----+ _assign_worker_ranks
+|   |                      |    | Workern(rank n)| |    <span style="margin:0px;padding:0px;color:rgb(136, 0, 0);">3</span>
+|   +----------------------+    +----------------+ |
+|                                                  |
++--------------------------------------------------+
+</code></pre>
+<p style="padding:0px;margin:10px auto;text-indent:0px;">接下来会分别把 rank 相关和 worker 相关的函数都分别罗列出来，以便大家更好的理解。</p>
+<h3 style="padding:0px;color:rgb(0, 0, 0);font-size:16px;line-height:1.5;font-weight:bold;margin:10px 0px;">4.3 ranks相关</h3>
+<p style="padding:0px;margin:10px auto;text-indent:0px;">前面的 _assign_worker_ranks 为 worker 建立 ranks，但是其内部有些细节我们还需要梳理一下。</p>
+<h4 style="padding:0px;color:rgb(0, 0, 0);font-size:14px;font-weight:bold;margin:10px 0px;">4.3.1 _RoleInstanceInfo</h4>
+<p style="padding:0px;margin:10px auto;text-indent:0px;">这里要介绍一下 _RoleInstanceInfo 这个数据结构。<u style="margin:0px;padding:0px;">代理使用该类与其他代理交换信息。该信息用于确定本代理workers的rank</u>。这些代理工作在异构环境下，不同代理也许有不同数量的workers。其构建参数是：</p>
+<ul style="margin:0px;padding:0px;margin-left:30px;padding-left:0px;list-style-type:disc;">
+<li style="margin:0px;padding:0px;list-style:inherit;">role (str) : 用户定义的role。</li>
+<li style="margin:0px;padding:0px;list-style:inherit;">rank (int) : 代理的rank。</li>
+<li style="margin:0px;padding:0px;list-style:inherit;">local_world_size (int) :  本地 workers 的数目。</li>
+</ul>
+<pre style="border-radius:4px;background-color: #fbfaf8;border: 1px solid rgba(0,0,0,.14902);color: #333;font-size: 12px;padding: 8px;font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif;box-sizing: border-box;"><code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span style="margin:0px;padding:0px;color:rgb(0, 0, 255);">class</span> <span style="margin:0px;padding:0px;color:rgb(163, 21, 21);">_RoleInstanceInfo</span>:
+    <span style="margin:0px;padding:0px;color:rgb(163, 21, 21);">"""
+    The class is used by the agent to exchange the information with other agents.
+    The information is used to determine the rank of the workers that agent
+    manages in heterogeneous environments, where different agents can have
+    different number of workers.
+    """</span>
+
+    __slots__ = [<span style="margin:0px;padding:0px;color:rgb(163, 21, 21);">"role"</span>, <span style="margin:0px;padding:0px;color:rgb(163, 21, 21);">"rank"</span>, <span style="margin:0px;padding:0px;color:rgb(163, 21, 21);">"local_world_size"</span>]
+
+    <span style="margin:0px;padding:0px;color:rgb(0, 0, 255);">def</span> <span style="margin:0px;padding:0px;color:rgb(163, 21, 21);">__init__</span>(<span style="margin:0px;padding:0px;">self, role: <span style="margin:0px;padding:0px;color:rgb(0, 0, 255);">str</span>, rank: <span style="margin:0px;padding:0px;color:rgb(0, 0, 255);">int</span>, local_world_size: <span style="margin:0px;padding:0px;color:rgb(0, 0, 255);">int</span></span>):
+        <span style="margin:0px;padding:0px;color:rgb(163, 21, 21);">r"""
+
+        Args:
+            role (str): user-defined role for the workers with this spec
+            rank (int): the rank of the agent
+            local_world_size (int): number of local workers to run
+        """</span>
+
+        self.role = role
+        self.rank = rank
+        self.local_world_size = local_world_size
+
+    <span style="margin:0px;padding:0px;color:rgb(0, 0, 255);">def</span> <span style="margin:0px;padding:0px;color:rgb(163, 21, 21);">serialize</span>(<span style="margin:0px;padding:0px;">self</span>) -&gt; <span style="margin:0px;padding:0px;color:rgb(0, 0, 255);">bytes</span>:
+        dict_data = {
+            <span style="margin:0px;padding:0px;color:rgb(163, 21, 21);">"role"</span>: self.role,
+            <span style="margin:0px;padding:0px;color:rgb(163, 21, 21);">"rank"</span>: self.rank,
+            <span style="margin:0px;padding:0px;color:rgb(163, 21, 21);">"local_world_size"</span>: self.local_world_size,
+        }
+        <span style="margin:0px;padding:0px;color:rgb(0, 0, 255);">return</span> json.dumps(dict_data).encode(encoding=<span style="margin:0px;padding:0px;color:rgb(163, 21, 21);">"UTF-8"</span>)
+
+<span style="margin:0px;padding:0px;color:rgb(43, 145, 175);">    @staticmethod</span>
+    <span style="margin:0px;padding:0px;color:rgb(0, 0, 255);">def</span> <span style="margin:0px;padding:0px;color:rgb(163, 21, 21);">deserialize</span>(<span style="margin:0px;padding:0px;">data: <span style="margin:0px;padding:0px;color:rgb(0, 0, 255);">bytes</span></span>):
+        dict_data = json.loads(data.decode(encoding=<span style="margin:0px;padding:0px;color:rgb(163, 21, 21);">"UTF-8"</span>))
+        <span style="margin:0px;padding:0px;color:rgb(0, 0, 255);">return</span> _RoleInstanceInfo(
+            dict_data[<span style="margin:0px;padding:0px;color:rgb(163, 21, 21);">"role"</span>], dict_data[<span style="margin:0px;padding:0px;color:rgb(163, 21, 21);">"rank"</span>], dict_data[<span style="margin:0px;padding:0px;color:rgb(163, 21, 21);">"local_world_size"</span>]
+        )
+
+<span style="margin:0px;padding:0px;color:rgb(43, 145, 175);">    @staticmethod</span>
+    <span style="margin:0px;padding:0px;color:rgb(0, 0, 255);">def</span> <span style="margin:0px;padding:0px;color:rgb(163, 21, 21);">compare</span>(<span style="margin:0px;padding:0px;">obj1, obj2</span>) -&gt; <span style="margin:0px;padding:0px;color:rgb(0, 0, 255);">int</span>:
+        <span style="margin:0px;padding:0px;color:rgb(0, 0, 255);">if</span> obj1.role == obj2.role:
+            <span style="margin:0px;padding:0px;color:rgb(0, 0, 255);">return</span> obj1.rank - obj2.rank
+        <span style="margin:0px;padding:0px;color:rgb(0, 0, 255);">elif</span> obj1.role &gt; obj2.role:
+            <span style="margin:0px;padding:0px;color:rgb(0, 0, 255);">return</span> <span style="margin:0px;padding:0px;color:rgb(136, 0, 0);">1</span>
+        <span style="margin:0px;padding:0px;color:rgb(0, 0, 255);">else</span>:
+            <span style="margin:0px;padding:0px;color:rgb(0, 0, 255);">return</span> -<span style="margin:0px;padding:0px;color:rgb(136, 0, 0);">1</span>
+
+<span style="margin:0px;padding:0px;color:rgb(43, 145, 175);">    @staticmethod</span>
+    <span style="margin:0px;padding:0px;color:rgb(0, 0, 255);">def</span> <span style="margin:0px;padding:0px;color:rgb(163, 21, 21);">find_role_boundaries</span>(<span style="margin:0px;padding:0px;">roles_infos: <span style="margin:0px;padding:0px;color:rgb(163, 21, 21);">List</span>, role: <span style="margin:0px;padding:0px;color:rgb(0, 0, 255);">str</span></span>) -&gt; <span style="margin:0px;padding:0px;color:rgb(163, 21, 21);">Tuple</span>[<span style="margin:0px;padding:0px;color:rgb(0, 0, 255);">int</span>, <span style="margin:0px;padding:0px;color:rgb(0, 0, 255);">int</span>]:
+        start_idx, end_idx = -<span style="margin:0px;padding:0px;color:rgb(136, 0, 0);">1</span>, -<span style="margin:0px;padding:0px;color:rgb(136, 0, 0);">1</span>
+        <span style="margin:0px;padding:0px;color:rgb(0, 0, 255);">for</span> idx, role_info <span style="margin:0px;padding:0px;color:rgb(0, 0, 255);">in</span> <span style="margin:0px;padding:0px;color:rgb(0, 0, 255);">enumerate</span>(roles_infos):
+            <span style="margin:0px;padding:0px;color:rgb(0, 0, 255);">if</span> role_info.role == role:
+                <span style="margin:0px;padding:0px;color:rgb(0, 0, 255);">if</span> start_idx == -<span style="margin:0px;padding:0px;color:rgb(136, 0, 0);">1</span>:
+                    start_idx = idx
+                end_idx = idx
+        <span style="margin:0px;padding:0px;color:rgb(0, 0, 255);">return</span> (start_idx, end_idx)
+</code></pre>
+<h4 style="padding:0px;color:rgb(0, 0, 0);font-size:14px;font-weight:bold;margin:10px 0px;">4.3.2 _share_and_gather</h4>
+<p style="padding:0px;margin:10px auto;text-indent:0px;">_share_and_gather 的作用是在各个代理之间同步，得到角色的总体信息。<strong style="margin:0px;padding:0px;">每个代理将其配置（group_rank, group_world_size , num_workers）写入公共存储</strong>。<u style="margin:0px;padding:0px;">这里就是使用之前 Rendezvous 返回的 store 来进行信息共享</u>。</p>
+<pre style="border-radius:4px;background-color: #fbfaf8;border: 1px solid rgba(0,0,0,.14902);color: #333;font-size: 12px;padding: 8px;font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif;box-sizing: border-box;"><code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif">    <span style="margin:0px;padding:0px;color:rgb(0, 0, 255);">def</span> <span style="margin:0px;padding:0px;color:rgb(163, 21, 21);">_share_and_gather</span>(<span style="margin:0px;padding:0px;">
+        self, store, group_rank: <span style="margin:0px;padding:0px;color:rgb(0, 0, 255);">int</span>, group_world_size: <span style="margin:0px;padding:0px;color:rgb(0, 0, 255);">int</span>, spec: WorkerSpec
+    </span>) -&gt; <span style="margin:0px;padding:0px;color:rgb(163, 21, 21);">List</span>:
+        agent_role_info = _RoleInstanceInfo(
+            spec.role, group_rank, spec.local_world_size
+        )
+        key_prefix = <span style="margin:0px;padding:0px;color:rgb(163, 21, 21);">"torchelastic/role_info"</span>
+        agent_config_enc = agent_role_info.serialize()
+        role_infos_bytes = store_util.synchronize(
+            store, agent_config_enc, group_rank, group_world_size, key_prefix
+        )
+        role_infos = [
+            _RoleInstanceInfo.deserialize(role_info_bytes)
+            <span style="margin:0px;padding:0px;color:rgb(0, 0, 255);">for</span> role_info_bytes <span style="margin:0px;padding:0px;color:rgb(0, 0, 255);">in</span> role_infos_bytes
+        ]
+        <span style="margin:0px;padding:0px;color:rgb(0, 0, 255);">return</span> role_infos
+</code></pre>
+<h4 style="padding:0px;color:rgb(0, 0, 0);font-size:14px;font-weight:bold;margin:10px 0px;">4.3.3 _get_ranks</h4>
+<p style="padding:0px;margin:10px auto;text-indent:0px;">依据 role infos 来确定全局rank：当前代理的global rank是 本代理 的 group_rank 在infos数组的偏移量（offset）。偏移量的计算方法是，排名低于group_rank的所有代理的local_world之和。workers 的等级为：[offset, offset+local_world_size]。</p>
+<pre style="border-radius:4px;background-color: #fbfaf8;border: 1px solid rgba(0,0,0,.14902);color: #333;font-size: 12px;padding: 8px;font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif;box-sizing: border-box;"><code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span style="margin:0px;padding:0px;color:rgb(0, 0, 255);">def</span> <span style="margin:0px;padding:0px;color:rgb(163, 21, 21);">_get_ranks</span>(<span style="margin:0px;padding:0px;">
+    self,
+    role_infos: <span style="margin:0px;padding:0px;color:rgb(163, 21, 21);">List</span>[_RoleInstanceInfo],
+    role_idx: <span style="margin:0px;padding:0px;color:rgb(0, 0, 255);">int</span>,
+    start_idx: <span style="margin:0px;padding:0px;color:rgb(0, 0, 255);">int</span> = <span style="margin:0px;padding:0px;color:rgb(136, 0, 0);">0</span>,
+    end_idx: <span style="margin:0px;padding:0px;color:rgb(0, 0, 255);">int</span> = -<span style="margin:0px;padding:0px;color:rgb(136, 0, 0);">1</span>,
+</span>) -&gt; <span style="margin:0px;padding:0px;color:rgb(163, 21, 21);">Tuple</span>[<span style="margin:0px;padding:0px;color:rgb(0, 0, 255);">int</span>, <span style="margin:0px;padding:0px;color:rgb(163, 21, 21);">List</span>[<span style="margin:0px;padding:0px;color:rgb(0, 0, 255);">int</span>]]:
+    <span style="margin:0px;padding:0px;color:rgb(0, 0, 255);">if</span> end_idx == -<span style="margin:0px;padding:0px;color:rgb(136, 0, 0);">1</span>:
+        end_idx = <span style="margin:0px;padding:0px;color:rgb(0, 0, 255);">len</span>(role_infos)
+    prefix_sum = <span style="margin:0px;padding:0px;color:rgb(136, 0, 0);">0</span>
+    total_sum = <span style="margin:0px;padding:0px;color:rgb(136, 0, 0);">0</span>
+    <span style="margin:0px;padding:0px;color:rgb(0, 0, 255);">for</span> idx <span style="margin:0px;padding:0px;color:rgb(0, 0, 255);">in</span> <span style="margin:0px;padding:0px;color:rgb(0, 0, 255);">range</span>(start_idx, end_idx):
+        <span style="margin:0px;padding:0px;color:rgb(0, 0, 255);">if</span> role_idx &gt; idx:
+            prefix_sum += role_infos[idx].local_world_size
+        total_sum += role_infos[idx].local_world_size
+    <span style="margin:0px;padding:0px;color:rgb(0, 0, 255);">return</span> (
+        total_sum,
+        <span style="margin:0px;padding:0px;color:rgb(0, 0, 255);">list</span>(<span style="margin:0px;padding:0px;color:rgb(0, 0, 255);">range</span>(prefix_sum, prefix_sum + role_infos[role_idx].local_world_size)),
+    )
+</code></pre>
+<p style="padding:0px;margin:10px auto;text-indent:0px;">目前逻辑拓展如下：</p>
+<ol style="margin:0px;padding:0px;padding-left:40px;list-style-type:decimal;">
+<li style="margin:0px;padding:0px;list-style:inherit;">调用 rdzv_handler.next_rendezvous() 来和其他节点进行同步，获得信息。</li>
+<li style="margin:0px;padding:0px;list-style:inherit;"><u style="margin:0px;padding:0px;">获得信息中的store（可以认为就是远端的KV存储）</u>，group_world_size，group_rank 传给 Agent。</li>
+<li style="margin:0px;padding:0px;list-style:inherit;">ranks 等信息传给 _assign_worker_ranks方法。</li>
+<li style="margin:0px;padding:0px;list-style:inherit;">_assign_worker_ranks 之中，<strong style="margin:0px;padding:0px;">调用  _share_and_gather 在各个代理之间同步，得到角色的总体信息</strong>。每个代理将其配置（group_rank, group_world_size , num_workers）写入公共KV存储。</li>
+<li style="margin:0px;padding:0px;list-style:inherit;">依据 role infos 来确定全局rank：当前代理的global rank是 本代理 的 group_rank 在infos数组的偏移量（offset）。偏移量的计算方法是，排名低于group_rank的所有代理的local_world之和。</li>
+<li style="margin:0px;padding:0px;list-style:inherit;">使用各种信息建立一系列的 Workers。</li>
+<li style="margin:0px;padding:0px;list-style:inherit;">Workers 被复制给 Agent 的 WorkerGroup 之中。</li>
+</ol>
+<pre style="border-radius:4px;background-color: #fbfaf8;border: 1px solid rgba(0,0,0,.14902);color: #333;font-size: 12px;padding: 8px;font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif;box-sizing: border-box;"><code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif">                                                              _initialize_workers
+                                                                      +
+                                                                      |
+                                                                      |
+                                                                      v
+                                                              _rendezvous(worker_group)
+                                                                      +
++----------------------------------------------+                      |
+| LocalElasticAgent                            |                      | <span style="margin:0px;padding:0px;color:rgb(136, 0, 0);">1</span>
+|                                              |   <span style="margin:0px;padding:0px;color:rgb(136, 0, 0);">2</span>                  v
+|                                         +--------------+  rdzv_handler.next_rendezvous()
+| +--------------------+                  |    |                      +
+| | WorkerGroup        |                  |    |                      |
+| |                    |                  |    |                    <span style="margin:0px;padding:0px;color:rgb(136, 0, 0);">3</span> | ranks
+| |                    |                  |    |                      v
+| |  spec              |                  |    |       +--------------+------------------+
+| |                    |                  |    |       | _assign_worker_ranks            |
+| |                    |                  |    |       |                                 |
+| |  store   &lt;----------------------------+    |       |                        <span style="margin:0px;padding:0px;color:rgb(136, 0, 0);">4</span>        |
+| |                    |                  |    |       | role_infos = _share_and_gather( |
+| |                    |                  |    |       |               +          store) |
+| |  group_world_size&lt;--------------------+    |       |               | <span style="margin:0px;padding:0px;color:rgb(136, 0, 0);">5</span>               |
+| |                    |                  |    |       |               |                 |
+| |                    |                  |    |       |               v                 |
+| |  group_rank &lt;-------------------------+    |       |          _get_ranks(world...)   |
+| |                    |                       |       |          _get_ranks(role...)    |
+| |                    |   +----------------+  |       |               +                 |
+| |  workers  +-----------&gt;+ Worker0(rank <span style="margin:0px;padding:0px;color:rgb(136, 0, 0);">0</span>)|  |       |               |                 |
+| |                    |   | Worker1(rank <span style="margin:0px;padding:0px;color:rgb(136, 0, 0);">1</span>)|  |       |               | <span style="margin:0px;padding:0px;color:rgb(136, 0, 0);">6</span>               |
+| |                    |   | ...            |  |Workers|               v                 |
+| |                    |   | Workern(rank n)+&lt;------------+ new Worker(local_rank,       |
+| +--------------------+   +----------------+  |    <span style="margin:0px;padding:0px;color:rgb(136, 0, 0);">7</span>  |               global_rank,      |
+|                                              |       |               role_rank,        |
++----------------------------------------------+       |               world_size,       |
+                                                       |               role_world_size)  |
+                                                       |                                 |
+                                                       +---------------------------------+
+</code></pre>
+<p style="padding:0px;margin:10px auto;text-indent:0px;">_rendezvous 操作之后，Worker 实例已经生成了，接下来就看看如何生成 Worker 进程。但是因为这些方法在 SimpleElasticAgent 之中并没有实现，所以我们需要在其派生类 LocalElasticAgent 分析小节才能继续拓展我们的逻辑图。</p>
+<h3 style="padding:0px;color:rgb(0, 0, 0);font-size:16px;line-height:1.5;font-weight:bold;margin:10px 0px;">4.4 Worker 相关</h3>
+<p style="padding:0px;margin:10px auto;text-indent:0px;">我们先看看 SimpleElasticAgent 剩余两个 worker 相关函数。</p>
+<h4 style="padding:0px;color:rgb(0, 0, 0);font-size:14px;font-weight:bold;margin:10px 0px;">4.4.1 重启</h4>
+<p style="padding:0px;margin:10px auto;text-indent:0px;">_restart_workers 是重启 workers。</p>
+<pre style="border-radius:4px;background-color: #fbfaf8;border: 1px solid rgba(0,0,0,.14902);color: #333;font-size: 12px;padding: 8px;font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif;box-sizing: border-box;"><code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span style="margin:0px;padding:0px;color:rgb(0, 128, 0);"># pyre-fixme[56]: Pyre was not able to infer the type of the decorator</span>
+<span style="margin:0px;padding:0px;color:rgb(0, 128, 0);">#  `torch.distributed.elastic.metrics.prof`.</span>
+<span style="margin:0px;padding:0px;color:rgb(43, 145, 175);">@prof</span>
+<span style="margin:0px;padding:0px;color:rgb(0, 0, 255);">def</span> <span style="margin:0px;padding:0px;color:rgb(163, 21, 21);">_restart_workers</span>(<span style="margin:0px;padding:0px;">self, worker_group: WorkerGroup</span>) -&gt; <span style="margin:0px;padding:0px;color:rgb(163, 21, 21);">None</span>:
+    <span style="margin:0px;padding:0px;color:rgb(163, 21, 21);">"""
+    Restarts (stops, rendezvous, starts) all local workers in the group.
+    """</span>
+
+    role = worker_group.spec.role
+    self._stop_workers(worker_group)
+    worker_group.state = WorkerState.STOPPED
+    self._initialize_workers(worker_group)
+</code></pre>
+<h4 style="padding:0px;color:rgb(0, 0, 0);font-size:14px;font-weight:bold;margin:10px 0px;">4.4.2  barrier</h4>
+<p style="padding:0px;margin:10px auto;text-indent:0px;">实际上，几乎不可能保证DDP的所有 worker 都能保证同时结束，所以因此TE提供了一个finalization barrier，这个barrier的作用是对worker finalization 实施等待超时（5分钟）。</p>
+<pre style="border-radius:4px;background-color: #fbfaf8;border: 1px solid rgba(0,0,0,.14902);color: #333;font-size: 12px;padding: 8px;font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif;box-sizing: border-box;"><code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif">    <span style="margin:0px;padding:0px;color:rgb(0, 0, 255);">def</span> <span style="margin:0px;padding:0px;color:rgb(163, 21, 21);">_exit_barrier</span>(<span style="margin:0px;padding:0px;">self</span>):
+        <span style="margin:0px;padding:0px;color:rgb(163, 21, 21);">"""
+        Wait for ``exit_barrier_timeout`` seconds for all agents to finish
+        executing their local workers (either successfully or not). This
+        acts as a safety guard against user scripts that terminate at different
+        times. This barrier keeps the agent process alive until all workers finish.
+        """</span>
+        start = time.time()
+        <span style="margin:0px;padding:0px;color:rgb(0, 0, 255);">try</span>:
+            store_util.barrier(
+                self._store,
+                self._worker_group.group_rank,
+                self._worker_group.group_world_size,
+                key_prefix=_TERMINAL_STATE_SYNC_ID,
+                barrier_timeout=self._exit_barrier_timeout,
+            )
+        <span style="margin:0px;padding:0px;color:rgb(0, 0, 255);">except</span> Exception:
+            log.exception(
+                <span style="margin:0px;padding:0px;color:rgb(163, 21, 21);">f"Error waiting on exit barrier. Elapsed: <span style="margin:0px;padding:0px;">{time.time() - start}</span> seconds"</span>
+            )
+</code></pre>
+<h2 style="padding:0px;color:rgb(0, 0, 0);font-size:21px;line-height:1.5;font-weight:bold;margin:10px 0px;">0x05 LocalElasticAgent</h2>
+<p style="padding:0px;margin:10px auto;text-indent:0px;">LocalElasticAgent 是弹性训练最终使用的代理，主要用于在本地进行操作，负责管理单机上所有的worker进程，<u style="margin:0px;padding:0px;">其派生了 SimpleElasticAgent</u>。</p>
+<p style="padding:0px;margin:10px auto;text-indent:0px;">此代理在每个主机之上部署，并配置为生成<code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif">n</code>个工作进程。当使用GPU时，n是主机上可用的GPU数量。本地代理不会与部署在其他主机上的其他本地代理通信，即使worker可以在主机间通信。Worker id被解释为本地进程。代理作为把本机所有工作进程作为一个整体启动和停止。</p>
+<p style="padding:0px;margin:10px auto;text-indent:0px;">传递给worker的函数和参数必须与python multiprocessing兼容。要将multiprocessing数据结构传递给worker，用户可以在与指定的start_method相同的多处理multiprocessing中创建数据结构，并将其作为函数参数传递。</p>
+<p style="padding:0px;margin:10px auto;text-indent:0px;">exit_barrier_timeout用来指定等待其他代理完成的时间量（以秒为单位）。这起到了一个安全网的作用，可以处理worker在不同时间完成的情况，以防止代理将提前完成的worker视为scale-down事件。强烈建议用户代码确保worker以同步方式终止，而不是依赖于exit_barrier_timeout。</p>
+<p style="padding:0px;margin:10px auto;text-indent:0px;">SimpleElasticAgent 主要是提供给了初始化和总体运行方式，但是遗留了一些抽象函数没有被实现，比如<code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif">_start_workers</code>，<code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif">_stop_workers</code>，<code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif">_monitor_workers</code>，<code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif">_shutdown</code>。LocalElasticAgent 就补齐了这些函数。</p>
+<pre style="border-radius:4px;background-color: #fbfaf8;border: 1px solid rgba(0,0,0,.14902);color: #333;font-size: 12px;padding: 8px;font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif;box-sizing: border-box;"><code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span style="margin:0px;padding:0px;color:rgb(0, 0, 255);">class</span> <span style="margin:0px;padding:0px;color:rgb(163, 21, 21);">LocalElasticAgent</span>(<span style="margin:0px;padding:0px;color:rgb(163, 21, 21);">SimpleElasticAgent</span>):
+    <span style="margin:0px;padding:0px;color:rgb(163, 21, 21);">"""
+    An implementation of :py:class:`torchelastic.agent.server.ElasticAgent`
+    that handles host-local workers.
+    This agent is deployed per host and is configured to spawn ``n`` workers.
+    When using GPUs, ``n`` maps to the number of GPUs available on the host.
+
+    The local agent does not communicate to other local agents deployed on
+    other hosts, even if the workers may communicate inter-host. The worker id
+    is interpreted to be a local process. The agent starts and stops all worker
+    processes as a single unit.
+
+
+    The worker function and argument passed to the worker function must be
+    python multiprocessing compatible. To pass multiprocessing data structures
+    to the workers you may create the data structure in the same multiprocessing
+    context as the specified ``start_method`` and pass it as a function argument.
+
+    The ``exit_barrier_timeout`` specifies the amount of time (in seconds) to wait
+    for other agents to finish. This acts as a safety net to handle cases where
+    workers finish at different times, to prevent agents from viewing workers
+    that finished early as a scale-down event. It is strongly advised that the
+    user code deal with ensuring that workers are terminated in a synchronous
+    manner rather than relying on the exit_barrier_timeout.
+    """</span>
+
+    <span style="margin:0px;padding:0px;color:rgb(0, 0, 255);">def</span> <span style="margin:0px;padding:0px;color:rgb(163, 21, 21);">__init__</span>(<span style="margin:0px;padding:0px;">
+        self,
+        spec: WorkerSpec,
+        start_method=<span style="margin:0px;padding:0px;color:rgb(163, 21, 21);">"spawn"</span>,
+        exit_barrier_timeout: <span style="margin:0px;padding:0px;color:rgb(0, 0, 255);">float</span> = <span style="margin:0px;padding:0px;color:rgb(136, 0, 0);">300</span>,
+        log_dir: <span style="margin:0px;padding:0px;color:rgb(163, 21, 21);">Optional</span>[<span style="margin:0px;padding:0px;color:rgb(0, 0, 255);">str</span>] = <span style="margin:0px;padding:0px;color:rgb(163, 21, 21);">None</span>,
+    </span>):
+        <span style="margin:0px;padding:0px;color:rgb(0, 0, 255);">super</span>().__init__(spec, exit_barrier_timeout)
+        self._start_method = start_method
+        self._pcontext: <span style="margin:0px;padding:0px;color:rgb(163, 21, 21);">Optional</span>[PContext] = <span style="margin:0px;padding:0px;color:rgb(163, 21, 21);">None</span>
+        rdzv_run_id = spec.rdzv_handler.get_run_id()
+        self._log_dir = self._make_log_dir(log_dir, rdzv_run_id)
+
+    <span style="margin:0px;padding:0px;color:rgb(0, 0, 255);">def</span> <span style="margin:0px;padding:0px;color:rgb(163, 21, 21);">_make_log_dir</span>(<span style="margin:0px;padding:0px;">self, log_dir: <span style="margin:0px;padding:0px;color:rgb(163, 21, 21);">Optional</span>[<span style="margin:0px;padding:0px;color:rgb(0, 0, 255);">str</span>], rdzv_run_id: <span style="margin:0px;padding:0px;color:rgb(0, 0, 255);">str</span></span>):
+        base_log_dir = log_dir <span style="margin:0px;padding:0px;color:rgb(0, 0, 255);">or</span> tempfile.mkdtemp(prefix=<span style="margin:0px;padding:0px;color:rgb(163, 21, 21);">"torchelastic_"</span>)
+        os.makedirs(base_log_dir, exist_ok=<span style="margin:0px;padding:0px;color:rgb(163, 21, 21);">True</span>)
+        <span style="margin:0px;padding:0px;color:rgb(0, 0, 255);">dir</span> = tempfile.mkdtemp(prefix=<span style="margin:0px;padding:0px;color:rgb(163, 21, 21);">f"<span style="margin:0px;padding:0px;">{rdzv_run_id}</span>_"</span>, <span style="margin:0px;padding:0px;color:rgb(0, 0, 255);">dir</span>=base_log_dir)
+        <span style="margin:0px;padding:0px;color:rgb(0, 0, 255);">return</span> <span style="margin:0px;padding:0px;color:rgb(0, 0, 255);">dir</span>
+</code></pre>
+<h3 style="padding:0px;color:rgb(0, 0, 0);font-size:16px;line-height:1.5;font-weight:bold;margin:10px 0px;">5.1 使用</h3>
+<p style="padding:0px;margin:10px auto;text-indent:0px;">我们先从其注释中提取代码，看看如何使用。以下是如何把function作为入口来启动。</p>
+<pre style="border-radius:4px;background-color: #fbfaf8;border: 1px solid rgba(0,0,0,.14902);color: #333;font-size: 12px;padding: 8px;font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif;box-sizing: border-box;"><code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif">    <span style="margin:0px;padding:0px;color:rgb(0, 0, 255);">def</span> <span style="margin:0px;padding:0px;color:rgb(163, 21, 21);">trainer</span>(<span style="margin:0px;padding:0px;">args</span>) -&gt; <span style="margin:0px;padding:0px;color:rgb(0, 0, 255);">str</span>:
+        <span style="margin:0px;padding:0px;color:rgb(0, 0, 255);">return</span> <span style="margin:0px;padding:0px;color:rgb(163, 21, 21);">"do train"</span>
+
+    <span style="margin:0px;padding:0px;color:rgb(0, 0, 255);">def</span> <span style="margin:0px;padding:0px;color:rgb(163, 21, 21);">main</span>():
+        start_method=<span style="margin:0px;padding:0px;color:rgb(163, 21, 21);">"spawn"</span>
+        shared_queue= multiprocessing.get_context(start_method).Queue()
+        spec = WorkerSpec(
+                    role=<span style="margin:0px;padding:0px;color:rgb(163, 21, 21);">"trainer"</span>,
+                    local_world_size=nproc_per_process,
+                    entrypoint=trainer,
+                    args=(<span style="margin:0px;padding:0px;color:rgb(163, 21, 21);">"foobar"</span>,),
+                    ...&lt;OTHER_PARAMS...&gt;)
+        agent = LocalElasticAgent(spec, start_method)
+        results = agent.run()
+
+        <span style="margin:0px;padding:0px;color:rgb(0, 0, 255);">if</span> results.is_failed():
+            <span style="margin:0px;padding:0px;color:rgb(0, 0, 255);">print</span>(<span style="margin:0px;padding:0px;color:rgb(163, 21, 21);">"trainer failed"</span>)
+        <span style="margin:0px;padding:0px;color:rgb(0, 0, 255);">else</span>:
+            <span style="margin:0px;padding:0px;color:rgb(0, 0, 255);">print</span>(<span style="margin:0px;padding:0px;color:rgb(163, 21, 21);">f"rank 0 return value: <span style="margin:0px;padding:0px;">{results.return_values[<span style="margin:0px;padding:0px;color:rgb(136, 0, 0);">0</span>]}</span>"</span>)
+            <span style="margin:0px;padding:0px;color:rgb(0, 128, 0);"># prints -&gt; rank 0 return value: do train</span>
+</code></pre>
+<p style="padding:0px;margin:10px auto;text-indent:0px;">以下是如何把binary作为入口来启动。</p>
+<pre style="border-radius:4px;background-color: #fbfaf8;border: 1px solid rgba(0,0,0,.14902);color: #333;font-size: 12px;padding: 8px;font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif;box-sizing: border-box;"><code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif">    <span style="margin:0px;padding:0px;color:rgb(0, 0, 255);">def</span> <span style="margin:0px;padding:0px;color:rgb(163, 21, 21);">main</span>():
+        spec = WorkerSpec(
+                    role=<span style="margin:0px;padding:0px;color:rgb(163, 21, 21);">"trainer"</span>,
+                    local_world_size=nproc_per_process,
+                    entrypoint=<span style="margin:0px;padding:0px;color:rgb(163, 21, 21);">"/usr/local/bin/trainer"</span>,
+                    args=(<span style="margin:0px;padding:0px;color:rgb(163, 21, 21);">"--trainer_args"</span>, <span style="margin:0px;padding:0px;color:rgb(163, 21, 21);">"foobar"</span>),
+                    ...&lt;OTHER_PARAMS...&gt;)
+        agent = LocalElasticAgent(spec)
+        results = agent.run()
+
+        <span style="margin:0px;padding:0px;color:rgb(0, 0, 255);">if</span> <span style="margin:0px;padding:0px;color:rgb(0, 0, 255);">not</span> results.is_failed():
+            <span style="margin:0px;padding:0px;color:rgb(0, 0, 255);">print</span>(<span style="margin:0px;padding:0px;color:rgb(163, 21, 21);">"binary launches do not have return values"</span>)
+</code></pre>
+<p style="padding:0px;margin:10px auto;text-indent:0px;">_rendezvous 操作之后，Worker 实例已经生成了，接下来就看看如何生成 Worker 进程。</p>
+<h3 style="padding:0px;color:rgb(0, 0, 0);font-size:16px;line-height:1.5;font-weight:bold;margin:10px 0px;">5.2 停止</h3>
+<p style="padding:0px;margin:10px auto;text-indent:0px;">以下函数会停止workers。</p>
+<pre style="border-radius:4px;background-color: #fbfaf8;border: 1px solid rgba(0,0,0,.14902);color: #333;font-size: 12px;padding: 8px;font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif;box-sizing: border-box;"><code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span style="margin:0px;padding:0px;color:rgb(43, 145, 175);">    @prof</span>
+    <span style="margin:0px;padding:0px;color:rgb(0, 0, 255);">def</span> <span style="margin:0px;padding:0px;color:rgb(163, 21, 21);">_stop_workers</span>(<span style="margin:0px;padding:0px;">self, worker_group: WorkerGroup</span>) -&gt; <span style="margin:0px;padding:0px;color:rgb(163, 21, 21);">None</span>:
+        self._shutdown()
+        
+    <span style="margin:0px;padding:0px;color:rgb(0, 0, 255);">def</span> <span style="margin:0px;padding:0px;color:rgb(163, 21, 21);">_shutdown</span>(<span style="margin:0px;padding:0px;">self</span>) -&gt; <span style="margin:0px;padding:0px;color:rgb(163, 21, 21);">None</span>:
+        <span style="margin:0px;padding:0px;color:rgb(0, 0, 255);">if</span> self._pcontext:
+            self._pcontext.close()        
+</code></pre>
+<h3 style="padding:0px;color:rgb(0, 0, 0);font-size:16px;line-height:1.5;font-weight:bold;margin:10px 0px;">5.3 初始化</h3>
+<p style="padding:0px;margin:10px auto;text-indent:0px;">我们接着前文来说，_rendezvous 操作之后，Worker 实例已经生成了，接下来就看看如何生成 Worker 进程。之前因为这些方法在 SimpleElasticAgent 之中并没有实现，所以我们在本小结继续拓展我们的逻辑图。</p>
+<p style="padding:0px;margin:10px auto;text-indent:0px;">我们先再看看初始化workers。在 _initialize_workers之中，首先使用 _rendezvous 建立 workers 实例，其次调用 _start_workers 启动 workers。</p>
+<pre style="border-radius:4px;background-color: #fbfaf8;border: 1px solid rgba(0,0,0,.14902);color: #333;font-size: 12px;padding: 8px;font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif;box-sizing: border-box;"><code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span style="margin:0px;padding:0px;color:rgb(43, 145, 175);">    @prof</span>
+    <span style="margin:0px;padding:0px;color:rgb(0, 0, 255);">def</span> <span style="margin:0px;padding:0px;color:rgb(163, 21, 21);">_initialize_workers</span>(<span style="margin:0px;padding:0px;">self, worker_group: WorkerGroup</span>) -&gt; <span style="margin:0px;padding:0px;color:rgb(163, 21, 21);">None</span>:
+        <span style="margin:0px;padding:0px;color:rgb(163, 21, 21);">r"""
+        Starts a fresh set of workers for the worker_group.
+        Essentially a rendezvous followed by a start_workers.
+
+        The caller should first call ``_stop_workers()`` to stop running workers
+        prior to calling this method.
+
+        Optimistically sets the state of the worker group that
+        just started as ``HEALTHY`` and delegates the actual monitoring
+        of state to ``_monitor_workers()`` method
+        """</span>
+        role = worker_group.spec.role
+
+        <span style="margin:0px;padding:0px;color:rgb(0, 128, 0);"># TODO after stopping workers, wait at least monitor_interval*2 for</span>
+        <span style="margin:0px;padding:0px;color:rgb(0, 128, 0);"># workers on different nodes to fail on a collective op before waiting</span>
+        <span style="margin:0px;padding:0px;color:rgb(0, 128, 0);"># on the rdzv barrier, this way we ensure that nodes enter rdzv</span>
+        <span style="margin:0px;padding:0px;color:rgb(0, 128, 0);"># at around the same time and reduce false positive rdzv timeout errors</span>
+        self._rendezvous(worker_group) <span style="margin:0px;padding:0px;color:rgb(0, 128, 0);"># Worker实例已经生成了</span>
+
+        worker_ids = self._start_workers(worker_group) <span style="margin:0px;padding:0px;color:rgb(0, 128, 0);"># 启动Worker进程</span>
+        <span style="margin:0px;padding:0px;color:rgb(0, 0, 255);">for</span> local_rank, w_id <span style="margin:0px;padding:0px;color:rgb(0, 0, 255);">in</span> worker_ids.items():
+            worker = worker_group.workers[local_rank]
+            worker.<span style="margin:0px;padding:0px;color:rgb(0, 0, 255);">id</span> = w_id <span style="margin:0px;padding:0px;color:rgb(0, 128, 0);"># 得到进程ID</span>
+
+        worker_group.state = WorkerState.HEALTHY
+</code></pre>
+<h3 style="padding:0px;color:rgb(0, 0, 0);font-size:16px;line-height:1.5;font-weight:bold;margin:10px 0px;">5.4 启动 worker 进程</h3>
+<p style="padding:0px;margin:10px auto;text-indent:0px;"><code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif">_start_workers</code> 方法会调用 start_processes 来启动 worker 进程，默认_start_method 是 "spawn"。<u style="margin:0px;padding:0px;">也就是启动了多个进程，并行执行用户程序。同时这些进程的运行结果会被监控</u>。start_processes 参数之中，<code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif">entrypoint</code>和<code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif">args</code> 是用户命令和参数，entrypoint可以是函数或者字符串。</p>
+<p style="padding:0px;margin:10px auto;text-indent:0px;"><code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif">_start_workers</code> 把 start_processes 方法启动多线程的结果保存在 _pcontext 之中，后续就用 _pcontext 来继续控制，比如结束 worker 就是直接调用 _pcontext 的 close方法。</p>
+<pre style="border-radius:4px;background-color: #fbfaf8;border: 1px solid rgba(0,0,0,.14902);color: #333;font-size: 12px;padding: 8px;font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif;box-sizing: border-box;"><code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span style="margin:0px;padding:0px;color:rgb(43, 145, 175);">    @prof</span>
+    <span style="margin:0px;padding:0px;color:rgb(0, 0, 255);">def</span> <span style="margin:0px;padding:0px;color:rgb(163, 21, 21);">_start_workers</span>(<span style="margin:0px;padding:0px;">self, worker_group: WorkerGroup</span>) -&gt; <span style="margin:0px;padding:0px;color:rgb(163, 21, 21);">Dict</span>[<span style="margin:0px;padding:0px;color:rgb(0, 0, 255);">int</span>, <span style="margin:0px;padding:0px;color:rgb(163, 21, 21);">Any</span>]:
+        spec = worker_group.spec
+        store = worker_group.store
+        <span style="margin:0px;padding:0px;color:rgb(0, 0, 255);">assert</span> store <span style="margin:0px;padding:0px;color:rgb(0, 0, 255);">is</span> <span style="margin:0px;padding:0px;color:rgb(0, 0, 255);">not</span> <span style="margin:0px;padding:0px;color:rgb(163, 21, 21);">None</span>
+        master_addr, master_port = <span style="margin:0px;padding:0px;color:rgb(0, 0, 255);">super</span>()._get_master_addr_port(store)
+        restart_count = spec.max_restarts - self._remaining_restarts
+
+        use_agent_store = spec.rdzv_handler.get_backend() == <span style="margin:0px;padding:0px;color:rgb(163, 21, 21);">"static"</span>
+
+        args: <span style="margin:0px;padding:0px;color:rgb(163, 21, 21);">Dict</span>[<span style="margin:0px;padding:0px;color:rgb(0, 0, 255);">int</span>, <span style="margin:0px;padding:0px;color:rgb(163, 21, 21);">Tuple</span>] = {}
+        envs: <span style="margin:0px;padding:0px;color:rgb(163, 21, 21);">Dict</span>[<span style="margin:0px;padding:0px;color:rgb(0, 0, 255);">int</span>, <span style="margin:0px;padding:0px;color:rgb(163, 21, 21);">Dict</span>[<span style="margin:0px;padding:0px;color:rgb(0, 0, 255);">str</span>, <span style="margin:0px;padding:0px;color:rgb(0, 0, 255);">str</span>]] = {}
+        <span style="margin:0px;padding:0px;color:rgb(0, 0, 255);">for</span> worker <span style="margin:0px;padding:0px;color:rgb(0, 0, 255);">in</span> worker_group.workers:
+            local_rank = worker.local_rank
+            worker_env = {
+                <span style="margin:0px;padding:0px;color:rgb(163, 21, 21);">"LOCAL_RANK"</span>: <span style="margin:0px;padding:0px;color:rgb(0, 0, 255);">str</span>(local_rank),
+                <span style="margin:0px;padding:0px;color:rgb(163, 21, 21);">"RANK"</span>: <span style="margin:0px;padding:0px;color:rgb(0, 0, 255);">str</span>(worker.global_rank),
+                <span style="margin:0px;padding:0px;color:rgb(163, 21, 21);">"GROUP_RANK"</span>: <span style="margin:0px;padding:0px;color:rgb(0, 0, 255);">str</span>(worker_group.group_rank),
+                <span style="margin:0px;padding:0px;color:rgb(163, 21, 21);">"ROLE_RANK"</span>: <span style="margin:0px;padding:0px;color:rgb(0, 0, 255);">str</span>(worker.role_rank),
+                <span style="margin:0px;padding:0px;color:rgb(163, 21, 21);">"ROLE_NAME"</span>: spec.role,
+                <span style="margin:0px;padding:0px;color:rgb(163, 21, 21);">"LOCAL_WORLD_SIZE"</span>: <span style="margin:0px;padding:0px;color:rgb(0, 0, 255);">str</span>(spec.local_world_size),
+                <span style="margin:0px;padding:0px;color:rgb(163, 21, 21);">"WORLD_SIZE"</span>: <span style="margin:0px;padding:0px;color:rgb(0, 0, 255);">str</span>(worker.world_size),
+                <span style="margin:0px;padding:0px;color:rgb(163, 21, 21);">"GROUP_WORLD_SIZE"</span>: <span style="margin:0px;padding:0px;color:rgb(0, 0, 255);">str</span>(worker_group.group_world_size),
+                <span style="margin:0px;padding:0px;color:rgb(163, 21, 21);">"ROLE_WORLD_SIZE"</span>: <span style="margin:0px;padding:0px;color:rgb(0, 0, 255);">str</span>(worker.role_world_size),
+                <span style="margin:0px;padding:0px;color:rgb(163, 21, 21);">"MASTER_ADDR"</span>: master_addr,
+                <span style="margin:0px;padding:0px;color:rgb(163, 21, 21);">"MASTER_PORT"</span>: <span style="margin:0px;padding:0px;color:rgb(0, 0, 255);">str</span>(master_port),
+                <span style="margin:0px;padding:0px;color:rgb(163, 21, 21);">"TORCHELASTIC_RESTART_COUNT"</span>: <span style="margin:0px;padding:0px;color:rgb(0, 0, 255);">str</span>(restart_count),
+                <span style="margin:0px;padding:0px;color:rgb(163, 21, 21);">"TORCHELASTIC_MAX_RESTARTS"</span>: <span style="margin:0px;padding:0px;color:rgb(0, 0, 255);">str</span>(spec.max_restarts),
+                <span style="margin:0px;padding:0px;color:rgb(163, 21, 21);">"TORCHELASTIC_RUN_ID"</span>: spec.rdzv_handler.get_run_id(),
+                <span style="margin:0px;padding:0px;color:rgb(163, 21, 21);">"TORCHELASTIC_USE_AGENT_STORE"</span>: <span style="margin:0px;padding:0px;color:rgb(0, 0, 255);">str</span>(use_agent_store),
+                <span style="margin:0px;padding:0px;color:rgb(163, 21, 21);">"NCCL_ASYNC_ERROR_HANDLING"</span>: <span style="margin:0px;padding:0px;color:rgb(0, 0, 255);">str</span>(<span style="margin:0px;padding:0px;color:rgb(136, 0, 0);">1</span>),
+            }
+            <span style="margin:0px;padding:0px;color:rgb(0, 0, 255);">if</span> <span style="margin:0px;padding:0px;color:rgb(163, 21, 21);">"OMP_NUM_THREADS"</span> <span style="margin:0px;padding:0px;color:rgb(0, 0, 255);">in</span> os.environ:
+                worker_env[<span style="margin:0px;padding:0px;color:rgb(163, 21, 21);">"OMP_NUM_THREADS"</span>] = os.environ[<span style="margin:0px;padding:0px;color:rgb(163, 21, 21);">"OMP_NUM_THREADS"</span>]
+            envs[local_rank] = worker_env
+            worker_args = <span style="margin:0px;padding:0px;color:rgb(0, 0, 255);">list</span>(spec.args)
+            worker_args = macros.substitute(worker_args, <span style="margin:0px;padding:0px;color:rgb(0, 0, 255);">str</span>(local_rank))
+            args[local_rank] = <span style="margin:0px;padding:0px;color:rgb(0, 0, 255);">tuple</span>(worker_args)
+
+        <span style="margin:0px;padding:0px;color:rgb(0, 128, 0);"># scaling events do not count towards restarts (gets same attempt #)</span>
+        <span style="margin:0px;padding:0px;color:rgb(0, 128, 0);"># remove existing log dir if this restart is due to a scaling event</span>
+        attempt_log_dir = os.path.join(self._log_dir, <span style="margin:0px;padding:0px;color:rgb(163, 21, 21);">f"attempt_<span style="margin:0px;padding:0px;">{restart_count}</span>"</span>)
+        shutil.rmtree(attempt_log_dir, ignore_errors=<span style="margin:0px;padding:0px;color:rgb(163, 21, 21);">True</span>)
+        os.makedirs(attempt_log_dir)
+
+        self._pcontext = start_processes( <span style="margin:0px;padding:0px;color:rgb(0, 128, 0);"># 把启动多线程的结果保存在 _pcontext 之中。</span>
+            name=spec.role,
+            entrypoint=spec.entrypoint,
+            args=args,
+            envs=envs,
+            log_dir=attempt_log_dir,
+            start_method=self._start_method,
+            redirects=spec.redirects,
+            tee=spec.tee,
+        )
+
+        <span style="margin:0px;padding:0px;color:rgb(0, 0, 255);">return</span> self._pcontext.pids()
+</code></pre>
+<h3 style="padding:0px;color:rgb(0, 0, 0);font-size:16px;line-height:1.5;font-weight:bold;margin:10px 0px;">5.5 监控</h3>
+<p style="padding:0px;margin:10px auto;text-indent:0px;">运行之后，TE 会调用 <code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif">_monitor_workers</code> 对workers进行监控。之前把启动多线程的结果保存在 <code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif">_pcontext</code> 之中，现在就用 <code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif">_pcontext</code> 对运行情况进行监控。</p>
+<pre style="border-radius:4px;background-color: #fbfaf8;border: 1px solid rgba(0,0,0,.14902);color: #333;font-size: 12px;padding: 8px;font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif;box-sizing: border-box;"><code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span style="margin:0px;padding:0px;color:rgb(43, 145, 175);">    @prof</span>
+    <span style="margin:0px;padding:0px;color:rgb(0, 0, 255);">def</span> <span style="margin:0px;padding:0px;color:rgb(163, 21, 21);">_monitor_workers</span>(<span style="margin:0px;padding:0px;">self, worker_group: WorkerGroup</span>) -&gt; RunResult:
+        role = worker_group.spec.role
+        worker_pids = {w.<span style="margin:0px;padding:0px;color:rgb(0, 0, 255);">id</span> <span style="margin:0px;padding:0px;color:rgb(0, 0, 255);">for</span> w <span style="margin:0px;padding:0px;color:rgb(0, 0, 255);">in</span> worker_group.workers}
+        <span style="margin:0px;padding:0px;color:rgb(0, 0, 255);">assert</span> self._pcontext <span style="margin:0px;padding:0px;color:rgb(0, 0, 255);">is</span> <span style="margin:0px;padding:0px;color:rgb(0, 0, 255);">not</span> <span style="margin:0px;padding:0px;color:rgb(163, 21, 21);">None</span>
+        pc_pids = <span style="margin:0px;padding:0px;color:rgb(0, 0, 255);">set</span>(self._pcontext.pids().values())
+        <span style="margin:0px;padding:0px;color:rgb(0, 0, 255);">if</span> worker_pids != pc_pids:
+            <span style="margin:0px;padding:0px;color:rgb(0, 0, 255);">return</span> RunResult(state=WorkerState.UNKNOWN)
+
+        result = self._pcontext.wait(<span style="margin:0px;padding:0px;color:rgb(136, 0, 0);">0</span>) <span style="margin:0px;padding:0px;color:rgb(0, 128, 0);"># 对运行结构进行监控</span>
+        <span style="margin:0px;padding:0px;color:rgb(0, 0, 255);">if</span> result:
+            <span style="margin:0px;padding:0px;color:rgb(0, 0, 255);">if</span> result.is_failed(): <span style="margin:0px;padding:0px;color:rgb(0, 128, 0);"># 如果进程失败</span>
+                <span style="margin:0px;padding:0px;color:rgb(0, 128, 0);"># map local rank failure to global rank</span>
+                worker_failures = {}
+                <span style="margin:0px;padding:0px;color:rgb(0, 128, 0);">#  返回的结果内部就包括每个进程的运行结果</span>
+                <span style="margin:0px;padding:0px;color:rgb(0, 0, 255);">for</span> local_rank, failure <span style="margin:0px;padding:0px;color:rgb(0, 0, 255);">in</span> result.failures.items():
+                    worker = worker_group.workers[local_rank]
+                    worker_failures[worker.global_rank] = failure
+                <span style="margin:0px;padding:0px;color:rgb(0, 0, 255);">return</span> RunResult(
+                    state=WorkerState.FAILED,
+                    failures=worker_failures, <span style="margin:0px;padding:0px;color:rgb(0, 128, 0);"># 返回运行结果</span>
+                )
+            <span style="margin:0px;padding:0px;color:rgb(0, 0, 255);">else</span>:
+                <span style="margin:0px;padding:0px;color:rgb(0, 128, 0);"># copy ret_val_queue into a map with a global ranks</span>
+                workers_ret_vals = {}
+                <span style="margin:0px;padding:0px;color:rgb(0, 0, 255);">for</span> local_rank, ret_val <span style="margin:0px;padding:0px;color:rgb(0, 0, 255);">in</span> result.return_values.items():
+                    worker = worker_group.workers[local_rank]
+                    workers_ret_vals[worker.global_rank] = ret_val
+                <span style="margin:0px;padding:0px;color:rgb(0, 0, 255);">return</span> RunResult(
+                    state=WorkerState.SUCCEEDED,
+                    return_values=workers_ret_vals, <span style="margin:0px;padding:0px;color:rgb(0, 128, 0);"># 返回运行结果</span>
+                )
+        <span style="margin:0px;padding:0px;color:rgb(0, 0, 255);">else</span>:
+            <span style="margin:0px;padding:0px;color:rgb(0, 0, 255);">return</span> RunResult(state=WorkerState.HEALTHY)
+</code></pre>
+<p style="padding:0px;margin:10px auto;text-indent:0px;">因为启动和监控涉及到系统整体运行逻辑，需要和 rendezvous 一起才能更好理解，所以我们把这部分的分析推迟，等到 Rendezvous 之后再来做整体分析。</p>
+<p style="padding:0px;margin:10px auto;text-indent:0px;">目前总体逻辑如下：</p>
+<ol style="margin:0px;padding:0px;padding-left:40px;list-style-type:decimal;">
+<li style="margin:0px;padding:0px;list-style:inherit;">调用 rdzv_handler.next_rendezvous() 来和其他节点进行同步，获得信息。</li>
+<li style="margin:0px;padding:0px;list-style:inherit;">获得信息中的store（可以认为就是远端的KV存储），group_world_size，group_rank 传给 Agent。</li>
+<li style="margin:0px;padding:0px;list-style:inherit;">ranks 等信息传给 _assign_worker_ranks方法。</li>
+<li style="margin:0px;padding:0px;list-style:inherit;">_assign_worker_ranks 之中，调用  _share_and_gather 在各个代理之间同步，得到角色的总体信息。每个代理将其配置（group_rank, group_world_size , num_workers）写入公共KV存储。</li>
+<li style="margin:0px;padding:0px;list-style:inherit;">依据 role infos 来确定全局rank：当前代理的global rank是 本代理 的 group_rank 在infos数组的偏移量（offset）。偏移量的计算方法是，排名低于group_rank的所有代理的local_world之和。</li>
+<li style="margin:0px;padding:0px;list-style:inherit;">使用各种信息建立一系列的 Workers。</li>
+<li style="margin:0px;padding:0px;list-style:inherit;">Workers 被复制给 Agent 的 WorkerGroup 之中。</li>
+<li style="margin:0px;padding:0px;list-style:inherit;">使用 _start_workers 来启动 worker 进程。</li>
+<li style="margin:0px;padding:0px;list-style:inherit;">把 worker 进程 id 赋值给 Agent 的 worker.id 之中，这样以后就可以用  worker.id 来操作进程。</li>
+<li style="margin:0px;padding:0px;list-style:inherit;">使用 _monitor_workers 监控 worker 进程。</li>
+<li style="margin:0px;padding:0px;list-style:inherit;">使用 _exit_barrier 来等待 worker 进程结束。</li>
+</ol>
+<pre style="border-radius:4px;background-color: #fbfaf8;border: 1px solid rgba(0,0,0,.14902);color: #333;font-size: 12px;padding: 8px;font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif;box-sizing: border-box;"><code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif">                                                              _initialize_workers
+                                                                      +
+                                                                      |
+                                                                      |
+                                                                      v
+                                                              _rendezvous(worker_group)
+                                                                      +
++----------------------------------------------+                      |
+| LocalElasticAgent                            |                      | <span style="margin:0px;padding:0px;color:rgb(136, 0, 0);">1</span>
+|                                              |   <span style="margin:0px;padding:0px;color:rgb(136, 0, 0);">2</span>                  v
+|                                         +--------------+  rdzv_handler.next_rendezvous()
+| +--------------------+                  |    |                      +
+| | WorkerGroup        |                  |    |                      |
+| |                    |                  |    |                    <span style="margin:0px;padding:0px;color:rgb(136, 0, 0);">3</span> | ranks
+| |                    |                  |    |                      v
+| |  spec              |                  |    |       +--------------+------------------+
+| |                    |                  |    |       | _assign_worker_ranks            |
+| |                    |                  |    |       |                                 |
+| |  store   &lt;----------------------------+    |       |                        <span style="margin:0px;padding:0px;color:rgb(136, 0, 0);">4</span>        |
+| |                    |                  |    |       | role_infos = _share_and_gather( |
+| |                    |                  |    |       |               +          store) |
+| |  group_world_size&lt;--------------------+    |       |               | <span style="margin:0px;padding:0px;color:rgb(136, 0, 0);">5</span>               |
+| |                    |                  |    |       |               |                 |
+| |                    |                  |    |       |               v                 |
+| |  group_rank &lt;-------------------------+    |       |          _get_ranks(world...)   |
+| |                    |                       |       |          _get_ranks(role...)    |
+| |                    |   +----------------+  |       |               +                 |
+| |  workers  +-----------&gt;+ Worker0(rank <span style="margin:0px;padding:0px;color:rgb(136, 0, 0);">0</span>)|  |       |               |                 |
+| |                    |   | Worker1(rank <span style="margin:0px;padding:0px;color:rgb(136, 0, 0);">1</span>)|  |       |               | <span style="margin:0px;padding:0px;color:rgb(136, 0, 0);">6</span>               |
+| |                    |   | ...            |  |Workers|               v                 |
+| |                    |   | Workern(rank n)+&lt;------------+ new Worker(local_rank,       |
+| +--------------------+   +---------+------+  |    <span style="margin:0px;padding:0px;color:rgb(136, 0, 0);">7</span>  |               global_rank,      |
+|                                    ^         |       |               role_rank,        |
+|                                    |         |       |               world_size,       |
+|                                    |         |       |               role_world_size)  |
++----------------------------------------------+       |                                 |
+                                     |                 +---------------+-----------------+
+                                     |                                 |
+                                     |                                 | <span style="margin:0px;padding:0px;color:rgb(136, 0, 0);">8</span>
+                                     |              <span style="margin:0px;padding:0px;color:rgb(136, 0, 0);">9</span>                  v
+                                     +-----------------------+   _start_workers
+                                                                       +
+                                                                       | <span style="margin:0px;padding:0px;color:rgb(136, 0, 0);">10</span>
+                                                                       |
+                                                                       v
+                                                       +---------------+--------------+
+                                                       | state = _monitor_workers     |
+                                                  +--&gt; |                              +--&gt;
+                                                  |    +---------------+--------------+  |
+                                                  |                    |                 |
+                                                  &lt;--------------------------------------+
+                                                     LOOP  Every 30S   |
+                                                                       | <span style="margin:0px;padding:0px;color:rgb(136, 0, 0);">11</span>
+                                                                       v
+                                                                    _exit_barrier
+</code></pre>
+<p style="padding:0px;margin:10px auto;text-indent:0px;">手机如下：</p>
+<p style="padding:0px;margin:10px auto;text-indent:0px;"><div class="media-placeholder">[图片/附件]</div></en-media></p>
+<h2 style="padding:0px;color:rgb(0, 0, 0);font-size:21px;line-height:1.5;font-weight:bold;margin:10px 0px;">0xFF 参考</h2>
+<p style="padding:0px;margin:10px auto;text-indent:0px;"><a href="https://zhuanlan.zhihu.com/p/156060169" target="_blank" rel="noopener" style="margin:0px;padding:0px;text-decoration:underline;color:rgb(0, 102, 204);">TorchElastic - 弹性、容错的分布式训练</a></p>
+
+</div></div></div></div></div></div></div></div></div></div></div></div>
+</div>
+</div>
+<a class="back-link" href="../articles.html">← 返回笔记列表</a>
+</body>
+</html>

@@ -1,0 +1,454 @@
+<!DOCTYPE html>
+<html lang="zh-CN" data-theme="light">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Autoloading and Reloading Constants — Ruby on Rails Guides — 技术笔记</title>
+<style>
+:root {
+  --bg: #ffffff;
+  --text: #1a1a1a;
+  --muted: #666;
+  --border: #e0e0e0;
+  --code-bg: #f5f5f5;
+  --link: #0066cc;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #1a1a1a;
+    --text: #e0e0e0;
+    --muted: #999;
+    --border: #333;
+    --code-bg: #2a2a2a;
+    --link: #66bbff;
+  }
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  line-height: 1.7;
+  color: var(--text);
+  background: var(--bg);
+  max-width: 860px;
+  margin: 0 auto;
+  padding: 2rem 1.5rem;
+}
+.note-header {
+  border-bottom: 2px solid var(--border);
+  padding-bottom: 1rem;
+  margin-bottom: 2rem;
+}
+.note-title {
+  font-size: 1.6rem;
+  font-weight: 700;
+  margin-bottom: 0.3rem;
+}
+.note-meta {
+  color: var(--muted);
+  font-size: 0.85rem;
+}
+.note-content {
+  font-size: 0.95rem;
+}
+.note-content h1 { font-size: 1.4rem; margin: 1.2rem 0 0.6rem; }
+.note-content h2 { font-size: 1.2rem; margin: 1rem 0 0.5rem; }
+.note-content h3 { font-size: 1.05rem; margin: 0.8rem 0 0.4rem; }
+.note-content p { margin: 0.5rem 0; }
+.note-content ul, .note-content ol { margin: 0.5rem 0 0.5rem 2rem; }
+.note-content li { margin: 0.2rem 0; }
+.note-content pre {
+  background: var(--code-bg);
+  padding: 1rem;
+  border-radius: 6px;
+  overflow-x: auto;
+  margin: 0.8rem 0;
+  font-size: 0.85rem;
+}
+.note-content code {
+  background: var(--code-bg);
+  padding: 0.1rem 0.3rem;
+  border-radius: 3px;
+  font-size: 0.88em;
+}
+.note-content pre code {
+  background: none;
+  padding: 0;
+}
+.note-content blockquote {
+  border-left: 3px solid var(--border);
+  padding-left: 1rem;
+  color: var(--muted);
+  margin: 0.8rem 0;
+}
+.note-content a { color: var(--link); }
+.note-content img {
+  max-width: 100%;
+  height: auto;
+  border-radius: 6px;
+  margin: 0.5rem 0;
+}
+.note-content table {
+  border-collapse: collapse;
+  width: 100%;
+  margin: 0.8rem 0;
+}
+.note-content th, .note-content td {
+  border: 1px solid var(--border);
+  padding: 0.5rem;
+}
+.note-content th { background: var(--code-bg); }
+.media-placeholder {
+  background: var(--code-bg);
+  padding: 1rem;
+  text-align: center;
+  color: var(--muted);
+  border-radius: 6px;
+  margin: 0.5rem 0;
+  font-size: 0.85rem;
+}
+.encrypt-placeholder {
+  background: #fff3cd;
+  padding: 0.5rem;
+  text-align: center;
+  color: #856404;
+  border-radius: 6px;
+  margin: 0.5rem 0;
+  font-size: 0.85rem;
+}
+.back-link {
+  display: inline-block;
+  margin-top: 2rem;
+  color: var(--link);
+  text-decoration: none;
+  font-size: 0.85rem;
+}
+</style>
+</head>
+<body>
+<div class="note-header">
+  <div class="note-title">Autoloading and Reloading Constants — Ruby on Rails Guides</div>
+  <div class="note-meta">笔记本：RubyOnRails</div>
+</div>
+<div class="note-content">
+<div style="--en-clipped-content:article; --en-clipped-source-url:https://guides.rubyonrails.org/autoloading_and_reloading_constants.html; --en-clipped-source-title:Autoloading and Reloading Constants — Ruby on Rails Guides;">
+<div><br/></div><div style="min-height: 13281px; font-size: 16px; display: block; min-width: 100%; position: relative;"> <div><div><div><div><div>
+        <h3><a href="https://guides.rubyonrails.org/autoloading_and_reloading_constants.html#introduction">1 Introduction</a></h3><div><p>This guide documents autoloading, reloading, and eager loading in Rails applications.</p></div><p>In a normal Ruby program, dependencies need to be loaded by hand. For example, the following controller uses classes <code>ApplicationController</code> and <code>Post</code>, and normally you'd need to put <code>require</code> calls for them:</p><div>
+<pre><code style="background-color:transparent;"><span style="color:rgb(108, 108, 101);font-style:italic;"># DO NOT DO THIS.</span>
+<span style="color:rgb(0, 116, 161);">require</span> <span style="color:rgb(213, 17, 68);">"application_controller"</span>
+<span style="color:rgb(0, 116, 161);">require</span> <span style="color:rgb(213, 17, 68);">"post"</span>
+<span style="color:rgb(108, 108, 101);font-style:italic;"># DO NOT DO THIS.</span>
+
+<span style="color:rgb(0, 115, 166);">class</span> <span style="color:rgb(68, 85, 136);font-weight:bold;">PostsController</span> <span style="color:rgb(0, 0, 0);font-weight:bold;">&lt;</span> <span style="color:rgb(0, 121, 121);">ApplicationController</span>
+  <span style="color:rgb(0, 115, 166);">def</span> <span style="color:rgb(153, 0, 0);font-weight:bold;">index</span>
+    <span style="color:rgb(0, 92, 197);">@posts</span> <span style="color:rgb(0, 0, 0);font-weight:bold;">=</span> <span style="color:rgb(0, 121, 121);">Post</span><span>.</span><span style="color:rgb(153, 0, 0);font-weight:bold;">all</span>
+  <span style="color:rgb(0, 115, 166);">end</span>
+<span style="color:rgb(0, 115, 166);">end</span>
+</code></pre>
+
+</div>
+<p>This is not the case in Rails applications, where application classes and modules are just available everywhere:</p><div>
+<pre><code style="background-color:transparent;"><span style="color:rgb(0, 115, 166);">class</span> <span style="color:rgb(68, 85, 136);font-weight:bold;">PostsController</span> <span style="color:rgb(0, 0, 0);font-weight:bold;">&lt;</span> <span style="color:rgb(0, 121, 121);">ApplicationController</span>
+  <span style="color:rgb(0, 115, 166);">def</span> <span style="color:rgb(153, 0, 0);font-weight:bold;">index</span>
+    <span style="color:rgb(0, 92, 197);">@posts</span> <span style="color:rgb(0, 0, 0);font-weight:bold;">=</span> <span style="color:rgb(0, 121, 121);">Post</span><span>.</span><span style="color:rgb(153, 0, 0);font-weight:bold;">all</span>
+  <span style="color:rgb(0, 115, 166);">end</span>
+<span style="color:rgb(0, 115, 166);">end</span>
+</code></pre>
+
+</div>
+<p>Idiomatic Rails applications only issue <code>require</code> calls to load stuff from their <code>lib</code> directory, the Ruby standard library, Ruby gems, etc. That is, anything that does not belong to their autoload paths, explained below.</p><p>To provide this feature, Rails manages a couple of <a href="https://github.com/fxn/zeitwerk">Zeitwerk</a> loaders on your behalf.</p><h3><a href="https://guides.rubyonrails.org/autoloading_and_reloading_constants.html#project-structure">2 Project Structure</a></h3><p>In a Rails application file names have to match the constants they define, with directories acting as namespaces.</p><p>For example, the file <code>app/helpers/users_helper.rb</code> should define <code>UsersHelper</code> and the file <code>app/controllers/admin/payments_controller.rb</code> should define <code>Admin::PaymentsController</code>.</p><p>By default, Rails configures Zeitwerk to inflect file names with <code>String#camelize</code>. For example, it expects that <code>app/controllers/users_controller.rb</code> defines the constant <code>UsersController</code> because</p><div>
+<pre><code style="background-color:transparent;"><span style="color:rgb(213, 17, 68);">"users_controller"</span><span>.</span><span style="color:rgb(153, 0, 0);font-weight:bold;">camelize</span> <span style="color:rgb(108, 108, 101);font-style:italic;"># =&gt; UsersController</span>
+</code></pre>
+
+</div>
+<p>The section <em>Customizing Inflections</em> below documents ways to override this default.</p><p>Please, check the <a href="https://github.com/fxn/zeitwerk#file-structure">Zeitwerk documentation</a> for further details.</p><h3><a href="https://guides.rubyonrails.org/autoloading_and_reloading_constants.html#config-autoload-paths">3 config.autoload_paths</a></h3><p>We refer to the list of application directories whose contents are to be autoloaded and (optionally) reloaded as <em>autoload paths</em>. For example, <code>app/models</code>. Such directories represent the root namespace: <code>Object</code>.</p><div><p>Autoload paths are called <em>root directories</em> in Zeitwerk documentation, but we'll stay with "autoload path" in this guide.</p></div><p>Within an autoload path, file names must match the constants they define as documented <a href="https://github.com/fxn/zeitwerk#file-structure">here</a>.</p><p>By default, the autoload paths of an application consist of all the subdirectories of <code>app</code> that exist when the application boots ---except for <code>assets</code>, <code>javascript</code>, and <code>views</code>--- plus the autoload paths of engines it might depend on.</p><p>For example, if <code>UsersHelper</code> is implemented in <code>app/helpers/users_helper.rb</code>, the module is autoloadable, you do not need (and should not write) a <code>require</code> call for it:</p><div>
+<pre><code style="background-color:transparent;"><span style="color:rgb(85, 85, 85);">$</span><span style="color:rgb(108, 108, 108);"> </span><span style="color:rgb(0, 116, 161);">bin/rails </span>runner <span style="color:rgb(213, 17, 68);">'p UsersHelper'</span>
+<span style="color:rgb(108, 108, 108);">UsersHelper
+</span></code></pre>
+
+</div>
+<p>Rails adds custom directories under <code>app</code> to the autoload paths automatically. For example, if your application has <code>app/presenters</code>, you don't need to configure anything in order to autoload presenters, it works out of the box.</p><p>The array of default autoload paths can be extended by pushing to <code>config.autoload_paths</code>, in <code>config/application.rb</code> or <code>config/environments/*.rb</code>. For example:</p><div>
+<pre><code style="background-color:transparent;"><span style="color:rgb(0, 115, 166);">module</span> <span style="color:rgb(85, 85, 85);">MyApplication</span>
+  <span style="color:rgb(0, 115, 166);">class</span> <span style="color:rgb(68, 85, 136);font-weight:bold;">Application</span> <span style="color:rgb(0, 0, 0);font-weight:bold;">&lt;</span> <span style="color:rgb(0, 121, 121);">Rails</span><span style="color:rgb(0, 0, 0);font-weight:bold;">::</span><span style="color:rgb(0, 121, 121);">Application</span>
+    <span>config</span><span>.</span><span style="color:rgb(153, 0, 0);font-weight:bold;">autoload_paths</span> <span style="color:rgb(0, 0, 0);font-weight:bold;">&lt;&lt;</span> <span style="color:rgb(213, 17, 68);">"</span><span style="color:rgb(213, 17, 68);">#{</span><span>root</span><span style="color:rgb(213, 17, 68);">}</span><span style="color:rgb(213, 17, 68);">/extras"</span>
+  <span style="color:rgb(0, 115, 166);">end</span>
+<span style="color:rgb(0, 115, 166);">end</span>
+</code></pre>
+
+</div>
+<p>Also, engines can push in body of the engine class and in their own <code>config/environments/*.rb</code>.</p><div><p>Please do not mutate <code>ActiveSupport::Dependencies.autoload_paths</code>; the public interface to change autoload paths is <code>config.autoload_paths</code>.</p></div><div><p>You cannot autoload code in the autoload paths while the application boots. It particular, directly in <code>config/initializers/*.rb</code>. Please check <a href="https://guides.rubyonrails.org/autoloading_and_reloading_constants.html#autoloading-when-the-application-boots"><em>Autoloading when the application boots</em></a> down below for valid ways to do that.</p></div><p>The autoload paths are managed by the <code>Rails.autoloaders.main</code> autoloader.</p><h3><a href="https://guides.rubyonrails.org/autoloading_and_reloading_constants.html#config-autoload-once-paths">4 config.autoload_once_paths</a></h3><p>You may want to be able to autoload classes and modules without reloading them. The autoload once paths store code that can be autoloaded, but won't be reloaded.</p><p>By default, this collection is empty, but you can extend it pushing to <code>config.autoload_once_paths</code>. You can do so in <code>config/application.rb</code> or <code>config/environments/*.rb</code>. For example:</p><div>
+<pre><code style="background-color:transparent;"><span style="color:rgb(0, 115, 166);">module</span> <span style="color:rgb(85, 85, 85);">MyApplication</span>
+  <span style="color:rgb(0, 115, 166);">class</span> <span style="color:rgb(68, 85, 136);font-weight:bold;">Application</span> <span style="color:rgb(0, 0, 0);font-weight:bold;">&lt;</span> <span style="color:rgb(0, 121, 121);">Rails</span><span style="color:rgb(0, 0, 0);font-weight:bold;">::</span><span style="color:rgb(0, 121, 121);">Application</span>
+    <span>config</span><span>.</span><span style="color:rgb(153, 0, 0);font-weight:bold;">autoload_once_paths</span> <span style="color:rgb(0, 0, 0);font-weight:bold;">&lt;&lt;</span> <span style="color:rgb(213, 17, 68);">"</span><span style="color:rgb(213, 17, 68);">#{</span><span>root</span><span style="color:rgb(213, 17, 68);">}</span><span style="color:rgb(213, 17, 68);">/app/serializers"</span>
+  <span style="color:rgb(0, 115, 166);">end</span>
+<span style="color:rgb(0, 115, 166);">end</span>
+</code></pre>
+
+</div>
+<p>Also, engines can push in body of the engine class and in their own <code>config/environments/*.rb</code>.</p><div><p>If <code>app/serializers</code> is pushed to <code>config.autoload_once_paths</code>, Rails no longer considers this an autoload path, despite being a custom directory under <code>app</code>. This setting overrides that rule.</p></div><p>This is key for classes and modules that are cached in places that survive reloads, like the Rails framework itself.</p><p>For example, Active Job serializers are stored inside Active Job:</p><div>
+<pre><code style="background-color:transparent;"><span style="color:rgb(108, 108, 101);font-style:italic;"># config/initializers/custom_serializers.rb</span>
+<span style="color:rgb(0, 121, 121);">Rails</span><span>.</span><span style="color:rgb(153, 0, 0);font-weight:bold;">application</span><span>.</span><span style="color:rgb(153, 0, 0);font-weight:bold;">config</span><span>.</span><span style="color:rgb(153, 0, 0);font-weight:bold;">active_job</span><span>.</span><span style="color:rgb(153, 0, 0);font-weight:bold;">custom_serializers</span> <span style="color:rgb(0, 0, 0);font-weight:bold;">&lt;&lt;</span> <span style="color:rgb(0, 121, 121);">MoneySerializer</span>
+</code></pre>
+
+</div>
+<p>and Active Job itself is not reloaded when there's a reload, only application and engines code in the autoload paths is.</p><p>Making <code>MoneySerializer</code> reloadable would be confusing, because reloading an edited version would have no effect on that class object stored in Active Job. Indeed, if <code>MoneySerializer</code> was reloadable, starting with Rails 7 such initializer would raise a <code>NameError</code>.</p><p>Another use case are engines decorating framework classes:</p><div>
+<pre><code style="background-color:transparent;"><span>initializer</span> <span style="color:rgb(213, 17, 68);">"decorate ActionController::Base"</span> <span style="color:rgb(0, 115, 166);">do</span>
+  <span style="color:rgb(0, 121, 121);">ActiveSupport</span><span>.</span><span style="color:rgb(153, 0, 0);font-weight:bold;">on_load</span><span>(</span><span style="color:rgb(153, 0, 115);">:action_controller_base</span><span>)</span> <span style="color:rgb(0, 115, 166);">do</span>
+    <span style="color:rgb(0, 0, 0);font-weight:bold;">include</span> <span style="color:rgb(0, 121, 121);">MyDecoration</span>
+  <span style="color:rgb(0, 115, 166);">end</span>
+<span style="color:rgb(0, 115, 166);">end</span>
+</code></pre>
+
+</div>
+<p>There, the module object stored in <code>MyDecoration</code> by the time the initializer runs becomes an ancestor of <code>ActionController::Base</code>, and reloading <code>MyDecoration</code> is pointless, it won't affect that ancestor chain.</p><p>Classes and modules from the autoload once paths can be autoloaded in <code>config/initializers</code>. So, with that configuration this works:</p><div>
+<pre><code style="background-color:transparent;"><span style="color:rgb(108, 108, 101);font-style:italic;"># config/initializers/custom_serializers.rb</span>
+<span style="color:rgb(0, 121, 121);">Rails</span><span>.</span><span style="color:rgb(153, 0, 0);font-weight:bold;">application</span><span>.</span><span style="color:rgb(153, 0, 0);font-weight:bold;">config</span><span>.</span><span style="color:rgb(153, 0, 0);font-weight:bold;">active_job</span><span>.</span><span style="color:rgb(153, 0, 0);font-weight:bold;">custom_serializers</span> <span style="color:rgb(0, 0, 0);font-weight:bold;">&lt;&lt;</span> <span style="color:rgb(0, 121, 121);">MoneySerializer</span>
+</code></pre>
+
+</div>
+<div><p>Technically, you can autoload classes and modules managed by the <code>once</code> autoloader in any initializer that runs after <code>:bootstrap_hook</code>.</p></div><p>The autoload once paths are managed by <code>Rails.autoloaders.once</code>.</p><h3><a href="https://guides.rubyonrails.org/autoloading_and_reloading_constants.html#load_path">5 $LOAD_PATH</a></h3><p>Autoload paths are added to <code>$LOAD_PATH</code> by default. However, Zeitwerk uses absolute file names internally, and your application should not issue <code>require</code> calls for autoloadable files, so those directories are actually not needed there. You can opt out with this flag:</p><div>
+<pre><code style="background-color:transparent;"><span>config</span><span>.</span><span style="color:rgb(153, 0, 0);font-weight:bold;">add_autoload_paths_to_load_path</span> <span style="color:rgb(0, 0, 0);font-weight:bold;">=</span> <span style="color:rgb(0, 0, 0);font-weight:bold;">false</span>
+</code></pre>
+
+</div>
+<p>That may speed up legitimate <code>require</code> calls a bit since there are fewer lookups. Also, if your application uses <a href="https://github.com/Shopify/bootsnap">Bootsnap</a>, that saves the library from building unnecessary indexes, and saves the RAM they would need.</p><h3><a href="https://guides.rubyonrails.org/autoloading_and_reloading_constants.html#reloading">6 Reloading</a></h3><p>Rails automatically reloads classes and modules if application files in the autoload paths change.</p><p>More precisely, if the web server is running and application files have been modified, Rails unloads all autoloaded constants managed by the <code>main</code> autoloader just before the next request is processed. That way, application classes or modules used during that request will be autoloaded again, thus picking up their current implementation in the file system.</p><p>Reloading can be enabled or disabled. The setting that controls this behavior is <code>config.cache_classes</code>, which is false by default in <code>development</code> mode (reloading enabled), and true by default in <code>production</code> mode (reloading disabled).</p><p>Rails uses an evented file monitor to detect files changes by default.  It can be configured instead to detect file changes by walking the autoload paths. This is controlled by the <code>config.file_watcher</code> setting.</p><p>In a Rails console there is no file watcher active regardless of the value of <code>config.cache_classes</code>. This is because, normally, it would be confusing to have code reloaded in the middle of a console session. Similar to an individual request, you generally want a console session to be served by a consistent, non-changing set of application classes and modules.</p><p>However, you can force a reload in the console by executing <code>reload!</code>:</p><div>
+<pre><code style="background-color:transparent;"><span style="color:rgb(85, 85, 85);">irb(main):001:0&gt;</span><span style="color:rgb(108, 108, 108);"> </span><span style="color:rgb(0, 121, 121);">User</span><span>.</span><span style="color:rgb(153, 0, 0);font-weight:bold;">object_id</span>
+<span>=&gt;</span> <span style="color:rgb(0, 121, 121);">70136277390120</span>
+<span style="color:rgb(85, 85, 85);">irb(main):002:0&gt;</span><span style="color:rgb(108, 108, 108);"> </span><span>reload!</span>
+<span style="color:rgb(108, 108, 108);">Reloading...
+</span><span>=&gt;</span> <span style="color:rgb(0, 0, 0);font-weight:bold;">true</span>
+<span style="color:rgb(85, 85, 85);">irb(main):003:0&gt;</span><span style="color:rgb(108, 108, 108);"> </span><span style="color:rgb(0, 121, 121);">User</span><span>.</span><span style="color:rgb(153, 0, 0);font-weight:bold;">object_id</span>
+<span>=&gt;</span> <span style="color:rgb(0, 121, 121);">70136284426020</span>
+</code></pre>
+
+</div>
+<p>As you can see, the class object stored in the <code>User</code> constant is different after reloading.</p><h4><a href="https://guides.rubyonrails.org/autoloading_and_reloading_constants.html#reloading-and-stale-objects">6.1 Reloading and Stale Objects</a></h4><p>It is very important to understand that Ruby does not have a way to truly reload classes and modules in memory, and have that reflected everywhere they are already used. Technically, "unloading" the <code>User</code> class means removing the <code>User</code> constant via <code>Object.send(:remove_const, "User")</code>.</p><p>For example, check out this Rails console session:</p><div>
+<pre><code style="background-color:transparent;"><span style="color:rgb(85, 85, 85);">irb&gt;</span><span style="color:rgb(108, 108, 108);"> </span><span>joe</span> <span style="color:rgb(0, 0, 0);font-weight:bold;">=</span> <span style="color:rgb(0, 121, 121);">User</span><span>.</span><span style="color:rgb(153, 0, 0);font-weight:bold;">new</span>
+<span style="color:rgb(85, 85, 85);">irb&gt;</span><span style="color:rgb(108, 108, 108);"> </span><span>reload!</span>
+<span style="color:rgb(85, 85, 85);">irb&gt;</span><span style="color:rgb(108, 108, 108);"> </span><span>alice</span> <span style="color:rgb(0, 0, 0);font-weight:bold;">=</span> <span style="color:rgb(0, 121, 121);">User</span><span>.</span><span style="color:rgb(153, 0, 0);font-weight:bold;">new</span>
+<span style="color:rgb(85, 85, 85);">irb&gt;</span><span style="color:rgb(108, 108, 108);"> </span><span>joe</span><span>.</span><span style="color:rgb(153, 0, 0);font-weight:bold;">class</span> <span style="color:rgb(0, 0, 0);font-weight:bold;">==</span> <span>alice</span><span>.</span><span style="color:rgb(153, 0, 0);font-weight:bold;">class</span>
+<span>=&gt;</span> <span style="color:rgb(0, 0, 0);font-weight:bold;">false</span>
+</code></pre>
+
+</div>
+<p><code>joe</code> is an instance of the original <code>User</code> class. When there is a reload, the <code>User</code> constant then evaluates to a different, reloaded class. <code>alice</code> is an instance of the newly loaded <code>User</code>, but <code>joe</code> is not — his class is stale. You may define <code>joe</code> again, start an IRB subsession, or just launch a new console instead of calling <code>reload!</code>.</p><p>Another situation in which you may find this gotcha is subclassing reloadable classes in a place that is not reloaded:</p><div>
+<pre><code style="background-color:transparent;"><span style="color:rgb(108, 108, 101);font-style:italic;"># lib/vip_user.rb</span>
+<span style="color:rgb(0, 115, 166);">class</span> <span style="color:rgb(68, 85, 136);font-weight:bold;">VipUser</span> <span style="color:rgb(0, 0, 0);font-weight:bold;">&lt;</span> <span style="color:rgb(0, 121, 121);">User</span>
+<span style="color:rgb(0, 115, 166);">end</span>
+</code></pre>
+
+</div>
+<p>if <code>User</code> is reloaded, since <code>VipUser</code> is not, the superclass of <code>VipUser</code> is the original stale class object.</p><p>Bottom line: <strong>do not cache reloadable classes or modules</strong>.</p><h3><a href="https://guides.rubyonrails.org/autoloading_and_reloading_constants.html#autoloading-when-the-application-boots">7 Autoloading when the application boots</a></h3><p>While booting, applications can autoload from the autoload once paths, which are managed by the <code>once</code> autoloader. Please check the section <a href="https://guides.rubyonrails.org/autoloading_and_reloading_constants.html#config-autoload-once-paths"><code>config.autoload_once_paths</code></a> above.</p><p>However, you cannot autoload from the autoload paths, which are managed by the <code>main</code> autoloader. This applies to code in <code>config/initializers</code> as well as application or engines initializers.</p><p>Why? Initializers only run once, when the application boots. If you reboot the server, they run again in a new process, but reloading does not reboot the server, and initializers don't run again. Let's see the two main use cases.</p><h4><a href="https://guides.rubyonrails.org/autoloading_and_reloading_constants.html#use-case-1-during-boot-load-reloadable-code">7.1 Use case 1: During boot, load reloadable code</a></h4><p>Let's imagine <code>ApiGateway</code> is a reloadable class from <code>app/services</code> managed by the <code>main</code> autoloader and you need to configure its endpoint while the application boots:</p><div>
+<pre><code style="background-color:transparent;"><span style="color:rgb(108, 108, 101);font-style:italic;"># config/initializers/api_gateway_setup.rb</span>
+<span style="color:rgb(0, 121, 121);">ApiGateway</span><span>.</span><span style="color:rgb(153, 0, 0);font-weight:bold;">endpoint</span> <span style="color:rgb(0, 0, 0);font-weight:bold;">=</span> <span style="color:rgb(213, 17, 68);">"https://example.com"</span> <span style="color:rgb(108, 108, 101);font-style:italic;"># DO NOT DO THIS</span>
+</code></pre>
+
+</div>
+<p>a reloaded <code>ApiGateway</code> would have a <code>nil</code> endpoint, because the code above does not run again.</p><p>You can still set things up during boot, but you need to wrap them in a <code>to_prepare</code> block, which runs on boot, and after each reload:</p><div>
+<pre><code style="background-color:transparent;"><span style="color:rgb(108, 108, 101);font-style:italic;"># config/initializers/api_gateway_setup.rb</span>
+<span style="color:rgb(0, 121, 121);">Rails</span><span>.</span><span style="color:rgb(153, 0, 0);font-weight:bold;">application</span><span>.</span><span style="color:rgb(153, 0, 0);font-weight:bold;">config</span><span>.</span><span style="color:rgb(153, 0, 0);font-weight:bold;">to_prepare</span> <span style="color:rgb(0, 115, 166);">do</span>
+  <span style="color:rgb(0, 121, 121);">ApiGateway</span><span>.</span><span style="color:rgb(153, 0, 0);font-weight:bold;">endpoint</span> <span style="color:rgb(0, 0, 0);font-weight:bold;">=</span> <span style="color:rgb(213, 17, 68);">"https://example.com"</span> <span style="color:rgb(108, 108, 101);font-style:italic;"># CORRECT</span>
+<span style="color:rgb(0, 115, 166);">end</span>
+</code></pre>
+
+</div>
+<div><p>For historical reasons, this callback may run twice. The code it executes must be idempotent.</p></div><h4><a href="https://guides.rubyonrails.org/autoloading_and_reloading_constants.html#use-case-2-during-boot-load-code-that-remains-cached">7.2 Use case 2: During boot, load code that remains cached</a></h4><p>Some configurations take a class or module object, and they store it in a place that is not reloaded.</p><p>One example is middleware:</p><div>
+<pre><code style="background-color:transparent;"><span>config</span><span>.</span><span style="color:rgb(153, 0, 0);font-weight:bold;">middleware</span><span>.</span><span style="color:rgb(153, 0, 0);font-weight:bold;">use</span> <span style="color:rgb(0, 121, 121);">MyApp</span><span style="color:rgb(0, 0, 0);font-weight:bold;">::</span><span style="color:rgb(0, 121, 121);">Middleware</span><span style="color:rgb(0, 0, 0);font-weight:bold;">::</span><span style="color:rgb(0, 121, 121);">Foo</span>
+</code></pre>
+
+</div>
+<p>When you reload, the middleware stack is not affected, so, whatever object was stored in <code>MyApp::Middleware::Foo</code> at boot time remains there stale.</p><p>Another example is Active Job serializers:</p><div>
+<pre><code style="background-color:transparent;"><span style="color:rgb(108, 108, 101);font-style:italic;"># config/initializers/custom_serializers.rb</span>
+<span style="color:rgb(0, 121, 121);">Rails</span><span>.</span><span style="color:rgb(153, 0, 0);font-weight:bold;">application</span><span>.</span><span style="color:rgb(153, 0, 0);font-weight:bold;">config</span><span>.</span><span style="color:rgb(153, 0, 0);font-weight:bold;">active_job</span><span>.</span><span style="color:rgb(153, 0, 0);font-weight:bold;">custom_serializers</span> <span style="color:rgb(0, 0, 0);font-weight:bold;">&lt;&lt;</span> <span style="color:rgb(0, 121, 121);">MoneySerializer</span>
+</code></pre>
+
+</div>
+<p>Whatever <code>MoneySerializer</code> evaluates to during initialization gets pushed to the custom serializers. If that was reloadable, the initial object would be still within Active Job, not reflecting your changes.</p><p>Yet another example are railties or engines decorating framework classes by including modules. For instance, <a href="https://github.com/hotwired/turbo-rails"><code>turbo-rails</code></a> decorates <code>ActiveRecord::Base</code> this way:</p><div>
+<pre><code style="background-color:transparent;"><span>initializer</span> <span style="color:rgb(213, 17, 68);">"turbo.broadcastable"</span> <span style="color:rgb(0, 115, 166);">do</span>
+  <span style="color:rgb(0, 121, 121);">ActiveSupport</span><span>.</span><span style="color:rgb(153, 0, 0);font-weight:bold;">on_load</span><span>(</span><span style="color:rgb(153, 0, 115);">:active_record</span><span>)</span> <span style="color:rgb(0, 115, 166);">do</span>
+    <span style="color:rgb(0, 0, 0);font-weight:bold;">include</span> <span style="color:rgb(0, 121, 121);">Turbo</span><span style="color:rgb(0, 0, 0);font-weight:bold;">::</span><span style="color:rgb(0, 121, 121);">Broadcastable</span>
+  <span style="color:rgb(0, 115, 166);">end</span>
+<span style="color:rgb(0, 115, 166);">end</span>
+</code></pre>
+
+</div>
+<p>That adds a module object to the ancestor chain of <code>ActiveRecord::Base</code>. Changes in <code>Turbo::Broadcastable</code> would have no effect if reloaded, the ancestor chain would still have the original one.</p><p>Corollary: Those classes or modules <strong>cannot be reloadable</strong>.</p><p>The easiest way to refer to those classes or modules during boot is to have them defined in a directory which does not belong to the autoload paths. For instance, <code>lib</code> is an idiomatic choice. It does not belong to the autoload paths by default, but it does belong to <code>$LOAD_PATH</code>. Just perform a regular <code>require</code> to load it.</p><p>As noted above, another option is to have the directory that defines them in the autoload once paths and autoload. Please check the <a href="https://edgeguides.rubyonrails.org/autoloading_and_reloading_constants.html#config-autoload-once-paths">section about config.autoload_once_paths</a> for details.</p><h3><a href="https://guides.rubyonrails.org/autoloading_and_reloading_constants.html#eager-loading">8 Eager Loading</a></h3><p>In production-like environments it is generally better to load all the application code when the application boots. Eager loading puts everything in memory ready to serve requests right away, and it is also <a href="https://en.wikipedia.org/wiki/Copy-on-write">CoW</a>-friendly.</p><p>Eager loading is controlled by the flag <code>config.eager_load</code>, which is enabled by default in <code>production</code> mode.</p><p>The order in which files are eager-loaded is undefined.</p><p>If the <code>Zeitwerk</code> constant is defined, Rails invokes <code>Zeitwerk::Loader.eager_load_all</code> regardless of the application autoloading mode. That ensures dependencies managed by Zeitwerk are eager-loaded.</p><h3><a href="https://guides.rubyonrails.org/autoloading_and_reloading_constants.html#single-table-inheritance">9 Single Table Inheritance</a></h3><p>Single Table Inheritance is a feature that doesn't play well with lazy loading. The reason is: its API generally needs to be able to enumerate the STI hierarchy to work correctly, whereas lazy loading defers loading classes until they are referenced. You can't enumerate what you haven't referenced yet.</p><p>In a sense, applications need to eager load STI hierarchies regardless of the loading mode.</p><p>Of course, if the application eager loads on boot, that is already accomplished. When it does not, it is in practice enough to instantiate the existing types in the database, which in development or test modes is usually fine. One way to do that is to include an STI preloading module in your <code>lib</code> directory:</p><div>
+<pre><code style="background-color:transparent;"><span style="color:rgb(0, 115, 166);">module</span> <span style="color:rgb(85, 85, 85);">StiPreload</span>
+  <span style="color:rgb(0, 115, 166);">unless</span> <span style="color:rgb(0, 121, 121);">Rails</span><span>.</span><span style="color:rgb(153, 0, 0);font-weight:bold;">application</span><span>.</span><span style="color:rgb(153, 0, 0);font-weight:bold;">config</span><span>.</span><span style="color:rgb(153, 0, 0);font-weight:bold;">eager_load</span>
+    <span style="color:rgb(0, 0, 0);font-weight:bold;">extend</span> <span style="color:rgb(0, 121, 121);">ActiveSupport</span><span style="color:rgb(0, 0, 0);font-weight:bold;">::</span><span style="color:rgb(0, 121, 121);">Concern</span>
+
+    <span>included</span> <span style="color:rgb(0, 115, 166);">do</span>
+      <span>cattr_accessor</span> <span style="color:rgb(153, 0, 115);">:preloaded</span><span>,</span> <span style="color:rgb(153, 0, 115);">instance_accessor: </span><span style="color:rgb(0, 0, 0);font-weight:bold;">false</span>
+    <span style="color:rgb(0, 115, 166);">end</span>
+
+    <span>class_methods</span> <span style="color:rgb(0, 115, 166);">do</span>
+      <span style="color:rgb(0, 115, 166);">def</span> <span style="color:rgb(153, 0, 0);font-weight:bold;">descendants</span>
+        <span>preload_sti</span> <span style="color:rgb(0, 115, 166);">unless</span> <span>preloaded</span>
+        <span style="color:rgb(0, 115, 166);">super</span>
+      <span style="color:rgb(0, 115, 166);">end</span>
+
+      <span style="color:rgb(108, 108, 101);font-style:italic;"># Constantizes all types present in the database. There might be more on</span>
+      <span style="color:rgb(108, 108, 101);font-style:italic;"># disk, but that does not matter in practice as far as the STI API is</span>
+      <span style="color:rgb(108, 108, 101);font-style:italic;"># concerned.</span>
+      <span style="color:rgb(108, 108, 101);font-style:italic;">#</span>
+      <span style="color:rgb(108, 108, 101);font-style:italic;"># Assumes store_full_sti_class is true, the default.</span>
+      <span style="color:rgb(0, 115, 166);">def</span> <span style="color:rgb(153, 0, 0);font-weight:bold;">preload_sti</span>
+        <span>types_in_db</span> <span style="color:rgb(0, 0, 0);font-weight:bold;">=</span> <span></span>
+          <span>base_class</span><span>.</span>
+            <span style="color:rgb(153, 0, 0);font-weight:bold;">unscoped</span><span>.</span>
+            <span style="color:rgb(153, 0, 0);font-weight:bold;">select</span><span>(</span><span>inheritance_column</span><span>).</span>
+            <span style="color:rgb(153, 0, 0);font-weight:bold;">distinct</span><span>.</span>
+            <span style="color:rgb(153, 0, 0);font-weight:bold;">pluck</span><span>(</span><span>inheritance_column</span><span>).</span>
+            <span style="color:rgb(153, 0, 0);font-weight:bold;">compact</span>
+
+        <span>types_in_db</span><span>.</span><span style="color:rgb(153, 0, 0);font-weight:bold;">each</span> <span style="color:rgb(0, 115, 166);">do</span> <span style="color:rgb(0, 0, 0);font-weight:bold;">|</span><span>type</span><span style="color:rgb(0, 0, 0);font-weight:bold;">|</span>
+          <span>logger</span><span>.</span><span style="color:rgb(153, 0, 0);font-weight:bold;">debug</span><span>(</span><span style="color:rgb(213, 17, 68);">"Preloading STI type </span><span style="color:rgb(213, 17, 68);">#{</span><span>type</span><span style="color:rgb(213, 17, 68);">}</span><span style="color:rgb(213, 17, 68);">"</span><span>)</span>
+          <span>type</span><span>.</span><span style="color:rgb(153, 0, 0);font-weight:bold;">constantize</span>
+        <span style="color:rgb(0, 115, 166);">end</span>
+
+        <span style="color:rgb(0, 116, 161);">self</span><span>.</span><span style="color:rgb(153, 0, 0);font-weight:bold;">preloaded</span> <span style="color:rgb(0, 0, 0);font-weight:bold;">=</span> <span style="color:rgb(0, 0, 0);font-weight:bold;">true</span>
+      <span style="color:rgb(0, 115, 166);">end</span>
+    <span style="color:rgb(0, 115, 166);">end</span>
+  <span style="color:rgb(0, 115, 166);">end</span>
+<span style="color:rgb(0, 115, 166);">end</span>
+</code></pre>
+
+</div>
+<p>and then include it in the STI root classes of your project:</p><div>
+<pre><code style="background-color:transparent;"><span style="color:rgb(108, 108, 101);font-style:italic;"># app/models/shape.rb</span>
+<span style="color:rgb(0, 116, 161);">require</span> <span style="color:rgb(213, 17, 68);">"sti_preload"</span>
+
+<span style="color:rgb(0, 115, 166);">class</span> <span style="color:rgb(68, 85, 136);font-weight:bold;">Shape</span> <span style="color:rgb(0, 0, 0);font-weight:bold;">&lt;</span> <span style="color:rgb(0, 121, 121);">ApplicationRecord</span>
+  <span style="color:rgb(0, 0, 0);font-weight:bold;">include</span> <span style="color:rgb(0, 121, 121);">StiPreload</span> <span style="color:rgb(108, 108, 101);font-style:italic;"># Only in the root class.</span>
+<span style="color:rgb(0, 115, 166);">end</span>
+</code></pre>
+
+</div>
+<div>
+<pre><code style="background-color:transparent;"><span style="color:rgb(108, 108, 101);font-style:italic;"># app/models/polygon.rb</span>
+<span style="color:rgb(0, 115, 166);">class</span> <span style="color:rgb(68, 85, 136);font-weight:bold;">Polygon</span> <span style="color:rgb(0, 0, 0);font-weight:bold;">&lt;</span> <span style="color:rgb(0, 121, 121);">Shape</span>
+<span style="color:rgb(0, 115, 166);">end</span>
+</code></pre>
+
+</div>
+<div>
+<pre><code style="background-color:transparent;"><span style="color:rgb(108, 108, 101);font-style:italic;"># app/models/triangle.rb</span>
+<span style="color:rgb(0, 115, 166);">class</span> <span style="color:rgb(68, 85, 136);font-weight:bold;">Triangle</span> <span style="color:rgb(0, 0, 0);font-weight:bold;">&lt;</span> <span style="color:rgb(0, 121, 121);">Polygon</span>
+<span style="color:rgb(0, 115, 166);">end</span>
+</code></pre>
+
+</div>
+<h3><a href="https://guides.rubyonrails.org/autoloading_and_reloading_constants.html#customizing-inflections">10 Customizing Inflections</a></h3><p>By default, Rails uses <code>String#camelize</code> to know which constant a given file or directory name should define. For example, <code>posts_controller.rb</code> should define <code>PostsController</code> because that is what <code>"posts_controller".camelize</code> returns.</p><p>It could be the case that some particular file or directory name does not get inflected as you want. For instance, <code>html_parser.rb</code> is expected to define <code>HtmlParser</code> by default. What if you prefer the class to be <code>HTMLParser</code>? There are a few ways to customize this.</p><p>The easiest way is to define acronyms in <code>config/initializers/inflections.rb</code>:</p><div>
+<pre><code style="background-color:transparent;"><span style="color:rgb(0, 121, 121);">ActiveSupport</span><span style="color:rgb(0, 0, 0);font-weight:bold;">::</span><span style="color:rgb(0, 121, 121);">Inflector</span><span>.</span><span style="color:rgb(153, 0, 0);font-weight:bold;">inflections</span><span>(</span><span style="color:rgb(153, 0, 115);">:en</span><span>)</span> <span style="color:rgb(0, 115, 166);">do</span> <span style="color:rgb(0, 0, 0);font-weight:bold;">|</span><span>inflect</span><span style="color:rgb(0, 0, 0);font-weight:bold;">|</span>
+  <span>inflect</span><span>.</span><span style="color:rgb(153, 0, 0);font-weight:bold;">acronym</span> <span style="color:rgb(213, 17, 68);">"HTML"</span>
+  <span>inflect</span><span>.</span><span style="color:rgb(153, 0, 0);font-weight:bold;">acronym</span> <span style="color:rgb(213, 17, 68);">"SSL"</span>
+<span style="color:rgb(0, 115, 166);">end</span>
+</code></pre>
+
+</div>
+<p>Doing so affects how Active Support inflects globally. That may be fine in some applications, but you can also customize how to camelize individual basenames independently from Active Support by passing a collection of overrides to the default inflectors:</p><div>
+<pre><code style="background-color:transparent;"><span style="color:rgb(108, 108, 101);font-style:italic;"># config/initializers/zeitwerk.rb</span>
+<span style="color:rgb(0, 121, 121);">Rails</span><span>.</span><span style="color:rgb(153, 0, 0);font-weight:bold;">autoloaders</span><span>.</span><span style="color:rgb(153, 0, 0);font-weight:bold;">each</span> <span style="color:rgb(0, 115, 166);">do</span> <span style="color:rgb(0, 0, 0);font-weight:bold;">|</span><span>autoloader</span><span style="color:rgb(0, 0, 0);font-weight:bold;">|</span>
+  <span>autoloader</span><span>.</span><span style="color:rgb(153, 0, 0);font-weight:bold;">inflector</span><span>.</span><span style="color:rgb(153, 0, 0);font-weight:bold;">inflect</span><span>(</span>
+    <span style="color:rgb(213, 17, 68);">"html_parser"</span> <span style="color:rgb(0, 0, 0);font-weight:bold;">=&gt;</span> <span style="color:rgb(213, 17, 68);">"HTMLParser"</span><span>,</span>
+    <span style="color:rgb(213, 17, 68);">"ssl_error"</span>   <span style="color:rgb(0, 0, 0);font-weight:bold;">=&gt;</span> <span style="color:rgb(213, 17, 68);">"SSLError"</span>
+  <span>)</span>
+<span style="color:rgb(0, 115, 166);">end</span>
+</code></pre>
+
+</div>
+<p>That technique still depends on <code>String#camelize</code>, though, because that is what the default inflectors use as fallback. If you instead prefer not to depend on Active Support inflections at all and have absolute control over inflections, configure the inflectors to be instances of <code>Zeitwerk::Inflector</code>:</p><div>
+<pre><code style="background-color:transparent;"><span style="color:rgb(108, 108, 101);font-style:italic;"># config/initializers/zeitwerk.rb</span>
+<span style="color:rgb(0, 121, 121);">Rails</span><span>.</span><span style="color:rgb(153, 0, 0);font-weight:bold;">autoloaders</span><span>.</span><span style="color:rgb(153, 0, 0);font-weight:bold;">each</span> <span style="color:rgb(0, 115, 166);">do</span> <span style="color:rgb(0, 0, 0);font-weight:bold;">|</span><span>autoloader</span><span style="color:rgb(0, 0, 0);font-weight:bold;">|</span>
+  <span>autoloader</span><span>.</span><span style="color:rgb(153, 0, 0);font-weight:bold;">inflector</span> <span style="color:rgb(0, 0, 0);font-weight:bold;">=</span> <span style="color:rgb(0, 121, 121);">Zeitwerk</span><span style="color:rgb(0, 0, 0);font-weight:bold;">::</span><span style="color:rgb(0, 121, 121);">Inflector</span><span>.</span><span style="color:rgb(153, 0, 0);font-weight:bold;">new</span>
+  <span>autoloader</span><span>.</span><span style="color:rgb(153, 0, 0);font-weight:bold;">inflector</span><span>.</span><span style="color:rgb(153, 0, 0);font-weight:bold;">inflect</span><span>(</span>
+    <span style="color:rgb(213, 17, 68);">"html_parser"</span> <span style="color:rgb(0, 0, 0);font-weight:bold;">=&gt;</span> <span style="color:rgb(213, 17, 68);">"HTMLParser"</span><span>,</span>
+    <span style="color:rgb(213, 17, 68);">"ssl_error"</span>   <span style="color:rgb(0, 0, 0);font-weight:bold;">=&gt;</span> <span style="color:rgb(213, 17, 68);">"SSLError"</span>
+  <span>)</span>
+<span style="color:rgb(0, 115, 166);">end</span>
+</code></pre>
+
+</div>
+<p>There is no global configuration that can affect said instances; they are deterministic.</p><p>You can even define a custom inflector for full flexibility. Please check the <a href="https://github.com/fxn/zeitwerk#custom-inflector">Zeitwerk documentation</a> for further details.</p><h3><a href="https://guides.rubyonrails.org/autoloading_and_reloading_constants.html#autoloading-and-engines">11 Autoloading and Engines</a></h3><p>Engines run in the context of a parent application, and their code is autoloaded, reloaded, and eager loaded by the parent application. If the application runs in <code>zeitwerk</code> mode, the engine code is loaded by <code>zeitwerk</code> mode. If the application runs in <code>classic</code> mode, the engine code is loaded by <code>classic</code> mode.</p><p>When Rails boots, engine directories are added to the autoload paths, and from the point of view of the autoloader, there's no difference. Autoloaders' main input are the autoload paths, and whether they belong to the application source tree or to some engine source tree is irrelevant.</p><p>For example, this application uses <a href="https://github.com/heartcombo/devise">Devise</a>:</p><div>
+<pre><code style="background-color:transparent;">% bin/rails runner 'pp ActiveSupport::Dependencies.autoload_paths'
+[".../app/controllers",
+ ".../app/controllers/concerns",
+ ".../app/helpers",
+ ".../app/models",
+ ".../app/models/concerns",
+ ".../gems/devise-4.8.0/app/controllers",
+ ".../gems/devise-4.8.0/app/helpers",
+ ".../gems/devise-4.8.0/app/mailers"]
+</code></pre>
+
+</div>
+<p>If the engine controls the autoloading mode of its parent application, the engine can be written as usual.</p><p>However, if an engine supports Rails 6 or Rails 6.1 and does not control its parent applications, it has to be ready to run under either <code>classic</code> or <code>zeitwerk</code> mode. Things to take into account:</p>
+<ol>
+<li><p>If <code>classic</code> mode would need a <code>require_dependency</code> call to ensure some constant is loaded at some point, write it. While <code>zeitwerk</code> would not need it, it won't hurt, it will work in <code>zeitwerk</code> mode too.</p></li>
+<li><p><code>classic</code> mode underscores constant names ("User" -&gt; "user.rb"), and <code>zeitwerk</code> mode camelizes file names ("user.rb" -&gt; "User"). They coincide in most cases, but they don't if there are series of consecutive uppercase letters as in "HTMLParser". The easiest way to be compatible is to avoid such names. In this case, pick "HtmlParser".</p></li>
+<li><p>In <code>classic</code> mode, a file <code>app/model/concerns/foo.rb</code> is allowed to define both <code>Foo</code> and <code>Concerns::Foo</code>. In <code>zeitwerk</code> mode, there's only one option: it has to define <code>Foo</code>. In order to be compatible, define <code>Foo</code>.</p></li>
+</ol>
+<h3><a href="https://guides.rubyonrails.org/autoloading_and_reloading_constants.html#testing">12 Testing</a></h3><h4><a href="https://guides.rubyonrails.org/autoloading_and_reloading_constants.html#manual-testing">12.1 Manual Testing</a></h4><p>The task <code>zeitwerk:check</code> checks if the project tree follows the expected naming conventions and it is handy for manual checks. For example, if you're migrating from <code>classic</code> to <code>zeitwerk</code> mode, or if you're fixing something:</p><div>
+<pre><code style="background-color:transparent;">% bin/rails zeitwerk:check
+Hold on, I am eager loading the application.
+All is good!
+</code></pre>
+
+</div>
+<p>There can be additional output depending on the application configuration, but the last "All is good!" is what you are looking for.</p><h4><a href="https://guides.rubyonrails.org/autoloading_and_reloading_constants.html#automated-testing">12.2 Automated Testing</a></h4><p>It is a good practice to verify in the test suite that the project eager loads correctly.</p><p>That covers Zeitwerk naming compliance and other possible error conditions. Please check the <a href="https://guides.rubyonrails.org/testing.html#testing-eager-loading">section about testing eager loading</a> in the <a href="https://guides.rubyonrails.org/testing.html"><em>Testing Rails Applications</em></a> guide.</p><h3><a href="https://guides.rubyonrails.org/autoloading_and_reloading_constants.html#troubleshooting">13 Troubleshooting</a></h3><p>The best way to follow what the loaders are doing is to inspect their activity.</p><p>The easiest way to do that is to include</p><div>
+<pre><code style="background-color:transparent;"><span style="color:rgb(0, 121, 121);">Rails</span><span>.</span><span style="color:rgb(153, 0, 0);font-weight:bold;">autoloaders</span><span>.</span><span style="color:rgb(153, 0, 0);font-weight:bold;">log!</span>
+</code></pre>
+
+</div>
+<p>in <code>config/application.rb</code> after loading the framework defaults. That will print traces to standard output.</p><p>If you prefer logging to a file, configure this instead:</p><div>
+<pre><code style="background-color:transparent;"><span style="color:rgb(0, 121, 121);">Rails</span><span>.</span><span style="color:rgb(153, 0, 0);font-weight:bold;">autoloaders</span><span>.</span><span style="color:rgb(153, 0, 0);font-weight:bold;">logger</span> <span style="color:rgb(0, 0, 0);font-weight:bold;">=</span> <span style="color:rgb(0, 121, 121);">Logger</span><span>.</span><span style="color:rgb(153, 0, 0);font-weight:bold;">new</span><span>(</span><span style="color:rgb(213, 17, 68);">"</span><span style="color:rgb(213, 17, 68);">#{</span><span style="color:rgb(0, 121, 121);">Rails</span><span>.</span><span style="color:rgb(153, 0, 0);font-weight:bold;">root</span><span style="color:rgb(213, 17, 68);">}</span><span style="color:rgb(213, 17, 68);">/log/autoloading.log"</span><span>)</span>
+</code></pre>
+
+</div>
+<p>The Rails logger is not yet available when <code>config/application.rb</code> executes. If you prefer to use the Rails logger, configure this setting in an initializer instead:</p><div>
+<pre><code style="background-color:transparent;"><span style="color:rgb(108, 108, 101);font-style:italic;"># config/initializers/log_autoloaders.rb</span>
+<span style="color:rgb(0, 121, 121);">Rails</span><span>.</span><span style="color:rgb(153, 0, 0);font-weight:bold;">autoloaders</span><span>.</span><span style="color:rgb(153, 0, 0);font-weight:bold;">logger</span> <span style="color:rgb(0, 0, 0);font-weight:bold;">=</span> <span style="color:rgb(0, 121, 121);">Rails</span><span>.</span><span style="color:rgb(153, 0, 0);font-weight:bold;">logger</span>
+</code></pre>
+
+</div>
+<h3><a href="https://guides.rubyonrails.org/autoloading_and_reloading_constants.html#rails-autoloaders">14 Rails.autoloaders</a></h3><p>The Zeitwerk instances managing your application are available at</p><div>
+<pre><code style="background-color:transparent;"><span style="color:rgb(0, 121, 121);">Rails</span><span>.</span><span style="color:rgb(153, 0, 0);font-weight:bold;">autoloaders</span><span>.</span><span style="color:rgb(153, 0, 0);font-weight:bold;">main</span>
+<span style="color:rgb(0, 121, 121);">Rails</span><span>.</span><span style="color:rgb(153, 0, 0);font-weight:bold;">autoloaders</span><span>.</span><span style="color:rgb(153, 0, 0);font-weight:bold;">once</span>
+</code></pre>
+
+</div>
+<p>The predicate</p><div>
+<pre><code style="background-color:transparent;"><span style="color:rgb(0, 121, 121);">Rails</span><span>.</span><span style="color:rgb(153, 0, 0);font-weight:bold;">autoloaders</span><span>.</span><span style="color:rgb(153, 0, 0);font-weight:bold;">zeitwerk_enabled?</span>
+</code></pre>
+
+</div>
+<p>is still available in Rails 7 applications, and returns <code>true</code>.</p>
+
+        <h3>Feedback</h3>
+        <p>
+          You're encouraged to help improve the quality of this guide.
+        </p>
+        <p>
+          Please contribute if you see any typos or factual errors.
+          To get started, you can read our <a href="https://edgeguides.rubyonrails.org/contributing_to_ruby_on_rails.html#contributing-to-the-rails-documentation">documentation contributions</a> section.
+        </p>
+        <p>
+          You may also find incomplete content or stuff that is not up to date.
+          Please do add any missing documentation for main. Make sure to check
+          <a href="https://edgeguides.rubyonrails.org/">Edge Guides</a> first to verify
+          if the issues are already fixed or not on the main branch.
+          Check the <a href="https://guides.rubyonrails.org/ruby_on_rails_guides_guidelines.html">Ruby on Rails Guides Guidelines</a>
+          for style and conventions.
+        </p>
+        <p>
+          If for whatever reason you spot something to fix but cannot patch it yourself, please
+          <a href="https://github.com/rails/rails/issues">open an issue</a>.
+        </p>
+        <p>And last but not least, any kind of discussion regarding Ruby on Rails
+          documentation is very welcome on the <a href="https://discuss.rubyonrails.org/c/rubyonrails-docs">rubyonrails-docs mailing list</a>.
+        </p>
+      </div></div></div></div></div></div>
+</div>
+</div>
+<a class="back-link" href="../articles.html">← 返回笔记列表</a>
+</body>
+</html>

@@ -1,0 +1,295 @@
+<!DOCTYPE html>
+<html lang="zh-CN" data-theme="light">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>I/O Performance HOWTO: Avoiding Bounce Buffers - szhan46 - 博客园 — 技术笔记</title>
+<style>
+:root {
+  --bg: #ffffff;
+  --text: #1a1a1a;
+  --muted: #666;
+  --border: #e0e0e0;
+  --code-bg: #f5f5f5;
+  --link: #0066cc;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #1a1a1a;
+    --text: #e0e0e0;
+    --muted: #999;
+    --border: #333;
+    --code-bg: #2a2a2a;
+    --link: #66bbff;
+  }
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  line-height: 1.7;
+  color: var(--text);
+  background: var(--bg);
+  max-width: 860px;
+  margin: 0 auto;
+  padding: 2rem 1.5rem;
+}
+.note-header {
+  border-bottom: 2px solid var(--border);
+  padding-bottom: 1rem;
+  margin-bottom: 2rem;
+}
+.note-title {
+  font-size: 1.6rem;
+  font-weight: 700;
+  margin-bottom: 0.3rem;
+}
+.note-meta {
+  color: var(--muted);
+  font-size: 0.85rem;
+}
+.note-content {
+  font-size: 0.95rem;
+}
+.note-content h1 { font-size: 1.4rem; margin: 1.2rem 0 0.6rem; }
+.note-content h2 { font-size: 1.2rem; margin: 1rem 0 0.5rem; }
+.note-content h3 { font-size: 1.05rem; margin: 0.8rem 0 0.4rem; }
+.note-content p { margin: 0.5rem 0; }
+.note-content ul, .note-content ol { margin: 0.5rem 0 0.5rem 2rem; }
+.note-content li { margin: 0.2rem 0; }
+.note-content pre {
+  background: var(--code-bg);
+  padding: 1rem;
+  border-radius: 6px;
+  overflow-x: auto;
+  margin: 0.8rem 0;
+  font-size: 0.85rem;
+}
+.note-content code {
+  background: var(--code-bg);
+  padding: 0.1rem 0.3rem;
+  border-radius: 3px;
+  font-size: 0.88em;
+}
+.note-content pre code {
+  background: none;
+  padding: 0;
+}
+.note-content blockquote {
+  border-left: 3px solid var(--border);
+  padding-left: 1rem;
+  color: var(--muted);
+  margin: 0.8rem 0;
+}
+.note-content a { color: var(--link); }
+.note-content img {
+  max-width: 100%;
+  height: auto;
+  border-radius: 6px;
+  margin: 0.5rem 0;
+}
+.note-content table {
+  border-collapse: collapse;
+  width: 100%;
+  margin: 0.8rem 0;
+}
+.note-content th, .note-content td {
+  border: 1px solid var(--border);
+  padding: 0.5rem;
+}
+.note-content th { background: var(--code-bg); }
+.media-placeholder {
+  background: var(--code-bg);
+  padding: 1rem;
+  text-align: center;
+  color: var(--muted);
+  border-radius: 6px;
+  margin: 0.5rem 0;
+  font-size: 0.85rem;
+}
+.encrypt-placeholder {
+  background: #fff3cd;
+  padding: 0.5rem;
+  text-align: center;
+  color: #856404;
+  border-radius: 6px;
+  margin: 0.5rem 0;
+  font-size: 0.85rem;
+}
+.back-link {
+  display: inline-block;
+  margin-top: 2rem;
+  color: var(--link);
+  text-decoration: none;
+  font-size: 0.85rem;
+}
+</style>
+</head>
+<body>
+<div class="note-header">
+  <div class="note-title">I/O Performance HOWTO: Avoiding Bounce Buffers - szhan46 - 博客园</div>
+  <div class="note-meta">笔记本：Linux</div>
+</div>
+<div class="note-content">
+<div style="--en-clipped-content:article">
+<div><br/></div><div style="font-size: 16px; display:block; min-width: 100%; position: relative;"> <div style="--olcb-folder-code-block-max-height:80vh;--cnb-code-bg:rgb(245, 245, 245);--cnb-code-font-size:12px;--cnb-code-color:rgb(68, 68, 68);"><div style="tab-size:4;font-family:&quot;PingFang SC&quot;, &quot;Microsoft YaHei&quot;, &quot;Helvetica Neue&quot;, Helvetica, Arial, sans-serif;text-size-adjust:none;font-size:14px;"><div style="background-color:rgb(255, 255, 255);"><div><div><div style="font-size:13px;line-height:1.5;"><div style="word-break:break-word;">
+<p style="font-size:13px;line-height:1.5;text-indent:0px;margin:10px auto;"><span style="line-height:1.5;">在 IA-32 系统中，物理内存最开始的1GB 被称为“低端内存”，1GB 以上的部分称为“高端内存”。先前的Linux 核心版本要求通往存储设备的数据缓存必须放在物理RAM 的低端内存区域，即使是应用程序可以同时使用高端内存和低端内存也存在同样状况。这样，来自低端内存区域数据缓存的I/O 请求可以直接进行内存存取操作。但是，当应用程序发出一个I/O 请求，其中包含位于高端内存的数据缓存时，核心将强制在低端内存中分配一个临时数据缓存，并将位于高端内存的应用程序缓存数据复制到此处，这个数据缓存相当于一个跳转的buffer。例如一些老设备只能访问16M以下的内存，但DMA的目的地址却在16M以上时，就需要在设备能访问16M范围内设置一个buffer作为跳转。这种额外的数据拷贝被称为“bounce buffering”，会明显地降低I/O 密集的数据库应用的性能，因为大量分配的bounce buffers 会占用许多内存，而且bouncebuffer 的复制会增加系统内存总线的负荷。</span></p>
+<p style="font-size:13px;line-height:1.5;text-indent:0px;margin:10px auto;"> </p>
+<p style="font-size:13px;line-height:1.5;text-indent:0px;margin:10px auto;"><span style="line-height:1.5;"><a href="http://www.linuxdoc.org/HOWTO/IO-Perf-HOWTO/overview.html" rel="noopener" style="color:rgb(0, 0, 128);text-decoration:none;">http://www.linuxdoc.org/HOWTO/IO-Perf-HOWTO/overview.html</a></span></p>
+<h1 style="font-weight:bold;line-height:1.5;font-size:28px;margin:10px 0px;"><a name="OVERVIEW" rel="noopener"></a>3. Avoiding Bounce Buffers</h1>
+<p style="font-size:13px;line-height:1.5;text-indent:0px;margin:10px auto;"><a name="OVERVIEW" rel="noopener"></a>This section provides information on applying and using the bounce buffer patch on the Linux 2.4 kernel. The bounce buffer patch, written by Jens Axboe, enables device drivers that support direct memory access (DMA) I/O to high-address physical memory to avoid bounce buffers.</p>
+<p style="font-size:13px;line-height:1.5;text-indent:0px;margin:10px auto;"><a name="OVERVIEW" rel="noopener"></a>This document provides a brief overview on memory and addressing in the Linux kernel, followed by information on why and how to make use of the bounce buffer patch.</p>
+<div>
+<h2 style="margin-top:10px;margin-bottom:3px;font-weight:bold;line-height:1.5;margin:10px 0px;font-size:21px;"><a name="OVERVIEW" rel="noopener"></a><a name="AEN40" rel="noopener"></a>3.1. Memory and Addressing in the Linux 2.4 Kernel</h2>
+<div><ins><ins></ins></ins></div>
+<p style="font-size:13px;line-height:1.5;text-indent:0px;margin:10px auto;"><a name="OVERVIEW" rel="noopener"></a>The Linux 2.4 kernel includes configuration options for specifying the amount of physical memory in the target computer. By default, the configuration is limited to the amount of memory that can be directly mapped into the kernel's virtual address space starting at PAGE_OFFSET. On i386 systems the default mapping scheme limits kernel-mode addressability to the first gigabyte (GB) of physical memory, also known as low memory. Conversely, high memory is normally the memory above 1 GB. High memory is not directly accessible or permanently mapped by the kernel. Support for high memory is an option that is enabled during <a href="http://www.linuxdoc.org/HOWTO/IO-Perf-HOWTO/overview.html#config" rel="noopener" style="color:rgb(0, 0, 128);text-decoration:none;">configuration of the Linux kernel</a>.</p>
+</div>
+<div>
+<h2 style="margin-top:10px;margin-bottom:3px;font-weight:bold;line-height:1.5;margin:10px 0px;font-size:21px;"><a name="AEN44" rel="noopener"></a>3.2. The Problem with Bounce Buffers</h2>
+<p style="font-size:13px;line-height:1.5;text-indent:0px;margin:10px auto;"><a name="AEN44" rel="noopener"></a>When DMA I/O is performed to or from high memory, an area is allocated in low memory known as a bounce buffer. When data travels between a device and high memory, it is first copied through the bounce buffer.</p>
+<p style="font-size:13px;line-height:1.5;text-indent:0px;margin:10px auto;"><a name="AEN44" rel="noopener"></a>Systems with a large amount of high memory and intense I/O activity can create a large number of bounce buffers that can cause memory shortage problems. In addition, the excessive number of bounce buffer data copies can lead to performance degradation.</p>
+<p style="font-size:13px;line-height:1.5;text-indent:0px;margin:10px auto;"><a name="AEN44" rel="noopener"></a>Peripheral component interface (PCI) devices normally address up to 4 GB of physical memory. When a bounce buffer is used for high memory that is below 4 GB, time and memory are wasted because the peripheral has the ability to address that memory directly. Using the bounce buffer patch can decrease, and possibly eliminate, the use of bounce buffers.</p>
+</div>
+<div>
+<h2 style="margin-top:10px;margin-bottom:3px;font-weight:bold;line-height:1.5;margin:10px 0px;font-size:21px;"><a name="AEN44" rel="noopener"></a><a name="config" rel="noopener"></a>3.3. Locating the Patch</h2>
+<p style="font-size:13px;line-height:1.5;text-indent:0px;margin:10px auto;"><a name="AEN44" rel="noopener"></a>The latest version of the bounce buffer patch is <em>block-highmem-all-18b.bz2</em>, and it is available from Andrea Arcangeli's -aa series kernels at<a href="http://kernel.org/pub/linux/kernel/people/andrea/kernels/v2.4/" target="_top" rel="noopener" style="color:rgb(0, 0, 128);text-decoration:none;">http://kernel.org/pub/linux/kernel/people/andrea/kernels/v2.4/</a>.</p>
+<div>
+<h3 style="font-weight:bold;line-height:1.5;margin:10px 0px;font-size:16px;"><a name="AEN54" rel="noopener"></a>3.3.1. Configuring the Linux Kernel to Avoid Bounce Buffers</h3>
+<p style="font-size:13px;line-height:1.5;text-indent:0px;margin:10px auto;"><a name="AEN54" rel="noopener"></a>This section includes information on configuring the Linux kernel to avoid bounce buffers. The Linux Kernel-HOWTO at <a href="http://www.linuxdoc.org/HOWTO/Kernel-HOWTO.html" target="_top" rel="noopener" style="color:rgb(0, 0, 128);text-decoration:none;">http://www.linuxdoc.org/HOWTO/Kernel-HOWTO.html</a> explains the process of re-compiling the Linux kernel.</p>
+<p style="font-size:13px;line-height:1.5;text-indent:0px;margin:10px auto;">The following kernel configuration options are required to enable the bounce buffer patch:</p>
+<p style="font-size:13px;line-height:1.5;text-indent:0px;margin:10px auto;"><em>Development Code</em> - To enable the configurator to display the <tt>High I/O Support</tt> option, select the <tt>Code maturity level options</tt> category and specify "y" to <tt>Prompt for development and/or incomplete code/drivers</tt>.</p>
+<p style="font-size:13px;line-height:1.5;text-indent:0px;margin:10px auto;"><em>High Memory Support</em> - To enable support for physical memory that is greater than 1 GB, select the <tt>Processor type and features</tt> category, and select a value from the <tt>High Memory Support</tt> option.</p>
+<p style="font-size:13px;line-height:1.5;text-indent:0px;margin:10px auto;"><em>High Memory I/O Support</em> - To enable DMA I/O to physical addresses greater than 1 GB, select the <tt>Processor type and features</tt> category, and enter "y" to the <tt>HIGHMEM I/O support</tt> option. This configuration option is a new option introduced by the bounce buffer patch.</p>
+</div>
+<div>
+<h3 style="font-weight:bold;line-height:1.5;margin:10px 0px;font-size:16px;"><a name="enabled" rel="noopener"></a>3.3.2. Enabled Device Drivers</h3>
+<p style="font-size:13px;line-height:1.5;text-indent:0px;margin:10px auto;"><a name="enabled" rel="noopener"></a>The bounce buffer patch provides the kernel infrastructure, as well as the SCSI and IDE mid-level driver modifications to support DMA I/O to high memory. Updates for several device drivers to make use of the added support are also included with the patch.</p>
+<p style="font-size:13px;line-height:1.5;text-indent:0px;margin:10px auto;"><a name="enabled" rel="noopener"></a>If the bounce buffer patch is applied and you configure the kernel to support high memory I/O, many IDE configurations and the device drivers listed below perform DMA I/O without the use of bounce buffers:</p>
+<p style="font-size:13px;line-height:1.5;text-indent:0px;margin:10px auto;"><a name="enabled" rel="noopener"></a></p>
+<div style="display:block;overflow-x:auto;"><table border="0" style="font-size:inherit;font-weight:inherit;font-style:inherit;font-variant:inherit;border-collapse:collapse;word-break:break-word;display:block;overflow-x:scroll;max-height:800px;">
+<tbody>
+<tr>
+<td style="font-size:12px;border:1px solid rgb(192, 192, 192);border-collapse:collapse;padding:8px 14px;min-width:50px;">aic7xxx_drv.o</td>
+</tr>
+<tr>
+<td style="font-size:12px;border:1px solid rgb(192, 192, 192);border-collapse:collapse;padding:8px 14px;min-width:50px;">aic7xxx_old.o</td>
+</tr>
+<tr>
+<td style="font-size:12px;border:1px solid rgb(192, 192, 192);border-collapse:collapse;padding:8px 14px;min-width:50px;">cciss.o</td>
+</tr>
+<tr>
+<td style="font-size:12px;border:1px solid rgb(192, 192, 192);border-collapse:collapse;padding:8px 14px;min-width:50px;">cpqarray.o</td>
+</tr>
+<tr>
+<td style="font-size:12px;border:1px solid rgb(192, 192, 192);border-collapse:collapse;padding:8px 14px;min-width:50px;">megaraid.o</td>
+</tr>
+<tr>
+<td style="font-size:12px;border:1px solid rgb(192, 192, 192);border-collapse:collapse;padding:8px 14px;min-width:50px;">qlogicfc.o</td>
+</tr>
+<tr>
+<td style="font-size:12px;border:1px solid rgb(192, 192, 192);border-collapse:collapse;padding:8px 14px;min-width:50px;">sym53c8xx.o</td>
+</tr>
+</tbody>
+</table></div>
+</div>
+</div>
+<div>
+<h2 style="margin-top:10px;margin-bottom:3px;font-weight:bold;line-height:1.5;margin:10px 0px;font-size:21px;"><a name="AEN85" rel="noopener"></a>3.4. Modifying Your Device Driver to Avoid Bounce Buffers</h2>
+<p style="font-size:13px;line-height:1.5;text-indent:0px;margin:10px auto;"><a name="AEN85" rel="noopener"></a>If your device drivers are not listed above in the <a href="http://www.linuxdoc.org/HOWTO/IO-Perf-HOWTO/overview.html#enabled" rel="noopener" style="color:rgb(0, 0, 128);text-decoration:none;">Enabled Device Drivers</a> section, and the device is capable of high-memory DMA I/O, you can modify your device driver to make use of the bounce buffer patch as follows. More information on rebuilding a Linux device driver is available at <a href="http://www.xml.com/ldd/chapter/book/index.html" target="_top" rel="noopener" style="color:rgb(0, 0, 128);text-decoration:none;">http://www.xml.com/ldd/chapter/book/index.html</a>.</p>
+<ol type="1" style="padding-left:40px;list-style-type:decimal;">
+<li style="list-style:inherit;">
+<p style="font-size:13px;line-height:1.5;text-indent:0px;margin:10px auto;">A.) For SCSI Adapter Drivers: set the <tt><em>highmem_io</em></tt> bit in the <tt><em>Scsi_Host_Template</em></tt> structure.</p>
+<p style="font-size:13px;line-height:1.5;text-indent:0px;margin:10px auto;">B.) For IDE Adapter Drivers: set the <tt><em>highmem</em></tt>bit in the <tt><em>ide_hwif_t</em></tt> structure.</p>
+</li>
+<li style="list-style:inherit;">
+<p style="font-size:13px;line-height:1.5;text-indent:0px;margin:10px auto;">Call <tt><em>pci_set_dma_mask(struct pci_dev *pdev, dma_addr_t mask)</em></tt> to specify the address bits that the device can successfully use on DMA operations.</p>
+<p style="font-size:13px;line-height:1.5;text-indent:0px;margin:10px auto;">If DMA I/O can be supported with the specified mask, <tt><em>pci_set_dma_mask()</em></tt> will set <tt><em>pdev-&gt;dma_mask</em></tt> and return 0. For SCSI or IDE, the mask value will also be passed by the mid-level drivers to<tt><em>blk_queue_bounce_limit(request_queue_t *q, u64 dma_addr)</em></tt> so that bounce buffers are not created for memory directly addressable by the device. Drivers other than SCSI or IDE must call<tt><em>blk_queue_bounce_limit()</em></tt> directly.</p>
+</li>
+<li style="list-style:inherit;">
+<p style="font-size:13px;line-height:1.5;text-indent:0px;margin:10px auto;">Use <tt><em>pci_map_page(dev, page, offset, size, direction)</em></tt>, instead of <tt><em>pci_map_single(dev, address, size, direction)</em></tt> to map a memory region so that it is accessible by the peripheral device. <tt><em>pci_map_page()</em></tt>supports both high and low memory.</p>
+<p style="font-size:13px;line-height:1.5;text-indent:0px;margin:10px auto;">The <tt><em>address</em></tt> parameter for <tt><em>pci_map_single()</em></tt> correlates to the <tt><em>page</em></tt> and <tt><em>offset</em></tt> parameters for <tt><em>pci_map_page()</em></tt>. Use the <tt><em>virt_to_page()</em></tt> macro to convert an <tt><em>address</em></tt> to a <tt><em>page</em></tt> and <tt><em>offset</em></tt>. The <tt><em>virt_to_page()</em></tt>macro is defined by including pci.h. For example:</p>
+<div style="display:block;overflow-x:auto;"><table border="0" bgcolor="#E0E0E0" style="font-size:inherit;font-weight:inherit;font-style:inherit;font-variant:inherit;border-collapse:collapse;word-break:break-word;width:100%;display:block;overflow-x:scroll;max-height:800px;height:auto;background-color:rgb(224, 224, 224);">
+<tbody>
+<tr>
+<td style="font-size:12px;border:1px solid rgb(192, 192, 192);border-collapse:collapse;padding:8px 14px;min-width:50px;">
+<pre style="transition-duration:0.2s;transition-property:background, font-size, border-color, border-radius, border-width, padding, margin, color;overflow:auto;margin-top:0px;margin-bottom:0px;"><span style="line-height:1.5;color:rgba(0, 0, 0, 1);"><tt><em>void *address;</em></tt></span>
+</pre>
+</td>
+</tr>
+</tbody>
+</table></div>
+<div style="display:block;overflow-x:auto;"><table border="0" bgcolor="#E0E0E0" style="font-size:inherit;font-weight:inherit;font-style:inherit;font-variant:inherit;border-collapse:collapse;word-break:break-word;width:100%;display:block;overflow-x:scroll;max-height:800px;height:auto;background-color:rgb(224, 224, 224);">
+<tbody>
+<tr>
+<td style="font-size:12px;border:1px solid rgb(192, 192, 192);border-collapse:collapse;padding:8px 14px;min-width:50px;">
+<pre style="transition-duration:0.2s;transition-property:background, font-size, border-color, border-radius, border-width, padding, margin, color;overflow:auto;margin-top:0px;margin-bottom:0px;"><span style="line-height:1.5;color:rgba(0, 0, 0, 1);"><tt><em>struct page *page;</em></tt></span>
+</pre>
+</td>
+</tr>
+</tbody>
+</table></div>
+<div style="display:block;overflow-x:auto;"><table border="0" bgcolor="#E0E0E0" style="font-size:inherit;font-weight:inherit;font-style:inherit;font-variant:inherit;border-collapse:collapse;word-break:break-word;width:100%;display:block;overflow-x:scroll;max-height:800px;height:auto;background-color:rgb(224, 224, 224);">
+<tbody>
+<tr>
+<td style="font-size:12px;border:1px solid rgb(192, 192, 192);border-collapse:collapse;padding:8px 14px;min-width:50px;">
+<pre style="transition-duration:0.2s;transition-property:background, font-size, border-color, border-radius, border-width, padding, margin, color;overflow:auto;margin-top:0px;margin-bottom:0px;"><span style="line-height:1.5;color:rgba(0, 0, 0, 1);"><tt><em>unsigned long offset;</em></tt></span>
+</pre>
+</td>
+</tr>
+</tbody>
+</table></div>
+<div style="display:block;overflow-x:auto;"><table border="0" bgcolor="#E0E0E0" style="font-size:inherit;font-weight:inherit;font-style:inherit;font-variant:inherit;border-collapse:collapse;word-break:break-word;width:100%;display:block;overflow-x:scroll;max-height:800px;height:auto;background-color:rgb(224, 224, 224);">
+<tbody>
+<tr>
+<td style="font-size:12px;border:1px solid rgb(192, 192, 192);border-collapse:collapse;padding:8px 14px;min-width:50px;">
+<pre style="transition-duration:0.2s;transition-property:background, font-size, border-color, border-radius, border-width, padding, margin, color;overflow:auto;margin-top:0px;margin-bottom:0px;"><span style="line-height:1.5;color:rgba(0, 0, 0, 1);"><tt><em>page = virt_to_page(address);</em></tt></span>
+</pre>
+</td>
+</tr>
+</tbody>
+</table></div>
+<div style="display:block;overflow-x:auto;"><table border="0" bgcolor="#E0E0E0" style="font-size:inherit;font-weight:inherit;font-style:inherit;font-variant:inherit;border-collapse:collapse;word-break:break-word;width:100%;display:block;overflow-x:scroll;max-height:800px;height:auto;background-color:rgb(224, 224, 224);">
+<tbody>
+<tr>
+<td style="font-size:12px;border:1px solid rgb(192, 192, 192);border-collapse:collapse;padding:8px 14px;min-width:50px;">
+<pre style="transition-duration:0.2s;transition-property:background, font-size, border-color, border-radius, border-width, padding, margin, color;overflow:auto;margin-top:0px;margin-bottom:0px;"><span style="line-height:1.5;color:rgba(0, 0, 0, 1);"><tt><em>offset = (unsigned long) address &amp; ~PAGE_MASK;</em></tt></span>
+</pre>
+</td>
+</tr>
+</tbody>
+</table></div>
+<p style="font-size:13px;line-height:1.5;text-indent:0px;margin:10px auto;">Call <tt><em>pci_unmap_page()</em></tt> after the DMA I/O transfer is complete to remove the mapping established by <tt><em>pci_map_page()</em></tt>.</p>
+<div>
+<div style="display:block;overflow-x:auto;"><table border="0" style="font-size:inherit;font-weight:inherit;font-style:inherit;font-variant:inherit;border-collapse:collapse;word-break:break-word;width:100%;display:block;overflow-x:scroll;max-height:800px;height:auto;">
+<tbody>
+<tr>
+<td align="center" valign="top" width="25" style="font-size:12px;border:1px solid rgb(192, 192, 192);border-collapse:collapse;padding:8px 14px;min-width:50px;"><img hspace="5" width="24" height="24" src="https://www.linuxdoc.org/HOWTO/images/note.gif" style="border:0px;height:auto;max-width:100%;"/></td>
+<td align="left" valign="top" style="font-size:12px;border:1px solid rgb(192, 192, 192);border-collapse:collapse;padding:8px 14px;min-width:50px;">
+<p style="font-size:13px;line-height:1.5;text-indent:0px;margin:10px auto;"><tt><em>pci_map_single()</em></tt> is implemented using <tt><em>virt_to_bus()</em></tt>. <tt><em>virt_to_bus()</em></tt> handles low memory addresses only. Drivers supporting high memory should no longer call <tt><em>virt_to_bus()</em></tt> or <tt><em>bus_to_virt()</em></tt>.</p>
+</td>
+</tr>
+</tbody>
+</table></div>
+</div>
+</li>
+<li style="list-style:inherit;">
+<p style="font-size:13px;line-height:1.5;text-indent:0px;margin:10px auto;">If your driver calls <tt><em>pci_map_sg()</em></tt> to map a scatter-gather DMA operation, your driver should set the <tt><em>page</em></tt> and <tt><em>offset</em></tt> fields instead of the <tt><em>address</em></tt> field of the <tt><em>scatterlist</em></tt> structure. Refer to step 3 for converting an <tt><em>address</em></tt> to a <tt><em>page</em></tt> and <tt><em>offset</em></tt>.</p>
+<div>
+<div style="display:block;overflow-x:auto;"><table border="0" style="font-size:inherit;font-weight:inherit;font-style:inherit;font-variant:inherit;border-collapse:collapse;word-break:break-word;width:100%;display:block;overflow-x:scroll;max-height:800px;height:auto;">
+<tbody>
+<tr>
+<td align="center" valign="top" width="25" style="font-size:12px;border:1px solid rgb(192, 192, 192);border-collapse:collapse;padding:8px 14px;min-width:50px;"><img hspace="5" width="24" height="24" src="https://www.linuxdoc.org/HOWTO/images/note.gif" style="border:0px;height:auto;max-width:100%;"/></td>
+<td align="left" valign="top" style="font-size:12px;border:1px solid rgb(192, 192, 192);border-collapse:collapse;padding:8px 14px;min-width:50px;">
+<p style="font-size:13px;line-height:1.5;text-indent:0px;margin:10px auto;">If your driver is already using the PCI DMA API, continue to use <tt><em>pci_map_page()</em></tt> or <tt><em>pci_map_sg()</em></tt> as appropriate. However, do not use the <tt><em>address</em></tt> field of the <tt><em>scatterlist</em></tt> structure.</p>
+</td>
+</tr>
+</tbody>
+</table></div>
+</div>
+</li>
+</ol></div>
+</div></div></div></div></div></div></div></div>
+</div>
+</div>
+<a class="back-link" href="../articles.html">← 返回笔记列表</a>
+</body>
+</html>

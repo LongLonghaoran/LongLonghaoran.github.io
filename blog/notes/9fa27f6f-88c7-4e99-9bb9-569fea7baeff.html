@@ -1,0 +1,242 @@
+<!DOCTYPE html>
+<html lang="zh-CN" data-theme="light">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Introduction — Cilium 1.14.5 documentation — 技术笔记</title>
+<style>
+:root {
+  --bg: #ffffff;
+  --text: #1a1a1a;
+  --muted: #666;
+  --border: #e0e0e0;
+  --code-bg: #f5f5f5;
+  --link: #0066cc;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #1a1a1a;
+    --text: #e0e0e0;
+    --muted: #999;
+    --border: #333;
+    --code-bg: #2a2a2a;
+    --link: #66bbff;
+  }
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  line-height: 1.7;
+  color: var(--text);
+  background: var(--bg);
+  max-width: 860px;
+  margin: 0 auto;
+  padding: 2rem 1.5rem;
+}
+.note-header {
+  border-bottom: 2px solid var(--border);
+  padding-bottom: 1rem;
+  margin-bottom: 2rem;
+}
+.note-title {
+  font-size: 1.6rem;
+  font-weight: 700;
+  margin-bottom: 0.3rem;
+}
+.note-meta {
+  color: var(--muted);
+  font-size: 0.85rem;
+}
+.note-content {
+  font-size: 0.95rem;
+}
+.note-content h1 { font-size: 1.4rem; margin: 1.2rem 0 0.6rem; }
+.note-content h2 { font-size: 1.2rem; margin: 1rem 0 0.5rem; }
+.note-content h3 { font-size: 1.05rem; margin: 0.8rem 0 0.4rem; }
+.note-content p { margin: 0.5rem 0; }
+.note-content ul, .note-content ol { margin: 0.5rem 0 0.5rem 2rem; }
+.note-content li { margin: 0.2rem 0; }
+.note-content pre {
+  background: var(--code-bg);
+  padding: 1rem;
+  border-radius: 6px;
+  overflow-x: auto;
+  margin: 0.8rem 0;
+  font-size: 0.85rem;
+}
+.note-content code {
+  background: var(--code-bg);
+  padding: 0.1rem 0.3rem;
+  border-radius: 3px;
+  font-size: 0.88em;
+}
+.note-content pre code {
+  background: none;
+  padding: 0;
+}
+.note-content blockquote {
+  border-left: 3px solid var(--border);
+  padding-left: 1rem;
+  color: var(--muted);
+  margin: 0.8rem 0;
+}
+.note-content a { color: var(--link); }
+.note-content img {
+  max-width: 100%;
+  height: auto;
+  border-radius: 6px;
+  margin: 0.5rem 0;
+}
+.note-content table {
+  border-collapse: collapse;
+  width: 100%;
+  margin: 0.8rem 0;
+}
+.note-content th, .note-content td {
+  border: 1px solid var(--border);
+  padding: 0.5rem;
+}
+.note-content th { background: var(--code-bg); }
+.media-placeholder {
+  background: var(--code-bg);
+  padding: 1rem;
+  text-align: center;
+  color: var(--muted);
+  border-radius: 6px;
+  margin: 0.5rem 0;
+  font-size: 0.85rem;
+}
+.encrypt-placeholder {
+  background: #fff3cd;
+  padding: 0.5rem;
+  text-align: center;
+  color: #856404;
+  border-radius: 6px;
+  margin: 0.5rem 0;
+  font-size: 0.85rem;
+}
+.back-link {
+  display: inline-block;
+  margin-top: 2rem;
+  color: var(--link);
+  text-decoration: none;
+  font-size: 0.85rem;
+}
+</style>
+</head>
+<body>
+<div class="note-header">
+  <div class="note-title">Introduction — Cilium 1.14.5 documentation</div>
+  <div class="note-meta">笔记本：ebpf</div>
+</div>
+<div class="note-content">
+<div style="--en-clipped-content:article">
+<div><br/></div><div style="font-size: 16px; display:block; min-width: 100%; position: relative;"> <div style="box-sizing:border-box;text-size-adjust:100%;font-family:Verdana, sans-serif;line-height:1.5;font-size:15px;overflow-x:hidden;"><div style="overflow-x:hidden;font-weight:400;color:rgb(0, 0, 0);box-sizing:inherit;font-size:15px;line-height:1.5;font-family:Verdana, sans-serif;background:rgb(255, 255, 255);"><div style="box-sizing:inherit;"><div style="box-sizing:inherit;background:rgb(255, 255, 255);"><div style="box-sizing:inherit;background:rgb(255, 255, 255);"><div style="box-sizing:inherit;"><div style="box-sizing:inherit;"><div style="box-sizing:inherit;"><div style="box-sizing:inherit;">
+<h1 style="box-sizing:inherit;font-size:36px;margin:10px 0px;font-weight:400;font-family:&quot;Segoe UI&quot;, Arial, sans-serif;margin-bottom:24px;">Introduction<a href="https://docs.cilium.io/en/stable/network/ebpf/intro/#introduction" title="Permalink to this heading" style="text-decoration:none;cursor:pointer;box-sizing:inherit;background-color:transparent;color:inherit;display:inline-block;font-style:normal;font-variant:normal;font-kerning:auto;font-optical-sizing:auto;font-feature-settings:normal;font-variation-settings:normal;font-weight:normal;font-stretch:normal;line-height:1;text-rendering:auto;-webkit-font-smoothing:antialiased;margin-left:0.5em;font-family:FontAwesome;font-size:14px;opacity:1;"><span style="font-style:normal;font-variant:normal;font-weight:400;line-height:1;font-family:FontAwesome;font-size:14px;color:inherit;cursor:pointer;-webkit-font-smoothing:antialiased;display:inline-block;text-decoration:inherit;"></span></a></h1>
+<p style="line-height:24px;font-size:16px;margin:0px 0px 24px;box-sizing:inherit;">The Linux kernel supports a set of BPF hooks in the networking stack
+that can be used to run BPF programs. The Cilium datapath uses these
+hooks to load BPF programs that when used together create higher level
+networking constructs.</p>
+<p style="line-height:24px;font-size:16px;margin:0px 0px 24px;box-sizing:inherit;">The following is a list of the hooks used by Cilium and a brief
+description. For a more thorough documentation on specifics of each
+hook see <a href="https://docs.cilium.io/en/stable/bpf/#bpf-guide" style="text-decoration:none;cursor:pointer;box-sizing:inherit;background-color:transparent;color:inherit;overflow-wrap:anywhere;"><span style="box-sizing:inherit;">BPF and XDP Reference Guide</span></a>.</p>
+<ul style="margin:0px;padding:0px;box-sizing:inherit;line-height:24px;margin-bottom:24px;list-style:disc;">
+<li style="box-sizing:inherit;margin-left:24px;list-style:disc;"><p style="line-height:24px;font-size:16px;margin:0px 0px 24px;box-sizing:inherit;margin-top:0px;margin-bottom:0px;"><strong style="box-sizing:inherit;font-weight:bolder;">XDP:</strong> The XDP BPF hook is at the earliest point possible in the networking driver
+and triggers a run of the BPF program upon packet reception. This
+achieves the best possible packet processing performance since the
+program runs directly on the packet data before any other processing
+can happen. This hook is ideal for running filtering programs that
+drop malicious or unexpected traffic, and other common DDOS protection
+mechanisms.</p></li>
+<li style="box-sizing:inherit;margin-left:24px;list-style:disc;"><p style="line-height:24px;font-size:16px;margin:0px 0px 24px;box-sizing:inherit;margin-bottom:12px;margin-top:0px;"><strong style="box-sizing:inherit;font-weight:bolder;">Traffic Control Ingress/Egress:</strong> BPF programs attached to the traffic
+control (tc) ingress hook are attached to a networking interface, same as
+XDP, but will run after the networking stack has done initial processing
+of the packet. The hook is run before the L3 layer of the stack but has
+access to most of the metadata associated with a packet. This is ideal
+for doing local node processing, such as applying L3/L4 endpoint policy
+and redirecting traffic to endpoints. For network-facing devices the
+tc ingress hook can be coupled with above XDP hook. When this is done it
+is reasonable to assume that the majority of the traffic at this
+point is legitimate and destined for the host.</p>
+<p style="line-height:24px;font-size:16px;margin:0px 0px 24px;box-sizing:inherit;margin-top:12px;margin-bottom:12px;">Containers typically use a virtual device called a veth pair which acts
+as a virtual wire connecting the container to the host. By attaching to
+the TC ingress hook of the host side of this veth pair Cilium can monitor
+and enforce policy on all traffic exiting a container. By attaching a BPF
+program to the veth pair associated with each container and routing all
+network traffic to the host side virtual devices with another BPF program
+attached to the tc ingress hook as well Cilium can monitor and enforce
+policy on all traffic entering or exiting the node.</p>
+</li>
+<li style="box-sizing:inherit;margin-left:24px;list-style:disc;"><p style="line-height:24px;font-size:16px;margin:0px 0px 24px;box-sizing:inherit;margin-top:0px;margin-bottom:0px;"><strong style="box-sizing:inherit;font-weight:bolder;">Socket operations:</strong> The socket operations hook is attached to a specific
+cgroup and runs on TCP events. Cilium attaches a BPF socket operations
+program to the root cgroup and uses this to monitor for TCP state transitions,
+specifically for ESTABLISHED state transitions. When
+a socket transitions into ESTABLISHED state if the TCP socket has a node
+local peer (possibly a local proxy) a socket send/recv program is attached.</p></li>
+<li style="box-sizing:inherit;margin-left:24px;list-style:disc;"><p style="line-height:24px;font-size:16px;margin:0px 0px 24px;box-sizing:inherit;margin-top:0px;margin-bottom:0px;"><strong style="box-sizing:inherit;font-weight:bolder;">Socket send/recv:</strong> The socket send/recv hook runs on every send operation
+performed by a TCP socket. At this point the hook can inspect the message
+and either drop the message, send the message to the TCP layer, or redirect
+the message to another socket. Cilium uses this to accelerate the datapath redirects
+as described below.</p></li>
+</ul>
+<p style="line-height:24px;font-size:16px;margin:0px 0px 24px;box-sizing:inherit;">Combining the above hooks with virtual interfaces (cilium_host, cilium_net),
+an optional overlay interface (cilium_vxlan), Linux kernel crypto support and
+a userspace proxy (Envoy) Cilium creates the following networking objects.</p>
+<ul style="margin:0px;padding:0px;box-sizing:inherit;line-height:24px;margin-bottom:24px;list-style:disc;">
+<li style="box-sizing:inherit;margin-left:24px;list-style:disc;"><p style="line-height:24px;font-size:16px;margin:0px 0px 24px;box-sizing:inherit;margin-top:0px;margin-bottom:0px;"><strong style="box-sizing:inherit;font-weight:bolder;">Prefilter:</strong> The prefilter object runs an XDP program and
+provides a set of prefilter rules used to filter traffic from the network for best performance. Specifically,
+a set of CIDR maps supplied by the Cilium agent are used to do a lookup and the packet
+is either dropped, for example when the destination is not a valid endpoint, or allowed to be processed by the stack. This can be easily
+extended as needed to build in new prefilter criteria/capabilities.</p></li>
+<li style="box-sizing:inherit;margin-left:24px;list-style:disc;"><p style="line-height:24px;font-size:16px;margin:0px 0px 24px;box-sizing:inherit;margin-top:0px;margin-bottom:0px;"><strong style="box-sizing:inherit;font-weight:bolder;">Endpoint Policy:</strong> The endpoint policy object implements the Cilium endpoint enforcement.
+Using a map to lookup a packet’s associated identity and policy, this layer
+scales well to lots of endpoints. Depending on the policy this layer may drop the
+packet, forward to a local endpoint, forward to the service object or forward to the
+L7 Policy object for further L7 rules. This is the primary object in the Cilium
+datapath responsible for mapping packets to identities and enforcing L3 and L4 policies.</p></li>
+<li style="box-sizing:inherit;margin-left:24px;list-style:disc;"><p style="line-height:24px;font-size:16px;margin:0px 0px 24px;box-sizing:inherit;margin-top:0px;margin-bottom:0px;"><strong style="box-sizing:inherit;font-weight:bolder;">Service:</strong> The Service object performs a map lookup on the destination IP
+and optionally destination port for every packet received by the object.
+If a matching entry is found, the packet will be forwarded to one of the
+configured L3/L4 endpoints. The Service block can be used to implement a
+standalone load balancer on any interface using the TC ingress hook or may
+be integrated in the endpoint policy object.</p></li>
+<li style="box-sizing:inherit;margin-left:24px;list-style:disc;"><p style="line-height:24px;font-size:16px;margin:0px 0px 24px;box-sizing:inherit;margin-bottom:12px;margin-top:0px;"><strong style="box-sizing:inherit;font-weight:bolder;">L3 Encryption:</strong> On ingress the L3 Encryption object marks packets for
+decryption, passes the packets to the Linux xfrm (transform) layer for
+decryption, and after the packet is decrypted the object receives the packet
+then passes it up the stack for further processing by other objects. Depending
+on the mode, direct routing or overlay, this may be a BPF tail call or the
+Linux routing stack that passes the packet to the next object. The key required
+for decryption is encoded in the IPsec header so on ingress we do not need to
+do a map lookup to find the decryption key.</p>
+<p style="line-height:24px;font-size:16px;margin:0px 0px 24px;box-sizing:inherit;margin-top:12px;margin-bottom:12px;">On egress a map lookup is first performed using the destination IP to determine
+if a packet should be encrypted and if so what keys are available on the destination
+node. The most recent key available on both nodes is chosen and the
+packet is marked for encryption. The packet is then passed to the Linux
+xfrm layer where it is encrypted. Upon receiving the now encrypted packet
+it is passed to the next layer either by sending it to the Linux stack for
+routing or doing a direct tail call if an overlay is in use.</p>
+</li>
+<li style="box-sizing:inherit;margin-left:24px;list-style:disc;"><p style="line-height:24px;font-size:16px;margin:0px 0px 24px;box-sizing:inherit;margin-top:0px;margin-bottom:0px;"><strong style="box-sizing:inherit;font-weight:bolder;">Socket Layer Enforcement:</strong> Socket layer enforcement uses two
+hooks (the socket operations hook and the socket send/recv hook) to monitor
+and attach to all TCP sockets associated with Cilium managed endpoints, including
+any L7 proxies. The socket operations hook
+will identify candidate sockets for accelerating. These include all local node connections
+(endpoint to endpoint) and any connection to a Cilium proxy.
+These identified connections will then have all messages handled by the socket
+send/recv hook. The fast redirect ensures all policies implemented in Cilium are valid for the associated
+socket/endpoint mapping and assuming they are sends the message directly to the
+peer socket.</p></li>
+<li style="box-sizing:inherit;margin-left:24px;list-style:disc;"><p style="line-height:24px;font-size:16px;margin:0px 0px 24px;box-sizing:inherit;margin-top:0px;margin-bottom:0px;"><strong style="box-sizing:inherit;font-weight:bolder;">L7 Policy:</strong> The L7 Policy object redirects proxy traffic to a Cilium userspace
+proxy instance. Cilium uses an Envoy instance as its userspace proxy. Envoy will
+then either forward the traffic or generate appropriate reject messages based on the configured L7 policy.</p></li>
+</ul>
+<p style="line-height:24px;font-size:16px;margin:0px 0px 24px;box-sizing:inherit;">These components are connected to create the flexible and efficient datapath used
+by Cilium. Below we show the following possible flows connecting endpoints on a single
+node, ingress to an endpoint, and endpoint to egress networking device. In each case
+there is an additional diagram showing the TCP accelerated path available when socket layer enforcement is enabled.</p>
+</div></div></div></div></div></div></div></div></div></div>
+</div>
+</div>
+<a class="back-link" href="../articles.html">← 返回笔记列表</a>
+</body>
+</html>

@@ -1,0 +1,209 @@
+<!DOCTYPE html>
+<html lang="zh-CN" data-theme="light">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>对比hash Struct Array的执行速度 — 技术笔记</title>
+<style>
+:root {
+  --bg: #ffffff;
+  --text: #1a1a1a;
+  --muted: #666;
+  --border: #e0e0e0;
+  --code-bg: #f5f5f5;
+  --link: #0066cc;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #1a1a1a;
+    --text: #e0e0e0;
+    --muted: #999;
+    --border: #333;
+    --code-bg: #2a2a2a;
+    --link: #66bbff;
+  }
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  line-height: 1.7;
+  color: var(--text);
+  background: var(--bg);
+  max-width: 860px;
+  margin: 0 auto;
+  padding: 2rem 1.5rem;
+}
+.note-header {
+  border-bottom: 2px solid var(--border);
+  padding-bottom: 1rem;
+  margin-bottom: 2rem;
+}
+.note-title {
+  font-size: 1.6rem;
+  font-weight: 700;
+  margin-bottom: 0.3rem;
+}
+.note-meta {
+  color: var(--muted);
+  font-size: 0.85rem;
+}
+.note-content {
+  font-size: 0.95rem;
+}
+.note-content h1 { font-size: 1.4rem; margin: 1.2rem 0 0.6rem; }
+.note-content h2 { font-size: 1.2rem; margin: 1rem 0 0.5rem; }
+.note-content h3 { font-size: 1.05rem; margin: 0.8rem 0 0.4rem; }
+.note-content p { margin: 0.5rem 0; }
+.note-content ul, .note-content ol { margin: 0.5rem 0 0.5rem 2rem; }
+.note-content li { margin: 0.2rem 0; }
+.note-content pre {
+  background: var(--code-bg);
+  padding: 1rem;
+  border-radius: 6px;
+  overflow-x: auto;
+  margin: 0.8rem 0;
+  font-size: 0.85rem;
+}
+.note-content code {
+  background: var(--code-bg);
+  padding: 0.1rem 0.3rem;
+  border-radius: 3px;
+  font-size: 0.88em;
+}
+.note-content pre code {
+  background: none;
+  padding: 0;
+}
+.note-content blockquote {
+  border-left: 3px solid var(--border);
+  padding-left: 1rem;
+  color: var(--muted);
+  margin: 0.8rem 0;
+}
+.note-content a { color: var(--link); }
+.note-content img {
+  max-width: 100%;
+  height: auto;
+  border-radius: 6px;
+  margin: 0.5rem 0;
+}
+.note-content table {
+  border-collapse: collapse;
+  width: 100%;
+  margin: 0.8rem 0;
+}
+.note-content th, .note-content td {
+  border: 1px solid var(--border);
+  padding: 0.5rem;
+}
+.note-content th { background: var(--code-bg); }
+.media-placeholder {
+  background: var(--code-bg);
+  padding: 1rem;
+  text-align: center;
+  color: var(--muted);
+  border-radius: 6px;
+  margin: 0.5rem 0;
+  font-size: 0.85rem;
+}
+.encrypt-placeholder {
+  background: #fff3cd;
+  padding: 0.5rem;
+  text-align: center;
+  color: #856404;
+  border-radius: 6px;
+  margin: 0.5rem 0;
+  font-size: 0.85rem;
+}
+.back-link {
+  display: inline-block;
+  margin-top: 2rem;
+  color: var(--link);
+  text-decoration: none;
+  font-size: 0.85rem;
+}
+</style>
+</head>
+<body>
+<div class="note-header">
+  <div class="note-title">对比hash Struct Array的执行速度</div>
+  <div class="note-meta">笔记本：Ruby</div>
+</div>
+<div class="note-content">
+<div style="font-size: 14px; margin: 0; padding: 0; width: 100%;"><pre style="line-height: 160%; box-sizing: content-box; border: 0; border-radius: 0; margin: 2px 0 8px; background-color: #f5f7f8;"><code style="display: block; overflow-x: auto; background: #1e1e1e; line-height: 160%; box-sizing: content-box; border: 0; border-radius: 0; letter-spacing: -.3px; padding: 18px; color: #f4f4f4; white-space: pre-wrap;">
+Benchmark.bmbm(<span style="color: #b8d7a3; line-height: 160%; box-sizing: content-box;">10</span>) <span style="color: #569cd6; line-height: 160%; box-sizing: content-box;">do</span> <span style="color: #dcdcdc; line-height: 160%; box-sizing: content-box;">|x|</span>
+  x.report(<span style="color: #d69d85; line-height: 160%; box-sizing: content-box;">"sql"</span>) <span style="color: #569cd6; line-height: 160%; box-sizing: content-box;">do</span> 
+    @from_date = DateTime.new(<span style="color: #b8d7a3; line-height: 160%; box-sizing: content-box;">2019</span>,<span style="color: #b8d7a3; line-height: 160%; box-sizing: content-box;">11</span>,<span style="color: #b8d7a3; line-height: 160%; box-sizing: content-box;">1</span>)
+    @to_date = DateTime.new(<span style="color: #b8d7a3; line-height: 160%; box-sizing: content-box;">2019</span>,<span style="color: #b8d7a3; line-height: 160%; box-sizing: content-box;">11</span>,<span style="color: #b8d7a3; line-height: 160%; box-sizing: content-box;">30</span>)
+    @ticket_responses = TicketResponse.left_joins(<span style="color: #569cd6; line-height: 160%; box-sizing: content-box;">:ticket</span>).
+    where(<span style="color: #569cd6; line-height: 160%; box-sizing: content-box;">created_at:</span> @from_date..@to_date).
+    select(
+      <span style="color: #d69d85; line-height: 160%; box-sizing: content-box;">"tickets.kind ticket_kind"</span>, <span style="color: #d69d85; line-height: 160%; box-sizing: content-box;">"tickets.offline ticket_offline"</span>, <span style="color: #d69d85; line-height: 160%; box-sizing: content-box;">"tickets.staff_id ticket_staff_id"</span>,
+      <span style="color: #d69d85; line-height: 160%; box-sizing: content-box;">"tickets.complexity ticket_complexity"</span>, <span style="color: #d69d85; line-height: 160%; box-sizing: content-box;">"tickets.call_ticket ticket_call_ticket"</span>, 
+      <span style="color: #d69d85; line-height: 160%; box-sizing: content-box;">"ticket_responses.kind kind"</span>, <span style="color: #d69d85; line-height: 160%; box-sizing: content-box;">"tickets.safety_issue ticket_safety_issue"</span>, 
+      <span style="color: #d69d85; line-height: 160%; box-sizing: content-box;">"ticket_responses.follow_up"</span>, <span style="color: #d69d85; line-height: 160%; box-sizing: content-box;">"ticket_responses.id"</span>, <span style="color: #d69d85; line-height: 160%; box-sizing: content-box;">"ticket_responses.staff_id staff_id"</span>
+    )
+  <span style="color: #569cd6; line-height: 160%; box-sizing: content-box;">end</span>
+
+  x.report(<span style="color: #d69d85; line-height: 160%; box-sizing: content-box;">"ar object"</span>) <span style="color: #569cd6; line-height: 160%; box-sizing: content-box;">do</span> 
+    @from_date = DateTime.new(<span style="color: #b8d7a3; line-height: 160%; box-sizing: content-box;">2019</span>,<span style="color: #b8d7a3; line-height: 160%; box-sizing: content-box;">11</span>,<span style="color: #b8d7a3; line-height: 160%; box-sizing: content-box;">1</span>)
+    @to_date = DateTime.new(<span style="color: #b8d7a3; line-height: 160%; box-sizing: content-box;">2019</span>,<span style="color: #b8d7a3; line-height: 160%; box-sizing: content-box;">11</span>,<span style="color: #b8d7a3; line-height: 160%; box-sizing: content-box;">30</span>)
+    @ticket_responses = TicketResponse.connection.execute(TicketResponse.left_joins(<span style="color: #569cd6; line-height: 160%; box-sizing: content-box;">:ticket</span>).
+    where(<span style="color: #569cd6; line-height: 160%; box-sizing: content-box;">created_at:</span> @from_date..@to_date).
+    select(
+      <span style="color: #d69d85; line-height: 160%; box-sizing: content-box;">"tickets.kind ticket_kind"</span>, <span style="color: #d69d85; line-height: 160%; box-sizing: content-box;">"tickets.offline ticket_offline"</span>, <span style="color: #d69d85; line-height: 160%; box-sizing: content-box;">"tickets.staff_id ticket_staff_id"</span>,
+      <span style="color: #d69d85; line-height: 160%; box-sizing: content-box;">"tickets.complexity ticket_complexity"</span>, <span style="color: #d69d85; line-height: 160%; box-sizing: content-box;">"tickets.call_ticket ticket_call_ticket"</span>, 
+      <span style="color: #d69d85; line-height: 160%; box-sizing: content-box;">"ticket_responses.kind kind"</span>, <span style="color: #d69d85; line-height: 160%; box-sizing: content-box;">"tickets.safety_issue ticket_safety_issue"</span>, 
+      <span style="color: #d69d85; line-height: 160%; box-sizing: content-box;">"ticket_responses.follow_up"</span>, <span style="color: #d69d85; line-height: 160%; box-sizing: content-box;">"ticket_responses.id"</span>, <span style="color: #d69d85; line-height: 160%; box-sizing: content-box;">"ticket_responses.staff_id staff_id"</span>
+    ).to_sql)
+  <span style="color: #569cd6; line-height: 160%; box-sizing: content-box;">end</span>
+<span style="color: #569cd6; line-height: 160%; box-sizing: content-box;">end</span>
+
+Struct.new(<span style="color: #d69d85; line-height: 160%; box-sizing: content-box;">"Student"</span>, <span style="color: #569cd6; line-height: 160%; box-sizing: content-box;">:name</span>, <span style="color: #569cd6; line-height: 160%; box-sizing: content-box;">:age</span>)
+students = []
+<span style="color: #b8d7a3; line-height: 160%; box-sizing: content-box;">100_000</span>.times <span style="color: #569cd6; line-height: 160%; box-sizing: content-box;">do</span> <span style="color: #dcdcdc; line-height: 160%; box-sizing: content-box;">|i|</span>
+  students &lt;&lt; Struct::Student.new(<span style="color: #d69d85; line-height: 160%; box-sizing: content-box;">"eddy<span style="color: #dcdcdc; line-height: 160%; box-sizing: content-box;">#{rand(<span style="color: #b8d7a3; line-height: 160%; box-sizing: content-box;">1_000</span>)}</span>"</span>, <span style="color: #b8d7a3; line-height: 160%; box-sizing: content-box;">20</span>+rand(<span style="color: #b8d7a3; line-height: 160%; box-sizing: content-box;">10</span>))
+<span style="color: #569cd6; line-height: 160%; box-sizing: content-box;">end</span>
+students_arr = students.collect{<span style="color: #dcdcdc; line-height: 160%; box-sizing: content-box;">|s|</span> [s.name, s.age]}
+<span style="color: #57a64a; font-style: italic; line-height: 160%; box-sizing: content-box;"># 测试数组和struct对象速度对比</span>
+Benchmark.bmbm <span style="color: #569cd6; line-height: 160%; box-sizing: content-box;">do</span> <span style="color: #dcdcdc; line-height: 160%; box-sizing: content-box;">|x|</span>
+  x.report(<span style="color: #d69d85; line-height: 160%; box-sizing: content-box;">"Struct"</span>) <span style="color: #569cd6; line-height: 160%; box-sizing: content-box;">do</span>
+    students.select{<span style="color: #dcdcdc; line-height: 160%; box-sizing: content-box;">|s|</span> s.age &gt; <span style="color: #b8d7a3; line-height: 160%; box-sizing: content-box;">25</span> }
+  <span style="color: #569cd6; line-height: 160%; box-sizing: content-box;">end</span>
+  x.report(<span style="color: #d69d85; line-height: 160%; box-sizing: content-box;">"Array"</span>) <span style="color: #569cd6; line-height: 160%; box-sizing: content-box;">do</span>
+    students_arr.select{<span style="color: #dcdcdc; line-height: 160%; box-sizing: content-box;">|s|</span> s[<span style="color: #b8d7a3; line-height: 160%; box-sizing: content-box;">1</span>] &gt; <span style="color: #b8d7a3; line-height: 160%; box-sizing: content-box;">25</span>}
+  <span style="color: #569cd6; line-height: 160%; box-sizing: content-box;">end</span>
+<span style="color: #569cd6; line-height: 160%; box-sizing: content-box;">end</span>
+
+@from_date, @to_date = [DateTime.new(<span style="color: #b8d7a3; line-height: 160%; box-sizing: content-box;">2019</span>,<span style="color: #b8d7a3; line-height: 160%; box-sizing: content-box;">11</span>,<span style="color: #b8d7a3; line-height: 160%; box-sizing: content-box;">1</span>), DateTime.new(<span style="color: #b8d7a3; line-height: 160%; box-sizing: content-box;">2019</span>,<span style="color: #b8d7a3; line-height: 160%; box-sizing: content-box;">11</span>,<span style="color: #b8d7a3; line-height: 160%; box-sizing: content-box;">15</span>)]
+result = Benchmark.bmbm(<span style="color: #b8d7a3; line-height: 160%; box-sizing: content-box;">5</span>) <span style="color: #569cd6; line-height: 160%; box-sizing: content-box;">do</span> <span style="color: #dcdcdc; line-height: 160%; box-sizing: content-box;">|x|</span>
+  x.report(<span style="color: #d69d85; line-height: 160%; box-sizing: content-box;">"hash array"</span>) <span style="color: #569cd6; line-height: 160%; box-sizing: content-box;">do</span>
+    ticket_responses = TicketResponse.connection.execute(TicketResponse.left_joins(<span style="color: #569cd6; line-height: 160%; box-sizing: content-box;">:ticket</span>).
+      where(<span style="color: #569cd6; line-height: 160%; box-sizing: content-box;">created_at:</span> @from_date..@to_date).
+      select(
+        <span style="color: #d69d85; line-height: 160%; box-sizing: content-box;">"tickets.kind ticket_kind"</span>, <span style="color: #d69d85; line-height: 160%; box-sizing: content-box;">"tickets.offline ticket_offline"</span>, <span style="color: #d69d85; line-height: 160%; box-sizing: content-box;">"tickets.staff_id ticket_staff_id"</span>,
+        <span style="color: #d69d85; line-height: 160%; box-sizing: content-box;">"tickets.complexity ticket_complexity"</span>, <span style="color: #d69d85; line-height: 160%; box-sizing: content-box;">"tickets.call_ticket ticket_call_ticket"</span>, 
+        <span style="color: #d69d85; line-height: 160%; box-sizing: content-box;">"ticket_responses.kind kind"</span>, <span style="color: #d69d85; line-height: 160%; box-sizing: content-box;">"tickets.safety_issue ticket_safety_issue"</span>, 
+        <span style="color: #d69d85; line-height: 160%; box-sizing: content-box;">"ticket_responses.follow_up"</span>, <span style="color: #d69d85; line-height: 160%; box-sizing: content-box;">"ticket_responses.id"</span>, <span style="color: #d69d85; line-height: 160%; box-sizing: content-box;">"ticket_responses.staff_id staff_id"</span>
+      ).to_sql)
+    ticket_responses.select{<span style="color: #dcdcdc; line-height: 160%; box-sizing: content-box;">|tr|</span> Ticket.kinds.invert[tr[<span style="color: #b8d7a3; line-height: 160%; box-sizing: content-box;">5</span>]] == <span style="color: #d69d85; line-height: 160%; box-sizing: content-box;">'artificial_reply'</span>}
+  <span style="color: #569cd6; line-height: 160%; box-sizing: content-box;">end</span>
+
+  x.report(<span style="color: #d69d85; line-height: 160%; box-sizing: content-box;">"ar obj"</span>) <span style="color: #569cd6; line-height: 160%; box-sizing: content-box;">do</span>
+    ticket_responses = TicketResponse.left_joins(<span style="color: #569cd6; line-height: 160%; box-sizing: content-box;">:ticket</span>).
+      where(<span style="color: #569cd6; line-height: 160%; box-sizing: content-box;">created_at:</span> @from_date..@to_date).
+      select(
+        <span style="color: #d69d85; line-height: 160%; box-sizing: content-box;">"tickets.kind ticket_kind"</span>, <span style="color: #d69d85; line-height: 160%; box-sizing: content-box;">"tickets.offline ticket_offline"</span>, <span style="color: #d69d85; line-height: 160%; box-sizing: content-box;">"tickets.staff_id ticket_staff_id"</span>,
+        <span style="color: #d69d85; line-height: 160%; box-sizing: content-box;">"tickets.complexity ticket_complexity"</span>, <span style="color: #d69d85; line-height: 160%; box-sizing: content-box;">"tickets.call_ticket ticket_call_ticket"</span>, 
+        <span style="color: #d69d85; line-height: 160%; box-sizing: content-box;">"ticket_responses.kind kind"</span>, <span style="color: #d69d85; line-height: 160%; box-sizing: content-box;">"tickets.safety_issue ticket_safety_issue"</span>, 
+        <span style="color: #d69d85; line-height: 160%; box-sizing: content-box;">"ticket_responses.follow_up"</span>, <span style="color: #d69d85; line-height: 160%; box-sizing: content-box;">"ticket_responses.id"</span>, <span style="color: #d69d85; line-height: 160%; box-sizing: content-box;">"ticket_responses.staff_id staff_id"</span>
+      )
+    ticket_responses.select{<span style="color: #dcdcdc; line-height: 160%; box-sizing: content-box;">|tr|</span> Ticket.kinds.invert[tr.kind] == <span style="color: #d69d85; line-height: 160%; box-sizing: content-box;">'artificial_reply'</span>}
+  <span style="color: #569cd6; line-height: 160%; box-sizing: content-box;">end</span>
+<span style="color: #569cd6; line-height: 160%; box-sizing: content-box;">end</span>
+</code></pre>
+</div><center style='display:none !important;visibility:collapse !important;height:0 !important;white-space:nowrap;width:100%;overflow:hidden'>%60%60%60ruby%0A%0ABenchmark.bmbm(10)%20do%20%7Cx%7C%0A%20%20x.report(%22sql%22)%20do%20%0A%20%20%20%20%40from_date%20%3D%20DateTime.new(2019%2C11%2C1)%0A%20%20%20%20%40to_date%20%3D%20DateTime.new(2019%2C11%2C30)%0A%20%20%20%20%40ticket_responses%20%3D%20TicketResponse.left_joins(%3Aticket).%0A%20%20%20%20where(created_at%3A%20%40from_date..%40to_date).%0A%20%20%20%20select(%0A%20%20%20%20%20%20%22tickets.kind%20ticket_kind%22%2C%20%22tickets.offline%20ticket_offline%22%2C%20%22tickets.staff_id%20ticket_staff_id%22%2C%0A%20%20%20%20%20%20%22tickets.complexity%20ticket_complexity%22%2C%20%22tickets.call_ticket%20ticket_call_ticket%22%2C%20%0A%20%20%20%20%20%20%22ticket_responses.kind%20kind%22%2C%20%22tickets.safety_issue%20ticket_safety_issue%22%2C%20%0A%20%20%20%20%20%20%22ticket_responses.follow_up%22%2C%20%22ticket_responses.id%22%2C%20%22ticket_responses.staff_id%20staff_id%22%0A%20%20%20%20)%0A%20%20end%0A%0A%20%20x.report(%22ar%20object%22)%20do%20%0A%20%20%20%20%40from_date%20%3D%20DateTime.new(2019%2C11%2C1)%0A%20%20%20%20%40to_date%20%3D%20DateTime.new(2019%2C11%2C30)%0A%20%20%20%20%40ticket_responses%20%3D%20TicketResponse.connection.execute(TicketResponse.left_joins(%3Aticket).%0A%20%20%20%20where(created_at%3A%20%40from_date..%40to_date).%0A%20%20%20%20select(%0A%20%20%20%20%20%20%22tickets.kind%20ticket_kind%22%2C%20%22tickets.offline%20ticket_offline%22%2C%20%22tickets.staff_id%20ticket_staff_id%22%2C%0A%20%20%20%20%20%20%22tickets.complexity%20ticket_complexity%22%2C%20%22tickets.call_ticket%20ticket_call_ticket%22%2C%20%0A%20%20%20%20%20%20%22ticket_responses.kind%20kind%22%2C%20%22tickets.safety_issue%20ticket_safety_issue%22%2C%20%0A%20%20%20%20%20%20%22ticket_responses.follow_up%22%2C%20%22ticket_responses.id%22%2C%20%22ticket_responses.staff_id%20staff_id%22%0A%20%20%20%20).to_sql)%0A%20%20end%0Aend%0A%0AStruct.new(%22Student%22%2C%20%3Aname%2C%20%3Aage)%0Astudents%20%3D%20%5B%5D%0A100_000.times%20do%20%7Ci%7C%0A%20%20students%20%3C%3C%20Struct%3A%3AStudent.new(%22eddy%23%7Brand(1_000)%7D%22%2C%2020%2Brand(10))%0Aend%0Astudents_arr%20%3D%20students.collect%7B%7Cs%7C%20%5Bs.name%2C%20s.age%5D%7D%0A%23%20%E6%B5%8B%E8%AF%95%E6%95%B0%E7%BB%84%E5%92%8Cstruct%E5%AF%B9%E8%B1%A1%E9%80%9F%E5%BA%A6%E5%AF%B9%E6%AF%94%0ABenchmark.bmbm%20do%20%7Cx%7C%0A%20%20x.report(%22Struct%22)%20do%0A%20%20%20%20students.select%7B%7Cs%7C%20s.age%20%3E%2025%20%7D%0A%20%20end%0A%20%20x.report(%22Array%22)%20do%0A%20%20%20%20students_arr.select%7B%7Cs%7C%20s%5B1%5D%20%3E%2025%7D%0A%20%20end%0Aend%0A%0A%40from_date%2C%20%40to_date%20%3D%20%5BDateTime.new(2019%2C11%2C1)%2C%20DateTime.new(2019%2C11%2C15)%5D%0Aresult%20%3D%20Benchmark.bmbm(5)%20do%20%7Cx%7C%0A%20%20x.report(%22hash%20array%22)%20do%0A%20%20%20%20ticket_responses%20%3D%20TicketResponse.connection.execute(TicketResponse.left_joins(%3Aticket).%0A%20%20%20%20%20%20where(created_at%3A%20%40from_date..%40to_date).%0A%20%20%20%20%20%20select(%0A%20%20%20%20%20%20%20%20%22tickets.kind%20ticket_kind%22%2C%20%22tickets.offline%20ticket_offline%22%2C%20%22tickets.staff_id%20ticket_staff_id%22%2C%0A%20%20%20%20%20%20%20%20%22tickets.complexity%20ticket_complexity%22%2C%20%22tickets.call_ticket%20ticket_call_ticket%22%2C%20%0A%20%20%20%20%20%20%20%20%22ticket_responses.kind%20kind%22%2C%20%22tickets.safety_issue%20ticket_safety_issue%22%2C%20%0A%20%20%20%20%20%20%20%20%22ticket_responses.follow_up%22%2C%20%22ticket_responses.id%22%2C%20%22ticket_responses.staff_id%20staff_id%22%0A%20%20%20%20%20%20).to_sql)%0A%20%20%20%20ticket_responses.select%7B%7Ctr%7C%20Ticket.kinds.invert%5Btr%5B5%5D%5D%20%3D%3D%20'artificial_reply'%7D%0A%20%20end%0A%0A%20%20x.report(%22ar%20obj%22)%20do%0A%20%20%20%20ticket_responses%20%3D%20TicketResponse.left_joins(%3Aticket).%0A%20%20%20%20%20%20where(created_at%3A%20%40from_date..%40to_date).%0A%20%20%20%20%20%20select(%0A%20%20%20%20%20%20%20%20%22tickets.kind%20ticket_kind%22%2C%20%22tickets.offline%20ticket_offline%22%2C%20%22tickets.staff_id%20ticket_staff_id%22%2C%0A%20%20%20%20%20%20%20%20%22tickets.complexity%20ticket_complexity%22%2C%20%22tickets.call_ticket%20ticket_call_ticket%22%2C%20%0A%20%20%20%20%20%20%20%20%22ticket_responses.kind%20kind%22%2C%20%22tickets.safety_issue%20ticket_safety_issue%22%2C%20%0A%20%20%20%20%20%20%20%20%22ticket_responses.follow_up%22%2C%20%22ticket_responses.id%22%2C%20%22ticket_responses.staff_id%20staff_id%22%0A%20%20%20%20%20%20)%0A%20%20%20%20ticket_responses.select%7B%7Ctr%7C%20Ticket.kinds.invert%5Btr.kind%5D%20%3D%3D%20'artificial_reply'%7D%0A%20%20end%0Aend%0A%60%60%60</center>
+</div>
+<a class="back-link" href="../articles.html">← 返回笔记列表</a>
+</body>
+</html>

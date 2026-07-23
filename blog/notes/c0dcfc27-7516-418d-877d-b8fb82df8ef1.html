@@ -1,0 +1,259 @@
+<!DOCTYPE html>
+<html lang="zh-CN" data-theme="light">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>网游加速器原理（转载） - dewxin - 博客园 — 技术笔记</title>
+<style>
+:root { --bg:#fff; --text:#1a1a1a; --muted:#666; --border:#e0e0e0; --code-bg:#f5f5f5; --link:#0066cc; }
+@media (prefers-color-scheme: dark) { :root { --bg:#1a1a1a; --text:#e0e0e0; --muted:#999; --border:#333; --code-bg:#2a2a2a; --link:#66bbff; } }
+* { box-sizing:border-box; margin:0; padding:0; }
+body { font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Arial,sans-serif; line-height:1.7; color:var(--text); background:var(--bg); max-width:860px; margin:0 auto; padding:2rem 1.5rem; }
+.note-header { border-bottom:2px solid var(--border); padding-bottom:1rem; margin-bottom:2rem; }
+.note-title { font-size:1.6rem; font-weight:700; margin-bottom:0.3rem; }
+.note-meta { color:var(--muted); font-size:0.85rem; }
+.note-content { font-size:0.95rem; }
+.note-content h1 { font-size:1.4rem; margin:1.2rem 0 0.6rem; }
+.note-content h2 { font-size:1.2rem; margin:1rem 0 0.5rem; }
+.note-content h3 { font-size:1.05rem; margin:0.8rem 0 0.4rem; }
+.note-content p { margin:0.5rem 0; }
+.note-content ul,.note-content ol { margin:0.5rem 0 0.5rem 2rem; }
+.note-content li { margin:0.2rem 0; }
+.note-content pre { background:var(--code-bg); padding:1rem; border-radius:6px; overflow-x:auto; margin:0.8rem 0; font-size:0.85rem; }
+.note-content code { background:var(--code-bg); padding:0.1rem 0.3rem; border-radius:3px; font-size:0.88em; }
+.note-content pre code { background:none; padding:0; }
+.note-content blockquote { border-left:3px solid var(--border); padding-left:1rem; color:var(--muted); margin:0.8rem 0; }
+.note-content a { color:var(--link); }
+.note-content img { max-width:100%; height:auto; border-radius:6px; margin:0.5rem 0; }
+.note-content table { border-collapse:collapse; width:100%; margin:0.8rem 0; }
+.note-content th,.note-content td { border:1px solid var(--border); padding:0.5rem; }
+.note-content th { background:var(--code-bg); }
+.media-placeholder { background:var(--code-bg); padding:1rem; text-align:center; color:var(--muted); border-radius:6px; margin:0.5rem 0; font-size:0.85rem; }
+.encrypt-placeholder { background:#fff3cd; padding:0.5rem; text-align:center; color:#856404; border-radius:6px; margin:0.5rem 0; font-size:0.85rem; }
+.back-link { display:inline-block; margin-top:2rem; color:var(--link); text-decoration:none; font-size:0.85rem; }
+</style>
+</head>
+<body>
+<div class="note-header"><div class="note-title">网游加速器原理（转载） - dewxin - 博客园</div><div class="note-meta">笔记本：计算机网络</div></div>
+<div class="note-content"><div style="--en-clipped-content:article"><div style="font-size: 16px; display:block; min-width: 100%; position: relative;"> <div style="--olcb-folder-code-block-max-height:80vh;--cnb-code-bg:rgb(245, 245, 245);--cnb-code-font-size:12px;--cnb-code-color:rgb(68, 68, 68);"><div style="tab-size:4;background:rgb(240, 238, 245);color:rgb(125, 139, 141);line-height:25px;font-family:&quot;PingFang SC&quot;, &quot;Microsoft YaHei&quot;, &quot;Helvetica Neue&quot;, Helvetica, Arial, sans-serif;text-size-adjust:none;font-size:14px;"><div><div><div style="background:none;overflow:visible;text-overflow:ellipsis;word-break:break-all;"><div><div><div style="background:rgb(255, 255, 255);overflow:hidden;"><div>
+            <h1 style="margin:0px;padding:0px;margin-bottom:20px;line-height:1.8;color:rgb(51, 51, 51);font-size:28px;font-weight:400;">
+                <a href="https://www.cnblogs.com/dewxin/p/17233985.html" title="发布于 2023-03-19 19:19" style="margin:0px;padding:0px;text-decoration:none;color:rgb(51, 51, 51);">
+    <span style="margin:0px;padding:0px;vertical-align:middle;">网游加速器原理（转载）</span>
+    
+
+</a>
+
+            </h1>
+            <div style="margin:0px;padding:0px;clear:both;"></div>
+            <div style="margin:0px;padding:0px;">
+                <div style="margin:0px;padding:0px;margin-bottom:20px;word-break:break-word;line-height:1.8;color:rgb(51, 51, 51);">
+<p style="padding:0px;margin:10px auto;text-indent:0px;"><a href="https://blog.csdn.net/qq_34561903/article/details/120590447" target="_blank" rel="noopener nofollow" style="margin:0px;padding:0px;color:rgb(0, 0, 0);text-decoration:underline;">https://blog.csdn.net/qq_34561903/article/details/120590447</a><br style="margin:0px;padding:0px;"/>
+<a href="https://blog.csdn.net/qq_38493448/article/details/104007711" target="_blank" rel="noopener nofollow" style="margin:0px;padding:0px;color:rgb(0, 0, 0);text-decoration:underline;">https://blog.csdn.net/qq_38493448/article/details/104007711</a></p>
+<ol style="list-style-type:decimal;margin:0px 0px 1em 40px;padding:0px;">
+<li style="margin:0px;padding:0px;list-style:inherit;">前言<br style="margin:0px;padding:0px;"/>
+网游加速器是针对个人用户快速连接网游服务器的一种服务。为了解决国内南北网络互联瓶颈的问题，“网络加速器”厂商通过搭建多个高带宽的双线机房(或通过租用双线VPS主机），并在这些机房的两大线路中架设多个节点服务器，然后为其编写“网络加速器客户端”，通过客户端判断用户的网络线路类型，并将用户应用客户端的网络数据转发到指定的节点服务器，由节点服务器转发给用户应用客户端请求的真正服务器。“网络加速器客户端”通过自动选择速度最快的节点服务器进行数据转发，以达到数据加速作用。优秀的网络加速器可以有效减少网络丢包和网络延迟。</li>
+</ol>
+<p style="padding:0px;margin:10px auto;text-indent:0px;">本文基于前期对各种加速器的分析以及对其中的关键技术进行试验。文章首先对互联网上流行的网游加速器分析结果进行简要汇总，然后针对各种不同的加速器实现方式进行详细实现细节的介绍。</p>
+<ol start="2" style="list-style-type:decimal;margin:0px 0px 1em 40px;padding:0px;">
+<li style="margin:0px;padding:0px;list-style:inherit;">流行加速器分析<br style="margin:0px;padding:0px;"/>
+本文前期对目前流行的网游加速器（或网络加速器）客户端进行了一定的深度分析，了解了这些网络加速器的使用特点、应用领域以及所采用的关键技术。目前网络上流行的网络加速器主要有：迅游加速器、迅雷网游加速器、盛大ET加速器、LavaVPN、NetPas等。</li>
+</ol>
+<p style="padding:0px;margin:10px auto;text-indent:0px;">迅游加速器（<a href="http://www.xunyou.com/" target="_blank" rel="noopener nofollow" style="margin:0px;padding:0px;color:rgb(0, 0, 0);text-decoration:underline;">http://www.xunyou.com</a>）和迅雷网络加速器迅游版（<a href="http://jaisuqi.xunlei.com/" target="_blank" rel="noopener nofollow" style="margin:0px;padding:0px;color:rgb(0, 0, 0);text-decoration:underline;">http://jaisuqi.xunlei.com</a>）是专门针对网游的加速器。迅雷共有两款加速器，自研的“给力加速器”提供免费加速服务，“迅游版加速器”是与迅游合作的产品。它们在软件UI设计和功能大致相同，使用流程也如出一辙：启动加速功能前需要选择指定的游戏及其区服，注意：待加速游戏必须是其客户端列表中指定的游戏，对于未指定的游戏不能被加速。</p>
+<p style="padding:0px;margin:10px auto;text-indent:0px;">启动加速后加速客户端对其全部节点服务器进行测速（迅游加速器部署了82个节点服务器），然后选择速度最快的服务器作为转发服务器，并在本地建立IP地址以172开头的虚拟网卡（局域网地址）。启动后通过抓包工具分析，所有发送到该游戏服务器的数据都是从该172开头的虚拟网卡地址发出的（VPN技术？），而不是从物理网卡地址发出。通过查看路由表，被加速的游戏当前所使用的服务器被增加到了路由表中，并指向了该172开头的虚拟网卡地址。</p>
+<p style="padding:0px;margin:10px auto;text-indent:0px;">在对迅游加速器分析过程中还发现，迅游加速器在加速过程中使用了LSP技术（一种通过在TCP/IP协议上层安装一层用户自定义协议，可以对WinSock2  API进行拦截的技术），并对WSAConnnect函数进行了拦截。</p>
+<p style="padding:0px;margin:10px auto;text-indent:0px;">迅雷给力加速器也提供了四种加速模式，模式一采用的是基于LSP的代理加速方式，通过LSP技术，将用户的网络数据直接转发给代理服务器，再由代理服务器将数据转发给真正的游戏服务器；模式二采用的是基于L2TP协议的VPN技术；模式三采用的是基于PPTP协议的VPN技术；模式四采用的是基于基于OpenVPN的VPN技术。这三种模式在启动加速后都需要修改路由表，以实现针对指定目的IP的加速功能。</p>
+<p style="padding:0px;margin:10px auto;text-indent:0px;">VPN顾名思义，虚拟专网，你接入VPN就是接入了一个专有网络，那么你访问网络都是从这个专有网络的出口出去，好比你在家，你家路由器后面的网络设备是在同一个网络，而VPN则是让你的设备进入了另一个网络。同时你的IP地址也变成了由VPN分配的一个IP地址。通常是一个私网地址。你和VPN服务器之间的通信是否加密取决于连接VPN的具体方式/协议。<br style="margin:0px;padding:0px;"/>
+代理服务器则是把你的网络数据请求通过一条连接你和代理服务器之间的通道，由服务器转发到目的地。你没有加入任何新的网络，只是http/socks数据经过代理服务器的转发送出，并从代理服务器接收回应。你与代理服务器通信过程不会被额外处理，如果你用https，那本身就是加密的。</p>
+<p style="padding:0px;margin:10px auto;text-indent:0px;">LavaVPN（<a href="http://www.lavajsq.com/" target="_blank" rel="noopener nofollow" style="margin:0px;padding:0px;color:rgb(0, 0, 0);text-decoration:underline;">http://www.lavajsq.com</a>，已经改名为LavaJSQ）是一款可以针对所有网络应用进行加速的网络加速器。它采用了VPN技术对网络进行加速，并提供四种VPN协议模型进行加速：PPTP、L2TP、OpenVPN（SSL_TCP）、OpenVPN（SSL_UDP），并可以通过增删路由表的形式，针对不同的应用进行加速：仅加速国外访问、仅加速对网通（电信）的网络访问、仅加速某些进程的网络访问等等。</p>
+<p style="padding:0px;margin:10px auto;text-indent:0px;">对LavaVPN的分析过程中未发现其有使用到LSP技术的迹象。</p>
+<p style="padding:0px;margin:10px auto;text-indent:0px;">盛大ET加速器（<a href="http://etspeed.sdo.com/" target="_blank" rel="noopener nofollow" style="margin:0px;padding:0px;color:rgb(0, 0, 0);text-decoration:underline;">http://etspeed.sdo.com</a>）是一款可以针对网络游戏加速以及语音加速的工具。ET加速器在结构设计上与迅游加速器有明显区别，但是功能类似：仅支持对其游戏列表中的游戏加速、启动加速功能后在本机建立了虚拟网卡，并添加了指向虚拟网卡地址的路由、在本机安装了LSP协议。ET加速器启动加速后，在“我的连接”面板里新增出现了一个名为“etaaaaaa”的网络连接。</p>
+<ol start="3" style="list-style-type:decimal;margin:0px 0px 1em 40px;padding:0px;">
+<li style="margin:0px;padding:0px;list-style:inherit;">加速器实现方式概要<br style="margin:0px;padding:0px;"/>
+通过对以上加速器的分析进行参考，并查阅相关资料，目前主流的加速技术可以采用两种方式来实现：“代理服务器方式”和“VPN方式”。</li>
+</ol>
+<p style="padding:0px;margin:10px auto;text-indent:0px;">代理服务器方式通过部署SOCKS5代理服务器作为加速节点，加速客户端自动选择最快的代理服务器作为当前的转发节点。在客户端主要采用LSP技术，在用户的主机安装分层协议，在游戏客户端调用connect函数（或WSAConnect函数）试图连接游戏服务器时，将连接重定向到代理服务器，并采用SOCKS5协议规范与代理服务器进行数据协商，由代理服务器来连接真正的游戏服务器，并将游戏服务器的数据原封不动转发给用户、将用户的数据原封不动转发给游戏服务器。</p>
+<p style="padding:0px;margin:10px auto;text-indent:0px;">VPN方式需要部署双线VPN服务器作为加速节点，加速客户端自动选择速度最快的VPN服务器，并通过VPN拨号连接到VPN服务器并获取一个虚拟IP地址，同时通过修改路由表的方式，将指定进程的网络访问路由到虚拟IP上，而其余地址仍经过原默认路由途径访问。</p>
+<p style="padding:0px;margin:10px auto;text-indent:0px;">下面就这两种加速方式的具体实现以及重要的技术难点进行详细分析。另外，报告中的所有代码截图均来自之前写的测试程序，并测试通过；VPN加速方式由主要进行了原理的详细介绍，并编写了支持PPTP协议的VPN客户端和服务器进行了测试。</p>
+<ol start="4" style="list-style-type:decimal;margin:0px 0px 1em 40px;padding:0px;">
+<li style="margin:0px;padding:0px;list-style:inherit;">VPN加速方式<br style="margin:0px;padding:0px;"/>
+4.1. VPN加速概述<br style="margin:0px;padding:0px;"/>
+VPN技术常常被广泛应用于“网游加速技术”和“FQ技术”中。如前面提到的迅游加速器、迅雷网游加速器、LavaVPN都采用到了VPN技术进行加速，而且目前主流的网游加速器都主要是采用的VPN技术。由于VPN环境的测试需要建立VPN服务器，本人的测试环境有限，所以只是进行了客户端的代码编写并连接通过，无法做相关的代理效果的测试。下面只针对实现的流程和原理给以介绍。</li>
+</ol>
+<p style="padding:0px;margin:10px auto;text-indent:0px;">4.2. VPN加速实现步骤<br style="margin:0px;padding:0px;"/>
+通过建立如下步骤，可以采用VPN技术来实现网络加速：</p>
+<ol style="list-style-type:decimal;margin:0px 0px 1em 40px;padding:0px;">
+<li style="margin:0px;padding:0px;list-style:inherit;">
+<p style="padding:0px;margin:10px auto;text-indent:0px;">部署双线VPN服务器节点；</p>
+</li>
+<li style="margin:0px;padding:0px;list-style:inherit;">
+<p style="padding:0px;margin:10px auto;text-indent:0px;">加速器客户端启动后选择网络性能最好的VPN服务器，并在客户端进行RAS拨号，与该VPN服务器建立隧道连接，连接建立后将会自动在本机生成一个虚拟网络地址，同时客户端的默认路由会被修改成指向该虚拟网络地址，如果此时不进行特殊处理，客户端的所有网络访问将都会通过该VPN通道出去；</p>
+</li>
+<li style="margin:0px;padding:0px;list-style:inherit;">
+<p style="padding:0px;margin:10px auto;text-indent:0px;">因为网游加速器的功能需求是仅仅针对某款游戏进行加速，即：在知道这款游戏连接的服务器IP的前提下，只有发送到该服务器IP的数据才被加速，其他网络数据应该不受影响。因此加速客户端在建立完VPN通道以后，需要立即修改路由表：在拨号前通过修改拨号参数，使其不修改本机的默认路由表；其次，将游戏服务器IP增加到路由表中，并让其指向VPN拨号建立的虚拟网络地址上。这样，与游戏服务器之间的通信都走VPN通道，而其他网络数据都不受影响。</p>
+</li>
+</ol>
+<p style="padding:0px;margin:10px auto;text-indent:0px;">4.3 VPN加速使用的三种协议介绍<br style="margin:0px;padding:0px;"/>
+目前网络上现有的网游加速器（或网络加速器）都使用到了三种VPN协议：PPTP、L2TP和OpenVPN。各种不同的协议在使用时可能受用户的网络状况的限制而无法使用，因此一般的网络加速器都会提供不同的加速模式供用户选择。或在启动加速过程中根据用户当前的网络状况自动选择可用的加速模式。</p>
+<p style="padding:0px;margin:10px auto;text-indent:0px;">PPTP协议：PPTP协议是在PPP协议基础上开发的增强型安全协议。PPTP协议中有两个流：控制流和数据流。PPTP协议的数据流采用了GRE协议，由于该协议的特殊性，如果同一个NAT中有两个或以上的主机同时在发送PPTP协议数据包，当数据包从外部达到NAT时，NAT将无法通过端口将数据转发到不同的主机，因此，当使用PPTP协议时，如果用户所在的NAT网关不支持VPN穿透功能（即支持PPTP协议的NAT编辑器，该编辑器在GRE协议的报头使用了一个CallId用来表示NAT下的一个会话，通过CallId来模拟端口，做NAT映射），那么内部主机只能与同一个服务器中间建立一个会话，不能有第二个客户端。目前，大多数NAT网关都具有PPTP NAT编辑器，能很好的支持PPTP协议。</p>
+<p style="padding:0px;margin:10px auto;text-indent:0px;">L2TP协议：第二层隧道协议，该协议是PPTP协议和Cisco第二层转发协议L2F的结合体。在windows建立的基于L2TP协议的VPN连接中，默认是启用了证书方式的IPSec协议作为安全传输协议，IPSec协议为了保护IP数据包的完整性，会禁止任何对数据包的修改，否则修改后的数据包达到目的主机后其解密和完整性认证就会失败，从而导致这个报文被认为是非法数据而被丢弃。而当加速器客户端位于NAT后时，数据包在通过NAT时，NAT会对IP头数据等进行修改，导致数据到达VPN服务器时被认为是非法数据而丢弃。</p>
+<p style="padding:0px;margin:10px auto;text-indent:0px;">解决该问题的一种方式是通过硬件方式：要求通信的双方的边界路由都支持NAT-T，基本原理是在IPSec封装好的数据包外再进行一次UDP的数据封装，因此，当数据包穿过NAT网关时，被修改的只是外层IP/UDP头，而真正的IPSec数据未被修改；到目的主机时再将IP/UDP封装去除，这样就可以得到未被修改的IPSec数据包。</p>
+<p style="padding:0px;margin:10px auto;text-indent:0px;">另一种方式是在L2TP协议中禁用IPSec。对于我们制作网络加速器应用来讲，IPSec协议并非必须的，因此，我们可以在加速器连接中去除IPSec协议，而不影响加速功能。在Windows系统下采用RAS进行VPN连接时，若要去除IPSec协议，需要修改注册表并重启机器使之生效。迅游的给力加速器中就是采用这种方式。</p>
+<p style="padding:0px;margin:10px auto;text-indent:0px;">OpenVPN模式：OpenVPN是一个基于OpenSSL加密和验证的应用层VPN实现，能够在NAT环境下很好的工作，是今年来新出现的一个基于开源软件体系的VPN项目。使用OpenVPN进行连接前，需要在客户端机器上安装一个虚拟网卡设备，并需要客户端修改路由表。</p>
+<p style="padding:0px;margin:10px auto;text-indent:0px;">以上VPN协议中，除了OpenVPN的使用可以不受用户当前网络的限制外，其他两种方式都可能收到用户的NAT情况影响而导致加速失败，因此在实际应用中，各种加速器都会把这几种模式都提供给用户，并根据用户的网络情况进行选择。</p>
+<p style="padding:0px;margin:10px auto;text-indent:0px;">4.4 VPN拨号客户端的实现<br style="margin:0px;padding:0px;"/>
+试验过程中对RAS拨号建立VPN连接功能进行了测试。如下客户端实现了连接到VPN服务器，并同时客户端用户输入的“待加速地址”列表，修改路由表，已达到“仅指定IP走VPN通道”的功能，而用户的其他网络访问完全不受影响。</p>
+<p style="padding:0px;margin:10px auto;text-indent:0px;">4.5 VPN方式尚存在的问题</p>
+<ol style="list-style-type:decimal;margin:0px 0px 1em 40px;padding:0px;">
+<li style="margin:0px;padding:0px;list-style:inherit;">
+<p style="padding:0px;margin:10px auto;text-indent:0px;">与采用代理方式一样，判断与当前启动的游戏通讯的是哪个服务器是个问题（原因如前所述），这里可以用到前面描述的LSP技术，通过在connect函数中判断欲建立连接的IP是否在当前游戏的服务器列表中。此时用到LSP技术并不是用于转发，仅仅用于判断是否加速。</p>
+</li>
+<li style="margin:0px;padding:0px;list-style:inherit;">
+<p style="padding:0px;margin:10px auto;text-indent:0px;">采用VPN方式有一个问题：如果用户修改路由表，让其他进程的服务器IP（如p2p下载软件）或默认路由表经过VPN通道的话，可能会造成VPN通道中的数据量增大，可能会影响正常的游戏。迅游加速器也没有对该问题进行很好的解决，早前的测试发现迅游加速功能启动后，通过修改路由表，可以使任意客户端进程都使用迅游的加速通道来访问网络。</p>
+</li>
+</ol>
+<p style="padding:0px;margin:10px auto;text-indent:0px;">该问题的也许可以通过两种方式来解决：一种是在客户端限制用户修改路由表，另一种是通过在服务器端进行限制非游戏服务器相关的数据。具体实现方式有待研究。</p>
+<ol start="5" style="list-style-type:decimal;margin:0px 0px 1em 40px;padding:0px;">
+<li style="margin:0px;padding:0px;list-style:inherit;">代理加速方式<br style="margin:0px;padding:0px;"/>
+5.1. 代理加速的基本原理<br style="margin:0px;padding:0px;"/>
+采用代理服务器进行网络加速是一类使用较早的技术。目前某些网游客户端和网络应用程序都直接支持SOCKS5代理协议来连接其客户端，客户端提供设置代理服务器IP和端口的方式供玩家来设置。然而大部分网游客户端并不直接支持SOCKS5代理技术。此处介绍的代理加速模式不仅支持那些无法设置SOCKS5代理的网络游戏，即使那些可以设置SOCKS5代理的游戏，玩家也可以不用手动去设置，而自动采用下面介绍的代理加速技术进行代理加速。</li>
+</ol>
+<p style="padding:0px;margin:10px auto;text-indent:0px;">代理加速方式可以直接采用SOCKS5协议，由于SOCKS5协议有现成的服务器程序可用，可以节省服务器编写时间；但是也可以自己定义一个“类SOCKS5”的代理协议，自行实现代理协商和身份验证功能。下面的介绍将会基于自己定义代理协议的模式。</p>
+<p style="padding:0px;margin:10px auto;text-indent:0px;">在使用代理方式加速时，LSP技术的使用是关键。Microsoft在Winsock2中提供了Winsock服务器提供者（SPI），允许用户在基础TCP/IP协议上层插入自己定义的分层协议（LSP），当用户通过Winsock2 API连接网络或发送网络数据时，如调用WSAConnect函数，将会首先执行到LSP协议的dll中我们定义的函数，这样我们可以先进行处理，然后再交给真正的WSAConnect函数，这样就会起到API Hook的作用。</p>
+<p style="padding:0px;margin:10px auto;text-indent:0px;">要使用LSP技术，必须要将写好的LSP协议安装到用户的机器上，安装过程实际就是将DLL放入系统目录，并在注册表中写入该DLL位置信息的过程。注意：安装未签名的LSP时，安装过程中一般防火墙都会有警告提示。</p>
+<p style="padding:0px;margin:10px auto;text-indent:0px;">5.2. 代理加速方式的实现概要<br style="margin:0px;padding:0px;"/>
+采用LSP方式进行网络加速需要部署SOCKS5代理服务器作为加速节点，加速客户端自动选择最快的代理服务器作为当前的转发节点。</p>
+<p style="padding:0px;margin:10px auto;text-indent:0px;">开发人员在客户端需要完成的动作有：</p>
+<ol style="list-style-type:decimal;margin:0px 0px 1em 40px;padding:0px;">
+<li style="margin:0px;padding:0px;list-style:inherit;">
+<p style="padding:0px;margin:10px auto;text-indent:0px;">编写我们自己的LSP协议动态库，重新实现我们需要的相关socket函数，如connect；</p>
+</li>
+<li style="margin:0px;padding:0px;list-style:inherit;">
+<p style="padding:0px;margin:10px auto;text-indent:0px;">在用户的主机安装我们自己的LSP协议，这一操作可以放入我们的应用程序部署的时候完成，也可以在我们的加速器每次启动的时候进行部署；</p>
+</li>
+<li style="margin:0px;padding:0px;list-style:inherit;">
+<p style="padding:0px;margin:10px auto;text-indent:0px;">当游戏客户端调用connect函数（或WSAConnect函数）试图连接游戏服务器时，通过LSP将连接重定向到代理服务器，并采用SOCKS5协议规范与代理服务器进行数据协商，由代理服务器来连接真正的游戏服务器，并将游戏服务器的数据原封不动转发给用户、同时将用户的数据原封不动转发给游戏服务器。</p>
+</li>
+</ol>
+<p style="padding:0px;margin:10px auto;text-indent:0px;">由于Socks5协议并不涉及协议加密，而且Socks5协议本身协商过程较长，实际在开发中，网络加速器开发商一般都不会直接采用socks协议，而是对该协议进行改造，定义自己的代理协议。</p>
+<p style="padding:0px;margin:10px auto;text-indent:0px;">5.3. Socks5协议与LSP结合<br style="margin:0px;padding:0px;"/>
+通过LSP技术Hook到相应的套接字函数进行数据转发之前，需要进行Socks5代理协商，即将鉴权信息告诉代理服务器，以及告诉代理服务器自己想连接的真正游戏服务器地址。代理协商完成后才能进行数据的收发。</p>
+<p style="padding:0px;margin:10px auto;text-indent:0px;">针对不同的网络连接方式，代理协商的方式有所不同：</p>
+<ol style="list-style-type:decimal;margin:0px 0px 1em 40px;padding:0px;">
+<li style="margin:0px;padding:0px;list-style:inherit;">普通阻塞方式的TCP连接最简单，可以在hook到connect函数后直接在内部进行阻塞式的代理协商，直到协商完毕后才将connect函数返回给用户，这时候用户拿到的socket实际上是连接到代理服务器的socket，当应用程序通过这个socket收发数据时，实际上是在和代理服务器交互，而这一过程对应用程序来说是透明的，应用程序以为自己是直接在和游戏服务器通信。</li>
+</ol>
+<p style="padding:0px;margin:10px auto;text-indent:0px;">目前的网络应用程序很少会采用阻塞方式进行TCP连接，所以这种情况应用场景比较少。</p>
+<ol start="2" style="list-style-type:decimal;margin:0px 0px 1em 40px;padding:0px;">
+<li style="margin:0px;padding:0px;list-style:inherit;">
+<p style="padding:0px;margin:10px auto;text-indent:0px;">非阻塞方式的TCP连接情况比较复杂，有的TCP连接的socket是可以修改阻塞选项，这样，我们可以在connect函数的入口处判断一下当前socket是否是非阻塞，如果是则将其改为阻塞方式，修改后以阻塞方式进行socks5代理协商，协商完毕后再将socket的阻塞方式修改为非阻塞。</p>
+</li>
+<li style="margin:0px;padding:0px;list-style:inherit;">
+<p style="padding:0px;margin:10px auto;text-indent:0px;">另一种更为复杂的非阻塞TCP连接是基于Windows异步消息的连接，这种连接采用了WSAAsynSelect方式设置了网络消息到来时的Windows接收窗口，所有的网络数据都需要在这个窗口的消息处理函数中处理（QQ飞车的TCP连接就是采用的这种方式）。这类网络模型不能简单采用修改socket阻塞方式的方法来解决。</p>
+</li>
+</ol>
+<p style="padding:0px;margin:10px auto;text-indent:0px;">解决这一问题的唯一办法是在LSP中hook住WSAAsynSelect，在该函数中创建一个我们自己的隐藏窗口，让网络应用程序的所有数据都转发我们自己的窗口上来，在我们的窗口的消息处理函数中进行代理协商和网络数据转发。</p>
+<ol start="4" style="list-style-type:decimal;margin:0px 0px 1em 40px;padding:0px;">
+<li style="margin:0px;padding:0px;list-style:inherit;">对于UDP网络数据的socks5代理转发比TCP又要稍微复杂一些，TCP只需要hook到connect和WSAAsynSelect，对于网络收发数据的send和recv函数是不需要我们自己来实现的。UDP由于是不保持连接的，因此每次发送和接收的UDP包都要包含代理协商信息，因此我们需要把RecvFrom函数和SendTo函数都hook住。</li>
+</ol>
+<p style="padding:0px;margin:10px auto;text-indent:0px;">对于UDP连接，需要在应用程序发送第一个UDP包的时候进行代理协商，以后发送数据的时候按照socks5协议的规定，加上socks5头部；收到的信息去除socks5头部再交给应用程序。</p>
+<p style="padding:0px;margin:10px auto;text-indent:0px;">5.4. 代理加速方式详细实现<br style="margin:0px;padding:0px;"/>
+下面就详细介绍每一步的具体实现方式，为了方便流程分析，这里从LSP实现数据包转发开始介绍，最后介绍代理服务器的实现。</p>
+<ol style="list-style-type:decimal;margin:0px 0px 1em 40px;padding:0px;">
+<li style="margin:0px;padding:0px;list-style:inherit;">利用LSP编写DLL，实现客户端数据包转发功能：</li>
+</ol>
+<p style="padding:0px;margin:10px auto;text-indent:0px;">编写LSP协议并安装到现有协议之上，需要建立基于DLL的工程，并导出WSPStartup函数，这样当有应用程序创建套接字时，会自动执行到该WSPStartup函数。在WSPStartup函数函数中，参数信息指明了应用程序期望采用哪种协议来创建套接字（所有的协议存在于一个协议链中，该协议链也包含了我们安装的LSP协议），我们需要在该函数中加载下层协议，并调用下层协议提供者的WSPStartup函数初始化，并修改传递给上层的函数表，将我们需要Hook的Winsock2函数指针的地址指向我们自己的函数。关键代码如下：</p>
+<p style="padding:0px;margin:10px auto;text-indent:0px;">如果测试程序只针对TCP数据包的转发，只需要实现WSPConnect函数就可以了，其余函数只需要直接调用g_NextProcTable中的默认函数就可以了。</p>
+<p style="padding:0px;margin:10px auto;text-indent:0px;">当用户应用程序调用connect函数或WSAConnect函数试图进行TCP连接时，将会先进入LSP的DLL中定义的WSPConnect函数，该函数进入后我们会判断应用程序试图连接的服务器IP和端口是不是我们待加速的服务器，如果是，会执行到socksProxy函数与代理服务器连接，并进行代理协商；如果不是待加速服务器，则执行g_NextProcTable中原有的连接函数，此时LSP就没有起作用，流程与不安装LSP前的流程是一致的。</p>
+<ol start="2" style="list-style-type:decimal;margin:0px 0px 1em 40px;padding:0px;">
+<li style="margin:0px;padding:0px;list-style:inherit;">安装LSP。</li>
+</ol>
+<p style="padding:0px;margin:10px auto;text-indent:0px;">要使我们上一步实现的转发协议生效，还必须将上一步生成的DLL安装到用户的系统上。只有安装了LSP，应用程序在调用ws2_32.dll中的函数时就会执行到我们的LSP的DLL中。一般来讲，生成的DLL需要放入Windows/System32目录下，一个原因是DLL路径不能有中文等特殊字符，另一方面，如果有其他程序误删了该DLL，会导致整个系统无法上网的现象，还可能导致整个系统崩溃。</p>
+<p style="padding:0px;margin:10px auto;text-indent:0px;">安装LSP首先需要安装协议链，需要将下层协议的信息拷贝过来，修改成我们需要的协议特点，并进行安装；然后对协议链进行排序，将我们的协议放在协议链的最上层，以保证ws2_32.dll调用到的第一个协议是我们的协议。</p>
+<p style="padding:0px;margin:10px auto;text-indent:0px;">这里需要注意的是，当安装了“迅游加速器”后，系统上原有安装的分层协议将会被移到最下层，导致原有的协议无效。因此，我们在开发自己的网游加速器时需要考虑该问题，并予以避免。</p>
+<p style="padding:0px;margin:10px auto;text-indent:0px;">5.4. 代理方式尚存在的问题</p>
+<ol style="list-style-type:decimal;margin:0px 0px 1em 40px;padding:0px;">
+<li style="margin:0px;padding:0px;list-style:inherit;">
+<p style="padding:0px;margin:10px auto;text-indent:0px;">不同网络加速器厂商的LSP安装程序相互之间可能会出现不兼容的情况，所以我们实现自己的加速LSP的时候，其他网络加速器厂商可能对我们安装的协议干扰，如迅游在安装和每次启动的时候会删除其他厂商的LSP协议；</p>
+</li>
+<li style="margin:0px;padding:0px;list-style:inherit;">
+<p style="padding:0px;margin:10px auto;text-indent:0px;">如前所述，LSP在Hook到connect函数后，在WSPConnect函数中会判断当前连接的服务器是否是需要被加速的目的地址。如何获得用户当前启动的游戏的IP和端口是多少是一个难点，因为一个游戏可能连接了多个服务器并开启了多个端口，而真正进行通讯的只是其中一个；另一方面，通过加速客户端启动的进行可能并不是真正的游戏进程（可能只是一个升级程序）。</p>
+</li>
+</ol>
+<p style="padding:0px;margin:10px auto;text-indent:0px;">迅游加速器可能收集了每款待加速游戏的服务器ip和端口，如果客户端发送网络包的目的地址是这些ip的时候，才会针对这些目的ip地址进行加速。本人有过测试：首先获取迅游加速器支持的某款游戏的某个服务器IP和端口，然后自己编写一个客户端不断给该服务器的端口发送数据，当该exe替换游戏的exe并启动后，从抓包结果来看，加速功能仍然有效；当从迅游列表中选择另一款游戏，启动exe时仍启动我们刚刚编写的exe时，加速功能就失效了。因此可以推测：迅游加速器并不是通过判断进程信息来获取目的服务器的（况且通过判断进程信息来获取目的服务器IP并不容易实现，如前所述），而是通过用户从列表中选择的游戏的名称。</p>
+<ol start="6" style="list-style-type:decimal;margin:0px 0px 1em 40px;padding:0px;">
+<li style="margin:0px;padding:0px;list-style:inherit;">总结<br style="margin:0px;padding:0px;"/>
+本文主要介绍了两种实现网游加速的可行的技术方案，其中提到的对其他网络游戏加速器的分析以及具体实现细节可能会有一些不完善之处。</li>
+</ol>
+<p style="padding:0px;margin:10px auto;text-indent:0px;">加速器实际实现过程中，还有关键一步就是判断当前用户的网络环境。比如用户当前连接的服务器是网通服务器，更智能的做法是在加速之前提前判断当前用户的网络情况，如果用户是网通用户，则不必启用加速功能，如果用户是电信或其他网络，则需要给用户提示可以启动加速功能，并由用户来决定是否启用加速。</p>
+<p style="padding:0px;margin:10px auto;text-indent:0px;">当前游戏如果采用了P2P通信，用户网络环境的判断仍然需要被考虑。如QQ飞车和CF等对战游戏，启动游戏后建立了P2P连接，是否需要对这些P2P连接进行加速呢？这种情况也需要考虑用户的当前网络环境：如果P2P双方处于同一个NAT下，则不需要加速，如果一方是电信用户，而另一方是网通用户，就需要加速功能。</p>
+<p style="padding:0px;margin:10px auto;text-indent:0px;">用户网络环境的判断（包括是否处于同一个NAT下的判断）是进行网络加速器的具体实现前需要解决的技术问题。</p>
+
+</div>
+<div style="margin:0px;padding:0px;clear:both;"></div>
+<div style="margin:0px;padding:0px;margin-top:20px;">
+
+
+<div style="margin:0px;padding:0px;margin-bottom:10px;">
+    分类: 
+            <a href="https://www.cnblogs.com/dewxin/category/2251017.html" target="_blank" style="margin:0px;padding:0px;color:rgb(0, 0, 0);text-decoration:none;margin-left:10px;">网络</a>
+</div>
+
+    <div style="margin:0px;padding:0px;">
+<div style="margin:0px;margin-bottom:20px;margin-top:10px;border:1px dashed rgb(192, 192, 192);font-size:12px;text-align:center;padding:10px 0px;width:100%;">
+        <a href="#" style="margin:0px;background:url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAAkCAYAAABIdFAMAAAAGXRFWHRTb2Z0d2FyZQBBZG9iZSBJbWFnZVJlYWR5ccllPAAAAHhJREFUeNo8zjsOxCAMBFB/KEAUFFR0Cbng3nQPw68ArZdAlOZppPFIBhH5EAB8b+Tlt9MYQ6i1BuqFaq1CKSVcxZ2Acs6406KUgpt5/LCKuVgz5BDCSb13ZO99ZOdcZGvt4mJjzMVKqcha68iIePB86GAiOv8CDADlIUQBs7MD3wAAAABJRU5ErkJggg%3D%3D) repeat-x;display:inline-block;font-weight:bold;cursor:pointer;margin-right:10px;border-radius:10px;box-shadow:rgba(0, 0, 0, 0.5) 0px 1px 3px;text-shadow:rgba(0, 0, 0, 0.25) 0px -1px 1px;vertical-align:middle;padding:3px 8px;text-decoration:none;background-color:rgb(45, 174, 191);border:none;color:rgb(255, 255, 255);">好文要顶</a>
+        <a href="#" style="margin:0px;background:url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAAkCAYAAABIdFAMAAAAGXRFWHRTb2Z0d2FyZQBBZG9iZSBJbWFnZVJlYWR5ccllPAAAAHhJREFUeNo8zjsOxCAMBFB/KEAUFFR0Cbng3nQPw68ArZdAlOZppPFIBhH5EAB8b+Tlt9MYQ6i1BuqFaq1CKSVcxZ2Acs6406KUgpt5/LCKuVgz5BDCSb13ZO99ZOdcZGvt4mJjzMVKqcha68iIePB86GAiOv8CDADlIUQBs7MD3wAAAABJRU5ErkJggg%3D%3D) repeat-x;display:inline-block;font-weight:bold;cursor:pointer;margin-right:10px;border-radius:10px;box-shadow:rgba(0, 0, 0, 0.5) 0px 1px 3px;text-shadow:rgba(0, 0, 0, 0.25) 0px -1px 1px;vertical-align:middle;padding:3px 8px;text-decoration:none;background-color:rgb(227, 49, 0);border:none;color:rgb(255, 255, 255);">关注我</a>
+    <a href="#" style="margin:0px;background:url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAAkCAYAAABIdFAMAAAAGXRFWHRTb2Z0d2FyZQBBZG9iZSBJbWFnZVJlYWR5ccllPAAAAHhJREFUeNo8zjsOxCAMBFB/KEAUFFR0Cbng3nQPw68ArZdAlOZppPFIBhH5EAB8b+Tlt9MYQ6i1BuqFaq1CKSVcxZ2Acs6406KUgpt5/LCKuVgz5BDCSb13ZO99ZOdcZGvt4mJjzMVKqcha68iIePB86GAiOv8CDADlIUQBs7MD3wAAAABJRU5ErkJggg%3D%3D) repeat-x;display:inline-block;font-weight:bold;cursor:pointer;margin-right:10px;border-radius:10px;box-shadow:rgba(0, 0, 0, 0.5) 0px 1px 3px;text-shadow:rgba(0, 0, 0, 0.25) 0px -1px 1px;vertical-align:middle;padding:3px 8px;text-decoration:none;background-color:rgb(255, 181, 21);border:none;color:rgb(255, 255, 255);">收藏该文</a>
+    <a href="#" style="margin:0px;background:url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAAkCAYAAABIdFAMAAAAGXRFWHRTb2Z0d2FyZQBBZG9iZSBJbWFnZVJlYWR5ccllPAAAAHhJREFUeNo8zjsOxCAMBFB/KEAUFFR0Cbng3nQPw68ArZdAlOZppPFIBhH5EAB8b+Tlt9MYQ6i1BuqFaq1CKSVcxZ2Acs6406KUgpt5/LCKuVgz5BDCSb13ZO99ZOdcZGvt4mJjzMVKqcha68iIePB86GAiOv8CDADlIUQBs7MD3wAAAABJRU5ErkJggg%3D%3D) repeat-x;display:inline-block;font-weight:bold;cursor:pointer;margin-right:10px;border-radius:10px;box-shadow:rgba(0, 0, 0, 0.5) 0px 1px 3px;text-shadow:rgba(0, 0, 0, 0.25) 0px -1px 1px;vertical-align:middle;padding:3px 8px;text-decoration:none;background-color:rgb(78, 171, 87);border:none;color:rgb(255, 255, 255);">微信分享</a>
+</div>
+<div style="margin:0px;padding:0px;float:left;width:280px;margin-top:0px;margin-bottom:10px;color:rgb(0, 0, 0);margin-left:0px;font-size:12px;">
+    <div style="margin:0px;padding:0px;float:left;line-height:18px;">
+            <a style="margin:0px;padding:0px;color:rgb(0, 0, 0);text-decoration:none;"><div class="media-placeholder">[图片/附件]</div></en-media></a>
+        <div style="margin:0px;padding:0px;float:left;line-height:18px;">
+            <a href="https://home.cnblogs.com/u/dewxin/" style="margin:0px;padding:0px;color:rgb(0, 0, 0);text-decoration:none;">dewxin</a>
+            <br style="margin:0px;padding:0px;"/>
+            <a href="https://home.cnblogs.com/u/dewxin/followers/" style="margin:0px;padding:0px;color:rgb(0, 0, 0);text-decoration:none;">粉丝 - <span style="margin:0px;padding:0px;">2</span></a>
+            <a href="https://home.cnblogs.com/u/dewxin/followees/" style="margin:0px;padding:0px;color:rgb(0, 0, 0);text-decoration:none;">关注 - <span style="margin:0px;padding:0px;">20</span></a><br style="margin:0px;padding:0px;"/>
+        </div>
+    </div>
+    <div style="margin:0px;padding:0px;clear:both;"></div>
+    <div style="margin:0px;padding:0px;"></div>
+    <div style="margin:0px;padding:0px;">
+                <a href="#" style="margin:0px;padding:0px;color:rgb(0, 0, 0);text-decoration:none;">+加关注</a>
+    </div>
+</div>
+<div style="margin:0px;padding:0px;float:right;margin-bottom:10px;margin-right:30px;font-size:12px;width:125px;text-align:center;margin-top:10px;">
+    <div style="margin:0px;padding:0px;float:left;width:46px;height:52px;background:url(https://assets.cnblogs.com/images/upup.gif) no-repeat;text-align:center;cursor:pointer;margin-top:2px;padding-top:5px;">
+        <span style="margin:0px;padding:0px;font-size:14px;color:rgb(7, 93, 179);font-family:Verdana;line-height:1.5em;">0</span>
+    </div>
+    <div style="margin:0px;padding:0px;float:right;margin-left:20px;width:46px;height:52px;background:url(https://assets.cnblogs.com/images/downdown.gif) no-repeat;text-align:center;cursor:pointer;margin-top:2px;padding-top:5px;">
+        <span style="margin:0px;padding:0px;font-size:14px;color:rgb(7, 93, 179);font-family:Verdana;line-height:1.5em;">0</span>
+    </div>
+    <div style="margin:0px;padding:0px;clear:both;"></div>
+    <div style="margin:0px;padding:0px;margin-top:5px;margin-left:0px;font-size:12px;color:rgb(128, 128, 128);">
+    </div>
+        <div style="margin:0px;padding:0px;"><a href="https://cnblogs.vip/" target="_blank" style="margin:0px;padding:0px;border-bottom:none;color:rgb(7, 93, 179);text-decoration:none;">升级成为会员</a></div>
+</div>
+
+
+</div>
+    <div style="margin:0px;padding:0px;clear:both;"></div>
+    <div style="padding:0px;line-height:200%;font-size:14px;margin:10px 0px;">
+
+    <a href="https://www.cnblogs.com/dewxin/p/17215406.html" style="margin:0px;padding:0px;color:rgb(51, 51, 51);text-decoration:none;">« </a> 上一篇：    <a href="https://www.cnblogs.com/dewxin/p/17215406.html" title="发布于 2023-03-16 23:02" style="margin:0px;padding:0px;text-decoration:none;color:rgb(51, 51, 51);">Unity 学习使用InputSystem接收键盘的输入</a>
+    <br style="margin:0px;padding:0px;"/>
+    <a href="https://www.cnblogs.com/dewxin/p/17238591.html" style="margin:0px;padding:0px;color:rgb(51, 51, 51);text-decoration:none;">» </a> 下一篇：    <a href="https://www.cnblogs.com/dewxin/p/17238591.html" title="发布于 2023-03-21 04:39" style="margin:0px;padding:0px;text-decoration:none;color:rgb(51, 51, 51);">Unity 中匀速旋转</a>
+
+</div>
+</div>
+            </div>
+            <div style="padding:0px;clear:both;float:none;text-align:left;margin:10px 0px;color:rgb(119, 119, 119);line-height:200%;font-size:14px;">posted @ 
+<span style="margin:0px;padding:0px;">2023-03-19 19:19</span> 
+<a href="https://www.cnblogs.com/dewxin" style="margin:0px;padding:0px;text-decoration:none;color:rgb(163, 163, 163);">dewxin</a> 
+阅读(<span style="margin:0px;padding:0px;">958</span>) 
+评论(<span style="margin:0px;padding:0px;">0</span>) 
+<a href="https://i.cnblogs.com/EditPosts.aspx?postid=17233985" rel="nofollow" style="margin:0px;padding:0px;text-decoration:none;color:rgb(163, 163, 163);">编辑</a> 
+<a href="#" style="margin:0px;padding:0px;text-decoration:none;color:rgb(163, 163, 163);">收藏</a> 
+<a href="#" style="margin:0px;padding:0px;text-decoration:none;color:rgb(163, 163, 163);">举报</a>
+</div>
+        </div></div></div></div></div></div></div></div></div></div></div></div>
+<a class="back-link" href="../articles.html">← 返回笔记列表</a>
+</body></html>

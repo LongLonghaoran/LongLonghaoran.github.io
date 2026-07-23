@@ -1,0 +1,1153 @@
+<!DOCTYPE html>
+<html lang="zh-CN" data-theme="light">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Interfaces and Networks - KubeVirt User-Guide — 技术笔记</title>
+<style>
+:root {
+  --bg: #ffffff;
+  --text: #1a1a1a;
+  --muted: #666;
+  --border: #e0e0e0;
+  --code-bg: #f5f5f5;
+  --link: #0066cc;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #1a1a1a;
+    --text: #e0e0e0;
+    --muted: #999;
+    --border: #333;
+    --code-bg: #2a2a2a;
+    --link: #66bbff;
+  }
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  line-height: 1.7;
+  color: var(--text);
+  background: var(--bg);
+  max-width: 860px;
+  margin: 0 auto;
+  padding: 2rem 1.5rem;
+}
+.note-header {
+  border-bottom: 2px solid var(--border);
+  padding-bottom: 1rem;
+  margin-bottom: 2rem;
+}
+.note-title {
+  font-size: 1.6rem;
+  font-weight: 700;
+  margin-bottom: 0.3rem;
+}
+.note-meta {
+  color: var(--muted);
+  font-size: 0.85rem;
+}
+.note-content {
+  font-size: 0.95rem;
+}
+.note-content h1 { font-size: 1.4rem; margin: 1.2rem 0 0.6rem; }
+.note-content h2 { font-size: 1.2rem; margin: 1rem 0 0.5rem; }
+.note-content h3 { font-size: 1.05rem; margin: 0.8rem 0 0.4rem; }
+.note-content p { margin: 0.5rem 0; }
+.note-content ul, .note-content ol { margin: 0.5rem 0 0.5rem 2rem; }
+.note-content li { margin: 0.2rem 0; }
+.note-content pre {
+  background: var(--code-bg);
+  padding: 1rem;
+  border-radius: 6px;
+  overflow-x: auto;
+  margin: 0.8rem 0;
+  font-size: 0.85rem;
+}
+.note-content code {
+  background: var(--code-bg);
+  padding: 0.1rem 0.3rem;
+  border-radius: 3px;
+  font-size: 0.88em;
+}
+.note-content pre code {
+  background: none;
+  padding: 0;
+}
+.note-content blockquote {
+  border-left: 3px solid var(--border);
+  padding-left: 1rem;
+  color: var(--muted);
+  margin: 0.8rem 0;
+}
+.note-content a { color: var(--link); }
+.note-content img {
+  max-width: 100%;
+  height: auto;
+  border-radius: 6px;
+  margin: 0.5rem 0;
+}
+.note-content table {
+  border-collapse: collapse;
+  width: 100%;
+  margin: 0.8rem 0;
+}
+.note-content th, .note-content td {
+  border: 1px solid var(--border);
+  padding: 0.5rem;
+}
+.note-content th { background: var(--code-bg); }
+.media-placeholder {
+  background: var(--code-bg);
+  padding: 1rem;
+  text-align: center;
+  color: var(--muted);
+  border-radius: 6px;
+  margin: 0.5rem 0;
+  font-size: 0.85rem;
+}
+.encrypt-placeholder {
+  background: #fff3cd;
+  padding: 0.5rem;
+  text-align: center;
+  color: #856404;
+  border-radius: 6px;
+  margin: 0.5rem 0;
+  font-size: 0.85rem;
+}
+.back-link {
+  display: inline-block;
+  margin-top: 2rem;
+  color: var(--link);
+  text-decoration: none;
+  font-size: 0.85rem;
+}
+</style>
+</head>
+<body>
+<div class="note-header">
+  <div class="note-title">Interfaces and Networks - KubeVirt User-Guide</div>
+  <div class="note-meta">笔记本：Kubevirt</div>
+</div>
+<div class="note-content">
+<div style="--en-clipped-content:article; --en-clipped-source-url:https://kubevirt.io/user-guide/virtual_machines/interfaces_and_networks/; --en-clipped-source-title:Interfaces and Networks - KubeVirt User-Guide;">
+<div><br/></div><div style="min-height: 17470px; font-size: 16px; display: block; min-width: 100%; position: relative;"> <div style="box-sizing:border-box;text-size-adjust:100%;overflow-x:hidden;font-size:16px;"><div style="box-sizing:border-box;overflow-x:hidden;font-family:Lato, proxima-nova, &quot;Helvetica Neue&quot;, Arial, sans-serif;font-weight:400;color:rgb(64, 64, 64);background:rgb(252, 252, 252);"><div style="box-sizing:border-box;"><div style="box-sizing:border-box;background:rgba(0, 0, 0, 0.05);"><div style="box-sizing:border-box;background:rgb(252, 252, 252);"><div style="box-sizing:border-box;"><div style="box-sizing:border-box;"><div style="box-sizing:border-box;">
+              
+                <h1 style="box-sizing:border-box;margin-top:0px;font-weight:700;font-family:&quot;Roboto Slab&quot;, ff-tisa-web-pro, Georgia, Arial, sans-serif;font-size:175%;margin-bottom:24px;">Interfaces and Networks<a href="https://kubevirt.io/user-guide/virtual_machines/interfaces_and_networks/#interfaces-and-networks" title="Permanent link" style="box-sizing:border-box;color:rgb(41, 128, 185);text-decoration:none;cursor:pointer;display:inline-block;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;line-height:1;text-rendering:auto;-webkit-font-smoothing:antialiased;opacity:0;margin-left:0.5em;font-family:FontAwesome;font-size:14px;">¶</a></h1>
+<p style="box-sizing:border-box;line-height:24px;font-size:16px;margin:0px 0px 24px;">Connecting a virtual machine to a network consists of two parts. First,
+networks are specified in <code style="box-sizing:border-box;max-width:100%;background:rgb(255, 255, 255);border:1px solid rgb(225, 228, 229);overflow-x:auto;font-size:75%;font-family:SFMono-Regular, Menlo, Monaco, Consolas, &quot;Liberation Mono&quot;, &quot;Courier New&quot;, Courier, monospace;overflow-wrap:break-word;white-space:pre-wrap;padding:2px 5px;color:rgb(231, 76, 60);">spec.networks</code>. Then, interfaces backed by
+the networks are added to the VM by specifying them in
+<code style="box-sizing:border-box;max-width:100%;background:rgb(255, 255, 255);border:1px solid rgb(225, 228, 229);overflow-x:auto;font-size:75%;font-family:SFMono-Regular, Menlo, Monaco, Consolas, &quot;Liberation Mono&quot;, &quot;Courier New&quot;, Courier, monospace;overflow-wrap:break-word;white-space:pre-wrap;padding:2px 5px;color:rgb(231, 76, 60);">spec.domain.devices.interfaces</code>.</p>
+<p style="box-sizing:border-box;line-height:24px;font-size:16px;margin:0px 0px 24px;">Each interface must have a corresponding network with the same name.</p>
+<p style="box-sizing:border-box;line-height:24px;font-size:16px;margin:0px 0px 24px;">An <code style="box-sizing:border-box;max-width:100%;background:rgb(255, 255, 255);border:1px solid rgb(225, 228, 229);overflow-x:auto;font-size:75%;font-family:SFMono-Regular, Menlo, Monaco, Consolas, &quot;Liberation Mono&quot;, &quot;Courier New&quot;, Courier, monospace;overflow-wrap:break-word;white-space:pre-wrap;padding:2px 5px;color:rgb(231, 76, 60);">interface</code> defines a virtual network interface of a virtual machine
+(also called a frontend). A <code style="box-sizing:border-box;max-width:100%;background:rgb(255, 255, 255);border:1px solid rgb(225, 228, 229);overflow-x:auto;font-size:75%;font-family:SFMono-Regular, Menlo, Monaco, Consolas, &quot;Liberation Mono&quot;, &quot;Courier New&quot;, Courier, monospace;overflow-wrap:break-word;white-space:pre-wrap;padding:2px 5px;color:rgb(231, 76, 60);">network</code> specifies the backend of an
+<code style="box-sizing:border-box;max-width:100%;background:rgb(255, 255, 255);border:1px solid rgb(225, 228, 229);overflow-x:auto;font-size:75%;font-family:SFMono-Regular, Menlo, Monaco, Consolas, &quot;Liberation Mono&quot;, &quot;Courier New&quot;, Courier, monospace;overflow-wrap:break-word;white-space:pre-wrap;padding:2px 5px;color:rgb(231, 76, 60);">interface</code> and declares which logical or physical device it is
+connected to (also called as backend).</p>
+<p style="box-sizing:border-box;line-height:24px;font-size:16px;margin:0px 0px 24px;">There are multiple ways of configuring an <code style="box-sizing:border-box;max-width:100%;background:rgb(255, 255, 255);border:1px solid rgb(225, 228, 229);overflow-x:auto;font-size:75%;font-family:SFMono-Regular, Menlo, Monaco, Consolas, &quot;Liberation Mono&quot;, &quot;Courier New&quot;, Courier, monospace;overflow-wrap:break-word;white-space:pre-wrap;padding:2px 5px;color:rgb(231, 76, 60);">interface</code> as well as a
+<code style="box-sizing:border-box;max-width:100%;background:rgb(255, 255, 255);border:1px solid rgb(225, 228, 229);overflow-x:auto;font-size:75%;font-family:SFMono-Regular, Menlo, Monaco, Consolas, &quot;Liberation Mono&quot;, &quot;Courier New&quot;, Courier, monospace;overflow-wrap:break-word;white-space:pre-wrap;padding:2px 5px;color:rgb(231, 76, 60);">network</code>.</p>
+<p style="box-sizing:border-box;line-height:24px;font-size:16px;margin:0px 0px 24px;">All possible configuration options are available in the <a href="https://kubevirt.io/api-reference/master/definitions.html#_v1_interface" style="box-sizing:border-box;color:rgb(41, 128, 185);text-decoration:none;cursor:pointer;">Interface API
+Reference</a>
+and <a href="https://kubevirt.io/api-reference/master/definitions.html#_v1_network" style="box-sizing:border-box;color:rgb(41, 128, 185);text-decoration:none;cursor:pointer;">Network API
+Reference</a>.</p>
+<h2 style="box-sizing:border-box;margin-top:0px;font-weight:700;font-family:&quot;Roboto Slab&quot;, ff-tisa-web-pro, Georgia, Arial, sans-serif;font-size:150%;margin-bottom:24px;">Backend<a href="https://kubevirt.io/user-guide/virtual_machines/interfaces_and_networks/#backend" title="Permanent link" style="box-sizing:border-box;color:rgb(41, 128, 185);text-decoration:none;cursor:pointer;display:inline-block;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;line-height:1;text-rendering:auto;-webkit-font-smoothing:antialiased;opacity:0;margin-left:0.5em;font-family:FontAwesome;font-size:14px;">¶</a></h2>
+<p style="box-sizing:border-box;line-height:24px;font-size:16px;margin:0px 0px 24px;">Network backends are configured in <code style="box-sizing:border-box;max-width:100%;background:rgb(255, 255, 255);border:1px solid rgb(225, 228, 229);overflow-x:auto;font-size:75%;font-family:SFMono-Regular, Menlo, Monaco, Consolas, &quot;Liberation Mono&quot;, &quot;Courier New&quot;, Courier, monospace;overflow-wrap:break-word;white-space:pre-wrap;padding:2px 5px;color:rgb(231, 76, 60);">spec.networks</code>. A network must have
+a unique name. Additional fields declare which logical or physical
+device the network relates to.</p>
+<p style="box-sizing:border-box;line-height:24px;font-size:16px;margin:0px 0px 24px;">Each network should declare its type by defining one of the following
+fields:</p>
+<div style="box-sizing:border-box;margin-bottom:24px;max-width:100%;overflow:auto;"><table style="font-size:inherit;font-weight:inherit;font-style:inherit;font-variant:inherit;box-sizing:border-box;empty-cells:show;border-collapse:collapse;border-spacing:0px;width:100%;overflow:auto;display:block;border:none;margin-bottom:0px;">
+<colgroup style="box-sizing:border-box;">
+<col style="box-sizing:border-box;width:50%;"/>
+<col style="box-sizing:border-box;width:50%;"/>
+</colgroup>
+<thead style="box-sizing:border-box;color:rgb(0, 0, 0);text-align:left;vertical-align:bottom;white-space:nowrap;">
+<tr style="box-sizing:border-box;">
+<th style="box-sizing:border-box;border-collapse:collapse;white-space:nowrap;font-size:90%;margin:0px;overflow:visible;padding:8px 16px;font-weight:700;border-bottom:2px solid rgb(225, 228, 229);border-left-width:0px;border:1px solid rgb(225, 228, 229);">Type</th>
+<th style="box-sizing:border-box;border-collapse:collapse;white-space:nowrap;font-size:90%;margin:0px;overflow:visible;padding:8px 16px;font-weight:700;border-bottom:2px solid rgb(225, 228, 229);border:1px solid rgb(225, 228, 229);">Description</th>
+</tr>
+</thead>
+<tbody style="box-sizing:border-box;">
+<tr style="box-sizing:border-box;">
+<td style="box-sizing:border-box;border-collapse:collapse;white-space:nowrap;font-size:90%;margin:0px;overflow:visible;padding:8px 16px;vertical-align:middle;border-bottom:1px solid rgb(225, 228, 229);border-left:1px solid rgb(225, 228, 229);border-left-width:0px;background-color:rgb(243, 246, 246);border:1px solid rgb(225, 228, 229);"><p style="box-sizing:border-box;margin:0px 0px 24px;line-height:16px;margin-bottom:0px;font-size:14.4px;"><code style="box-sizing:border-box;max-width:100%;background:rgb(255, 255, 255);border:1px solid rgb(225, 228, 229);overflow-x:auto;font-size:75%;font-family:SFMono-Regular, Menlo, Monaco, Consolas, &quot;Liberation Mono&quot;, &quot;Courier New&quot;, Courier, monospace;overflow-wrap:break-word;white-space:pre-wrap;padding:2px 5px;color:rgb(231, 76, 60);">pod</code></p></td>
+<td style="box-sizing:border-box;border-collapse:collapse;white-space:nowrap;font-size:90%;margin:0px;overflow:visible;padding:8px 16px;vertical-align:middle;border-bottom:1px solid rgb(225, 228, 229);border-left:1px solid rgb(225, 228, 229);background-color:rgb(243, 246, 246);border:1px solid rgb(225, 228, 229);"><p style="box-sizing:border-box;margin:0px 0px 24px;line-height:16px;margin-bottom:0px;font-size:14.4px;">Default Kubernetes network</p></td>
+</tr>
+<tr style="box-sizing:border-box;">
+<td style="box-sizing:border-box;border-collapse:collapse;white-space:nowrap;font-size:90%;margin:0px;overflow:visible;padding:8px 16px;background-color:transparent;vertical-align:middle;border-bottom:1px solid rgb(225, 228, 229);border-left:1px solid rgb(225, 228, 229);border-left-width:0px;border-bottom-width:0px;border:1px solid rgb(225, 228, 229);"><p style="box-sizing:border-box;margin:0px 0px 24px;line-height:16px;margin-bottom:0px;font-size:14.4px;"><code style="box-sizing:border-box;max-width:100%;background:rgb(255, 255, 255);border:1px solid rgb(225, 228, 229);overflow-x:auto;font-size:75%;font-family:SFMono-Regular, Menlo, Monaco, Consolas, &quot;Liberation Mono&quot;, &quot;Courier New&quot;, Courier, monospace;overflow-wrap:break-word;white-space:pre-wrap;padding:2px 5px;color:rgb(231, 76, 60);">multus</code></p></td>
+<td style="box-sizing:border-box;border-collapse:collapse;white-space:nowrap;font-size:90%;margin:0px;overflow:visible;padding:8px 16px;background-color:transparent;vertical-align:middle;border-bottom:1px solid rgb(225, 228, 229);border-left:1px solid rgb(225, 228, 229);border-bottom-width:0px;border:1px solid rgb(225, 228, 229);"><p style="box-sizing:border-box;margin:0px 0px 24px;line-height:16px;margin-bottom:0px;font-size:14.4px;">Secondary network provided using Multus</p></td>
+</tr>
+</tbody>
+</table></div>
+
+<h3 style="box-sizing:border-box;margin-top:0px;font-weight:700;font-family:&quot;Roboto Slab&quot;, ff-tisa-web-pro, Georgia, Arial, sans-serif;font-size:125%;margin-bottom:24px;">pod<a href="https://kubevirt.io/user-guide/virtual_machines/interfaces_and_networks/#pod" title="Permanent link" style="box-sizing:border-box;color:rgb(41, 128, 185);text-decoration:none;cursor:pointer;display:inline-block;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;line-height:1;text-rendering:auto;-webkit-font-smoothing:antialiased;opacity:0;margin-left:0.5em;font-family:FontAwesome;font-size:14px;">¶</a></h3>
+<p style="box-sizing:border-box;line-height:24px;font-size:16px;margin:0px 0px 24px;">A <code style="box-sizing:border-box;max-width:100%;background:rgb(255, 255, 255);border:1px solid rgb(225, 228, 229);overflow-x:auto;font-size:75%;font-family:SFMono-Regular, Menlo, Monaco, Consolas, &quot;Liberation Mono&quot;, &quot;Courier New&quot;, Courier, monospace;overflow-wrap:break-word;white-space:pre-wrap;padding:2px 5px;color:rgb(231, 76, 60);">pod</code> network represents the default pod <code style="box-sizing:border-box;max-width:100%;background:rgb(255, 255, 255);border:1px solid rgb(225, 228, 229);overflow-x:auto;font-size:75%;font-family:SFMono-Regular, Menlo, Monaco, Consolas, &quot;Liberation Mono&quot;, &quot;Courier New&quot;, Courier, monospace;overflow-wrap:break-word;white-space:pre-wrap;padding:2px 5px;color:rgb(231, 76, 60);">eth0</code> interface configured
+by cluster network solution that is present in each pod.</p>
+<pre style="box-sizing:border-box;font-size:1em;white-space:pre;font-family:SFMono-Regular, Menlo, Monaco, Consolas, &quot;Liberation Mono&quot;, &quot;Courier New&quot;, Courier, monospace;"><code style="box-sizing:border-box;max-width:100%;border:1px solid rgb(225, 228, 229);font-family:SFMono-Regular, Menlo, Monaco, Consolas, &quot;Liberation Mono&quot;, &quot;Courier New&quot;, Courier, monospace;font-size:12px;white-space:pre;overflow-wrap:normal;padding:0.5em;overflow-x:auto;display:block;background:rgb(248, 248, 248);color:rgb(0, 0, 0);"><span style="box-sizing:border-box;">kind:</span> <span style="box-sizing:border-box;color:rgb(221, 17, 68);">VM</span>
+<span style="box-sizing:border-box;">spec:</span>
+  <span style="box-sizing:border-box;">domain:</span>
+    <span style="box-sizing:border-box;">devices:</span>
+      <span style="box-sizing:border-box;">interfaces:</span>
+        <span style="box-sizing:border-box;color:rgb(153, 0, 115);">-</span> <span style="box-sizing:border-box;">name:</span> <span style="box-sizing:border-box;color:rgb(221, 17, 68);">default</span>
+          <span style="box-sizing:border-box;">masquerade:</span> {}
+  <span style="box-sizing:border-box;">networks:</span>
+  <span style="box-sizing:border-box;color:rgb(153, 0, 115);">-</span> <span style="box-sizing:border-box;">name:</span> <span style="box-sizing:border-box;color:rgb(221, 17, 68);">default</span>
+    <span style="box-sizing:border-box;">pod:</span> {} <span style="box-sizing:border-box;color:rgb(153, 153, 136);font-style:italic;"># Stock pod network</span>
+</code></pre>
+<h3 style="box-sizing:border-box;margin-top:0px;font-weight:700;font-family:&quot;Roboto Slab&quot;, ff-tisa-web-pro, Georgia, Arial, sans-serif;font-size:125%;margin-bottom:24px;">multus<a href="https://kubevirt.io/user-guide/virtual_machines/interfaces_and_networks/#multus" title="Permanent link" style="box-sizing:border-box;color:rgb(41, 128, 185);text-decoration:none;cursor:pointer;display:inline-block;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;line-height:1;text-rendering:auto;-webkit-font-smoothing:antialiased;opacity:0;margin-left:0.5em;font-family:FontAwesome;font-size:14px;">¶</a></h3>
+<p style="box-sizing:border-box;line-height:24px;font-size:16px;margin:0px 0px 24px;">It is also possible to connect VMIs to secondary networks using
+<a href="https://github.com/intel/multus-cni" style="box-sizing:border-box;color:rgb(41, 128, 185);text-decoration:none;cursor:pointer;">Multus</a>. This assumes that multus
+is installed across your cluster and a corresponding
+<code style="box-sizing:border-box;max-width:100%;background:rgb(255, 255, 255);border:1px solid rgb(225, 228, 229);overflow-x:auto;font-size:75%;font-family:SFMono-Regular, Menlo, Monaco, Consolas, &quot;Liberation Mono&quot;, &quot;Courier New&quot;, Courier, monospace;overflow-wrap:break-word;white-space:pre-wrap;padding:2px 5px;color:rgb(231, 76, 60);">NetworkAttachmentDefinition</code> CRD was created.</p>
+<p style="box-sizing:border-box;line-height:24px;font-size:16px;margin:0px 0px 24px;">The following example defines a network which uses the <a href="https://github.com/kubevirt/ovs-cni" style="box-sizing:border-box;color:rgb(41, 128, 185);text-decoration:none;cursor:pointer;">ovs-cni
+plugin</a>, which will connect the VMI
+to Open vSwitch's bridge <code style="box-sizing:border-box;max-width:100%;background:rgb(255, 255, 255);border:1px solid rgb(225, 228, 229);overflow-x:auto;font-size:75%;font-family:SFMono-Regular, Menlo, Monaco, Consolas, &quot;Liberation Mono&quot;, &quot;Courier New&quot;, Courier, monospace;overflow-wrap:break-word;white-space:pre-wrap;padding:2px 5px;color:rgb(231, 76, 60);">br1</code> and VLAN 100. Other CNI plugins such as
+ptp, bridge, macvlan or Flannel might be used as well. For their
+installation and usage refer to the respective project documentation.</p>
+<p style="box-sizing:border-box;line-height:24px;font-size:16px;margin:0px 0px 24px;">First the <code style="box-sizing:border-box;max-width:100%;background:rgb(255, 255, 255);border:1px solid rgb(225, 228, 229);overflow-x:auto;font-size:75%;font-family:SFMono-Regular, Menlo, Monaco, Consolas, &quot;Liberation Mono&quot;, &quot;Courier New&quot;, Courier, monospace;overflow-wrap:break-word;white-space:pre-wrap;padding:2px 5px;color:rgb(231, 76, 60);">NetworkAttachmentDefinition</code> needs to be created. That is
+usually done by an administrator. Users can then reference the
+definition.</p>
+<pre style="box-sizing:border-box;font-size:1em;white-space:pre;font-family:SFMono-Regular, Menlo, Monaco, Consolas, &quot;Liberation Mono&quot;, &quot;Courier New&quot;, Courier, monospace;"><code style="box-sizing:border-box;max-width:100%;border:1px solid rgb(225, 228, 229);font-family:SFMono-Regular, Menlo, Monaco, Consolas, &quot;Liberation Mono&quot;, &quot;Courier New&quot;, Courier, monospace;font-size:12px;white-space:pre;overflow-wrap:normal;padding:0.5em;overflow-x:auto;display:block;background:rgb(248, 248, 248);color:rgb(0, 0, 0);"><span style="box-sizing:border-box;">apiVersion:</span> <span style="box-sizing:border-box;color:rgb(221, 17, 68);">"k8s.cni.cncf.io/v1"</span>
+<span style="box-sizing:border-box;">kind:</span> <span style="box-sizing:border-box;color:rgb(221, 17, 68);">NetworkAttachmentDefinition</span>
+<span style="box-sizing:border-box;">metadata:</span>
+  <span style="box-sizing:border-box;">name:</span> <span style="box-sizing:border-box;color:rgb(221, 17, 68);">ovs-vlan-100</span>
+<span style="box-sizing:border-box;">spec:</span>
+  <span style="box-sizing:border-box;">config:</span> <span style="box-sizing:border-box;color:rgb(221, 17, 68);">'{
+      "cniVersion": "0.3.1",
+      "type": "ovs",
+      "bridge": "br1",
+      "vlan": 100
+    }'</span>
+</code></pre>
+<p style="box-sizing:border-box;line-height:24px;font-size:16px;margin:0px 0px 24px;">With following definition, the VMI will be connected to the default pod
+network and to the secondary Open vSwitch network.</p>
+<pre style="box-sizing:border-box;font-size:1em;white-space:pre;font-family:SFMono-Regular, Menlo, Monaco, Consolas, &quot;Liberation Mono&quot;, &quot;Courier New&quot;, Courier, monospace;"><code style="box-sizing:border-box;max-width:100%;border:1px solid rgb(225, 228, 229);font-family:SFMono-Regular, Menlo, Monaco, Consolas, &quot;Liberation Mono&quot;, &quot;Courier New&quot;, Courier, monospace;font-size:12px;white-space:pre;overflow-wrap:normal;padding:0.5em;overflow-x:auto;display:block;background:rgb(248, 248, 248);color:rgb(0, 0, 0);"><span style="box-sizing:border-box;">kind:</span> <span style="box-sizing:border-box;color:rgb(221, 17, 68);">VM</span>
+<span style="box-sizing:border-box;">spec:</span>
+  <span style="box-sizing:border-box;">domain:</span>
+    <span style="box-sizing:border-box;">devices:</span>
+      <span style="box-sizing:border-box;">interfaces:</span>
+        <span style="box-sizing:border-box;color:rgb(153, 0, 115);">-</span> <span style="box-sizing:border-box;">name:</span> <span style="box-sizing:border-box;color:rgb(221, 17, 68);">default</span>
+          <span style="box-sizing:border-box;">masquerade:</span> {}
+          <span style="box-sizing:border-box;">bootOrder:</span> <span style="box-sizing:border-box;color:teal;">1</span>   <span style="box-sizing:border-box;color:rgb(153, 153, 136);font-style:italic;"># attempt to boot from an external tftp server</span>
+          <span style="box-sizing:border-box;">dhcpOptions:</span>
+            <span style="box-sizing:border-box;">bootFileName:</span> <span style="box-sizing:border-box;color:rgb(221, 17, 68);">default_image.bin</span>
+            <span style="box-sizing:border-box;">tftpServerName:</span> <span style="box-sizing:border-box;color:rgb(221, 17, 68);">tftp.example.com</span>
+        <span style="box-sizing:border-box;color:rgb(153, 0, 115);">-</span> <span style="box-sizing:border-box;">name:</span> <span style="box-sizing:border-box;color:rgb(221, 17, 68);">ovs-net</span>
+          <span style="box-sizing:border-box;">bridge:</span> {}
+          <span style="box-sizing:border-box;">bootOrder:</span> <span style="box-sizing:border-box;color:teal;">2</span>   <span style="box-sizing:border-box;color:rgb(153, 153, 136);font-style:italic;"># if first attempt failed, try to PXE-boot from this L2 networks</span>
+  <span style="box-sizing:border-box;">networks:</span>
+  <span style="box-sizing:border-box;color:rgb(153, 0, 115);">-</span> <span style="box-sizing:border-box;">name:</span> <span style="box-sizing:border-box;color:rgb(221, 17, 68);">default</span>
+    <span style="box-sizing:border-box;">pod:</span> {} <span style="box-sizing:border-box;color:rgb(153, 153, 136);font-style:italic;"># Stock pod network</span>
+  <span style="box-sizing:border-box;color:rgb(153, 0, 115);">-</span> <span style="box-sizing:border-box;">name:</span> <span style="box-sizing:border-box;color:rgb(221, 17, 68);">ovs-net</span>
+    <span style="box-sizing:border-box;">multus:</span> <span style="box-sizing:border-box;color:rgb(153, 153, 136);font-style:italic;"># Secondary multus network</span>
+      <span style="box-sizing:border-box;">networkName:</span> <span style="box-sizing:border-box;color:rgb(221, 17, 68);">ovs-vlan-100</span>
+</code></pre>
+<p style="box-sizing:border-box;line-height:24px;font-size:16px;margin:0px 0px 24px;">It is also possible to define a multus network as the default pod
+network with <a href="https://github.com/intel/multus-cni" style="box-sizing:border-box;color:rgb(41, 128, 185);text-decoration:none;cursor:pointer;">Multus</a>. A version of
+multus after this <a href="https://github.com/intel/multus-cni/pull/174" style="box-sizing:border-box;color:rgb(41, 128, 185);text-decoration:none;cursor:pointer;">Pull
+Request</a> is required
+(currently master).</p>
+<p style="box-sizing:border-box;line-height:24px;font-size:16px;margin:0px 0px 24px;"><strong style="box-sizing:border-box;font-weight:700;">Note the following:</strong></p>
+<ul style="box-sizing:border-box;margin:0px;padding:0px;line-height:24px;margin-bottom:24px;list-style:disc;">
+<li style="box-sizing:border-box;margin-left:24px;list-style:disc;">
+<p style="box-sizing:border-box;line-height:24px;font-size:16px;margin:0px 0px 24px;margin-top:0px;margin-bottom:0px;">A multus default network and a pod network type are mutually
+    exclusive.</p>
+</li>
+<li style="box-sizing:border-box;margin-left:24px;list-style:disc;">
+<p style="box-sizing:border-box;line-height:24px;font-size:16px;margin:0px 0px 24px;margin-top:0px;margin-bottom:0px;">The virt-launcher pod that starts the VMI will <strong style="box-sizing:border-box;font-weight:700;">not</strong> have the pod
+    network configured.</p>
+</li>
+<li style="box-sizing:border-box;margin-left:24px;list-style:disc;">
+<p style="box-sizing:border-box;line-height:24px;font-size:16px;margin:0px 0px 24px;margin-top:0px;margin-bottom:0px;">The multus delegate chosen as default <strong style="box-sizing:border-box;font-weight:700;">must</strong> return at least one
+    IP address.</p>
+</li>
+</ul>
+<p style="box-sizing:border-box;line-height:24px;font-size:16px;margin:0px 0px 24px;">Create a <code style="box-sizing:border-box;max-width:100%;background:rgb(255, 255, 255);border:1px solid rgb(225, 228, 229);overflow-x:auto;font-size:75%;font-family:SFMono-Regular, Menlo, Monaco, Consolas, &quot;Liberation Mono&quot;, &quot;Courier New&quot;, Courier, monospace;overflow-wrap:break-word;white-space:pre-wrap;padding:2px 5px;color:rgb(231, 76, 60);">NetworkAttachmentDefinition</code> with IPAM.</p>
+<pre style="box-sizing:border-box;font-size:1em;white-space:pre;font-family:SFMono-Regular, Menlo, Monaco, Consolas, &quot;Liberation Mono&quot;, &quot;Courier New&quot;, Courier, monospace;"><code style="box-sizing:border-box;max-width:100%;border:1px solid rgb(225, 228, 229);font-family:SFMono-Regular, Menlo, Monaco, Consolas, &quot;Liberation Mono&quot;, &quot;Courier New&quot;, Courier, monospace;font-size:12px;white-space:pre;overflow-wrap:normal;padding:0.5em;overflow-x:auto;display:block;background:rgb(248, 248, 248);color:rgb(0, 0, 0);"><span style="box-sizing:border-box;">apiVersion:</span> <span style="box-sizing:border-box;color:rgb(221, 17, 68);">"k8s.cni.cncf.io/v1"</span>
+<span style="box-sizing:border-box;">kind:</span> <span style="box-sizing:border-box;color:rgb(221, 17, 68);">NetworkAttachmentDefinition</span>
+<span style="box-sizing:border-box;">metadata:</span>
+  <span style="box-sizing:border-box;">name:</span> <span style="box-sizing:border-box;color:rgb(221, 17, 68);">macvlan-test</span>
+<span style="box-sizing:border-box;">spec:</span>
+  <span style="box-sizing:border-box;">config:</span> <span style="box-sizing:border-box;color:rgb(221, 17, 68);">'{
+      "type": "macvlan",
+      "master": "eth0",
+      "mode": "bridge",
+      "ipam": {
+        "type": "host-local",
+        "subnet": "10.250.250.0/24"
+      }
+    }'</span>
+</code></pre>
+<p style="box-sizing:border-box;line-height:24px;font-size:16px;margin:0px 0px 24px;">Define a VMI with a <a href="https://github.com/intel/multus-cni" style="box-sizing:border-box;color:rgb(41, 128, 185);text-decoration:none;cursor:pointer;">Multus</a>
+network as the default.</p>
+<pre style="box-sizing:border-box;font-size:1em;white-space:pre;font-family:SFMono-Regular, Menlo, Monaco, Consolas, &quot;Liberation Mono&quot;, &quot;Courier New&quot;, Courier, monospace;"><code style="box-sizing:border-box;max-width:100%;border:1px solid rgb(225, 228, 229);font-family:SFMono-Regular, Menlo, Monaco, Consolas, &quot;Liberation Mono&quot;, &quot;Courier New&quot;, Courier, monospace;font-size:12px;white-space:pre;overflow-wrap:normal;padding:0.5em;overflow-x:auto;display:block;background:rgb(248, 248, 248);color:rgb(0, 0, 0);"><span style="box-sizing:border-box;">kind:</span> <span style="box-sizing:border-box;color:rgb(221, 17, 68);">VM</span>
+<span style="box-sizing:border-box;">spec:</span>
+  <span style="box-sizing:border-box;">domain:</span>
+    <span style="box-sizing:border-box;">devices:</span>
+      <span style="box-sizing:border-box;">interfaces:</span>
+        <span style="box-sizing:border-box;color:rgb(153, 0, 115);">-</span> <span style="box-sizing:border-box;">name:</span> <span style="box-sizing:border-box;color:rgb(221, 17, 68);">test1</span>
+          <span style="box-sizing:border-box;">bridge:</span> {}
+  <span style="box-sizing:border-box;">networks:</span>
+  <span style="box-sizing:border-box;color:rgb(153, 0, 115);">-</span> <span style="box-sizing:border-box;">name:</span> <span style="box-sizing:border-box;color:rgb(221, 17, 68);">test1</span>
+    <span style="box-sizing:border-box;">multus:</span> <span style="box-sizing:border-box;color:rgb(153, 153, 136);font-style:italic;"># Multus network as default</span>
+      <span style="box-sizing:border-box;">default:</span> <span style="box-sizing:border-box;color:teal;">true</span>
+      <span style="box-sizing:border-box;">networkName:</span> <span style="box-sizing:border-box;color:rgb(221, 17, 68);">macvlan-test</span>
+</code></pre>
+<h4 style="box-sizing:border-box;margin-top:0px;font-weight:700;font-family:&quot;Roboto Slab&quot;, ff-tisa-web-pro, Georgia, Arial, sans-serif;font-size:115%;margin-bottom:24px;">Invalid CNIs for secondary networks<a href="https://kubevirt.io/user-guide/virtual_machines/interfaces_and_networks/#invalid-cnis-for-secondary-networks" title="Permanent link" style="box-sizing:border-box;color:rgb(41, 128, 185);text-decoration:none;cursor:pointer;display:inline-block;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;line-height:1;text-rendering:auto;-webkit-font-smoothing:antialiased;opacity:0;margin-left:0.5em;font-family:FontAwesome;font-size:14px;">¶</a></h4>
+<p style="box-sizing:border-box;line-height:24px;font-size:16px;margin:0px 0px 24px;">The following list of CNIs is known <strong style="box-sizing:border-box;font-weight:700;">not</strong> to work for bridge interfaces -
+which are most common for secondary interfaces.</p>
+<ul style="box-sizing:border-box;margin:0px;padding:0px;line-height:24px;margin-bottom:24px;list-style:disc;">
+<li style="box-sizing:border-box;margin-left:24px;list-style:disc;">
+<p style="box-sizing:border-box;line-height:24px;font-size:16px;margin:0px 0px 24px;margin-top:0px;margin-bottom:0px;"><a href="https://www.cni.dev/plugins/current/main/macvlan/" style="box-sizing:border-box;color:rgb(41, 128, 185);text-decoration:none;cursor:pointer;">macvlan</a></p>
+</li>
+<li style="box-sizing:border-box;margin-left:24px;list-style:disc;">
+<p style="box-sizing:border-box;line-height:24px;font-size:16px;margin:0px 0px 24px;margin-top:0px;margin-bottom:0px;"><a href="https://www.cni.dev/plugins/current/main/ipvlan/" style="box-sizing:border-box;color:rgb(41, 128, 185);text-decoration:none;cursor:pointer;">ipvlan</a></p>
+</li>
+</ul>
+<p style="box-sizing:border-box;line-height:24px;font-size:16px;margin:0px 0px 24px;">The reason is similar: the bridge interface type moves the pod interface MAC
+address to the VM, leaving the pod interface with a different address. The
+aforementioned CNIs require the pod interface to have the original MAC address.</p>
+<p style="box-sizing:border-box;line-height:24px;font-size:16px;margin:0px 0px 24px;">These issues are tracked individually:</p>
+<ul style="box-sizing:border-box;margin:0px;padding:0px;line-height:24px;margin-bottom:24px;list-style:disc;">
+<li style="box-sizing:border-box;margin-left:24px;list-style:disc;">
+<p style="box-sizing:border-box;line-height:24px;font-size:16px;margin:0px 0px 24px;margin-top:0px;margin-bottom:0px;"><a href="https://github.com/kubevirt/kubevirt/issues/5483" style="box-sizing:border-box;color:rgb(41, 128, 185);text-decoration:none;cursor:pointer;">macvlan</a></p>
+</li>
+<li style="box-sizing:border-box;margin-left:24px;list-style:disc;">
+<p style="box-sizing:border-box;line-height:24px;font-size:16px;margin:0px 0px 24px;margin-top:0px;margin-bottom:0px;"><a href="https://github.com/kubevirt/kubevirt/issues/7001" style="box-sizing:border-box;color:rgb(41, 128, 185);text-decoration:none;cursor:pointer;">ipvlan</a></p>
+</li>
+</ul>
+<p style="box-sizing:border-box;line-height:24px;font-size:16px;margin:0px 0px 24px;">Feel free to discuss and / or propose fixes for them; we'd like to have
+these plugins as valid options on our ecosystem.</p>
+<h2 style="box-sizing:border-box;margin-top:0px;font-weight:700;font-family:&quot;Roboto Slab&quot;, ff-tisa-web-pro, Georgia, Arial, sans-serif;font-size:150%;margin-bottom:24px;">Frontend<a href="https://kubevirt.io/user-guide/virtual_machines/interfaces_and_networks/#frontend" title="Permanent link" style="box-sizing:border-box;color:rgb(41, 128, 185);text-decoration:none;cursor:pointer;display:inline-block;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;line-height:1;text-rendering:auto;-webkit-font-smoothing:antialiased;opacity:0;margin-left:0.5em;font-family:FontAwesome;font-size:14px;">¶</a></h2>
+<p style="box-sizing:border-box;line-height:24px;font-size:16px;margin:0px 0px 24px;">Network interfaces are configured in <code style="box-sizing:border-box;max-width:100%;background:rgb(255, 255, 255);border:1px solid rgb(225, 228, 229);overflow-x:auto;font-size:75%;font-family:SFMono-Regular, Menlo, Monaco, Consolas, &quot;Liberation Mono&quot;, &quot;Courier New&quot;, Courier, monospace;overflow-wrap:break-word;white-space:pre-wrap;padding:2px 5px;color:rgb(231, 76, 60);">spec.domain.devices.interfaces</code>.
+They describe properties of virtual interfaces as "seen" inside guest
+instances. The same network backend may be connected to a virtual
+machine in multiple different ways, each with their own connectivity
+guarantees and characteristics.</p>
+<p style="box-sizing:border-box;line-height:24px;font-size:16px;margin:0px 0px 24px;">Each interface should declare its type by defining on of the following
+fields:</p>
+<div style="box-sizing:border-box;margin-bottom:24px;max-width:100%;overflow:auto;"><table style="font-size:inherit;font-weight:inherit;font-style:inherit;font-variant:inherit;box-sizing:border-box;empty-cells:show;border-collapse:collapse;border-spacing:0px;width:100%;overflow:auto;display:block;border:none;margin-bottom:0px;">
+<colgroup style="box-sizing:border-box;">
+<col style="box-sizing:border-box;width:50%;"/>
+<col style="box-sizing:border-box;width:50%;"/>
+</colgroup>
+<thead style="box-sizing:border-box;color:rgb(0, 0, 0);text-align:left;vertical-align:bottom;white-space:nowrap;">
+<tr style="box-sizing:border-box;">
+<th style="box-sizing:border-box;border-collapse:collapse;white-space:nowrap;font-size:90%;margin:0px;overflow:visible;padding:8px 16px;font-weight:700;border-bottom:2px solid rgb(225, 228, 229);border-left-width:0px;border:1px solid rgb(225, 228, 229);">Type</th>
+<th style="box-sizing:border-box;border-collapse:collapse;white-space:nowrap;font-size:90%;margin:0px;overflow:visible;padding:8px 16px;font-weight:700;border-bottom:2px solid rgb(225, 228, 229);border:1px solid rgb(225, 228, 229);">Description</th>
+</tr>
+</thead>
+<tbody style="box-sizing:border-box;">
+<tr style="box-sizing:border-box;">
+<td style="box-sizing:border-box;border-collapse:collapse;white-space:nowrap;font-size:90%;margin:0px;overflow:visible;padding:8px 16px;vertical-align:middle;border-bottom:1px solid rgb(225, 228, 229);border-left:1px solid rgb(225, 228, 229);border-left-width:0px;background-color:rgb(243, 246, 246);border:1px solid rgb(225, 228, 229);"><p style="box-sizing:border-box;margin:0px 0px 24px;line-height:16px;margin-bottom:0px;font-size:14.4px;"><code style="box-sizing:border-box;max-width:100%;background:rgb(255, 255, 255);border:1px solid rgb(225, 228, 229);overflow-x:auto;font-size:75%;font-family:SFMono-Regular, Menlo, Monaco, Consolas, &quot;Liberation Mono&quot;, &quot;Courier New&quot;, Courier, monospace;overflow-wrap:break-word;white-space:pre-wrap;padding:2px 5px;color:rgb(231, 76, 60);">bridge</code></p></td>
+<td style="box-sizing:border-box;border-collapse:collapse;white-space:nowrap;font-size:90%;margin:0px;overflow:visible;padding:8px 16px;vertical-align:middle;border-bottom:1px solid rgb(225, 228, 229);border-left:1px solid rgb(225, 228, 229);background-color:rgb(243, 246, 246);border:1px solid rgb(225, 228, 229);"><p style="box-sizing:border-box;margin:0px 0px 24px;line-height:16px;margin-bottom:0px;font-size:14.4px;">Connect using a linux bridge</p></td>
+</tr>
+<tr style="box-sizing:border-box;">
+<td style="box-sizing:border-box;border-collapse:collapse;white-space:nowrap;font-size:90%;margin:0px;overflow:visible;padding:8px 16px;background-color:transparent;vertical-align:middle;border-bottom:1px solid rgb(225, 228, 229);border-left:1px solid rgb(225, 228, 229);border-left-width:0px;border:1px solid rgb(225, 228, 229);"><p style="box-sizing:border-box;margin:0px 0px 24px;line-height:16px;margin-bottom:0px;font-size:14.4px;"><code style="box-sizing:border-box;max-width:100%;background:rgb(255, 255, 255);border:1px solid rgb(225, 228, 229);overflow-x:auto;font-size:75%;font-family:SFMono-Regular, Menlo, Monaco, Consolas, &quot;Liberation Mono&quot;, &quot;Courier New&quot;, Courier, monospace;overflow-wrap:break-word;white-space:pre-wrap;padding:2px 5px;color:rgb(231, 76, 60);">slirp</code></p></td>
+<td style="box-sizing:border-box;border-collapse:collapse;white-space:nowrap;font-size:90%;margin:0px;overflow:visible;padding:8px 16px;background-color:transparent;vertical-align:middle;border-bottom:1px solid rgb(225, 228, 229);border-left:1px solid rgb(225, 228, 229);border:1px solid rgb(225, 228, 229);"><p style="box-sizing:border-box;margin:0px 0px 24px;line-height:16px;margin-bottom:0px;font-size:14.4px;">Connect using QEMU user networking mode</p></td>
+</tr>
+<tr style="box-sizing:border-box;">
+<td style="box-sizing:border-box;border-collapse:collapse;white-space:nowrap;font-size:90%;margin:0px;overflow:visible;padding:8px 16px;vertical-align:middle;border-bottom:1px solid rgb(225, 228, 229);border-left:1px solid rgb(225, 228, 229);border-left-width:0px;background-color:rgb(243, 246, 246);border:1px solid rgb(225, 228, 229);"><p style="box-sizing:border-box;margin:0px 0px 24px;line-height:16px;margin-bottom:0px;font-size:14.4px;"><code style="box-sizing:border-box;max-width:100%;background:rgb(255, 255, 255);border:1px solid rgb(225, 228, 229);overflow-x:auto;font-size:75%;font-family:SFMono-Regular, Menlo, Monaco, Consolas, &quot;Liberation Mono&quot;, &quot;Courier New&quot;, Courier, monospace;overflow-wrap:break-word;white-space:pre-wrap;padding:2px 5px;color:rgb(231, 76, 60);">sriov</code></p></td>
+<td style="box-sizing:border-box;border-collapse:collapse;white-space:nowrap;font-size:90%;margin:0px;overflow:visible;padding:8px 16px;vertical-align:middle;border-bottom:1px solid rgb(225, 228, 229);border-left:1px solid rgb(225, 228, 229);background-color:rgb(243, 246, 246);border:1px solid rgb(225, 228, 229);"><p style="box-sizing:border-box;margin:0px 0px 24px;line-height:16px;margin-bottom:0px;font-size:14.4px;">Pass through a SR-IOV PCI device via <code style="box-sizing:border-box;max-width:100%;background:rgb(255, 255, 255);border:1px solid rgb(225, 228, 229);overflow-x:auto;font-size:75%;font-family:SFMono-Regular, Menlo, Monaco, Consolas, &quot;Liberation Mono&quot;, &quot;Courier New&quot;, Courier, monospace;overflow-wrap:break-word;white-space:pre-wrap;padding:2px 5px;color:rgb(231, 76, 60);">vfio</code></p></td>
+</tr>
+<tr style="box-sizing:border-box;">
+<td style="box-sizing:border-box;border-collapse:collapse;white-space:nowrap;font-size:90%;margin:0px;overflow:visible;padding:8px 16px;background-color:transparent;vertical-align:middle;border-bottom:1px solid rgb(225, 228, 229);border-left:1px solid rgb(225, 228, 229);border-left-width:0px;border-bottom-width:0px;border:1px solid rgb(225, 228, 229);"><p style="box-sizing:border-box;margin:0px 0px 24px;line-height:16px;margin-bottom:0px;font-size:14.4px;"><code style="box-sizing:border-box;max-width:100%;background:rgb(255, 255, 255);border:1px solid rgb(225, 228, 229);overflow-x:auto;font-size:75%;font-family:SFMono-Regular, Menlo, Monaco, Consolas, &quot;Liberation Mono&quot;, &quot;Courier New&quot;, Courier, monospace;overflow-wrap:break-word;white-space:pre-wrap;padding:2px 5px;color:rgb(231, 76, 60);">masquerade</code></p></td>
+<td style="box-sizing:border-box;border-collapse:collapse;white-space:nowrap;font-size:90%;margin:0px;overflow:visible;padding:8px 16px;background-color:transparent;vertical-align:middle;border-bottom:1px solid rgb(225, 228, 229);border-left:1px solid rgb(225, 228, 229);border-bottom-width:0px;border:1px solid rgb(225, 228, 229);"><p style="box-sizing:border-box;margin:0px 0px 24px;line-height:16px;margin-bottom:0px;font-size:14.4px;">Connect using Iptables rules to nat the traffic</p></td>
+</tr>
+</tbody>
+</table></div>
+
+<p style="box-sizing:border-box;line-height:24px;font-size:16px;margin:0px 0px 24px;">Each interface may also have additional configuration fields that modify
+properties "seen" inside guest instances, as listed below:</p>
+<div style="box-sizing:border-box;margin-bottom:24px;max-width:100%;overflow:auto;"><table style="font-size:inherit;font-weight:inherit;font-style:inherit;font-variant:inherit;box-sizing:border-box;empty-cells:show;border-collapse:collapse;border-spacing:0px;width:100%;overflow:auto;display:block;border:none;margin-bottom:0px;">
+<colgroup style="box-sizing:border-box;">
+<col style="box-sizing:border-box;width:25%;"/>
+<col style="box-sizing:border-box;width:25%;"/>
+<col style="box-sizing:border-box;width:25%;"/>
+<col style="box-sizing:border-box;width:25%;"/>
+</colgroup>
+<thead style="box-sizing:border-box;color:rgb(0, 0, 0);text-align:left;vertical-align:bottom;white-space:nowrap;">
+<tr style="box-sizing:border-box;">
+<th style="box-sizing:border-box;border-collapse:collapse;white-space:nowrap;font-size:90%;margin:0px;overflow:visible;padding:8px 16px;font-weight:700;border-bottom:2px solid rgb(225, 228, 229);border-left-width:0px;border:1px solid rgb(225, 228, 229);">Name</th>
+<th style="box-sizing:border-box;border-collapse:collapse;white-space:nowrap;font-size:90%;margin:0px;overflow:visible;padding:8px 16px;font-weight:700;border-bottom:2px solid rgb(225, 228, 229);border:1px solid rgb(225, 228, 229);">Format</th>
+<th style="box-sizing:border-box;border-collapse:collapse;white-space:nowrap;font-size:90%;margin:0px;overflow:visible;padding:8px 16px;font-weight:700;border-bottom:2px solid rgb(225, 228, 229);border:1px solid rgb(225, 228, 229);">Default value</th>
+<th style="box-sizing:border-box;border-collapse:collapse;white-space:nowrap;font-size:90%;margin:0px;overflow:visible;padding:8px 16px;font-weight:700;border-bottom:2px solid rgb(225, 228, 229);border:1px solid rgb(225, 228, 229);">Description</th>
+</tr>
+</thead>
+<tbody style="box-sizing:border-box;">
+<tr style="box-sizing:border-box;">
+<td style="box-sizing:border-box;border-collapse:collapse;white-space:nowrap;font-size:90%;margin:0px;overflow:visible;padding:8px 16px;vertical-align:middle;border-bottom:1px solid rgb(225, 228, 229);border-left:1px solid rgb(225, 228, 229);border-left-width:0px;background-color:rgb(243, 246, 246);border:1px solid rgb(225, 228, 229);"><p style="box-sizing:border-box;margin:0px 0px 24px;line-height:16px;margin-bottom:0px;font-size:14.4px;"><code style="box-sizing:border-box;max-width:100%;background:rgb(255, 255, 255);border:1px solid rgb(225, 228, 229);overflow-x:auto;font-size:75%;font-family:SFMono-Regular, Menlo, Monaco, Consolas, &quot;Liberation Mono&quot;, &quot;Courier New&quot;, Courier, monospace;overflow-wrap:break-word;white-space:pre-wrap;padding:2px 5px;color:rgb(231, 76, 60);">model</code></p></td>
+<td style="box-sizing:border-box;border-collapse:collapse;white-space:nowrap;font-size:90%;margin:0px;overflow:visible;padding:8px 16px;vertical-align:middle;border-bottom:1px solid rgb(225, 228, 229);border-left:1px solid rgb(225, 228, 229);background-color:rgb(243, 246, 246);border:1px solid rgb(225, 228, 229);"><p style="box-sizing:border-box;margin:0px 0px 24px;line-height:16px;margin-bottom:0px;font-size:14.4px;">One of: <code style="box-sizing:border-box;max-width:100%;background:rgb(255, 255, 255);border:1px solid rgb(225, 228, 229);overflow-x:auto;font-size:75%;font-family:SFMono-Regular, Menlo, Monaco, Consolas, &quot;Liberation Mono&quot;, &quot;Courier New&quot;, Courier, monospace;overflow-wrap:break-word;white-space:pre-wrap;padding:2px 5px;color:rgb(231, 76, 60);">e1000</code>, <code style="box-sizing:border-box;max-width:100%;background:rgb(255, 255, 255);border:1px solid rgb(225, 228, 229);overflow-x:auto;font-size:75%;font-family:SFMono-Regular, Menlo, Monaco, Consolas, &quot;Liberation Mono&quot;, &quot;Courier New&quot;, Courier, monospace;overflow-wrap:break-word;white-space:pre-wrap;padding:2px 5px;color:rgb(231, 76, 60);">e1000e</code>, <code style="box-sizing:border-box;max-width:100%;background:rgb(255, 255, 255);border:1px solid rgb(225, 228, 229);overflow-x:auto;font-size:75%;font-family:SFMono-Regular, Menlo, Monaco, Consolas, &quot;Liberation Mono&quot;, &quot;Courier New&quot;, Courier, monospace;overflow-wrap:break-word;white-space:pre-wrap;padding:2px 5px;color:rgb(231, 76, 60);">ne2k_pci</code>, <code style="box-sizing:border-box;max-width:100%;background:rgb(255, 255, 255);border:1px solid rgb(225, 228, 229);overflow-x:auto;font-size:75%;font-family:SFMono-Regular, Menlo, Monaco, Consolas, &quot;Liberation Mono&quot;, &quot;Courier New&quot;, Courier, monospace;overflow-wrap:break-word;white-space:pre-wrap;padding:2px 5px;color:rgb(231, 76, 60);">pcnet</code>, <code style="box-sizing:border-box;max-width:100%;background:rgb(255, 255, 255);border:1px solid rgb(225, 228, 229);overflow-x:auto;font-size:75%;font-family:SFMono-Regular, Menlo, Monaco, Consolas, &quot;Liberation Mono&quot;, &quot;Courier New&quot;, Courier, monospace;overflow-wrap:break-word;white-space:pre-wrap;padding:2px 5px;color:rgb(231, 76, 60);">rtl8139</code>, <code style="box-sizing:border-box;max-width:100%;background:rgb(255, 255, 255);border:1px solid rgb(225, 228, 229);overflow-x:auto;font-size:75%;font-family:SFMono-Regular, Menlo, Monaco, Consolas, &quot;Liberation Mono&quot;, &quot;Courier New&quot;, Courier, monospace;overflow-wrap:break-word;white-space:pre-wrap;padding:2px 5px;color:rgb(231, 76, 60);">virtio</code></p></td>
+<td style="box-sizing:border-box;border-collapse:collapse;white-space:nowrap;font-size:90%;margin:0px;overflow:visible;padding:8px 16px;vertical-align:middle;border-bottom:1px solid rgb(225, 228, 229);border-left:1px solid rgb(225, 228, 229);background-color:rgb(243, 246, 246);border:1px solid rgb(225, 228, 229);"><p style="box-sizing:border-box;margin:0px 0px 24px;line-height:16px;margin-bottom:0px;font-size:14.4px;"><code style="box-sizing:border-box;max-width:100%;background:rgb(255, 255, 255);border:1px solid rgb(225, 228, 229);overflow-x:auto;font-size:75%;font-family:SFMono-Regular, Menlo, Monaco, Consolas, &quot;Liberation Mono&quot;, &quot;Courier New&quot;, Courier, monospace;overflow-wrap:break-word;white-space:pre-wrap;padding:2px 5px;color:rgb(231, 76, 60);">virtio</code></p></td>
+<td style="box-sizing:border-box;border-collapse:collapse;white-space:nowrap;font-size:90%;margin:0px;overflow:visible;padding:8px 16px;vertical-align:middle;border-bottom:1px solid rgb(225, 228, 229);border-left:1px solid rgb(225, 228, 229);background-color:rgb(243, 246, 246);border:1px solid rgb(225, 228, 229);"><p style="box-sizing:border-box;margin:0px 0px 24px;line-height:16px;margin-bottom:0px;font-size:14.4px;">NIC type</p></td>
+</tr>
+<tr style="box-sizing:border-box;">
+<td style="box-sizing:border-box;border-collapse:collapse;white-space:nowrap;font-size:90%;margin:0px;overflow:visible;padding:8px 16px;background-color:transparent;vertical-align:middle;border-bottom:1px solid rgb(225, 228, 229);border-left:1px solid rgb(225, 228, 229);border-left-width:0px;border:1px solid rgb(225, 228, 229);"><p style="box-sizing:border-box;margin:0px 0px 24px;line-height:16px;margin-bottom:0px;font-size:14.4px;">macAddress</p></td>
+<td style="box-sizing:border-box;border-collapse:collapse;white-space:nowrap;font-size:90%;margin:0px;overflow:visible;padding:8px 16px;background-color:transparent;vertical-align:middle;border-bottom:1px solid rgb(225, 228, 229);border-left:1px solid rgb(225, 228, 229);border:1px solid rgb(225, 228, 229);"><p style="box-sizing:border-box;margin:0px 0px 24px;line-height:16px;margin-bottom:0px;font-size:14.4px;"><code style="box-sizing:border-box;max-width:100%;background:rgb(255, 255, 255);border:1px solid rgb(225, 228, 229);overflow-x:auto;font-size:75%;font-family:SFMono-Regular, Menlo, Monaco, Consolas, &quot;Liberation Mono&quot;, &quot;Courier New&quot;, Courier, monospace;overflow-wrap:break-word;white-space:pre-wrap;padding:2px 5px;color:rgb(231, 76, 60);">ff:ff:ff:ff:ff:ff</code> or <code style="box-sizing:border-box;max-width:100%;background:rgb(255, 255, 255);border:1px solid rgb(225, 228, 229);overflow-x:auto;font-size:75%;font-family:SFMono-Regular, Menlo, Monaco, Consolas, &quot;Liberation Mono&quot;, &quot;Courier New&quot;, Courier, monospace;overflow-wrap:break-word;white-space:pre-wrap;padding:2px 5px;color:rgb(231, 76, 60);">FF-FF-FF-FF-FF-FF</code></p></td>
+<td style="box-sizing:border-box;border-collapse:collapse;white-space:nowrap;font-size:90%;margin:0px;overflow:visible;padding:8px 16px;background-color:transparent;vertical-align:middle;border-bottom:1px solid rgb(225, 228, 229);border-left:1px solid rgb(225, 228, 229);border:1px solid rgb(225, 228, 229);"></td>
+<td style="box-sizing:border-box;border-collapse:collapse;white-space:nowrap;font-size:90%;margin:0px;overflow:visible;padding:8px 16px;background-color:transparent;vertical-align:middle;border-bottom:1px solid rgb(225, 228, 229);border-left:1px solid rgb(225, 228, 229);border:1px solid rgb(225, 228, 229);"><p style="box-sizing:border-box;margin:0px 0px 24px;line-height:16px;margin-bottom:0px;font-size:14.4px;">MAC address as seen inside the guest system, for example: <code style="box-sizing:border-box;max-width:100%;background:rgb(255, 255, 255);border:1px solid rgb(225, 228, 229);overflow-x:auto;font-size:75%;font-family:SFMono-Regular, Menlo, Monaco, Consolas, &quot;Liberation Mono&quot;, &quot;Courier New&quot;, Courier, monospace;overflow-wrap:break-word;white-space:pre-wrap;padding:2px 5px;color:rgb(231, 76, 60);">de:ad:00:00:be:af</code></p></td>
+</tr>
+<tr style="box-sizing:border-box;">
+<td style="box-sizing:border-box;border-collapse:collapse;white-space:nowrap;font-size:90%;margin:0px;overflow:visible;padding:8px 16px;vertical-align:middle;border-bottom:1px solid rgb(225, 228, 229);border-left:1px solid rgb(225, 228, 229);border-left-width:0px;background-color:rgb(243, 246, 246);border:1px solid rgb(225, 228, 229);"><p style="box-sizing:border-box;margin:0px 0px 24px;line-height:16px;margin-bottom:0px;font-size:14.4px;">ports</p></td>
+<td style="box-sizing:border-box;border-collapse:collapse;white-space:nowrap;font-size:90%;margin:0px;overflow:visible;padding:8px 16px;vertical-align:middle;border-bottom:1px solid rgb(225, 228, 229);border-left:1px solid rgb(225, 228, 229);background-color:rgb(243, 246, 246);border:1px solid rgb(225, 228, 229);"></td>
+<td style="box-sizing:border-box;border-collapse:collapse;white-space:nowrap;font-size:90%;margin:0px;overflow:visible;padding:8px 16px;vertical-align:middle;border-bottom:1px solid rgb(225, 228, 229);border-left:1px solid rgb(225, 228, 229);background-color:rgb(243, 246, 246);border:1px solid rgb(225, 228, 229);"><p style="box-sizing:border-box;margin:0px 0px 24px;line-height:16px;margin-bottom:0px;font-size:14.4px;">empty</p></td>
+<td style="box-sizing:border-box;border-collapse:collapse;white-space:nowrap;font-size:90%;margin:0px;overflow:visible;padding:8px 16px;vertical-align:middle;border-bottom:1px solid rgb(225, 228, 229);border-left:1px solid rgb(225, 228, 229);background-color:rgb(243, 246, 246);border:1px solid rgb(225, 228, 229);"><p style="box-sizing:border-box;margin:0px 0px 24px;line-height:16px;margin-bottom:0px;font-size:14.4px;">List of ports to be forwarded to the virtual machine.</p></td>
+</tr>
+<tr style="box-sizing:border-box;">
+<td style="box-sizing:border-box;border-collapse:collapse;white-space:nowrap;font-size:90%;margin:0px;overflow:visible;padding:8px 16px;background-color:transparent;vertical-align:middle;border-bottom:1px solid rgb(225, 228, 229);border-left:1px solid rgb(225, 228, 229);border-left-width:0px;border-bottom-width:0px;border:1px solid rgb(225, 228, 229);"><p style="box-sizing:border-box;margin:0px 0px 24px;line-height:16px;margin-bottom:0px;font-size:14.4px;">pciAddress</p></td>
+<td style="box-sizing:border-box;border-collapse:collapse;white-space:nowrap;font-size:90%;margin:0px;overflow:visible;padding:8px 16px;background-color:transparent;vertical-align:middle;border-bottom:1px solid rgb(225, 228, 229);border-left:1px solid rgb(225, 228, 229);border-bottom-width:0px;border:1px solid rgb(225, 228, 229);"><p style="box-sizing:border-box;margin:0px 0px 24px;line-height:16px;margin-bottom:0px;font-size:14.4px;"><code style="box-sizing:border-box;max-width:100%;background:rgb(255, 255, 255);border:1px solid rgb(225, 228, 229);overflow-x:auto;font-size:75%;font-family:SFMono-Regular, Menlo, Monaco, Consolas, &quot;Liberation Mono&quot;, &quot;Courier New&quot;, Courier, monospace;overflow-wrap:break-word;white-space:pre-wrap;padding:2px 5px;color:rgb(231, 76, 60);">0000:81:00.1</code></p></td>
+<td style="box-sizing:border-box;border-collapse:collapse;white-space:nowrap;font-size:90%;margin:0px;overflow:visible;padding:8px 16px;background-color:transparent;vertical-align:middle;border-bottom:1px solid rgb(225, 228, 229);border-left:1px solid rgb(225, 228, 229);border-bottom-width:0px;border:1px solid rgb(225, 228, 229);"></td>
+<td style="box-sizing:border-box;border-collapse:collapse;white-space:nowrap;font-size:90%;margin:0px;overflow:visible;padding:8px 16px;background-color:transparent;vertical-align:middle;border-bottom:1px solid rgb(225, 228, 229);border-left:1px solid rgb(225, 228, 229);border-bottom-width:0px;border:1px solid rgb(225, 228, 229);"><p style="box-sizing:border-box;margin:0px 0px 24px;line-height:16px;margin-bottom:0px;font-size:14.4px;">Set network interface PCI address, for example: <code style="box-sizing:border-box;max-width:100%;background:rgb(255, 255, 255);border:1px solid rgb(225, 228, 229);overflow-x:auto;font-size:75%;font-family:SFMono-Regular, Menlo, Monaco, Consolas, &quot;Liberation Mono&quot;, &quot;Courier New&quot;, Courier, monospace;overflow-wrap:break-word;white-space:pre-wrap;padding:2px 5px;color:rgb(231, 76, 60);">0000:81:00.1</code></p></td>
+</tr>
+</tbody>
+</table></div>
+
+<pre style="box-sizing:border-box;font-size:1em;white-space:pre;font-family:SFMono-Regular, Menlo, Monaco, Consolas, &quot;Liberation Mono&quot;, &quot;Courier New&quot;, Courier, monospace;"><code style="box-sizing:border-box;max-width:100%;border:1px solid rgb(225, 228, 229);font-family:SFMono-Regular, Menlo, Monaco, Consolas, &quot;Liberation Mono&quot;, &quot;Courier New&quot;, Courier, monospace;font-size:12px;white-space:pre;overflow-wrap:normal;padding:0.5em;overflow-x:auto;display:block;background:rgb(248, 248, 248);color:rgb(0, 0, 0);"><span style="box-sizing:border-box;">kind:</span> <span style="box-sizing:border-box;color:rgb(221, 17, 68);">VM</span>
+<span style="box-sizing:border-box;">spec:</span>
+  <span style="box-sizing:border-box;">domain:</span>
+    <span style="box-sizing:border-box;">devices:</span>
+      <span style="box-sizing:border-box;">interfaces:</span>
+        <span style="box-sizing:border-box;color:rgb(153, 0, 115);">-</span> <span style="box-sizing:border-box;">name:</span> <span style="box-sizing:border-box;color:rgb(221, 17, 68);">default</span>
+          <span style="box-sizing:border-box;">model:</span> <span style="box-sizing:border-box;color:rgb(221, 17, 68);">e1000</span> <span style="box-sizing:border-box;color:rgb(153, 153, 136);font-style:italic;"># expose e1000 NIC to the guest</span>
+          <span style="box-sizing:border-box;">masquerade:</span> {} <span style="box-sizing:border-box;color:rgb(153, 153, 136);font-style:italic;"># connect through a masquerade</span>
+          <span style="box-sizing:border-box;">ports:</span>
+           <span style="box-sizing:border-box;color:rgb(153, 0, 115);">-</span> <span style="box-sizing:border-box;">name:</span> <span style="box-sizing:border-box;color:rgb(221, 17, 68);">http</span>
+             <span style="box-sizing:border-box;">port:</span> <span style="box-sizing:border-box;color:teal;">80</span>
+  <span style="box-sizing:border-box;">networks:</span>
+  <span style="box-sizing:border-box;color:rgb(153, 0, 115);">-</span> <span style="box-sizing:border-box;">name:</span> <span style="box-sizing:border-box;color:rgb(221, 17, 68);">default</span>
+    <span style="box-sizing:border-box;">pod:</span> {}
+</code></pre>
+<blockquote style="box-sizing:border-box;margin:0px;margin-left:24px;line-height:24px;margin-bottom:24px;">
+<p style="box-sizing:border-box;line-height:24px;font-size:16px;margin:0px 0px 24px;"><strong style="box-sizing:border-box;font-weight:700;">Note:</strong> For secondary interfaces, when a MAC address is specified for a
+virtual machine interface, it is passed to the underlying CNI plugin which is,
+in turn, expected to configure the backend to allow for this particular MAC.
+Not every plugin has native support for custom MAC addresses.</p>
+<p style="box-sizing:border-box;line-height:24px;font-size:16px;margin:0px 0px 24px;"><strong style="box-sizing:border-box;font-weight:700;">Note:</strong> For some CNI plugins without native support for custom MAC
+addresses, there is a workaround, which is to use the <code style="box-sizing:border-box;max-width:100%;background:rgb(255, 255, 255);border:1px solid rgb(225, 228, 229);overflow-x:auto;font-size:75%;font-family:SFMono-Regular, Menlo, Monaco, Consolas, &quot;Liberation Mono&quot;, &quot;Courier New&quot;, Courier, monospace;overflow-wrap:break-word;white-space:pre-wrap;padding:2px 5px;color:rgb(231, 76, 60);">tuning</code> CNI
+plugin to adjust pod interface MAC address. This can be used as
+follows:</p>
+</blockquote>
+<pre style="box-sizing:border-box;font-size:1em;white-space:pre;font-family:SFMono-Regular, Menlo, Monaco, Consolas, &quot;Liberation Mono&quot;, &quot;Courier New&quot;, Courier, monospace;"><code style="box-sizing:border-box;max-width:100%;border:1px solid rgb(225, 228, 229);font-family:SFMono-Regular, Menlo, Monaco, Consolas, &quot;Liberation Mono&quot;, &quot;Courier New&quot;, Courier, monospace;font-size:12px;white-space:pre;overflow-wrap:normal;padding:0.5em;overflow-x:auto;display:block;background:rgb(248, 248, 248);color:rgb(0, 0, 0);"><span style="box-sizing:border-box;">apiVersion:</span> <span style="box-sizing:border-box;color:rgb(221, 17, 68);">"k8s.cni.cncf.io/v1"</span>
+<span style="box-sizing:border-box;">kind:</span> <span style="box-sizing:border-box;color:rgb(221, 17, 68);">NetworkAttachmentDefinition</span>
+<span style="box-sizing:border-box;">metadata:</span>
+  <span style="box-sizing:border-box;">name:</span> <span style="box-sizing:border-box;color:rgb(221, 17, 68);">ptp-mac</span>
+<span style="box-sizing:border-box;">spec:</span>
+  <span style="box-sizing:border-box;">config:</span> <span style="box-sizing:border-box;color:rgb(221, 17, 68);">'{
+      "cniVersion": "0.3.1",
+      "name": "ptp-mac",
+      "plugins": [
+        {
+          "type": "ptp",
+          "ipam": {
+            "type": "host-local",
+            "subnet": "10.1.1.0/24"
+          }
+        },
+        {
+          "type": "tuning"
+        }
+      ]
+    }'</span>
+</code></pre>
+<blockquote style="box-sizing:border-box;margin:0px;margin-left:24px;line-height:24px;margin-bottom:24px;">
+<p style="box-sizing:border-box;line-height:24px;font-size:16px;margin:0px 0px 24px;">This approach may not work for all plugins. For example, OKD SDN is
+not compatible with <code style="box-sizing:border-box;max-width:100%;background:rgb(255, 255, 255);border:1px solid rgb(225, 228, 229);overflow-x:auto;font-size:75%;font-family:SFMono-Regular, Menlo, Monaco, Consolas, &quot;Liberation Mono&quot;, &quot;Courier New&quot;, Courier, monospace;overflow-wrap:break-word;white-space:pre-wrap;padding:2px 5px;color:rgb(231, 76, 60);">tuning</code> plugin.</p>
+<ul style="box-sizing:border-box;margin:0px;padding:0px;line-height:24px;margin-bottom:24px;list-style:disc;">
+<li style="box-sizing:border-box;margin-left:24px;list-style:disc;">
+<p style="box-sizing:border-box;line-height:24px;font-size:16px;margin:0px 0px 24px;margin-top:0px;margin-bottom:0px;">Plugins that handle custom MAC addresses natively: <code style="box-sizing:border-box;max-width:100%;background:rgb(255, 255, 255);border:1px solid rgb(225, 228, 229);overflow-x:auto;font-size:75%;font-family:SFMono-Regular, Menlo, Monaco, Consolas, &quot;Liberation Mono&quot;, &quot;Courier New&quot;, Courier, monospace;overflow-wrap:break-word;white-space:pre-wrap;padding:2px 5px;color:rgb(231, 76, 60);">ovs</code>, <code style="box-sizing:border-box;max-width:100%;background:rgb(255, 255, 255);border:1px solid rgb(225, 228, 229);overflow-x:auto;font-size:75%;font-family:SFMono-Regular, Menlo, Monaco, Consolas, &quot;Liberation Mono&quot;, &quot;Courier New&quot;, Courier, monospace;overflow-wrap:break-word;white-space:pre-wrap;padding:2px 5px;color:rgb(231, 76, 60);">bridge</code>.</p>
+</li>
+<li style="box-sizing:border-box;margin-left:24px;list-style:disc;">
+<p style="box-sizing:border-box;line-height:24px;font-size:16px;margin:0px 0px 24px;margin-top:0px;margin-bottom:0px;">Plugins that are compatible with <code style="box-sizing:border-box;max-width:100%;background:rgb(255, 255, 255);border:1px solid rgb(225, 228, 229);overflow-x:auto;font-size:75%;font-family:SFMono-Regular, Menlo, Monaco, Consolas, &quot;Liberation Mono&quot;, &quot;Courier New&quot;, Courier, monospace;overflow-wrap:break-word;white-space:pre-wrap;padding:2px 5px;color:rgb(231, 76, 60);">tuning</code> plugin: <code style="box-sizing:border-box;max-width:100%;background:rgb(255, 255, 255);border:1px solid rgb(225, 228, 229);overflow-x:auto;font-size:75%;font-family:SFMono-Regular, Menlo, Monaco, Consolas, &quot;Liberation Mono&quot;, &quot;Courier New&quot;, Courier, monospace;overflow-wrap:break-word;white-space:pre-wrap;padding:2px 5px;color:rgb(231, 76, 60);">flannel</code>, <code style="box-sizing:border-box;max-width:100%;background:rgb(255, 255, 255);border:1px solid rgb(225, 228, 229);overflow-x:auto;font-size:75%;font-family:SFMono-Regular, Menlo, Monaco, Consolas, &quot;Liberation Mono&quot;, &quot;Courier New&quot;, Courier, monospace;overflow-wrap:break-word;white-space:pre-wrap;padding:2px 5px;color:rgb(231, 76, 60);">ptp</code>.</p>
+</li>
+<li style="box-sizing:border-box;margin-left:24px;list-style:disc;">
+<p style="box-sizing:border-box;line-height:24px;font-size:16px;margin:0px 0px 24px;margin-top:0px;margin-bottom:0px;">Plugins that don't need special MAC address treatment: <code style="box-sizing:border-box;max-width:100%;background:rgb(255, 255, 255);border:1px solid rgb(225, 228, 229);overflow-x:auto;font-size:75%;font-family:SFMono-Regular, Menlo, Monaco, Consolas, &quot;Liberation Mono&quot;, &quot;Courier New&quot;, Courier, monospace;overflow-wrap:break-word;white-space:pre-wrap;padding:2px 5px;color:rgb(231, 76, 60);">sriov</code> (in
+    <code style="box-sizing:border-box;max-width:100%;background:rgb(255, 255, 255);border:1px solid rgb(225, 228, 229);overflow-x:auto;font-size:75%;font-family:SFMono-Regular, Menlo, Monaco, Consolas, &quot;Liberation Mono&quot;, &quot;Courier New&quot;, Courier, monospace;overflow-wrap:break-word;white-space:pre-wrap;padding:2px 5px;color:rgb(231, 76, 60);">vfio</code> mode).
+</p>
+</li>
+</ul>
+</blockquote>
+<h3 style="box-sizing:border-box;margin-top:0px;font-weight:700;font-family:&quot;Roboto Slab&quot;, ff-tisa-web-pro, Georgia, Arial, sans-serif;font-size:125%;margin-bottom:24px;">Ports<a href="https://kubevirt.io/user-guide/virtual_machines/interfaces_and_networks/#ports" title="Permanent link" style="box-sizing:border-box;color:rgb(41, 128, 185);text-decoration:none;cursor:pointer;display:inline-block;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;line-height:1;text-rendering:auto;-webkit-font-smoothing:antialiased;opacity:0;margin-left:0.5em;font-family:FontAwesome;font-size:14px;">¶</a></h3>
+<p style="box-sizing:border-box;line-height:24px;font-size:16px;margin:0px 0px 24px;">Declare ports listen by the virtual machine</p>
+<blockquote style="box-sizing:border-box;margin:0px;margin-left:24px;line-height:24px;margin-bottom:24px;">
+<p style="box-sizing:border-box;line-height:24px;font-size:16px;margin:0px 0px 24px;"><strong style="box-sizing:border-box;font-weight:700;">Note:</strong> When using the slirp interface only the configured ports
+will be forwarded to the virtual machine.</p>
+</blockquote>
+<div style="box-sizing:border-box;margin-bottom:24px;max-width:100%;overflow:auto;"><table style="font-size:inherit;font-weight:inherit;font-style:inherit;font-variant:inherit;box-sizing:border-box;empty-cells:show;border-collapse:collapse;border-spacing:0px;width:100%;overflow:auto;display:block;border:none;margin-bottom:0px;">
+<colgroup style="box-sizing:border-box;">
+<col style="box-sizing:border-box;width:25%;"/>
+<col style="box-sizing:border-box;width:25%;"/>
+<col style="box-sizing:border-box;width:25%;"/>
+<col style="box-sizing:border-box;width:25%;"/>
+</colgroup>
+<thead style="box-sizing:border-box;color:rgb(0, 0, 0);text-align:left;vertical-align:bottom;white-space:nowrap;">
+<tr style="box-sizing:border-box;">
+<th style="box-sizing:border-box;border-collapse:collapse;white-space:nowrap;font-size:90%;margin:0px;overflow:visible;padding:8px 16px;font-weight:700;border-bottom:2px solid rgb(225, 228, 229);border-left-width:0px;border:1px solid rgb(225, 228, 229);">Name</th>
+<th style="box-sizing:border-box;border-collapse:collapse;white-space:nowrap;font-size:90%;margin:0px;overflow:visible;padding:8px 16px;font-weight:700;border-bottom:2px solid rgb(225, 228, 229);border:1px solid rgb(225, 228, 229);">Format</th>
+<th style="box-sizing:border-box;border-collapse:collapse;white-space:nowrap;font-size:90%;margin:0px;overflow:visible;padding:8px 16px;font-weight:700;border-bottom:2px solid rgb(225, 228, 229);border:1px solid rgb(225, 228, 229);">Required</th>
+<th style="box-sizing:border-box;border-collapse:collapse;white-space:nowrap;font-size:90%;margin:0px;overflow:visible;padding:8px 16px;font-weight:700;border-bottom:2px solid rgb(225, 228, 229);border:1px solid rgb(225, 228, 229);">Description</th>
+</tr>
+</thead>
+<tbody style="box-sizing:border-box;">
+<tr style="box-sizing:border-box;">
+<td style="box-sizing:border-box;border-collapse:collapse;white-space:nowrap;font-size:90%;margin:0px;overflow:visible;padding:8px 16px;vertical-align:middle;border-bottom:1px solid rgb(225, 228, 229);border-left:1px solid rgb(225, 228, 229);border-left-width:0px;background-color:rgb(243, 246, 246);border:1px solid rgb(225, 228, 229);"><p style="box-sizing:border-box;margin:0px 0px 24px;line-height:16px;margin-bottom:0px;font-size:14.4px;"><code style="box-sizing:border-box;max-width:100%;background:rgb(255, 255, 255);border:1px solid rgb(225, 228, 229);overflow-x:auto;font-size:75%;font-family:SFMono-Regular, Menlo, Monaco, Consolas, &quot;Liberation Mono&quot;, &quot;Courier New&quot;, Courier, monospace;overflow-wrap:break-word;white-space:pre-wrap;padding:2px 5px;color:rgb(231, 76, 60);">name</code></p></td>
+<td style="box-sizing:border-box;border-collapse:collapse;white-space:nowrap;font-size:90%;margin:0px;overflow:visible;padding:8px 16px;vertical-align:middle;border-bottom:1px solid rgb(225, 228, 229);border-left:1px solid rgb(225, 228, 229);background-color:rgb(243, 246, 246);border:1px solid rgb(225, 228, 229);"></td>
+<td style="box-sizing:border-box;border-collapse:collapse;white-space:nowrap;font-size:90%;margin:0px;overflow:visible;padding:8px 16px;vertical-align:middle;border-bottom:1px solid rgb(225, 228, 229);border-left:1px solid rgb(225, 228, 229);background-color:rgb(243, 246, 246);border:1px solid rgb(225, 228, 229);"><p style="box-sizing:border-box;margin:0px 0px 24px;line-height:16px;margin-bottom:0px;font-size:14.4px;">no</p></td>
+<td style="box-sizing:border-box;border-collapse:collapse;white-space:nowrap;font-size:90%;margin:0px;overflow:visible;padding:8px 16px;vertical-align:middle;border-bottom:1px solid rgb(225, 228, 229);border-left:1px solid rgb(225, 228, 229);background-color:rgb(243, 246, 246);border:1px solid rgb(225, 228, 229);"><p style="box-sizing:border-box;margin:0px 0px 24px;line-height:16px;margin-bottom:0px;font-size:14.4px;">Name</p></td>
+</tr>
+<tr style="box-sizing:border-box;">
+<td style="box-sizing:border-box;border-collapse:collapse;white-space:nowrap;font-size:90%;margin:0px;overflow:visible;padding:8px 16px;background-color:transparent;vertical-align:middle;border-bottom:1px solid rgb(225, 228, 229);border-left:1px solid rgb(225, 228, 229);border-left-width:0px;border:1px solid rgb(225, 228, 229);"><p style="box-sizing:border-box;margin:0px 0px 24px;line-height:16px;margin-bottom:0px;font-size:14.4px;"><code style="box-sizing:border-box;max-width:100%;background:rgb(255, 255, 255);border:1px solid rgb(225, 228, 229);overflow-x:auto;font-size:75%;font-family:SFMono-Regular, Menlo, Monaco, Consolas, &quot;Liberation Mono&quot;, &quot;Courier New&quot;, Courier, monospace;overflow-wrap:break-word;white-space:pre-wrap;padding:2px 5px;color:rgb(231, 76, 60);">port</code></p></td>
+<td style="box-sizing:border-box;border-collapse:collapse;white-space:nowrap;font-size:90%;margin:0px;overflow:visible;padding:8px 16px;background-color:transparent;vertical-align:middle;border-bottom:1px solid rgb(225, 228, 229);border-left:1px solid rgb(225, 228, 229);border:1px solid rgb(225, 228, 229);"><p style="box-sizing:border-box;margin:0px 0px 24px;line-height:16px;margin-bottom:0px;font-size:14.4px;">1 - 65535</p></td>
+<td style="box-sizing:border-box;border-collapse:collapse;white-space:nowrap;font-size:90%;margin:0px;overflow:visible;padding:8px 16px;background-color:transparent;vertical-align:middle;border-bottom:1px solid rgb(225, 228, 229);border-left:1px solid rgb(225, 228, 229);border:1px solid rgb(225, 228, 229);"><p style="box-sizing:border-box;margin:0px 0px 24px;line-height:16px;margin-bottom:0px;font-size:14.4px;">yes</p></td>
+<td style="box-sizing:border-box;border-collapse:collapse;white-space:nowrap;font-size:90%;margin:0px;overflow:visible;padding:8px 16px;background-color:transparent;vertical-align:middle;border-bottom:1px solid rgb(225, 228, 229);border-left:1px solid rgb(225, 228, 229);border:1px solid rgb(225, 228, 229);"><p style="box-sizing:border-box;margin:0px 0px 24px;line-height:16px;margin-bottom:0px;font-size:14.4px;">Port to expose</p></td>
+</tr>
+<tr style="box-sizing:border-box;">
+<td style="box-sizing:border-box;border-collapse:collapse;white-space:nowrap;font-size:90%;margin:0px;overflow:visible;padding:8px 16px;vertical-align:middle;border-bottom:1px solid rgb(225, 228, 229);border-left:1px solid rgb(225, 228, 229);border-left-width:0px;border-bottom-width:0px;background-color:rgb(243, 246, 246);border:1px solid rgb(225, 228, 229);"><p style="box-sizing:border-box;margin:0px 0px 24px;line-height:16px;margin-bottom:0px;font-size:14.4px;"><code style="box-sizing:border-box;max-width:100%;background:rgb(255, 255, 255);border:1px solid rgb(225, 228, 229);overflow-x:auto;font-size:75%;font-family:SFMono-Regular, Menlo, Monaco, Consolas, &quot;Liberation Mono&quot;, &quot;Courier New&quot;, Courier, monospace;overflow-wrap:break-word;white-space:pre-wrap;padding:2px 5px;color:rgb(231, 76, 60);">protocol</code></p></td>
+<td style="box-sizing:border-box;border-collapse:collapse;white-space:nowrap;font-size:90%;margin:0px;overflow:visible;padding:8px 16px;vertical-align:middle;border-bottom:1px solid rgb(225, 228, 229);border-left:1px solid rgb(225, 228, 229);border-bottom-width:0px;background-color:rgb(243, 246, 246);border:1px solid rgb(225, 228, 229);"><p style="box-sizing:border-box;margin:0px 0px 24px;line-height:16px;margin-bottom:0px;font-size:14.4px;">TCP,UDP</p></td>
+<td style="box-sizing:border-box;border-collapse:collapse;white-space:nowrap;font-size:90%;margin:0px;overflow:visible;padding:8px 16px;vertical-align:middle;border-bottom:1px solid rgb(225, 228, 229);border-left:1px solid rgb(225, 228, 229);border-bottom-width:0px;background-color:rgb(243, 246, 246);border:1px solid rgb(225, 228, 229);"><p style="box-sizing:border-box;margin:0px 0px 24px;line-height:16px;margin-bottom:0px;font-size:14.4px;">no</p></td>
+<td style="box-sizing:border-box;border-collapse:collapse;white-space:nowrap;font-size:90%;margin:0px;overflow:visible;padding:8px 16px;vertical-align:middle;border-bottom:1px solid rgb(225, 228, 229);border-left:1px solid rgb(225, 228, 229);border-bottom-width:0px;background-color:rgb(243, 246, 246);border:1px solid rgb(225, 228, 229);"><p style="box-sizing:border-box;margin:0px 0px 24px;line-height:16px;margin-bottom:0px;font-size:14.4px;">Connection protocol</p></td>
+</tr>
+</tbody>
+</table></div>
+
+<blockquote style="box-sizing:border-box;margin:0px;margin-left:24px;line-height:24px;margin-bottom:24px;">
+<p style="box-sizing:border-box;line-height:24px;font-size:16px;margin:0px 0px 24px;"><strong style="box-sizing:border-box;font-weight:700;">Tip:</strong> Use <code style="box-sizing:border-box;max-width:100%;background:rgb(255, 255, 255);border:1px solid rgb(225, 228, 229);overflow-x:auto;font-size:75%;font-family:SFMono-Regular, Menlo, Monaco, Consolas, &quot;Liberation Mono&quot;, &quot;Courier New&quot;, Courier, monospace;overflow-wrap:break-word;white-space:pre-wrap;padding:2px 5px;color:rgb(231, 76, 60);">e1000</code> model if your guest image doesn't ship with
+virtio drivers.</p>
+<p style="box-sizing:border-box;line-height:24px;font-size:16px;margin:0px 0px 24px;"><strong style="box-sizing:border-box;font-weight:700;">Note:</strong> Windows machines need the latest virtio network driver to
+configure the correct MTU on the interface.</p>
+</blockquote>
+<p style="box-sizing:border-box;line-height:24px;font-size:16px;margin:0px 0px 24px;">If <code style="box-sizing:border-box;max-width:100%;background:rgb(255, 255, 255);border:1px solid rgb(225, 228, 229);overflow-x:auto;font-size:75%;font-family:SFMono-Regular, Menlo, Monaco, Consolas, &quot;Liberation Mono&quot;, &quot;Courier New&quot;, Courier, monospace;overflow-wrap:break-word;white-space:pre-wrap;padding:2px 5px;color:rgb(231, 76, 60);">spec.domain.devices.interfaces</code> is omitted, the virtual machine is
+connected using the default pod network interface of <code style="box-sizing:border-box;max-width:100%;background:rgb(255, 255, 255);border:1px solid rgb(225, 228, 229);overflow-x:auto;font-size:75%;font-family:SFMono-Regular, Menlo, Monaco, Consolas, &quot;Liberation Mono&quot;, &quot;Courier New&quot;, Courier, monospace;overflow-wrap:break-word;white-space:pre-wrap;padding:2px 5px;color:rgb(231, 76, 60);">bridge</code> type. If
+you'd like to have a virtual machine instance without any network
+connectivity, you can use the <code style="box-sizing:border-box;max-width:100%;background:rgb(255, 255, 255);border:1px solid rgb(225, 228, 229);overflow-x:auto;font-size:75%;font-family:SFMono-Regular, Menlo, Monaco, Consolas, &quot;Liberation Mono&quot;, &quot;Courier New&quot;, Courier, monospace;overflow-wrap:break-word;white-space:pre-wrap;padding:2px 5px;color:rgb(231, 76, 60);">autoattachPodInterface</code> field as follows:</p>
+<pre style="box-sizing:border-box;font-size:1em;white-space:pre;font-family:SFMono-Regular, Menlo, Monaco, Consolas, &quot;Liberation Mono&quot;, &quot;Courier New&quot;, Courier, monospace;"><code style="box-sizing:border-box;max-width:100%;border:1px solid rgb(225, 228, 229);font-family:SFMono-Regular, Menlo, Monaco, Consolas, &quot;Liberation Mono&quot;, &quot;Courier New&quot;, Courier, monospace;font-size:12px;white-space:pre;overflow-wrap:normal;padding:0.5em;overflow-x:auto;display:block;background:rgb(248, 248, 248);color:rgb(0, 0, 0);"><span style="box-sizing:border-box;">kind:</span> <span style="box-sizing:border-box;color:rgb(221, 17, 68);">VM</span>
+<span style="box-sizing:border-box;">spec:</span>
+  <span style="box-sizing:border-box;">domain:</span>
+    <span style="box-sizing:border-box;">devices:</span>
+      <span style="box-sizing:border-box;">autoattachPodInterface:</span> <span style="box-sizing:border-box;color:teal;">false</span>
+</code></pre>
+<h3 style="box-sizing:border-box;margin-top:0px;font-weight:700;font-family:&quot;Roboto Slab&quot;, ff-tisa-web-pro, Georgia, Arial, sans-serif;font-size:125%;margin-bottom:24px;">bridge<a href="https://kubevirt.io/user-guide/virtual_machines/interfaces_and_networks/#bridge" title="Permanent link" style="box-sizing:border-box;color:rgb(41, 128, 185);text-decoration:none;cursor:pointer;display:inline-block;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;line-height:1;text-rendering:auto;-webkit-font-smoothing:antialiased;opacity:0;margin-left:0.5em;font-family:FontAwesome;font-size:14px;">¶</a></h3>
+<p style="box-sizing:border-box;line-height:24px;font-size:16px;margin:0px 0px 24px;">In <code style="box-sizing:border-box;max-width:100%;background:rgb(255, 255, 255);border:1px solid rgb(225, 228, 229);overflow-x:auto;font-size:75%;font-family:SFMono-Regular, Menlo, Monaco, Consolas, &quot;Liberation Mono&quot;, &quot;Courier New&quot;, Courier, monospace;overflow-wrap:break-word;white-space:pre-wrap;padding:2px 5px;color:rgb(231, 76, 60);">bridge</code> mode, virtual machines are connected to the network backend
+through a linux "bridge". The pod network IPv4 address is delegated to
+the virtual machine via DHCPv4. The virtual machine should be configured
+to use DHCP to acquire IPv4 addresses.</p>
+<blockquote style="box-sizing:border-box;margin:0px;margin-left:24px;line-height:24px;margin-bottom:24px;">
+<p style="box-sizing:border-box;line-height:24px;font-size:16px;margin:0px 0px 24px;"><strong style="box-sizing:border-box;font-weight:700;">Note:</strong> If a specific MAC address is not configured in the virtual
+machine interface spec the MAC address from the relevant pod interface
+is delegated to the virtual machine.</p>
+</blockquote>
+<pre style="box-sizing:border-box;font-size:1em;white-space:pre;font-family:SFMono-Regular, Menlo, Monaco, Consolas, &quot;Liberation Mono&quot;, &quot;Courier New&quot;, Courier, monospace;"><code style="box-sizing:border-box;max-width:100%;border:1px solid rgb(225, 228, 229);font-family:SFMono-Regular, Menlo, Monaco, Consolas, &quot;Liberation Mono&quot;, &quot;Courier New&quot;, Courier, monospace;font-size:12px;white-space:pre;overflow-wrap:normal;padding:0.5em;overflow-x:auto;display:block;background:rgb(248, 248, 248);color:rgb(0, 0, 0);"><span style="box-sizing:border-box;">kind:</span> <span style="box-sizing:border-box;color:rgb(221, 17, 68);">VM</span>
+<span style="box-sizing:border-box;">spec:</span>
+  <span style="box-sizing:border-box;">domain:</span>
+    <span style="box-sizing:border-box;">devices:</span>
+      <span style="box-sizing:border-box;">interfaces:</span>
+        <span style="box-sizing:border-box;color:rgb(153, 0, 115);">-</span> <span style="box-sizing:border-box;">name:</span> <span style="box-sizing:border-box;color:rgb(221, 17, 68);">red</span>
+          <span style="box-sizing:border-box;">bridge:</span> {} <span style="box-sizing:border-box;color:rgb(153, 153, 136);font-style:italic;"># connect through a bridge</span>
+  <span style="box-sizing:border-box;">networks:</span>
+  <span style="box-sizing:border-box;color:rgb(153, 0, 115);">-</span> <span style="box-sizing:border-box;">name:</span> <span style="box-sizing:border-box;color:rgb(221, 17, 68);">red</span>
+    <span style="box-sizing:border-box;">multus:</span>
+      <span style="box-sizing:border-box;">networkName:</span> <span style="box-sizing:border-box;color:rgb(221, 17, 68);">red</span>
+</code></pre>
+<p style="box-sizing:border-box;line-height:24px;font-size:16px;margin:0px 0px 24px;">At this time, <code style="box-sizing:border-box;max-width:100%;background:rgb(255, 255, 255);border:1px solid rgb(225, 228, 229);overflow-x:auto;font-size:75%;font-family:SFMono-Regular, Menlo, Monaco, Consolas, &quot;Liberation Mono&quot;, &quot;Courier New&quot;, Courier, monospace;overflow-wrap:break-word;white-space:pre-wrap;padding:2px 5px;color:rgb(231, 76, 60);">bridge</code> mode doesn't support additional configuration
+fields.</p>
+<blockquote style="box-sizing:border-box;margin:0px;margin-left:24px;line-height:24px;margin-bottom:24px;">
+<p style="box-sizing:border-box;line-height:24px;font-size:16px;margin:0px 0px 24px;"><strong style="box-sizing:border-box;font-weight:700;">Note:</strong> due to IPv4 address delegation, in <code style="box-sizing:border-box;max-width:100%;background:rgb(255, 255, 255);border:1px solid rgb(225, 228, 229);overflow-x:auto;font-size:75%;font-family:SFMono-Regular, Menlo, Monaco, Consolas, &quot;Liberation Mono&quot;, &quot;Courier New&quot;, Courier, monospace;overflow-wrap:break-word;white-space:pre-wrap;padding:2px 5px;color:rgb(231, 76, 60);">bridge</code> mode the pod
+doesn't have an IP address configured, which may introduce issues with
+third-party solutions that may rely on it. For example, Istio may not
+work in this mode.</p>
+<p style="box-sizing:border-box;line-height:24px;font-size:16px;margin:0px 0px 24px;"><strong style="box-sizing:border-box;font-weight:700;">Note:</strong> admin can forbid using <code style="box-sizing:border-box;max-width:100%;background:rgb(255, 255, 255);border:1px solid rgb(225, 228, 229);overflow-x:auto;font-size:75%;font-family:SFMono-Regular, Menlo, Monaco, Consolas, &quot;Liberation Mono&quot;, &quot;Courier New&quot;, Courier, monospace;overflow-wrap:break-word;white-space:pre-wrap;padding:2px 5px;color:rgb(231, 76, 60);">bridge</code> interface type for pod
+networks via a designated configuration flag. To achieve it, the admin
+should set the following option to <code style="box-sizing:border-box;max-width:100%;background:rgb(255, 255, 255);border:1px solid rgb(225, 228, 229);overflow-x:auto;font-size:75%;font-family:SFMono-Regular, Menlo, Monaco, Consolas, &quot;Liberation Mono&quot;, &quot;Courier New&quot;, Courier, monospace;overflow-wrap:break-word;white-space:pre-wrap;padding:2px 5px;color:rgb(231, 76, 60);">false</code>:</p>
+</blockquote>
+<pre style="box-sizing:border-box;font-size:1em;white-space:pre;font-family:SFMono-Regular, Menlo, Monaco, Consolas, &quot;Liberation Mono&quot;, &quot;Courier New&quot;, Courier, monospace;"><code style="box-sizing:border-box;max-width:100%;border:1px solid rgb(225, 228, 229);font-family:SFMono-Regular, Menlo, Monaco, Consolas, &quot;Liberation Mono&quot;, &quot;Courier New&quot;, Courier, monospace;font-size:12px;white-space:pre;overflow-wrap:normal;padding:0.5em;overflow-x:auto;display:block;background:rgb(248, 248, 248);color:rgb(0, 0, 0);"><span style="box-sizing:border-box;">apiVersion:</span> <span style="box-sizing:border-box;color:rgb(221, 17, 68);">kubevirt.io/v1</span>
+<span style="box-sizing:border-box;">kind:</span> <span style="box-sizing:border-box;color:rgb(221, 17, 68);">Kubevirt</span>
+<span style="box-sizing:border-box;">metadata:</span>
+  <span style="box-sizing:border-box;">name:</span> <span style="box-sizing:border-box;color:rgb(221, 17, 68);">kubevirt</span>
+  <span style="box-sizing:border-box;">namespace:</span> <span style="box-sizing:border-box;color:rgb(221, 17, 68);">kubevirt</span>
+<span style="box-sizing:border-box;">spec:</span>
+  <span style="box-sizing:border-box;">configuration:</span>
+    <span style="box-sizing:border-box;">network:</span>
+      <span style="box-sizing:border-box;">permitBridgeInterfaceOnPodNetwork:</span> <span style="box-sizing:border-box;color:teal;">false</span>
+</code></pre>
+<blockquote style="box-sizing:border-box;margin:0px;margin-left:24px;line-height:24px;margin-bottom:24px;">
+<p style="box-sizing:border-box;line-height:24px;font-size:16px;margin:0px 0px 24px;"><strong style="box-sizing:border-box;font-weight:700;">Note:</strong> binding the pod network using <code style="box-sizing:border-box;max-width:100%;background:rgb(255, 255, 255);border:1px solid rgb(225, 228, 229);overflow-x:auto;font-size:75%;font-family:SFMono-Regular, Menlo, Monaco, Consolas, &quot;Liberation Mono&quot;, &quot;Courier New&quot;, Courier, monospace;overflow-wrap:break-word;white-space:pre-wrap;padding:2px 5px;color:rgb(231, 76, 60);">bridge</code> interface type may
+cause issues. Other than the third-party issue mentioned in the above
+note, live migration is not allowed with a pod network binding of
+<code style="box-sizing:border-box;max-width:100%;background:rgb(255, 255, 255);border:1px solid rgb(225, 228, 229);overflow-x:auto;font-size:75%;font-family:SFMono-Regular, Menlo, Monaco, Consolas, &quot;Liberation Mono&quot;, &quot;Courier New&quot;, Courier, monospace;overflow-wrap:break-word;white-space:pre-wrap;padding:2px 5px;color:rgb(231, 76, 60);">bridge</code> interface type, and also some CNI plugins might not allow to
+use a custom MAC address for your VM instances. If you think you may
+be affected by any of issues mentioned above, consider changing the
+default interface type to <code style="box-sizing:border-box;max-width:100%;background:rgb(255, 255, 255);border:1px solid rgb(225, 228, 229);overflow-x:auto;font-size:75%;font-family:SFMono-Regular, Menlo, Monaco, Consolas, &quot;Liberation Mono&quot;, &quot;Courier New&quot;, Courier, monospace;overflow-wrap:break-word;white-space:pre-wrap;padding:2px 5px;color:rgb(231, 76, 60);">masquerade</code>, and disabling the <code style="box-sizing:border-box;max-width:100%;background:rgb(255, 255, 255);border:1px solid rgb(225, 228, 229);overflow-x:auto;font-size:75%;font-family:SFMono-Regular, Menlo, Monaco, Consolas, &quot;Liberation Mono&quot;, &quot;Courier New&quot;, Courier, monospace;overflow-wrap:break-word;white-space:pre-wrap;padding:2px 5px;color:rgb(231, 76, 60);">bridge</code>
+type for pod network, as shown in the example above.</p>
+</blockquote>
+<h3 style="box-sizing:border-box;margin-top:0px;font-weight:700;font-family:&quot;Roboto Slab&quot;, ff-tisa-web-pro, Georgia, Arial, sans-serif;font-size:125%;margin-bottom:24px;">slirp<a href="https://kubevirt.io/user-guide/virtual_machines/interfaces_and_networks/#slirp" title="Permanent link" style="box-sizing:border-box;color:rgb(41, 128, 185);text-decoration:none;cursor:pointer;display:inline-block;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;line-height:1;text-rendering:auto;-webkit-font-smoothing:antialiased;opacity:0;margin-left:0.5em;font-family:FontAwesome;font-size:14px;">¶</a></h3>
+<p style="box-sizing:border-box;line-height:24px;font-size:16px;margin:0px 0px 24px;">In <code style="box-sizing:border-box;max-width:100%;background:rgb(255, 255, 255);border:1px solid rgb(225, 228, 229);overflow-x:auto;font-size:75%;font-family:SFMono-Regular, Menlo, Monaco, Consolas, &quot;Liberation Mono&quot;, &quot;Courier New&quot;, Courier, monospace;overflow-wrap:break-word;white-space:pre-wrap;padding:2px 5px;color:rgb(231, 76, 60);">slirp</code> mode, virtual machines are connected to the network backend
+using QEMU user networking mode. In this mode, QEMU allocates internal
+IP addresses to virtual machines and hides them behind NAT.</p>
+<pre style="box-sizing:border-box;font-size:1em;white-space:pre;font-family:SFMono-Regular, Menlo, Monaco, Consolas, &quot;Liberation Mono&quot;, &quot;Courier New&quot;, Courier, monospace;"><code style="box-sizing:border-box;max-width:100%;border:1px solid rgb(225, 228, 229);font-family:SFMono-Regular, Menlo, Monaco, Consolas, &quot;Liberation Mono&quot;, &quot;Courier New&quot;, Courier, monospace;font-size:12px;white-space:pre;overflow-wrap:normal;padding:0.5em;overflow-x:auto;display:block;background:rgb(248, 248, 248);color:rgb(0, 0, 0);"><span style="box-sizing:border-box;">kind:</span> <span style="box-sizing:border-box;color:rgb(221, 17, 68);">VM</span>
+<span style="box-sizing:border-box;">spec:</span>
+  <span style="box-sizing:border-box;">domain:</span>
+    <span style="box-sizing:border-box;">devices:</span>
+      <span style="box-sizing:border-box;">interfaces:</span>
+        <span style="box-sizing:border-box;color:rgb(153, 0, 115);">-</span> <span style="box-sizing:border-box;">name:</span> <span style="box-sizing:border-box;color:rgb(221, 17, 68);">red</span>
+          <span style="box-sizing:border-box;">slirp:</span> {} <span style="box-sizing:border-box;color:rgb(153, 153, 136);font-style:italic;"># connect using SLIRP mode</span>
+  <span style="box-sizing:border-box;">networks:</span>
+  <span style="box-sizing:border-box;color:rgb(153, 0, 115);">-</span> <span style="box-sizing:border-box;">name:</span> <span style="box-sizing:border-box;color:rgb(221, 17, 68);">red</span>
+    <span style="box-sizing:border-box;">pod:</span> {}
+</code></pre>
+<p style="box-sizing:border-box;line-height:24px;font-size:16px;margin:0px 0px 24px;">At this time, <code style="box-sizing:border-box;max-width:100%;background:rgb(255, 255, 255);border:1px solid rgb(225, 228, 229);overflow-x:auto;font-size:75%;font-family:SFMono-Regular, Menlo, Monaco, Consolas, &quot;Liberation Mono&quot;, &quot;Courier New&quot;, Courier, monospace;overflow-wrap:break-word;white-space:pre-wrap;padding:2px 5px;color:rgb(231, 76, 60);">slirp</code> mode doesn't support additional configuration
+fields.</p>
+<blockquote style="box-sizing:border-box;margin:0px;margin-left:24px;line-height:24px;margin-bottom:24px;">
+<p style="box-sizing:border-box;line-height:24px;font-size:16px;margin:0px 0px 24px;"><strong style="box-sizing:border-box;font-weight:700;">Note:</strong> in <code style="box-sizing:border-box;max-width:100%;background:rgb(255, 255, 255);border:1px solid rgb(225, 228, 229);overflow-x:auto;font-size:75%;font-family:SFMono-Regular, Menlo, Monaco, Consolas, &quot;Liberation Mono&quot;, &quot;Courier New&quot;, Courier, monospace;overflow-wrap:break-word;white-space:pre-wrap;padding:2px 5px;color:rgb(231, 76, 60);">slirp</code> mode, the only supported protocols are TCP and
+UDP. ICMP is <em style="box-sizing:border-box;">not</em> supported.</p>
+</blockquote>
+<p style="box-sizing:border-box;line-height:24px;font-size:16px;margin:0px 0px 24px;">More information about SLIRP mode can be found in <a href="https://wiki.qemu.org/Documentation/Networking#User_Networking_.28SLIRP.29" style="box-sizing:border-box;color:rgb(41, 128, 185);text-decoration:none;cursor:pointer;">QEMU
+Wiki</a>.</p>
+<h3 style="box-sizing:border-box;margin-top:0px;font-weight:700;font-family:&quot;Roboto Slab&quot;, ff-tisa-web-pro, Georgia, Arial, sans-serif;font-size:125%;margin-bottom:24px;">masquerade<a href="https://kubevirt.io/user-guide/virtual_machines/interfaces_and_networks/#masquerade" title="Permanent link" style="box-sizing:border-box;color:rgb(41, 128, 185);text-decoration:none;cursor:pointer;display:inline-block;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;line-height:1;text-rendering:auto;-webkit-font-smoothing:antialiased;opacity:0;margin-left:0.5em;font-family:FontAwesome;font-size:14px;">¶</a></h3>
+<p style="box-sizing:border-box;line-height:24px;font-size:16px;margin:0px 0px 24px;">In <code style="box-sizing:border-box;max-width:100%;background:rgb(255, 255, 255);border:1px solid rgb(225, 228, 229);overflow-x:auto;font-size:75%;font-family:SFMono-Regular, Menlo, Monaco, Consolas, &quot;Liberation Mono&quot;, &quot;Courier New&quot;, Courier, monospace;overflow-wrap:break-word;white-space:pre-wrap;padding:2px 5px;color:rgb(231, 76, 60);">masquerade</code> mode, KubeVirt allocates internal IP addresses to
+virtual machines and hides them behind NAT. All the traffic exiting
+virtual machines is "NAT'ed" using pod IP addresses. A guest operating system
+should be configured to use DHCP to acquire IPv4 addresses.</p>
+<p style="box-sizing:border-box;line-height:24px;font-size:16px;margin:0px 0px 24px;">To allow traffic of specific ports into virtual machines, the template <code style="box-sizing:border-box;max-width:100%;background:rgb(255, 255, 255);border:1px solid rgb(225, 228, 229);overflow-x:auto;font-size:75%;font-family:SFMono-Regular, Menlo, Monaco, Consolas, &quot;Liberation Mono&quot;, &quot;Courier New&quot;, Courier, monospace;overflow-wrap:break-word;white-space:pre-wrap;padding:2px 5px;color:rgb(231, 76, 60);">ports</code> section of
+the interface should be configured as follows. If the <code style="box-sizing:border-box;max-width:100%;background:rgb(255, 255, 255);border:1px solid rgb(225, 228, 229);overflow-x:auto;font-size:75%;font-family:SFMono-Regular, Menlo, Monaco, Consolas, &quot;Liberation Mono&quot;, &quot;Courier New&quot;, Courier, monospace;overflow-wrap:break-word;white-space:pre-wrap;padding:2px 5px;color:rgb(231, 76, 60);">ports</code> section is missing,
+all ports forwarded into the VM.</p>
+<pre style="box-sizing:border-box;font-size:1em;white-space:pre;font-family:SFMono-Regular, Menlo, Monaco, Consolas, &quot;Liberation Mono&quot;, &quot;Courier New&quot;, Courier, monospace;"><code style="box-sizing:border-box;max-width:100%;border:1px solid rgb(225, 228, 229);font-family:SFMono-Regular, Menlo, Monaco, Consolas, &quot;Liberation Mono&quot;, &quot;Courier New&quot;, Courier, monospace;font-size:12px;white-space:pre;overflow-wrap:normal;padding:0.5em;overflow-x:auto;display:block;background:rgb(248, 248, 248);color:rgb(0, 0, 0);"><span style="box-sizing:border-box;">kind:</span> <span style="box-sizing:border-box;color:rgb(221, 17, 68);">VM</span>
+<span style="box-sizing:border-box;">spec:</span>
+  <span style="box-sizing:border-box;">domain:</span>
+    <span style="box-sizing:border-box;">devices:</span>
+      <span style="box-sizing:border-box;">interfaces:</span>
+        <span style="box-sizing:border-box;color:rgb(153, 0, 115);">-</span> <span style="box-sizing:border-box;">name:</span> <span style="box-sizing:border-box;color:rgb(221, 17, 68);">red</span>
+          <span style="box-sizing:border-box;">masquerade:</span> {} <span style="box-sizing:border-box;color:rgb(153, 153, 136);font-style:italic;"># connect using masquerade mode</span>
+          <span style="box-sizing:border-box;">ports:</span>
+            <span style="box-sizing:border-box;color:rgb(153, 0, 115);">-</span> <span style="box-sizing:border-box;">port:</span> <span style="box-sizing:border-box;color:teal;">80</span> <span style="box-sizing:border-box;color:rgb(153, 153, 136);font-style:italic;"># allow incoming traffic on port 80 to get into the virtual machine</span>
+  <span style="box-sizing:border-box;">networks:</span>
+  <span style="box-sizing:border-box;color:rgb(153, 0, 115);">-</span> <span style="box-sizing:border-box;">name:</span> <span style="box-sizing:border-box;color:rgb(221, 17, 68);">red</span>
+    <span style="box-sizing:border-box;">pod:</span> {}
+</code></pre>
+<blockquote style="box-sizing:border-box;margin:0px;margin-left:24px;line-height:24px;margin-bottom:24px;">
+<p style="box-sizing:border-box;line-height:24px;font-size:16px;margin:0px 0px 24px;"><strong style="box-sizing:border-box;font-weight:700;">Note:</strong> Masquerade is only allowed to connect to the pod network.</p>
+<p style="box-sizing:border-box;line-height:24px;font-size:16px;margin:0px 0px 24px;"><strong style="box-sizing:border-box;font-weight:700;">Note:</strong> The network CIDR can be configured in the pod network
+section using the <code style="box-sizing:border-box;max-width:100%;background:rgb(255, 255, 255);border:1px solid rgb(225, 228, 229);overflow-x:auto;font-size:75%;font-family:SFMono-Regular, Menlo, Monaco, Consolas, &quot;Liberation Mono&quot;, &quot;Courier New&quot;, Courier, monospace;overflow-wrap:break-word;white-space:pre-wrap;padding:2px 5px;color:rgb(231, 76, 60);">vmNetworkCIDR</code> attribute.</p>
+</blockquote>
+<h4 style="box-sizing:border-box;margin-top:0px;font-weight:700;font-family:&quot;Roboto Slab&quot;, ff-tisa-web-pro, Georgia, Arial, sans-serif;font-size:115%;margin-bottom:24px;">masquerade - IPv4 and IPv6 dual-stack support<a href="https://kubevirt.io/user-guide/virtual_machines/interfaces_and_networks/#masquerade-ipv4-and-ipv6-dual-stack-support" title="Permanent link" style="box-sizing:border-box;color:rgb(41, 128, 185);text-decoration:none;cursor:pointer;display:inline-block;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;line-height:1;text-rendering:auto;-webkit-font-smoothing:antialiased;opacity:0;margin-left:0.5em;font-family:FontAwesome;font-size:14px;">¶</a></h4>
+<p style="box-sizing:border-box;line-height:24px;font-size:16px;margin:0px 0px 24px;"><code style="box-sizing:border-box;max-width:100%;background:rgb(255, 255, 255);border:1px solid rgb(225, 228, 229);overflow-x:auto;font-size:75%;font-family:SFMono-Regular, Menlo, Monaco, Consolas, &quot;Liberation Mono&quot;, &quot;Courier New&quot;, Courier, monospace;overflow-wrap:break-word;white-space:pre-wrap;padding:2px 5px;color:rgb(231, 76, 60);">masquerade</code> mode can be used in IPv4 and IPv6 dual-stack clusters to provide
+a VM with an IP connectivity over both protocols.</p>
+<p style="box-sizing:border-box;line-height:24px;font-size:16px;margin:0px 0px 24px;">As with the IPv4 <code style="box-sizing:border-box;max-width:100%;background:rgb(255, 255, 255);border:1px solid rgb(225, 228, 229);overflow-x:auto;font-size:75%;font-family:SFMono-Regular, Menlo, Monaco, Consolas, &quot;Liberation Mono&quot;, &quot;Courier New&quot;, Courier, monospace;overflow-wrap:break-word;white-space:pre-wrap;padding:2px 5px;color:rgb(231, 76, 60);">masquerade</code> mode, the VM can be contacted using the pod's IP
+address - which will be in this case two IP addresses, one IPv4 and one
+IPv6. Outgoing traffic is also "NAT'ed" to the pod's respective IP address
+from the given family.</p>
+<p style="box-sizing:border-box;line-height:24px;font-size:16px;margin:0px 0px 24px;">Unlike in IPv4, the configuration of the IPv6 address and the default route is
+not automatic; it should be configured via cloud init, as shown below:</p>
+<pre style="box-sizing:border-box;font-size:1em;white-space:pre;font-family:SFMono-Regular, Menlo, Monaco, Consolas, &quot;Liberation Mono&quot;, &quot;Courier New&quot;, Courier, monospace;"><code style="box-sizing:border-box;max-width:100%;border:1px solid rgb(225, 228, 229);font-family:SFMono-Regular, Menlo, Monaco, Consolas, &quot;Liberation Mono&quot;, &quot;Courier New&quot;, Courier, monospace;font-size:12px;white-space:pre;overflow-wrap:normal;padding:0.5em;overflow-x:auto;display:block;background:rgb(248, 248, 248);color:rgb(0, 0, 0);"><span style="box-sizing:border-box;">kind:</span> <span style="box-sizing:border-box;color:rgb(221, 17, 68);">VM</span>
+<span style="box-sizing:border-box;">spec:</span>
+  <span style="box-sizing:border-box;">domain:</span>
+    <span style="box-sizing:border-box;">devices:</span>
+      <span style="box-sizing:border-box;">disks:</span>
+        <span style="box-sizing:border-box;color:rgb(153, 0, 115);">-</span> <span style="box-sizing:border-box;">disk:</span>
+          <span style="box-sizing:border-box;">bus:</span> <span style="box-sizing:border-box;color:rgb(221, 17, 68);">virtio</span>
+          <span style="box-sizing:border-box;">name:</span> <span style="box-sizing:border-box;color:rgb(221, 17, 68);">cloudinitdisk</span>
+      <span style="box-sizing:border-box;">interfaces:</span>
+        <span style="box-sizing:border-box;color:rgb(153, 0, 115);">-</span> <span style="box-sizing:border-box;">name:</span> <span style="box-sizing:border-box;color:rgb(221, 17, 68);">red</span>
+          <span style="box-sizing:border-box;">masquerade:</span> {} <span style="box-sizing:border-box;color:rgb(153, 153, 136);font-style:italic;"># connect using masquerade mode</span>
+          <span style="box-sizing:border-box;">ports:</span>
+            <span style="box-sizing:border-box;color:rgb(153, 0, 115);">-</span> <span style="box-sizing:border-box;">port:</span> <span style="box-sizing:border-box;color:teal;">80</span> <span style="box-sizing:border-box;color:rgb(153, 153, 136);font-style:italic;"># allow incoming traffic on port 80 to get into the virtual machine</span>
+  <span style="box-sizing:border-box;">networks:</span>
+  <span style="box-sizing:border-box;color:rgb(153, 0, 115);">-</span> <span style="box-sizing:border-box;">name:</span> <span style="box-sizing:border-box;color:rgb(221, 17, 68);">red</span>
+    <span style="box-sizing:border-box;">pod:</span> {}
+  <span style="box-sizing:border-box;">volumes:</span>
+  <span style="box-sizing:border-box;color:rgb(153, 0, 115);">-</span> <span style="box-sizing:border-box;">cloudInitNoCloud:</span>
+      <span style="box-sizing:border-box;">networkData:</span> <span style="box-sizing:border-box;color:rgb(221, 17, 68);">|
+        version: 2
+        ethernets:
+          eth0:
+            dhcp4: true
+            addresses: [ fd10:0:2::2/120 ]
+            gateway6: fd10:0:2::1
+</span>      <span style="box-sizing:border-box;">userData:</span> <span style="box-sizing:border-box;color:rgb(221, 17, 68);">|-
+        #!/bin/bash
+        echo "fedora" |passwd fedora --stdin
+</span></code></pre>
+<blockquote style="box-sizing:border-box;margin:0px;margin-left:24px;line-height:24px;margin-bottom:24px;">
+<p style="box-sizing:border-box;line-height:24px;font-size:16px;margin:0px 0px 24px;"><strong style="box-sizing:border-box;font-weight:700;">Note:</strong> The IPv6 address for the VM and default gateway <strong style="box-sizing:border-box;font-weight:700;">must</strong> be the ones
+shown above.</p>
+</blockquote>
+<h4 style="box-sizing:border-box;margin-top:0px;font-weight:700;font-family:&quot;Roboto Slab&quot;, ff-tisa-web-pro, Georgia, Arial, sans-serif;font-size:115%;margin-bottom:24px;">masquerade - IPv6 single-stack support<a href="https://kubevirt.io/user-guide/virtual_machines/interfaces_and_networks/#masquerade-ipv6-single-stack-support" title="Permanent link" style="box-sizing:border-box;color:rgb(41, 128, 185);text-decoration:none;cursor:pointer;display:inline-block;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;line-height:1;text-rendering:auto;-webkit-font-smoothing:antialiased;opacity:0;margin-left:0.5em;font-family:FontAwesome;font-size:14px;">¶</a></h4>
+<p style="box-sizing:border-box;line-height:24px;font-size:16px;margin:0px 0px 24px;"><code style="box-sizing:border-box;max-width:100%;background:rgb(255, 255, 255);border:1px solid rgb(225, 228, 229);overflow-x:auto;font-size:75%;font-family:SFMono-Regular, Menlo, Monaco, Consolas, &quot;Liberation Mono&quot;, &quot;Courier New&quot;, Courier, monospace;overflow-wrap:break-word;white-space:pre-wrap;padding:2px 5px;color:rgb(231, 76, 60);">masquerade</code> mode can be used in IPv6 single stack clusters to provide a VM
+with an IPv6 only connectivity.</p>
+<p style="box-sizing:border-box;line-height:24px;font-size:16px;margin:0px 0px 24px;">As with the IPv4 <code style="box-sizing:border-box;max-width:100%;background:rgb(255, 255, 255);border:1px solid rgb(225, 228, 229);overflow-x:auto;font-size:75%;font-family:SFMono-Regular, Menlo, Monaco, Consolas, &quot;Liberation Mono&quot;, &quot;Courier New&quot;, Courier, monospace;overflow-wrap:break-word;white-space:pre-wrap;padding:2px 5px;color:rgb(231, 76, 60);">masquerade</code> mode, the VM can be contacted using the pod's IP
+address - which will be in this case the IPv6 one.
+Outgoing traffic is also "NAT'ed" to the pod's respective IPv6 address.</p>
+<p style="box-sizing:border-box;line-height:24px;font-size:16px;margin:0px 0px 24px;">As with the dual-stack cluster, the configuration of the IPv6 address and the default route is
+not automatic; it should be configured via cloud init, as shown in the <a href="https://kubevirt.io/user-guide/virtual_machines/interfaces_and_networks/#masquerade-ipv4-and-ipv6-dual-stack-support" style="box-sizing:border-box;color:rgb(41, 128, 185);text-decoration:none;cursor:pointer;">dual-stack section</a>.</p>
+<p style="box-sizing:border-box;line-height:24px;font-size:16px;margin:0px 0px 24px;">Unlike the dual-stack cluster, which has a DHCP server for IPv4, the IPv6 single stack cluster
+has no DHCP server at all. Therefore, the VM won't have the search domains information and
+reaching a destination using its FQDN is not possible.
+Tracking issue - https://github.com/kubevirt/kubevirt/issues/7184</p>
+<h3 style="box-sizing:border-box;margin-top:0px;font-weight:700;font-family:&quot;Roboto Slab&quot;, ff-tisa-web-pro, Georgia, Arial, sans-serif;font-size:125%;margin-bottom:24px;">passt<a href="https://kubevirt.io/user-guide/virtual_machines/interfaces_and_networks/#passt" title="Permanent link" style="box-sizing:border-box;color:rgb(41, 128, 185);text-decoration:none;cursor:pointer;display:inline-block;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;line-height:1;text-rendering:auto;-webkit-font-smoothing:antialiased;opacity:0;margin-left:0.5em;font-family:FontAwesome;font-size:14px;">¶</a></h3>
+<p style="box-sizing:border-box;line-height:24px;font-size:16px;margin:0px 0px 24px;"><code style="box-sizing:border-box;max-width:100%;background:rgb(255, 255, 255);border:1px solid rgb(225, 228, 229);overflow-x:auto;font-size:75%;font-family:SFMono-Regular, Menlo, Monaco, Consolas, &quot;Liberation Mono&quot;, &quot;Courier New&quot;, Courier, monospace;overflow-wrap:break-word;white-space:pre-wrap;padding:2px 5px;color:rgb(231, 76, 60);">passt</code> is a new approach for user-mode networking which can be used as a simple replacement for Slirp (which is practically dead).</p>
+<p style="box-sizing:border-box;line-height:24px;font-size:16px;margin:0px 0px 24px;"><code style="box-sizing:border-box;max-width:100%;background:rgb(255, 255, 255);border:1px solid rgb(225, 228, 229);overflow-x:auto;font-size:75%;font-family:SFMono-Regular, Menlo, Monaco, Consolas, &quot;Liberation Mono&quot;, &quot;Courier New&quot;, Courier, monospace;overflow-wrap:break-word;white-space:pre-wrap;padding:2px 5px;color:rgb(231, 76, 60);">passt</code> is a universal tool which implements a translation layer between a Layer-2 network interface and native
+Layer -4 sockets (TCP, UDP, ICMP/ICMPv6 echo) on a host.<br style="box-sizing:border-box;"/></p>
+<p style="box-sizing:border-box;line-height:24px;font-size:16px;margin:0px 0px 24px;">Its main benefits are:
+- doesn't require extra network capabilities as CAP_NET_RAW and CAP_NET_ADMIN.
+- allows integration with service meshes (which expect applications to run locally) out of the box.
+- supports IPv6 out of the box (in contrast to the existing bindings which require configuring IPv6
+manually).</p>
+<div style="box-sizing:border-box;margin-bottom:24px;max-width:100%;overflow:auto;"><table style="font-size:inherit;font-weight:inherit;font-style:inherit;font-variant:inherit;box-sizing:border-box;empty-cells:show;border-collapse:collapse;border-spacing:0px;width:100%;overflow:auto;display:block;border:none;margin-bottom:0px;">
+<thead style="box-sizing:border-box;color:rgb(0, 0, 0);text-align:left;vertical-align:bottom;white-space:nowrap;">
+<tr style="box-sizing:border-box;">
+<th style="box-sizing:border-box;border-collapse:collapse;white-space:nowrap;font-size:90%;margin:0px;overflow:visible;padding:8px 16px;font-weight:700;border-bottom:2px solid rgb(225, 228, 229);border-left-width:0px;border:1px solid rgb(225, 228, 229);"></th>
+<th style="box-sizing:border-box;border-collapse:collapse;white-space:nowrap;font-size:90%;margin:0px;overflow:visible;padding:8px 16px;font-weight:700;border-bottom:2px solid rgb(225, 228, 229);border:1px solid rgb(225, 228, 229);">Masquerade</th>
+<th style="box-sizing:border-box;border-collapse:collapse;white-space:nowrap;font-size:90%;margin:0px;overflow:visible;padding:8px 16px;font-weight:700;border-bottom:2px solid rgb(225, 228, 229);border:1px solid rgb(225, 228, 229);">Bridge</th>
+<th style="box-sizing:border-box;border-collapse:collapse;white-space:nowrap;font-size:90%;margin:0px;overflow:visible;padding:8px 16px;font-weight:700;border-bottom:2px solid rgb(225, 228, 229);border:1px solid rgb(225, 228, 229);">Passt</th>
+</tr>
+</thead>
+<tbody style="box-sizing:border-box;">
+<tr style="box-sizing:border-box;">
+<td style="box-sizing:border-box;border-collapse:collapse;white-space:nowrap;font-size:90%;margin:0px;overflow:visible;padding:8px 16px;vertical-align:middle;border-bottom:1px solid rgb(225, 228, 229);border-left:1px solid rgb(225, 228, 229);border-left-width:0px;background-color:rgb(243, 246, 246);border:1px solid rgb(225, 228, 229);">Supports migration</td>
+<td style="box-sizing:border-box;border-collapse:collapse;white-space:nowrap;font-size:90%;margin:0px;overflow:visible;padding:8px 16px;vertical-align:middle;border-bottom:1px solid rgb(225, 228, 229);border-left:1px solid rgb(225, 228, 229);background-color:rgb(243, 246, 246);border:1px solid rgb(225, 228, 229);">Yes</td>
+<td style="box-sizing:border-box;border-collapse:collapse;white-space:nowrap;font-size:90%;margin:0px;overflow:visible;padding:8px 16px;vertical-align:middle;border-bottom:1px solid rgb(225, 228, 229);border-left:1px solid rgb(225, 228, 229);background-color:rgb(243, 246, 246);border:1px solid rgb(225, 228, 229);">No</td>
+<td style="box-sizing:border-box;border-collapse:collapse;white-space:nowrap;font-size:90%;margin:0px;overflow:visible;padding:8px 16px;vertical-align:middle;border-bottom:1px solid rgb(225, 228, 229);border-left:1px solid rgb(225, 228, 229);background-color:rgb(243, 246, 246);border:1px solid rgb(225, 228, 229);">No<br style="box-sizing:border-box;"/>(will be supported in the future)</td>
+</tr>
+<tr style="box-sizing:border-box;">
+<td style="box-sizing:border-box;border-collapse:collapse;white-space:nowrap;font-size:90%;margin:0px;overflow:visible;padding:8px 16px;background-color:transparent;vertical-align:middle;border-bottom:1px solid rgb(225, 228, 229);border-left:1px solid rgb(225, 228, 229);border-left-width:0px;border:1px solid rgb(225, 228, 229);">VM uses Pod IP</td>
+<td style="box-sizing:border-box;border-collapse:collapse;white-space:nowrap;font-size:90%;margin:0px;overflow:visible;padding:8px 16px;background-color:transparent;vertical-align:middle;border-bottom:1px solid rgb(225, 228, 229);border-left:1px solid rgb(225, 228, 229);border:1px solid rgb(225, 228, 229);">No</td>
+<td style="box-sizing:border-box;border-collapse:collapse;white-space:nowrap;font-size:90%;margin:0px;overflow:visible;padding:8px 16px;background-color:transparent;vertical-align:middle;border-bottom:1px solid rgb(225, 228, 229);border-left:1px solid rgb(225, 228, 229);border:1px solid rgb(225, 228, 229);">Yes</td>
+<td style="box-sizing:border-box;border-collapse:collapse;white-space:nowrap;font-size:90%;margin:0px;overflow:visible;padding:8px 16px;background-color:transparent;vertical-align:middle;border-bottom:1px solid rgb(225, 228, 229);border-left:1px solid rgb(225, 228, 229);border:1px solid rgb(225, 228, 229);">Yes<br style="box-sizing:border-box;"/>(in the future it will be possible to configure the VM IP. Currently the default is the pod IP)</td>
+</tr>
+<tr style="box-sizing:border-box;">
+<td style="box-sizing:border-box;border-collapse:collapse;white-space:nowrap;font-size:90%;margin:0px;overflow:visible;padding:8px 16px;vertical-align:middle;border-bottom:1px solid rgb(225, 228, 229);border-left:1px solid rgb(225, 228, 229);border-left-width:0px;background-color:rgb(243, 246, 246);border:1px solid rgb(225, 228, 229);">Service Mesh out of the box</td>
+<td style="box-sizing:border-box;border-collapse:collapse;white-space:nowrap;font-size:90%;margin:0px;overflow:visible;padding:8px 16px;vertical-align:middle;border-bottom:1px solid rgb(225, 228, 229);border-left:1px solid rgb(225, 228, 229);background-color:rgb(243, 246, 246);border:1px solid rgb(225, 228, 229);">No<br style="box-sizing:border-box;"/>(only ISTIO is supported, adjustmets on both ISTIO and kubevirt had to be done to make it work)</td>
+<td style="box-sizing:border-box;border-collapse:collapse;white-space:nowrap;font-size:90%;margin:0px;overflow:visible;padding:8px 16px;vertical-align:middle;border-bottom:1px solid rgb(225, 228, 229);border-left:1px solid rgb(225, 228, 229);background-color:rgb(243, 246, 246);border:1px solid rgb(225, 228, 229);">No</td>
+<td style="box-sizing:border-box;border-collapse:collapse;white-space:nowrap;font-size:90%;margin:0px;overflow:visible;padding:8px 16px;vertical-align:middle;border-bottom:1px solid rgb(225, 228, 229);border-left:1px solid rgb(225, 228, 229);background-color:rgb(243, 246, 246);border:1px solid rgb(225, 228, 229);">Yes</td>
+</tr>
+<tr style="box-sizing:border-box;">
+<td style="box-sizing:border-box;border-collapse:collapse;white-space:nowrap;font-size:90%;margin:0px;overflow:visible;padding:8px 16px;background-color:transparent;vertical-align:middle;border-bottom:1px solid rgb(225, 228, 229);border-left:1px solid rgb(225, 228, 229);border-left-width:0px;border:1px solid rgb(225, 228, 229);">Doesn’t require extra capabilities on the virt-launcher pod</td>
+<td style="box-sizing:border-box;border-collapse:collapse;white-space:nowrap;font-size:90%;margin:0px;overflow:visible;padding:8px 16px;background-color:transparent;vertical-align:middle;border-bottom:1px solid rgb(225, 228, 229);border-left:1px solid rgb(225, 228, 229);border:1px solid rgb(225, 228, 229);">Yes<br style="box-sizing:border-box;"/>(multiple workarounds had to be added to kuebivrt to make it work)</td>
+<td style="box-sizing:border-box;border-collapse:collapse;white-space:nowrap;font-size:90%;margin:0px;overflow:visible;padding:8px 16px;background-color:transparent;vertical-align:middle;border-bottom:1px solid rgb(225, 228, 229);border-left:1px solid rgb(225, 228, 229);border:1px solid rgb(225, 228, 229);">No<br style="box-sizing:border-box;"/>(Multiple workarounds had to be added to kuebivrt to make it work)</td>
+<td style="box-sizing:border-box;border-collapse:collapse;white-space:nowrap;font-size:90%;margin:0px;overflow:visible;padding:8px 16px;background-color:transparent;vertical-align:middle;border-bottom:1px solid rgb(225, 228, 229);border-left:1px solid rgb(225, 228, 229);border:1px solid rgb(225, 228, 229);">Yes</td>
+</tr>
+<tr style="box-sizing:border-box;">
+<td style="box-sizing:border-box;border-collapse:collapse;white-space:nowrap;font-size:90%;margin:0px;overflow:visible;padding:8px 16px;vertical-align:middle;border-bottom:1px solid rgb(225, 228, 229);border-left:1px solid rgb(225, 228, 229);border-left-width:0px;background-color:rgb(243, 246, 246);border:1px solid rgb(225, 228, 229);">Doesn't require extra network devices on the virt-launcher pod</td>
+<td style="box-sizing:border-box;border-collapse:collapse;white-space:nowrap;font-size:90%;margin:0px;overflow:visible;padding:8px 16px;vertical-align:middle;border-bottom:1px solid rgb(225, 228, 229);border-left:1px solid rgb(225, 228, 229);background-color:rgb(243, 246, 246);border:1px solid rgb(225, 228, 229);">No<br style="box-sizing:border-box;"/>(bridge and tap device are created)</td>
+<td style="box-sizing:border-box;border-collapse:collapse;white-space:nowrap;font-size:90%;margin:0px;overflow:visible;padding:8px 16px;vertical-align:middle;border-bottom:1px solid rgb(225, 228, 229);border-left:1px solid rgb(225, 228, 229);background-color:rgb(243, 246, 246);border:1px solid rgb(225, 228, 229);">No<br style="box-sizing:border-box;"/>(bridge and tap device are created)</td>
+<td style="box-sizing:border-box;border-collapse:collapse;white-space:nowrap;font-size:90%;margin:0px;overflow:visible;padding:8px 16px;vertical-align:middle;border-bottom:1px solid rgb(225, 228, 229);border-left:1px solid rgb(225, 228, 229);background-color:rgb(243, 246, 246);border:1px solid rgb(225, 228, 229);">Yes</td>
+</tr>
+<tr style="box-sizing:border-box;">
+<td style="box-sizing:border-box;border-collapse:collapse;white-space:nowrap;font-size:90%;margin:0px;overflow:visible;padding:8px 16px;background-color:transparent;vertical-align:middle;border-bottom:1px solid rgb(225, 228, 229);border-left:1px solid rgb(225, 228, 229);border-left-width:0px;border-bottom-width:0px;border:1px solid rgb(225, 228, 229);">Supports IPv6</td>
+<td style="box-sizing:border-box;border-collapse:collapse;white-space:nowrap;font-size:90%;margin:0px;overflow:visible;padding:8px 16px;background-color:transparent;vertical-align:middle;border-bottom:1px solid rgb(225, 228, 229);border-left:1px solid rgb(225, 228, 229);border-bottom-width:0px;border:1px solid rgb(225, 228, 229);">Yes<br style="box-sizing:border-box;"/>(requires manual configuration on the VM)</td>
+<td style="box-sizing:border-box;border-collapse:collapse;white-space:nowrap;font-size:90%;margin:0px;overflow:visible;padding:8px 16px;background-color:transparent;vertical-align:middle;border-bottom:1px solid rgb(225, 228, 229);border-left:1px solid rgb(225, 228, 229);border-bottom-width:0px;border:1px solid rgb(225, 228, 229);">No</td>
+<td style="box-sizing:border-box;border-collapse:collapse;white-space:nowrap;font-size:90%;margin:0px;overflow:visible;padding:8px 16px;background-color:transparent;vertical-align:middle;border-bottom:1px solid rgb(225, 228, 229);border-left:1px solid rgb(225, 228, 229);border-bottom-width:0px;border:1px solid rgb(225, 228, 229);">Yes</td>
+</tr>
+</tbody>
+</table></div>
+<pre style="box-sizing:border-box;font-size:1em;white-space:pre;font-family:SFMono-Regular, Menlo, Monaco, Consolas, &quot;Liberation Mono&quot;, &quot;Courier New&quot;, Courier, monospace;"><code style="box-sizing:border-box;max-width:100%;border:1px solid rgb(225, 228, 229);font-family:SFMono-Regular, Menlo, Monaco, Consolas, &quot;Liberation Mono&quot;, &quot;Courier New&quot;, Courier, monospace;font-size:12px;white-space:pre;overflow-wrap:normal;padding:0.5em;overflow-x:auto;display:block;background:rgb(248, 248, 248);color:rgb(0, 0, 0);"><span style="box-sizing:border-box;">kind:</span> <span style="box-sizing:border-box;color:rgb(221, 17, 68);">VM</span>
+<span style="box-sizing:border-box;">spec:</span>
+  <span style="box-sizing:border-box;">domain:</span>
+    <span style="box-sizing:border-box;">devices:</span>
+      <span style="box-sizing:border-box;">interfaces:</span>
+        <span style="box-sizing:border-box;color:rgb(153, 0, 115);">-</span> <span style="box-sizing:border-box;">name:</span> <span style="box-sizing:border-box;color:rgb(221, 17, 68);">red</span>
+          <span style="box-sizing:border-box;">passt:</span> {} <span style="box-sizing:border-box;color:rgb(153, 153, 136);font-style:italic;"># connect using passt mode</span>
+          <span style="box-sizing:border-box;">ports:</span>
+            <span style="box-sizing:border-box;color:rgb(153, 0, 115);">-</span> <span style="box-sizing:border-box;">port:</span> <span style="box-sizing:border-box;color:teal;">8080</span> <span style="box-sizing:border-box;color:rgb(153, 153, 136);font-style:italic;"># allow incoming traffic on port 8080 to get into the virtual machine</span>
+  <span style="box-sizing:border-box;">networks:</span>
+    <span style="box-sizing:border-box;color:rgb(153, 0, 115);">-</span> <span style="box-sizing:border-box;">name:</span> <span style="box-sizing:border-box;color:rgb(221, 17, 68);">red</span>
+      <span style="box-sizing:border-box;">pod:</span> {}
+</code></pre>
+<h4 style="box-sizing:border-box;margin-top:0px;font-weight:700;font-family:&quot;Roboto Slab&quot;, ff-tisa-web-pro, Georgia, Arial, sans-serif;font-size:115%;margin-bottom:24px;">Requirements/Recommendations:<a href="https://kubevirt.io/user-guide/virtual_machines/interfaces_and_networks/#requirementsrecommendations" title="Permanent link" style="box-sizing:border-box;color:rgb(41, 128, 185);text-decoration:none;cursor:pointer;display:inline-block;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;line-height:1;text-rendering:auto;-webkit-font-smoothing:antialiased;opacity:0;margin-left:0.5em;font-family:FontAwesome;font-size:14px;">¶</a></h4>
+<ol style="box-sizing:border-box;margin:0px;padding:0px;line-height:24px;margin-bottom:24px;list-style:decimal;">
+<li style="box-sizing:border-box;margin-left:24px;list-style:decimal;">To get better performance the node should be configured with:</li>
+</ol>
+<pre style="box-sizing:border-box;font-size:1em;white-space:pre;font-family:SFMono-Regular, Menlo, Monaco, Consolas, &quot;Liberation Mono&quot;, &quot;Courier New&quot;, Courier, monospace;"><code style="box-sizing:border-box;max-width:100%;border:1px solid rgb(225, 228, 229);font-family:SFMono-Regular, Menlo, Monaco, Consolas, &quot;Liberation Mono&quot;, &quot;Courier New&quot;, Courier, monospace;font-size:12px;white-space:pre;overflow-wrap:normal;padding:0.5em;overflow-x:auto;display:block;background:rgb(248, 248, 248);color:rgb(0, 0, 0);"><span style="box-sizing:border-box;color:navy;font-weight:400;">sysctl</span> -w net.core.rmem_max = <span style="box-sizing:border-box;color:teal;">33554432</span>
+<span style="box-sizing:border-box;color:navy;font-weight:400;">sysctl</span> -w net.core.wmem_max = <span style="box-sizing:border-box;color:teal;">33554432</span>
+</code></pre>
+<ol style="box-sizing:border-box;margin:0px;padding:0px;line-height:24px;margin-bottom:24px;list-style:decimal;">
+<li style="box-sizing:border-box;margin-left:24px;list-style:decimal;">To run multiple passt VMs with no explicit ports, the node's <code style="box-sizing:border-box;max-width:100%;background:rgb(255, 255, 255);border:1px solid rgb(225, 228, 229);overflow-x:auto;font-size:75%;font-family:SFMono-Regular, Menlo, Monaco, Consolas, &quot;Liberation Mono&quot;, &quot;Courier New&quot;, Courier, monospace;overflow-wrap:break-word;white-space:pre-wrap;padding:2px 5px;color:rgb(231, 76, 60);margin-bottom:12px;margin-top:0px;">fs.file-max</code> should be increased
+   (for a VM forwards all IPv4 and IPv6 ports, for TCP and UDP, passt needs to create ~2^18 sockets):</li>
+</ol>
+<pre style="box-sizing:border-box;font-size:1em;white-space:pre;font-family:SFMono-Regular, Menlo, Monaco, Consolas, &quot;Liberation Mono&quot;, &quot;Courier New&quot;, Courier, monospace;"><code style="box-sizing:border-box;max-width:100%;border:1px solid rgb(225, 228, 229);font-family:SFMono-Regular, Menlo, Monaco, Consolas, &quot;Liberation Mono&quot;, &quot;Courier New&quot;, Courier, monospace;font-size:12px;white-space:pre;overflow-wrap:normal;padding:0.5em;overflow-x:auto;display:block;background:rgb(248, 248, 248);color:rgb(0, 0, 0);"><span style="box-sizing:border-box;color:navy;font-weight:400;">sysctl</span> -w fs.file-max = <span style="box-sizing:border-box;color:teal;">9223372036854775807</span>
+</code></pre>
+<p style="box-sizing:border-box;line-height:24px;font-size:16px;margin:0px 0px 24px;"><em style="box-sizing:border-box;">NOTE</em>: To achieve optimal memory consumption with Passt binding, specify ports required for your workload.
+When no ports are explicitly specified, all ports are forwarded, leading to memory overhead of up to 800 Mi.</p>
+<h4 style="box-sizing:border-box;margin-top:0px;font-weight:700;font-family:&quot;Roboto Slab&quot;, ff-tisa-web-pro, Georgia, Arial, sans-serif;font-size:115%;margin-bottom:24px;">Temporary restrictions:<a href="https://kubevirt.io/user-guide/virtual_machines/interfaces_and_networks/#temporary-restrictions" title="Permanent link" style="box-sizing:border-box;color:rgb(41, 128, 185);text-decoration:none;cursor:pointer;display:inline-block;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;line-height:1;text-rendering:auto;-webkit-font-smoothing:antialiased;opacity:0;margin-left:0.5em;font-family:FontAwesome;font-size:14px;">¶</a></h4>
+<ol style="box-sizing:border-box;margin:0px;padding:0px;line-height:24px;margin-bottom:24px;list-style:decimal;">
+<li style="box-sizing:border-box;margin-left:24px;list-style:decimal;"><code style="box-sizing:border-box;max-width:100%;background:rgb(255, 255, 255);border:1px solid rgb(225, 228, 229);overflow-x:auto;font-size:75%;font-family:SFMono-Regular, Menlo, Monaco, Consolas, &quot;Liberation Mono&quot;, &quot;Courier New&quot;, Courier, monospace;overflow-wrap:break-word;white-space:pre-wrap;padding:2px 5px;color:rgb(231, 76, 60);margin-bottom:12px;margin-top:0px;">passt</code> currently only supported as primary network and doesn't allow extra multus networks to be configured on the VM.</li>
+</ol>
+<p style="box-sizing:border-box;line-height:24px;font-size:16px;margin:0px 0px 24px;">passt interfaces are feature gated; to enable the feature, follow
+<a href="https://kubevirt.io/user-guide/operations/activating_feature_gates/#how-to-activate-a-feature-gate" style="box-sizing:border-box;color:rgb(41, 128, 185);text-decoration:none;cursor:pointer;">these</a>
+instructions, in order to activate the <code style="box-sizing:border-box;max-width:100%;background:rgb(255, 255, 255);border:1px solid rgb(225, 228, 229);overflow-x:auto;font-size:75%;font-family:SFMono-Regular, Menlo, Monaco, Consolas, &quot;Liberation Mono&quot;, &quot;Courier New&quot;, Courier, monospace;overflow-wrap:break-word;white-space:pre-wrap;padding:2px 5px;color:rgb(231, 76, 60);">Passt</code> feature gate (case sensitive).</p>
+<p style="box-sizing:border-box;line-height:24px;font-size:16px;margin:0px 0px 24px;">More information about passt mode can be found in <a href="https://passt.top/passt/about/" style="box-sizing:border-box;color:rgb(41, 128, 185);text-decoration:none;cursor:pointer;">passt
+Wiki</a>.</p>
+<h3 style="box-sizing:border-box;margin-top:0px;font-weight:700;font-family:&quot;Roboto Slab&quot;, ff-tisa-web-pro, Georgia, Arial, sans-serif;font-size:125%;margin-bottom:24px;">virtio-net multiqueue<a href="https://kubevirt.io/user-guide/virtual_machines/interfaces_and_networks/#virtio-net-multiqueue" title="Permanent link" style="box-sizing:border-box;color:rgb(41, 128, 185);text-decoration:none;cursor:pointer;display:inline-block;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;line-height:1;text-rendering:auto;-webkit-font-smoothing:antialiased;opacity:0;margin-left:0.5em;font-family:FontAwesome;font-size:14px;">¶</a></h3>
+<p style="box-sizing:border-box;line-height:24px;font-size:16px;margin:0px 0px 24px;">Setting the <code style="box-sizing:border-box;max-width:100%;background:rgb(255, 255, 255);border:1px solid rgb(225, 228, 229);overflow-x:auto;font-size:75%;font-family:SFMono-Regular, Menlo, Monaco, Consolas, &quot;Liberation Mono&quot;, &quot;Courier New&quot;, Courier, monospace;overflow-wrap:break-word;white-space:pre-wrap;padding:2px 5px;color:rgb(231, 76, 60);">networkInterfaceMultiqueue</code> to <code style="box-sizing:border-box;max-width:100%;background:rgb(255, 255, 255);border:1px solid rgb(225, 228, 229);overflow-x:auto;font-size:75%;font-family:SFMono-Regular, Menlo, Monaco, Consolas, &quot;Liberation Mono&quot;, &quot;Courier New&quot;, Courier, monospace;overflow-wrap:break-word;white-space:pre-wrap;padding:2px 5px;color:rgb(231, 76, 60);">true</code> will enable the
+multi-queue functionality, increasing the number of vhost queue, for
+interfaces configured with a <code style="box-sizing:border-box;max-width:100%;background:rgb(255, 255, 255);border:1px solid rgb(225, 228, 229);overflow-x:auto;font-size:75%;font-family:SFMono-Regular, Menlo, Monaco, Consolas, &quot;Liberation Mono&quot;, &quot;Courier New&quot;, Courier, monospace;overflow-wrap:break-word;white-space:pre-wrap;padding:2px 5px;color:rgb(231, 76, 60);">virtio</code> model.</p>
+<pre style="box-sizing:border-box;font-size:1em;white-space:pre;font-family:SFMono-Regular, Menlo, Monaco, Consolas, &quot;Liberation Mono&quot;, &quot;Courier New&quot;, Courier, monospace;"><code style="box-sizing:border-box;max-width:100%;border:1px solid rgb(225, 228, 229);font-family:SFMono-Regular, Menlo, Monaco, Consolas, &quot;Liberation Mono&quot;, &quot;Courier New&quot;, Courier, monospace;font-size:12px;white-space:pre;overflow-wrap:normal;padding:0.5em;overflow-x:auto;display:block;background:rgb(248, 248, 248);color:rgb(0, 0, 0);"><span style="box-sizing:border-box;">kind:</span> <span style="box-sizing:border-box;color:rgb(221, 17, 68);">VM</span>
+<span style="box-sizing:border-box;">spec:</span>
+  <span style="box-sizing:border-box;">domain:</span>
+    <span style="box-sizing:border-box;">devices:</span>
+      <span style="box-sizing:border-box;">networkInterfaceMultiqueue:</span> <span style="box-sizing:border-box;color:teal;">true</span>
+</code></pre>
+<p style="box-sizing:border-box;line-height:24px;font-size:16px;margin:0px 0px 24px;">Users of a Virtual Machine with multiple vCPUs may benefit of increased
+network throughput and performance.</p>
+<p style="box-sizing:border-box;line-height:24px;font-size:16px;margin:0px 0px 24px;">Currently, the number of queues is being determined by the number of
+vCPUs of a VM. This is because multi-queue support optimizes RX
+interrupt affinity and TX queue selection in order to make a specific
+queue private to a specific vCPU.</p>
+<p style="box-sizing:border-box;line-height:24px;font-size:16px;margin:0px 0px 24px;">Without enabling the feature, network performance does not scale as the
+number of vCPUs increases. Guests cannot transmit or retrieve packets in
+parallel, as virtio-net has only one TX and RX queue.</p>
+<p style="box-sizing:border-box;line-height:24px;font-size:16px;margin:0px 0px 24px;">Virtio interfaces advertise on their status.interfaces.interface entry a field named queueCount.<br style="box-sizing:border-box;"/>
+The queueCount field indicates how many queues were assigned to the interface.<br style="box-sizing:border-box;"/>
+Queue count value is derived from the domain XML.<br style="box-sizing:border-box;"/>
+In case the number of queues can't be determined (i.e interface that is reported by quest-agent only),
+it will be omitted.</p>
+<p style="box-sizing:border-box;line-height:24px;font-size:16px;margin:0px 0px 24px;"><em style="box-sizing:border-box;">NOTE</em>: Although the virtio-net multiqueue feature provides a
+performance benefit, it has some limitations and therefore should not be
+unconditionally enabled</p>
+<h4 style="box-sizing:border-box;margin-top:0px;font-weight:700;font-family:&quot;Roboto Slab&quot;, ff-tisa-web-pro, Georgia, Arial, sans-serif;font-size:115%;margin-bottom:24px;">Some known limitations<a href="https://kubevirt.io/user-guide/virtual_machines/interfaces_and_networks/#some-known-limitations" title="Permanent link" style="box-sizing:border-box;color:rgb(41, 128, 185);text-decoration:none;cursor:pointer;display:inline-block;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;line-height:1;text-rendering:auto;-webkit-font-smoothing:antialiased;opacity:0;margin-left:0.5em;font-family:FontAwesome;font-size:14px;">¶</a></h4>
+<ul style="box-sizing:border-box;margin:0px;padding:0px;line-height:24px;margin-bottom:24px;list-style:disc;">
+<li style="box-sizing:border-box;margin-left:24px;list-style:disc;">
+<p style="box-sizing:border-box;line-height:24px;font-size:16px;margin:0px 0px 24px;margin-top:0px;margin-bottom:0px;">Guest OS is limited to ~200 MSI vectors. Each NIC queue requires a
+    MSI vector, as well as any virtio device or assigned PCI device.
+    Defining an instance with multiple virtio NICs and vCPUs might lead
+    to a possibility of hitting the guest MSI limit.</p>
+</li>
+<li style="box-sizing:border-box;margin-left:24px;list-style:disc;">
+<p style="box-sizing:border-box;line-height:24px;font-size:16px;margin:0px 0px 24px;margin-top:0px;margin-bottom:0px;">virtio-net multiqueue works well for incoming traffic, but can
+    occasionally cause a performance degradation, for outgoing traffic.
+    Specifically, this may occur when sending packets under 1,500 bytes
+    over the Transmission Control Protocol (TCP) stream.</p>
+</li>
+<li style="box-sizing:border-box;margin-left:24px;list-style:disc;">
+<p style="box-sizing:border-box;line-height:24px;font-size:16px;margin:0px 0px 24px;margin-top:0px;margin-bottom:0px;">Enabling virtio-net multiqueue increases the total network
+    throughput, but in parallel it also increases the CPU consumption.</p>
+</li>
+<li style="box-sizing:border-box;margin-left:24px;list-style:disc;">
+<p style="box-sizing:border-box;line-height:24px;font-size:16px;margin:0px 0px 24px;margin-top:0px;margin-bottom:0px;">Enabling virtio-net multiqueue in the host QEMU config, does not
+    enable the functionality in the guest OS. The guest OS administrator
+    needs to manually turn it on for each guest NIC that requires this
+    feature, using ethtool.</p>
+</li>
+<li style="box-sizing:border-box;margin-left:24px;list-style:disc;">
+<p style="box-sizing:border-box;line-height:24px;font-size:16px;margin:0px 0px 24px;margin-top:0px;margin-bottom:0px;">MSI vectors would still be consumed (wasted), if multiqueue was
+    enabled in the host, but has not been enabled in the guest OS by the
+    administrator.</p>
+</li>
+<li style="box-sizing:border-box;margin-left:24px;list-style:disc;">
+<p style="box-sizing:border-box;line-height:24px;font-size:16px;margin:0px 0px 24px;margin-top:0px;margin-bottom:0px;">In case the number of vNICs in a guest instance is proportional to
+    the number of vCPUs, enabling the multiqueue feature is less
+    important.</p>
+</li>
+<li style="box-sizing:border-box;margin-left:24px;list-style:disc;">
+<p style="box-sizing:border-box;line-height:24px;font-size:16px;margin:0px 0px 24px;margin-top:0px;margin-bottom:0px;">Each virtio-net queue consumes 64 KiB of kernel memory for the vhost
+    driver.</p>
+</li>
+</ul>
+<p style="box-sizing:border-box;line-height:24px;font-size:16px;margin:0px 0px 24px;"><em style="box-sizing:border-box;">NOTE</em>: Virtio-net multiqueue should be enabled in the guest OS
+manually, using ethtool. For example:
+<code style="box-sizing:border-box;max-width:100%;background:rgb(255, 255, 255);border:1px solid rgb(225, 228, 229);overflow-x:auto;font-size:75%;font-family:SFMono-Regular, Menlo, Monaco, Consolas, &quot;Liberation Mono&quot;, &quot;Courier New&quot;, Courier, monospace;overflow-wrap:break-word;white-space:pre-wrap;padding:2px 5px;color:rgb(231, 76, 60);">ethtool -L &lt;NIC&gt; combined #num_of_queues</code></p>
+<p style="box-sizing:border-box;line-height:24px;font-size:16px;margin:0px 0px 24px;">More information please refer to <a href="http://www.linux-kvm.org/page/Multiqueue" style="box-sizing:border-box;color:rgb(41, 128, 185);text-decoration:none;cursor:pointer;">KVM/QEMU
+MultiQueue</a>.</p>
+<h3 style="box-sizing:border-box;margin-top:0px;font-weight:700;font-family:&quot;Roboto Slab&quot;, ff-tisa-web-pro, Georgia, Arial, sans-serif;font-size:125%;margin-bottom:24px;">sriov<a href="https://kubevirt.io/user-guide/virtual_machines/interfaces_and_networks/#sriov" title="Permanent link" style="box-sizing:border-box;color:rgb(41, 128, 185);text-decoration:none;cursor:pointer;display:inline-block;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;line-height:1;text-rendering:auto;-webkit-font-smoothing:antialiased;opacity:0;margin-left:0.5em;font-family:FontAwesome;font-size:14px;">¶</a></h3>
+<p style="box-sizing:border-box;line-height:24px;font-size:16px;margin:0px 0px 24px;">In <code style="box-sizing:border-box;max-width:100%;background:rgb(255, 255, 255);border:1px solid rgb(225, 228, 229);overflow-x:auto;font-size:75%;font-family:SFMono-Regular, Menlo, Monaco, Consolas, &quot;Liberation Mono&quot;, &quot;Courier New&quot;, Courier, monospace;overflow-wrap:break-word;white-space:pre-wrap;padding:2px 5px;color:rgb(231, 76, 60);">sriov</code> mode, virtual machines are directly exposed to an SR-IOV PCI
+device, usually allocated by <a href="https://github.com/intel/sriov-network-device-plugin" style="box-sizing:border-box;color:rgb(41, 128, 185);text-decoration:none;cursor:pointer;">Intel SR-IOV device
+plugin</a>. The
+device is passed through into the guest operating system as a host
+device, using the
+<a href="https://www.kernel.org/doc/Documentation/vfio.txt" style="box-sizing:border-box;color:rgb(41, 128, 185);text-decoration:none;cursor:pointer;">vfio</a> userspace
+interface, to maintain high networking performance.</p>
+<h4 style="box-sizing:border-box;margin-top:0px;font-weight:700;font-family:&quot;Roboto Slab&quot;, ff-tisa-web-pro, Georgia, Arial, sans-serif;font-size:115%;margin-bottom:24px;">How to expose SR-IOV VFs to KubeVirt<a href="https://kubevirt.io/user-guide/virtual_machines/interfaces_and_networks/#how-to-expose-sr-iov-vfs-to-kubevirt" title="Permanent link" style="box-sizing:border-box;color:rgb(41, 128, 185);text-decoration:none;cursor:pointer;display:inline-block;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;line-height:1;text-rendering:auto;-webkit-font-smoothing:antialiased;opacity:0;margin-left:0.5em;font-family:FontAwesome;font-size:14px;">¶</a></h4>
+<p style="box-sizing:border-box;line-height:24px;font-size:16px;margin:0px 0px 24px;">To simplify procedure, please use <a href="https://github.com/openshift/sriov-network-operator" style="box-sizing:border-box;color:rgb(41, 128, 185);text-decoration:none;cursor:pointer;">OpenShift SR-IOV
+operator</a> to deploy
+and configure SR-IOV components in your cluster. On how to use the
+operator, please refer to <a href="https://github.com/openshift/sriov-network-operator/blob/master/doc/quickstart.md" style="box-sizing:border-box;color:rgb(41, 128, 185);text-decoration:none;cursor:pointer;">their respective
+documentation</a>.</p>
+<blockquote style="box-sizing:border-box;margin:0px;margin-left:24px;line-height:24px;margin-bottom:24px;">
+<p style="box-sizing:border-box;line-height:24px;font-size:16px;margin:0px 0px 24px;"><strong style="box-sizing:border-box;font-weight:700;">Note:</strong> KubeVirt relies on VFIO userspace driver to pass PCI devices
+into VMI guest. Because of that, when configuring SR-IOV operator
+policies, make sure you define a pool of VF resources that uses
+<code style="box-sizing:border-box;max-width:100%;background:rgb(255, 255, 255);border:1px solid rgb(225, 228, 229);overflow-x:auto;font-size:75%;font-family:SFMono-Regular, Menlo, Monaco, Consolas, &quot;Liberation Mono&quot;, &quot;Courier New&quot;, Courier, monospace;overflow-wrap:break-word;white-space:pre-wrap;padding:2px 5px;color:rgb(231, 76, 60);">driver: vfio</code>.</p>
+</blockquote>
+<p style="box-sizing:border-box;line-height:24px;font-size:16px;margin:0px 0px 24px;">Once the operator is deployed, an <a href="https://github.com/openshift/sriov-network-operator#sriovnetworknodeconfigpolicy" style="box-sizing:border-box;color:rgb(41, 128, 185);text-decoration:none;cursor:pointer;">SriovNetworkNodePolicy
+</a>
+must be provisioned, in which the list of SR-IOV devices to expose (with
+respective configurations) is defined.</p>
+<p style="box-sizing:border-box;line-height:24px;font-size:16px;margin:0px 0px 24px;">Please refer to the following <code style="box-sizing:border-box;max-width:100%;background:rgb(255, 255, 255);border:1px solid rgb(225, 228, 229);overflow-x:auto;font-size:75%;font-family:SFMono-Regular, Menlo, Monaco, Consolas, &quot;Liberation Mono&quot;, &quot;Courier New&quot;, Courier, monospace;overflow-wrap:break-word;white-space:pre-wrap;padding:2px 5px;color:rgb(231, 76, 60);">SriovNetworkNodePolicy</code> for an example:</p>
+<pre style="box-sizing:border-box;font-size:1em;white-space:pre;font-family:SFMono-Regular, Menlo, Monaco, Consolas, &quot;Liberation Mono&quot;, &quot;Courier New&quot;, Courier, monospace;"><code style="box-sizing:border-box;max-width:100%;border:1px solid rgb(225, 228, 229);font-family:SFMono-Regular, Menlo, Monaco, Consolas, &quot;Liberation Mono&quot;, &quot;Courier New&quot;, Courier, monospace;font-size:12px;white-space:pre;overflow-wrap:normal;padding:0.5em;overflow-x:auto;display:block;background:rgb(248, 248, 248);color:rgb(0, 0, 0);"><span style="box-sizing:border-box;">apiVersion:</span> <span style="box-sizing:border-box;color:rgb(221, 17, 68);">sriovnetwork.openshift.io/v1</span>
+<span style="box-sizing:border-box;">kind:</span> <span style="box-sizing:border-box;color:rgb(221, 17, 68);">SriovNetworkNodePolicy</span>
+<span style="box-sizing:border-box;">metadata:</span>
+  <span style="box-sizing:border-box;">name:</span> <span style="box-sizing:border-box;color:rgb(221, 17, 68);">policy-1</span>
+  <span style="box-sizing:border-box;">namespace:</span> <span style="box-sizing:border-box;color:rgb(221, 17, 68);">sriov-network-operator</span>
+<span style="box-sizing:border-box;">spec:</span>
+  <span style="box-sizing:border-box;">deviceType:</span> <span style="box-sizing:border-box;color:rgb(221, 17, 68);">vfio-pci</span>
+  <span style="box-sizing:border-box;">mtu:</span> <span style="box-sizing:border-box;color:teal;">9000</span>
+  <span style="box-sizing:border-box;">nicSelector:</span>
+    <span style="box-sizing:border-box;">pfNames:</span>
+    <span style="box-sizing:border-box;color:rgb(153, 0, 115);">-</span> <span style="box-sizing:border-box;color:rgb(221, 17, 68);">ens1f0</span>
+  <span style="box-sizing:border-box;">nodeSelector:</span>
+    <span style="box-sizing:border-box;">sriov:</span> <span style="box-sizing:border-box;color:rgb(221, 17, 68);">"true"</span>
+  <span style="box-sizing:border-box;">numVfs:</span> <span style="box-sizing:border-box;color:teal;">8</span>
+  <span style="box-sizing:border-box;">priority:</span> <span style="box-sizing:border-box;color:teal;">90</span>
+  <span style="box-sizing:border-box;">resourceName:</span> <span style="box-sizing:border-box;color:rgb(221, 17, 68);">sriov-nic</span>
+</code></pre>
+<p style="box-sizing:border-box;line-height:24px;font-size:16px;margin:0px 0px 24px;">The policy above will configure the <code style="box-sizing:border-box;max-width:100%;background:rgb(255, 255, 255);border:1px solid rgb(225, 228, 229);overflow-x:auto;font-size:75%;font-family:SFMono-Regular, Menlo, Monaco, Consolas, &quot;Liberation Mono&quot;, &quot;Courier New&quot;, Courier, monospace;overflow-wrap:break-word;white-space:pre-wrap;padding:2px 5px;color:rgb(231, 76, 60);">SR-IOV</code> device plugin, allowing the
+PF named <code style="box-sizing:border-box;max-width:100%;background:rgb(255, 255, 255);border:1px solid rgb(225, 228, 229);overflow-x:auto;font-size:75%;font-family:SFMono-Regular, Menlo, Monaco, Consolas, &quot;Liberation Mono&quot;, &quot;Courier New&quot;, Courier, monospace;overflow-wrap:break-word;white-space:pre-wrap;padding:2px 5px;color:rgb(231, 76, 60);">ens1f0</code> to be exposed in the SRIOV capable nodes as a resource named
+<code style="box-sizing:border-box;max-width:100%;background:rgb(255, 255, 255);border:1px solid rgb(225, 228, 229);overflow-x:auto;font-size:75%;font-family:SFMono-Regular, Menlo, Monaco, Consolas, &quot;Liberation Mono&quot;, &quot;Courier New&quot;, Courier, monospace;overflow-wrap:break-word;white-space:pre-wrap;padding:2px 5px;color:rgb(231, 76, 60);">sriov-nic</code>.</p>
+<h4 style="box-sizing:border-box;margin-top:0px;font-weight:700;font-family:&quot;Roboto Slab&quot;, ff-tisa-web-pro, Georgia, Arial, sans-serif;font-size:115%;margin-bottom:24px;">Start an SR-IOV VM<a href="https://kubevirt.io/user-guide/virtual_machines/interfaces_and_networks/#start-an-sr-iov-vm" title="Permanent link" style="box-sizing:border-box;color:rgb(41, 128, 185);text-decoration:none;cursor:pointer;display:inline-block;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;line-height:1;text-rendering:auto;-webkit-font-smoothing:antialiased;opacity:0;margin-left:0.5em;font-family:FontAwesome;font-size:14px;">¶</a></h4>
+<p style="box-sizing:border-box;line-height:24px;font-size:16px;margin:0px 0px 24px;">Once all the SR-IOV components are deployed, it is needed to indicate how to
+configure the SR-IOV network. Refer to the following
+<code style="box-sizing:border-box;max-width:100%;background:rgb(255, 255, 255);border:1px solid rgb(225, 228, 229);overflow-x:auto;font-size:75%;font-family:SFMono-Regular, Menlo, Monaco, Consolas, &quot;Liberation Mono&quot;, &quot;Courier New&quot;, Courier, monospace;overflow-wrap:break-word;white-space:pre-wrap;padding:2px 5px;color:rgb(231, 76, 60);">SriovNetwork</code> for an example:</p>
+<pre style="box-sizing:border-box;font-size:1em;white-space:pre;font-family:SFMono-Regular, Menlo, Monaco, Consolas, &quot;Liberation Mono&quot;, &quot;Courier New&quot;, Courier, monospace;"><code style="box-sizing:border-box;max-width:100%;border:1px solid rgb(225, 228, 229);font-family:SFMono-Regular, Menlo, Monaco, Consolas, &quot;Liberation Mono&quot;, &quot;Courier New&quot;, Courier, monospace;font-size:12px;white-space:pre;overflow-wrap:normal;padding:0.5em;overflow-x:auto;display:block;background:rgb(248, 248, 248);color:rgb(0, 0, 0);"><span style="box-sizing:border-box;">apiVersion:</span> <span style="box-sizing:border-box;color:rgb(221, 17, 68);">sriovnetwork.openshift.io/v1</span>
+<span style="box-sizing:border-box;">kind:</span> <span style="box-sizing:border-box;color:rgb(221, 17, 68);">SriovNetwork</span>
+<span style="box-sizing:border-box;">metadata:</span>
+  <span style="box-sizing:border-box;">name:</span> <span style="box-sizing:border-box;color:rgb(221, 17, 68);">sriov-net</span>
+  <span style="box-sizing:border-box;">namespace:</span> <span style="box-sizing:border-box;color:rgb(221, 17, 68);">sriov-network-operator</span>
+<span style="box-sizing:border-box;">spec:</span>
+  <span style="box-sizing:border-box;">ipam:</span> <span style="box-sizing:border-box;color:rgb(221, 17, 68);">|
+    {}
+</span>  <span style="box-sizing:border-box;">networkNamespace:</span> <span style="box-sizing:border-box;color:rgb(221, 17, 68);">default</span>
+  <span style="box-sizing:border-box;">resourceName:</span> <span style="box-sizing:border-box;color:rgb(221, 17, 68);">sriov-nic</span>
+  <span style="box-sizing:border-box;">spoofChk:</span> <span style="box-sizing:border-box;color:rgb(221, 17, 68);">"off"</span>
+</code></pre>
+<p style="box-sizing:border-box;line-height:24px;font-size:16px;margin:0px 0px 24px;">Finally, to create a VM that will attach to the aforementioned Network, refer
+to the following VMI spec:</p>
+<pre style="box-sizing:border-box;font-size:1em;white-space:pre;font-family:SFMono-Regular, Menlo, Monaco, Consolas, &quot;Liberation Mono&quot;, &quot;Courier New&quot;, Courier, monospace;"><code style="box-sizing:border-box;max-width:100%;border:1px solid rgb(225, 228, 229);font-family:SFMono-Regular, Menlo, Monaco, Consolas, &quot;Liberation Mono&quot;, &quot;Courier New&quot;, Courier, monospace;font-size:12px;white-space:pre;overflow-wrap:normal;padding:0.5em;overflow-x:auto;display:block;background:rgb(248, 248, 248);color:rgb(0, 0, 0);"><span style="box-sizing:border-box;color:rgb(153, 153, 153);font-weight:700;">---</span>
+<span style="box-sizing:border-box;">apiVersion:</span> <span style="box-sizing:border-box;color:rgb(221, 17, 68);">kubevirt.io/v1</span>
+<span style="box-sizing:border-box;">kind:</span> <span style="box-sizing:border-box;color:rgb(221, 17, 68);">VirtualMachineInstance</span>
+<span style="box-sizing:border-box;">metadata:</span>
+  <span style="box-sizing:border-box;">labels:</span>
+    <span style="box-sizing:border-box;">special:</span> <span style="box-sizing:border-box;color:rgb(221, 17, 68);">vmi-perf</span>
+  <span style="box-sizing:border-box;">name:</span> <span style="box-sizing:border-box;color:rgb(221, 17, 68);">vmi-perf</span>
+<span style="box-sizing:border-box;">spec:</span>
+  <span style="box-sizing:border-box;">domain:</span>
+    <span style="box-sizing:border-box;">cpu:</span>
+      <span style="box-sizing:border-box;">sockets:</span> <span style="box-sizing:border-box;color:teal;">2</span>
+      <span style="box-sizing:border-box;">cores:</span> <span style="box-sizing:border-box;color:teal;">1</span>
+      <span style="box-sizing:border-box;">threads:</span> <span style="box-sizing:border-box;color:teal;">1</span>
+      <span style="box-sizing:border-box;">dedicatedCpuPlacement:</span> <span style="box-sizing:border-box;color:teal;">true</span>
+    <span style="box-sizing:border-box;">resources:</span>
+      <span style="box-sizing:border-box;">requests:</span>
+        <span style="box-sizing:border-box;">memory:</span> <span style="box-sizing:border-box;color:rgb(221, 17, 68);">"4Gi"</span>
+      <span style="box-sizing:border-box;">limits:</span>
+        <span style="box-sizing:border-box;">memory:</span> <span style="box-sizing:border-box;color:rgb(221, 17, 68);">"4Gi"</span>
+    <span style="box-sizing:border-box;">devices:</span>
+      <span style="box-sizing:border-box;">disks:</span>
+      <span style="box-sizing:border-box;color:rgb(153, 0, 115);">-</span> <span style="box-sizing:border-box;">disk:</span>
+          <span style="box-sizing:border-box;">bus:</span> <span style="box-sizing:border-box;color:rgb(221, 17, 68);">virtio</span>
+        <span style="box-sizing:border-box;">name:</span> <span style="box-sizing:border-box;color:rgb(221, 17, 68);">containerdisk</span>
+      <span style="box-sizing:border-box;color:rgb(153, 0, 115);">-</span> <span style="box-sizing:border-box;">disk:</span>
+          <span style="box-sizing:border-box;">bus:</span> <span style="box-sizing:border-box;color:rgb(221, 17, 68);">virtio</span>
+        <span style="box-sizing:border-box;">name:</span> <span style="box-sizing:border-box;color:rgb(221, 17, 68);">cloudinitdisk</span>
+      <span style="box-sizing:border-box;">interfaces:</span>
+      <span style="box-sizing:border-box;color:rgb(153, 0, 115);">-</span> <span style="box-sizing:border-box;">masquerade:</span> {}
+        <span style="box-sizing:border-box;">name:</span> <span style="box-sizing:border-box;color:rgb(221, 17, 68);">default</span>
+      <span style="box-sizing:border-box;color:rgb(153, 0, 115);">-</span> <span style="box-sizing:border-box;">name:</span> <span style="box-sizing:border-box;color:rgb(221, 17, 68);">sriov-net</span>
+        <span style="box-sizing:border-box;">sriov:</span> {}
+      <span style="box-sizing:border-box;">rng:</span> {}
+    <span style="box-sizing:border-box;">machine:</span>
+      <span style="box-sizing:border-box;">type:</span> <span style="box-sizing:border-box;color:rgb(221, 17, 68);">""</span>
+  <span style="box-sizing:border-box;">networks:</span>
+  <span style="box-sizing:border-box;color:rgb(153, 0, 115);">-</span> <span style="box-sizing:border-box;">name:</span> <span style="box-sizing:border-box;color:rgb(221, 17, 68);">default</span>
+    <span style="box-sizing:border-box;">pod:</span> {}
+  <span style="box-sizing:border-box;color:rgb(153, 0, 115);">-</span> <span style="box-sizing:border-box;">multus:</span>
+      <span style="box-sizing:border-box;">networkName:</span> <span style="box-sizing:border-box;color:rgb(221, 17, 68);">default/sriov-net</span>
+    <span style="box-sizing:border-box;">name:</span> <span style="box-sizing:border-box;color:rgb(221, 17, 68);">sriov-net</span>
+  <span style="box-sizing:border-box;">terminationGracePeriodSeconds:</span> <span style="box-sizing:border-box;color:teal;">0</span>
+  <span style="box-sizing:border-box;">volumes:</span>
+  <span style="box-sizing:border-box;color:rgb(153, 0, 115);">-</span> <span style="box-sizing:border-box;">containerDisk:</span>
+      <span style="box-sizing:border-box;">image:</span> <span style="box-sizing:border-box;color:rgb(221, 17, 68);">docker.io/kubevirt/fedora-cloud-container-disk-demo:latest</span>
+    <span style="box-sizing:border-box;">name:</span> <span style="box-sizing:border-box;color:rgb(221, 17, 68);">containerdisk</span>
+  <span style="box-sizing:border-box;color:rgb(153, 0, 115);">-</span> <span style="box-sizing:border-box;">cloudInitNoCloud:</span>
+      <span style="box-sizing:border-box;">userData:</span> <span style="box-sizing:border-box;color:rgb(221, 17, 68);">|
+        #!/bin/bash
+        echo "centos" |passwd centos --stdin
+        dhclient eth1
+</span>    <span style="box-sizing:border-box;">name:</span> <span style="box-sizing:border-box;color:rgb(221, 17, 68);">cloudinitdisk</span>
+</code></pre>
+<blockquote style="box-sizing:border-box;margin:0px;margin-left:24px;line-height:24px;margin-bottom:24px;">
+<p style="box-sizing:border-box;line-height:24px;font-size:16px;margin:0px 0px 24px;"><strong style="box-sizing:border-box;font-weight:700;">Note:</strong> for some NICs (e.g. Mellanox), the kernel module needs to be
+installed in the guest VM.</p>
+<p style="box-sizing:border-box;line-height:24px;font-size:16px;margin:0px 0px 24px;"><strong style="box-sizing:border-box;font-weight:700;">Note:</strong> Placement on dedicated CPUs can only be achieved if the Kubernetes CPU manager is running on the SR-IOV capable workers.
+For further details please refer to the <a href="https://kubevirt.io/user-guide/#/creation/dedicated-cpu" style="box-sizing:border-box;color:rgb(41, 128, 185);text-decoration:none;cursor:pointer;">dedicated cpu resources documentation</a>.</p>
+</blockquote>
+<h3 style="box-sizing:border-box;margin-top:0px;font-weight:700;font-family:&quot;Roboto Slab&quot;, ff-tisa-web-pro, Georgia, Arial, sans-serif;font-size:125%;margin-bottom:24px;">Macvtap<a href="https://kubevirt.io/user-guide/virtual_machines/interfaces_and_networks/#macvtap" title="Permanent link" style="box-sizing:border-box;color:rgb(41, 128, 185);text-decoration:none;cursor:pointer;display:inline-block;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;line-height:1;text-rendering:auto;-webkit-font-smoothing:antialiased;opacity:0;margin-left:0.5em;font-family:FontAwesome;font-size:14px;">¶</a></h3>
+<p style="box-sizing:border-box;line-height:24px;font-size:16px;margin:0px 0px 24px;">In <code style="box-sizing:border-box;max-width:100%;background:rgb(255, 255, 255);border:1px solid rgb(225, 228, 229);overflow-x:auto;font-size:75%;font-family:SFMono-Regular, Menlo, Monaco, Consolas, &quot;Liberation Mono&quot;, &quot;Courier New&quot;, Courier, monospace;overflow-wrap:break-word;white-space:pre-wrap;padding:2px 5px;color:rgb(231, 76, 60);">macvtap</code> mode, virtual machines are directly exposed to the Kubernetes
+nodes L2 network. This is achieved by 'extending' an existing network interface
+with a virtual device that has its own MAC address.</p>
+<p style="box-sizing:border-box;line-height:24px;font-size:16px;margin:0px 0px 24px;">Macvtap interfaces are feature gated; to enable the feature, follow
+<a href="https://kubevirt.io/user-guide/operations/activating_feature_gates/#how-to-activate-a-feature-gate" style="box-sizing:border-box;color:rgb(41, 128, 185);text-decoration:none;cursor:pointer;">these</a>
+instructions, in order to activate the <code style="box-sizing:border-box;max-width:100%;background:rgb(255, 255, 255);border:1px solid rgb(225, 228, 229);overflow-x:auto;font-size:75%;font-family:SFMono-Regular, Menlo, Monaco, Consolas, &quot;Liberation Mono&quot;, &quot;Courier New&quot;, Courier, monospace;overflow-wrap:break-word;white-space:pre-wrap;padding:2px 5px;color:rgb(231, 76, 60);">Macvtap</code> feature gate (case sensitive).</p>
+<h4 style="box-sizing:border-box;margin-top:0px;font-weight:700;font-family:&quot;Roboto Slab&quot;, ff-tisa-web-pro, Georgia, Arial, sans-serif;font-size:115%;margin-bottom:24px;">Limitations<a href="https://kubevirt.io/user-guide/virtual_machines/interfaces_and_networks/#limitations" title="Permanent link" style="box-sizing:border-box;color:rgb(41, 128, 185);text-decoration:none;cursor:pointer;display:inline-block;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;line-height:1;text-rendering:auto;-webkit-font-smoothing:antialiased;opacity:0;margin-left:0.5em;font-family:FontAwesome;font-size:14px;">¶</a></h4>
+<ul style="box-sizing:border-box;margin:0px;padding:0px;line-height:24px;margin-bottom:24px;list-style:disc;">
+<li style="box-sizing:border-box;margin-left:24px;list-style:disc;">Live migration is not seamless, see <a href="https://github.com/kubevirt/kubevirt/issues/5912#issuecomment-888938920" style="box-sizing:border-box;color:rgb(41, 128, 185);text-decoration:none;cursor:pointer;margin-bottom:12px;margin-top:0px;">issue #5912</a></li>
+</ul>
+<h4 style="box-sizing:border-box;margin-top:0px;font-weight:700;font-family:&quot;Roboto Slab&quot;, ff-tisa-web-pro, Georgia, Arial, sans-serif;font-size:115%;margin-bottom:24px;">How to expose host interface to the macvtap device plugin<a href="https://kubevirt.io/user-guide/virtual_machines/interfaces_and_networks/#how-to-expose-host-interface-to-the-macvtap-device-plugin" title="Permanent link" style="box-sizing:border-box;color:rgb(41, 128, 185);text-decoration:none;cursor:pointer;display:inline-block;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;line-height:1;text-rendering:auto;-webkit-font-smoothing:antialiased;opacity:0;margin-left:0.5em;font-family:FontAwesome;font-size:14px;">¶</a></h4>
+<p style="box-sizing:border-box;line-height:24px;font-size:16px;margin:0px 0px 24px;">To simplify the procedure, please use the
+<a href="https://github.com/kubevirt/cluster-network-addons-operator" style="box-sizing:border-box;color:rgb(41, 128, 185);text-decoration:none;cursor:pointer;">Cluster Network Addons Operator</a>
+to deploy and configure the macvtap components in your cluster.</p>
+<p style="box-sizing:border-box;line-height:24px;font-size:16px;margin:0px 0px 24px;">The aforementioned operator effectively deploys the
+<a href="https://github.com/kubevirt/macvtap-cni" style="box-sizing:border-box;color:rgb(41, 128, 185);text-decoration:none;cursor:pointer;">macvtap-cni</a> cni / device plugin
+combo.</p>
+<p style="box-sizing:border-box;line-height:24px;font-size:16px;margin:0px 0px 24px;">There are two different alternatives to configure which host interfaces get
+exposed to the user, enabling them to create macvtap interfaces on top of:</p>
+<ul style="box-sizing:border-box;margin:0px;padding:0px;line-height:24px;margin-bottom:24px;list-style:disc;">
+<li style="box-sizing:border-box;margin-left:24px;list-style:disc;">select the host interfaces: indicates which host interfaces are exposed.</li>
+<li style="box-sizing:border-box;margin-left:24px;list-style:disc;">expose all interfaces: all interfaces of all hosts are exposed.</li>
+</ul>
+<p style="box-sizing:border-box;line-height:24px;font-size:16px;margin:0px 0px 24px;">Both options are configured via the <code style="box-sizing:border-box;max-width:100%;background:rgb(255, 255, 255);border:1px solid rgb(225, 228, 229);overflow-x:auto;font-size:75%;font-family:SFMono-Regular, Menlo, Monaco, Consolas, &quot;Liberation Mono&quot;, &quot;Courier New&quot;, Courier, monospace;overflow-wrap:break-word;white-space:pre-wrap;padding:2px 5px;color:rgb(231, 76, 60);">macvtap-deviceplugin-config</code> ConfigMap,
+and more information on how to configure it can be found in the
+<a href="https://github.com/kubevirt/macvtap-cni#deployment" style="box-sizing:border-box;color:rgb(41, 128, 185);text-decoration:none;cursor:pointer;">macvtap-cni</a> repo.</p>
+<p style="box-sizing:border-box;line-height:24px;font-size:16px;margin:0px 0px 24px;">You can find a minimal example, in which the <code style="box-sizing:border-box;max-width:100%;background:rgb(255, 255, 255);border:1px solid rgb(225, 228, 229);overflow-x:auto;font-size:75%;font-family:SFMono-Regular, Menlo, Monaco, Consolas, &quot;Liberation Mono&quot;, &quot;Courier New&quot;, Courier, monospace;overflow-wrap:break-word;white-space:pre-wrap;padding:2px 5px;color:rgb(231, 76, 60);">eth0</code> interface of the Kubernetes
+nodes is exposed, via the <code style="box-sizing:border-box;max-width:100%;background:rgb(255, 255, 255);border:1px solid rgb(225, 228, 229);overflow-x:auto;font-size:75%;font-family:SFMono-Regular, Menlo, Monaco, Consolas, &quot;Liberation Mono&quot;, &quot;Courier New&quot;, Courier, monospace;overflow-wrap:break-word;white-space:pre-wrap;padding:2px 5px;color:rgb(231, 76, 60);">master</code> attribute.</p>
+<pre style="box-sizing:border-box;font-size:1em;white-space:pre;font-family:SFMono-Regular, Menlo, Monaco, Consolas, &quot;Liberation Mono&quot;, &quot;Courier New&quot;, Courier, monospace;"><code style="box-sizing:border-box;max-width:100%;border:1px solid rgb(225, 228, 229);font-family:SFMono-Regular, Menlo, Monaco, Consolas, &quot;Liberation Mono&quot;, &quot;Courier New&quot;, Courier, monospace;font-size:12px;white-space:pre;overflow-wrap:normal;padding:0.5em;overflow-x:auto;display:block;background:rgb(248, 248, 248);color:rgb(0, 0, 0);"><span style="box-sizing:border-box;">kind:</span> <span style="box-sizing:border-box;color:rgb(221, 17, 68);">ConfigMap</span>
+<span style="box-sizing:border-box;">apiVersion:</span> <span style="box-sizing:border-box;color:rgb(221, 17, 68);">v1</span>
+<span style="box-sizing:border-box;">metadata:</span>
+  <span style="box-sizing:border-box;">name:</span> <span style="box-sizing:border-box;color:rgb(221, 17, 68);">macvtap-deviceplugin-config</span>
+<span style="box-sizing:border-box;">data:</span>
+  <span style="box-sizing:border-box;">DP_MACVTAP_CONF:</span> <span style="box-sizing:border-box;color:rgb(221, 17, 68);">|
+    [
+        {
+            "name"     : "dataplane",
+            "master"   : "eth0",
+            "mode"     : "bridge",
+            "capacity" : 50
+        },
+    ]
+</span></code></pre>
+<p style="box-sizing:border-box;line-height:24px;font-size:16px;margin:0px 0px 24px;">This step can be omitted, since the default configuration of the aforementioned
+<code style="box-sizing:border-box;max-width:100%;background:rgb(255, 255, 255);border:1px solid rgb(225, 228, 229);overflow-x:auto;font-size:75%;font-family:SFMono-Regular, Menlo, Monaco, Consolas, &quot;Liberation Mono&quot;, &quot;Courier New&quot;, Courier, monospace;overflow-wrap:break-word;white-space:pre-wrap;padding:2px 5px;color:rgb(231, 76, 60);">ConfigMap</code> is to expose all host interfaces (which is represented by the
+following configuration):</p>
+<pre style="box-sizing:border-box;font-size:1em;white-space:pre;font-family:SFMono-Regular, Menlo, Monaco, Consolas, &quot;Liberation Mono&quot;, &quot;Courier New&quot;, Courier, monospace;"><code style="box-sizing:border-box;max-width:100%;border:1px solid rgb(225, 228, 229);font-family:SFMono-Regular, Menlo, Monaco, Consolas, &quot;Liberation Mono&quot;, &quot;Courier New&quot;, Courier, monospace;font-size:12px;white-space:pre;overflow-wrap:normal;padding:0.5em;overflow-x:auto;display:block;background:rgb(248, 248, 248);color:rgb(0, 0, 0);"><span style="box-sizing:border-box;">kind:</span> <span style="box-sizing:border-box;color:rgb(221, 17, 68);">ConfigMap</span>
+<span style="box-sizing:border-box;">apiVersion:</span> <span style="box-sizing:border-box;color:rgb(221, 17, 68);">v1</span>
+<span style="box-sizing:border-box;">metadata:</span>
+  <span style="box-sizing:border-box;">name:</span> <span style="box-sizing:border-box;color:rgb(221, 17, 68);">macvtap-deviceplugin-config</span>
+<span style="box-sizing:border-box;">data:</span>
+  <span style="box-sizing:border-box;">DP_MACVTAP_CONF:</span> <span style="box-sizing:border-box;color:rgb(221, 17, 68);">'[]'</span>
+</code></pre>
+<h4 style="box-sizing:border-box;margin-top:0px;font-weight:700;font-family:&quot;Roboto Slab&quot;, ff-tisa-web-pro, Georgia, Arial, sans-serif;font-size:115%;margin-bottom:24px;">Start a VM with macvtap interfaces<a href="https://kubevirt.io/user-guide/virtual_machines/interfaces_and_networks/#start-a-vm-with-macvtap-interfaces" title="Permanent link" style="box-sizing:border-box;color:rgb(41, 128, 185);text-decoration:none;cursor:pointer;display:inline-block;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;line-height:1;text-rendering:auto;-webkit-font-smoothing:antialiased;opacity:0;margin-left:0.5em;font-family:FontAwesome;font-size:14px;">¶</a></h4>
+<p style="box-sizing:border-box;line-height:24px;font-size:16px;margin:0px 0px 24px;">Once the macvtap components are deployed, it is needed to indicate how to
+configure the macvtap network. Refer to the following
+<code style="box-sizing:border-box;max-width:100%;background:rgb(255, 255, 255);border:1px solid rgb(225, 228, 229);overflow-x:auto;font-size:75%;font-family:SFMono-Regular, Menlo, Monaco, Consolas, &quot;Liberation Mono&quot;, &quot;Courier New&quot;, Courier, monospace;overflow-wrap:break-word;white-space:pre-wrap;padding:2px 5px;color:rgb(231, 76, 60);">NetworkAttachmentDefinition</code> for a simple example:</p>
+<pre style="box-sizing:border-box;font-size:1em;white-space:pre;font-family:SFMono-Regular, Menlo, Monaco, Consolas, &quot;Liberation Mono&quot;, &quot;Courier New&quot;, Courier, monospace;"><code style="box-sizing:border-box;max-width:100%;border:1px solid rgb(225, 228, 229);font-family:SFMono-Regular, Menlo, Monaco, Consolas, &quot;Liberation Mono&quot;, &quot;Courier New&quot;, Courier, monospace;font-size:12px;white-space:pre;overflow-wrap:normal;padding:0.5em;overflow-x:auto;display:block;background:rgb(248, 248, 248);color:rgb(0, 0, 0);"><span style="box-sizing:border-box;color:rgb(153, 153, 153);font-weight:700;">---</span>
+<span style="box-sizing:border-box;">kind:</span> <span style="box-sizing:border-box;color:rgb(221, 17, 68);">NetworkAttachmentDefinition</span>
+<span style="box-sizing:border-box;">apiVersion:</span> <span style="box-sizing:border-box;color:rgb(221, 17, 68);">k8s.cni.cncf.io/v1</span>
+<span style="box-sizing:border-box;">metadata:</span>
+  <span style="box-sizing:border-box;">name:</span> <span style="box-sizing:border-box;color:rgb(221, 17, 68);">macvtapnetwork</span>
+  <span style="box-sizing:border-box;">annotations:</span>
+    <span style="box-sizing:border-box;">k8s.v1.cni.cncf.io/resourceName:</span> <span style="box-sizing:border-box;color:rgb(221, 17, 68);">macvtap.network.kubevirt.io/eth0</span>
+<span style="box-sizing:border-box;">spec:</span>
+  <span style="box-sizing:border-box;">config:</span> <span style="box-sizing:border-box;color:rgb(221, 17, 68);">'{
+      "cniVersion": "0.3.1",
+      "name": "macvtapnetwork",
+      "type": "macvtap",
+      "mtu": 1500
+    }'</span>
+</code></pre>
+<p style="box-sizing:border-box;line-height:24px;font-size:16px;margin:0px 0px 24px;">The requested <code style="box-sizing:border-box;max-width:100%;background:rgb(255, 255, 255);border:1px solid rgb(225, 228, 229);overflow-x:auto;font-size:75%;font-family:SFMono-Regular, Menlo, Monaco, Consolas, &quot;Liberation Mono&quot;, &quot;Courier New&quot;, Courier, monospace;overflow-wrap:break-word;white-space:pre-wrap;padding:2px 5px;color:rgb(231, 76, 60);">k8s.v1.cni.cncf.io/resourceName</code> annotation must point to an
+exposed host interface (via the <code style="box-sizing:border-box;max-width:100%;background:rgb(255, 255, 255);border:1px solid rgb(225, 228, 229);overflow-x:auto;font-size:75%;font-family:SFMono-Regular, Menlo, Monaco, Consolas, &quot;Liberation Mono&quot;, &quot;Courier New&quot;, Courier, monospace;overflow-wrap:break-word;white-space:pre-wrap;padding:2px 5px;color:rgb(231, 76, 60);">master</code> attribute, on the
+<code style="box-sizing:border-box;max-width:100%;background:rgb(255, 255, 255);border:1px solid rgb(225, 228, 229);overflow-x:auto;font-size:75%;font-family:SFMono-Regular, Menlo, Monaco, Consolas, &quot;Liberation Mono&quot;, &quot;Courier New&quot;, Courier, monospace;overflow-wrap:break-word;white-space:pre-wrap;padding:2px 5px;color:rgb(231, 76, 60);">macvtap-deviceplugin-config</code> <code style="box-sizing:border-box;max-width:100%;background:rgb(255, 255, 255);border:1px solid rgb(225, 228, 229);overflow-x:auto;font-size:75%;font-family:SFMono-Regular, Menlo, Monaco, Consolas, &quot;Liberation Mono&quot;, &quot;Courier New&quot;, Courier, monospace;overflow-wrap:break-word;white-space:pre-wrap;padding:2px 5px;color:rgb(231, 76, 60);">ConfigMap</code>).</p>
+<p style="box-sizing:border-box;line-height:24px;font-size:16px;margin:0px 0px 24px;">Finally, to create a VM that will attach to the aforementioned Network, refer
+to the following VMI spec:</p>
+<pre style="box-sizing:border-box;font-size:1em;white-space:pre;font-family:SFMono-Regular, Menlo, Monaco, Consolas, &quot;Liberation Mono&quot;, &quot;Courier New&quot;, Courier, monospace;"><code style="box-sizing:border-box;max-width:100%;border:1px solid rgb(225, 228, 229);font-family:SFMono-Regular, Menlo, Monaco, Consolas, &quot;Liberation Mono&quot;, &quot;Courier New&quot;, Courier, monospace;font-size:12px;white-space:pre;overflow-wrap:normal;padding:0.5em;overflow-x:auto;display:block;background:rgb(248, 248, 248);color:rgb(0, 0, 0);"><span style="box-sizing:border-box;color:rgb(153, 153, 153);font-weight:700;">---</span>
+<span style="box-sizing:border-box;">apiVersion:</span> <span style="box-sizing:border-box;color:rgb(221, 17, 68);">kubevirt.io/v1</span>
+<span style="box-sizing:border-box;">kind:</span> <span style="box-sizing:border-box;color:rgb(221, 17, 68);">VirtualMachineInstance</span>
+<span style="box-sizing:border-box;">metadata:</span>
+  <span style="box-sizing:border-box;">labels:</span>
+    <span style="box-sizing:border-box;">special:</span> <span style="box-sizing:border-box;color:rgb(221, 17, 68);">vmi-host-network</span>
+  <span style="box-sizing:border-box;">name:</span> <span style="box-sizing:border-box;color:rgb(221, 17, 68);">vmi-host-network</span>
+<span style="box-sizing:border-box;">spec:</span>
+  <span style="box-sizing:border-box;">domain:</span>
+    <span style="box-sizing:border-box;">devices:</span>
+      <span style="box-sizing:border-box;">disks:</span>
+      <span style="box-sizing:border-box;color:rgb(153, 0, 115);">-</span> <span style="box-sizing:border-box;">disk:</span>
+          <span style="box-sizing:border-box;">bus:</span> <span style="box-sizing:border-box;color:rgb(221, 17, 68);">virtio</span>
+        <span style="box-sizing:border-box;">name:</span> <span style="box-sizing:border-box;color:rgb(221, 17, 68);">containerdisk</span>
+      <span style="box-sizing:border-box;color:rgb(153, 0, 115);">-</span> <span style="box-sizing:border-box;">disk:</span>
+          <span style="box-sizing:border-box;">bus:</span> <span style="box-sizing:border-box;color:rgb(221, 17, 68);">virtio</span>
+        <span style="box-sizing:border-box;">name:</span> <span style="box-sizing:border-box;color:rgb(221, 17, 68);">cloudinitdisk</span>
+      <span style="box-sizing:border-box;">interfaces:</span>
+      <span style="box-sizing:border-box;color:rgb(153, 0, 115);">-</span> <span style="box-sizing:border-box;">macvtap:</span> {}
+        <span style="box-sizing:border-box;">name:</span> <span style="box-sizing:border-box;color:rgb(221, 17, 68);">hostnetwork</span>
+      <span style="box-sizing:border-box;">rng:</span> {}
+    <span style="box-sizing:border-box;">machine:</span>
+      <span style="box-sizing:border-box;">type:</span> <span style="box-sizing:border-box;color:rgb(221, 17, 68);">""</span>
+    <span style="box-sizing:border-box;">resources:</span>
+      <span style="box-sizing:border-box;">requests:</span>
+        <span style="box-sizing:border-box;">memory:</span> <span style="box-sizing:border-box;color:rgb(221, 17, 68);">1024M</span>
+  <span style="box-sizing:border-box;">networks:</span>
+  <span style="box-sizing:border-box;color:rgb(153, 0, 115);">-</span> <span style="box-sizing:border-box;">multus:</span>
+      <span style="box-sizing:border-box;">networkName:</span> <span style="box-sizing:border-box;color:rgb(221, 17, 68);">macvtapnetwork</span>
+    <span style="box-sizing:border-box;">name:</span> <span style="box-sizing:border-box;color:rgb(221, 17, 68);">hostnetwork</span>
+  <span style="box-sizing:border-box;">terminationGracePeriodSeconds:</span> <span style="box-sizing:border-box;color:teal;">0</span>
+  <span style="box-sizing:border-box;">volumes:</span>
+  <span style="box-sizing:border-box;color:rgb(153, 0, 115);">-</span> <span style="box-sizing:border-box;">containerDisk:</span>
+      <span style="box-sizing:border-box;">image:</span> <span style="box-sizing:border-box;color:rgb(221, 17, 68);">docker.io/kubevirt/fedora-cloud-container-disk-demo:devel</span>
+    <span style="box-sizing:border-box;">name:</span> <span style="box-sizing:border-box;color:rgb(221, 17, 68);">containerdisk</span>
+  <span style="box-sizing:border-box;color:rgb(153, 0, 115);">-</span> <span style="box-sizing:border-box;">cloudInitNoCloud:</span>
+      <span style="box-sizing:border-box;">userData:</span> <span style="box-sizing:border-box;color:rgb(221, 17, 68);">|-
+        #!/bin/bash
+        echo "fedora" |passwd fedora --stdin
+</span>    <span style="box-sizing:border-box;">name:</span> <span style="box-sizing:border-box;color:rgb(221, 17, 68);">cloudinitdisk</span>
+</code></pre>
+<p style="box-sizing:border-box;line-height:24px;font-size:16px;margin:0px 0px 24px;">The requested <code style="box-sizing:border-box;max-width:100%;background:rgb(255, 255, 255);border:1px solid rgb(225, 228, 229);overflow-x:auto;font-size:75%;font-family:SFMono-Regular, Menlo, Monaco, Consolas, &quot;Liberation Mono&quot;, &quot;Courier New&quot;, Courier, monospace;overflow-wrap:break-word;white-space:pre-wrap;padding:2px 5px;color:rgb(231, 76, 60);">multus</code> <code style="box-sizing:border-box;max-width:100%;background:rgb(255, 255, 255);border:1px solid rgb(225, 228, 229);overflow-x:auto;font-size:75%;font-family:SFMono-Regular, Menlo, Monaco, Consolas, &quot;Liberation Mono&quot;, &quot;Courier New&quot;, Courier, monospace;overflow-wrap:break-word;white-space:pre-wrap;padding:2px 5px;color:rgb(231, 76, 60);">networkName</code> - i.e. <code style="box-sizing:border-box;max-width:100%;background:rgb(255, 255, 255);border:1px solid rgb(225, 228, 229);overflow-x:auto;font-size:75%;font-family:SFMono-Regular, Menlo, Monaco, Consolas, &quot;Liberation Mono&quot;, &quot;Courier New&quot;, Courier, monospace;overflow-wrap:break-word;white-space:pre-wrap;padding:2px 5px;color:rgb(231, 76, 60);">macvtapnetwork</code> - must match the
+name of the provisioned <code style="box-sizing:border-box;max-width:100%;background:rgb(255, 255, 255);border:1px solid rgb(225, 228, 229);overflow-x:auto;font-size:75%;font-family:SFMono-Regular, Menlo, Monaco, Consolas, &quot;Liberation Mono&quot;, &quot;Courier New&quot;, Courier, monospace;overflow-wrap:break-word;white-space:pre-wrap;padding:2px 5px;color:rgb(231, 76, 60);">NetworkAttachmentDefinition</code>.</p>
+<blockquote style="box-sizing:border-box;margin:0px;margin-left:24px;line-height:24px;margin-bottom:24px;">
+<p style="box-sizing:border-box;line-height:24px;font-size:16px;margin:0px 0px 24px;"><strong style="box-sizing:border-box;font-weight:700;">Note:</strong> VMIs with macvtap interfaces can be migrated, but their MAC
+addresses <strong style="box-sizing:border-box;font-weight:700;">must</strong> be statically set.</p>
+</blockquote>
+<h2 style="box-sizing:border-box;margin-top:0px;font-weight:700;font-family:&quot;Roboto Slab&quot;, ff-tisa-web-pro, Georgia, Arial, sans-serif;font-size:150%;margin-bottom:24px;">Security<a href="https://kubevirt.io/user-guide/virtual_machines/interfaces_and_networks/#security" title="Permanent link" style="box-sizing:border-box;color:rgb(41, 128, 185);text-decoration:none;cursor:pointer;display:inline-block;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;line-height:1;text-rendering:auto;-webkit-font-smoothing:antialiased;opacity:0;margin-left:0.5em;font-family:FontAwesome;font-size:14px;">¶</a></h2>
+<h3 style="box-sizing:border-box;margin-top:0px;font-weight:700;font-family:&quot;Roboto Slab&quot;, ff-tisa-web-pro, Georgia, Arial, sans-serif;font-size:125%;margin-bottom:24px;">MAC spoof check<a href="https://kubevirt.io/user-guide/virtual_machines/interfaces_and_networks/#mac-spoof-check" title="Permanent link" style="box-sizing:border-box;color:rgb(41, 128, 185);text-decoration:none;cursor:pointer;display:inline-block;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;line-height:1;text-rendering:auto;-webkit-font-smoothing:antialiased;opacity:0;margin-left:0.5em;font-family:FontAwesome;font-size:14px;">¶</a></h3>
+<p style="box-sizing:border-box;line-height:24px;font-size:16px;margin:0px 0px 24px;">MAC spoofing refers to the ability to generate traffic with an arbitrary source
+MAC address.
+An attacker may use this option to generate attacks on the network.</p>
+<p style="box-sizing:border-box;line-height:24px;font-size:16px;margin:0px 0px 24px;">In order to protect against such scenarios, it is possible to enable the
+mac-spoof-check support in CNI plugins that support it.</p>
+<p style="box-sizing:border-box;line-height:24px;font-size:16px;margin:0px 0px 24px;">The pod primary network which is served by the cluster network provider
+is not covered by this documentation. Please refer to the relevant provider to
+check how to enable spoofing check.
+The following text refers to the secondary networks, served using multus.</p>
+<p style="box-sizing:border-box;line-height:24px;font-size:16px;margin:0px 0px 24px;">There are two known CNI plugins that support mac-spoof-check:</p>
+<ul style="box-sizing:border-box;margin:0px;padding:0px;line-height:24px;margin-bottom:24px;list-style:disc;">
+<li style="box-sizing:border-box;margin-left:24px;list-style:disc;"><a href="https://github.com/openshift/sriov-cni" style="box-sizing:border-box;color:rgb(41, 128, 185);text-decoration:none;cursor:pointer;margin-bottom:12px;margin-top:0px;">sriov-cni</a>:
+  Through the <code style="box-sizing:border-box;max-width:100%;background:rgb(255, 255, 255);border:1px solid rgb(225, 228, 229);overflow-x:auto;font-size:75%;font-family:SFMono-Regular, Menlo, Monaco, Consolas, &quot;Liberation Mono&quot;, &quot;Courier New&quot;, Courier, monospace;overflow-wrap:break-word;white-space:pre-wrap;padding:2px 5px;color:rgb(231, 76, 60);margin-top:12px;margin-bottom:12px;">spoofchk</code> parameter .</li>
+<li style="box-sizing:border-box;margin-left:24px;list-style:disc;">cnv-bridge: Through the <code style="box-sizing:border-box;max-width:100%;background:rgb(255, 255, 255);border:1px solid rgb(225, 228, 229);overflow-x:auto;font-size:75%;font-family:SFMono-Regular, Menlo, Monaco, Consolas, &quot;Liberation Mono&quot;, &quot;Courier New&quot;, Courier, monospace;overflow-wrap:break-word;white-space:pre-wrap;padding:2px 5px;color:rgb(231, 76, 60);margin-bottom:12px;margin-top:0px;">macspoofchk</code>.</li>
+</ul>
+<blockquote style="box-sizing:border-box;margin:0px;margin-left:24px;line-height:24px;margin-bottom:24px;">
+<p style="box-sizing:border-box;line-height:24px;font-size:16px;margin:0px 0px 24px;"><strong style="box-sizing:border-box;font-weight:700;">Note:</strong> <code style="box-sizing:border-box;max-width:100%;background:rgb(255, 255, 255);border:1px solid rgb(225, 228, 229);overflow-x:auto;font-size:75%;font-family:SFMono-Regular, Menlo, Monaco, Consolas, &quot;Liberation Mono&quot;, &quot;Courier New&quot;, Courier, monospace;overflow-wrap:break-word;white-space:pre-wrap;padding:2px 5px;color:rgb(231, 76, 60);">cnv-bridge</code> is provided by
+  <a href="https://github.com/kubevirt/cluster-network-addons-operator" style="box-sizing:border-box;color:rgb(41, 128, 185);text-decoration:none;cursor:pointer;">CNAO</a>.
+  The <a href="https://github.com/containernetworking/plugins" style="box-sizing:border-box;color:rgb(41, 128, 185);text-decoration:none;cursor:pointer;">bridge-cni</a> is planned
+  to support the <code style="box-sizing:border-box;max-width:100%;background:rgb(255, 255, 255);border:1px solid rgb(225, 228, 229);overflow-x:auto;font-size:75%;font-family:SFMono-Regular, Menlo, Monaco, Consolas, &quot;Liberation Mono&quot;, &quot;Courier New&quot;, Courier, monospace;overflow-wrap:break-word;white-space:pre-wrap;padding:2px 5px;color:rgb(231, 76, 60);">macspoofchk</code> options as well.</p>
+</blockquote>
+<p style="box-sizing:border-box;line-height:24px;font-size:16px;margin:0px 0px 24px;">The configuration is to be done on the  NetworkAttachmentDefinition by the
+operator and any interface that refers to it, will have this feature enabled.</p>
+<p style="box-sizing:border-box;line-height:24px;font-size:16px;margin:0px 0px 24px;">Below is an example of using the <code style="box-sizing:border-box;max-width:100%;background:rgb(255, 255, 255);border:1px solid rgb(225, 228, 229);overflow-x:auto;font-size:75%;font-family:SFMono-Regular, Menlo, Monaco, Consolas, &quot;Liberation Mono&quot;, &quot;Courier New&quot;, Courier, monospace;overflow-wrap:break-word;white-space:pre-wrap;padding:2px 5px;color:rgb(231, 76, 60);">cnv-bridge</code> CNI with <code style="box-sizing:border-box;max-width:100%;background:rgb(255, 255, 255);border:1px solid rgb(225, 228, 229);overflow-x:auto;font-size:75%;font-family:SFMono-Regular, Menlo, Monaco, Consolas, &quot;Liberation Mono&quot;, &quot;Courier New&quot;, Courier, monospace;overflow-wrap:break-word;white-space:pre-wrap;padding:2px 5px;color:rgb(231, 76, 60);">macspoofchk</code> enabled:</p>
+<pre style="box-sizing:border-box;font-size:1em;white-space:pre;font-family:SFMono-Regular, Menlo, Monaco, Consolas, &quot;Liberation Mono&quot;, &quot;Courier New&quot;, Courier, monospace;"><code style="box-sizing:border-box;max-width:100%;border:1px solid rgb(225, 228, 229);font-family:SFMono-Regular, Menlo, Monaco, Consolas, &quot;Liberation Mono&quot;, &quot;Courier New&quot;, Courier, monospace;font-size:12px;white-space:pre;overflow-wrap:normal;padding:0.5em;overflow-x:auto;display:block;background:rgb(248, 248, 248);color:rgb(0, 0, 0);"><span style="box-sizing:border-box;">apiVersion:</span> <span style="box-sizing:border-box;color:rgb(221, 17, 68);">"k8s.cni.cncf.io/v1"</span>
+<span style="box-sizing:border-box;">kind:</span> <span style="box-sizing:border-box;color:rgb(221, 17, 68);">NetworkAttachmentDefinition</span>
+<span style="box-sizing:border-box;">metadata:</span>
+  <span style="box-sizing:border-box;">name:</span> <span style="box-sizing:border-box;color:rgb(221, 17, 68);">br-spoof-check</span>
+<span style="box-sizing:border-box;">spec:</span>
+  <span style="box-sizing:border-box;">config:</span> <span style="box-sizing:border-box;color:rgb(221, 17, 68);">'{
+            "cniVersion": "0.3.1",
+            "name": "br-spoof-check",
+            "type": "cnv-bridge",
+            "bridge": "br10",
+            "macspoofchk": true
+        }'</span>
+</code></pre>
+<p style="box-sizing:border-box;line-height:24px;font-size:16px;margin:0px 0px 24px;">On the VMI, the network section should point to this
+NetworkAttachmentDefinition by name:</p>
+<pre style="box-sizing:border-box;font-size:1em;white-space:pre;font-family:SFMono-Regular, Menlo, Monaco, Consolas, &quot;Liberation Mono&quot;, &quot;Courier New&quot;, Courier, monospace;"><code style="box-sizing:border-box;max-width:100%;border:1px solid rgb(225, 228, 229);font-family:SFMono-Regular, Menlo, Monaco, Consolas, &quot;Liberation Mono&quot;, &quot;Courier New&quot;, Courier, monospace;font-size:12px;white-space:pre;overflow-wrap:normal;padding:0.5em;overflow-x:auto;display:block;background:rgb(248, 248, 248);color:rgb(0, 0, 0);">  <span style="box-sizing:border-box;">networks:</span>
+  <span style="box-sizing:border-box;color:rgb(153, 0, 115);">-</span> <span style="box-sizing:border-box;">name:</span> <span style="box-sizing:border-box;color:rgb(221, 17, 68);">default</span>
+    <span style="box-sizing:border-box;">pod:</span> {}
+  <span style="box-sizing:border-box;color:rgb(153, 0, 115);">-</span> <span style="box-sizing:border-box;">multus:</span>
+      <span style="box-sizing:border-box;">networkName:</span> <span style="box-sizing:border-box;color:rgb(221, 17, 68);">br-spoof-check</span>
+    <span style="box-sizing:border-box;">name:</span> <span style="box-sizing:border-box;color:rgb(221, 17, 68);">br10</span>
+</code></pre>
+<h4 style="box-sizing:border-box;margin-top:0px;font-weight:700;font-family:&quot;Roboto Slab&quot;, ff-tisa-web-pro, Georgia, Arial, sans-serif;font-size:115%;margin-bottom:24px;">Limitations<a href="https://kubevirt.io/user-guide/virtual_machines/interfaces_and_networks/#limitations_1" title="Permanent link" style="box-sizing:border-box;color:rgb(41, 128, 185);text-decoration:none;cursor:pointer;display:inline-block;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;line-height:1;text-rendering:auto;-webkit-font-smoothing:antialiased;opacity:0;margin-left:0.5em;font-family:FontAwesome;font-size:14px;">¶</a></h4>
+<ul style="box-sizing:border-box;margin:0px;padding:0px;line-height:24px;margin-bottom:24px;list-style:disc;">
+<li style="box-sizing:border-box;margin-left:24px;list-style:disc;">The <code style="box-sizing:border-box;max-width:100%;background:rgb(255, 255, 255);border:1px solid rgb(225, 228, 229);overflow-x:auto;font-size:75%;font-family:SFMono-Regular, Menlo, Monaco, Consolas, &quot;Liberation Mono&quot;, &quot;Courier New&quot;, Courier, monospace;overflow-wrap:break-word;white-space:pre-wrap;padding:2px 5px;color:rgb(231, 76, 60);margin-bottom:12px;margin-top:0px;">cnv-bridge</code> CNI supports mac-spoof-check through nftables, therefore
+the node must support nftables and have the <code style="box-sizing:border-box;max-width:100%;background:rgb(255, 255, 255);border:1px solid rgb(225, 228, 229);overflow-x:auto;font-size:75%;font-family:SFMono-Regular, Menlo, Monaco, Consolas, &quot;Liberation Mono&quot;, &quot;Courier New&quot;, Courier, monospace;overflow-wrap:break-word;white-space:pre-wrap;padding:2px 5px;color:rgb(231, 76, 60);margin-top:12px;margin-bottom:12px;">nft</code> binary deployed.</li>
+</ul>
+              
+            </div></div></div></div></div></div></div></div></div>
+</div>
+</div>
+<a class="back-link" href="../articles.html">← 返回笔记列表</a>
+</body>
+</html>

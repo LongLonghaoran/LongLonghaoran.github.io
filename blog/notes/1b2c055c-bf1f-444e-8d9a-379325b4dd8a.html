@@ -1,0 +1,316 @@
+<!DOCTYPE html>
+<html lang="zh-CN" data-theme="light">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>2-2 自动微分机制 - 20天吃透Pytorch — 技术笔记</title>
+<style>
+:root {
+  --bg: #ffffff;
+  --text: #1a1a1a;
+  --muted: #666;
+  --border: #e0e0e0;
+  --code-bg: #f5f5f5;
+  --link: #0066cc;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #1a1a1a;
+    --text: #e0e0e0;
+    --muted: #999;
+    --border: #333;
+    --code-bg: #2a2a2a;
+    --link: #66bbff;
+  }
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  line-height: 1.7;
+  color: var(--text);
+  background: var(--bg);
+  max-width: 860px;
+  margin: 0 auto;
+  padding: 2rem 1.5rem;
+}
+.note-header {
+  border-bottom: 2px solid var(--border);
+  padding-bottom: 1rem;
+  margin-bottom: 2rem;
+}
+.note-title {
+  font-size: 1.6rem;
+  font-weight: 700;
+  margin-bottom: 0.3rem;
+}
+.note-meta {
+  color: var(--muted);
+  font-size: 0.85rem;
+}
+.note-content {
+  font-size: 0.95rem;
+}
+.note-content h1 { font-size: 1.4rem; margin: 1.2rem 0 0.6rem; }
+.note-content h2 { font-size: 1.2rem; margin: 1rem 0 0.5rem; }
+.note-content h3 { font-size: 1.05rem; margin: 0.8rem 0 0.4rem; }
+.note-content p { margin: 0.5rem 0; }
+.note-content ul, .note-content ol { margin: 0.5rem 0 0.5rem 2rem; }
+.note-content li { margin: 0.2rem 0; }
+.note-content pre {
+  background: var(--code-bg);
+  padding: 1rem;
+  border-radius: 6px;
+  overflow-x: auto;
+  margin: 0.8rem 0;
+  font-size: 0.85rem;
+}
+.note-content code {
+  background: var(--code-bg);
+  padding: 0.1rem 0.3rem;
+  border-radius: 3px;
+  font-size: 0.88em;
+}
+.note-content pre code {
+  background: none;
+  padding: 0;
+}
+.note-content blockquote {
+  border-left: 3px solid var(--border);
+  padding-left: 1rem;
+  color: var(--muted);
+  margin: 0.8rem 0;
+}
+.note-content a { color: var(--link); }
+.note-content img {
+  max-width: 100%;
+  height: auto;
+  border-radius: 6px;
+  margin: 0.5rem 0;
+}
+.note-content table {
+  border-collapse: collapse;
+  width: 100%;
+  margin: 0.8rem 0;
+}
+.note-content th, .note-content td {
+  border: 1px solid var(--border);
+  padding: 0.5rem;
+}
+.note-content th { background: var(--code-bg); }
+.media-placeholder {
+  background: var(--code-bg);
+  padding: 1rem;
+  text-align: center;
+  color: var(--muted);
+  border-radius: 6px;
+  margin: 0.5rem 0;
+  font-size: 0.85rem;
+}
+.encrypt-placeholder {
+  background: #fff3cd;
+  padding: 0.5rem;
+  text-align: center;
+  color: #856404;
+  border-radius: 6px;
+  margin: 0.5rem 0;
+  font-size: 0.85rem;
+}
+.back-link {
+  display: inline-block;
+  margin-top: 2rem;
+  color: var(--link);
+  text-decoration: none;
+  font-size: 0.85rem;
+}
+</style>
+</head>
+<body>
+<div class="note-header">
+  <div class="note-title">2-2 自动微分机制 - 20天吃透Pytorch</div>
+  <div class="note-meta">笔记本：AI</div>
+</div>
+<div class="note-content">
+<div style="--en-clipped-content:article">
+<div><br/></div><div style="font-size: 16px; display:block; min-width: 100%; position: relative;"> <div style="box-sizing:border-box;font-size:100%;text-size-adjust:100%;overflow-x:hidden;"><div style="box-sizing:border-box;font-family:Lato, proxima-nova, &quot;Helvetica Neue&quot;, Arial, sans-serif;font-weight:normal;color:rgb(64, 64, 64);overflow-x:hidden;background:rgb(252, 252, 252);"><div style="box-sizing:border-box;"><div style="box-sizing:border-box;background:rgba(0, 0, 0, 0.05);"><div style="box-sizing:border-box;background:rgb(252, 252, 252);"><div style="box-sizing:border-box;"><div style="box-sizing:border-box;"><div style="box-sizing:border-box;">
+              
+                <h1 style="box-sizing:border-box;margin-top:0px;font-weight:700;font-family:&quot;Roboto Slab&quot;, ff-tisa-web-pro, Georgia, Arial, sans-serif;font-size:175%;">2-2,自动微分机制</h1>
+<p style="box-sizing:border-box;line-height:24px;margin:0px 0px 24px;font-size:16px;">神经网络通常依赖反向传播求梯度来更新网络参数，求梯度过程通常是一件非常复杂而容易出错的事情。</p>
+<p style="box-sizing:border-box;line-height:24px;margin:0px 0px 24px;font-size:16px;">而深度学习框架可以帮助我们自动地完成这种求梯度运算。</p>
+<p style="box-sizing:border-box;line-height:24px;margin:0px 0px 24px;font-size:16px;">Pytorch一般通过反向传播 backward 方法 实现这种求梯度计算。该方法求得的梯度将存在对应自变量张量的grad属性下。</p>
+<p style="box-sizing:border-box;line-height:24px;margin:0px 0px 24px;font-size:16px;">除此之外，也能够调用torch.autograd.grad 函数来实现求梯度计算。</p>
+<p style="box-sizing:border-box;line-height:24px;margin:0px 0px 24px;font-size:16px;">这就是Pytorch的自动微分机制。</p>
+<h3 style="box-sizing:border-box;margin-top:0px;font-weight:700;font-family:&quot;Roboto Slab&quot;, ff-tisa-web-pro, Georgia, Arial, sans-serif;font-size:125%;">一，利用backward方法求导数</h3>
+<p style="box-sizing:border-box;line-height:24px;margin:0px 0px 24px;font-size:16px;">backward 方法通常在一个标量张量上调用，该方法求得的梯度将存在对应自变量张量的grad属性下。</p>
+<p style="box-sizing:border-box;line-height:24px;margin:0px 0px 24px;font-size:16px;">如果调用的张量非标量，则要传入一个和它同形状 的gradient参数张量。</p>
+<p style="box-sizing:border-box;line-height:24px;margin:0px 0px 24px;font-size:16px;">相当于用该gradient参数张量与调用张量作向量点乘，得到的标量结果再反向传播。</p>
+<p style="box-sizing:border-box;line-height:24px;margin:0px 0px 24px;font-size:16px;"><strong style="box-sizing:border-box;font-weight:bold;">1, 标量的反向传播</strong></p>
+<pre style="border-radius:4px;background-color: #fbfaf8;border: 1px solid rgba(0,0,0,.14902);color: #333;font-size: 12px;padding: 8px;font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif;box-sizing: border-box;"><code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span style="box-sizing:border-box;color:rgb(51, 51, 51);font-weight:bold;">import</span> numpy <span style="box-sizing:border-box;color:rgb(51, 51, 51);font-weight:bold;">as</span> np 
+<span style="box-sizing:border-box;color:rgb(51, 51, 51);font-weight:bold;">import</span> torch 
+
+<span style="box-sizing:border-box;color:rgb(153, 153, 136);font-style:italic;"># f(x) = a*x**2 + b*x + c的导数</span>
+
+x = torch.tensor(<span style="box-sizing:border-box;color:rgb(0, 128, 128);">0.0</span>,requires_grad = <span style="box-sizing:border-box;color:rgb(51, 51, 51);font-weight:bold;">True</span>) <span style="box-sizing:border-box;color:rgb(153, 153, 136);font-style:italic;"># x需要被求导</span>
+a = torch.tensor(<span style="box-sizing:border-box;color:rgb(0, 128, 128);">1.0</span>)
+b = torch.tensor(<span style="box-sizing:border-box;color:rgb(0, 128, 128);">-2.0</span>)
+c = torch.tensor(<span style="box-sizing:border-box;color:rgb(0, 128, 128);">1.0</span>)
+y = a*torch.pow(x,<span style="box-sizing:border-box;color:rgb(0, 128, 128);">2</span>) + b*x + c 
+
+y.backward()
+dy_dx = x.grad
+print(dy_dx)
+
+</code></pre>
+<pre style="border-radius:4px;background-color: #fbfaf8;border: 1px solid rgba(0,0,0,.14902);color: #333;font-size: 12px;padding: 8px;font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif;box-sizing: border-box;"><code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif">tensor(-2.)
+</code></pre>
+<p style="box-sizing:border-box;line-height:24px;margin:0px 0px 24px;font-size:16px;"><strong style="box-sizing:border-box;font-weight:bold;">2, 非标量的反向传播</strong></p>
+<pre style="border-radius:4px;background-color: #fbfaf8;border: 1px solid rgba(0,0,0,.14902);color: #333;font-size: 12px;padding: 8px;font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif;box-sizing: border-box;"><code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span style="box-sizing:border-box;color:rgb(51, 51, 51);font-weight:bold;">import</span> numpy <span style="box-sizing:border-box;color:rgb(51, 51, 51);font-weight:bold;">as</span> np 
+<span style="box-sizing:border-box;color:rgb(51, 51, 51);font-weight:bold;">import</span> torch 
+
+<span style="box-sizing:border-box;color:rgb(153, 153, 136);font-style:italic;"># f(x) = a*x**2 + b*x + c</span>
+
+x = torch.tensor([[<span style="box-sizing:border-box;color:rgb(0, 128, 128);">0.0</span>,<span style="box-sizing:border-box;color:rgb(0, 128, 128);">0.0</span>],[<span style="box-sizing:border-box;color:rgb(0, 128, 128);">1.0</span>,<span style="box-sizing:border-box;color:rgb(0, 128, 128);">2.0</span>]],requires_grad = <span style="box-sizing:border-box;color:rgb(51, 51, 51);font-weight:bold;">True</span>) <span style="box-sizing:border-box;color:rgb(153, 153, 136);font-style:italic;"># x需要被求导</span>
+a = torch.tensor(<span style="box-sizing:border-box;color:rgb(0, 128, 128);">1.0</span>)
+b = torch.tensor(<span style="box-sizing:border-box;color:rgb(0, 128, 128);">-2.0</span>)
+c = torch.tensor(<span style="box-sizing:border-box;color:rgb(0, 128, 128);">1.0</span>)
+y = a*torch.pow(x,<span style="box-sizing:border-box;color:rgb(0, 128, 128);">2</span>) + b*x + c 
+
+gradient = torch.tensor([[<span style="box-sizing:border-box;color:rgb(0, 128, 128);">1.0</span>,<span style="box-sizing:border-box;color:rgb(0, 128, 128);">1.0</span>],[<span style="box-sizing:border-box;color:rgb(0, 128, 128);">1.0</span>,<span style="box-sizing:border-box;color:rgb(0, 128, 128);">1.0</span>]])
+
+print(<span style="box-sizing:border-box;color:rgb(221, 17, 68);">"x:\n"</span>,x)
+print(<span style="box-sizing:border-box;color:rgb(221, 17, 68);">"y:\n"</span>,y)
+y.backward(gradient = gradient)
+x_grad = x.grad
+print(<span style="box-sizing:border-box;color:rgb(221, 17, 68);">"x_grad:\n"</span>,x_grad)
+</code></pre>
+<pre style="border-radius:4px;background-color: #fbfaf8;border: 1px solid rgba(0,0,0,.14902);color: #333;font-size: 12px;padding: 8px;font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif;box-sizing: border-box;"><code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif">x:
+ tensor([[<span style="box-sizing:border-box;color:rgb(0, 128, 128);">0.</span>, <span style="box-sizing:border-box;color:rgb(0, 128, 128);">0.</span>],
+        [<span style="box-sizing:border-box;color:rgb(153, 153, 153);font-weight:bold;">1., 2.</span>]], requires_grad=True)
+y:
+ tensor([[<span style="box-sizing:border-box;color:rgb(0, 128, 128);">1.</span>, <span style="box-sizing:border-box;color:rgb(0, 128, 128);">1.</span>],
+        [<span style="box-sizing:border-box;color:rgb(153, 153, 153);font-weight:bold;">0., 1.</span>]], grad_fn=&lt;AddBackward0&gt;)
+x_grad:
+ tensor([[<span style="box-sizing:border-box;color:rgb(0, 128, 128);">-2.</span>, <span style="box-sizing:border-box;color:rgb(0, 128, 128);">-2.</span>],
+        [<span style="box-sizing:border-box;color:rgb(153, 153, 153);font-weight:bold;"> 0.,  2.</span>]])
+</code></pre>
+<p style="box-sizing:border-box;line-height:24px;margin:0px 0px 24px;font-size:16px;"><strong style="box-sizing:border-box;font-weight:bold;">3, 非标量的反向传播可以用标量的反向传播实现</strong></p>
+<pre style="border-radius:4px;background-color: #fbfaf8;border: 1px solid rgba(0,0,0,.14902);color: #333;font-size: 12px;padding: 8px;font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif;box-sizing: border-box;"><code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span style="box-sizing:border-box;color:rgb(51, 51, 51);font-weight:bold;">import</span> numpy <span style="box-sizing:border-box;color:rgb(51, 51, 51);font-weight:bold;">as</span> np 
+<span style="box-sizing:border-box;color:rgb(51, 51, 51);font-weight:bold;">import</span> torch 
+
+<span style="box-sizing:border-box;color:rgb(153, 153, 136);font-style:italic;"># f(x) = a*x**2 + b*x + c</span>
+
+x = torch.tensor([[<span style="box-sizing:border-box;color:rgb(0, 128, 128);">0.0</span>,<span style="box-sizing:border-box;color:rgb(0, 128, 128);">0.0</span>],[<span style="box-sizing:border-box;color:rgb(0, 128, 128);">1.0</span>,<span style="box-sizing:border-box;color:rgb(0, 128, 128);">2.0</span>]],requires_grad = <span style="box-sizing:border-box;color:rgb(51, 51, 51);font-weight:bold;">True</span>) <span style="box-sizing:border-box;color:rgb(153, 153, 136);font-style:italic;"># x需要被求导</span>
+a = torch.tensor(<span style="box-sizing:border-box;color:rgb(0, 128, 128);">1.0</span>)
+b = torch.tensor(<span style="box-sizing:border-box;color:rgb(0, 128, 128);">-2.0</span>)
+c = torch.tensor(<span style="box-sizing:border-box;color:rgb(0, 128, 128);">1.0</span>)
+y = a*torch.pow(x,<span style="box-sizing:border-box;color:rgb(0, 128, 128);">2</span>) + b*x + c 
+
+gradient = torch.tensor([[<span style="box-sizing:border-box;color:rgb(0, 128, 128);">1.0</span>,<span style="box-sizing:border-box;color:rgb(0, 128, 128);">1.0</span>],[<span style="box-sizing:border-box;color:rgb(0, 128, 128);">1.0</span>,<span style="box-sizing:border-box;color:rgb(0, 128, 128);">1.0</span>]])
+z = torch.sum(y*gradient)
+
+print(<span style="box-sizing:border-box;color:rgb(221, 17, 68);">"x:"</span>,x)
+print(<span style="box-sizing:border-box;color:rgb(221, 17, 68);">"y:"</span>,y)
+z.backward()
+x_grad = x.grad
+print(<span style="box-sizing:border-box;color:rgb(221, 17, 68);">"x_grad:\n"</span>,x_grad)
+</code></pre>
+<pre style="border-radius:4px;background-color: #fbfaf8;border: 1px solid rgba(0,0,0,.14902);color: #333;font-size: 12px;padding: 8px;font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif;box-sizing: border-box;"><code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif">x: tensor([[<span style="box-sizing:border-box;color:rgb(0, 128, 128);">0.</span>, <span style="box-sizing:border-box;color:rgb(0, 128, 128);">0.</span>],
+        [<span style="box-sizing:border-box;color:rgb(153, 153, 153);font-weight:bold;">1., 2.</span>]], requires_grad=True)
+y: tensor([[<span style="box-sizing:border-box;color:rgb(0, 128, 128);">1.</span>, <span style="box-sizing:border-box;color:rgb(0, 128, 128);">1.</span>],
+        [<span style="box-sizing:border-box;color:rgb(153, 153, 153);font-weight:bold;">0., 1.</span>]], grad_fn=&lt;AddBackward0&gt;)
+x_grad:
+ tensor([[<span style="box-sizing:border-box;color:rgb(0, 128, 128);">-2.</span>, <span style="box-sizing:border-box;color:rgb(0, 128, 128);">-2.</span>],
+        [<span style="box-sizing:border-box;color:rgb(153, 153, 153);font-weight:bold;"> 0.,  2.</span>]])
+</code></pre>
+<pre style="border-radius:4px;background-color: #fbfaf8;border: 1px solid rgba(0,0,0,.14902);color: #333;font-size: 12px;padding: 8px;font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif;box-sizing: border-box;"><code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif">
+</code></pre>
+<h3 style="box-sizing:border-box;margin-top:0px;font-weight:700;font-family:&quot;Roboto Slab&quot;, ff-tisa-web-pro, Georgia, Arial, sans-serif;font-size:125%;">二，利用autograd.grad方法求导数</h3>
+<pre style="border-radius:4px;background-color: #fbfaf8;border: 1px solid rgba(0,0,0,.14902);color: #333;font-size: 12px;padding: 8px;font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif;box-sizing: border-box;"><code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span style="box-sizing:border-box;color:rgb(51, 51, 51);font-weight:bold;">import</span> numpy <span style="box-sizing:border-box;color:rgb(51, 51, 51);font-weight:bold;">as</span> np 
+<span style="box-sizing:border-box;color:rgb(51, 51, 51);font-weight:bold;">import</span> torch 
+
+<span style="box-sizing:border-box;color:rgb(153, 153, 136);font-style:italic;"># f(x) = a*x**2 + b*x + c的导数</span>
+
+x = torch.tensor(<span style="box-sizing:border-box;color:rgb(0, 128, 128);">0.0</span>,requires_grad = <span style="box-sizing:border-box;color:rgb(51, 51, 51);font-weight:bold;">True</span>) <span style="box-sizing:border-box;color:rgb(153, 153, 136);font-style:italic;"># x需要被求导</span>
+a = torch.tensor(<span style="box-sizing:border-box;color:rgb(0, 128, 128);">1.0</span>)
+b = torch.tensor(<span style="box-sizing:border-box;color:rgb(0, 128, 128);">-2.0</span>)
+c = torch.tensor(<span style="box-sizing:border-box;color:rgb(0, 128, 128);">1.0</span>)
+y = a*torch.pow(x,<span style="box-sizing:border-box;color:rgb(0, 128, 128);">2</span>) + b*x + c
+
+
+<span style="box-sizing:border-box;color:rgb(153, 153, 136);font-style:italic;"># create_graph 设置为 True 将允许创建更高阶的导数 </span>
+dy_dx = torch.autograd.grad(y,x,create_graph=<span style="box-sizing:border-box;color:rgb(51, 51, 51);font-weight:bold;">True</span>)[<span style="box-sizing:border-box;color:rgb(0, 128, 128);">0</span>]
+print(dy_dx.data)
+
+<span style="box-sizing:border-box;color:rgb(153, 153, 136);font-style:italic;"># 求二阶导数</span>
+dy2_dx2 = torch.autograd.grad(dy_dx,x)[<span style="box-sizing:border-box;color:rgb(0, 128, 128);">0</span>] 
+
+print(dy2_dx2.data)
+
+
+</code></pre>
+<pre style="border-radius:4px;background-color: #fbfaf8;border: 1px solid rgba(0,0,0,.14902);color: #333;font-size: 12px;padding: 8px;font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif;box-sizing: border-box;"><code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif">tensor(-2.)
+tensor(2.)
+</code></pre>
+<pre style="border-radius:4px;background-color: #fbfaf8;border: 1px solid rgba(0,0,0,.14902);color: #333;font-size: 12px;padding: 8px;font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif;box-sizing: border-box;"><code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span style="box-sizing:border-box;color:rgb(51, 51, 51);font-weight:bold;">import</span> numpy <span style="box-sizing:border-box;color:rgb(51, 51, 51);font-weight:bold;">as</span> np 
+<span style="box-sizing:border-box;color:rgb(51, 51, 51);font-weight:bold;">import</span> torch 
+
+x1 = torch.tensor(<span style="box-sizing:border-box;color:rgb(0, 128, 128);">1.0</span>,requires_grad = <span style="box-sizing:border-box;color:rgb(51, 51, 51);font-weight:bold;">True</span>) <span style="box-sizing:border-box;color:rgb(153, 153, 136);font-style:italic;"># x需要被求导</span>
+x2 = torch.tensor(<span style="box-sizing:border-box;color:rgb(0, 128, 128);">2.0</span>,requires_grad = <span style="box-sizing:border-box;color:rgb(51, 51, 51);font-weight:bold;">True</span>)
+
+y1 = x1*x2
+y2 = x1+x2
+
+
+<span style="box-sizing:border-box;color:rgb(153, 153, 136);font-style:italic;"># 允许同时对多个自变量求导数</span>
+(dy1_dx1,dy1_dx2) = torch.autograd.grad(outputs=y1,inputs = [x1,x2],retain_graph = <span style="box-sizing:border-box;color:rgb(51, 51, 51);font-weight:bold;">True</span>)
+print(dy1_dx1,dy1_dx2)
+
+<span style="box-sizing:border-box;color:rgb(153, 153, 136);font-style:italic;"># 如果有多个因变量，相当于把多个因变量的梯度结果求和</span>
+(dy12_dx1,dy12_dx2) = torch.autograd.grad(outputs=[y1,y2],inputs = [x1,x2])
+print(dy12_dx1,dy12_dx2)
+
+
+</code></pre>
+<pre style="border-radius:4px;background-color: #fbfaf8;border: 1px solid rgba(0,0,0,.14902);color: #333;font-size: 12px;padding: 8px;font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif;box-sizing: border-box;"><code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif">tensor(2.) tensor(1.)
+tensor(3.) tensor(2.)
+</code></pre>
+<pre style="border-radius:4px;background-color: #fbfaf8;border: 1px solid rgba(0,0,0,.14902);color: #333;font-size: 12px;padding: 8px;font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif;box-sizing: border-box;"><code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif">
+</code></pre>
+<h3 style="box-sizing:border-box;margin-top:0px;font-weight:700;font-family:&quot;Roboto Slab&quot;, ff-tisa-web-pro, Georgia, Arial, sans-serif;font-size:125%;">三，利用自动微分和优化器求最小值</h3>
+<pre style="border-radius:4px;background-color: #fbfaf8;border: 1px solid rgba(0,0,0,.14902);color: #333;font-size: 12px;padding: 8px;font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif;box-sizing: border-box;"><code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span style="box-sizing:border-box;color:rgb(51, 51, 51);font-weight:bold;">import</span> numpy <span style="box-sizing:border-box;color:rgb(51, 51, 51);font-weight:bold;">as</span> np 
+<span style="box-sizing:border-box;color:rgb(51, 51, 51);font-weight:bold;">import</span> torch 
+
+<span style="box-sizing:border-box;color:rgb(153, 153, 136);font-style:italic;"># f(x) = a*x**2 + b*x + c的最小值</span>
+
+x = torch.tensor(<span style="box-sizing:border-box;color:rgb(0, 128, 128);">0.0</span>,requires_grad = <span style="box-sizing:border-box;color:rgb(51, 51, 51);font-weight:bold;">True</span>) <span style="box-sizing:border-box;color:rgb(153, 153, 136);font-style:italic;"># x需要被求导</span>
+a = torch.tensor(<span style="box-sizing:border-box;color:rgb(0, 128, 128);">1.0</span>)
+b = torch.tensor(<span style="box-sizing:border-box;color:rgb(0, 128, 128);">-2.0</span>)
+c = torch.tensor(<span style="box-sizing:border-box;color:rgb(0, 128, 128);">1.0</span>)
+
+optimizer = torch.optim.SGD(params=[x],lr = <span style="box-sizing:border-box;color:rgb(0, 128, 128);">0.01</span>)
+
+
+<span style="box-sizing:border-box;"><span style="box-sizing:border-box;color:rgb(51, 51, 51);font-weight:bold;">def</span> <span style="box-sizing:border-box;color:rgb(153, 0, 0);font-weight:bold;">f</span><span style="box-sizing:border-box;">(x)</span>:</span>
+    result = a*torch.pow(x,<span style="box-sizing:border-box;color:rgb(0, 128, 128);">2</span>) + b*x + c 
+    <span style="box-sizing:border-box;color:rgb(51, 51, 51);font-weight:bold;">return</span>(result)
+
+<span style="box-sizing:border-box;color:rgb(51, 51, 51);font-weight:bold;">for</span> i <span style="box-sizing:border-box;color:rgb(51, 51, 51);font-weight:bold;">in</span> range(<span style="box-sizing:border-box;color:rgb(0, 128, 128);">500</span>):
+    optimizer.zero_grad()
+    y = f(x)
+    y.backward()
+    optimizer.step()
+
+
+print(<span style="box-sizing:border-box;color:rgb(221, 17, 68);">"y="</span>,f(x).data,<span style="box-sizing:border-box;color:rgb(221, 17, 68);">";"</span>,<span style="box-sizing:border-box;color:rgb(221, 17, 68);">"x="</span>,x.data)
+
+</code></pre>
+<pre style="border-radius:4px;background-color: #fbfaf8;border: 1px solid rgba(0,0,0,.14902);color: #333;font-size: 12px;padding: 8px;font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif;box-sizing: border-box;"><code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span style="box-sizing:border-box;">y</span>= tensor(<span style="box-sizing:border-box;color:rgb(0, 128, 128);">0</span>.) ; x= tensor(<span style="box-sizing:border-box;color:rgb(0, 128, 128);">1.0000</span>)
+</code></pre>
+<pre style="border-radius:4px;background-color: #fbfaf8;border: 1px solid rgba(0,0,0,.14902);color: #333;font-size: 12px;padding: 8px;font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif;box-sizing: border-box;"><code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif">
+</code></pre>
+              
+            </div></div></div></div></div></div></div></div></div>
+</div>
+</div>
+<a class="back-link" href="../articles.html">← 返回笔记列表</a>
+</body>
+</html>

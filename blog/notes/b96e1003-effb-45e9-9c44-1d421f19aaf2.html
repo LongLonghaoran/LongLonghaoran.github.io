@@ -1,0 +1,348 @@
+<!DOCTYPE html>
+<html lang="zh-CN" data-theme="light">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Kubernetes 内存资源限制实战 – 云原生实验室 - Kubernetes|Docker|Istio|Envoy|Hugo|Golang|云原生 — 技术笔记</title>
+<style>
+:root {
+  --bg: #ffffff;
+  --text: #1a1a1a;
+  --muted: #666;
+  --border: #e0e0e0;
+  --code-bg: #f5f5f5;
+  --link: #0066cc;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #1a1a1a;
+    --text: #e0e0e0;
+    --muted: #999;
+    --border: #333;
+    --code-bg: #2a2a2a;
+    --link: #66bbff;
+  }
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  line-height: 1.7;
+  color: var(--text);
+  background: var(--bg);
+  max-width: 860px;
+  margin: 0 auto;
+  padding: 2rem 1.5rem;
+}
+.note-header {
+  border-bottom: 2px solid var(--border);
+  padding-bottom: 1rem;
+  margin-bottom: 2rem;
+}
+.note-title {
+  font-size: 1.6rem;
+  font-weight: 700;
+  margin-bottom: 0.3rem;
+}
+.note-meta {
+  color: var(--muted);
+  font-size: 0.85rem;
+}
+.note-content {
+  font-size: 0.95rem;
+}
+.note-content h1 { font-size: 1.4rem; margin: 1.2rem 0 0.6rem; }
+.note-content h2 { font-size: 1.2rem; margin: 1rem 0 0.5rem; }
+.note-content h3 { font-size: 1.05rem; margin: 0.8rem 0 0.4rem; }
+.note-content p { margin: 0.5rem 0; }
+.note-content ul, .note-content ol { margin: 0.5rem 0 0.5rem 2rem; }
+.note-content li { margin: 0.2rem 0; }
+.note-content pre {
+  background: var(--code-bg);
+  padding: 1rem;
+  border-radius: 6px;
+  overflow-x: auto;
+  margin: 0.8rem 0;
+  font-size: 0.85rem;
+}
+.note-content code {
+  background: var(--code-bg);
+  padding: 0.1rem 0.3rem;
+  border-radius: 3px;
+  font-size: 0.88em;
+}
+.note-content pre code {
+  background: none;
+  padding: 0;
+}
+.note-content blockquote {
+  border-left: 3px solid var(--border);
+  padding-left: 1rem;
+  color: var(--muted);
+  margin: 0.8rem 0;
+}
+.note-content a { color: var(--link); }
+.note-content img {
+  max-width: 100%;
+  height: auto;
+  border-radius: 6px;
+  margin: 0.5rem 0;
+}
+.note-content table {
+  border-collapse: collapse;
+  width: 100%;
+  margin: 0.8rem 0;
+}
+.note-content th, .note-content td {
+  border: 1px solid var(--border);
+  padding: 0.5rem;
+}
+.note-content th { background: var(--code-bg); }
+.media-placeholder {
+  background: var(--code-bg);
+  padding: 1rem;
+  text-align: center;
+  color: var(--muted);
+  border-radius: 6px;
+  margin: 0.5rem 0;
+  font-size: 0.85rem;
+}
+.encrypt-placeholder {
+  background: #fff3cd;
+  padding: 0.5rem;
+  text-align: center;
+  color: #856404;
+  border-radius: 6px;
+  margin: 0.5rem 0;
+  font-size: 0.85rem;
+}
+.back-link {
+  display: inline-block;
+  margin-top: 2rem;
+  color: var(--link);
+  text-decoration: none;
+  font-size: 0.85rem;
+}
+</style>
+</head>
+<body>
+<div class="note-header">
+  <div class="note-title">Kubernetes 内存资源限制实战 – 云原生实验室 - Kubernetes|Docker|Istio|Envoy|Hugo|Golang|云原生</div>
+  <div class="note-meta">笔记本：Linux</div>
+</div>
+<div class="note-content">
+<div style="--en-clipped-content:simplified; --en-clipped-source-url:https://icloudnative.io/posts/memory-limit-of-pod-and-oom-killer/; --en-clipped-source-title:Kubernetes 内存资源限制实战 – 云原生实验室 - Kubernetes|Docker|Istio|Envoy|Hugo|Golang|云原生;">
+<div><br/></div><div style="min-height: 6828px; font-size: 16px; display: block; min-width: 100%; position: relative;"> <div style="background-color:transparent;font:inherit;vertical-align:baseline;"><div style="background-color:transparent;font:inherit;vertical-align:baseline;font-family:&quot;PT Serif&quot;;font-size:16px;line-height:1.5em;color:rgb(31, 9, 9);text-align:left;"><div style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;"><div style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;width:36em;z-index:200;padding-left:2em;padding-right:2em;margin-left:auto;margin-right:auto;position:relative;"><div style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;position:relative;margin-left:-25px;margin-right:25px;"><div style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;padding-top:0px;padding-bottom:9em;position:relative;"><div style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;margin-bottom:1.5em;"><div style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;position:relative;margin-bottom:0px;"><div style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;margin-bottom:0px;"><div style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;margin-bottom:0px;"><h1 style="font-family:&quot;PT Serif&quot;;text-align:left;border:0px;font:inherit;vertical-align:baseline;font-size:35px;font-weight:normal;line-height:35px;margin-bottom:20px;padding:0px;margin:0px;">Kubernetes 内存资源限制实战</h1><div style="padding:0px;border:0px;font:inherit;vertical-align:baseline;position:relative;height:1em;line-height:1;text-align:center;margin:0px;padding-top:1.5em;padding-bottom:1.5em;margin-bottom:0px;"><div style="padding:0px;border:0px;font:inherit;vertical-align:baseline;background:-webkit-linear-gradient(0deg, rgb(243, 242, 238) 1%, rgb(31, 9, 9) 50%, rgb(243, 242, 238) 99%);position:absolute;left:-4em;top:50%;z-index:10;width:100%;padding-left:4em;padding-right:4em;height:0.1em;opacity:0.5;margin:0px;margin-bottom:0px;"></div></div></div>
+    <h3 style="font-family:&quot;PT Serif&quot;;text-align:left;margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;font-size:30px;line-height:35px;margin-top:35px;font-weight:normal;margin-bottom:15px;">通过实验来探索容器在什么情况下会被 OOM killed</h3>
+    <div style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;margin-bottom:1.5em;">
+      
+<div style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;margin-bottom:0px;">
+  <span style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;"> 2019年04月29日 </span>
+  
+   ·  <span style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;"> ☕ 5 分钟 </span>
+  
+   ·  <span style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;">✍️ 米开朗基杨</span>
+  
+  <span style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;">
+     · <span style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;">622</span> 阅读
+  </span>
+</div>
+      
+
+    </div>
+    <a title="Serverless" href="https://github.com/labring/laf" style="color:rgb(6, 85, 136);border:0px;font:inherit;vertical-align:baseline;text-decoration:none;display:block;background-color:transparent;margin:0px;padding:0px;">
+
+<p style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;margin-bottom:1.5em;">
+  </p><div style="padding:0px;border:0px;font:inherit;vertical-align:baseline;display:block;text-align:center;margin-bottom:1em;margin-top:1em;margin:0px;"><div class="media-placeholder">[图片/附件]</div></en-media></div>
+
+<p style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;margin-bottom:0px;"></p>
+</a>
+
+
+
+<a title="Sealos" href="https://github.com/fanux/sealos" style="color:rgb(6, 85, 136);margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;text-decoration:none;">
+<div style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;margin-bottom:0px;">
+  <span style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;">sealos</span> 以 Kubernetes 为内核的云操作系统 <span style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;">走，看看去！</span>
+</div>
+</a>
+
+    
+      
+      
+        
+
+        
+          
+          <p style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;margin-bottom:1.5em;">Kubernetes 对内存资源的限制实际上是通过 cgroup 来控制的，cgroup 是容器的一组用来控制内核如何运行进程的相关属性集合。针对内存、CPU 和各种设备都有对应的 cgroup。cgroup 是具有层级的，这意味着每个 cgroup 拥有一个它可以继承属性的父亲，往上一直直到系统启动时创建的 root cgroup。关于其背后的原理可以参考：
+
+<a href="https://medium.com/@betz.mark/understanding-resource-limits-in-kubernetes-memory-6b41e9a955f9" style="color:rgb(6, 85, 136);margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;text-decoration:none;">深入理解Kubernetes资源限制：内存</a>。</p>
+<p style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;margin-bottom:1.5em;">今天我们将通过实验来探索容器在什么情况下会被 oom-killed。</p>
+<h2 style="font-family:&quot;PT Serif&quot;;text-align:left;margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;font-weight:bold;font-size:30px;line-height:35px;margin-top:35px;margin-bottom:15px;">1. 实验准备</h2>
+<hr style="border-color:rgb(31, 9, 9);border-top:none;border-right:none;border-bottom:1px solid;border-left:none;"/>
+<p style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;margin-bottom:1.5em;">首先你需要一个 Kubernetes 集群，然后通过 kubectl 创建一个 Pod，内存限制为 <code style="font-family:Inconsolata;margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;font-size:0.875em;line-height:1.71429em;">123Mi</code>。</p>
+<div style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;margin-bottom:1.5em;"><pre style="background-color:rgb(243, 242, 238);font-family:Inconsolata;margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;width:auto;font-size:0.875em;line-height:1.71429em;"><code style="font-family:Inconsolata;margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;line-height:1.71429em;font-size:1.15em;">$ kubectl run --restart=Never --rm -it --image=ubuntu --limits='memory=123Mi' -- sh
+If you don't see a command prompt, try pressing enter.
+root@sh:/#
+</code></pre></div><p style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;margin-bottom:1.5em;">重新打开一个 shell 窗口，找出刚创建的 Pod 的 uid：</p>
+<div style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;margin-bottom:1.5em;"><pre style="background-color:rgb(243, 242, 238);font-family:Inconsolata;margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;width:auto;font-size:0.875em;line-height:1.71429em;"><code style="font-family:Inconsolata;margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;line-height:1.71429em;font-size:1.15em;">$ kubectl get pods sh -o yaml | grep uid
+  uid: bc001ffa-68fc-11e9-92d7-5ef9efd9374c
+</code></pre></div><p style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;margin-bottom:1.5em;">在运行该 Pod 的节点上找出其 cgroup 的内存设置：</p>
+<div style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;margin-bottom:1.5em;"><pre style="background-color:rgb(243, 242, 238);font-family:Inconsolata;margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;width:auto;font-size:0.875em;line-height:1.71429em;"><code style="font-family:Inconsolata;margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;line-height:1.71429em;font-size:1.15em;">$ cd /sys/fs/cgroup/memory/kubepods/burstable/podbc001ffa-68fc-11e9-92d7-5ef9efd9374c
+$ cat memory.limit_in_bytes
+128974848
+</code></pre></div><p style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;margin-bottom:1.5em;">其中 <code style="font-family:Inconsolata;margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;font-size:0.875em;line-height:1.71429em;">memory.limit_in_bytes</code> 表示当前限制的内存额度。<code style="font-family:Inconsolata;margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;font-size:0.875em;line-height:1.71429em;">128974848</code> 正好等于 <code style="font-family:Inconsolata;margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;font-size:0.875em;line-height:1.71429em;">123*1024*1024</code>。</p>
+<p style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;margin-bottom:1.5em;">如果你查看一下这个 Pod 的 cgroup 目录，就会发现 Pod 中的每个容器都会在该目录下创建一个子 cgroup 目录：</p>
+<div style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;margin-bottom:1.5em;"><pre style="background-color:rgb(243, 242, 238);font-family:Inconsolata;margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;width:auto;font-size:0.875em;line-height:1.71429em;"><code style="font-family:Inconsolata;margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;line-height:1.71429em;font-size:1.15em;">$ ll /sys/fs/cgroup/memory/kubepods/burstable/podbc001ffa-68fc-11e9-92d7-5ef9efd9374c
+总用量 0
+drwxr-xr-x 2 root root 0 4月  28 18:46 64ae20d221399e618bbf8c15f3b5ae5050062d497971d0af5346d5532fa5c585
+drwxr-xr-x 2 root root 0 4月  28 18:25 a398d3c012bb37dd9fe5fef524842a8699de931bce3a4e3753a49ef1694b33ee
+-rw-r--r-- 1 root root 0 4月  28 18:46 cgroup.clone_children
+--w--w--w- 1 root root 0 4月  28 18:46 cgroup.event_control
+-rw-r--r-- 1 root root 0 4月  28 18:46 cgroup.procs
+-rw-r--r-- 1 root root 0 4月  28 18:46 memory.failcnt
+--w------- 1 root root 0 4月  28 18:46 memory.force_empty
+-rw-r--r-- 1 root root 0 4月  28 18:46 memory.kmem.failcnt
+-rw-r--r-- 1 root root 0 4月  28 18:24 memory.kmem.limit_in_bytes
+-rw-r--r-- 1 root root 0 4月  28 18:46 memory.kmem.max_usage_in_bytes
+-r--r--r-- 1 root root 0 4月  28 18:46 memory.kmem.slabinfo
+-rw-r--r-- 1 root root 0 4月  28 18:46 memory.kmem.tcp.failcnt
+-rw-r--r-- 1 root root 0 4月  28 18:46 memory.kmem.tcp.limit_in_bytes
+-rw-r--r-- 1 root root 0 4月  28 18:46 memory.kmem.tcp.max_usage_in_bytes
+-r--r--r-- 1 root root 0 4月  28 18:46 memory.kmem.tcp.usage_in_bytes
+-r--r--r-- 1 root root 0 4月  28 18:46 memory.kmem.usage_in_bytes
+-rw-r--r-- 1 root root 0 4月  28 18:24 memory.limit_in_bytes
+-rw-r--r-- 1 root root 0 4月  28 18:46 memory.max_usage_in_bytes
+-rw-r--r-- 1 root root 0 4月  28 18:46 memory.memsw.failcnt
+-rw-r--r-- 1 root root 0 4月  28 18:46 memory.memsw.limit_in_bytes
+-rw-r--r-- 1 root root 0 4月  28 18:46 memory.memsw.max_usage_in_bytes
+-r--r--r-- 1 root root 0 4月  28 18:46 memory.memsw.usage_in_bytes
+-rw-r--r-- 1 root root 0 4月  28 18:46 memory.move_charge_at_immigrate
+-r--r--r-- 1 root root 0 4月  28 18:46 memory.numa_stat
+-rw-r--r-- 1 root root 0 4月  28 18:46 memory.oom_control
+---------- 1 root root 0 4月  28 18:46 memory.pressure_level
+-rw-r--r-- 1 root root 0 4月  28 18:46 memory.soft_limit_in_bytes
+-r--r--r-- 1 root root 0 4月  28 18:46 memory.stat
+-rw-r--r-- 1 root root 0 4月  28 18:46 memory.swappiness
+-r--r--r-- 1 root root 0 4月  28 18:46 memory.usage_in_bytes
+-rw-r--r-- 1 root root 0 4月  28 18:46 memory.use_hierarchy
+-rw-r--r-- 1 root root 0 4月  28 18:46 notify_on_release
+-rw-r--r-- 1 root root 0 4月  28 18:46 tasks
+</code></pre></div><p style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;margin-bottom:1.5em;">输出结果的前两个目录其实就是 pause 容器的 <code style="font-family:Inconsolata;margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;font-size:0.875em;line-height:1.71429em;">pause</code> 进程和业务容器的 <code style="font-family:Inconsolata;margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;font-size:0.875em;line-height:1.71429em;">bash</code> 进程创建的两个子 cgroup 目录。可以来证实一下，我的环境使用的容器运行时是 containerd，可以通过 crictl 工具来查看，如果你使用的是 docker，方法类似。</p>
+<p style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;margin-bottom:1.5em;">先在运行该容器的节点上找到该业务容器的 ID：</p>
+<div style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;margin-bottom:1.5em;"><pre style="background-color:rgb(243, 242, 238);font-family:Inconsolata;margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;width:auto;font-size:0.875em;line-height:1.71429em;"><code style="font-family:Inconsolata;margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;line-height:1.71429em;font-size:1.15em;">$ crictl ps|grep "CONTAINER_RUNNING   sh"
+64ae20d221399       sha256:d131e0fa2585a7efbfb187f70d648aa50e251d9d3b7031edf4730ca6154e221e   17 hours ago        CONTAINER_RUNNING   sh                           0
+</code></pre></div><p style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;margin-bottom:1.5em;">查看该容器的 pid：</p>
+<div style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;margin-bottom:1.5em;"><pre style="background-color:rgb(243, 242, 238);font-family:Inconsolata;margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;width:auto;font-size:0.875em;line-height:1.71429em;"><code style="font-family:Inconsolata;margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;line-height:1.71429em;font-size:1.15em;">$ crictl inspect 64ae20d221399|grep pid
+    "pid": 32308,
+            "pid": 1
+            "type": "pid"
+</code></pre></div><p style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;margin-bottom:1.5em;">查看该进程所属的 cgroup，即进程在 cgroup 树中的路径：</p>
+<div style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;margin-bottom:1.5em;"><pre style="background-color:rgb(243, 242, 238);font-family:Inconsolata;margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;width:auto;font-size:0.875em;line-height:1.71429em;"><code style="font-family:Inconsolata;margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;line-height:1.71429em;font-size:1.15em;">$ cat /proc/32308/cgroup
+...
+4:memory:/kubepods/burstable/podbc001ffa-68fc-11e9-92d7-5ef9efd9374c/64ae20d221399e618bbf8c15f3b5ae5050062d497971d0af5346d5532fa5c585
+...
+</code></pre></div><p style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;margin-bottom:1.5em;">进入该目录，查看内存限制：</p>
+<div style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;margin-bottom:1.5em;"><pre style="background-color:rgb(243, 242, 238);font-family:Inconsolata;margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;width:auto;font-size:0.875em;line-height:1.71429em;"><code style="font-family:Inconsolata;margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;line-height:1.71429em;font-size:1.15em;">$ cd /sys/fs/cgroup/memory/kubepods/burstable/podbc001ffa-68fc-11e9-92d7-5ef9efd9374c/64ae20d221399e618bbf8c15f3b5ae5050062d497971d0af5346d5532fa5c585
+$ cat memory.limit_in_bytes
+128974848
+</code></pre></div><p style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;margin-bottom:1.5em;">可以看到该 cgroup 的内存限制和父 cgroup 一样，而父 cgroup 其实就是 Pod 级别的 cgroup。</p>
+<p style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;margin-bottom:1.5em;">按照预想，一旦 Pod 消耗的内存资源超过这个限制，cgroup 就会杀死容器进程，我们来测试一下。</p>
+<h2 style="font-family:&quot;PT Serif&quot;;text-align:left;margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;font-weight:bold;font-size:30px;line-height:35px;margin-top:35px;margin-bottom:15px;">2. 压力测试</h2>
+<hr style="border-color:rgb(31, 9, 9);border-top:none;border-right:none;border-bottom:1px solid;border-left:none;"/>
+<p style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;margin-bottom:1.5em;">先在容器中安装压力测试工具：</p>
+<div style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;margin-bottom:1.5em;"><pre style="background-color:rgb(243, 242, 238);font-family:Inconsolata;margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;width:auto;font-size:0.875em;line-height:1.71429em;"><code style="font-family:Inconsolata;margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;line-height:1.71429em;font-size:1.15em;">root@sh:/# apt update; apt install -y stress
+</code></pre></div><p style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;margin-bottom:1.5em;">在另一个一个 shell 窗口中执行 <code style="font-family:Inconsolata;margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;font-size:0.875em;line-height:1.71429em;">dmesg -Tw</code> 命令查看系统的 Syslog。</p>
+<p style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;margin-bottom:1.5em;">回到第一个 shell 窗口进行压力测试，限制内存在 100M 以内：</p>
+<div style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;margin-bottom:1.5em;"><pre style="background-color:rgb(243, 242, 238);font-family:Inconsolata;margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;width:auto;font-size:0.875em;line-height:1.71429em;"><code style="font-family:Inconsolata;margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;line-height:1.71429em;font-size:1.15em;">root@sh:/# stress --vm 1 --vm-bytes 100M &amp;
+[1] 271
+root@sh:/# stress: info: [271] dispatching hogs: 0 cpu, 0 io, 1 vm, 0 hdd
+</code></pre></div><p style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;margin-bottom:1.5em;">执行第二次压力测试：</p>
+<div style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;margin-bottom:1.5em;"><pre style="background-color:rgb(243, 242, 238);font-family:Inconsolata;margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;width:auto;font-size:0.875em;line-height:1.71429em;"><code style="font-family:Inconsolata;margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;line-height:1.71429em;font-size:1.15em;">root@sh:/# stress --vm 1 --vm-bytes 50M
+stress: info: [273] dispatching hogs: 0 cpu, 0 io, 1 vm, 0 hdd
+stress: FAIL: [271] (415) &lt;-- worker 272 got signal 9
+stress: WARN: [271] (417) now reaping child worker processes
+stress: FAIL: [271] (451) failed run completed in 7s
+</code></pre></div><p style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;margin-bottom:1.5em;">可以看到系统通过发送 signal 9（SIGKILL） 信号杀死了第一次压力测试的进程（进程 ID 为 <code style="font-family:Inconsolata;margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;font-size:0.875em;line-height:1.71429em;">271</code>）。</p>
+<p style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;margin-bottom:1.5em;">可以在另一个 shell 窗口中看到系统的 syslog 日志输出：</p>
+<div style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;margin-bottom:1.5em;"><pre style="background-color:rgb(243, 242, 238);font-family:Inconsolata;margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;width:auto;font-size:0.875em;line-height:1.71429em;"><code style="font-family:Inconsolata;margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;line-height:1.71429em;font-size:1.15em;">[Sat Apr 27 22:56:09 2019] stress invoked oom-killer: gfp_mask=0x14000c0(GFP_KERNEL), nodemask=(null), order=0, oom_score_adj=939
+[Sat Apr 27 22:56:09 2019] stress cpuset=a2ed67c63e828da3849bf9f506ae2b36b4dac5b402a57f2981c9bdc07b23e672 mems_allowed=0
+[Sat Apr 27 22:56:09 2019] CPU: 0 PID: 32332 Comm: stress Not tainted 4.15.0-46-generic #49-Ubuntu
+[Sat Apr 27 22:56:09 2019] Hardware name:  BHYVE, BIOS 1.00 03/14/2014
+[Sat Apr 27 22:56:09 2019] Call Trace:
+[Sat Apr 27 22:56:09 2019]  dump_stack+0x63/0x8b
+[Sat Apr 27 22:56:09 2019]  dump_header+0x71/0x285
+[Sat Apr 27 22:56:09 2019]  oom_kill_process+0x220/0x440
+[Sat Apr 27 22:56:09 2019]  out_of_memory+0x2d1/0x4f0
+[Sat Apr 27 22:56:09 2019]  mem_cgroup_out_of_memory+0x4b/0x80
+[Sat Apr 27 22:56:09 2019]  mem_cgroup_oom_synchronize+0x2e8/0x320
+[Sat Apr 27 22:56:09 2019]  ? mem_cgroup_css_online+0x40/0x40
+[Sat Apr 27 22:56:09 2019]  pagefault_out_of_memory+0x36/0x7b
+[Sat Apr 27 22:56:09 2019]  mm_fault_error+0x90/0x180
+[Sat Apr 27 22:56:09 2019]  __do_page_fault+0x4a5/0x4d0
+[Sat Apr 27 22:56:09 2019]  do_page_fault+0x2e/0xe0
+[Sat Apr 27 22:56:09 2019]  ? page_fault+0x2f/0x50
+[Sat Apr 27 22:56:09 2019]  page_fault+0x45/0x50
+[Sat Apr 27 22:56:09 2019] RIP: 0033:0x558182259cf0
+[Sat Apr 27 22:56:09 2019] RSP: 002b:00007fff01a47940 EFLAGS: 00010206
+[Sat Apr 27 22:56:09 2019] RAX: 00007fdc18cdf010 RBX: 00007fdc1763a010 RCX: 00007fdc1763a010
+[Sat Apr 27 22:56:09 2019] RDX: 00000000016a5000 RSI: 0000000003201000 RDI: 0000000000000000
+[Sat Apr 27 22:56:09 2019] RBP: 0000000003200000 R08: 00000000ffffffff R09: 0000000000000000
+[Sat Apr 27 22:56:09 2019] R10: 0000000000000022 R11: 0000000000000246 R12: ffffffffffffffff
+[Sat Apr 27 22:56:09 2019] R13: 0000000000000002 R14: fffffffffffff000 R15: 0000000000001000
+[Sat Apr 27 22:56:09 2019] Task in /kubepods/burstable/podbc001ffa-68fc-11e9-92d7-5ef9efd9374c/a2ed67c63e828da3849bf9f506ae2b36b4dac5b402a57f2981c9bdc07b23e672 killed as a result of limit of /kubepods/burstable/podbc001ffa-68fc-11e9-92d7-5ef9efd9374c
+[Sat Apr 27 22:56:09 2019] memory: usage 125952kB, limit 125952kB, failcnt 3632
+[Sat Apr 27 22:56:09 2019] memory+swap: usage 0kB, limit 9007199254740988kB, failcnt 0
+[Sat Apr 27 22:56:09 2019] kmem: usage 2352kB, limit 9007199254740988kB, failcnt 0
+[Sat Apr 27 22:56:09 2019] Memory cgroup stats for /kubepods/burstable/podbc001ffa-68fc-11e9-92d7-5ef9efd9374c: cache:0KB rss:0KB rss_huge:0KB shmem:0KB mapped_file:0KB dirty:0KB writeback:0KB inactive_anon:0KB active_anon:0KB inactive_file:0KB active_file:0KB unevictable:0KB
+[Sat Apr 27 22:56:09 2019] Memory cgroup stats for /kubepods/burstable/podbc001ffa-68fc-11e9-92d7-5ef9efd9374c/79fae7c2724ea1b19caa343fed8da3ea84bbe5eb370e5af8a6a94a090d9e4ac2: cache:0KB rss:48KB rss_huge:0KB shmem:0KB mapped_file:0KB dirty:0KB writeback:0KB inactive_anon:0KB active_anon:48KB inactive_file:0KB active_file:0KB unevictable:0KB
+[Sat Apr 27 22:56:09 2019] Memory cgroup stats for /kubepods/burstable/podbc001ffa-68fc-11e9-92d7-5ef9efd9374c/a2ed67c63e828da3849bf9f506ae2b36b4dac5b402a57f2981c9bdc07b23e672: cache:0KB rss:123552KB rss_huge:0KB shmem:0KB mapped_file:0KB dirty:0KB writeback:0KB inactive_anon:0KB active_anon:123548KB inactive_file:0KB active_file:0KB unevictable:0KB
+[Sat Apr 27 22:56:09 2019] [ pid ]   uid  tgid total_vm      rss pgtables_bytes swapents oom_score_adj name
+[Sat Apr 27 22:56:09 2019] [25160]     0 25160      256        1    28672        0          -998 pause
+[Sat Apr 27 22:56:09 2019] [25218]     0 25218     4627      872    77824        0           939 bash
+[Sat Apr 27 22:56:09 2019] [32307]     0 32307     2060      275    57344        0           939 stress
+[Sat Apr 27 22:56:09 2019] [32308]     0 32308    27661    24953   253952        0           939 stress
+[Sat Apr 27 22:56:09 2019] [32331]     0 32331     2060      304    53248        0           939 stress
+[Sat Apr 27 22:56:09 2019] [32332]     0 32332    14861     5829   102400        0           939 stress
+[Sat Apr 27 22:56:09 2019] Memory cgroup out of memory: Kill process 32308 (stress) score 1718 or sacrifice child
+[Sat Apr 27 22:56:09 2019] Killed process 32308 (stress) total-vm:110644kB, anon-rss:99620kB, file-rss:192kB, shmem-rss:0kB
+[Sat Apr 27 22:56:09 2019] oom_reaper: reaped process 32308 (stress), now anon-rss:0kB, file-rss:0kB, shmem-rss:0kB
+</code></pre></div><p style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;margin-bottom:1.5em;">从宿主机的视角来看，PID 为 <code style="font-family:Inconsolata;margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;font-size:0.875em;line-height:1.71429em;">32308</code> 的进程被 oom-killed 了，我们需要重点关注最后一段日志输出：</p>
+<p style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;margin-bottom:1.5em;">对于刚刚创建的 Pod 而言，有好几个进程作为 OOM killer 的候选人，其中最重要的进程是 <code style="font-family:Inconsolata;margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;font-size:0.875em;line-height:1.71429em;">pause</code>，用来为业务容器创建共享的 network namespace，其 <code style="font-family:Inconsolata;margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;font-size:0.875em;line-height:1.71429em;">oom_score_adj</code> 值为 <code style="font-family:Inconsolata;margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;font-size:0.875em;line-height:1.71429em;">-998</code>，可以确保不被杀死。<code style="font-family:Inconsolata;margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;font-size:0.875em;line-height:1.71429em;">oom_score_adj</code> 值越低就越不容易被杀死。关于 Pod 的 QoS 与 OOM 值的对应关系，可以参考：
+
+<a href="https://icloudnative.io/posts/kubernetes-resource-management/#qos-%E6%9C%8D%E5%8A%A1%E8%B4%A8%E9%87%8F" style="color:rgb(6, 85, 136);margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;text-decoration:none;">Kubernetes 资源管理概述</a>。</p>
+<p style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;margin-bottom:1.5em;">除了 <code style="font-family:Inconsolata;margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;font-size:0.875em;line-height:1.71429em;">pause</code> 进程外，剩下的进程 <code style="font-family:Inconsolata;margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;font-size:0.875em;line-height:1.71429em;">oom_score_adj</code> 值均为 <code style="font-family:Inconsolata;margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;font-size:0.875em;line-height:1.71429em;">939</code>，我们可以根据 
+
+<a href="https://kubernetes.io/docs/tasks/administer-cluster/out-of-resource/#node-oom-behavior" style="color:rgb(6, 85, 136);margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;text-decoration:none;">Kubernetes 官方文档</a>中公式来验证一下：</p>
+<div style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;margin-bottom:1.5em;"><pre style="background-color:rgb(243, 242, 238);font-family:Inconsolata;margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;width:auto;font-size:0.875em;line-height:1.71429em;"><code style="font-family:Inconsolata;margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;line-height:1.71429em;font-size:1.15em;">min(max(2, 1000 - (1000 * memoryRequestBytes) / machineMemoryCapacityBytes), 999)
+</code></pre></div><p style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;margin-bottom:1.5em;">进程的 <code style="font-family:Inconsolata;margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;font-size:0.875em;line-height:1.71429em;">oom_score_adj</code> 值可以通过以下命令来查看：</p>
+<div style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;margin-bottom:1.5em;"><pre style="background-color:rgb(243, 242, 238);font-family:Inconsolata;margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;width:auto;font-size:0.875em;line-height:1.71429em;"><code style="font-family:Inconsolata;margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;line-height:1.71429em;font-size:1.15em;">$ cat /proc/32308/oom_score_adj
+939
+</code></pre></div><blockquote style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;quotes:none;margin-bottom:1.5em;font-style:italic;border-left:5px solid;margin-left:2em;padding-left:1em;">
+<p style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;margin-bottom:0px;">其中 <code style="font-family:Inconsolata;margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;font-size:0.875em;line-height:1.71429em;">memoryRequest</code> 是 pod 申请的资源，<code style="font-family:Inconsolata;margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;font-size:0.875em;line-height:1.71429em;">memoryCapacity</code> 是节点的内存总量。可以看到，申请的内存越多，oom 值越低，也就越不容易被杀死。</p>
+</blockquote>
+<p style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;margin-bottom:1.5em;">查看运行该 Pod 的节点内存总量：</p>
+<div style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;margin-bottom:1.5em;"><pre style="background-color:rgb(243, 242, 238);font-family:Inconsolata;margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;width:auto;font-size:0.875em;line-height:1.71429em;"><code style="font-family:Inconsolata;margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;line-height:1.71429em;font-size:1.15em;">$ kubectl describe nodes k3s | grep Allocatable -A 5
+Allocatable:
+ cpu:                1
+ ephemeral-storage:  49255941901
+ hugepages-1Gi:      0
+ hugepages-2Mi:      0
+ memory:             2041888Ki
+</code></pre></div><p style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;margin-bottom:1.5em;">如果只设置了 limits，Kubernetes 会自动把 Pod 的 requests 设置成和 limits 一样。所以其他进程的 <code style="font-family:Inconsolata;margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;font-size:0.875em;line-height:1.71429em;">oom_score_adj</code> 值为 <code style="font-family:Inconsolata;margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;font-size:0.875em;line-height:1.71429em;">1000–123*1024/2041888=938.32</code>，这个值已经很接近 syslog 中输出的 939 了。</p>
+<div style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;margin-bottom:1.5em;">
+  OOM killer 会根据进程的内存使用情况来计算 <code style="font-family:Inconsolata;margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;font-size:0.875em;line-height:1.71429em;">oom_score</code> 的值，并根据 <code style="font-family:Inconsolata;margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;font-size:0.875em;line-height:1.71429em;">oom_score_adj</code> 的值来进行微调。
+</div>
+<p style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;margin-bottom:1.5em;">进程的 <code style="font-family:Inconsolata;margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;font-size:0.875em;line-height:1.71429em;">oom_score</code> 值可以通过以下命令来查看：</p>
+<div style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;margin-bottom:1.5em;"><pre style="background-color:rgb(243, 242, 238);font-family:Inconsolata;margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;width:auto;font-size:0.875em;line-height:1.71429em;"><code style="font-family:Inconsolata;margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;line-height:1.71429em;font-size:1.15em;">$ cat /proc/32308/oom_score
+1718
+</code></pre></div><p style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;margin-bottom:1.5em;">因为业务容器内所有进程的 <code style="font-family:Inconsolata;margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;font-size:0.875em;line-height:1.71429em;">oom_score_adj</code> 值都相同，所以谁的内存使用量最多，<code style="font-family:Inconsolata;margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;font-size:0.875em;line-height:1.71429em;">oom_score</code> 值就越高，也就越容易被杀死。因为第一个 stress 进程使的内存使用量最多（100M），<code style="font-family:Inconsolata;margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;font-size:0.875em;line-height:1.71429em;">oom_score</code> 值最高（值为 1718），所以被杀死。</p>
+<h2 style="font-family:&quot;PT Serif&quot;;text-align:left;margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;font-weight:bold;font-size:30px;line-height:35px;margin-top:35px;margin-bottom:15px;">3. 总结</h2>
+<hr style="border-color:rgb(31, 9, 9);border-top:none;border-right:none;border-bottom:1px solid;border-left:none;"/>
+<p style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;margin-bottom:1.5em;">Kubernetes 通过 cgroup 和 OOM killer 来限制 Pod 的内存资源，在实际使用中我们需要小心区分 OS 级别的 OOM 和 Pod 级别的 OOM。</p>
+        
+	<div style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;margin-bottom:0px;">-------他日江湖相逢  再当杯酒言欢-------</div>
+    </div></div></div></div></div></div></div></div></div></div>
+</div>
+</div>
+<a class="back-link" href="../articles.html">← 返回笔记列表</a>
+</body>
+</html>

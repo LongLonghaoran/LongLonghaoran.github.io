@@ -1,0 +1,378 @@
+<!DOCTYPE html>
+<html lang="zh-CN" data-theme="light">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>2-3 动态计算图 - 20天吃透Pytorch — 技术笔记</title>
+<style>
+:root {
+  --bg: #ffffff;
+  --text: #1a1a1a;
+  --muted: #666;
+  --border: #e0e0e0;
+  --code-bg: #f5f5f5;
+  --link: #0066cc;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #1a1a1a;
+    --text: #e0e0e0;
+    --muted: #999;
+    --border: #333;
+    --code-bg: #2a2a2a;
+    --link: #66bbff;
+  }
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  line-height: 1.7;
+  color: var(--text);
+  background: var(--bg);
+  max-width: 860px;
+  margin: 0 auto;
+  padding: 2rem 1.5rem;
+}
+.note-header {
+  border-bottom: 2px solid var(--border);
+  padding-bottom: 1rem;
+  margin-bottom: 2rem;
+}
+.note-title {
+  font-size: 1.6rem;
+  font-weight: 700;
+  margin-bottom: 0.3rem;
+}
+.note-meta {
+  color: var(--muted);
+  font-size: 0.85rem;
+}
+.note-content {
+  font-size: 0.95rem;
+}
+.note-content h1 { font-size: 1.4rem; margin: 1.2rem 0 0.6rem; }
+.note-content h2 { font-size: 1.2rem; margin: 1rem 0 0.5rem; }
+.note-content h3 { font-size: 1.05rem; margin: 0.8rem 0 0.4rem; }
+.note-content p { margin: 0.5rem 0; }
+.note-content ul, .note-content ol { margin: 0.5rem 0 0.5rem 2rem; }
+.note-content li { margin: 0.2rem 0; }
+.note-content pre {
+  background: var(--code-bg);
+  padding: 1rem;
+  border-radius: 6px;
+  overflow-x: auto;
+  margin: 0.8rem 0;
+  font-size: 0.85rem;
+}
+.note-content code {
+  background: var(--code-bg);
+  padding: 0.1rem 0.3rem;
+  border-radius: 3px;
+  font-size: 0.88em;
+}
+.note-content pre code {
+  background: none;
+  padding: 0;
+}
+.note-content blockquote {
+  border-left: 3px solid var(--border);
+  padding-left: 1rem;
+  color: var(--muted);
+  margin: 0.8rem 0;
+}
+.note-content a { color: var(--link); }
+.note-content img {
+  max-width: 100%;
+  height: auto;
+  border-radius: 6px;
+  margin: 0.5rem 0;
+}
+.note-content table {
+  border-collapse: collapse;
+  width: 100%;
+  margin: 0.8rem 0;
+}
+.note-content th, .note-content td {
+  border: 1px solid var(--border);
+  padding: 0.5rem;
+}
+.note-content th { background: var(--code-bg); }
+.media-placeholder {
+  background: var(--code-bg);
+  padding: 1rem;
+  text-align: center;
+  color: var(--muted);
+  border-radius: 6px;
+  margin: 0.5rem 0;
+  font-size: 0.85rem;
+}
+.encrypt-placeholder {
+  background: #fff3cd;
+  padding: 0.5rem;
+  text-align: center;
+  color: #856404;
+  border-radius: 6px;
+  margin: 0.5rem 0;
+  font-size: 0.85rem;
+}
+.back-link {
+  display: inline-block;
+  margin-top: 2rem;
+  color: var(--link);
+  text-decoration: none;
+  font-size: 0.85rem;
+}
+</style>
+</head>
+<body>
+<div class="note-header">
+  <div class="note-title">2-3 动态计算图 - 20天吃透Pytorch</div>
+  <div class="note-meta">笔记本：AI</div>
+</div>
+<div class="note-content">
+<div style="--en-clipped-content:article">
+<div><br/></div><div style="font-size: 16px; display:block; min-width: 100%; position: relative;"> <div style="box-sizing:border-box;font-size:100%;text-size-adjust:100%;overflow-x:hidden;"><div style="box-sizing:border-box;font-family:Lato, proxima-nova, &quot;Helvetica Neue&quot;, Arial, sans-serif;font-weight:normal;color:rgb(64, 64, 64);overflow-x:hidden;background:rgb(252, 252, 252);"><div style="box-sizing:border-box;"><div style="box-sizing:border-box;background:rgba(0, 0, 0, 0.05);"><div style="box-sizing:border-box;background:rgb(252, 252, 252);"><div style="box-sizing:border-box;"><div style="box-sizing:border-box;"><div style="box-sizing:border-box;">
+              
+                <h1 style="box-sizing:border-box;margin-top:0px;font-weight:700;font-family:&quot;Roboto Slab&quot;, ff-tisa-web-pro, Georgia, Arial, sans-serif;font-size:175%;">2-3,动态计算图</h1>
+<p style="box-sizing:border-box;line-height:24px;margin:0px 0px 24px;font-size:16px;">本节我们将介绍 Pytorch的动态计算图。</p>
+<p style="box-sizing:border-box;line-height:24px;margin:0px 0px 24px;font-size:16px;">包括： </p>
+<ul style="box-sizing:border-box;margin:0px;padding:0px;line-height:24px;margin-bottom:24px;list-style:disc;">
+<li style="box-sizing:border-box;margin-left:24px;list-style:disc;">
+<p style="box-sizing:border-box;line-height:24px;margin:0px 0px 24px;font-size:16px;margin-bottom:24px;">动态计算图简介</p>
+</li>
+<li style="box-sizing:border-box;margin-left:24px;list-style:disc;">
+<p style="box-sizing:border-box;line-height:24px;margin:0px 0px 24px;font-size:16px;margin-bottom:24px;">计算图中的Function</p>
+</li>
+<li style="box-sizing:border-box;margin-left:24px;list-style:disc;">
+<p style="box-sizing:border-box;line-height:24px;margin:0px 0px 24px;font-size:16px;margin-bottom:24px;">计算图和反向传播</p>
+</li>
+<li style="box-sizing:border-box;margin-left:24px;list-style:disc;">
+<p style="box-sizing:border-box;line-height:24px;margin:0px 0px 24px;font-size:16px;margin-bottom:24px;">叶子节点和非叶子节点</p>
+</li>
+<li style="box-sizing:border-box;margin-left:24px;list-style:disc;">
+<p style="box-sizing:border-box;line-height:24px;margin:0px 0px 24px;font-size:16px;margin-bottom:24px;">计算图在TensorBoard中的可视化</p>
+</li>
+</ul>
+<h3 style="box-sizing:border-box;margin-top:0px;font-weight:700;font-family:&quot;Roboto Slab&quot;, ff-tisa-web-pro, Georgia, Arial, sans-serif;font-size:125%;">一，动态计算图简介</h3>
+<p style="box-sizing:border-box;line-height:24px;margin:0px 0px 24px;font-size:16px;"><div class="media-placeholder">[图片/附件]</div></en-media></p>
+<p style="box-sizing:border-box;line-height:24px;margin:0px 0px 24px;font-size:16px;">Pytorch的计算图由节点和边组成，节点表示张量或者Function，边表示张量和Function之间的依赖关系。</p>
+<p style="box-sizing:border-box;line-height:24px;margin:0px 0px 24px;font-size:16px;">Pytorch中的计算图是动态图。这里的动态主要有两重含义。</p>
+<p style="box-sizing:border-box;line-height:24px;margin:0px 0px 24px;font-size:16px;">第一层含义是：计算图的正向传播是立即执行的。无需等待完整的计算图创建完毕，每条语句都会在计算图中动态添加节点和边，并立即执行正向传播得到计算结果。</p>
+<p style="box-sizing:border-box;line-height:24px;margin:0px 0px 24px;font-size:16px;">第二层含义是：计算图在反向传播后立即销毁。下次调用需要重新构建计算图。如果在程序中使用了backward方法执行了反向传播，或者利用torch.autograd.grad方法计算了梯度，那么创建的计算图会被立即销毁，释放存储空间，下次调用需要重新创建。</p>
+<p style="box-sizing:border-box;line-height:24px;margin:0px 0px 24px;font-size:16px;"><strong style="box-sizing:border-box;font-weight:bold;">1，计算图的正向传播是立即执行的。</strong></p>
+<pre style="border-radius:4px;background-color: #fbfaf8;border: 1px solid rgba(0,0,0,.14902);color: #333;font-size: 12px;padding: 8px;font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif;box-sizing: border-box;"><code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span style="box-sizing:border-box;color:rgb(51, 51, 51);font-weight:bold;">import</span> torch 
+w = torch.tensor([[<span style="box-sizing:border-box;color:rgb(0, 128, 128);">3.0</span>,<span style="box-sizing:border-box;color:rgb(0, 128, 128);">1.0</span>]],requires_grad=<span style="box-sizing:border-box;color:rgb(51, 51, 51);font-weight:bold;">True</span>)
+b = torch.tensor([[<span style="box-sizing:border-box;color:rgb(0, 128, 128);">3.0</span>]],requires_grad=<span style="box-sizing:border-box;color:rgb(51, 51, 51);font-weight:bold;">True</span>)
+X = torch.randn(<span style="box-sizing:border-box;color:rgb(0, 128, 128);">10</span>,<span style="box-sizing:border-box;color:rgb(0, 128, 128);">2</span>)
+Y = torch.randn(<span style="box-sizing:border-box;color:rgb(0, 128, 128);">10</span>,<span style="box-sizing:border-box;color:rgb(0, 128, 128);">1</span>)
+Y_hat = X@w.t() + b  <span style="box-sizing:border-box;color:rgb(153, 153, 136);font-style:italic;"># Y_hat定义后其正向传播被立即执行，与其后面的loss创建语句无关</span>
+loss = torch.mean(torch.pow(Y_hat-Y,<span style="box-sizing:border-box;color:rgb(0, 128, 128);">2</span>))
+
+print(loss.data)
+print(Y_hat.data)
+</code></pre>
+<pre style="border-radius:4px;background-color: #fbfaf8;border: 1px solid rgba(0,0,0,.14902);color: #333;font-size: 12px;padding: 8px;font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif;box-sizing: border-box;"><code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span style="box-sizing:border-box;color:rgb(51, 51, 51);font-weight:bold;">tensor</span>(17<span style="box-sizing:border-box;">.8969</span>)
+<span style="box-sizing:border-box;color:rgb(51, 51, 51);font-weight:bold;">tensor</span>(<span style="box-sizing:border-box;">[[3.2613]</span>,
+        <span style="box-sizing:border-box;">[4.7322]</span>,
+        <span style="box-sizing:border-box;">[4.5037]</span>,
+        <span style="box-sizing:border-box;">[7.5899]</span>,
+        <span style="box-sizing:border-box;">[7.0973]</span>,
+        <span style="box-sizing:border-box;">[1.3287]</span>,
+        <span style="box-sizing:border-box;">[6.1473]</span>,
+        <span style="box-sizing:border-box;">[1.3492]</span>,
+        <span style="box-sizing:border-box;">[1.3911]</span>,
+        <span style="box-sizing:border-box;">[1.2150]</span>])
+</code></pre>
+<pre style="border-radius:4px;background-color: #fbfaf8;border: 1px solid rgba(0,0,0,.14902);color: #333;font-size: 12px;padding: 8px;font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif;box-sizing: border-box;"><code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif">
+</code></pre>
+<p style="box-sizing:border-box;line-height:24px;margin:0px 0px 24px;font-size:16px;"><strong style="box-sizing:border-box;font-weight:bold;">2，计算图在反向传播后立即销毁。</strong></p>
+<pre style="border-radius:4px;background-color: #fbfaf8;border: 1px solid rgba(0,0,0,.14902);color: #333;font-size: 12px;padding: 8px;font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif;box-sizing: border-box;"><code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span style="box-sizing:border-box;color:rgb(51, 51, 51);font-weight:bold;">import</span> torch 
+w = torch.tensor([[<span style="box-sizing:border-box;color:rgb(0, 128, 128);">3.0</span>,<span style="box-sizing:border-box;color:rgb(0, 128, 128);">1.0</span>]],requires_grad=<span style="box-sizing:border-box;color:rgb(51, 51, 51);font-weight:bold;">True</span>)
+b = torch.tensor([[<span style="box-sizing:border-box;color:rgb(0, 128, 128);">3.0</span>]],requires_grad=<span style="box-sizing:border-box;color:rgb(51, 51, 51);font-weight:bold;">True</span>)
+X = torch.randn(<span style="box-sizing:border-box;color:rgb(0, 128, 128);">10</span>,<span style="box-sizing:border-box;color:rgb(0, 128, 128);">2</span>)
+Y = torch.randn(<span style="box-sizing:border-box;color:rgb(0, 128, 128);">10</span>,<span style="box-sizing:border-box;color:rgb(0, 128, 128);">1</span>)
+Y_hat = X@w.t() + b  <span style="box-sizing:border-box;color:rgb(153, 153, 136);font-style:italic;"># Y_hat定义后其正向传播被立即执行，与其后面的loss创建语句无关</span>
+loss = torch.mean(torch.pow(Y_hat-Y,<span style="box-sizing:border-box;color:rgb(0, 128, 128);">2</span>))
+
+<span style="box-sizing:border-box;color:rgb(153, 153, 136);font-style:italic;">#计算图在反向传播后立即销毁，如果需要保留计算图, 需要设置retain_graph = True</span>
+loss.backward()  <span style="box-sizing:border-box;color:rgb(153, 153, 136);font-style:italic;">#loss.backward(retain_graph = True) </span>
+
+<span style="box-sizing:border-box;color:rgb(153, 153, 136);font-style:italic;">#loss.backward() #如果再次执行反向传播将报错</span>
+
+</code></pre>
+<pre style="border-radius:4px;background-color: #fbfaf8;border: 1px solid rgba(0,0,0,.14902);color: #333;font-size: 12px;padding: 8px;font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif;box-sizing: border-box;"><code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif">
+</code></pre>
+<h3 style="box-sizing:border-box;margin-top:0px;font-weight:700;font-family:&quot;Roboto Slab&quot;, ff-tisa-web-pro, Georgia, Arial, sans-serif;font-size:125%;">二，计算图中的Function</h3>
+<p style="box-sizing:border-box;line-height:24px;margin:0px 0px 24px;font-size:16px;">计算图中的 张量我们已经比较熟悉了, 计算图中的另外一种节点是Function, 实际上就是 Pytorch中各种对张量操作的函数。</p>
+<p style="box-sizing:border-box;line-height:24px;margin:0px 0px 24px;font-size:16px;">这些Function和我们Python中的函数有一个较大的区别，那就是它同时包括正向计算逻辑和反向传播的逻辑。</p>
+<p style="box-sizing:border-box;line-height:24px;margin:0px 0px 24px;font-size:16px;">我们可以通过继承torch.autograd.Function来创建这种支持反向传播的Function</p>
+<pre style="border-radius:4px;background-color: #fbfaf8;border: 1px solid rgba(0,0,0,.14902);color: #333;font-size: 12px;padding: 8px;font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif;box-sizing: border-box;"><code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span style="box-sizing:border-box;"><span style="box-sizing:border-box;color:rgb(51, 51, 51);font-weight:bold;">class</span> <span style="box-sizing:border-box;color:rgb(68, 85, 136);font-weight:bold;">MyReLU</span><span style="box-sizing:border-box;">(torch.autograd.Function)</span>:</span>
+
+    <span style="box-sizing:border-box;color:rgb(153, 153, 136);font-style:italic;">#正向传播逻辑，可以用ctx存储一些值，供反向传播使用。</span>
+<span style="box-sizing:border-box;color:rgb(153, 153, 153);font-weight:bold;">    @staticmethod</span>
+    <span style="box-sizing:border-box;"><span style="box-sizing:border-box;color:rgb(51, 51, 51);font-weight:bold;">def</span> <span style="box-sizing:border-box;color:rgb(153, 0, 0);font-weight:bold;">forward</span><span style="box-sizing:border-box;">(ctx, input)</span>:</span>
+        ctx.save_for_backward(input)
+        <span style="box-sizing:border-box;color:rgb(51, 51, 51);font-weight:bold;">return</span> input.clamp(min=<span style="box-sizing:border-box;color:rgb(0, 128, 128);">0</span>)
+
+    <span style="box-sizing:border-box;color:rgb(153, 153, 136);font-style:italic;">#反向传播逻辑</span>
+<span style="box-sizing:border-box;color:rgb(153, 153, 153);font-weight:bold;">    @staticmethod</span>
+    <span style="box-sizing:border-box;"><span style="box-sizing:border-box;color:rgb(51, 51, 51);font-weight:bold;">def</span> <span style="box-sizing:border-box;color:rgb(153, 0, 0);font-weight:bold;">backward</span><span style="box-sizing:border-box;">(ctx, grad_output)</span>:</span>
+        input, = ctx.saved_tensors
+        grad_input = grad_output.clone()
+        grad_input[input &lt; <span style="box-sizing:border-box;color:rgb(0, 128, 128);">0</span>] = <span style="box-sizing:border-box;color:rgb(0, 128, 128);">0</span>
+        <span style="box-sizing:border-box;color:rgb(51, 51, 51);font-weight:bold;">return</span> grad_input
+</code></pre>
+<pre style="border-radius:4px;background-color: #fbfaf8;border: 1px solid rgba(0,0,0,.14902);color: #333;font-size: 12px;padding: 8px;font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif;box-sizing: border-box;"><code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span style="box-sizing:border-box;color:rgb(51, 51, 51);font-weight:bold;">import</span> torch 
+w = torch.tensor([[<span style="box-sizing:border-box;color:rgb(0, 128, 128);">3.0</span>,<span style="box-sizing:border-box;color:rgb(0, 128, 128);">1.0</span>]],requires_grad=<span style="box-sizing:border-box;color:rgb(51, 51, 51);font-weight:bold;">True</span>)
+b = torch.tensor([[<span style="box-sizing:border-box;color:rgb(0, 128, 128);">3.0</span>]],requires_grad=<span style="box-sizing:border-box;color:rgb(51, 51, 51);font-weight:bold;">True</span>)
+X = torch.tensor([[<span style="box-sizing:border-box;color:rgb(0, 128, 128);">-1.0</span>,<span style="box-sizing:border-box;color:rgb(0, 128, 128);">-1.0</span>],[<span style="box-sizing:border-box;color:rgb(0, 128, 128);">1.0</span>,<span style="box-sizing:border-box;color:rgb(0, 128, 128);">1.0</span>]])
+Y = torch.tensor([[<span style="box-sizing:border-box;color:rgb(0, 128, 128);">2.0</span>,<span style="box-sizing:border-box;color:rgb(0, 128, 128);">3.0</span>]])
+
+relu = MyReLU.apply <span style="box-sizing:border-box;color:rgb(153, 153, 136);font-style:italic;"># relu现在也可以具有正向传播和反向传播功能</span>
+Y_hat = relu(X@w.t() + b)
+loss = torch.mean(torch.pow(Y_hat-Y,<span style="box-sizing:border-box;color:rgb(0, 128, 128);">2</span>))
+
+loss.backward()
+
+print(w.grad)
+print(b.grad)
+</code></pre>
+<pre style="border-radius:4px;background-color: #fbfaf8;border: 1px solid rgba(0,0,0,.14902);color: #333;font-size: 12px;padding: 8px;font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif;box-sizing: border-box;"><code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span style="box-sizing:border-box;color:rgb(51, 51, 51);font-weight:bold;">tensor</span>(<span style="box-sizing:border-box;">[[4.5000, 4.5000]</span>])
+<span style="box-sizing:border-box;color:rgb(51, 51, 51);font-weight:bold;">tensor</span>(<span style="box-sizing:border-box;">[[4.5000]</span>])
+</code></pre>
+<pre style="border-radius:4px;background-color: #fbfaf8;border: 1px solid rgba(0,0,0,.14902);color: #333;font-size: 12px;padding: 8px;font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif;box-sizing: border-box;"><code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span style="box-sizing:border-box;color:rgb(153, 153, 136);font-style:italic;"># Y_hat的梯度函数即是我们自己所定义的 MyReLU.backward</span>
+
+print(Y_hat.grad_fn)
+</code></pre>
+<pre style="border-radius:4px;background-color: #fbfaf8;border: 1px solid rgba(0,0,0,.14902);color: #333;font-size: 12px;padding: 8px;font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif;box-sizing: border-box;"><code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif">&lt;<span style="box-sizing:border-box;color:rgb(51, 51, 51);font-weight:bold;">torch</span><span style="box-sizing:border-box;">.autograd</span><span style="box-sizing:border-box;">.function</span><span style="box-sizing:border-box;">.MyReLUBackward</span> <span style="box-sizing:border-box;color:rgb(51, 51, 51);font-weight:bold;">object</span> <span style="box-sizing:border-box;color:rgb(51, 51, 51);font-weight:bold;">at</span> 0<span style="box-sizing:border-box;color:rgb(51, 51, 51);font-weight:bold;">x1205a46c8</span>&gt;
+</code></pre>
+<pre style="border-radius:4px;background-color: #fbfaf8;border: 1px solid rgba(0,0,0,.14902);color: #333;font-size: 12px;padding: 8px;font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif;box-sizing: border-box;"><code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif">
+</code></pre>
+<h3 style="box-sizing:border-box;margin-top:0px;font-weight:700;font-family:&quot;Roboto Slab&quot;, ff-tisa-web-pro, Georgia, Arial, sans-serif;font-size:125%;">三，计算图与反向传播</h3>
+<p style="box-sizing:border-box;line-height:24px;margin:0px 0px 24px;font-size:16px;">了解了Function的功能，我们可以简单地理解一下反向传播的原理和过程。理解该部分原理需要一些高等数学中求导链式法则的基础知识。</p>
+<pre style="border-radius:4px;background-color: #fbfaf8;border: 1px solid rgba(0,0,0,.14902);color: #333;font-size: 12px;padding: 8px;font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif;box-sizing: border-box;"><code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span style="box-sizing:border-box;color:rgb(51, 51, 51);font-weight:bold;">import</span> torch 
+
+x = torch.tensor(<span style="box-sizing:border-box;color:rgb(0, 128, 128);">3.0</span>,requires_grad=<span style="box-sizing:border-box;color:rgb(51, 51, 51);font-weight:bold;">True</span>)
+y1 = x + <span style="box-sizing:border-box;color:rgb(0, 128, 128);">1</span>
+y2 = <span style="box-sizing:border-box;color:rgb(0, 128, 128);">2</span>*x
+loss = (y1-y2)**<span style="box-sizing:border-box;color:rgb(0, 128, 128);">2</span>
+
+loss.backward()
+</code></pre>
+<p style="box-sizing:border-box;line-height:24px;margin:0px 0px 24px;font-size:16px;">loss.backward()语句调用后，依次发生以下计算过程。</p>
+<p style="box-sizing:border-box;line-height:24px;margin:0px 0px 24px;font-size:16px;">1，loss自己的grad梯度赋值为1，即对自身的梯度为1。</p>
+<p style="box-sizing:border-box;line-height:24px;margin:0px 0px 24px;font-size:16px;">2，loss根据其自身梯度以及关联的backward方法，计算出其对应的自变量即y1和y2的梯度，将该值赋值到y1.grad和y2.grad。</p>
+<p style="box-sizing:border-box;line-height:24px;margin:0px 0px 24px;font-size:16px;">3，y2和y1根据其自身梯度以及关联的backward方法, 分别计算出其对应的自变量x的梯度，x.grad将其收到的多个梯度值累加。</p>
+<p style="box-sizing:border-box;line-height:24px;margin:0px 0px 24px;font-size:16px;">（注意，1,2,3步骤的求梯度顺序和对多个梯度值的累加规则恰好是求导链式法则的程序表述）</p>
+<p style="box-sizing:border-box;line-height:24px;margin:0px 0px 24px;font-size:16px;">正因为求导链式法则衍生的梯度累加规则，张量的grad梯度不会自动清零，在需要的时候需要手动置零。</p>
+<pre style="border-radius:4px;background-color: #fbfaf8;border: 1px solid rgba(0,0,0,.14902);color: #333;font-size: 12px;padding: 8px;font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif;box-sizing: border-box;"><code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif">
+</code></pre>
+<h3 style="box-sizing:border-box;margin-top:0px;font-weight:700;font-family:&quot;Roboto Slab&quot;, ff-tisa-web-pro, Georgia, Arial, sans-serif;font-size:125%;">四，叶子节点和非叶子节点</h3>
+<p style="box-sizing:border-box;line-height:24px;margin:0px 0px 24px;font-size:16px;">执行下面代码，我们会发现 loss.grad并不是我们期望的1,而是 None。</p>
+<p style="box-sizing:border-box;line-height:24px;margin:0px 0px 24px;font-size:16px;">类似地 y1.grad 以及 y2.grad也是 None.</p>
+<p style="box-sizing:border-box;line-height:24px;margin:0px 0px 24px;font-size:16px;">这是为什么呢？这是由于它们不是叶子节点张量。</p>
+<p style="box-sizing:border-box;line-height:24px;margin:0px 0px 24px;font-size:16px;">在反向传播过程中，只有 is_leaf=True 的叶子节点，需要求导的张量的导数结果才会被最后保留下来。</p>
+<p style="box-sizing:border-box;line-height:24px;margin:0px 0px 24px;font-size:16px;">那么什么是叶子节点张量呢？叶子节点张量需要满足两个条件。</p>
+<p style="box-sizing:border-box;line-height:24px;margin:0px 0px 24px;font-size:16px;">1，叶子节点张量是由用户直接创建的张量，而非由某个Function通过计算得到的张量。</p>
+<p style="box-sizing:border-box;line-height:24px;margin:0px 0px 24px;font-size:16px;">2，叶子节点张量的 requires_grad属性必须为True.</p>
+<p style="box-sizing:border-box;line-height:24px;margin:0px 0px 24px;font-size:16px;">Pytorch设计这样的规则主要是为了节约内存或者显存空间，因为几乎所有的时候，用户只会关心他自己直接创建的张量的梯度。</p>
+<p style="box-sizing:border-box;line-height:24px;margin:0px 0px 24px;font-size:16px;">所有依赖于叶子节点张量的张量, 其requires_grad 属性必定是True的，但其梯度值只在计算过程中被用到，不会最终存储到grad属性中。</p>
+<p style="box-sizing:border-box;line-height:24px;margin:0px 0px 24px;font-size:16px;">如果需要保留中间计算结果的梯度到grad属性中，可以使用 retain_grad方法。
+如果仅仅是为了调试代码查看梯度值，可以利用register_hook打印日志。</p>
+<pre style="border-radius:4px;background-color: #fbfaf8;border: 1px solid rgba(0,0,0,.14902);color: #333;font-size: 12px;padding: 8px;font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif;box-sizing: border-box;"><code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span style="box-sizing:border-box;color:rgb(51, 51, 51);font-weight:bold;">import</span> torch 
+
+x = torch.tensor(<span style="box-sizing:border-box;color:rgb(0, 128, 128);">3.0</span>,requires_grad=<span style="box-sizing:border-box;color:rgb(51, 51, 51);font-weight:bold;">True</span>)
+y1 = x + <span style="box-sizing:border-box;color:rgb(0, 128, 128);">1</span>
+y2 = <span style="box-sizing:border-box;color:rgb(0, 128, 128);">2</span>*x
+loss = (y1-y2)**<span style="box-sizing:border-box;color:rgb(0, 128, 128);">2</span>
+
+loss.backward()
+print(<span style="box-sizing:border-box;color:rgb(221, 17, 68);">"loss.grad:"</span>, loss.grad)
+print(<span style="box-sizing:border-box;color:rgb(221, 17, 68);">"y1.grad:"</span>, y1.grad)
+print(<span style="box-sizing:border-box;color:rgb(221, 17, 68);">"y2.grad:"</span>, y2.grad)
+print(x.grad)
+</code></pre>
+<pre style="border-radius:4px;background-color: #fbfaf8;border: 1px solid rgba(0,0,0,.14902);color: #333;font-size: 12px;padding: 8px;font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif;box-sizing: border-box;"><code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span style="box-sizing:border-box;color:rgb(51, 51, 51);font-weight:bold;">loss</span><span style="box-sizing:border-box;">.grad</span>: <span style="box-sizing:border-box;color:rgb(51, 51, 51);font-weight:bold;">None</span>
+<span style="box-sizing:border-box;color:rgb(51, 51, 51);font-weight:bold;">y1</span><span style="box-sizing:border-box;">.grad</span>: <span style="box-sizing:border-box;color:rgb(51, 51, 51);font-weight:bold;">None</span>
+<span style="box-sizing:border-box;color:rgb(51, 51, 51);font-weight:bold;">y2</span><span style="box-sizing:border-box;">.grad</span>: <span style="box-sizing:border-box;color:rgb(51, 51, 51);font-weight:bold;">None</span>
+<span style="box-sizing:border-box;color:rgb(51, 51, 51);font-weight:bold;">tensor</span>(4.)
+</code></pre>
+<pre style="border-radius:4px;background-color: #fbfaf8;border: 1px solid rgba(0,0,0,.14902);color: #333;font-size: 12px;padding: 8px;font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif;box-sizing: border-box;"><code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif">print(x.is_leaf)
+print(y1.is_leaf)
+print(y2.is_leaf)
+print(loss.is_leaf)
+</code></pre>
+<pre style="border-radius:4px;background-color: #fbfaf8;border: 1px solid rgba(0,0,0,.14902);color: #333;font-size: 12px;padding: 8px;font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif;box-sizing: border-box;"><code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span style="box-sizing:border-box;color:rgb(51, 51, 51);font-weight:bold;">True</span>
+<span style="box-sizing:border-box;color:rgb(51, 51, 51);font-weight:bold;">False</span>
+<span style="box-sizing:border-box;color:rgb(51, 51, 51);font-weight:bold;">False</span>
+<span style="box-sizing:border-box;color:rgb(51, 51, 51);font-weight:bold;">False</span>
+</code></pre>
+<p style="box-sizing:border-box;line-height:24px;margin:0px 0px 24px;font-size:16px;">利用retain_grad可以保留非叶子节点的梯度值，利用register_hook可以查看非叶子节点的梯度值。</p>
+<pre style="border-radius:4px;background-color: #fbfaf8;border: 1px solid rgba(0,0,0,.14902);color: #333;font-size: 12px;padding: 8px;font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif;box-sizing: border-box;"><code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span style="box-sizing:border-box;color:rgb(51, 51, 51);font-weight:bold;">import</span> torch 
+
+<span style="box-sizing:border-box;color:rgb(153, 153, 136);font-style:italic;">#正向传播</span>
+x = torch.tensor(<span style="box-sizing:border-box;color:rgb(0, 128, 128);">3.0</span>,requires_grad=<span style="box-sizing:border-box;color:rgb(51, 51, 51);font-weight:bold;">True</span>)
+y1 = x + <span style="box-sizing:border-box;color:rgb(0, 128, 128);">1</span>
+y2 = <span style="box-sizing:border-box;color:rgb(0, 128, 128);">2</span>*x
+loss = (y1-y2)**<span style="box-sizing:border-box;color:rgb(0, 128, 128);">2</span>
+
+<span style="box-sizing:border-box;color:rgb(153, 153, 136);font-style:italic;">#非叶子节点梯度显示控制</span>
+y1.register_hook(<span style="box-sizing:border-box;color:rgb(51, 51, 51);font-weight:bold;">lambda</span> grad: print(<span style="box-sizing:border-box;color:rgb(221, 17, 68);">'y1 grad: '</span>, grad))
+y2.register_hook(<span style="box-sizing:border-box;color:rgb(51, 51, 51);font-weight:bold;">lambda</span> grad: print(<span style="box-sizing:border-box;color:rgb(221, 17, 68);">'y2 grad: '</span>, grad))
+loss.retain_grad()
+
+<span style="box-sizing:border-box;color:rgb(153, 153, 136);font-style:italic;">#反向传播</span>
+loss.backward()
+print(<span style="box-sizing:border-box;color:rgb(221, 17, 68);">"loss.grad:"</span>, loss.grad)
+print(<span style="box-sizing:border-box;color:rgb(221, 17, 68);">"x.grad:"</span>, x.grad)
+</code></pre>
+<pre style="border-radius:4px;background-color: #fbfaf8;border: 1px solid rgba(0,0,0,.14902);color: #333;font-size: 12px;padding: 8px;font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif;box-sizing: border-box;"><code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span style="box-sizing:border-box;color:rgb(51, 51, 51);font-weight:bold;">y2</span> <span style="box-sizing:border-box;color:rgb(51, 51, 51);font-weight:bold;">grad</span>:  <span style="box-sizing:border-box;color:rgb(51, 51, 51);font-weight:bold;">tensor</span>(4.)
+<span style="box-sizing:border-box;color:rgb(51, 51, 51);font-weight:bold;">y1</span> <span style="box-sizing:border-box;color:rgb(51, 51, 51);font-weight:bold;">grad</span>:  <span style="box-sizing:border-box;color:rgb(51, 51, 51);font-weight:bold;">tensor</span>(<span style="box-sizing:border-box;color:rgb(51, 51, 51);font-weight:bold;">-4</span>.)
+<span style="box-sizing:border-box;color:rgb(51, 51, 51);font-weight:bold;">loss</span><span style="box-sizing:border-box;">.grad</span>: <span style="box-sizing:border-box;color:rgb(51, 51, 51);font-weight:bold;">tensor</span>(1.)
+<span style="box-sizing:border-box;color:rgb(51, 51, 51);font-weight:bold;">x</span><span style="box-sizing:border-box;">.grad</span>: <span style="box-sizing:border-box;color:rgb(51, 51, 51);font-weight:bold;">tensor</span>(4.)
+</code></pre>
+<pre style="border-radius:4px;background-color: #fbfaf8;border: 1px solid rgba(0,0,0,.14902);color: #333;font-size: 12px;padding: 8px;font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif;box-sizing: border-box;"><code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif">
+</code></pre>
+<h3 style="box-sizing:border-box;margin-top:0px;font-weight:700;font-family:&quot;Roboto Slab&quot;, ff-tisa-web-pro, Georgia, Arial, sans-serif;font-size:125%;">五，计算图在TensorBoard中的可视化</h3>
+<p style="box-sizing:border-box;line-height:24px;margin:0px 0px 24px;font-size:16px;">可以利用 torch.utils.tensorboard 将计算图导出到 TensorBoard进行可视化。</p>
+<pre style="border-radius:4px;background-color: #fbfaf8;border: 1px solid rgba(0,0,0,.14902);color: #333;font-size: 12px;padding: 8px;font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif;box-sizing: border-box;"><code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span style="box-sizing:border-box;color:rgb(51, 51, 51);font-weight:bold;">from</span> torch <span style="box-sizing:border-box;color:rgb(51, 51, 51);font-weight:bold;">import</span> nn 
+<span style="box-sizing:border-box;"><span style="box-sizing:border-box;color:rgb(51, 51, 51);font-weight:bold;">class</span> <span style="box-sizing:border-box;color:rgb(68, 85, 136);font-weight:bold;">Net</span><span style="box-sizing:border-box;">(nn.Module)</span>:</span>
+    <span style="box-sizing:border-box;"><span style="box-sizing:border-box;color:rgb(51, 51, 51);font-weight:bold;">def</span> <span style="box-sizing:border-box;color:rgb(153, 0, 0);font-weight:bold;">__init__</span><span style="box-sizing:border-box;">(self)</span>:</span>
+        super(Net, self).__init__()
+        self.w = nn.Parameter(torch.randn(<span style="box-sizing:border-box;color:rgb(0, 128, 128);">2</span>,<span style="box-sizing:border-box;color:rgb(0, 128, 128);">1</span>))
+        self.b = nn.Parameter(torch.zeros(<span style="box-sizing:border-box;color:rgb(0, 128, 128);">1</span>,<span style="box-sizing:border-box;color:rgb(0, 128, 128);">1</span>))
+
+    <span style="box-sizing:border-box;"><span style="box-sizing:border-box;color:rgb(51, 51, 51);font-weight:bold;">def</span> <span style="box-sizing:border-box;color:rgb(153, 0, 0);font-weight:bold;">forward</span><span style="box-sizing:border-box;">(self, x)</span>:</span>
+        y = x@self.w + self.b
+        <span style="box-sizing:border-box;color:rgb(51, 51, 51);font-weight:bold;">return</span> y
+
+net = Net()
+
+</code></pre>
+<pre style="border-radius:4px;background-color: #fbfaf8;border: 1px solid rgba(0,0,0,.14902);color: #333;font-size: 12px;padding: 8px;font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif;box-sizing: border-box;"><code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span style="box-sizing:border-box;color:rgb(51, 51, 51);font-weight:bold;">from</span> torch.utils.tensorboard <span style="box-sizing:border-box;color:rgb(51, 51, 51);font-weight:bold;">import</span> SummaryWriter
+writer = SummaryWriter(<span style="box-sizing:border-box;color:rgb(221, 17, 68);">'./data/tensorboard'</span>)
+writer.add_graph(net,input_to_model = torch.rand(<span style="box-sizing:border-box;color:rgb(0, 128, 128);">10</span>,<span style="box-sizing:border-box;color:rgb(0, 128, 128);">2</span>))
+writer.close()
+
+</code></pre>
+<pre style="border-radius:4px;background-color: #fbfaf8;border: 1px solid rgba(0,0,0,.14902);color: #333;font-size: 12px;padding: 8px;font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif;box-sizing: border-box;"><code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif">%load_ext tensorboard
+<span style="box-sizing:border-box;color:rgb(153, 153, 136);font-style:italic;">#%tensorboard --logdir ./data/tensorboard</span>
+
+</code></pre>
+<pre style="border-radius:4px;background-color: #fbfaf8;border: 1px solid rgba(0,0,0,.14902);color: #333;font-size: 12px;padding: 8px;font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif;box-sizing: border-box;"><code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span style="box-sizing:border-box;color:rgb(51, 51, 51);font-weight:bold;">from</span> tensorboard <span style="box-sizing:border-box;color:rgb(51, 51, 51);font-weight:bold;">import</span> notebook
+notebook.list() 
+
+</code></pre>
+<pre style="border-radius:4px;background-color: #fbfaf8;border: 1px solid rgba(0,0,0,.14902);color: #333;font-size: 12px;padding: 8px;font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif;box-sizing: border-box;"><code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span style="box-sizing:border-box;color:rgb(153, 153, 136);font-style:italic;">#在tensorboard中查看模型</span>
+notebook.start(<span style="box-sizing:border-box;color:rgb(221, 17, 68);">"--logdir ./data/tensorboard"</span>)
+</code></pre>
+<p style="box-sizing:border-box;line-height:24px;margin:0px 0px 24px;font-size:16px;"><div class="media-placeholder">[图片/附件]</div></en-media></p>
+<pre style="border-radius:4px;background-color: #fbfaf8;border: 1px solid rgba(0,0,0,.14902);color: #333;font-size: 12px;padding: 8px;font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif;box-sizing: border-box;"><code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif">
+</code></pre>
+              
+            </div></div></div></div></div></div></div></div></div>
+</div>
+</div>
+<a class="back-link" href="../articles.html">← 返回笔记列表</a>
+</body>
+</html>

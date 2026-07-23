@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="zh-CN" data-theme="light">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>20190713（闭包习题、复习函数、逗号操作符） — 技术笔记</title>
+<style>
+:root { --bg:#fff; --text:#1a1a1a; --muted:#666; --border:#e0e0e0; --code-bg:#f5f5f5; --link:#0066cc; }
+@media (prefers-color-scheme: dark) { :root { --bg:#1a1a1a; --text:#e0e0e0; --muted:#999; --border:#333; --code-bg:#2a2a2a; --link:#66bbff; } }
+* { box-sizing:border-box; margin:0; padding:0; }
+body { font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Arial,sans-serif; line-height:1.7; color:var(--text); background:var(--bg); max-width:860px; margin:0 auto; padding:2rem 1.5rem; }
+.note-header { border-bottom:2px solid var(--border); padding-bottom:1rem; margin-bottom:2rem; }
+.note-title { font-size:1.6rem; font-weight:700; margin-bottom:0.3rem; }
+.note-meta { color:var(--muted); font-size:0.85rem; }
+.note-content { font-size:0.95rem; }
+.note-content h1 { font-size:1.4rem; margin:1.2rem 0 0.6rem; }
+.note-content h2 { font-size:1.2rem; margin:1rem 0 0.5rem; }
+.note-content h3 { font-size:1.05rem; margin:0.8rem 0 0.4rem; }
+.note-content p { margin:0.5rem 0; }
+.note-content ul,.note-content ol { margin:0.5rem 0 0.5rem 2rem; }
+.note-content li { margin:0.2rem 0; }
+.note-content pre { background:var(--code-bg); padding:1rem; border-radius:6px; overflow-x:auto; margin:0.8rem 0; font-size:0.85rem; }
+.note-content code { background:var(--code-bg); padding:0.1rem 0.3rem; border-radius:3px; font-size:0.88em; }
+.note-content pre code { background:none; padding:0; }
+.note-content blockquote { border-left:3px solid var(--border); padding-left:1rem; color:var(--muted); margin:0.8rem 0; }
+.note-content a { color:var(--link); }
+.note-content img { max-width:100%; height:auto; border-radius:6px; margin:0.5rem 0; }
+.note-content table { border-collapse:collapse; width:100%; margin:0.8rem 0; }
+.note-content th,.note-content td { border:1px solid var(--border); padding:0.5rem; }
+.note-content th { background:var(--code-bg); }
+.media-placeholder { background:var(--code-bg); padding:1rem; text-align:center; color:var(--muted); border-radius:6px; margin:0.5rem 0; font-size:0.85rem; }
+.encrypt-placeholder { background:#fff3cd; padding:0.5rem; text-align:center; color:#856404; border-radius:6px; margin:0.5rem 0; font-size:0.85rem; }
+.back-link { display:inline-block; margin-top:2rem; color:var(--link); text-decoration:none; font-size:0.85rem; }
+</style>
+</head>
+<body>
+<div class="note-header"><div class="note-title">20190713（闭包习题、复习函数、逗号操作符）</div><div class="note-meta">笔记本：前端学习</div></div>
+<div class="note-content"><div>1.闭包习题:</div><div>    </div><div>        function test(){</div><div>            arr = [];</div><div>            for(var i=0; i&lt;10; i++){</div><div>                arr[i] = function(){console.log(i)}</div><div>            }            </div><div>            return arr;</div><div>        }</div><div><br /></div><div>        myArr = test();</div><div>        for(i=0; i&lt; myArr.length; i++){</div><div>            myArr[i]();</div><div>        }</div><div><br /></div><div>        结果会输出什么？</div><div><br /></div><div>        答案是: 10 10 10 10 10 10 10 10 10 10(10个10)</div><div>        由于数组中每个函数将内部的作用域保存了出来，事实上10个函数共用了一个test的作用域，并且共用了其中了i变量，所以10个函数中输出的都是同一个值，此外由于循环结束时，i最后还会++一次，所以i等于10.</div><div><br /></div><div>        如果我们希望这个test返回的数组按照我们预期的 0 1 ..9来输出呢？</div><div>        两种方法：</div><div>            采用立即执行函数:</div><div>            function test(){</div><div>                arr=[];</div><div>                for(i=0; i&lt;10; i++){</div><div>                    (function(j){</div><div>                        arr[j] = function(){console.log(j)}</div><div>                        return arr;</div><div>                    }(i))</div><div>                }</div><div>                return arr;</div><div>            }</div><div><br /></div><div><br /></div><div>            myArr = test();</div><div>            for(i=0; i&lt; myArr.length; i++){</div><div>                myArr[i]();</div><div>            }</div><div>            立即执行函数同普通的函数一样，运行的时候也会创建一个单独的作用域，并且它会真正的立即执行，这个时候会将循环的i值真正的赋值给j,也就是说每次循环里面的j的值是不同的，进而实现定义arr[j]函数的时候，函数体中的值也是不同的了。</div><div>            知识点在于： 首先，在test的循环中定义的函数，并不会在test函数定义完之后就立马定义，而是需要等到test函数执行的时候，其里面的内部函数才会执行函数定义，再其次，内部函数在定义的时候，其使用的i是一个公用的变量i,所以导致数组中定义的10个函数中的i，实际上都是来自于同一个test函数的AO对象中的公用变量/属性，所以最终输出的值自然也是一致的。而如果使用立即执行函数的话，当执行循环体的时候，每次都会新建一个新的执行期上下文，将作为实参赋值为其中的形参j，这个就相当于在内部的立即执行函数的AO中增加了一个属性，该属性的值为当时具体的i值，所以能够正确到我们预期的i，当然也正因为这是个“立即执行函数”所以才有这样的效果,因为它在执行函数内代码的同时，又有函数会创建自己独立AO对象的特性。如果把立即执行函数换成普通的函数定义就不行了，因为那样定义的函数，它内部的代码根本就不会执行。</div><div>            第二题:</div><div>                页面:</div><div>                    &lt;ul&gt;</div><div>                        &lt;li&gt;a&lt;/li&gt;</div><div>                        &lt;li&gt;a&lt;/li&gt;</div><div>                        &lt;li&gt;a&lt;/li&gt;</div><div>                        &lt;li&gt;a&lt;/li&gt;</div><div>                    &lt;/ul&gt;</div><div><br /></div><div>                // 要求通过addEventListener给每个li绑定一个click事件，需要做到单击每个li的时候输出它的顺序</div><div><br /></div><div>                var listCollection = document.getElementsByTagName("li");</div><div>                for(var i=0; i&lt;listCollection.length; i++){</div><div>                    (function(j){</div><div>                        listCollection[i].addEventListener('click', function(){</div><div>                            console.log(j);</div><div>                        });</div><div>                    })(i);</div><div>                }</div><div><br /></div><div>            还有一种方法，就是在循环体内部再添加一个变量，这样也能在内部将当下i的值抽离出来：</div><div>            function test(){</div><div>                arr=[];</div><div>                for(i=0; i&lt;10; i++){</div><div>                    arr[i] = function(){</div><div>                        var k = i</div><div>                        console.log(k)</div><div>                    }</div><div>                }</div><div>                return arr;</div><div>            }</div><div><br /></div><div><br /></div><div>            myArr = test();</div><div>            for(i=0; i&lt; myArr.length; i++){</div><div>                myArr[i]();</div><div>            }</div><div><br /></div><div>2.复习函数以及立即执行函数：</div><div>    函数有2种定义方式，函数声明和函数表达式</div><div><br /></div><div>    立即执行函数：只执行一次的函数，定义完之后立即执行</div><div>    (function(){函数体}())</div><div>    后面的()是执行运算符，它可以直接执行表达式，,即直接执行函数定义并且调用函数计算它的值，执行完之后就销毁函数</div><div>    立即函数也可以这样定义  var a = function(){}();但是函数执行完之后a将不会继续存储函数的引用，因为函数已经销毁</div><div><br /></div><div>3.逗号操作符,返回最后一个逗号后的表达式的值</div><div>    a = (1,2,3,4,5)</div><div>    a==5</div></div>
+<a class="back-link" href="../articles.html">← 返回笔记列表</a>
+</body></html>

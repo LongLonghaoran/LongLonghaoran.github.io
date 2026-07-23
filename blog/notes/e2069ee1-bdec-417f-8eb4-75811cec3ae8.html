@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="zh-CN" data-theme="light">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>导出系统内所有被标记为Technical fans的客户 — 技术笔记</title>
+<style>
+:root {
+  --bg: #ffffff;
+  --text: #1a1a1a;
+  --muted: #666;
+  --border: #e0e0e0;
+  --code-bg: #f5f5f5;
+  --link: #0066cc;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #1a1a1a;
+    --text: #e0e0e0;
+    --muted: #999;
+    --border: #333;
+    --code-bg: #2a2a2a;
+    --link: #66bbff;
+  }
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  line-height: 1.7;
+  color: var(--text);
+  background: var(--bg);
+  max-width: 860px;
+  margin: 0 auto;
+  padding: 2rem 1.5rem;
+}
+.note-header {
+  border-bottom: 2px solid var(--border);
+  padding-bottom: 1rem;
+  margin-bottom: 2rem;
+}
+.note-title {
+  font-size: 1.6rem;
+  font-weight: 700;
+  margin-bottom: 0.3rem;
+}
+.note-meta {
+  color: var(--muted);
+  font-size: 0.85rem;
+}
+.note-content {
+  font-size: 0.95rem;
+}
+.note-content h1 { font-size: 1.4rem; margin: 1.2rem 0 0.6rem; }
+.note-content h2 { font-size: 1.2rem; margin: 1rem 0 0.5rem; }
+.note-content h3 { font-size: 1.05rem; margin: 0.8rem 0 0.4rem; }
+.note-content p { margin: 0.5rem 0; }
+.note-content ul, .note-content ol { margin: 0.5rem 0 0.5rem 2rem; }
+.note-content li { margin: 0.2rem 0; }
+.note-content pre {
+  background: var(--code-bg);
+  padding: 1rem;
+  border-radius: 6px;
+  overflow-x: auto;
+  margin: 0.8rem 0;
+  font-size: 0.85rem;
+}
+.note-content code {
+  background: var(--code-bg);
+  padding: 0.1rem 0.3rem;
+  border-radius: 3px;
+  font-size: 0.88em;
+}
+.note-content pre code {
+  background: none;
+  padding: 0;
+}
+.note-content blockquote {
+  border-left: 3px solid var(--border);
+  padding-left: 1rem;
+  color: var(--muted);
+  margin: 0.8rem 0;
+}
+.note-content a { color: var(--link); }
+.note-content img {
+  max-width: 100%;
+  height: auto;
+  border-radius: 6px;
+  margin: 0.5rem 0;
+}
+.note-content table {
+  border-collapse: collapse;
+  width: 100%;
+  margin: 0.8rem 0;
+}
+.note-content th, .note-content td {
+  border: 1px solid var(--border);
+  padding: 0.5rem;
+}
+.note-content th { background: var(--code-bg); }
+.media-placeholder {
+  background: var(--code-bg);
+  padding: 1rem;
+  text-align: center;
+  color: var(--muted);
+  border-radius: 6px;
+  margin: 0.5rem 0;
+  font-size: 0.85rem;
+}
+.encrypt-placeholder {
+  background: #fff3cd;
+  padding: 0.5rem;
+  text-align: center;
+  color: #856404;
+  border-radius: 6px;
+  margin: 0.5rem 0;
+  font-size: 0.85rem;
+}
+.back-link {
+  display: inline-block;
+  margin-top: 2rem;
+  color: var(--link);
+  text-decoration: none;
+  font-size: 0.85rem;
+}
+</style>
+</head>
+<body>
+<div class="note-header">
+  <div class="note-title">导出系统内所有被标记为Technical fans的客户</div>
+  <div class="note-meta">笔记本：Anker</div>
+</div>
+<div class="note-content">
+<div style="font-size: 14px; margin: 0; padding: 0; width: 100%;"><pre style="line-height: 160%; box-sizing: content-box; border: 0; border-radius: 0; margin: 2px 0 8px; background-color: #f5f7f8;"><code style="display: block; overflow-x: auto; background: #1e1e1e; line-height: 160%; box-sizing: content-box; border: 0; border-radius: 0; letter-spacing: -.3px; padding: 18px; color: #f4f4f4; white-space: pre-wrap;">
+<span style="color: #57a64a; font-style: italic; line-height: 160%; box-sizing: content-box;"># 导出系统内所有被标记为Technical fans的客户</span>
+<span style="color: #57a64a; font-style: italic; line-height: 160%; box-sizing: content-box;"># 导出字段（保留列名）：Customer email,Customer name,Ticket#,Market,Dept,BU,Brand,Skus,Comment</span>
+
+CSV.open(Rails.root.join(<span style="color: #d69d85; line-height: 160%; box-sizing: content-box;">"techinical_fans.csv"</span>), <span style="color: #d69d85; line-height: 160%; box-sizing: content-box;">"wb"</span>) <span style="color: #569cd6; line-height: 160%; box-sizing: content-box;">do</span> <span style="color: #dcdcdc; line-height: 160%; box-sizing: content-box;">|csv|</span>
+  csv &lt;&lt; <span style="color: #d69d85; line-height: 160%; box-sizing: content-box;">%w(email name ticket_number marketplace department bu brand skus comment)</span>
+  Ticket.joins(<span style="color: #569cd6; line-height: 160%; box-sizing: content-box;">:customer_profile</span>, <span style="color: #569cd6; line-height: 160%; box-sizing: content-box;">:user</span>).includes(<span style="color: #569cd6; line-height: 160%; box-sizing: content-box;">:customer_profile</span>, <span style="color: #569cd6; line-height: 160%; box-sizing: content-box;">:user</span>, <span style="color: #569cd6; line-height: 160%; box-sizing: content-box;">:brand</span>).
+    where(<span style="color: #569cd6; line-height: 160%; box-sizing: content-box;">customer_profiles:</span> {<span style="color: #569cd6; line-height: 160%; box-sizing: content-box;">technical_fans:</span> <span style="color: #569cd6; line-height: 160%; box-sizing: content-box;">true</span>}).
+    each <span style="color: #569cd6; line-height: 160%; box-sizing: content-box;">do</span> <span style="color: #dcdcdc; line-height: 160%; box-sizing: content-box;">|ticket|</span>
+    puts <span style="color: #d69d85; line-height: 160%; box-sizing: content-box;">"ticket:<span style="color: #dcdcdc; line-height: 160%; box-sizing: content-box;">#{ticket.ticket_number}</span>"</span>
+    csv &lt;&lt; [
+      ticket.customer_profile.email,
+      ticket.user.name,
+      ticket.ticket_number,
+      ticket.marketplace,
+      ticket.department.name,
+      ticket.business_unit.name,
+      ticket.brand.name,
+      ticket.customer_profile.skus,
+      ticket.customer_profile.comment
+    ]
+  <span style="color: #569cd6; line-height: 160%; box-sizing: content-box;">end</span>
+<span style="color: #569cd6; line-height: 160%; box-sizing: content-box;">end</span>
+</code></pre>
+</div><center style='display:none !important;visibility:collapse !important;height:0 !important;white-space:nowrap;width:100%;overflow:hidden'>%60%60%60ruby%0A%0A%23%20%E5%AF%BC%E5%87%BA%E7%B3%BB%E7%BB%9F%E5%86%85%E6%89%80%E6%9C%89%E8%A2%AB%E6%A0%87%E8%AE%B0%E4%B8%BATechnical%20fans%E7%9A%84%E5%AE%A2%E6%88%B7%0A%23%20%E5%AF%BC%E5%87%BA%E5%AD%97%E6%AE%B5%EF%BC%88%E4%BF%9D%E7%95%99%E5%88%97%E5%90%8D%EF%BC%89%EF%BC%9ACustomer%20email%2CCustomer%20name%2CTicket%23%2CMarket%2CDept%2CBU%2CBrand%2CSkus%2CComment%0A%0ACSV.open(Rails.root.join(%22techinical_fans.csv%22)%2C%20%22wb%22)%20do%20%7Ccsv%7C%0A%20%20csv%20%3C%3C%20%25w(email%20name%20ticket_number%20marketplace%20department%20bu%20brand%20skus%20comment)%0A%20%20Ticket.joins(%3Acustomer_profile%2C%20%3Auser).includes(%3Acustomer_profile%2C%20%3Auser%2C%20%3Abrand).%0A%20%20%20%20where(customer_profiles%3A%20%7Btechnical_fans%3A%20true%7D).%0A%20%20%20%20each%20do%20%7Cticket%7C%0A%20%20%20%20puts%20%22ticket%3A%23%7Bticket.ticket_number%7D%22%0A%20%20%20%20csv%20%3C%3C%20%5B%0A%20%20%20%20%20%20ticket.customer_profile.email%2C%0A%20%20%20%20%20%20ticket.user.name%2C%0A%20%20%20%20%20%20ticket.ticket_number%2C%0A%20%20%20%20%20%20ticket.marketplace%2C%0A%20%20%20%20%20%20ticket.department.name%2C%0A%20%20%20%20%20%20ticket.business_unit.name%2C%0A%20%20%20%20%20%20ticket.brand.name%2C%0A%20%20%20%20%20%20ticket.customer_profile.skus%2C%0A%20%20%20%20%20%20ticket.customer_profile.comment%0A%20%20%20%20%5D%0A%20%20end%0Aend%0A%60%60%60</center>
+</div>
+<a class="back-link" href="../articles.html">← 返回笔记列表</a>
+</body>
+</html>

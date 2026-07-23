@@ -1,0 +1,590 @@
+<!DOCTYPE html>
+<html lang="zh-CN" data-theme="light">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>一文讲透HTTP缓存之ETag - 掘金 — 技术笔记</title>
+<style>
+:root {
+  --bg: #ffffff;
+  --text: #1a1a1a;
+  --muted: #666;
+  --border: #e0e0e0;
+  --code-bg: #f5f5f5;
+  --link: #0066cc;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #1a1a1a;
+    --text: #e0e0e0;
+    --muted: #999;
+    --border: #333;
+    --code-bg: #2a2a2a;
+    --link: #66bbff;
+  }
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  line-height: 1.7;
+  color: var(--text);
+  background: var(--bg);
+  max-width: 860px;
+  margin: 0 auto;
+  padding: 2rem 1.5rem;
+}
+.note-header {
+  border-bottom: 2px solid var(--border);
+  padding-bottom: 1rem;
+  margin-bottom: 2rem;
+}
+.note-title {
+  font-size: 1.6rem;
+  font-weight: 700;
+  margin-bottom: 0.3rem;
+}
+.note-meta {
+  color: var(--muted);
+  font-size: 0.85rem;
+}
+.note-content {
+  font-size: 0.95rem;
+}
+.note-content h1 { font-size: 1.4rem; margin: 1.2rem 0 0.6rem; }
+.note-content h2 { font-size: 1.2rem; margin: 1rem 0 0.5rem; }
+.note-content h3 { font-size: 1.05rem; margin: 0.8rem 0 0.4rem; }
+.note-content p { margin: 0.5rem 0; }
+.note-content ul, .note-content ol { margin: 0.5rem 0 0.5rem 2rem; }
+.note-content li { margin: 0.2rem 0; }
+.note-content pre {
+  background: var(--code-bg);
+  padding: 1rem;
+  border-radius: 6px;
+  overflow-x: auto;
+  margin: 0.8rem 0;
+  font-size: 0.85rem;
+}
+.note-content code {
+  background: var(--code-bg);
+  padding: 0.1rem 0.3rem;
+  border-radius: 3px;
+  font-size: 0.88em;
+}
+.note-content pre code {
+  background: none;
+  padding: 0;
+}
+.note-content blockquote {
+  border-left: 3px solid var(--border);
+  padding-left: 1rem;
+  color: var(--muted);
+  margin: 0.8rem 0;
+}
+.note-content a { color: var(--link); }
+.note-content img {
+  max-width: 100%;
+  height: auto;
+  border-radius: 6px;
+  margin: 0.5rem 0;
+}
+.note-content table {
+  border-collapse: collapse;
+  width: 100%;
+  margin: 0.8rem 0;
+}
+.note-content th, .note-content td {
+  border: 1px solid var(--border);
+  padding: 0.5rem;
+}
+.note-content th { background: var(--code-bg); }
+.media-placeholder {
+  background: var(--code-bg);
+  padding: 1rem;
+  text-align: center;
+  color: var(--muted);
+  border-radius: 6px;
+  margin: 0.5rem 0;
+  font-size: 0.85rem;
+}
+.encrypt-placeholder {
+  background: #fff3cd;
+  padding: 0.5rem;
+  text-align: center;
+  color: #856404;
+  border-radius: 6px;
+  margin: 0.5rem 0;
+  font-size: 0.85rem;
+}
+.back-link {
+  display: inline-block;
+  margin-top: 2rem;
+  color: var(--link);
+  text-decoration: none;
+  font-size: 0.85rem;
+}
+</style>
+</head>
+<body>
+<div class="note-header">
+  <div class="note-title">一文讲透HTTP缓存之ETag - 掘金</div>
+  <div class="note-meta">笔记本：HTTP</div>
+</div>
+<div class="note-content">
+<div style="--en-clipped-content:article; --en-clipped-source-url:https://juejin.cn/post/7078272638203723789; --en-clipped-source-title:一文讲透HTTP缓存之ETag - 掘金;">
+<div><br/></div><div style="min-height: 13538px; font-size: 16px; display: block; min-width: 100%; position: relative;"> <div style="text-size-adjust:100%;font-size:12px;word-break:break-word;text-rendering:optimizelegibility;color:rgb(51, 51, 51);background-color:rgb(244, 245, 245);-webkit-font-smoothing:unset;font-family:-apple-system, system-ui, &quot;Segoe UI&quot;, Roboto, Ubuntu, Cantarell, &quot;Noto Sans&quot;, sans-serif, BlinkMacSystemFont, &quot;Helvetica Neue&quot;, &quot;PingFang SC&quot;, &quot;Hiragino Sans GB&quot;, &quot;Microsoft YaHei&quot;, Arial;"><div style="font-size:12px;line-height:normal;word-break:break-word;-webkit-font-smoothing:unset;font-family:-apple-system, system-ui, &quot;Segoe UI&quot;, Roboto, Ubuntu, Cantarell, &quot;Noto Sans&quot;, sans-serif, BlinkMacSystemFont, &quot;Helvetica Neue&quot;, &quot;PingFang SC&quot;, &quot;Hiragino Sans GB&quot;, &quot;Microsoft YaHei&quot;, Arial;"><div><div><div style="overflow-x:initial;"><div><span><div><div style="box-sizing:border-box;"><div style="background-color:rgb(255, 255, 255);box-sizing:border-box;border-radius:4px 4px 0px 0px;">     <div> </div> <div> <div>  </div></div> <h1 style="font-weight:600;line-height:1.31;color:rgb(37, 41, 51);font-size:32.004px;margin:0px 0px 1.667rem;">
+            一文讲透HTTP缓存之ETag
+            </h1> <div style="display:flex;align-items:center;margin-bottom:20.004px;"><a href="https://juejin.cn/user/4195392102597309" target="_blank" rel="" style="background-color:transparent;margin:initial;text-decoration:none;cursor:pointer;color:rgb(144, 144, 144);font-size:0px;"><div class="media-placeholder">[图片/附件]</div></en-media></a> <div style="min-width:0px;flex:1 1 0%;min-height:43px;"><div style="height:24px;display:flex;"><a href="https://juejin.cn/user/4195392102597309" target="_blank" rel="" style="background-color:transparent;margin:initial;text-decoration:none;cursor:pointer;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;display:flex;align-items:center;line-height:24px;font-size:15.996px;font-weight:500;color:rgb(81, 87, 103);"><span style="display:inline-block;vertical-align:top;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:128px;">
+    杜甫很忙
+  </span> <span style="display:inline-flex;align-items:center;margin-left:3.96px;vertical-align:middle;"><div class="media-placeholder">[图片/附件]</div></en-media></span>   </a> </div> <div style="font-size:14.004px;color:rgb(138, 145, 159);margin-top:2px;line-height:22px;"><span title="Wed Mar 23 2022 20:33:11 GMT+0800 (China Standard Time)" style="letter-spacing:1px;">
+                    2022年03月23日 20:33
+                  </span> <span>
+                    ·  阅读 1452
+                  </span> </div> </div> </div>    <div><div style="word-break:break-word;line-height:1.75;font-weight:400;font-size:16px;color:rgb(37, 41, 51);overflow-x:hidden;"><blockquote style="color:rgb(102, 102, 102);padding:1px 23px;margin:22px 0px;border-left:4px solid rgb(203, 203, 203);background-color:rgb(248, 248, 248);">
+<p style="line-height:inherit;margin:10px 0px;">无论是前端、后端或者运维同学，在平时的开发工作中，都会和HTTP缓存打交道，大家或多或少都了解HTTP缓存中的ETag字段，<a href="https://link.juejin.cn/?target=https%3A%2F%2Fdeveloper.mozilla.org%2Fzh-CN%2Fdocs%2FWeb%2FHTTP%2FHeaders%2FETag" target="_blank" rel="nofollow noopener noreferrer" title="https://developer.mozilla.org/zh-CN/docs/Web/HTTP/Headers/ETag" style="background-color:transparent;margin:initial;cursor:pointer;border-bottom:1px solid rgb(209, 233, 255);text-decoration:none;color:rgb(2, 105, 200);">它是资源的特定版本的标识符，可以让缓存更高效，并节省带宽</a>。本文系统性的阐述了ETag的起源、生成原理及使用。看完本文后，对于不了解ETag的同学能够知道ETag的来龙去脉，并能马上上手使用；对于熟悉ETag的同学也能做到温故而知新。</p>
+</blockquote>
+<h3 style="margin-top:35px;margin-bottom:10px;padding-bottom:5px;font-size:20px;line-height:28px;">ETag定义及起源</h3>
+<p style="line-height:inherit;margin-top:22px;margin-bottom:22px;">ETag（Entity-Tag，下文简称：ETag）是<a href="https://link.juejin.cn/?target=https%3A%2F%2Fen.jinzhao.wiki%2Fwiki%2FWorld_Wide_Web" target="_blank" rel="nofollow noopener noreferrer" title="https://en.jinzhao.wiki/wiki/World_Wide_Web" style="background-color:transparent;margin:initial;cursor:pointer;border-bottom:1px solid rgb(209, 233, 255);text-decoration:none;color:rgb(2, 105, 200);">万维网</a>协议<a href="https://link.juejin.cn/?target=https%3A%2F%2Fen.jinzhao.wiki%2Fwiki%2FHypertext_Transfer_Protocol" target="_blank" rel="nofollow noopener noreferrer" title="https://en.jinzhao.wiki/wiki/Hypertext_Transfer_Protocol" style="background-color:transparent;margin:initial;cursor:pointer;border-bottom:1px solid rgb(209, 233, 255);text-decoration:none;color:rgb(2, 105, 200);">HTTP</a>的一部分，它是 HTTP 为<a href="https://link.juejin.cn/?target=https%3A%2F%2Fen.jinzhao.wiki%2Fwiki%2FWeb_cache" target="_blank" rel="nofollow noopener noreferrer" title="https://en.jinzhao.wiki/wiki/Web_cache" style="background-color:transparent;margin:initial;cursor:pointer;border-bottom:1px solid rgb(209, 233, 255);text-decoration:none;color:rgb(2, 105, 200);">Web 缓存</a>验证提供的多种机制之一，它允许客户端发出条件请求。这种机制允许缓存更有效并节省带宽，因为如果内容没有更改，Web 服务器不再需要发送完整的响应。</p>
+<p style="line-height:inherit;margin-top:22px;margin-bottom:22px;"><a href="https://link.juejin.cn/?target=https%3A%2F%2Fen.jinzhao.wiki%2Fwiki%2FUniform_Resource_Locator" target="_blank" rel="nofollow noopener noreferrer" title="https://en.jinzhao.wiki/wiki/Uniform_Resource_Locator" style="background-color:transparent;margin:initial;cursor:pointer;border-bottom:1px solid rgb(209, 233, 255);text-decoration:none;color:rgb(2, 105, 200);">ETag 是由 Web 服务器分配给在URL</a>中找到的特定版本资源的不透明标识符。如果该 URL 的资源表示发生了变化，则会重新分配一个新的 ETag。ETag 类似于<a href="https://link.juejin.cn/?target=https%3A%2F%2Fen.jinzhao.wiki%2Fwiki%2FFingerprint_(computing)" target="_blank" rel="nofollow noopener noreferrer" title="https://en.jinzhao.wiki/wiki/Fingerprint_(computing)" style="background-color:transparent;margin:initial;cursor:pointer;border-bottom:1px solid rgb(209, 233, 255);text-decoration:none;color:rgb(2, 105, 200);">指纹</a>，可以快速进行比较以确定资源的两种表示是否相同。</p>
+<p style="line-height:inherit;margin-top:22px;margin-bottom:22px;">ETag的正式提出是在 HTTP/1.1 协议的 <a href="https://link.juejin.cn/?target=https%3A%2F%2Fdatatracker.ietf.org%2Fdoc%2Fhtml%2Frfc7232%23section-2.3" target="_blank" rel="nofollow noopener noreferrer" title="https://datatracker.ietf.org/doc/html/rfc7232#section-2.3" style="background-color:transparent;margin:initial;cursor:pointer;border-bottom:1px solid rgb(209, 233, 255);text-decoration:none;color:rgb(2, 105, 200);">rfc7232</a> 文档中，引入 ETag 的目的主要是为了解决 <a href="https://link.juejin.cn/?target=https%3A%2F%2Fdatatracker.ietf.org%2Fdoc%2Fhtml%2Frfc7232%23section-2.2" target="_blank" rel="nofollow noopener noreferrer" title="https://datatracker.ietf.org/doc/html/rfc7232#section-2.2" style="background-color:transparent;margin:initial;cursor:pointer;border-bottom:1px solid rgb(209, 233, 255);text-decoration:none;color:rgb(2, 105, 200);">Last-Modified</a> 存在的一些问题：</p>
+<ol style="padding-left:28px;">
+<li style="margin-bottom:0px;list-style:inherit;padding-left:6px;">一些文件也许会周期性的更改，但是他的内容并不改变（仅仅改变的修改时间），这个时候我们并不希望客户端认为这个文件被修改了，而重新发起GET请求</li>
+<li style="margin-bottom:0px;list-style:inherit;padding-left:6px;">某些文件修改非常频繁，比如在秒以下的时间内进行修改，(比方说1s内修改了N次)，<code style="word-break:break-word;border-radius:2px;overflow-x:auto;background-color:rgb(255, 245, 245);color:rgb(255, 80, 44);padding:0.065em 0.4em;font-size:0.87em;font-family:Menlo, Monaco, Consolas, &quot;Courier New&quot;, monospace;">If-Modified-Since</code>能检查到的粒度是s级的，这种修改无法判断（或者说UNIX记录MTIME只能精确到秒）</li>
+<li style="margin-bottom:0px;list-style:inherit;padding-left:6px;">某些服务器不能精确的得到文件的最后修改时间</li>
+</ol>
+<p style="line-height:inherit;margin-top:22px;margin-bottom:22px;">HTTP/1.1协议虽然提出了 ETag，但并没有规定ETag的内容是什么或者说要怎么实现，唯一规定的是ETag的内容必须放在""内。</p>
+<h3 style="margin-top:35px;margin-bottom:10px;padding-bottom:5px;font-size:20px;line-height:28px;">强校验和弱校验</h3>
+<p style="line-height:inherit;margin-top:22px;margin-bottom:22px;">ETag的格式为：<code style="word-break:break-word;border-radius:2px;overflow-x:auto;background-color:rgb(255, 245, 245);color:rgb(255, 80, 44);padding:0.065em 0.4em;font-size:0.87em;font-family:Menlo, Monaco, Consolas, &quot;Courier New&quot;, monospace;">ETag= [ weak ] opaque-tag</code>，其中[ weak ]表示可选。ETag支持强校验和弱校验，它们的区别在于 ETag 标识符中是否存在一个初始的“W/”（即有无 [ weak ]），格式如下所示：</p>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<table style="font-weight:inherit;font-style:inherit;font-variant:inherit;font-size:12px;width:auto;max-width:100%;overflow:auto;border:1px solid rgb(246, 246, 246);display:inline-block;"><thead style="background:rgb(246, 246, 246);color:rgb(0, 0, 0);text-align:left;"><tr><th style="padding:12px 7px;line-height:24px;">值</th><th style="padding:12px 7px;line-height:24px;">类型</th></tr></thead><tbody><tr><td style="padding:12px 7px;line-height:24px;min-width:120px;">ETag="123456789"</td><td style="padding:12px 7px;line-height:24px;min-width:120px;">强校验</td></tr><tr style="background-color:rgb(252, 252, 252);"><td style="padding:12px 7px;line-height:24px;min-width:120px;">ETag=W/"123456789"</td><td style="padding:12px 7px;line-height:24px;min-width:120px;">弱校验（W大小写敏感）</td></tr></tbody></table>
+<p style="line-height:inherit;margin-top:22px;margin-bottom:22px;">强校验 ETag 匹配表明两个资源表示的内容是逐字节相同的，并且所有其它实体字段（例如 Content-Language）也未更改。强 ETag 允许缓存和重组部分响应，就像<a href="https://link.juejin.cn/?target=https%3A%2F%2Fen.jinzhao.wiki%2Fwiki%2FByte_serving" target="_blank" rel="nofollow noopener noreferrer" title="https://en.jinzhao.wiki/wiki/Byte_serving" style="background-color:transparent;margin:initial;cursor:pointer;border-bottom:1px solid rgb(209, 233, 255);text-decoration:none;color:rgb(2, 105, 200);">字节范围请求</a>一样。</p>
+<p style="line-height:inherit;margin-top:22px;margin-bottom:22px;">弱校验 ETag 匹配仅表明这两种表示在<a href="https://link.juejin.cn/?target=https%3A%2F%2Fen.jinzhao.wiki%2Fwiki%2FSemantic_equivalence" target="_blank" rel="nofollow noopener noreferrer" title="https://en.jinzhao.wiki/wiki/Semantic_equivalence" style="background-color:transparent;margin:initial;cursor:pointer;border-bottom:1px solid rgb(209, 233, 255);text-decoration:none;color:rgb(2, 105, 200);">语义上是等效</a>的，这意味着出于实际目的它们是可互换的并且可以使用缓存的副本。但是，资源表示不一定逐字节相同，因此弱 ETag 不适用于字节范围请求。弱 ETag 可能适用于 Web 服务器无法生成强 ETag 的情况，例如<a href="https://link.juejin.cn/?target=https%3A%2F%2Fen.jinzhao.wiki%2Fwiki%2FDynamic_Web_page" target="_blank" rel="nofollow noopener noreferrer" title="https://en.jinzhao.wiki/wiki/Dynamic_Web_page" style="background-color:transparent;margin:initial;cursor:pointer;border-bottom:1px solid rgb(209, 233, 255);text-decoration:none;color:rgb(2, 105, 200);">动态生成的内容</a>。</p>
+<p style="line-height:inherit;margin-top:22px;margin-bottom:22px;">我们通过下面的例子来看看强、弱校验的匹配对比：</p>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<table style="font-weight:inherit;font-style:inherit;font-variant:inherit;font-size:12px;width:auto;max-width:100%;overflow:auto;border:1px solid rgb(246, 246, 246);display:inline-block;"><thead style="background:rgb(246, 246, 246);color:rgb(0, 0, 0);text-align:left;"><tr><th style="padding:12px 7px;line-height:24px;">ETag1</th><th style="padding:12px 7px;line-height:24px;">ETag2</th><th style="padding:12px 7px;line-height:24px;">强校验</th><th style="padding:12px 7px;line-height:24px;">弱校验</th></tr></thead><tbody><tr><td style="padding:12px 7px;line-height:24px;min-width:120px;">W/"1"</td><td style="padding:12px 7px;line-height:24px;min-width:120px;">W/"1"</td><td style="padding:12px 7px;line-height:24px;min-width:120px;">不匹配</td><td style="padding:12px 7px;line-height:24px;min-width:120px;">匹配</td></tr><tr style="background-color:rgb(252, 252, 252);"><td style="padding:12px 7px;line-height:24px;min-width:120px;">W/"1"</td><td style="padding:12px 7px;line-height:24px;min-width:120px;">W/"2"</td><td style="padding:12px 7px;line-height:24px;min-width:120px;">不匹配</td><td style="padding:12px 7px;line-height:24px;min-width:120px;">不匹配</td></tr><tr><td style="padding:12px 7px;line-height:24px;min-width:120px;">W/"1"</td><td style="padding:12px 7px;line-height:24px;min-width:120px;">"1"</td><td style="padding:12px 7px;line-height:24px;min-width:120px;">不匹配</td><td style="padding:12px 7px;line-height:24px;min-width:120px;">匹配</td></tr><tr style="background-color:rgb(252, 252, 252);"><td style="padding:12px 7px;line-height:24px;min-width:120px;">"1"</td><td style="padding:12px 7px;line-height:24px;min-width:120px;">"1"</td><td style="padding:12px 7px;line-height:24px;min-width:120px;">匹配</td><td style="padding:12px 7px;line-height:24px;min-width:120px;">匹配</td></tr></tbody></table>
+<h3 style="margin-top:35px;margin-bottom:10px;padding-bottom:5px;font-size:20px;line-height:28px;">ETag交互过程</h3>
+<p style="line-height:inherit;margin-top:22px;margin-bottom:22px;">ETag由服务器端生成，发送给客户端，客户端再次访问时通过传<code style="word-break:break-word;border-radius:2px;overflow-x:auto;background-color:rgb(255, 245, 245);color:rgb(255, 80, 44);padding:0.065em 0.4em;font-size:0.87em;font-family:Menlo, Monaco, Consolas, &quot;Courier New&quot;, monospace;">If-None-Match</code>字段，服务端判断请求中的<code style="word-break:break-word;border-radius:2px;overflow-x:auto;background-color:rgb(255, 245, 245);color:rgb(255, 80, 44);padding:0.065em 0.4em;font-size:0.87em;font-family:Menlo, Monaco, Consolas, &quot;Courier New&quot;, monospace;">If-None-Match</code>来验证资源是否修改。下面是协商缓存（ETag）的请求流程：
+<div class="media-placeholder">[图片/附件]</div></en-media></p>
+<ol style="padding-left:28px;">
+<li style="margin-bottom:0px;list-style:inherit;padding-left:6px;">客户端发起GET请求</li>
+<li style="margin-bottom:0px;list-style:inherit;padding-left:6px;">服务端接收、处理请求，返回Header值，里面包含ETag字段（如：ETag:"182ed89aac91e00e81c9b0c78de417f6"）</li>
+<li style="margin-bottom:0px;list-style:inherit;padding-left:6px;">此时客户端再次发送请求，该请求头中就会携带上 <code style="word-break:break-word;border-radius:2px;overflow-x:auto;background-color:rgb(255, 245, 245);color:rgb(255, 80, 44);padding:0.065em 0.4em;font-size:0.87em;font-family:Menlo, Monaco, Consolas, &quot;Courier New&quot;, monospace;">If-None-Match</code>字段，值是ETag返回的内容（如：If-None-Match: "182ed89aac91e00e81c9b0c78de417f6"）。服务器判断发送过来的<code style="word-break:break-word;border-radius:2px;overflow-x:auto;background-color:rgb(255, 245, 245);color:rgb(255, 80, 44);padding:0.065em 0.4em;font-size:0.87em;font-family:Menlo, Monaco, Consolas, &quot;Courier New&quot;, monospace;">If-None-Match</code>字段的值与服务端计算出来的ETag值是否匹配，如果匹配，则返回304状态码，此时服务端不返回任何实体数据，即body为空；否则返回200，同时会返回最新的资源和ETag值；</li>
+</ol>
+<p style="line-height:inherit;margin-top:22px;margin-bottom:22px;">例如当我们多次访问百度首页时，在控制面板中可以看到部分资源返回状态码是 304，其中Request Headers 和 Response Headers 出现了 <code style="word-break:break-word;border-radius:2px;overflow-x:auto;background-color:rgb(255, 245, 245);color:rgb(255, 80, 44);padding:0.065em 0.4em;font-size:0.87em;font-family:Menlo, Monaco, Consolas, &quot;Courier New&quot;, monospace;">ETag/If-None-Match</code> 字段，这说明该资源走的是协商缓存策略。</p>
+<p style="line-height:inherit;margin-top:22px;margin-bottom:22px;"><div class="media-placeholder">[图片/附件]</div></en-media></p>
+<p style="line-height:inherit;margin-top:22px;margin-bottom:22px;">以上就是协商缓存（ETag）的交互过程，接下来我们就来看看ETag的生成原理。</p>
+<h3 style="margin-top:35px;margin-bottom:10px;padding-bottom:5px;font-size:20px;line-height:28px;">ETag生成原理</h3>
+<p style="line-height:inherit;margin-top:22px;margin-bottom:22px;">虽然HTTP协议没有规定ETag的生成方法，但为了避免使用过期的缓存数据，用于生成 ETag 的方法应保证（尽可能）每个 ETag 是唯一的。生成的 ETag 常用方法包括使用资源内容<a href="https://link.juejin.cn/?target=https%3A%2F%2Fen.jinzhao.wiki%2Fwiki%2FCollision_resistance" target="_blank" rel="nofollow noopener noreferrer" title="https://en.jinzhao.wiki/wiki/Collision_resistance" style="background-color:transparent;margin:initial;cursor:pointer;border-bottom:1px solid rgb(209, 233, 255);text-decoration:none;color:rgb(2, 105, 200);">的抗冲突</a> <a href="https://link.juejin.cn/?target=https%3A%2F%2Fen.jinzhao.wiki%2Fwiki%2FHash_function" target="_blank" rel="nofollow noopener noreferrer" title="https://en.jinzhao.wiki/wiki/Hash_function" style="background-color:transparent;margin:initial;cursor:pointer;border-bottom:1px solid rgb(209, 233, 255);text-decoration:none;color:rgb(2, 105, 200);">散列函数</a>、最后修改时间戳的散列值或一个<a href="https://link.juejin.cn/?target=https%3A%2F%2Fen.jinzhao.wiki%2Fwiki%2FRevision_control" target="_blank" rel="nofollow noopener noreferrer" title="https://en.jinzhao.wiki/wiki/Revision_control" style="background-color:transparent;margin:initial;cursor:pointer;border-bottom:1px solid rgb(209, 233, 255);text-decoration:none;color:rgb(2, 105, 200);">修订号</a>。</p>
+<p style="line-height:inherit;margin-top:22px;margin-bottom:22px;">我们接下来介绍的是koa框架中ETag的生成原理，其它框架/服务器生成的方式可能不太一致，但我们只需要了解其实现思路即可。</p>
+<pre style="font-size:1em;font-family:Menlo, Monaco, Consolas, &quot;Courier New&quot;, monospace;overflow:auto;line-height:1.75;position:relative;color:rgb(51, 51, 51);background:rgb(248, 248, 248);"><code lang="javascript" style="border-radius:2px;font-family:Menlo, Monaco, Consolas, &quot;Courier New&quot;, monospace;margin:0px;display:block;font-size:12px;word-break:normal;overflow-x:auto;padding:15px 12px;color:rgb(51, 51, 51);background:rgb(248, 248, 248);"><span style="color:rgb(153, 153, 136);font-style:italic;">// https://github.com/koajs/ETag/blob/master/index.js</span>
+
+<span style="color:rgb(153, 153, 136);font-style:italic;">// 核心代码：生成ETag的函数（下面会具体分析）</span>
+
+<span style="color:rgb(51, 51, 51);font-weight:700;">const</span> calculate = <span style="color:rgb(0, 134, 179);">require</span>(<span style="color:rgb(221, 17, 68);">'ETag'</span>)
+
+<span style="color:rgb(153, 153, 136);font-style:italic;">// koa中间件，对ctx进行了处理</span>
+
+<span style="color:teal;">module</span>.<span>exports</span> = <span style="color:rgb(51, 51, 51);font-weight:700;">function</span> <span style="color:rgb(153, 0, 0);font-weight:700;">ETag</span> (options) {
+
+  <span style="color:rgb(51, 51, 51);font-weight:700;">return</span> <span style="color:rgb(51, 51, 51);font-weight:700;">async</span> <span style="color:rgb(51, 51, 51);font-weight:700;">function</span> <span style="color:rgb(153, 0, 0);font-weight:700;">ETag</span> (ctx, next) {
+
+    <span style="color:rgb(51, 51, 51);font-weight:700;">await</span> <span style="color:rgb(153, 0, 0);font-weight:700;">next</span>()
+
+    <span style="color:rgb(51, 51, 51);font-weight:700;">const</span> entity = <span style="color:rgb(51, 51, 51);font-weight:700;">await</span> <span style="color:rgb(153, 0, 0);font-weight:700;">getResponseEntity</span>(ctx) <span style="color:rgb(153, 153, 136);font-style:italic;">// 获取body内容</span>
+
+    <span style="color:rgb(153, 0, 0);font-weight:700;">setETag</span>(ctx, entity, options) <span style="color:rgb(153, 153, 136);font-style:italic;">// 生成ETag【重点】</span>
+
+  }
+
+}
+
+<span style="color:rgb(51, 51, 51);font-weight:700;">async</span> <span style="color:rgb(51, 51, 51);font-weight:700;">function</span> <span style="color:rgb(153, 0, 0);font-weight:700;">getResponseEntity</span> (ctx) {
+
+  <span style="color:rgb(153, 153, 136);font-style:italic;">// dosomething,最终返回body：return body</span>
+
+}
+
+<span style="color:rgb(51, 51, 51);font-weight:700;">function</span> <span style="color:rgb(153, 0, 0);font-weight:700;">setETag</span> (ctx, entity, options) {
+
+  <span style="color:rgb(51, 51, 51);font-weight:700;">if</span> (!entity) <span style="color:rgb(51, 51, 51);font-weight:700;">return</span>
+
+  ctx.<span>response</span>.<span>ETag</span> = <span style="color:rgb(153, 0, 0);font-weight:700;">calculate</span>(entity, options) <span style="color:rgb(153, 153, 136);font-style:italic;">// 生成ETag</span>
+
+}
+<span style="position:absolute;top:6px;right:15px;font-size:12px;line-height:1;cursor:pointer;color:rgba(140, 140, 140, 0.8);transition:color 0.1s ease 0s;">复制代码</span></code></pre>
+<pre style="font-size:1em;font-family:Menlo, Monaco, Consolas, &quot;Courier New&quot;, monospace;overflow:auto;line-height:1.75;position:relative;color:rgb(51, 51, 51);background:rgb(248, 248, 248);"><code lang="javascript" style="border-radius:2px;font-family:Menlo, Monaco, Consolas, &quot;Courier New&quot;, monospace;margin:0px;display:block;font-size:12px;word-break:normal;overflow-x:auto;padding:15px 12px;color:rgb(51, 51, 51);background:rgb(248, 248, 248);"><span>https</span>:<span style="color:rgb(153, 153, 136);font-style:italic;">//github.com/jshttp/ETag/blob/master/index.js</span>
+
+<span style="color:rgb(153, 153, 136);font-style:italic;">// 核心代码：生成ETag的函数（承接上面）</span>
+
+<span style="color:teal;">module</span>.<span>exports</span> = <span style="color:rgb(153, 0, 0);font-weight:700;">ETag</span>
+
+<span style="color:rgb(51, 51, 51);font-weight:700;">var</span> crypto = <span style="color:rgb(0, 134, 179);">require</span>(<span style="color:rgb(221, 17, 68);">'crypto'</span>)
+
+<span style="color:rgb(51, 51, 51);font-weight:700;">var</span> <span style="color:rgb(153, 0, 0);font-weight:700;">Stats</span> = <span style="color:rgb(0, 134, 179);">require</span>(<span style="color:rgb(221, 17, 68);">'fs'</span>).<span>Stats</span>
+
+<span style="color:rgb(51, 51, 51);font-weight:700;">var</span> toString = <span style="color:rgb(153, 0, 0);font-weight:700;">Object</span>.<span><span style="color:rgb(51, 51, 51);font-weight:700;">prototype</span></span>.<span>toString</span>
+
+<span style="color:rgb(153, 153, 136);font-style:italic;">/** 为非Stats类型创建ETag */</span>
+
+<span style="color:rgb(51, 51, 51);font-weight:700;">function</span> <span style="color:rgb(153, 0, 0);font-weight:700;">entitytag</span> (entity) {
+
+  <span style="color:rgb(51, 51, 51);font-weight:700;">if</span> (entity.<span>length</span> === <span style="color:teal;">0</span>) {
+
+    <span style="color:rgb(153, 153, 136);font-style:italic;">// fast-path empty</span>
+
+    <span style="color:rgb(51, 51, 51);font-weight:700;">return</span> <span style="color:rgb(221, 17, 68);">'"0-2jmj7l5rSw0yVb/vlWAYkK/YBwk"'</span>
+
+  }
+
+  <span style="color:rgb(153, 153, 136);font-style:italic;">// compute hash of entity</span>
+
+  <span style="color:rgb(51, 51, 51);font-weight:700;">var</span> hash = crypto.<span style="color:rgb(153, 0, 0);font-weight:700;">createHash</span>(<span style="color:rgb(221, 17, 68);">'sha1'</span>).<span style="color:rgb(153, 0, 0);font-weight:700;">update</span>(entity, <span style="color:rgb(221, 17, 68);">'utf8'</span>)
+
+      .<span style="color:rgb(153, 0, 0);font-weight:700;">digest</span>(<span style="color:rgb(221, 17, 68);">'base64'</span>).<span style="color:rgb(153, 0, 0);font-weight:700;">substring</span>(<span style="color:teal;">0</span>, <span style="color:teal;">27</span>)
+
+  <span style="color:rgb(153, 153, 136);font-style:italic;">// compute length of entity</span>
+
+  <span style="color:rgb(51, 51, 51);font-weight:700;">var</span> len = <span style="color:rgb(51, 51, 51);font-weight:700;">typeof</span> entity === <span style="color:rgb(221, 17, 68);">'string'</span>
+
+    ? <span style="color:rgb(153, 0, 0);font-weight:700;">Buffer</span>.<span style="color:rgb(153, 0, 0);font-weight:700;">byteLength</span>(entity, <span style="color:rgb(221, 17, 68);">'utf8'</span>)
+
+    : entity.<span>length</span>
+
+  <span style="color:rgb(153, 153, 136);font-style:italic;">// 重点：长度(16进制)+hash(entity)值</span>
+
+  <span style="color:rgb(51, 51, 51);font-weight:700;">return</span> <span style="color:rgb(221, 17, 68);">'"'</span> + len.<span style="color:rgb(153, 0, 0);font-weight:700;">toString</span>(<span style="color:teal;">16</span>) + <span style="color:rgb(221, 17, 68);">'-'</span> + hash + <span style="color:rgb(221, 17, 68);">'"'</span>
+
+}
+
+<span style="color:rgb(153, 153, 136);font-style:italic;">/** 生成ETag */</span>
+
+<span style="color:rgb(51, 51, 51);font-weight:700;">function</span> <span style="color:rgb(153, 0, 0);font-weight:700;">ETag</span> (entity, options) {
+
+  <span style="color:rgb(153, 153, 136);font-style:italic;">// support fs.Stats object</span>
+
+  <span style="color:rgb(51, 51, 51);font-weight:700;">var</span> isStats = <span style="color:rgb(153, 0, 0);font-weight:700;">isstats</span>(entity)
+
+  <span style="color:rgb(51, 51, 51);font-weight:700;">var</span> weak = options &amp;&amp; <span style="color:rgb(51, 51, 51);font-weight:700;">typeof</span> options.<span>weak</span> === <span style="color:rgb(221, 17, 68);">'boolean'</span> ? options.<span>weak</span> : isStats   
+
+  <span style="color:rgb(153, 153, 136);font-style:italic;">// generate entity tag</span>
+
+  <span style="color:rgb(51, 51, 51);font-weight:700;">var</span> tag = isStats ? <span style="color:rgb(153, 0, 0);font-weight:700;">stattag</span>(entity) : <span style="color:rgb(153, 0, 0);font-weight:700;">entitytag</span>(entity)
+
+  <span style="color:rgb(153, 153, 136);font-style:italic;">// 弱ETag 比 强ETag 多了个 W/</span>
+
+  <span style="color:rgb(51, 51, 51);font-weight:700;">return</span> weak ? <span style="color:rgb(221, 17, 68);">'W/'</span> + tag : tag
+
+}
+
+<span style="color:rgb(153, 153, 136);font-style:italic;">/** 确定对象是否是 Stats 类型 */</span>
+
+<span style="color:rgb(51, 51, 51);font-weight:700;">function</span> <span style="color:rgb(153, 0, 0);font-weight:700;">isstats</span> (obj) {
+
+  <span style="color:rgb(153, 153, 136);font-style:italic;">// genuine fs.Stats</span>
+
+  <span style="color:rgb(51, 51, 51);font-weight:700;">if</span> (<span style="color:rgb(51, 51, 51);font-weight:700;">typeof</span> <span style="color:rgb(153, 0, 0);font-weight:700;">Stats</span> === <span style="color:rgb(221, 17, 68);">'function'</span> &amp;&amp; obj <span style="color:rgb(51, 51, 51);font-weight:700;">instanceof</span> <span style="color:rgb(153, 0, 0);font-weight:700;">Stats</span>) {
+
+    <span style="color:rgb(51, 51, 51);font-weight:700;">return</span> <span style="color:teal;">true</span>
+
+  }
+
+  <span style="color:rgb(153, 153, 136);font-style:italic;">// quack quack</span>
+
+  <span style="color:rgb(51, 51, 51);font-weight:700;">return</span> obj &amp;&amp; <span style="color:rgb(51, 51, 51);font-weight:700;">typeof</span> obj === <span style="color:rgb(221, 17, 68);">'object'</span> &amp;&amp;
+
+    <span style="color:rgb(221, 17, 68);">'ctime'</span> <span style="color:rgb(51, 51, 51);font-weight:700;">in</span> obj &amp;&amp; toString.<span style="color:rgb(153, 0, 0);font-weight:700;">call</span>(obj.<span>ctime</span>) === <span style="color:rgb(221, 17, 68);">'[object Date]'</span> &amp;&amp;
+
+    <span style="color:rgb(221, 17, 68);">'mtime'</span> <span style="color:rgb(51, 51, 51);font-weight:700;">in</span> obj &amp;&amp; toString.<span style="color:rgb(153, 0, 0);font-weight:700;">call</span>(obj.<span>mtime</span>) === <span style="color:rgb(221, 17, 68);">'[object Date]'</span> &amp;&amp;
+
+    <span style="color:rgb(221, 17, 68);">'ino'</span> <span style="color:rgb(51, 51, 51);font-weight:700;">in</span> obj &amp;&amp; <span style="color:rgb(51, 51, 51);font-weight:700;">typeof</span> obj.<span>ino</span> === <span style="color:rgb(221, 17, 68);">'number'</span> &amp;&amp;
+
+    <span style="color:rgb(221, 17, 68);">'size'</span> <span style="color:rgb(51, 51, 51);font-weight:700;">in</span> obj &amp;&amp; <span style="color:rgb(51, 51, 51);font-weight:700;">typeof</span> obj.<span>size</span> === <span style="color:rgb(221, 17, 68);">'number'</span>
+
+}
+
+<span style="color:rgb(153, 153, 136);font-style:italic;">/** 为 Stats 类型创建ETag */</span>
+
+<span style="color:rgb(51, 51, 51);font-weight:700;">function</span> <span style="color:rgb(153, 0, 0);font-weight:700;">stattag</span> (stat) {
+
+  <span style="color:rgb(51, 51, 51);font-weight:700;">var</span> mtime = stat.<span>mtime</span>.<span style="color:rgb(153, 0, 0);font-weight:700;">getTime</span>().<span style="color:rgb(153, 0, 0);font-weight:700;">toString</span>(<span style="color:teal;">16</span>)
+
+  <span style="color:rgb(51, 51, 51);font-weight:700;">var</span> size = stat.<span>size</span>.<span style="color:rgb(153, 0, 0);font-weight:700;">toString</span>(<span style="color:teal;">16</span>)
+
+  <span style="color:rgb(153, 153, 136);font-style:italic;">// 重点：文件大小的16进制+修改时间</span>
+
+  <span style="color:rgb(51, 51, 51);font-weight:700;">return</span> <span style="color:rgb(221, 17, 68);">'"'</span> + size + <span style="color:rgb(221, 17, 68);">'-'</span> + mtime + <span style="color:rgb(221, 17, 68);">'"'</span>
+
+}
+<span style="position:absolute;top:6px;right:15px;font-size:12px;line-height:1;cursor:pointer;color:rgba(140, 140, 140, 0.8);transition:color 0.1s ease 0s;">复制代码</span></code></pre>
+<p style="line-height:inherit;margin-top:22px;margin-bottom:22px;">以上就是ETag的生成原理，总结如下：</p>
+<h3 style="margin-top:35px;margin-bottom:10px;padding-bottom:5px;font-size:20px;line-height:28px;">ETag生成结论</h3>
+<p style="line-height:inherit;margin-top:22px;margin-bottom:22px;"><strong style="font-weight:700;">1.  对于静态文件（如css、js、图片等），ETag的生成策略是：文件大小的16进制+修改时间</strong></p>
+<p style="line-height:inherit;margin-top:22px;margin-bottom:22px;"><strong style="font-weight:700;">2. 对于字符串或Buffer，ETag的生成策略是：字符串/Buffer长度的16进制+对应的hash值</strong></p>
+<h3 style="margin-top:35px;margin-bottom:10px;padding-bottom:5px;font-size:20px;line-height:28px;">ETag如何生效</h3>
+<p style="line-height:inherit;margin-top:22px;margin-bottom:22px;">上面代码介绍了如何生成ETag，如果想让生成的ETag生效，还需要用到另一个koa中间件：<a href="https://link.juejin.cn/?target=https%3A%2F%2Fwww.npmjs.com%2Fpackage%2Fkoa-conditional-get" target="_blank" rel="nofollow noopener noreferrer" title="https://www.npmjs.com/package/koa-conditional-get" style="background-color:transparent;margin:initial;cursor:pointer;border-bottom:1px solid rgb(209, 233, 255);text-decoration:none;color:rgb(2, 105, 200);">koa-conditional-get</a>，该中间件核心源码如下：</p>
+<pre style="font-size:1em;font-family:Menlo, Monaco, Consolas, &quot;Courier New&quot;, monospace;overflow:auto;line-height:1.75;position:relative;color:rgb(51, 51, 51);background:rgb(248, 248, 248);"><code lang="javascript" style="border-radius:2px;font-family:Menlo, Monaco, Consolas, &quot;Courier New&quot;, monospace;margin:0px;display:block;font-size:12px;word-break:normal;overflow-x:auto;padding:15px 12px;color:rgb(51, 51, 51);background:rgb(248, 248, 248);"><span style="color:rgb(153, 153, 136);font-style:italic;">// https://github.com/koajs/conditional-get/blob/master/index.js</span>
+
+<span style="color:teal;">module</span>.<span>exports</span> = <span style="color:rgb(51, 51, 51);font-weight:700;">function</span> <span style="color:rgb(153, 0, 0);font-weight:700;">conditional</span> () {
+
+  <span style="color:rgb(51, 51, 51);font-weight:700;">return</span> <span style="color:rgb(51, 51, 51);font-weight:700;">async</span> <span style="color:rgb(51, 51, 51);font-weight:700;">function</span> (<span>ctx, next</span>) {
+
+    <span style="color:rgb(51, 51, 51);font-weight:700;">await</span> <span style="color:rgb(153, 0, 0);font-weight:700;">next</span>()
+
+    <span style="color:rgb(153, 153, 136);font-style:italic;">// 调用 ctx 上的fresh属性</span>
+
+    <span style="color:rgb(51, 51, 51);font-weight:700;">if</span> (ctx.<span>fresh</span>) { 
+
+      ctx.<span>status</span> = <span style="color:teal;">304</span>
+
+      ctx.<span>body</span> = <span style="color:teal;">null</span>
+
+    }
+
+  }
+
+}
+<span style="position:absolute;top:6px;right:15px;font-size:12px;line-height:1;cursor:pointer;color:rgba(140, 140, 140, 0.8);transition:color 0.1s ease 0s;">复制代码</span></code></pre>
+<p style="line-height:inherit;margin-top:22px;margin-bottom:22px;">上面的代码中，我们看到<a href="https://link.juejin.cn/?target=https%3A%2F%2Fwww.npmjs.com%2Fpackage%2Fkoa-conditional-get" target="_blank" rel="nofollow noopener noreferrer" title="https://www.npmjs.com/package/koa-conditional-get" style="background-color:transparent;margin:initial;cursor:pointer;border-bottom:1px solid rgb(209, 233, 255);text-decoration:none;color:rgb(2, 105, 200);">koa-conditional-get</a>中间件实际上调用了 ctx 上的fresh属性，如果该属性返回 true ，则将状态码重置为304，同时清空body。我们接着看 ctx.fresh 属性是怎么进行判断的，代码如下：</p>
+<pre style="font-size:1em;font-family:Menlo, Monaco, Consolas, &quot;Courier New&quot;, monospace;overflow:auto;line-height:1.75;position:relative;color:rgb(51, 51, 51);background:rgb(248, 248, 248);"><code lang="kotlin" style="border-radius:2px;font-family:Menlo, Monaco, Consolas, &quot;Courier New&quot;, monospace;margin:0px;display:block;font-size:12px;word-break:normal;overflow-x:auto;padding:15px 12px;color:rgb(51, 51, 51);background:rgb(248, 248, 248);"><span style="color:rgb(153, 153, 136);font-style:italic;">// https://github.com/koajs/koa/blob/master/lib/request.js</span>
+
+<span style="color:rgb(153, 153, 136);font-style:italic;">// ctx中fresh属性如下</span>
+
+<span style="color:rgb(51, 51, 51);font-weight:700;">const</span> fresh = require(<span style="color:rgb(221, 17, 68);">'fresh'</span>) <span style="color:rgb(153, 153, 136);font-style:italic;">// 真正判断的函数</span>
+
+<span style="color:rgb(51, 51, 51);font-weight:700;">get</span> fresh () {
+
+    <span style="color:rgb(51, 51, 51);font-weight:700;">const</span> method = <span style="color:rgb(51, 51, 51);font-weight:700;">this</span>.method
+
+    <span style="color:rgb(51, 51, 51);font-weight:700;">const</span> s = <span style="color:rgb(51, 51, 51);font-weight:700;">this</span>.ctx.status
+
+
+
+    <span style="color:rgb(153, 153, 136);font-style:italic;">// GET or HEAD for weak freshness validation only</span>
+
+    <span style="color:rgb(51, 51, 51);font-weight:700;">if</span> (method !== <span style="color:rgb(221, 17, 68);">'GET'</span> &amp;&amp; method !== <span style="color:rgb(221, 17, 68);">'HEAD'</span>) <span style="color:rgb(51, 51, 51);font-weight:700;">return</span> <span style="color:teal;">false</span>
+
+
+
+    <span style="color:rgb(153, 153, 136);font-style:italic;">// 2xx or 304 as per rfc2616 14.26</span>
+
+    <span style="color:rgb(51, 51, 51);font-weight:700;">if</span> ((s &gt;= <span style="color:teal;">200</span> &amp;&amp; s &lt; <span style="color:teal;">300</span>) || s === <span style="color:teal;">304</span>) {
+
+      <span style="color:rgb(51, 51, 51);font-weight:700;">return</span> fresh(<span style="color:rgb(51, 51, 51);font-weight:700;">this</span>.header, <span style="color:rgb(51, 51, 51);font-weight:700;">this</span>.response.header) <span style="color:rgb(153, 153, 136);font-style:italic;">// 重点</span>
+
+    }
+
+
+
+    <span style="color:rgb(51, 51, 51);font-weight:700;">return</span> <span style="color:teal;">false</span>
+
+  }
+<span style="position:absolute;top:6px;right:15px;font-size:12px;line-height:1;cursor:pointer;color:rgba(140, 140, 140, 0.8);transition:color 0.1s ease 0s;">复制代码</span></code></pre>
+<p style="line-height:inherit;margin-top:22px;margin-bottom:22px;">ctx.fresh 属性的核心内容是引入了第三方库（fresh）来判断资源是否足够新鲜，fresh库的核心代码如下：</p>
+<pre style="font-size:1em;font-family:Menlo, Monaco, Consolas, &quot;Courier New&quot;, monospace;overflow:auto;line-height:1.75;position:relative;color:rgb(51, 51, 51);background:rgb(248, 248, 248);"><code lang="kotlin" style="border-radius:2px;font-family:Menlo, Monaco, Consolas, &quot;Courier New&quot;, monospace;margin:0px;display:block;font-size:12px;word-break:normal;overflow-x:auto;padding:15px 12px;color:rgb(51, 51, 51);background:rgb(248, 248, 248);"><span style="color:rgb(153, 153, 136);font-style:italic;">// https://github.com/jshttp/fresh/blob/master/index.js</span>
+
+<span style="color:rgb(153, 153, 136);font-style:italic;">// fresh 核心代码如下</span>
+
+module.exports = fresh
+
+function fresh (reqHeaders, resHeaders) {
+
+  <span style="color:rgb(153, 153, 136);font-style:italic;">// fields</span>
+
+  <span style="color:rgb(51, 51, 51);font-weight:700;">var</span> modifiedSince = reqHeaders[<span style="color:rgb(221, 17, 68);">'if-modified-since'</span>]
+
+  <span style="color:rgb(51, 51, 51);font-weight:700;">var</span> noneMatch = reqHeaders[<span style="color:rgb(221, 17, 68);">'If-None-Match'</span>]
+
+  <span style="color:rgb(153, 153, 136);font-style:italic;">// unconditional request</span>
+
+  <span style="color:rgb(51, 51, 51);font-weight:700;">if</span> (!modifiedSince &amp;&amp; !noneMatch) {
+
+    <span style="color:rgb(51, 51, 51);font-weight:700;">return</span> <span style="color:teal;">false</span>
+
+  }
+
+  <span style="color:rgb(153, 153, 136);font-style:italic;">// Always return stale when Cache-Control: no-cache</span>
+
+  <span style="color:rgb(153, 153, 136);font-style:italic;">// to support end-to-end reload requests</span>
+
+  <span style="color:rgb(153, 153, 136);font-style:italic;">// https://tools.ietf.org/html/rfc2616#section-14.9.4</span>
+
+  <span style="color:rgb(51, 51, 51);font-weight:700;">var</span> cacheControl = reqHeaders[<span style="color:rgb(221, 17, 68);">'cache-control'</span>]
+
+  <span style="color:rgb(51, 51, 51);font-weight:700;">if</span> (cacheControl &amp;&amp; CACHE_CONTROL_NO_CACHE_REGEXP.test(cacheControl)) {
+
+    <span style="color:rgb(51, 51, 51);font-weight:700;">return</span> <span style="color:teal;">false</span>
+
+  }
+
+  <span style="color:rgb(153, 153, 136);font-style:italic;">// If-None-Match</span>
+
+  <span style="color:rgb(51, 51, 51);font-weight:700;">if</span> (noneMatch &amp;&amp; noneMatch !== <span style="color:rgb(221, 17, 68);">'*'</span>) {
+
+    <span style="color:rgb(51, 51, 51);font-weight:700;">var</span> ETag = resHeaders[<span style="color:rgb(221, 17, 68);">'ETag'</span>]
+
+    <span style="color:rgb(51, 51, 51);font-weight:700;">if</span> (!ETag) {
+
+      <span style="color:rgb(51, 51, 51);font-weight:700;">return</span> <span style="color:teal;">false</span>
+
+    }
+
+    <span style="color:rgb(51, 51, 51);font-weight:700;">var</span> ETagStale = <span style="color:teal;">true</span>
+
+    <span style="color:rgb(51, 51, 51);font-weight:700;">var</span> matches = parseTokenList(noneMatch)
+
+    <span style="color:rgb(51, 51, 51);font-weight:700;">for</span> (<span style="color:rgb(51, 51, 51);font-weight:700;">var</span> i = <span style="color:teal;">0</span>; i &lt; matches.length; i++) {
+
+      <span style="color:rgb(51, 51, 51);font-weight:700;">var</span> match = matches[i]
+
+      <span style="color:rgb(51, 51, 51);font-weight:700;">if</span> (match === ETag || match === <span style="color:rgb(221, 17, 68);">'W/'</span> + ETag || <span style="color:rgb(221, 17, 68);">'W/'</span> + match === ETag) {
+
+        ETagStale = <span style="color:teal;">false</span>
+
+        <span style="color:rgb(51, 51, 51);font-weight:700;">break</span>
+
+      }
+
+    }
+
+    <span style="color:rgb(51, 51, 51);font-weight:700;">if</span> (ETagStale) {
+
+      <span style="color:rgb(51, 51, 51);font-weight:700;">return</span> <span style="color:teal;">false</span>
+
+    }
+
+  }
+
+  <span style="color:rgb(153, 153, 136);font-style:italic;">// if-modified-since</span>
+
+  <span style="color:rgb(51, 51, 51);font-weight:700;">if</span> (modifiedSince) {
+
+    <span style="color:rgb(51, 51, 51);font-weight:700;">var</span> lastModified = resHeaders[<span style="color:rgb(221, 17, 68);">'last-modified'</span>]
+
+    <span style="color:rgb(51, 51, 51);font-weight:700;">var</span> modifiedStale = !lastModified || !(parseHttpDate(lastModified) &lt;= parseHttpDate(modifiedSince))
+
+    <span style="color:rgb(51, 51, 51);font-weight:700;">if</span> (modifiedStale) {
+
+      <span style="color:rgb(51, 51, 51);font-weight:700;">return</span> <span style="color:teal;">false</span>
+
+    }
+
+  }
+
+  <span style="color:rgb(51, 51, 51);font-weight:700;">return</span> <span style="color:teal;">true</span>
+
+}
+<span style="position:absolute;top:6px;right:15px;font-size:12px;line-height:1;cursor:pointer;color:rgba(140, 140, 140, 0.8);transition:color 0.1s ease 0s;">复制代码</span></code></pre>
+<p style="line-height:inherit;margin-top:22px;margin-bottom:22px;">根据源码，将fresh函数的代码判断逻辑进行了整理，总结如下。</p>
+<p style="line-height:inherit;margin-top:22px;margin-bottom:22px;"><div class="media-placeholder">[图片/附件]</div></en-media></p>
+<p style="line-height:inherit;margin-top:22px;margin-bottom:22px;">只要满足右边紫色部分的判断条件之一，fresh即为true。需要注意的是，判断条件的优先级是从上到下，即如果<code style="word-break:break-word;border-radius:2px;overflow-x:auto;background-color:rgb(255, 245, 245);color:rgb(255, 80, 44);padding:0.065em 0.4em;font-size:0.87em;font-family:Menlo, Monaco, Consolas, &quot;Courier New&quot;, monospace;">ETag</code>和<code style="word-break:break-word;border-radius:2px;overflow-x:auto;background-color:rgb(255, 245, 245);color:rgb(255, 80, 44);padding:0.065em 0.4em;font-size:0.87em;font-family:Menlo, Monaco, Consolas, &quot;Courier New&quot;, monospace;">Last-Modified</code>字段同时存在，<strong style="font-weight:700;">ETag的优先级更高</strong>。</p>
+<h3 style="margin-top:35px;margin-bottom:10px;padding-bottom:5px;font-size:20px;line-height:28px;">ETag实战</h3>
+<p style="line-height:inherit;margin-top:22px;margin-bottom:22px;">上一节中我们分析了如何让ETag策略生效，加下来我们将通过一个例子来更加直观的了解ETag：</p>
+<pre style="font-size:1em;font-family:Menlo, Monaco, Consolas, &quot;Courier New&quot;, monospace;overflow:auto;line-height:1.75;position:relative;color:rgb(51, 51, 51);background:rgb(248, 248, 248);"><code lang="ini" style="border-radius:2px;font-family:Menlo, Monaco, Consolas, &quot;Courier New&quot;, monospace;margin:0px;display:block;font-size:12px;word-break:normal;overflow-x:auto;padding:15px 12px;color:rgb(51, 51, 51);background:rgb(248, 248, 248);">const <span>Koa</span> = require(<span style="color:rgb(221, 17, 68);">'koa'</span>)<span style="color:rgb(153, 153, 136);font-style:italic;">;</span>
+
+const <span>etag</span> = require(<span style="color:rgb(221, 17, 68);">'koa-etag'</span>)<span style="color:rgb(153, 153, 136);font-style:italic;">;</span>
+
+const <span>conditional</span> = require(<span style="color:rgb(221, 17, 68);">'koa-conditional-get'</span>)<span style="color:rgb(153, 153, 136);font-style:italic;">;</span>
+
+const <span>app</span> = new Koa()<span style="color:rgb(153, 153, 136);font-style:italic;">;</span>
+
+ // 放在 use(etag) 上面
+
+app.use(conditional())<span style="color:rgb(153, 153, 136);font-style:italic;">;</span>
+
+ // 使用 etag
+
+app.use(etag())<span style="color:rgb(153, 153, 136);font-style:italic;">;</span>
+
+
+
+ // 请求响应
+
+app.use(async function(ctx, next){
+
+  await next()<span style="color:rgb(153, 153, 136);font-style:italic;">;</span>
+
+  <span>ctx.body</span> = {
+
+    name: 'tobi',
+
+    species: 'ferret',
+
+    age: 2
+
+  }<span style="color:rgb(153, 153, 136);font-style:italic;">;</span>
+
+})<span style="color:rgb(153, 153, 136);font-style:italic;">;</span>
+
+
+
+app.listen(3000, () =&gt; console.log('port 3000'))<span style="color:rgb(153, 153, 136);font-style:italic;">;</span>
+<span style="position:absolute;top:6px;right:15px;font-size:12px;line-height:1;cursor:pointer;color:rgba(140, 140, 140, 0.8);transition:color 0.1s ease 0s;">复制代码</span></code></pre>
+<p style="line-height:inherit;margin-top:22px;margin-bottom:22px;"><div class="media-placeholder">[图片/附件]</div></en-media></p>
+<p style="line-height:inherit;margin-top:22px;margin-bottom:22px;"><div class="media-placeholder">[图片/附件]</div></en-media></p>
+<p style="line-height:inherit;margin-top:22px;margin-bottom:22px;">从上图中的访问结果来看，ETag策略已生效。我们这里只给出了最基础的用法，其它用法可根据业务进行调整。</p>
+<h3 style="margin-top:35px;margin-bottom:10px;padding-bottom:5px;font-size:20px;line-height:28px;">总结</h3>
+<p style="line-height:inherit;margin-top:22px;margin-bottom:22px;">本文首先介绍了ETag的基本定义，它是资源的特定版本的标识符，可以让缓存更高效，并节省带宽；接下来讲述了ETag的起源、验证类型以及服务端与客户端的交互流程；最后，我们通过koa-<a href="https://link.juejin.cn/?target=https%3A%2F%2Fgithub.com%2Fkoajs%2FETag%2Fblob%2Fmaster%2Findex.js" target="_blank" rel="nofollow noopener noreferrer" title="https://github.com/koajs/ETag/blob/master/index.js" style="background-color:transparent;margin:initial;cursor:pointer;border-bottom:1px solid rgb(209, 233, 255);text-decoration:none;color:rgb(2, 105, 200);">ETag</a>库的源码具体分析了ETag的生成原理及实战应用，让我们对Etag有了更加直观、清晰的认识。</p>
+<p style="line-height:inherit;margin-top:22px;margin-bottom:22px;">ETag的提出主要是为了解决Last-Modified验证机制存在的一些问题，但ETag也并非完美，在传统意义上，ETag 只能在单个服务器提供内容的网站上使用，对于像 Apache（2.4版本以下） 或 IIS 等多服务器提供资源的网站，ETag则无法正常工作。此时需要单独对Etag进行配置，请参考 <a href="https://link.juejin.cn/?target=https%3A%2F%2Fhttpd.apache.org%2Fdocs%2F2.4%2Fmod%2Fcore.html" target="_blank" rel="nofollow noopener noreferrer" title="https://httpd.apache.org/docs/2.4/mod/core.html" style="background-color:transparent;margin:initial;cursor:pointer;border-bottom:1px solid rgb(209, 233, 255);text-decoration:none;color:rgb(2, 105, 200);">Apache ETag</a> 和<a href="https://link.juejin.cn/?target=https%3A%2F%2Faspisfun.com%2Fblog%2Fadding-entity-tags-etags-to-iis-for-faster-loading%2F" target="_blank" rel="nofollow noopener noreferrer" title="https://aspisfun.com/blog/adding-entity-tags-etags-to-iis-for-faster-loading/" style="background-color:transparent;margin:initial;cursor:pointer;border-bottom:1px solid rgb(209, 233, 255);text-decoration:none;color:rgb(2, 105, 200);"> IIS ETag</a>。</p>
+<p style="line-height:inherit;margin-top:22px;margin-bottom:22px;">不同服务器对ETag的生成策略不尽相同，如果你的请求中返回的ETag值与本文的格式不一致，这是正常现象；如果你想自定义ETag生成算法，可以直接在上述的源码中进行修改，其它服务器请参考 <a href="https://link.juejin.cn/?target=https%3A%2F%2Fblog.csdn.net%2Fz529905310%2Farticle%2Fdetails%2F78305028" target="_blank" rel="nofollow noopener noreferrer" title="https://blog.csdn.net/z529905310/article/details/78305028" style="background-color:transparent;margin:initial;cursor:pointer;border-bottom:1px solid rgb(209, 233, 255);text-decoration:none;color:rgb(2, 105, 200);">Nginx</a>、<a href="https://link.juejin.cn/?target=https%3A%2F%2Fwww.jb51.cc%2Fnginx%2F434822.html" target="_blank" rel="nofollow noopener noreferrer" title="https://www.jb51.cc/nginx/434822.html" style="background-color:transparent;margin:initial;cursor:pointer;border-bottom:1px solid rgb(209, 233, 255);text-decoration:none;color:rgb(2, 105, 200);">Apache</a>。</p>
+<h3 style="margin-top:35px;margin-bottom:10px;padding-bottom:5px;font-size:20px;line-height:28px;">附录</h3>
+<p style="line-height:inherit;margin-top:22px;margin-bottom:22px;"><a href="https://link.juejin.cn/?target=https%3A%2F%2Fgithub.com%2Fkoajs%2Fetag" target="_blank" rel="nofollow noopener noreferrer" title="https://github.com/koajs/etag" style="background-color:transparent;margin:initial;cursor:pointer;border-bottom:1px solid rgb(209, 233, 255);text-decoration:none;color:rgb(2, 105, 200);">github.com/koajs/etag</a></p>
+<p style="line-height:inherit;margin-top:22px;margin-bottom:22px;"><a href="https://link.juejin.cn/?target=https%3A%2F%2Fgithub.com%2Fkoajs%2Fconditional-get%2Fblob%2Fmaster%2Findex.js" target="_blank" rel="nofollow noopener noreferrer" title="https://github.com/koajs/conditional-get/blob/master/index.js" style="background-color:transparent;margin:initial;cursor:pointer;border-bottom:1px solid rgb(209, 233, 255);text-decoration:none;color:rgb(2, 105, 200);">github.com/koajs/condi…</a></p>
+<p style="line-height:inherit;margin-top:22px;margin-bottom:22px;"><a href="https://link.juejin.cn/?target=https%3A%2F%2Fgithub.com%2Fkoajs%2Fkoa%2Fblob%2Fmaster%2Flib%2Frequest.js" target="_blank" rel="nofollow noopener noreferrer" title="https://github.com/koajs/koa/blob/master/lib/request.js" style="background-color:transparent;margin:initial;cursor:pointer;border-bottom:1px solid rgb(209, 233, 255);text-decoration:none;color:rgb(2, 105, 200);">github.com/koajs/koa/b…</a></p>
+<p style="line-height:inherit;margin-top:22px;margin-bottom:22px;"><a href="https://link.juejin.cn/?target=https%3A%2F%2Fgithub.com%2Fjshttp%2Ffresh%2Fblob%2Fmaster%2Findex.js" target="_blank" rel="nofollow noopener noreferrer" title="https://github.com/jshttp/fresh/blob/master/index.js" style="background-color:transparent;margin:initial;cursor:pointer;border-bottom:1px solid rgb(209, 233, 255);text-decoration:none;color:rgb(2, 105, 200);">github.com/jshttp/fres…</a></p>
+<p style="line-height:inherit;margin-top:22px;margin-bottom:22px;"><a href="https://link.juejin.cn/?target=https%3A%2F%2Fdatatracker.ietf.org%2Fdoc%2Fhtml%2Frfc7232%23section-2.3" target="_blank" rel="nofollow noopener noreferrer" title="https://datatracker.ietf.org/doc/html/rfc7232#section-2.3" style="background-color:transparent;margin:initial;cursor:pointer;border-bottom:1px solid rgb(209, 233, 255);text-decoration:none;color:rgb(2, 105, 200);">datatracker.ietf.org/doc/html/rf…</a></p>
+<p style="line-height:inherit;margin-top:22px;margin-bottom:22px;"><a href="https://link.juejin.cn/?target=https%3A%2F%2Fwww.cnblogs.com%2Fyalong%2Fp%2F15207547.html" target="_blank" rel="nofollow noopener noreferrer" title="https://www.cnblogs.com/yalong/p/15207547.html" style="background-color:transparent;margin:initial;cursor:pointer;border-bottom:1px solid rgb(209, 233, 255);text-decoration:none;color:rgb(2, 105, 200);">www.cnblogs.com/yalong/p/15…</a></p>
+<p style="line-height:inherit;margin-top:22px;margin-bottom:22px;"><a href="https://juejin.cn/post/6844904133024022536#heading-19" target="_blank" title="https://juejin.cn/post/6844904133024022536#heading-19" style="background-color:transparent;margin:initial;cursor:pointer;border-bottom:1px solid rgb(209, 233, 255);text-decoration:none;color:rgb(2, 105, 200);">juejin.cn/post/684490…</a></p></div></div></div></div></div></span></div></div></div></div></div></div></div>
+</div>
+</div>
+<a class="back-link" href="../articles.html">← 返回笔记列表</a>
+</body>
+</html>

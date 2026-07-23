@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="zh-CN" data-theme="light">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>一次Rails项目卡顿的问题排查 — 技术笔记</title>
+<style>
+:root {
+  --bg: #ffffff;
+  --text: #1a1a1a;
+  --muted: #666;
+  --border: #e0e0e0;
+  --code-bg: #f5f5f5;
+  --link: #0066cc;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #1a1a1a;
+    --text: #e0e0e0;
+    --muted: #999;
+    --border: #333;
+    --code-bg: #2a2a2a;
+    --link: #66bbff;
+  }
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  line-height: 1.7;
+  color: var(--text);
+  background: var(--bg);
+  max-width: 860px;
+  margin: 0 auto;
+  padding: 2rem 1.5rem;
+}
+.note-header {
+  border-bottom: 2px solid var(--border);
+  padding-bottom: 1rem;
+  margin-bottom: 2rem;
+}
+.note-title {
+  font-size: 1.6rem;
+  font-weight: 700;
+  margin-bottom: 0.3rem;
+}
+.note-meta {
+  color: var(--muted);
+  font-size: 0.85rem;
+}
+.note-content {
+  font-size: 0.95rem;
+}
+.note-content h1 { font-size: 1.4rem; margin: 1.2rem 0 0.6rem; }
+.note-content h2 { font-size: 1.2rem; margin: 1rem 0 0.5rem; }
+.note-content h3 { font-size: 1.05rem; margin: 0.8rem 0 0.4rem; }
+.note-content p { margin: 0.5rem 0; }
+.note-content ul, .note-content ol { margin: 0.5rem 0 0.5rem 2rem; }
+.note-content li { margin: 0.2rem 0; }
+.note-content pre {
+  background: var(--code-bg);
+  padding: 1rem;
+  border-radius: 6px;
+  overflow-x: auto;
+  margin: 0.8rem 0;
+  font-size: 0.85rem;
+}
+.note-content code {
+  background: var(--code-bg);
+  padding: 0.1rem 0.3rem;
+  border-radius: 3px;
+  font-size: 0.88em;
+}
+.note-content pre code {
+  background: none;
+  padding: 0;
+}
+.note-content blockquote {
+  border-left: 3px solid var(--border);
+  padding-left: 1rem;
+  color: var(--muted);
+  margin: 0.8rem 0;
+}
+.note-content a { color: var(--link); }
+.note-content img {
+  max-width: 100%;
+  height: auto;
+  border-radius: 6px;
+  margin: 0.5rem 0;
+}
+.note-content table {
+  border-collapse: collapse;
+  width: 100%;
+  margin: 0.8rem 0;
+}
+.note-content th, .note-content td {
+  border: 1px solid var(--border);
+  padding: 0.5rem;
+}
+.note-content th { background: var(--code-bg); }
+.media-placeholder {
+  background: var(--code-bg);
+  padding: 1rem;
+  text-align: center;
+  color: var(--muted);
+  border-radius: 6px;
+  margin: 0.5rem 0;
+  font-size: 0.85rem;
+}
+.encrypt-placeholder {
+  background: #fff3cd;
+  padding: 0.5rem;
+  text-align: center;
+  color: #856404;
+  border-radius: 6px;
+  margin: 0.5rem 0;
+  font-size: 0.85rem;
+}
+.back-link {
+  display: inline-block;
+  margin-top: 2rem;
+  color: var(--link);
+  text-decoration: none;
+  font-size: 0.85rem;
+}
+</style>
+</head>
+<body>
+<div class="note-header">
+  <div class="note-title">一次Rails项目卡顿的问题排查</div>
+  <div class="note-meta">笔记本：RubyOnRails</div>
+</div>
+<div class="note-content">
+<div>1.看grafana，观察到上面在卡顿的时间点事发时，出现过cpu占用急剧下降，看上去像是进程被杀的操作</div><div><br /></div><div>2.登陆服务器</div><div>使用 sudo journalctl -k 查看系统诊断日志，可以看到相关系统诊断信息</div><div><br /></div><div>3.查看 puma_access.log</div><div><span>    查看到到日志中最近有worker被kill的记录，信息显示内存超出</span><br /></div><div>Worker #&lt;Puma::Cluster::Worker:0x007f93d6026d60 @index=0, @pid=10912, @phase=0, @stage=:booted, @signal="TERM", @options=#&lt;Puma::LeveledOptions:0x007f93d0c74168 @cur={}, @set=[{:directory=&gt;"/home/deploy/apps/CSC/current", :rackup=&gt;"/home/deploy/apps/CSC/current/<a href="http://config.ru">config.ru</a>", :environment=&gt;"production", :pidfile=&gt;"/home/deploy/apps/CSC/shared/tmp/pids/puma.pid", :state=&gt;"/home/deploy/apps/CSC/shared/tmp/pids/puma.state", :redirect_stdout=&gt;"/home/deploy/apps/CSC/shared/log/puma_access.log", :redirect_stderr=&gt;"/home/deploy/apps/CSC/shared/log/puma_error.log", :redirect_append=&gt;true, :min_threads=&gt;8, :max_threads=&gt;25, :binds=&gt;["unix:///home/deploy/apps/CSC/shared/tmp/sockets/CSC-puma.sock", "tcp://<a href="http://0.0.0.0:3000">0.0.0.0:3000</a>"], :workers=&gt;2, :preload_app=&gt;true, :before_fork=&gt;[#&lt;Proc:0x007f93d0c26788@config/puma.rb:26&gt;], :before_worker_boot=&gt;[#&lt;Proc:0x007f93d0c26738@config/puma.rb:42&gt;], :prune_bundler=&gt;true, :on_restart=&gt;[#&lt;Proc:0x007f93d0c266e8@config/puma.rb:47&gt;]}, {}, {:state=&gt;"/home/deploy/apps/CSC/shared/tmp/pids/puma.state", :pidfile=&gt;"/home/deploy/apps/CSC/shared/tmp/pids/puma.pid", :config_files=&gt;["config/puma.rb"]}, {}, {:environment=&gt;"production", :logger=&gt;#&lt;Puma::Events:0x007f93d0c74ed8 @formatter=#&lt;Puma::Events::PidFormatter:0x007f93d0c263f0&gt;, @stdout=#&lt;IO:/home/deploy/apps/CSC/shared/log/puma_access.log&gt;, @stderr=#&lt;IO:/home/deploy/apps/CSC/shared/log/puma_error.log&gt;, @debug=false, @hooks={:on_booted=&gt;[]}&gt;}, {}, {}], @defaults={:min_threads=&gt;0, :max_threads=&gt;16, :log_requests=&gt;false, :debug=&gt;false, :binds=&gt;["tcp://<a href="http://0.0.0.0:9292">0.0.0.0:9292</a>"], :workers=&gt;0, :daemon=&gt;false, :mode=&gt;:http, :worker_timeout=&gt;60, :worker_boot_timeout=&gt;60, :worker_shutdown_timeout=&gt;30, :remote_address=&gt;:socket, :tag=&gt;"20210311120403", :environment=&gt;"production", :rackup=&gt;"<a href="http://config.ru">config.ru</a>", :logger=&gt;#&lt;IO:/home/deploy/apps/CSC/shared/log/puma_access.log&gt;, :persistent_timeout=&gt;20}&gt;, @first_term_sent=nil, @last_checkin=2021-03-16 18:16:59 +0800, @last_status="{ \"backlog\":0, \"running\":15 }", @dead=false&gt; being killed</div><div>,我们在puma中配置了内存超出4g即会杀掉进程</div><div><div class="media-placeholder">[图片/附件]</div></div><div><br /></div>
+</div>
+<a class="back-link" href="../articles.html">← 返回笔记列表</a>
+</body>
+</html>

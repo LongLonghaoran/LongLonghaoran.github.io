@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="zh-CN" data-theme="light">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>导出reject reason — 技术笔记</title>
+<style>
+:root {
+  --bg: #ffffff;
+  --text: #1a1a1a;
+  --muted: #666;
+  --border: #e0e0e0;
+  --code-bg: #f5f5f5;
+  --link: #0066cc;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #1a1a1a;
+    --text: #e0e0e0;
+    --muted: #999;
+    --border: #333;
+    --code-bg: #2a2a2a;
+    --link: #66bbff;
+  }
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  line-height: 1.7;
+  color: var(--text);
+  background: var(--bg);
+  max-width: 860px;
+  margin: 0 auto;
+  padding: 2rem 1.5rem;
+}
+.note-header {
+  border-bottom: 2px solid var(--border);
+  padding-bottom: 1rem;
+  margin-bottom: 2rem;
+}
+.note-title {
+  font-size: 1.6rem;
+  font-weight: 700;
+  margin-bottom: 0.3rem;
+}
+.note-meta {
+  color: var(--muted);
+  font-size: 0.85rem;
+}
+.note-content {
+  font-size: 0.95rem;
+}
+.note-content h1 { font-size: 1.4rem; margin: 1.2rem 0 0.6rem; }
+.note-content h2 { font-size: 1.2rem; margin: 1rem 0 0.5rem; }
+.note-content h3 { font-size: 1.05rem; margin: 0.8rem 0 0.4rem; }
+.note-content p { margin: 0.5rem 0; }
+.note-content ul, .note-content ol { margin: 0.5rem 0 0.5rem 2rem; }
+.note-content li { margin: 0.2rem 0; }
+.note-content pre {
+  background: var(--code-bg);
+  padding: 1rem;
+  border-radius: 6px;
+  overflow-x: auto;
+  margin: 0.8rem 0;
+  font-size: 0.85rem;
+}
+.note-content code {
+  background: var(--code-bg);
+  padding: 0.1rem 0.3rem;
+  border-radius: 3px;
+  font-size: 0.88em;
+}
+.note-content pre code {
+  background: none;
+  padding: 0;
+}
+.note-content blockquote {
+  border-left: 3px solid var(--border);
+  padding-left: 1rem;
+  color: var(--muted);
+  margin: 0.8rem 0;
+}
+.note-content a { color: var(--link); }
+.note-content img {
+  max-width: 100%;
+  height: auto;
+  border-radius: 6px;
+  margin: 0.5rem 0;
+}
+.note-content table {
+  border-collapse: collapse;
+  width: 100%;
+  margin: 0.8rem 0;
+}
+.note-content th, .note-content td {
+  border: 1px solid var(--border);
+  padding: 0.5rem;
+}
+.note-content th { background: var(--code-bg); }
+.media-placeholder {
+  background: var(--code-bg);
+  padding: 1rem;
+  text-align: center;
+  color: var(--muted);
+  border-radius: 6px;
+  margin: 0.5rem 0;
+  font-size: 0.85rem;
+}
+.encrypt-placeholder {
+  background: #fff3cd;
+  padding: 0.5rem;
+  text-align: center;
+  color: #856404;
+  border-radius: 6px;
+  margin: 0.5rem 0;
+  font-size: 0.85rem;
+}
+.back-link {
+  display: inline-block;
+  margin-top: 2rem;
+  color: var(--link);
+  text-decoration: none;
+  font-size: 0.85rem;
+}
+</style>
+</head>
+<body>
+<div class="note-header">
+  <div class="note-title">导出reject reason</div>
+  <div class="note-meta">笔记本：Anker</div>
+</div>
+<div class="note-content">
+<div style="font-size: 14px; margin: 0; padding: 0; width: 100%;"><pre style="line-height: 160%; box-sizing: content-box; border: 0; border-radius: 0; margin: 2px 0 8px; background-color: #f5f7f8;"><code style="display: block; overflow-x: auto; background: #1e1e1e; line-height: 160%; box-sizing: content-box; border: 0; border-radius: 0; letter-spacing: -.3px; padding: 18px; color: #f4f4f4; white-space: pre-wrap;">CSV.open(Rails.application.root.join(<span style="color: #d69d85; line-height: 160%; box-sizing: content-box;">'csc_reject_reason.csv'</span>), <span style="color: #d69d85; line-height: 160%; box-sizing: content-box;">"wb"</span>) <span style="color: #569cd6; line-height: 160%; box-sizing: content-box;">do</span> <span style="color: #dcdcdc; line-height: 160%; box-sizing: content-box;">|csv|</span>
+
+  file = File.open(<span style="color: #d69d85; line-height: 160%; box-sizing: content-box;">'/home/deploy/csc_rejected_ticket.xlsx'</span>)
+  spreadsheet = Roo::Spreadsheet.open(file)
+  sheet_names = spreadsheet.sheets
+  sheet_names.each <span style="color: #569cd6; line-height: 160%; box-sizing: content-box;">do</span> <span style="color: #dcdcdc; line-height: 160%; box-sizing: content-box;">|sheet_name|</span>
+    sheet = spreadsheet.sheet(sheet_name)
+    rows = sheet.parse(<span style="color: #d69d85; line-height: 160%; box-sizing: content-box;">'ticket_number'</span>: <span style="color: #9a5334; line-height: 160%; box-sizing: content-box;">/\ATicket number\z/i</span>)
+    ticket_numbers = rows.collect{<span style="color: #dcdcdc; line-height: 160%; box-sizing: content-box;">|r|</span> r[<span style="color: #569cd6; line-height: 160%; box-sizing: content-box;">:ticket_number</span>]}.compact
+    tickets = Ticket.where(<span style="color: #569cd6; line-height: 160%; box-sizing: content-box;">ticket_number:</span> ticket_numbers)
+    csv &lt;&lt; [sheet_name]
+    tickets.each <span style="color: #569cd6; line-height: 160%; box-sizing: content-box;">do</span> <span style="color: #dcdcdc; line-height: 160%; box-sizing: content-box;">|ticket|</span>
+      csv &lt;&lt; [ticket.ticket_number, ticket.ai_replied, ticket.do_not_call_ai_reason, ticket.sensitive_words.collect{<span style="color: #dcdcdc; line-height: 160%; box-sizing: content-box;">|s|</span> s.keywords}.join(<span style="color: #d69d85; line-height: 160%; box-sizing: content-box;">' | '</span>) ]
+    <span style="color: #569cd6; line-height: 160%; box-sizing: content-box;">end</span>
+  <span style="color: #569cd6; line-height: 160%; box-sizing: content-box;">end</span>
+<span style="color: #569cd6; line-height: 160%; box-sizing: content-box;">end</span>
+</code></pre>
+</div><center style='display:none !important;visibility:collapse !important;height:0 !important;white-space:nowrap;width:100%;overflow:hidden'>%60%60%60ruby%0ACSV.open(Rails.application.root.join('csc_reject_reason.csv')%2C%20%22wb%22)%20do%20%7Ccsv%7C%0A%0A%20%20file%20%3D%20File.open('%2Fhome%2Fdeploy%2Fcsc_rejected_ticket.xlsx')%0A%20%20spreadsheet%20%3D%20Roo%3A%3ASpreadsheet.open(file)%0A%20%20sheet_names%20%3D%20spreadsheet.sheets%0A%20%20sheet_names.each%20do%20%7Csheet_name%7C%0A%20%20%20%20sheet%20%3D%20spreadsheet.sheet(sheet_name)%0A%20%20%20%20rows%20%3D%20sheet.parse('ticket_number'%3A%20%2F%5CATicket%20number%5Cz%2Fi)%0A%20%20%20%20ticket_numbers%20%3D%20rows.collect%7B%7Cr%7C%20r%5B%3Aticket_number%5D%7D.compact%0A%20%20%20%20tickets%20%3D%20Ticket.where(ticket_number%3A%20ticket_numbers)%0A%20%20%20%20csv%20%3C%3C%20%5Bsheet_name%5D%0A%20%20%20%20tickets.each%20do%20%7Cticket%7C%0A%20%20%20%20%20%20regexp%20%3D%20Regexp.compile(%0A%20%20%20%20%20%20%20%20ticket.sensitive_words.%0A%20%20%20%20%20%20%20%20%20%20collect%7B%20%7Cs%7C%20s.keywords%20%7D.%0A%20%20%20%20%20%20%20%20%20%20join('%2C').split('%2C').%0A%20%20%20%20%20%20%20%20%20%20collect(%26%3Astrip).%0A%20%20%20%20%20%20%20%20%20%20reject(%26%3Ablank%3F).%0A%20%20%20%20%20%20%20%20%20%20join('%7C')%2C%20%0A%20%20%20%20%20%20%20%20Regexp%3A%3AIGNORECASE%20%7C%20Regexp%3A%3AMULTILINE%0A%20%20%20%20%20%20)%0A%20%20%20%20%20%20ticket_message%20%3D%20ticket.ticket_messages.first%0A%20%20%20%20%20%20csv%20%3C%3C%20%5B%0A%20%20%20%20%20%20%20%20ticket.ticket_number%2C%20%0A%20%20%20%20%20%20%20%20ticket.ai_replied%2C%20%0A%20%20%20%20%20%20%20%20ticket.do_not_call_ai_reason%2C%20%0A%20%20%20%20%20%20%20%20ticket.sensitive_words.collect%7B%7Cs%7C%20s.keywords%7D.join('%20%7C%20')%2C%0A%20%20%20%20%20%20%20%20(ticket_message.ml_text%20%7C%7C%20ticket_message.message_content_strip_end).encode('UTF-8').scan(regexp).join('%2C')%0A%20%20%20%20%20%20%5D%0A%20%20%20%20end%0A%20%20end%0Aend%0A%60%60%60</center>
+</div>
+<a class="back-link" href="../articles.html">← 返回笔记列表</a>
+</body>
+</html>

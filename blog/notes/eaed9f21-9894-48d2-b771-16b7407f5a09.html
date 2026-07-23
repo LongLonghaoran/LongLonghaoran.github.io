@@ -1,0 +1,308 @@
+<!DOCTYPE html>
+<html lang="zh-CN" data-theme="light">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>后端 - interface 作为 struct field，谈谈 Golang 结构体中的匿名接口 - 无风的内存空间 - SegmentFault 思否 — 技术笔记</title>
+<style>
+:root {
+  --bg: #ffffff;
+  --text: #1a1a1a;
+  --muted: #666;
+  --border: #e0e0e0;
+  --code-bg: #f5f5f5;
+  --link: #0066cc;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #1a1a1a;
+    --text: #e0e0e0;
+    --muted: #999;
+    --border: #333;
+    --code-bg: #2a2a2a;
+    --link: #66bbff;
+  }
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  line-height: 1.7;
+  color: var(--text);
+  background: var(--bg);
+  max-width: 860px;
+  margin: 0 auto;
+  padding: 2rem 1.5rem;
+}
+.note-header {
+  border-bottom: 2px solid var(--border);
+  padding-bottom: 1rem;
+  margin-bottom: 2rem;
+}
+.note-title {
+  font-size: 1.6rem;
+  font-weight: 700;
+  margin-bottom: 0.3rem;
+}
+.note-meta {
+  color: var(--muted);
+  font-size: 0.85rem;
+}
+.note-content {
+  font-size: 0.95rem;
+}
+.note-content h1 { font-size: 1.4rem; margin: 1.2rem 0 0.6rem; }
+.note-content h2 { font-size: 1.2rem; margin: 1rem 0 0.5rem; }
+.note-content h3 { font-size: 1.05rem; margin: 0.8rem 0 0.4rem; }
+.note-content p { margin: 0.5rem 0; }
+.note-content ul, .note-content ol { margin: 0.5rem 0 0.5rem 2rem; }
+.note-content li { margin: 0.2rem 0; }
+.note-content pre {
+  background: var(--code-bg);
+  padding: 1rem;
+  border-radius: 6px;
+  overflow-x: auto;
+  margin: 0.8rem 0;
+  font-size: 0.85rem;
+}
+.note-content code {
+  background: var(--code-bg);
+  padding: 0.1rem 0.3rem;
+  border-radius: 3px;
+  font-size: 0.88em;
+}
+.note-content pre code {
+  background: none;
+  padding: 0;
+}
+.note-content blockquote {
+  border-left: 3px solid var(--border);
+  padding-left: 1rem;
+  color: var(--muted);
+  margin: 0.8rem 0;
+}
+.note-content a { color: var(--link); }
+.note-content img {
+  max-width: 100%;
+  height: auto;
+  border-radius: 6px;
+  margin: 0.5rem 0;
+}
+.note-content table {
+  border-collapse: collapse;
+  width: 100%;
+  margin: 0.8rem 0;
+}
+.note-content th, .note-content td {
+  border: 1px solid var(--border);
+  padding: 0.5rem;
+}
+.note-content th { background: var(--code-bg); }
+.media-placeholder {
+  background: var(--code-bg);
+  padding: 1rem;
+  text-align: center;
+  color: var(--muted);
+  border-radius: 6px;
+  margin: 0.5rem 0;
+  font-size: 0.85rem;
+}
+.encrypt-placeholder {
+  background: #fff3cd;
+  padding: 0.5rem;
+  text-align: center;
+  color: #856404;
+  border-radius: 6px;
+  margin: 0.5rem 0;
+  font-size: 0.85rem;
+}
+.back-link {
+  display: inline-block;
+  margin-top: 2rem;
+  color: var(--link);
+  text-decoration: none;
+  font-size: 0.85rem;
+}
+</style>
+</head>
+<body>
+<div class="note-header">
+  <div class="note-title">后端 - interface 作为 struct field，谈谈 Golang 结构体中的匿名接口 - 无风的内存空间 - SegmentFault 思否</div>
+  <div class="note-meta">笔记本：Go语言</div>
+</div>
+<div class="note-content">
+<div style="--en-clipped-content:article; --en-clipped-source-url:https://segmentfault.com/a/1190000018865258; --en-clipped-source-title:后端 - interface 作为 struct field，谈谈 Golang 结构体中的匿名接口 - 无风的内存空间 - SegmentFault 思否;">
+<div><br/></div><div style="min-height: 3008px; font-size: 16px; display: flex; min-width: 100%; position: relative;"> <div style="box-sizing:border-box;scroll-padding-top:60px;scroll-behavior:unset;"><div style="box-sizing:border-box;font-family:system-ui, -apple-system, &quot;Segoe UI&quot;, Roboto, &quot;Helvetica Neue&quot;, &quot;Noto Sans&quot;, &quot;Liberation Sans&quot;, Arial, sans-serif, &quot;Apple Color Emoji&quot;, &quot;Segoe UI Emoji&quot;, &quot;Segoe UI Symbol&quot;, &quot;Noto Color Emoji&quot;;font-size:16px;font-weight:400;line-height:24px;color:rgb(33, 37, 41);text-align:start;text-size-adjust:100%;-webkit-tap-highlight-color:rgba(0, 0, 0, 0);-webkit-font-smoothing:antialiased;background-color:rgb(233, 236, 239);"><div style="box-sizing:border-box;"><div style="box-sizing:border-box;"><div style="box-sizing:border-box;"><div style="box-sizing:border-box;min-width:0px;"><div style="box-sizing:border-box;min-width:0px;overflow-wrap:break-word;background-color:rgb(255, 255, 255);background-clip:border-box;border-radius:6px;"><div style="box-sizing:border-box;color:rgb(33, 37, 41);"><h1 style="box-sizing:border-box;margin-top:0px;line-height:1.2;font-size:32px;font-weight:500;margin-bottom:16px;"><a href="https://segmentfault.com/a/1190000018865258" style="box-sizing:border-box;text-decoration:none;color:rgb(33, 37, 41);">interface 作为 struct field，谈谈 Golang 结构体中的匿名接口</a></h1><div style="box-sizing:border-box;display:flex;flex-wrap:wrap;margin-bottom:24px;"><div style="box-sizing:border-box;display:flex;align-items:center;"><div style="box-sizing:border-box;display:flex;align-items:center;"><a href="https://segmentfault.com/u/atwqh" style="box-sizing:border-box;color:rgb(0, 150, 94);text-decoration:none;"><div style="box-sizing:border-box;display:flex;justify-content:center;align-items:center;position:relative;flex-shrink:0;margin-right:8px;border-radius:50%;width:32px;height:32px;"><div class="media-placeholder">[图片/附件]</div></en-media></div></a><div style="box-sizing:border-box;display:flex;flex-direction:column;"><a href="https://segmentfault.com/u/atwqh" style="box-sizing:border-box;color:rgb(0, 150, 94);text-decoration:none;"><div style="box-sizing:border-box;display:flex;"><strong style="box-sizing:border-box;font-weight:bolder;font-size:14px;">无风</strong><ul style="box-sizing:border-box;margin-top:0px;list-style:none;padding-left:0px;margin-bottom:0px;margin-left:4px;"></ul></div></a><a href="https://segmentfault.com/u/atwqh/badges" style="box-sizing:border-box;text-decoration:none;color:rgb(108, 117, 125);"><div style="box-sizing:border-box;color:rgb(108, 117, 125);font-size:14px;"><span title="声望值" style="box-sizing:border-box;margin-right:4px;color:#BF7158;font-weight:bold;">657</span></div></a></div></div><div style="box-sizing:border-box;border-left:1px solid rgb(233, 236, 239);height:42px;margin:0px 1rem;"></div><a href="https://segmentfault.com/a/1190000018865258/revision" style="box-sizing:border-box;text-decoration:none;color:rgb(108, 117, 125);font-size:14px;"><div style="box-sizing:border-box;">发布于</div><div style="box-sizing:border-box;"><span style="box-sizing:border-box;">2019-04-14 </span></div></a></div><div style="box-sizing:border-box;display:flex;flex-direction:column;justify-content:center;font-size:14px;"><div style="box-sizing:border-box;display:flex;align-items:baseline;"></div><div style="box-sizing:border-box;"> </div></div></div><div style="box-sizing:border-box;display:block;"><div style="box-sizing:border-box;position:absolute;left:0px;top:0px;visibility:hidden;"><div class="media-placeholder">[图片/附件]</div></en-media></div>
+</div><div style="box-sizing:border-box;margin-bottom:24px;line-height:1.6;"><p style="box-sizing:border-box;margin-top:0px;margin-bottom:20px;">golang中通过组合(composite)实现类似继承(extends)和重写(override)的功能，大家可能平时用的比较多的是struct中匿名struct的写法，有没有见过struct中匿名接口(anonymous interface)的写法呢？</p><p style="box-sizing:border-box;margin-top:0px;margin-bottom:20px;">Interface这个接口直接作为struct中的一个匿名字段，在标准库sort包中就有这种写法：</p><pre style="box-sizing:border-box;font-family:SFMono-Regular, Menlo, Monaco, Consolas, &quot;Liberation Mono&quot;, &quot;Courier New&quot;, monospace;display:block;font-size:0.875em;position:relative;margin-bottom:20px;padding:16px;max-height:560px;line-height:1.5;color:rgb(36, 41, 46);background:rgb(255, 255, 255);overflow:auto;margin-top:0px;"><span style="box-sizing:border-box;color:rgb(215, 58, 73);">type</span> Interface <span style="box-sizing:border-box;color:rgb(215, 58, 73);">interface</span> {
+    Len() <span style="box-sizing:border-box;color:rgb(215, 58, 73);">int</span>
+    Less(i, j <span style="box-sizing:border-box;color:rgb(215, 58, 73);">int</span>) <span style="box-sizing:border-box;color:rgb(215, 58, 73);">bool</span>
+    Swap(i, j <span style="box-sizing:border-box;color:rgb(215, 58, 73);">int</span>)
+}
+
+<span style="box-sizing:border-box;color:rgb(215, 58, 73);">type</span> reverse <span style="box-sizing:border-box;color:rgb(215, 58, 73);">struct</span> {
+    Interface
+}</pre><p style="box-sizing:border-box;margin-top:0px;margin-bottom:20px;">下面我们来看一个完整的例子，以下代码是从sort包提取出来的：</p><pre style="box-sizing:border-box;font-family:SFMono-Regular, Menlo, Monaco, Consolas, &quot;Liberation Mono&quot;, &quot;Courier New&quot;, monospace;display:block;font-size:0.875em;position:relative;margin-bottom:20px;padding:16px;max-height:560px;line-height:1.5;color:rgb(36, 41, 46);background:rgb(255, 255, 255);overflow:auto;margin-top:0px;"><span style="box-sizing:border-box;color:rgb(215, 58, 73);">package</span> main
+
+<span style="box-sizing:border-box;color:rgb(215, 58, 73);">import</span> (
+    <span style="box-sizing:border-box;color:rgb(3, 47, 98);">&quot;fmt&quot;</span>
+)
+
+<span style="box-sizing:border-box;color:rgb(215, 58, 73);">type</span> Interface <span style="box-sizing:border-box;color:rgb(215, 58, 73);">interface</span> {
+    Len() <span style="box-sizing:border-box;color:rgb(215, 58, 73);">int</span>
+    Less(i, j <span style="box-sizing:border-box;color:rgb(215, 58, 73);">int</span>) <span style="box-sizing:border-box;color:rgb(215, 58, 73);">bool</span>
+    Swap(i, j <span style="box-sizing:border-box;color:rgb(215, 58, 73);">int</span>)
+}
+
+<span style="box-sizing:border-box;color:rgb(106, 115, 125);">// Array 实现Interface接口</span>
+<span style="box-sizing:border-box;color:rgb(215, 58, 73);">type</span> Array []<span style="box-sizing:border-box;color:rgb(215, 58, 73);">int</span>
+
+<span style="box-sizing:border-box;"><span style="box-sizing:border-box;color:rgb(215, 58, 73);">func</span> <span style="box-sizing:border-box;">(arr Array)</span></span> Len() <span style="box-sizing:border-box;color:rgb(215, 58, 73);">int</span> {
+    <span style="box-sizing:border-box;color:rgb(215, 58, 73);">return</span> <span style="box-sizing:border-box;color:rgb(227, 98, 9);">len</span>(arr)
+}
+
+<span style="box-sizing:border-box;"><span style="box-sizing:border-box;color:rgb(215, 58, 73);">func</span> <span style="box-sizing:border-box;">(arr Array)</span></span> Less(i, j <span style="box-sizing:border-box;color:rgb(215, 58, 73);">int</span>) <span style="box-sizing:border-box;color:rgb(215, 58, 73);">bool</span> {
+    <span style="box-sizing:border-box;color:rgb(215, 58, 73);">return</span> arr[i] &lt; arr[j]
+}
+
+<span style="box-sizing:border-box;"><span style="box-sizing:border-box;color:rgb(215, 58, 73);">func</span> <span style="box-sizing:border-box;">(arr Array)</span></span> Swap(i, j <span style="box-sizing:border-box;color:rgb(215, 58, 73);">int</span>) {
+    arr[i], arr[j] = arr[j], arr[i]
+}
+
+<span style="box-sizing:border-box;color:rgb(106, 115, 125);">// 匿名接口(anonymous interface)</span>
+<span style="box-sizing:border-box;color:rgb(215, 58, 73);">type</span> reverse <span style="box-sizing:border-box;color:rgb(215, 58, 73);">struct</span> {
+    Interface
+}
+
+<span style="box-sizing:border-box;color:rgb(106, 115, 125);">// 重写(override)</span>
+<span style="box-sizing:border-box;"><span style="box-sizing:border-box;color:rgb(215, 58, 73);">func</span> <span style="box-sizing:border-box;">(r reverse)</span></span> Less(i, j <span style="box-sizing:border-box;color:rgb(215, 58, 73);">int</span>) <span style="box-sizing:border-box;color:rgb(215, 58, 73);">bool</span> {
+    <span style="box-sizing:border-box;color:rgb(215, 58, 73);">return</span> r.Interface.Less(j, i)
+}
+
+<span style="box-sizing:border-box;color:rgb(106, 115, 125);">// 构造reverse Interface</span>
+<span style="box-sizing:border-box;"><span style="box-sizing:border-box;color:rgb(215, 58, 73);">func</span> <span style="box-sizing:border-box;color:rgb(111, 66, 193);">Reverse</span><span style="box-sizing:border-box;">(data Interface)</span></span> Interface {
+    <span style="box-sizing:border-box;color:rgb(215, 58, 73);">return</span> &amp;reverse{data}
+}
+
+<span style="box-sizing:border-box;"><span style="box-sizing:border-box;color:rgb(215, 58, 73);">func</span> <span style="box-sizing:border-box;color:rgb(111, 66, 193);">main</span><span style="box-sizing:border-box;">()</span></span> {
+    arr := Array{<span style="box-sizing:border-box;color:rgb(0, 92, 197);">1</span>, <span style="box-sizing:border-box;color:rgb(0, 92, 197);">2</span>, <span style="box-sizing:border-box;color:rgb(0, 92, 197);">3</span>}
+    rarr := Reverse(arr)
+    fmt.Println(arr.Less(<span style="box-sizing:border-box;color:rgb(0, 92, 197);">0</span>,<span style="box-sizing:border-box;color:rgb(0, 92, 197);">1</span>))
+    fmt.Println(rarr.Less(<span style="box-sizing:border-box;color:rgb(0, 92, 197);">0</span>,<span style="box-sizing:border-box;color:rgb(0, 92, 197);">1</span>))
+}
+</pre><p style="box-sizing:border-box;margin-top:0px;margin-bottom:20px;">sort包中这么写的目的是为了重写Interface的Less方法，并有效利用了原始的Less方法；通过Reverse可以从Interface构造出一个反向的Interface。go语言利用组合的特性，寥寥几行代码就实现了重写。</p><p style="box-sizing:border-box;margin-top:0px;margin-bottom:20px;">对比一下传统的组合匿名结构体实现重写的写法，或许可以更好的帮助我们了解匿名接口的优点：</p><pre style="box-sizing:border-box;font-family:SFMono-Regular, Menlo, Monaco, Consolas, &quot;Liberation Mono&quot;, &quot;Courier New&quot;, monospace;display:block;font-size:0.875em;position:relative;margin-bottom:20px;padding:16px;max-height:560px;line-height:1.5;color:rgb(36, 41, 46);background:rgb(255, 255, 255);overflow:auto;margin-top:0px;"><span style="box-sizing:border-box;color:rgb(215, 58, 73);">package</span> main
+
+<span style="box-sizing:border-box;color:rgb(215, 58, 73);">import</span> (
+    <span style="box-sizing:border-box;color:rgb(3, 47, 98);">&quot;fmt&quot;</span>
+)
+
+<span style="box-sizing:border-box;color:rgb(215, 58, 73);">type</span> Interface <span style="box-sizing:border-box;color:rgb(215, 58, 73);">interface</span> {
+    Len() <span style="box-sizing:border-box;color:rgb(215, 58, 73);">int</span>
+    Less(i, j <span style="box-sizing:border-box;color:rgb(215, 58, 73);">int</span>) <span style="box-sizing:border-box;color:rgb(215, 58, 73);">bool</span>
+    Swap(i, j <span style="box-sizing:border-box;color:rgb(215, 58, 73);">int</span>)
+}
+
+<span style="box-sizing:border-box;color:rgb(215, 58, 73);">type</span> Array []<span style="box-sizing:border-box;color:rgb(215, 58, 73);">int</span>
+
+<span style="box-sizing:border-box;"><span style="box-sizing:border-box;color:rgb(215, 58, 73);">func</span> <span style="box-sizing:border-box;">(arr Array)</span></span> Len() <span style="box-sizing:border-box;color:rgb(215, 58, 73);">int</span> {
+    <span style="box-sizing:border-box;color:rgb(215, 58, 73);">return</span> <span style="box-sizing:border-box;color:rgb(227, 98, 9);">len</span>(arr)
+}
+
+<span style="box-sizing:border-box;"><span style="box-sizing:border-box;color:rgb(215, 58, 73);">func</span> <span style="box-sizing:border-box;">(arr Array)</span></span> Less(i, j <span style="box-sizing:border-box;color:rgb(215, 58, 73);">int</span>) <span style="box-sizing:border-box;color:rgb(215, 58, 73);">bool</span> {
+    <span style="box-sizing:border-box;color:rgb(215, 58, 73);">return</span> arr[i] &lt; arr[j]
+}
+
+<span style="box-sizing:border-box;"><span style="box-sizing:border-box;color:rgb(215, 58, 73);">func</span> <span style="box-sizing:border-box;">(arr Array)</span></span> Swap(i, j <span style="box-sizing:border-box;color:rgb(215, 58, 73);">int</span>) {
+    arr[i], arr[j] = arr[j], arr[i]
+}
+
+<span style="box-sizing:border-box;color:rgb(106, 115, 125);">// 匿名struct</span>
+<span style="box-sizing:border-box;color:rgb(215, 58, 73);">type</span> reverse <span style="box-sizing:border-box;color:rgb(215, 58, 73);">struct</span> {
+    Array
+}
+
+<span style="box-sizing:border-box;color:rgb(106, 115, 125);">// 重写</span>
+<span style="box-sizing:border-box;"><span style="box-sizing:border-box;color:rgb(215, 58, 73);">func</span> <span style="box-sizing:border-box;">(r reverse)</span></span> Less(i, j <span style="box-sizing:border-box;color:rgb(215, 58, 73);">int</span>) <span style="box-sizing:border-box;color:rgb(215, 58, 73);">bool</span> {
+    <span style="box-sizing:border-box;color:rgb(215, 58, 73);">return</span> r.Array.Less(j, i)
+}
+
+<span style="box-sizing:border-box;color:rgb(106, 115, 125);">// 构造reverse Interface</span>
+<span style="box-sizing:border-box;"><span style="box-sizing:border-box;color:rgb(215, 58, 73);">func</span> <span style="box-sizing:border-box;color:rgb(111, 66, 193);">Reverse</span><span style="box-sizing:border-box;">(data Array)</span></span> Interface {
+    <span style="box-sizing:border-box;color:rgb(215, 58, 73);">return</span> &amp;reverse{data}
+}
+
+<span style="box-sizing:border-box;"><span style="box-sizing:border-box;color:rgb(215, 58, 73);">func</span> <span style="box-sizing:border-box;color:rgb(111, 66, 193);">main</span><span style="box-sizing:border-box;">()</span></span> {
+    arr := Array{<span style="box-sizing:border-box;color:rgb(0, 92, 197);">1</span>, <span style="box-sizing:border-box;color:rgb(0, 92, 197);">2</span>, <span style="box-sizing:border-box;color:rgb(0, 92, 197);">3</span>}
+    rarr := Reverse(arr)
+    fmt.Println(arr.Less(<span style="box-sizing:border-box;color:rgb(0, 92, 197);">0</span>, <span style="box-sizing:border-box;color:rgb(0, 92, 197);">1</span>))
+    fmt.Println(rarr.Less(<span style="box-sizing:border-box;color:rgb(0, 92, 197);">0</span>, <span style="box-sizing:border-box;color:rgb(0, 92, 197);">1</span>))
+}
+</pre><p style="box-sizing:border-box;margin-top:0px;margin-bottom:20px;">上面这个例子使用了匿名结构体的写法，和之前匿名接口的写法实现了同样的重写功能，甚至非常相似。但是仔细对比一下你就会发现匿名接口的优点，<strong style="box-sizing:border-box;font-weight:bolder;">匿名接口的方式不依赖具体实现，可以对任意实现了该接口的类型进行重写</strong>。这在写一些公共库时会非常有用，如果你经常看一些库的源码，匿名接口的写法应该会很眼熟。</p><p style="box-sizing:border-box;margin-top:0px;margin-bottom:20px;">匿名接口还有一个作用就是对<strong style="box-sizing:border-box;font-weight:bolder;">结构体添加一些约束</strong>，必须使用实现了该接口的类型来构造实例。结构体中可以包含一些其他的字段，而interface只有方法，没有field。</p><pre style="box-sizing:border-box;font-family:SFMono-Regular, Menlo, Monaco, Consolas, &quot;Liberation Mono&quot;, &quot;Courier New&quot;, monospace;display:block;font-size:0.875em;position:relative;margin-bottom:20px;padding:16px;max-height:560px;line-height:1.5;color:rgb(36, 41, 46);background:rgb(255, 255, 255);overflow:auto;margin-top:0px;">package <span style="box-sizing:border-box;color:rgb(34, 134, 58);">main</span>
+
+import (
+    <span style="box-sizing:border-box;color:rgb(3, 47, 98);">&quot;fmt&quot;</span>
+    <span style="box-sizing:border-box;color:rgb(3, 47, 98);">&quot;reflect&quot;</span>
+    <span style="box-sizing:border-box;color:rgb(3, 47, 98);">&quot;sort&quot;</span>
+)
+
+type Array1 <span style="box-sizing:border-box;color:rgb(0, 92, 197);">[]</span>int
+
+func (arr Array1) <span style="box-sizing:border-box;color:rgb(227, 98, 9);">Len</span>() int {
+    return <span style="box-sizing:border-box;color:rgb(227, 98, 9);">len</span>(arr)
+}
+
+func (arr Array1) <span style="box-sizing:border-box;color:rgb(227, 98, 9);">Less</span>(<span style="box-sizing:border-box;color:rgb(34, 134, 58);">i</span>, j int) bool {
+    return arr<span style="box-sizing:border-box;color:rgb(0, 92, 197);">[i]</span> &lt; arr<span style="box-sizing:border-box;color:rgb(0, 92, 197);">[j]</span>
+}
+
+func (arr Array1) <span style="box-sizing:border-box;color:rgb(227, 98, 9);">Swap</span>(<span style="box-sizing:border-box;color:rgb(34, 134, 58);">i</span>, j int) {
+    arr<span style="box-sizing:border-box;color:rgb(0, 92, 197);">[i]</span>, arr<span style="box-sizing:border-box;color:rgb(0, 92, 197);">[j]</span> = arr<span style="box-sizing:border-box;color:rgb(0, 92, 197);">[j]</span>, arr<span style="box-sizing:border-box;color:rgb(0, 92, 197);">[i]</span>
+}
+
+type Array2 <span style="box-sizing:border-box;color:rgb(0, 92, 197);">[]</span>int
+
+func (arr Array2) <span style="box-sizing:border-box;color:rgb(227, 98, 9);">Len</span>() int {
+    return <span style="box-sizing:border-box;color:rgb(227, 98, 9);">len</span>(arr)
+}
+
+func (arr Array2) <span style="box-sizing:border-box;color:rgb(227, 98, 9);">Less</span>(<span style="box-sizing:border-box;color:rgb(34, 134, 58);">i</span>, j int) bool {
+    return arr<span style="box-sizing:border-box;color:rgb(0, 92, 197);">[i]</span> &lt; arr<span style="box-sizing:border-box;color:rgb(0, 92, 197);">[j]</span>
+}
+
+func (arr Array2) <span style="box-sizing:border-box;color:rgb(227, 98, 9);">Swap</span>(<span style="box-sizing:border-box;color:rgb(34, 134, 58);">i</span>, j int) {
+    arr<span style="box-sizing:border-box;color:rgb(0, 92, 197);">[i]</span>, arr<span style="box-sizing:border-box;color:rgb(0, 92, 197);">[j]</span> = arr<span style="box-sizing:border-box;color:rgb(0, 92, 197);">[j]</span>, arr<span style="box-sizing:border-box;color:rgb(0, 92, 197);">[i]</span>
+}
+
+type Sortable struct {
+    sort<span style="box-sizing:border-box;color:rgb(0, 92, 197);">.Interface</span>
+    <span style="box-sizing:border-box;color:rgb(106, 115, 125);">// other field</span>
+    Type string
+}
+
+func <span style="box-sizing:border-box;color:rgb(227, 98, 9);">NewSortable</span>(<span style="box-sizing:border-box;color:rgb(34, 134, 58);">i</span> sort.Interface) Sortable {
+    t := reflect<span style="box-sizing:border-box;color:rgb(0, 92, 197);">.TypeOf</span>(i)<span style="box-sizing:border-box;color:rgb(0, 92, 197);">.String</span>()
+
+    return Sortable{
+        Interface: <span style="box-sizing:border-box;color:rgb(34, 134, 58);">i</span>,
+        Type:      t,
+    }
+}
+
+func <span style="box-sizing:border-box;color:rgb(227, 98, 9);">DoSomething</span>(s Sortable) {
+    fmt<span style="box-sizing:border-box;color:rgb(0, 92, 197);">.Println</span>(s.Type)
+    fmt<span style="box-sizing:border-box;color:rgb(0, 92, 197);">.Println</span>(s<span style="box-sizing:border-box;color:rgb(0, 92, 197);">.Len</span>())
+    fmt<span style="box-sizing:border-box;color:rgb(0, 92, 197);">.Println</span>(s<span style="box-sizing:border-box;color:rgb(0, 92, 197);">.Less</span>(<span style="box-sizing:border-box;color:rgb(0, 92, 197);">0</span>, <span style="box-sizing:border-box;color:rgb(0, 92, 197);">1</span>))
+}
+
+func <span style="box-sizing:border-box;color:rgb(34, 134, 58);">main</span>() {
+    arr1 := Array1{<span style="box-sizing:border-box;color:rgb(0, 92, 197);">1</span>, <span style="box-sizing:border-box;color:rgb(0, 92, 197);">2</span>, <span style="box-sizing:border-box;color:rgb(0, 92, 197);">3</span>}
+    arr2 := Array2{<span style="box-sizing:border-box;color:rgb(0, 92, 197);">3</span>, <span style="box-sizing:border-box;color:rgb(0, 92, 197);">2</span>, <span style="box-sizing:border-box;color:rgb(0, 92, 197);">1</span>, <span style="box-sizing:border-box;color:rgb(0, 92, 197);">0</span>}
+
+    <span style="box-sizing:border-box;color:rgb(227, 98, 9);">DoSomething</span>(<span style="box-sizing:border-box;color:rgb(227, 98, 9);">NewSortable</span>(arr1))
+    <span style="box-sizing:border-box;color:rgb(227, 98, 9);">DoSomething</span>(<span style="box-sizing:border-box;color:rgb(227, 98, 9);">NewSortable</span>(arr2))
+}
+</pre></div><div style="box-sizing:border-box;display:flex;flex-wrap:wrap;align-items:center;"><div style="box-sizing:border-box;display:flex;flex-wrap:wrap;align-items:center;margin:-0.25rem;"><a href="https://segmentfault.com/t/go" style="box-sizing:border-box;color:rgb(0, 150, 94);text-decoration:none;display:inline-block;font-size:14px;padding:0px 0.375rem;height:24px;line-height:24px;border-radius:3px;background-color:rgba(0, 150, 94, 0.1);margin:4px;">go</a><a href="https://segmentfault.com/t/%E5%90%8E%E7%AB%AF" style="box-sizing:border-box;color:rgb(0, 150, 94);text-decoration:none;display:inline-block;font-size:14px;padding:0px 0.375rem;height:24px;line-height:24px;border-radius:3px;background-color:rgba(0, 150, 94, 0.1);margin:4px;">后端</a></div></div><div style="box-sizing:border-box;margin-top:24px;margin-bottom:24px;"><div style="box-sizing:border-box;display:block;"><div style="box-sizing:border-box;position:absolute;left:0px;top:0px;visibility:hidden;"><div class="media-placeholder">[图片/附件]</div></en-media></div>
+</div></div><div style="box-sizing:border-box;display:flex;flex-wrap:wrap;justify-content:space-between;margin-top:16px;margin-bottom:48px;color:rgb(108, 117, 125);font-size:14px;"><div style="box-sizing:border-box;"><span style="box-sizing:border-box;">阅读 10.3k</span><span style="box-sizing:border-box;margin-left:4px;margin-right:4px;"><span style="color:rgb(206, 212, 218);">•</span></span><a href="https://segmentfault.com/a/1190000018865258/revision" style="box-sizing:border-box;text-decoration:none;color:rgb(108, 117, 125);"><span style="box-sizing:border-box;">更新于 2021-03-08 </span></a></div><div style="box-sizing:border-box;text-align:right;"><div style="box-sizing:border-box;"></div></div></div><div style="box-sizing:border-box;text-align:center;"><div style="box-sizing:border-box;position:relative;display:inline-flex;vertical-align:middle;border-radius:6px;align-items:center;"><div style="box-sizing:border-box;position:relative;margin-left:-2px;"><a style="box-sizing:border-box;font-family:system-ui, -apple-system, &quot;Segoe UI&quot;, Roboto, &quot;Helvetica Neue&quot;, &quot;Noto Sans&quot;, &quot;Liberation Sans&quot;, Arial, sans-serif, &quot;Apple Color Emoji&quot;, &quot;Segoe UI Emoji&quot;, &quot;Segoe UI Symbol&quot;, &quot;Noto Color Emoji&quot;;font-size:16px;font-weight:400;line-height:24px;text-align:center;vertical-align:middle;cursor:pointer;user-select:none;border:1px solid rgba(0, 0, 0, 0);border-radius:6px;background-color:rgba(0, 0, 0, 0);transition:color 0.15s ease-in-out 0s, background-color 0.15s ease-in-out 0s, border-color 0.15s ease-in-out 0s, box-shadow 0.15s ease-in-out 0s;color:rgb(33, 37, 41);text-decoration:none;white-space:nowrap;padding:0px;display:flex;justify-content:center;align-items:center;"></a></div></div></div><div style="box-sizing:border-box;margin-top:16px;margin-bottom:48px;text-align:center;color:rgb(108, 117, 125);font-size:14px;"><span style="box-sizing:border-box;">本作品系原创，</span><a target="_blank" href="https://creativecommons.org/licenses/by-nc-nd/4.0/" style="box-sizing:border-box;text-decoration:none;color:rgb(108, 117, 125);">采用《署名-非商业性使用-禁止演绎 4.0 国际》许可协议</a></div><hr style="box-sizing:border-box;margin:1rem 0px;color:inherit;border-width:1px 0px 0px;border-right-style:initial;border-bottom-style:initial;border-left-style:initial;border-right-color:initial;border-bottom-color:initial;border-left-color:initial;border-image:initial;border-top-style:solid;border-top-color:rgba(0, 0, 0, 0.05);opacity:0.25;margin-bottom:0px;background-color:rgba(0, 0, 0, 0.5);"/><div style="box-sizing:border-box;display:flex;flex-wrap:wrap;margin-top:0px;margin-right:-12px;margin-left:-12px;align-items:center;padding-top:24px;"><div style="box-sizing:border-box;flex-shrink:0;max-width:100%;padding-right:12px;padding-left:12px;margin-top:0px;width:100%;flex:1 0 0%;min-width:0px;display:flex;align-items:center;"><a href="https://segmentfault.com/blog/atwqh" style="box-sizing:border-box;color:rgb(0, 150, 94);text-decoration:none;"><div class="media-placeholder">[图片/附件]</div></en-media></a><div style="box-sizing:border-box;width:100%;"><a href="https://segmentfault.com/blog/atwqh" style="box-sizing:border-box;text-decoration:none;color:rgb(33, 37, 41);"><h5 style="box-sizing:border-box;margin-top:0px;line-height:1.2;font-size:20px;font-weight:500;margin-bottom:0px;">无风的内存空间</h5></a><div style="box-sizing:border-box;display:-webkit-box;overflow:hidden;-webkit-box-orient:vertical;-webkit-line-clamp:1;margin-top:8px;color:rgb(108, 117, 125);">编程相关，随手记下</div></div></div><div style="box-sizing:border-box;flex-shrink:0;max-width:100%;padding-right:12px;padding-left:12px;flex:0 0 auto;width:120px;margin-top:0px;"><div style="box-sizing:border-box;display:grid;"></div></div></div></div></div></div></div></div></div></div></div></div>
+</div>
+</div>
+<a class="back-link" href="../articles.html">← 返回笔记列表</a>
+</body>
+</html>

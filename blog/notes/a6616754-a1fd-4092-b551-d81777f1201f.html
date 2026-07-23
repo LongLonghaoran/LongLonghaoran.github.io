@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="zh-CN" data-theme="light">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Unix环境编程学习笔记 — 技术笔记</title>
+<style>
+:root {
+  --bg: #ffffff;
+  --text: #1a1a1a;
+  --muted: #666;
+  --border: #e0e0e0;
+  --code-bg: #f5f5f5;
+  --link: #0066cc;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #1a1a1a;
+    --text: #e0e0e0;
+    --muted: #999;
+    --border: #333;
+    --code-bg: #2a2a2a;
+    --link: #66bbff;
+  }
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  line-height: 1.7;
+  color: var(--text);
+  background: var(--bg);
+  max-width: 860px;
+  margin: 0 auto;
+  padding: 2rem 1.5rem;
+}
+.note-header {
+  border-bottom: 2px solid var(--border);
+  padding-bottom: 1rem;
+  margin-bottom: 2rem;
+}
+.note-title {
+  font-size: 1.6rem;
+  font-weight: 700;
+  margin-bottom: 0.3rem;
+}
+.note-meta {
+  color: var(--muted);
+  font-size: 0.85rem;
+}
+.note-content {
+  font-size: 0.95rem;
+}
+.note-content h1 { font-size: 1.4rem; margin: 1.2rem 0 0.6rem; }
+.note-content h2 { font-size: 1.2rem; margin: 1rem 0 0.5rem; }
+.note-content h3 { font-size: 1.05rem; margin: 0.8rem 0 0.4rem; }
+.note-content p { margin: 0.5rem 0; }
+.note-content ul, .note-content ol { margin: 0.5rem 0 0.5rem 2rem; }
+.note-content li { margin: 0.2rem 0; }
+.note-content pre {
+  background: var(--code-bg);
+  padding: 1rem;
+  border-radius: 6px;
+  overflow-x: auto;
+  margin: 0.8rem 0;
+  font-size: 0.85rem;
+}
+.note-content code {
+  background: var(--code-bg);
+  padding: 0.1rem 0.3rem;
+  border-radius: 3px;
+  font-size: 0.88em;
+}
+.note-content pre code {
+  background: none;
+  padding: 0;
+}
+.note-content blockquote {
+  border-left: 3px solid var(--border);
+  padding-left: 1rem;
+  color: var(--muted);
+  margin: 0.8rem 0;
+}
+.note-content a { color: var(--link); }
+.note-content img {
+  max-width: 100%;
+  height: auto;
+  border-radius: 6px;
+  margin: 0.5rem 0;
+}
+.note-content table {
+  border-collapse: collapse;
+  width: 100%;
+  margin: 0.8rem 0;
+}
+.note-content th, .note-content td {
+  border: 1px solid var(--border);
+  padding: 0.5rem;
+}
+.note-content th { background: var(--code-bg); }
+.media-placeholder {
+  background: var(--code-bg);
+  padding: 1rem;
+  text-align: center;
+  color: var(--muted);
+  border-radius: 6px;
+  margin: 0.5rem 0;
+  font-size: 0.85rem;
+}
+.encrypt-placeholder {
+  background: #fff3cd;
+  padding: 0.5rem;
+  text-align: center;
+  color: #856404;
+  border-radius: 6px;
+  margin: 0.5rem 0;
+  font-size: 0.85rem;
+}
+.back-link {
+  display: inline-block;
+  margin-top: 2rem;
+  color: var(--link);
+  text-decoration: none;
+  font-size: 0.85rem;
+}
+</style>
+</head>
+<body>
+<div class="note-header">
+  <div class="note-title">Unix环境编程学习笔记</div>
+  <div class="note-meta">笔记本：Linux</div>
+</div>
+<div class="note-content">
+<div>前言:</div><div>macOS是经过OpenGroup认证的Unix系统，该认证叫做 Single Unix Specification(SUS)</div><div>而Linux只算是 类unix系统</div><div>SVRx表示的是System V Release x的意思</div><div>Unix体系和linux体系是两套分支，严格来说这两套分支并没有直接联系，只能说linux是仿照了unix系统标准开发起来的</div><div>第一章: </div><div>myls代码:</div><div>问题1:由于closedir写在循环中导致段错误</div><div>问题2:编译时使用-g选项，之后使用lldb调试可以看到具体的代码行号</div><div>问题3:errno是怎么设置的？</div><div>errno是一个单线程中的全局变量，系统调用出错时自行设置,不会清零，应该在函数返回错误时才检查errno</div><div><span style="background-color: rgb(255, 255, 255);"><font style="font-size: 14px;"><span style="box-sizing: border-box; white-space: pre-wrap; word-break: break-word; letter-spacing: 0.064px; orphans: 2; text-indent: 0px; text-transform: none; widows: 2; word-spacing: 0px; -webkit-text-stroke-width: 0px; font-size: 14px; background-color: rgb(255, 255, 255); color: rgb(44, 44, 54); font-variant-caps: normal; font-variant-ligatures: normal;-en-paragraph:true;">问题4:当系统调用出错时，程序</span><span style="box-sizing: border-box; white-space: pre-wrap; word-break: break-word; letter-spacing: 0.064px; orphans: 2; text-indent: 0px; text-transform: none; widows: 2; word-spacing: 0px; -webkit-text-stroke-width: 0px; background-color: rgb(255, 255, 255); font-size: 14px; color: rgb(44, 44, 54); font-variant-caps: normal; font-variant-ligatures: normal;-en-paragraph:true;">不会自动终止</span><span style="box-sizing: border-box; white-space: pre-wrap; word-break: break-word; letter-spacing: 0.064px; orphans: 2; text-indent: 0px; text-transform: none; widows: 2; word-spacing: 0px; -webkit-text-stroke-width: 0px; background-color: rgb(255, 255, 255); font-size: 14px; color: rgb(44, 44, 54); font-variant-caps: normal; font-variant-ligatures: normal;-en-paragraph:true;">。相反，它会设置全局变量 </span><span style="box-sizing: border-box; white-space: break-spaces; word-break: break-word; letter-spacing: 0.064px; orphans: 2; text-indent: 0px; text-transform: none; widows: 2; word-spacing: 0px; -webkit-text-stroke-width: 0px; background-color: rgba(175, 184, 193, 0.2); border-radius: 6px; font-size: 14px; color: rgb(44, 44, 54); font-variant-caps: normal; font-variant-ligatures: normal;-en-paragraph:true;">errno</span><span style="box-sizing: border-box; white-space: pre-wrap; word-break: break-word; letter-spacing: 0.064px; orphans: 2; text-indent: 0px; text-transform: none; widows: 2; word-spacing: 0px; -webkit-text-stroke-width: 0px; background-color: rgb(255, 255, 255); font-size: 14px; color: rgb(44, 44, 54); font-variant-caps: normal; font-variant-ligatures: normal;-en-paragraph:true;"> 来指示具体的错误类型，并返回一个特定的错误值（如 </span><span style="box-sizing: border-box; white-space: break-spaces; word-break: break-word; letter-spacing: 0.064px; orphans: 2; text-indent: 0px; text-transform: none; widows: 2; word-spacing: 0px; -webkit-text-stroke-width: 0px; background-color: rgba(175, 184, 193, 0.2); border-radius: 6px; font-size: 14px; color: rgb(44, 44, 54); font-variant-caps: normal; font-variant-ligatures: normal;-en-paragraph:true;">-1</span><span style="box-sizing: border-box; white-space: pre-wrap; word-break: break-word; letter-spacing: 0.064px; orphans: 2; text-indent: 0px; text-transform: none; widows: 2; word-spacing: 0px; -webkit-text-stroke-width: 0px; background-color: rgb(255, 255, 255); font-size: 14px; color: rgb(44, 44, 54); font-variant-caps: normal; font-variant-ligatures: normal;-en-paragraph:true;"> 或 </span><span style="box-sizing: border-box; white-space: break-spaces; word-break: break-word; letter-spacing: 0.064px; orphans: 2; text-indent: 0px; text-transform: none; widows: 2; word-spacing: 0px; -webkit-text-stroke-width: 0px; background-color: rgba(175, 184, 193, 0.2); border-radius: 6px; font-size: 14px; color: rgb(44, 44, 54); font-variant-caps: normal; font-variant-ligatures: normal;-en-paragraph:true;">NULL</span><span style="box-sizing: border-box; white-space: pre-wrap; word-break: break-word; letter-spacing: 0.064px; orphans: 2; text-indent: 0px; text-transform: none; widows: 2; word-spacing: 0px; -webkit-text-stroke-width: 0px; background-color: rgb(255, 255, 255); font-size: 14px; color: rgb(44, 44, 54); font-variant-caps: normal; font-variant-ligatures: normal;-en-paragraph:true;">）。程序员需要检查这些返回值并根据需要进行错误处理。
+</span></font></span></div><div><span style="background-color: rgb(255, 255, 255);"><font style="font-size: 14px;"><span style="box-sizing: border-box; white-space: pre-wrap; word-break: break-word; letter-spacing: 0.064px; orphans: 2; text-indent: 0px; text-transform: none; widows: 2; word-spacing: 0px; -webkit-text-stroke-width: 0px; font-size: 14px; background-color: rgb(255, 255, 255); color: rgb(44, 44, 54); font-variant-caps: normal; font-variant-ligatures: normal;-en-paragraph:true;">问题5:read和write是不带缓冲的I/O函数,putc getc是带缓冲的I/O函数,这里所谓的不带缓冲严格意义上是说不带用户态的缓冲（比如没有一个叫做buf[]的数组用于暂存），至于内核中是否还有页缓存与这里无关</span></font></span></div><div>第二章: Unix标准化</div><div>ISO C标准，是C语言的标准，Unix标准经历了Posix、SUS，以及扩展的可选实现XSI</div><div>Unix的实现: SVR4(AT&amp;T实验室的产品), 4.4BSD(加州大学伯克利分校)</div><div>    MacOSX(基于FreeBSD),Solaris(基于SVR4)</div><div>    linux，其实并非Unix系统，只能算是类Unix系统，因为linux内核并没有申请unix认证</div><div>通过sysconf,pathconf, fpathconf可以获得系统的运行时限制:</div><div>以_SC_开头的常量用于表示运行时限制的sysconf参数,</div><div>以_PC_开头的常量用于标识运行时限制的pathconf和fpathconf参数</div><div>第三章：文件I/O</div><div>1.表示文件的三大数据结构：文件描述符表&amp;&amp;项、文件表、vNode/iNode</div><div><div class="media-placeholder">[图片/附件]</div><br /></div><div>第四章：文件和目录(stat)</div><div>文件类型:</div><div>stat,fstat,lstat,fstatat</div><div><div class="media-placeholder">[图片/附件]</div><br /></div><div>普通文件、目录、块特殊文件、字符特殊文件、FIFO、套接字、符号链接</div><div>系统中所有设备文件要么是块特殊文件要么是字符特殊文件</div><div>SBIT粘着位:S_ISVTX被称为粘着位，如果一个可执行程序文件的这一位被设置，那么当该程序第一次被执行，在其终止时，程序正文部分的一个副本仍被保存在交换区（程序的正文部分是机器指令）这使得下次执行该程序时能较快地将其装载入内存。其原因是：通常的UNIX文件系统中，文件的各数据块很可能是随机存放的，如果对一个目录设置了粘着位，只有对该目录具有写权限的用户并且满足以下条件之一，才能删除或重命名该目录下的文件：拥有该文件、拥有此目录、是超级用户，最后一位是t说明是粘着位</div><div><div class="media-placeholder">[图片/附件]</div><br /></div><div>函数chown,fchown,fchownat,lchown: 用于更改用户ID和组ID</div><div><div class="media-placeholder">[图片/附件]</div><br /></div><div>如果owner或者group是-1，则对应的ID不发生改变</div><div><div class="media-placeholder">[图片/附件]</div><br /></div><div>人话:当_POSIX_CHOWN_RESTRICTED生效时,如果该文件是你的，用户ID和你一样，那么你可以改组ID</div><div>文件截断: ftruncate, truncate</div><div>文件长度:st_size字段，普通文件长度，符号链接长度是链接的路径长度、目录长度</div><div>文件系统:</div><div>了解inode:硬链接目录项中记录的是inode编号，inode上有记录链接数即链接到该i node的数量，软链接目录项中记录的是所指向的文件的名字(路径)</div><div>一个目录下每多一个子目录都会使得该目录的链接数加1</div><div>函数link,linkat,unlink,unlinkat,remove</div><div>只有当链接计数为0时文件才可被删除</div><div>link函数只能创建符号链接，创建符号链接要使用symlink函数</div><div><br /></div><div>设备特殊文件:</div><div><br /></div><div>继续多看看read write open</div><div><br /></div><div>第五章：</div><div><span><span><span>待看，看了下习题</span></span></span></div><div>第六章: 系统数据文件和信息</div><div>口令文件: </div><div><div class="media-placeholder">[图片/附件]</div></div><div>比如 root::0:0:root:/root:/bin/bash</div><div>shell字段:改为/dev/null阻止任何人以该用户登陆</div><div><br /></div><div><br /></div>
+</div>
+<a class="back-link" href="../articles.html">← 返回笔记列表</a>
+</body>
+</html>

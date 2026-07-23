@@ -1,0 +1,1063 @@
+<!DOCTYPE html>
+<html lang="zh-CN" data-theme="light">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Review UI — 技术笔记</title>
+<style>
+:root { --bg:#fff; --text:#1a1a1a; --muted:#666; --border:#e0e0e0; --code-bg:#f5f5f5; --link:#0066cc; }
+@media (prefers-color-scheme: dark) { :root { --bg:#1a1a1a; --text:#e0e0e0; --muted:#999; --border:#333; --code-bg:#2a2a2a; --link:#66bbff; } }
+* { box-sizing:border-box; margin:0; padding:0; }
+body { font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Arial,sans-serif; line-height:1.7; color:var(--text); background:var(--bg); max-width:860px; margin:0 auto; padding:2rem 1.5rem; }
+.note-header { border-bottom:2px solid var(--border); padding-bottom:1rem; margin-bottom:2rem; }
+.note-title { font-size:1.6rem; font-weight:700; margin-bottom:0.3rem; }
+.note-meta { color:var(--muted); font-size:0.85rem; }
+.note-content { font-size:0.95rem; }
+.note-content h1 { font-size:1.4rem; margin:1.2rem 0 0.6rem; }
+.note-content h2 { font-size:1.2rem; margin:1rem 0 0.5rem; }
+.note-content h3 { font-size:1.05rem; margin:0.8rem 0 0.4rem; }
+.note-content p { margin:0.5rem 0; }
+.note-content ul,.note-content ol { margin:0.5rem 0 0.5rem 2rem; }
+.note-content li { margin:0.2rem 0; }
+.note-content pre { background:var(--code-bg); padding:1rem; border-radius:6px; overflow-x:auto; margin:0.8rem 0; font-size:0.85rem; }
+.note-content code { background:var(--code-bg); padding:0.1rem 0.3rem; border-radius:3px; font-size:0.88em; }
+.note-content pre code { background:none; padding:0; }
+.note-content blockquote { border-left:3px solid var(--border); padding-left:1rem; color:var(--muted); margin:0.8rem 0; }
+.note-content a { color:var(--link); }
+.note-content img { max-width:100%; height:auto; border-radius:6px; margin:0.5rem 0; }
+.note-content table { border-collapse:collapse; width:100%; margin:0.8rem 0; }
+.note-content th,.note-content td { border:1px solid var(--border); padding:0.5rem; }
+.note-content th { background:var(--code-bg); }
+.media-placeholder { background:var(--code-bg); padding:1rem; text-align:center; color:var(--muted); border-radius:6px; margin:0.5rem 0; font-size:0.85rem; }
+.encrypt-placeholder { background:#fff3cd; padding:0.5rem; text-align:center; color:#856404; border-radius:6px; margin:0.5rem 0; font-size:0.85rem; }
+.back-link { display:inline-block; margin-top:2rem; color:var(--link); text-decoration:none; font-size:0.85rem; }
+</style>
+</head>
+<body>
+<div class="note-header"><div class="note-title">Review UI</div><div class="note-meta">笔记本：git&amp;gerrit</div></div>
+<div class="note-content"><div style="--en-clipped-content:article"><div style="font-size: 16px; display:block; min-width: 100%; position: relative;"> <div style="font-family:sans-serif;text-size-adjust:100%;box-sizing:border-box;font-size:100%;"><div style="box-sizing:border-box;font-size:100%;background:rgb(255, 255, 255);color:rgba(0, 0, 0, 0.8);font-family:&quot;Noto Serif&quot;, &quot;DejaVu Serif&quot;, serif;font-weight:400;font-style:normal;line-height:1;cursor:auto;tab-size:4;-webkit-font-smoothing:antialiased;"><div style="box-sizing:border-box;direction:ltr;"><div style="box-sizing:border-box;direction:ltr;"><div style="box-sizing:border-box;direction:ltr;">
+<div style="box-sizing:border-box;margin:0px;padding:0px;direction:ltr;">
+<p style="box-sizing:border-box;margin:0px;padding:0px;direction:ltr;font-family:inherit;font-weight:400;line-height:1.6;text-rendering:optimizelegibility;letter-spacing:-0.01em;font-size:17px;margin-bottom:20px;">The change screen shows the details of a single change and provides
+various actions on it.</p>
+</div>
+<div style="box-sizing:border-box;margin:0px;padding:0px;direction:ltr;margin-bottom:1.25em;">
+<div style="box-sizing:border-box;margin:0px;padding:0px;direction:ltr;">
+<a style="background:transparent;box-sizing:border-box;color:rgb(33, 86, 165);line-height:inherit;display:inline-block;text-decoration:none;"><div class="media-placeholder">[图片/附件]</div></en-media></a>
+</div>
+</div>
+<div style="box-sizing:border-box;margin:0px;padding:0px;direction:ltr;">
+<h3 style="box-sizing:border-box;margin:0px;padding:0px;direction:ltr;font-family:&quot;Open Sans&quot;, &quot;DejaVu Sans&quot;, sans-serif;font-weight:300;font-style:normal;color:rgb(186, 57, 37);text-rendering:optimizelegibility;margin-top:1em;margin-bottom:0.5em;font-size:1.6875em;word-spacing:-0.05em;line-height:1.2;">Commit Message Block</h3>
+<div style="box-sizing:border-box;margin:0px;padding:0px;direction:ltr;">
+<p style="box-sizing:border-box;margin:0px;padding:0px;direction:ltr;font-family:inherit;font-weight:400;line-height:1.6;text-rendering:optimizelegibility;letter-spacing:-0.01em;font-size:17px;margin-bottom:20px;">The focus of the change screen is on the commit message since this is
+the most important information about a change. The numeric change ID
+and the change status are displayed right above the commit message.</p>
+</div>
+<div style="box-sizing:border-box;margin:0px;padding:0px;direction:ltr;margin-bottom:1.25em;">
+<div style="box-sizing:border-box;margin:0px;padding:0px;direction:ltr;">
+<a style="background:transparent;box-sizing:border-box;color:rgb(33, 86, 165);line-height:inherit;display:inline-block;text-decoration:none;"><div class="media-placeholder">[图片/附件]</div></en-media></a>
+</div>
+</div>
+<div style="box-sizing:border-box;margin:0px;padding:0px;direction:ltr;">
+<p style="box-sizing:border-box;margin:0px;padding:0px;direction:ltr;font-family:inherit;font-weight:400;line-height:1.6;text-rendering:optimizelegibility;letter-spacing:-0.01em;font-size:17px;margin-bottom:20px;">The numeric change ID is a link to the change and clicking on it
+refreshes the change screen. By copying the link location you can get
+the permalink of the change.</p>
+</div>
+<div style="box-sizing:border-box;margin:0px;padding:0px;direction:ltr;margin-bottom:1.25em;">
+<div style="box-sizing:border-box;margin:0px;padding:0px;direction:ltr;">
+<a style="background:transparent;box-sizing:border-box;color:rgb(33, 86, 165);line-height:inherit;display:inline-block;text-decoration:none;"><div class="media-placeholder">[图片/附件]</div></en-media></a>
+</div>
+</div>
+<div style="box-sizing:border-box;margin:0px;padding:0px;direction:ltr;">
+<p style="box-sizing:border-box;margin:0px;padding:0px;direction:ltr;font-family:inherit;font-weight:400;line-height:1.6;text-rendering:optimizelegibility;letter-spacing:-0.01em;font-size:17px;margin-bottom:20px;">The change status shows the state of the change:</p>
+</div>
+<div style="box-sizing:border-box;margin:0px;padding:0px;direction:ltr;">
+<ul style="box-sizing:border-box;margin:0px;padding:0px;direction:ltr;font-size:1em;line-height:1.6;margin-bottom:1.25em;list-style-position:outside;font-family:inherit;margin-left:1.5em;">
+<li style="box-sizing:border-box;margin:0px;padding:0px;direction:ltr;">
+<p style="box-sizing:border-box;margin:0px;padding:0px;direction:ltr;font-family:inherit;font-weight:400;line-height:1.6;text-rendering:optimizelegibility;letter-spacing:-0.01em;font-size:17px;margin-bottom:10.625px;"><a style="background:transparent;box-sizing:border-box;color:rgb(33, 86, 165);text-decoration:underline;line-height:inherit;"><code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif">Needs &lt;label&gt;</code></a>:</p>
+<div style="box-sizing:border-box;margin:0px;padding:0px;direction:ltr;">
+<p style="box-sizing:border-box;margin:0px;padding:0px;direction:ltr;font-family:inherit;font-weight:400;line-height:1.6;text-rendering:optimizelegibility;letter-spacing:-0.01em;font-size:17px;margin-bottom:10.625px;">The change is in review and an approval on the shown label is still
+required to make the change submittable.</p>
+</div>
+</li>
+<li style="box-sizing:border-box;margin:0px;padding:0px;direction:ltr;">
+<p style="box-sizing:border-box;margin:0px;padding:0px;direction:ltr;font-family:inherit;font-weight:400;line-height:1.6;text-rendering:optimizelegibility;letter-spacing:-0.01em;font-size:17px;margin-bottom:10.625px;"><a style="background:transparent;box-sizing:border-box;color:rgb(33, 86, 165);text-decoration:underline;line-height:inherit;"><code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif">Not &lt;label&gt;</code></a>:</p>
+<div style="box-sizing:border-box;margin:0px;padding:0px;direction:ltr;">
+<p style="box-sizing:border-box;margin:0px;padding:0px;direction:ltr;font-family:inherit;font-weight:400;line-height:1.6;text-rendering:optimizelegibility;letter-spacing:-0.01em;font-size:17px;margin-bottom:10.625px;">The change is in review and a veto vote on the shown label is
+preventing the submit.</p>
+</div>
+</li>
+<li style="box-sizing:border-box;margin:0px;padding:0px;direction:ltr;">
+<p style="box-sizing:border-box;margin:0px;padding:0px;direction:ltr;font-family:inherit;font-weight:400;line-height:1.6;text-rendering:optimizelegibility;letter-spacing:-0.01em;font-size:17px;margin-bottom:10.625px;"><a style="background:transparent;box-sizing:border-box;color:rgb(33, 86, 165);text-decoration:underline;line-height:inherit;"><code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif">Not Current</code></a>:</p>
+<div style="box-sizing:border-box;margin:0px;padding:0px;direction:ltr;">
+<p style="box-sizing:border-box;margin:0px;padding:0px;direction:ltr;font-family:inherit;font-weight:400;line-height:1.6;text-rendering:optimizelegibility;letter-spacing:-0.01em;font-size:17px;margin-bottom:10.625px;">The currently viewed patch set is outdated.</p>
+</div>
+<div style="box-sizing:border-box;margin:0px;padding:0px;direction:ltr;">
+<p style="box-sizing:border-box;margin:0px;padding:0px;direction:ltr;font-family:inherit;font-weight:400;line-height:1.6;text-rendering:optimizelegibility;letter-spacing:-0.01em;font-size:17px;margin-bottom:10.625px;">Please note that some operations, like voting, are not available on
+outdated patch sets, but only on the current patch set.</p>
+</div>
+</li>
+<li style="box-sizing:border-box;margin:0px;padding:0px;direction:ltr;">
+<p style="box-sizing:border-box;margin:0px;padding:0px;direction:ltr;font-family:inherit;font-weight:400;line-height:1.6;text-rendering:optimizelegibility;letter-spacing:-0.01em;font-size:17px;margin-bottom:10.625px;"><a style="background:transparent;box-sizing:border-box;color:rgb(33, 86, 165);text-decoration:underline;line-height:inherit;"><code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif">Ready to Submit</code></a>:</p>
+<div style="box-sizing:border-box;margin:0px;padding:0px;direction:ltr;">
+<p style="box-sizing:border-box;margin:0px;padding:0px;direction:ltr;font-family:inherit;font-weight:400;line-height:1.6;text-rendering:optimizelegibility;letter-spacing:-0.01em;font-size:17px;margin-bottom:10.625px;">The change has all necessary approvals and may be submitted.</p>
+</div>
+</li>
+<li style="box-sizing:border-box;margin:0px;padding:0px;direction:ltr;">
+<p style="box-sizing:border-box;margin:0px;padding:0px;direction:ltr;font-family:inherit;font-weight:400;line-height:1.6;text-rendering:optimizelegibility;letter-spacing:-0.01em;font-size:17px;margin-bottom:10.625px;"><a style="background:transparent;box-sizing:border-box;color:rgb(33, 86, 165);text-decoration:underline;line-height:inherit;"><code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif">Merged</code></a>:</p>
+<div style="box-sizing:border-box;margin:0px;padding:0px;direction:ltr;">
+<p style="box-sizing:border-box;margin:0px;padding:0px;direction:ltr;font-family:inherit;font-weight:400;line-height:1.6;text-rendering:optimizelegibility;letter-spacing:-0.01em;font-size:17px;margin-bottom:10.625px;">The change was successfully merged into the destination branch.</p>
+</div>
+</li>
+<li style="box-sizing:border-box;margin:0px;padding:0px;direction:ltr;">
+<p style="box-sizing:border-box;margin:0px;padding:0px;direction:ltr;font-family:inherit;font-weight:400;line-height:1.6;text-rendering:optimizelegibility;letter-spacing:-0.01em;font-size:17px;margin-bottom:10.625px;"><a style="background:transparent;box-sizing:border-box;color:rgb(33, 86, 165);text-decoration:underline;line-height:inherit;"><code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif">Abandoned</code></a>:</p>
+<div style="box-sizing:border-box;margin:0px;padding:0px;direction:ltr;">
+<p style="box-sizing:border-box;margin:0px;padding:0px;direction:ltr;font-family:inherit;font-weight:400;line-height:1.6;text-rendering:optimizelegibility;letter-spacing:-0.01em;font-size:17px;margin-bottom:10.625px;">The change was abandoned.</p>
+</div>
+</li>
+</ul>
+</div>
+</div>
+<div style="box-sizing:border-box;margin:0px;padding:0px;direction:ltr;">
+<h3 style="box-sizing:border-box;margin:0px;padding:0px;direction:ltr;font-family:&quot;Open Sans&quot;, &quot;DejaVu Sans&quot;, sans-serif;font-weight:300;font-style:normal;color:rgb(186, 57, 37);text-rendering:optimizelegibility;margin-top:1em;margin-bottom:0.5em;font-size:1.6875em;word-spacing:-0.05em;line-height:1.2;">Commit Info Block</h3>
+<div style="box-sizing:border-box;margin:0px;padding:0px;direction:ltr;">
+<p style="box-sizing:border-box;margin:0px;padding:0px;direction:ltr;font-family:inherit;font-weight:400;line-height:1.6;text-rendering:optimizelegibility;letter-spacing:-0.01em;font-size:17px;margin-bottom:20px;">The commit info block shows information about the commit of the
+currently viewed patch set.</p>
+</div>
+<div style="box-sizing:border-box;margin:0px;padding:0px;direction:ltr;">
+<p style="box-sizing:border-box;margin:0px;padding:0px;direction:ltr;font-family:inherit;font-weight:400;line-height:1.6;text-rendering:optimizelegibility;letter-spacing:-0.01em;font-size:17px;margin-bottom:20px;">It displays the author and the committer as links to a list of this
+person’s changes that have the same status as the currently viewed
+change.</p>
+</div>
+<div style="box-sizing:border-box;margin:0px;padding:0px;direction:ltr;">
+<p style="box-sizing:border-box;margin:0px;padding:0px;direction:ltr;font-family:inherit;font-weight:400;line-height:1.6;text-rendering:optimizelegibility;letter-spacing:-0.01em;font-size:17px;margin-bottom:20px;">The commit ID, the parent commit(s) and the <a href="http://gerrit.kylin.com/Documentation/user-changeid.html" style="background:transparent;box-sizing:border-box;color:rgb(33, 86, 165);text-decoration:underline;line-height:inherit;">Change-Id</a> are
+displayed with a copy-to-clipboard icon that allows the ID to be copied
+into the clipboard.</p>
+</div>
+<div style="box-sizing:border-box;margin:0px;padding:0px;direction:ltr;">
+<p style="box-sizing:border-box;margin:0px;padding:0px;direction:ltr;font-family:inherit;font-weight:400;line-height:1.6;text-rendering:optimizelegibility;letter-spacing:-0.01em;font-size:17px;margin-bottom:20px;">If a Git web browser, such as gitweb or Gitiles, is configured, there
+is also a link to the commit in the Git web browser.</p>
+</div>
+<div style="box-sizing:border-box;margin:0px;padding:0px;direction:ltr;margin-bottom:1.25em;">
+<div style="box-sizing:border-box;margin:0px;padding:0px;direction:ltr;">
+<a style="background:transparent;box-sizing:border-box;color:rgb(33, 86, 165);line-height:inherit;display:inline-block;text-decoration:none;"><div class="media-placeholder">[图片/附件]</div></en-media></a>
+</div>
+</div>
+<div style="box-sizing:border-box;margin:0px;padding:0px;direction:ltr;">
+<p style="box-sizing:border-box;margin:0px;padding:0px;direction:ltr;font-family:inherit;font-weight:400;line-height:1.6;text-rendering:optimizelegibility;letter-spacing:-0.01em;font-size:17px;margin-bottom:20px;">If a merge commit is viewed this is highlighted by an icon.</p>
+</div>
+<div style="box-sizing:border-box;margin:0px;padding:0px;direction:ltr;margin-bottom:1.25em;">
+<div style="box-sizing:border-box;margin:0px;padding:0px;direction:ltr;">
+<a style="background:transparent;box-sizing:border-box;color:rgb(33, 86, 165);line-height:inherit;display:inline-block;text-decoration:none;"><div class="media-placeholder">[图片/附件]</div></en-media></a>
+</div>
+</div>
+</div>
+<div style="box-sizing:border-box;margin:0px;padding:0px;direction:ltr;">
+<h3 style="box-sizing:border-box;margin:0px;padding:0px;direction:ltr;font-family:&quot;Open Sans&quot;, &quot;DejaVu Sans&quot;, sans-serif;font-weight:300;font-style:normal;color:rgb(186, 57, 37);text-rendering:optimizelegibility;margin-top:1em;margin-bottom:0.5em;font-size:1.6875em;word-spacing:-0.05em;line-height:1.2;">Change Info Block</h3>
+<div style="box-sizing:border-box;margin:0px;padding:0px;direction:ltr;">
+<p style="box-sizing:border-box;margin:0px;padding:0px;direction:ltr;font-family:inherit;font-weight:400;line-height:1.6;text-rendering:optimizelegibility;letter-spacing:-0.01em;font-size:17px;margin-bottom:20px;">The change info block contains detailed information about the change
+and offers actions on the change.</p>
+</div>
+<div style="box-sizing:border-box;margin:0px;padding:0px;direction:ltr;margin-bottom:1.25em;">
+<div style="box-sizing:border-box;margin:0px;padding:0px;direction:ltr;">
+<a style="background:transparent;box-sizing:border-box;color:rgb(33, 86, 165);line-height:inherit;display:inline-block;text-decoration:none;"><div class="media-placeholder">[图片/附件]</div></en-media></a>
+</div>
+</div>
+<div style="box-sizing:border-box;margin:0px;padding:0px;direction:ltr;">
+<ul style="box-sizing:border-box;margin:0px;padding:0px;direction:ltr;font-size:1em;line-height:1.6;margin-bottom:1.25em;list-style-position:outside;font-family:inherit;margin-left:1.5em;">
+<li style="box-sizing:border-box;margin:0px;padding:0px;direction:ltr;">
+<p style="box-sizing:border-box;margin:0px;padding:0px;direction:ltr;font-family:inherit;font-weight:400;line-height:1.6;text-rendering:optimizelegibility;letter-spacing:-0.01em;font-size:17px;margin-bottom:10.625px;"><a style="background:transparent;box-sizing:border-box;color:rgb(33, 86, 165);text-decoration:underline;line-height:inherit;">Change Owner:</a></p>
+<div style="box-sizing:border-box;margin:0px;padding:0px;direction:ltr;">
+<p style="box-sizing:border-box;margin:0px;padding:0px;direction:ltr;font-family:inherit;font-weight:400;line-height:1.6;text-rendering:optimizelegibility;letter-spacing:-0.01em;font-size:17px;margin-bottom:10.625px;">The owner of the change is displayed as a link to a list of the owner’s
+changes that have the same status as the currently viewed change.</p>
+</div>
+<div style="box-sizing:border-box;margin:0px;padding:0px;direction:ltr;margin-bottom:1.25em;">
+<div style="box-sizing:border-box;margin:0px;padding:0px;direction:ltr;">
+<a style="background:transparent;box-sizing:border-box;color:rgb(33, 86, 165);line-height:inherit;display:inline-block;text-decoration:none;"><div class="media-placeholder">[图片/附件]</div></en-media></a>
+</div>
+</div>
+</li>
+<li style="box-sizing:border-box;margin:0px;padding:0px;direction:ltr;">
+<p style="box-sizing:border-box;margin:0px;padding:0px;direction:ltr;font-family:inherit;font-weight:400;line-height:1.6;text-rendering:optimizelegibility;letter-spacing:-0.01em;font-size:17px;margin-bottom:10.625px;"><a style="background:transparent;box-sizing:border-box;color:rgb(33, 86, 165);text-decoration:underline;line-height:inherit;">Reviewers:</a></p>
+<div style="box-sizing:border-box;margin:0px;padding:0px;direction:ltr;">
+<p style="box-sizing:border-box;margin:0px;padding:0px;direction:ltr;font-family:inherit;font-weight:400;line-height:1.6;text-rendering:optimizelegibility;letter-spacing:-0.01em;font-size:17px;margin-bottom:10.625px;">The reviewers of the change are displayed as chip tokens.</p>
+</div>
+<div style="box-sizing:border-box;margin:0px;padding:0px;direction:ltr;">
+<p style="box-sizing:border-box;margin:0px;padding:0px;direction:ltr;font-family:inherit;font-weight:400;line-height:1.6;text-rendering:optimizelegibility;letter-spacing:-0.01em;font-size:17px;margin-bottom:10.625px;">For each reviewer there is a tooltip that shows on which labels the
+reviewer is allowed to vote.</p>
+</div>
+<div style="box-sizing:border-box;margin:0px;padding:0px;direction:ltr;">
+<p style="box-sizing:border-box;margin:0px;padding:0px;direction:ltr;font-family:inherit;font-weight:400;line-height:1.6;text-rendering:optimizelegibility;letter-spacing:-0.01em;font-size:17px;margin-bottom:10.625px;">New reviewers can be added by clicking on the <code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif">Add…​</code> button. Typing
+into the pop-up text field activates auto completion of user and group
+names.</p>
+</div>
+<div style="box-sizing:border-box;margin:0px;padding:0px;direction:ltr;">
+<p style="box-sizing:border-box;margin:0px;padding:0px;direction:ltr;font-family:inherit;font-weight:400;line-height:1.6;text-rendering:optimizelegibility;letter-spacing:-0.01em;font-size:17px;margin-bottom:10.625px;">Reviewers can be removed from the change by clicking on the <code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif">x</code> icon
+in the reviewer’s chip token. Removing a reviewer also removes the
+current votes of the reviewer. The removal of votes is recorded as a
+message on the change.</p>
+</div>
+<div style="box-sizing:border-box;margin:0px;padding:0px;direction:ltr;">
+<p style="box-sizing:border-box;margin:0px;padding:0px;direction:ltr;font-family:inherit;font-weight:400;line-height:1.6;text-rendering:optimizelegibility;letter-spacing:-0.01em;font-size:17px;margin-bottom:10.625px;">Removing reviewers is protected by permissions:</p>
+</div>
+<div style="box-sizing:border-box;margin:0px;padding:0px;direction:ltr;margin-bottom:0.625em;">
+<ul style="box-sizing:border-box;margin:0px;padding:0px;direction:ltr;line-height:1.6;list-style-position:outside;font-family:inherit;font-size:1em;margin-bottom:0px;margin-left:1.25em;">
+<li style="box-sizing:border-box;margin:0px;padding:0px;direction:ltr;">
+<p style="box-sizing:border-box;margin:0px;padding:0px;direction:ltr;font-family:inherit;font-weight:400;line-height:1.6;text-rendering:optimizelegibility;letter-spacing:-0.01em;font-size:17px;margin-bottom:10.625px;">Users can always remove themselves.</p>
+</li>
+<li style="box-sizing:border-box;margin:0px;padding:0px;direction:ltr;">
+<p style="box-sizing:border-box;margin:0px;padding:0px;direction:ltr;font-family:inherit;font-weight:400;line-height:1.6;text-rendering:optimizelegibility;letter-spacing:-0.01em;font-size:17px;margin-bottom:10.625px;">The change owner may remove any zero or positive score.</p>
+</li>
+<li style="box-sizing:border-box;margin:0px;padding:0px;direction:ltr;">
+<p style="box-sizing:border-box;margin:0px;padding:0px;direction:ltr;font-family:inherit;font-weight:400;line-height:1.6;text-rendering:optimizelegibility;letter-spacing:-0.01em;font-size:17px;margin-bottom:10.625px;">Users with the <a href="http://gerrit.kylin.com/Documentation/access-control.html#category_remove_reviewer" style="background:transparent;box-sizing:border-box;color:rgb(33, 86, 165);text-decoration:underline;line-height:inherit;">
+Remove Reviewer</a> access right, the branch owner, the project owner
+and Gerrit administrators may remove anyone.</p>
+</li>
+</ul>
+</div>
+<div style="box-sizing:border-box;margin:0px;padding:0px;direction:ltr;margin-bottom:1.25em;">
+<div style="box-sizing:border-box;margin:0px;padding:0px;direction:ltr;">
+<a style="background:transparent;box-sizing:border-box;color:rgb(33, 86, 165);line-height:inherit;display:inline-block;text-decoration:none;"><div class="media-placeholder">[图片/附件]</div></en-media></a>
+</div>
+</div>
+</li>
+<li style="box-sizing:border-box;margin:0px;padding:0px;direction:ltr;">
+<p style="box-sizing:border-box;margin:0px;padding:0px;direction:ltr;font-family:inherit;font-weight:400;line-height:1.6;text-rendering:optimizelegibility;letter-spacing:-0.01em;font-size:17px;margin-bottom:10.625px;"><a style="background:transparent;box-sizing:border-box;color:rgb(33, 86, 165);text-decoration:underline;line-height:inherit;">Project / Branch / Topic:</a></p>
+<div style="box-sizing:border-box;margin:0px;padding:0px;direction:ltr;">
+<p style="box-sizing:border-box;margin:0px;padding:0px;direction:ltr;font-family:inherit;font-weight:400;line-height:1.6;text-rendering:optimizelegibility;letter-spacing:-0.01em;font-size:17px;margin-bottom:10.625px;">The name of the project for which the change was done is displayed as a
+link to the <a href="http://gerrit.kylin.com/Documentation/user-dashboards.html#project-default-dashboard" style="background:transparent;box-sizing:border-box;color:rgb(33, 86, 165);text-decoration:underline;line-height:inherit;">default
+dashboard</a> of the project. If no default dashboard is defined, the link
+opens a list of open changes on the project.</p>
+</div>
+<div style="box-sizing:border-box;margin:0px;padding:0px;direction:ltr;">
+<p style="box-sizing:border-box;margin:0px;padding:0px;direction:ltr;font-family:inherit;font-weight:400;line-height:1.6;text-rendering:optimizelegibility;letter-spacing:-0.01em;font-size:17px;margin-bottom:10.625px;">Clicking on the settings icon on the right side navigates to the
+project administration screen.</p>
+</div>
+<div style="box-sizing:border-box;margin:0px;padding:0px;direction:ltr;">
+<p style="box-sizing:border-box;margin:0px;padding:0px;direction:ltr;font-family:inherit;font-weight:400;line-height:1.6;text-rendering:optimizelegibility;letter-spacing:-0.01em;font-size:17px;margin-bottom:10.625px;">The name of the destination branch is displayed as a link to a list
+with all changes on this branch that have the same status as the
+currently viewed change.</p>
+</div>
+<div style="box-sizing:border-box;margin:0px;padding:0px;direction:ltr;">
+<p style="box-sizing:border-box;margin:0px;padding:0px;direction:ltr;font-family:inherit;font-weight:400;line-height:1.6;text-rendering:optimizelegibility;letter-spacing:-0.01em;font-size:17px;margin-bottom:10.625px;">If a topic was assigned to the change it is displayed below the branch.
+By clicking on the edit icon the topic can be set. This requires the
+<a href="http://gerrit.kylin.com/Documentation/access-control.html#category_edit_topic_name" style="background:transparent;box-sizing:border-box;color:rgb(33, 86, 165);text-decoration:underline;line-height:inherit;">Edit Topic Name</a>
+access right. To be able to set a topic on a closed change, the
+<code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif">Edit Topic Name</code> must be assigned with the <code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif">force</code> flag.</p>
+</div>
+<div style="box-sizing:border-box;margin:0px;padding:0px;direction:ltr;margin-bottom:1.25em;">
+<div style="box-sizing:border-box;margin:0px;padding:0px;direction:ltr;">
+<a style="background:transparent;box-sizing:border-box;color:rgb(33, 86, 165);line-height:inherit;display:inline-block;text-decoration:none;"><div class="media-placeholder">[图片/附件]</div></en-media></a>
+</div>
+</div>
+</li>
+<li style="box-sizing:border-box;margin:0px;padding:0px;direction:ltr;">
+<p style="box-sizing:border-box;margin:0px;padding:0px;direction:ltr;font-family:inherit;font-weight:400;line-height:1.6;text-rendering:optimizelegibility;letter-spacing:-0.01em;font-size:17px;margin-bottom:10.625px;"><a style="background:transparent;box-sizing:border-box;color:rgb(33, 86, 165);text-decoration:underline;line-height:inherit;">Submit Strategy:</a></p>
+<div style="box-sizing:border-box;margin:0px;padding:0px;direction:ltr;">
+<p style="box-sizing:border-box;margin:0px;padding:0px;direction:ltr;font-family:inherit;font-weight:400;line-height:1.6;text-rendering:optimizelegibility;letter-spacing:-0.01em;font-size:17px;margin-bottom:10.625px;">The <a href="http://gerrit.kylin.com/Documentation/project-setup.html#submit_type" style="background:transparent;box-sizing:border-box;color:rgb(33, 86, 165);text-decoration:underline;line-height:inherit;">submit strategy</a> that will be
+used to submit the change. The submit strategy is only displayed for
+open changes.</p>
+</div>
+<div style="box-sizing:border-box;margin:0px;padding:0px;direction:ltr;margin-bottom:1.25em;">
+<div style="box-sizing:border-box;margin:0px;padding:0px;direction:ltr;">
+<a style="background:transparent;box-sizing:border-box;color:rgb(33, 86, 165);line-height:inherit;display:inline-block;text-decoration:none;"><div class="media-placeholder">[图片/附件]</div></en-media></a>
+</div>
+</div>
+<div style="box-sizing:border-box;margin:0px;padding:0px;direction:ltr;">
+<p style="box-sizing:border-box;margin:0px;padding:0px;direction:ltr;font-family:inherit;font-weight:400;line-height:1.6;text-rendering:optimizelegibility;letter-spacing:-0.01em;font-size:17px;margin-bottom:10.625px;">If a change cannot be merged due to path conflicts this is highlighted
+by a bold red <code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif">Cannot Merge</code> label.</p>
+</div>
+<div style="box-sizing:border-box;margin:0px;padding:0px;direction:ltr;margin-bottom:1.25em;">
+<div style="box-sizing:border-box;margin:0px;padding:0px;direction:ltr;">
+<a style="background:transparent;box-sizing:border-box;color:rgb(33, 86, 165);line-height:inherit;display:inline-block;text-decoration:none;"><div class="media-placeholder">[图片/附件]</div></en-media></a>
+</div>
+</div>
+</li>
+<li style="box-sizing:border-box;margin:0px;padding:0px;direction:ltr;">
+<p style="box-sizing:border-box;margin:0px;padding:0px;direction:ltr;font-family:inherit;font-weight:400;line-height:1.6;text-rendering:optimizelegibility;letter-spacing:-0.01em;font-size:17px;margin-bottom:10.625px;"><a style="background:transparent;box-sizing:border-box;color:rgb(33, 86, 165);text-decoration:underline;line-height:inherit;">Time of Last Update:</a></p>
+<div style="box-sizing:border-box;margin:0px;padding:0px;direction:ltr;margin-bottom:1.25em;">
+<div style="box-sizing:border-box;margin:0px;padding:0px;direction:ltr;">
+<a style="background:transparent;box-sizing:border-box;color:rgb(33, 86, 165);line-height:inherit;display:inline-block;text-decoration:none;"><div class="media-placeholder">[图片/附件]</div></en-media></a>
+</div>
+</div>
+</li>
+<li style="box-sizing:border-box;margin:0px;padding:0px;direction:ltr;">
+<p style="box-sizing:border-box;margin:0px;padding:0px;direction:ltr;font-family:inherit;font-weight:400;line-height:1.6;text-rendering:optimizelegibility;letter-spacing:-0.01em;font-size:17px;margin-bottom:10.625px;"><a style="background:transparent;box-sizing:border-box;color:rgb(33, 86, 165);text-decoration:underline;line-height:inherit;">Actions:</a></p>
+<div style="box-sizing:border-box;margin:0px;padding:0px;direction:ltr;">
+<p style="box-sizing:border-box;margin:0px;padding:0px;direction:ltr;font-family:inherit;font-weight:400;line-height:1.6;text-rendering:optimizelegibility;letter-spacing:-0.01em;font-size:17px;margin-bottom:10.625px;">Depending on the change state and the permissions of the user, different
+actions are available on the change:</p>
+</div>
+<div style="box-sizing:border-box;margin:0px;padding:0px;direction:ltr;margin-bottom:0.625em;">
+<ul style="box-sizing:border-box;margin:0px;padding:0px;direction:ltr;line-height:1.6;list-style-position:outside;font-family:inherit;font-size:1em;margin-bottom:0px;margin-left:1.25em;">
+<li style="box-sizing:border-box;margin:0px;padding:0px;direction:ltr;">
+<p style="box-sizing:border-box;margin:0px;padding:0px;direction:ltr;font-family:inherit;font-weight:400;line-height:1.6;text-rendering:optimizelegibility;letter-spacing:-0.01em;font-size:17px;margin-bottom:10.625px;"><a style="background:transparent;box-sizing:border-box;color:rgb(33, 86, 165);text-decoration:underline;line-height:inherit;"><code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif">Submit</code></a>:</p>
+<div style="box-sizing:border-box;margin:0px;padding:0px;direction:ltr;">
+<p style="box-sizing:border-box;margin:0px;padding:0px;direction:ltr;font-family:inherit;font-weight:400;line-height:1.6;text-rendering:optimizelegibility;letter-spacing:-0.01em;font-size:17px;margin-bottom:10.625px;">Submits the change and adds it to the merge queue. If possible the
+change is merged into the destination branch.</p>
+</div>
+<div style="box-sizing:border-box;margin:0px;padding:0px;direction:ltr;">
+<p style="box-sizing:border-box;margin:0px;padding:0px;direction:ltr;font-family:inherit;font-weight:400;line-height:1.6;text-rendering:optimizelegibility;letter-spacing:-0.01em;font-size:17px;margin-bottom:10.625px;">The <code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif">Submit</code> button is available if the change is submittable and
+the <a href="http://gerrit.kylin.com/Documentation/access-control.html#category_submit" style="background:transparent;box-sizing:border-box;color:rgb(33, 86, 165);text-decoration:underline;line-height:inherit;">Submit</a> access right is
+assigned.</p>
+</div>
+</li>
+<li style="box-sizing:border-box;margin:0px;padding:0px;direction:ltr;">
+<p style="box-sizing:border-box;margin:0px;padding:0px;direction:ltr;font-family:inherit;font-weight:400;line-height:1.6;text-rendering:optimizelegibility;letter-spacing:-0.01em;font-size:17px;margin-bottom:10.625px;"><a style="background:transparent;box-sizing:border-box;color:rgb(33, 86, 165);text-decoration:underline;line-height:inherit;"><code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif">Revert</code></a>:</p>
+<div style="box-sizing:border-box;margin:0px;padding:0px;direction:ltr;">
+<p style="box-sizing:border-box;margin:0px;padding:0px;direction:ltr;font-family:inherit;font-weight:400;line-height:1.6;text-rendering:optimizelegibility;letter-spacing:-0.01em;font-size:17px;margin-bottom:10.625px;">Reverts the change via creating a new one.</p>
+</div>
+<div style="box-sizing:border-box;margin:0px;padding:0px;direction:ltr;">
+<p style="box-sizing:border-box;margin:0px;padding:0px;direction:ltr;font-family:inherit;font-weight:400;line-height:1.6;text-rendering:optimizelegibility;letter-spacing:-0.01em;font-size:17px;margin-bottom:10.625px;">The <code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif">Revert</code> button is available if the change has been submitted.</p>
+</div>
+<div style="box-sizing:border-box;margin:0px;padding:0px;direction:ltr;">
+<p style="box-sizing:border-box;margin:0px;padding:0px;direction:ltr;font-family:inherit;font-weight:400;line-height:1.6;text-rendering:optimizelegibility;letter-spacing:-0.01em;font-size:17px;margin-bottom:10.625px;">When the <code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif">Revert</code> button is pressed, a panel will appear to allow
+the user to enter a commit message for the reverting change.</p>
+</div>
+<div style="box-sizing:border-box;margin:0px;padding:0px;direction:ltr;">
+<p style="box-sizing:border-box;margin:0px;padding:0px;direction:ltr;font-family:inherit;font-weight:400;line-height:1.6;text-rendering:optimizelegibility;letter-spacing:-0.01em;font-size:17px;margin-bottom:10.625px;">Once a revert change is created, the original author and any reviewers
+of the original change are added as reviewers and a message is posted
+to the original change linking to the revert.</p>
+</div>
+</li>
+<li style="box-sizing:border-box;margin:0px;padding:0px;direction:ltr;">
+<p style="box-sizing:border-box;margin:0px;padding:0px;direction:ltr;font-family:inherit;font-weight:400;line-height:1.6;text-rendering:optimizelegibility;letter-spacing:-0.01em;font-size:17px;margin-bottom:10.625px;"><a style="background:transparent;box-sizing:border-box;color:rgb(33, 86, 165);text-decoration:underline;line-height:inherit;"><code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif">Abandon</code></a>:</p>
+<div style="box-sizing:border-box;margin:0px;padding:0px;direction:ltr;">
+<p style="box-sizing:border-box;margin:0px;padding:0px;direction:ltr;font-family:inherit;font-weight:400;line-height:1.6;text-rendering:optimizelegibility;letter-spacing:-0.01em;font-size:17px;margin-bottom:10.625px;">Abandons the change.</p>
+</div>
+<div style="box-sizing:border-box;margin:0px;padding:0px;direction:ltr;">
+<p style="box-sizing:border-box;margin:0px;padding:0px;direction:ltr;font-family:inherit;font-weight:400;line-height:1.6;text-rendering:optimizelegibility;letter-spacing:-0.01em;font-size:17px;margin-bottom:10.625px;">The <code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif">Abandon</code> button is only available if the change is open and the
+<a href="http://gerrit.kylin.com/Documentation/access-control.html#category_abandon" style="background:transparent;box-sizing:border-box;color:rgb(33, 86, 165);text-decoration:underline;line-height:inherit;">Abandon</a> access right is
+assigned.</p>
+</div>
+<div style="box-sizing:border-box;margin:0px;padding:0px;direction:ltr;">
+<p style="box-sizing:border-box;margin:0px;padding:0px;direction:ltr;font-family:inherit;font-weight:400;line-height:1.6;text-rendering:optimizelegibility;letter-spacing:-0.01em;font-size:17px;margin-bottom:10.625px;">When a change is abandoned, a panel appears that allows one to type a
+comment message to explain why the change is being abandoned.</p>
+</div>
+</li>
+<li style="box-sizing:border-box;margin:0px;padding:0px;direction:ltr;">
+<p style="box-sizing:border-box;margin:0px;padding:0px;direction:ltr;font-family:inherit;font-weight:400;line-height:1.6;text-rendering:optimizelegibility;letter-spacing:-0.01em;font-size:17px;margin-bottom:10.625px;"><a style="background:transparent;box-sizing:border-box;color:rgb(33, 86, 165);text-decoration:underline;line-height:inherit;"><code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif">Restore</code></a>:</p>
+<div style="box-sizing:border-box;margin:0px;padding:0px;direction:ltr;">
+<p style="box-sizing:border-box;margin:0px;padding:0px;direction:ltr;font-family:inherit;font-weight:400;line-height:1.6;text-rendering:optimizelegibility;letter-spacing:-0.01em;font-size:17px;margin-bottom:10.625px;">Restores the change.</p>
+</div>
+<div style="box-sizing:border-box;margin:0px;padding:0px;direction:ltr;">
+<p style="box-sizing:border-box;margin:0px;padding:0px;direction:ltr;font-family:inherit;font-weight:400;line-height:1.6;text-rendering:optimizelegibility;letter-spacing:-0.01em;font-size:17px;margin-bottom:10.625px;">The <code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif">Restore</code> button is only available if the change is abandoned and
+the <a href="http://gerrit.kylin.com/Documentation/access-control.html#category_abandon" style="background:transparent;box-sizing:border-box;color:rgb(33, 86, 165);text-decoration:underline;line-height:inherit;">Abandon</a> and the
+<a href="http://gerrit.kylin.com/Documentation/access-control.html#category_push" style="background:transparent;box-sizing:border-box;color:rgb(33, 86, 165);text-decoration:underline;line-height:inherit;">Push</a> access right is
+assigned.</p>
+</div>
+<div style="box-sizing:border-box;margin:0px;padding:0px;direction:ltr;">
+<p style="box-sizing:border-box;margin:0px;padding:0px;direction:ltr;font-family:inherit;font-weight:400;line-height:1.6;text-rendering:optimizelegibility;letter-spacing:-0.01em;font-size:17px;margin-bottom:10.625px;">When a change is restored, a panel appears that allows one to type a
+comment message to explain why the change is being restored.</p>
+</div>
+</li>
+<li style="box-sizing:border-box;margin:0px;padding:0px;direction:ltr;">
+<p style="box-sizing:border-box;margin:0px;padding:0px;direction:ltr;font-family:inherit;font-weight:400;line-height:1.6;text-rendering:optimizelegibility;letter-spacing:-0.01em;font-size:17px;margin-bottom:10.625px;"><a style="background:transparent;box-sizing:border-box;color:rgb(33, 86, 165);text-decoration:underline;line-height:inherit;"><code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif">Rebase</code></a>:</p>
+<div style="box-sizing:border-box;margin:0px;padding:0px;direction:ltr;">
+<p style="box-sizing:border-box;margin:0px;padding:0px;direction:ltr;font-family:inherit;font-weight:400;line-height:1.6;text-rendering:optimizelegibility;letter-spacing:-0.01em;font-size:17px;margin-bottom:10.625px;">Rebases the change. The rebase is always done with content merge
+enabled. If the rebase is successful a new patch set with the rebased
+commit is created. If the rebase fails, there are conflicts that have
+to be resolved manually.</p>
+</div>
+<div style="box-sizing:border-box;margin:0px;padding:0px;direction:ltr;">
+<p style="box-sizing:border-box;margin:0px;padding:0px;direction:ltr;font-family:inherit;font-weight:400;line-height:1.6;text-rendering:optimizelegibility;letter-spacing:-0.01em;font-size:17px;margin-bottom:10.625px;">If the change does not depend on another open change, it is rebased
+onto the tip of the destination branch.</p>
+</div>
+<div style="box-sizing:border-box;margin:0px;padding:0px;direction:ltr;">
+<p style="box-sizing:border-box;margin:0px;padding:0px;direction:ltr;font-family:inherit;font-weight:400;line-height:1.6;text-rendering:optimizelegibility;letter-spacing:-0.01em;font-size:17px;margin-bottom:10.625px;">If the change depends on another open change, it is rebased onto the
+current patch set of that other change.</p>
+</div>
+<div style="box-sizing:border-box;margin:0px;padding:0px;direction:ltr;">
+<p style="box-sizing:border-box;margin:0px;padding:0px;direction:ltr;font-family:inherit;font-weight:400;line-height:1.6;text-rendering:optimizelegibility;letter-spacing:-0.01em;font-size:17px;margin-bottom:10.625px;">It is possible to change parent revision of a change. The new parent
+revision can be another change towards the same target branch, or
+the tip of the target branch.</p>
+</div>
+<div style="box-sizing:border-box;margin:0px;padding:0px;direction:ltr;">
+<p style="box-sizing:border-box;margin:0px;padding:0px;direction:ltr;font-family:inherit;font-weight:400;line-height:1.6;text-rendering:optimizelegibility;letter-spacing:-0.01em;font-size:17px;margin-bottom:10.625px;">The <code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif">Rebase</code> button is only available if
+the <a href="http://gerrit.kylin.com/Documentation/access-control.html#category_rebase" style="background:transparent;box-sizing:border-box;color:rgb(33, 86, 165);text-decoration:underline;line-height:inherit;">Rebase</a> access right is
+assigned. Rebasing merge commits is not supported.</p>
+</div>
+</li>
+<li style="box-sizing:border-box;margin:0px;padding:0px;direction:ltr;">
+<p style="box-sizing:border-box;margin:0px;padding:0px;direction:ltr;font-family:inherit;font-weight:400;line-height:1.6;text-rendering:optimizelegibility;letter-spacing:-0.01em;font-size:17px;margin-bottom:10.625px;"><a style="background:transparent;box-sizing:border-box;color:rgb(33, 86, 165);text-decoration:underline;line-height:inherit;"><code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif">Cherry-Pick</code></a>:</p>
+<div style="box-sizing:border-box;margin:0px;padding:0px;direction:ltr;">
+<p style="box-sizing:border-box;margin:0px;padding:0px;direction:ltr;font-family:inherit;font-weight:400;line-height:1.6;text-rendering:optimizelegibility;letter-spacing:-0.01em;font-size:17px;margin-bottom:10.625px;">Allows to cherry-pick the change to another branch. The destination
+branch can be selected from a dialog. Cherry-picking a change creates a
+new open change on the selected destination branch.</p>
+</div>
+<div style="box-sizing:border-box;margin:0px;padding:0px;direction:ltr;">
+<p style="box-sizing:border-box;margin:0px;padding:0px;direction:ltr;font-family:inherit;font-weight:400;line-height:1.6;text-rendering:optimizelegibility;letter-spacing:-0.01em;font-size:17px;margin-bottom:10.625px;">It is also possible to cherry-pick a change to the same branch. This is
+effectively the same as rebasing it to the current tip of the
+destination branch. This can be used to remove dependencies on other
+open changes.</p>
+</div>
+<div style="box-sizing:border-box;margin:0px;padding:0px;direction:ltr;">
+<p style="box-sizing:border-box;margin:0px;padding:0px;direction:ltr;font-family:inherit;font-weight:400;line-height:1.6;text-rendering:optimizelegibility;letter-spacing:-0.01em;font-size:17px;margin-bottom:10.625px;">Users can only cherry-pick changes to branches for which they are
+allowed to upload changes for review.</p>
+</div>
+</li>
+<li style="box-sizing:border-box;margin:0px;padding:0px;direction:ltr;">
+<p style="box-sizing:border-box;margin:0px;padding:0px;direction:ltr;font-family:inherit;font-weight:400;line-height:1.6;text-rendering:optimizelegibility;letter-spacing:-0.01em;font-size:17px;margin-bottom:10.625px;"><a style="background:transparent;box-sizing:border-box;color:rgb(33, 86, 165);text-decoration:underline;line-height:inherit;"><code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif">Delete Change</code></a> / <code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif">Delete Revision</code>:</p>
+<div style="box-sizing:border-box;margin:0px;padding:0px;direction:ltr;">
+<p style="box-sizing:border-box;margin:0px;padding:0px;direction:ltr;font-family:inherit;font-weight:400;line-height:1.6;text-rendering:optimizelegibility;letter-spacing:-0.01em;font-size:17px;margin-bottom:10.625px;">Deletes the change.</p>
+</div>
+<div style="box-sizing:border-box;margin:0px;padding:0px;direction:ltr;">
+<p style="box-sizing:border-box;margin:0px;padding:0px;direction:ltr;font-family:inherit;font-weight:400;line-height:1.6;text-rendering:optimizelegibility;letter-spacing:-0.01em;font-size:17px;margin-bottom:10.625px;">For open or abandoned changes, the <code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif">Delete Change</code> button will be available
+and if the user is the change owner and is granted the
+<a href="http://gerrit.kylin.com/Documentation/access-control.html#category_delete_own_changes" style="background:transparent;box-sizing:border-box;color:rgb(33, 86, 165);text-decoration:underline;line-height:inherit;">Delete Own Changes</a>
+permission, if they are granted the
+<a href="http://gerrit.kylin.com/Documentation/access-control.html#category_delete_changes" style="background:transparent;box-sizing:border-box;color:rgb(33, 86, 165);text-decoration:underline;line-height:inherit;">Delete Changes</a> permission,
+or if they are an administrator.</p>
+</div>
+</li>
+<li style="box-sizing:border-box;margin:0px;padding:0px;direction:ltr;">
+<p style="box-sizing:border-box;margin:0px;padding:0px;direction:ltr;font-family:inherit;font-weight:400;line-height:1.6;text-rendering:optimizelegibility;letter-spacing:-0.01em;font-size:17px;margin-bottom:10.625px;"><a style="background:transparent;box-sizing:border-box;color:rgb(33, 86, 165);text-decoration:underline;line-height:inherit;">Further actions may be available if plugins are installed.</a></p>
+</li>
+</ul>
+</div>
+<div style="box-sizing:border-box;margin:0px;padding:0px;direction:ltr;margin-bottom:1.25em;">
+<div style="box-sizing:border-box;margin:0px;padding:0px;direction:ltr;">
+<a style="background:transparent;box-sizing:border-box;color:rgb(33, 86, 165);line-height:inherit;display:inline-block;text-decoration:none;"><div class="media-placeholder">[图片/附件]</div></en-media></a>
+</div>
+</div>
+</li>
+<li style="box-sizing:border-box;margin:0px;padding:0px;direction:ltr;">
+<p style="box-sizing:border-box;margin:0px;padding:0px;direction:ltr;font-family:inherit;font-weight:400;line-height:1.6;text-rendering:optimizelegibility;letter-spacing:-0.01em;font-size:17px;margin-bottom:10.625px;"><a style="background:transparent;box-sizing:border-box;color:rgb(33, 86, 165);text-decoration:underline;line-height:inherit;">Labels &amp; Votes:</a></p>
+<div style="box-sizing:border-box;margin:0px;padding:0px;direction:ltr;">
+<p style="box-sizing:border-box;margin:0px;padding:0px;direction:ltr;font-family:inherit;font-weight:400;line-height:1.6;text-rendering:optimizelegibility;letter-spacing:-0.01em;font-size:17px;margin-bottom:10.625px;">Approving votes are colored green; veto votes are colored red.</p>
+</div>
+<div style="box-sizing:border-box;margin:0px;padding:0px;direction:ltr;margin-bottom:1.25em;">
+<div style="box-sizing:border-box;margin:0px;padding:0px;direction:ltr;">
+<a style="background:transparent;box-sizing:border-box;color:rgb(33, 86, 165);line-height:inherit;display:inline-block;text-decoration:none;"><div class="media-placeholder">[图片/附件]</div></en-media></a>
+</div>
+</div>
+</li>
+</ul>
+</div>
+</div>
+<div style="box-sizing:border-box;margin:0px;padding:0px;direction:ltr;">
+<h3 style="box-sizing:border-box;margin:0px;padding:0px;direction:ltr;font-family:&quot;Open Sans&quot;, &quot;DejaVu Sans&quot;, sans-serif;font-weight:300;font-style:normal;color:rgb(186, 57, 37);text-rendering:optimizelegibility;margin-top:1em;margin-bottom:0.5em;font-size:1.6875em;word-spacing:-0.05em;line-height:1.2;">File List</h3>
+<div style="box-sizing:border-box;margin:0px;padding:0px;direction:ltr;">
+<p style="box-sizing:border-box;margin:0px;padding:0px;direction:ltr;font-family:inherit;font-weight:400;line-height:1.6;text-rendering:optimizelegibility;letter-spacing:-0.01em;font-size:17px;margin-bottom:20px;">The file list shows the files that are modified in the currently viewed
+patch set.</p>
+</div>
+<div style="box-sizing:border-box;margin:0px;padding:0px;direction:ltr;margin-bottom:1.25em;">
+<div style="box-sizing:border-box;margin:0px;padding:0px;direction:ltr;">
+<a style="background:transparent;box-sizing:border-box;color:rgb(33, 86, 165);line-height:inherit;display:inline-block;text-decoration:none;"><div class="media-placeholder">[图片/附件]</div></en-media></a>
+</div>
+</div>
+<div style="box-sizing:border-box;margin:0px;padding:0px;direction:ltr;">
+<p style="box-sizing:border-box;margin:0px;padding:0px;direction:ltr;font-family:inherit;font-weight:400;line-height:1.6;text-rendering:optimizelegibility;letter-spacing:-0.01em;font-size:17px;margin-bottom:20px;">In addition to the modified files the file list contains magic files
+that are generated by Gerrit and which don’t exist in the repository.
+The magic files contain additional commit data that should be
+reviewable and allow users to comment on this data. The magic files are
+always listed first. The following magic files exist:</p>
+</div>
+<div style="box-sizing:border-box;margin:0px;padding:0px;direction:ltr;">
+<ul style="box-sizing:border-box;margin:0px;padding:0px;direction:ltr;font-size:1em;line-height:1.6;margin-bottom:1.25em;list-style-position:outside;font-family:inherit;margin-left:1.5em;">
+<li style="box-sizing:border-box;margin:0px;padding:0px;direction:ltr;">
+<p style="box-sizing:border-box;margin:0px;padding:0px;direction:ltr;font-family:inherit;font-weight:400;line-height:1.6;text-rendering:optimizelegibility;letter-spacing:-0.01em;font-size:17px;margin-bottom:10.625px;"><code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif">Commit Message</code>:</p>
+<div style="box-sizing:border-box;margin:0px;padding:0px;direction:ltr;">
+<p style="box-sizing:border-box;margin:0px;padding:0px;direction:ltr;font-family:inherit;font-weight:400;line-height:1.6;text-rendering:optimizelegibility;letter-spacing:-0.01em;font-size:17px;margin-bottom:10.625px;">The commit message and headers with the parent commit(s), the author
+information and the committer information.</p>
+</div>
+</li>
+<li style="box-sizing:border-box;margin:0px;padding:0px;direction:ltr;">
+<p style="box-sizing:border-box;margin:0px;padding:0px;direction:ltr;font-family:inherit;font-weight:400;line-height:1.6;text-rendering:optimizelegibility;letter-spacing:-0.01em;font-size:17px;margin-bottom:10.625px;"><code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif">Merge List</code> (for merge commits only):</p>
+<div style="box-sizing:border-box;margin:0px;padding:0px;direction:ltr;">
+<p style="box-sizing:border-box;margin:0px;padding:0px;direction:ltr;font-family:inherit;font-weight:400;line-height:1.6;text-rendering:optimizelegibility;letter-spacing:-0.01em;font-size:17px;margin-bottom:10.625px;">The list of commits that are being integrated into the destination
+branch by submitting the merge commit.</p>
+</div>
+</li>
+</ul>
+</div>
+<div style="box-sizing:border-box;margin:0px;padding:0px;direction:ltr;">
+<p style="box-sizing:border-box;margin:0px;padding:0px;direction:ltr;font-family:inherit;font-weight:400;line-height:1.6;text-rendering:optimizelegibility;letter-spacing:-0.01em;font-size:17px;margin-bottom:20px;">The checkboxes in front of the file names allow files to be marked as reviewed.</p>
+</div>
+<div style="box-sizing:border-box;margin:0px;padding:0px;direction:ltr;margin-bottom:1.25em;">
+<div style="box-sizing:border-box;margin:0px;padding:0px;direction:ltr;">
+<a style="background:transparent;box-sizing:border-box;color:rgb(33, 86, 165);line-height:inherit;display:inline-block;text-decoration:none;"><div class="media-placeholder">[图片/附件]</div></en-media></a>
+</div>
+</div>
+<div style="box-sizing:border-box;margin:0px;padding:0px;direction:ltr;">
+<p style="box-sizing:border-box;margin:0px;padding:0px;direction:ltr;font-family:inherit;font-weight:400;line-height:1.6;text-rendering:optimizelegibility;letter-spacing:-0.01em;font-size:17px;margin-bottom:20px;">The type of a file modification is indicated by the character in front
+of the file name:</p>
+</div>
+<div style="box-sizing:border-box;margin:0px;padding:0px;direction:ltr;">
+<ul style="box-sizing:border-box;margin:0px;padding:0px;direction:ltr;font-size:1em;line-height:1.6;margin-bottom:1.25em;list-style-position:outside;font-family:inherit;margin-left:1.5em;">
+<li style="box-sizing:border-box;margin:0px;padding:0px;direction:ltr;">
+<p style="box-sizing:border-box;margin:0px;padding:0px;direction:ltr;font-family:inherit;font-weight:400;line-height:1.6;text-rendering:optimizelegibility;letter-spacing:-0.01em;font-size:17px;margin-bottom:10.625px;"><code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif">M</code> or 'no character' (Modified):</p>
+<div style="box-sizing:border-box;margin:0px;padding:0px;direction:ltr;">
+<p style="box-sizing:border-box;margin:0px;padding:0px;direction:ltr;font-family:inherit;font-weight:400;line-height:1.6;text-rendering:optimizelegibility;letter-spacing:-0.01em;font-size:17px;margin-bottom:10.625px;">The file existed before this change and is modified.</p>
+</div>
+</li>
+<li style="box-sizing:border-box;margin:0px;padding:0px;direction:ltr;">
+<p style="box-sizing:border-box;margin:0px;padding:0px;direction:ltr;font-family:inherit;font-weight:400;line-height:1.6;text-rendering:optimizelegibility;letter-spacing:-0.01em;font-size:17px;margin-bottom:10.625px;"><code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif">A</code> (Added):</p>
+<div style="box-sizing:border-box;margin:0px;padding:0px;direction:ltr;">
+<p style="box-sizing:border-box;margin:0px;padding:0px;direction:ltr;font-family:inherit;font-weight:400;line-height:1.6;text-rendering:optimizelegibility;letter-spacing:-0.01em;font-size:17px;margin-bottom:10.625px;">The file is newly added.</p>
+</div>
+</li>
+<li style="box-sizing:border-box;margin:0px;padding:0px;direction:ltr;">
+<p style="box-sizing:border-box;margin:0px;padding:0px;direction:ltr;font-family:inherit;font-weight:400;line-height:1.6;text-rendering:optimizelegibility;letter-spacing:-0.01em;font-size:17px;margin-bottom:10.625px;"><code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif">D</code> (Deleted):</p>
+<div style="box-sizing:border-box;margin:0px;padding:0px;direction:ltr;">
+<p style="box-sizing:border-box;margin:0px;padding:0px;direction:ltr;font-family:inherit;font-weight:400;line-height:1.6;text-rendering:optimizelegibility;letter-spacing:-0.01em;font-size:17px;margin-bottom:10.625px;">The file is deleted.</p>
+</div>
+</li>
+<li style="box-sizing:border-box;margin:0px;padding:0px;direction:ltr;">
+<p style="box-sizing:border-box;margin:0px;padding:0px;direction:ltr;font-family:inherit;font-weight:400;line-height:1.6;text-rendering:optimizelegibility;letter-spacing:-0.01em;font-size:17px;margin-bottom:10.625px;"><code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif">R</code> (Renamed):</p>
+<div style="box-sizing:border-box;margin:0px;padding:0px;direction:ltr;">
+<p style="box-sizing:border-box;margin:0px;padding:0px;direction:ltr;font-family:inherit;font-weight:400;line-height:1.6;text-rendering:optimizelegibility;letter-spacing:-0.01em;font-size:17px;margin-bottom:10.625px;">The file is renamed.</p>
+</div>
+</li>
+<li style="box-sizing:border-box;margin:0px;padding:0px;direction:ltr;">
+<p style="box-sizing:border-box;margin:0px;padding:0px;direction:ltr;font-family:inherit;font-weight:400;line-height:1.6;text-rendering:optimizelegibility;letter-spacing:-0.01em;font-size:17px;margin-bottom:10.625px;"><code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif">C</code> (Copied):</p>
+<div style="box-sizing:border-box;margin:0px;padding:0px;direction:ltr;">
+<p style="box-sizing:border-box;margin:0px;padding:0px;direction:ltr;font-family:inherit;font-weight:400;line-height:1.6;text-rendering:optimizelegibility;letter-spacing:-0.01em;font-size:17px;margin-bottom:10.625px;">The file is new and is copied from an existing file.</p>
+</div>
+</li>
+<li style="box-sizing:border-box;margin:0px;padding:0px;direction:ltr;">
+<p style="box-sizing:border-box;margin:0px;padding:0px;direction:ltr;font-family:inherit;font-weight:400;line-height:1.6;text-rendering:optimizelegibility;letter-spacing:-0.01em;font-size:17px;margin-bottom:10.625px;"><code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif">U</code> (Unchanged):</p>
+<div style="box-sizing:border-box;margin:0px;padding:0px;direction:ltr;">
+<p style="box-sizing:border-box;margin:0px;padding:0px;direction:ltr;font-family:inherit;font-weight:400;line-height:1.6;text-rendering:optimizelegibility;letter-spacing:-0.01em;font-size:17px;margin-bottom:10.625px;">The file is unchanged and has the same content. Unchanged files only
+appear in the file list if 2 patch sets are compared and the file has
+comments on at least one of the sides. Otherwise unchanged files are
+filtered out.</p>
+</div>
+</li>
+</ul>
+</div>
+<div style="box-sizing:border-box;margin:0px;padding:0px;direction:ltr;margin-bottom:1.25em;">
+<div style="box-sizing:border-box;margin:0px;padding:0px;direction:ltr;">
+<a style="background:transparent;box-sizing:border-box;color:rgb(33, 86, 165);line-height:inherit;display:inline-block;text-decoration:none;"><div class="media-placeholder">[图片/附件]</div></en-media></a>
+</div>
+</div>
+<div style="box-sizing:border-box;margin:0px;padding:0px;direction:ltr;">
+<p style="box-sizing:border-box;margin:0px;padding:0px;direction:ltr;font-family:inherit;font-weight:400;line-height:1.6;text-rendering:optimizelegibility;letter-spacing:-0.01em;font-size:17px;margin-bottom:20px;">If a file is renamed or copied, the name of the original file is
+displayed in gray below the file name.</p>
+</div>
+<div style="box-sizing:border-box;margin:0px;padding:0px;direction:ltr;margin-bottom:1.25em;">
+<div style="box-sizing:border-box;margin:0px;padding:0px;direction:ltr;">
+<a style="background:transparent;box-sizing:border-box;color:rgb(33, 86, 165);line-height:inherit;display:inline-block;text-decoration:none;"><div class="media-placeholder">[图片/附件]</div></en-media></a>
+</div>
+</div>
+<div style="box-sizing:border-box;margin:0px;padding:0px;direction:ltr;">
+<p style="box-sizing:border-box;margin:0px;padding:0px;direction:ltr;font-family:inherit;font-weight:400;line-height:1.6;text-rendering:optimizelegibility;letter-spacing:-0.01em;font-size:17px;margin-bottom:20px;">Repeating path segments are grayed out.</p>
+</div>
+<div style="box-sizing:border-box;margin:0px;padding:0px;direction:ltr;margin-bottom:1.25em;">
+<div style="box-sizing:border-box;margin:0px;padding:0px;direction:ltr;">
+<a style="background:transparent;box-sizing:border-box;color:rgb(33, 86, 165);line-height:inherit;display:inline-block;text-decoration:none;"><div class="media-placeholder">[图片/附件]</div></en-media></a>
+</div>
+</div>
+<div style="box-sizing:border-box;margin:0px;padding:0px;direction:ltr;">
+<p style="box-sizing:border-box;margin:0px;padding:0px;direction:ltr;font-family:inherit;font-weight:400;line-height:1.6;text-rendering:optimizelegibility;letter-spacing:-0.01em;font-size:17px;margin-bottom:20px;">Inline comments on a file are shown in the <code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif">Comments</code> column.</p>
+</div>
+<div style="box-sizing:border-box;margin:0px;padding:0px;direction:ltr;">
+<p style="box-sizing:border-box;margin:0px;padding:0px;direction:ltr;font-family:inherit;font-weight:400;line-height:1.6;text-rendering:optimizelegibility;letter-spacing:-0.01em;font-size:17px;margin-bottom:20px;">Draft comments, i.e. comments that have been written by the current
+user but not yet published, are highlighted in red.</p>
+</div>
+<div style="box-sizing:border-box;margin:0px;padding:0px;direction:ltr;">
+<p style="box-sizing:border-box;margin:0px;padding:0px;direction:ltr;font-family:inherit;font-weight:400;line-height:1.6;text-rendering:optimizelegibility;letter-spacing:-0.01em;font-size:17px;margin-bottom:20px;">New comments from other users, that were published after the current
+user last reviewed this change, are highlighted in bold.</p>
+</div>
+<div style="box-sizing:border-box;margin:0px;padding:0px;direction:ltr;margin-bottom:1.25em;">
+<div style="box-sizing:border-box;margin:0px;padding:0px;direction:ltr;">
+<a style="background:transparent;box-sizing:border-box;color:rgb(33, 86, 165);line-height:inherit;display:inline-block;text-decoration:none;"><div class="media-placeholder">[图片/附件]</div></en-media></a>
+</div>
+</div>
+<div style="box-sizing:border-box;margin:0px;padding:0px;direction:ltr;">
+<p style="box-sizing:border-box;margin:0px;padding:0px;direction:ltr;font-family:inherit;font-weight:400;line-height:1.6;text-rendering:optimizelegibility;letter-spacing:-0.01em;font-size:17px;margin-bottom:20px;">The size of the modifications in the files can be seen in the <code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif">Size</code> column. The
+footer row shows the total size of the change.</p>
+</div>
+<div style="box-sizing:border-box;margin:0px;padding:0px;direction:ltr;">
+<p style="box-sizing:border-box;margin:0px;padding:0px;direction:ltr;font-family:inherit;font-weight:400;line-height:1.6;text-rendering:optimizelegibility;letter-spacing:-0.01em;font-size:17px;margin-bottom:20px;">The size information is useful to easily spot the files that contain
+the most modifications; these files are likely to be the most relevant
+files for this change. The total change size gives an estimate of how
+long a review of this change may take.</p>
+</div>
+<div style="box-sizing:border-box;margin:0px;padding:0px;direction:ltr;">
+<p style="box-sizing:border-box;margin:0px;padding:0px;direction:ltr;font-family:inherit;font-weight:400;line-height:1.6;text-rendering:optimizelegibility;letter-spacing:-0.01em;font-size:17px;margin-bottom:20px;">When the "Show Change Sizes As Colored Bars" user preference is enabled, the
+<code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif">Size</code> column shows the sum of inserted and deleted lines as one number.  In
+addition, the change size is shown as a bar. The size of the bar indicates the
+amount of changed lines, and its coloring shows the proportion of insertions
+(green) to deletions (red).</p>
+</div>
+<div style="box-sizing:border-box;margin:0px;padding:0px;direction:ltr;">
+<p style="box-sizing:border-box;margin:0px;padding:0px;direction:ltr;font-family:inherit;font-weight:400;line-height:1.6;text-rendering:optimizelegibility;letter-spacing:-0.01em;font-size:17px;margin-bottom:20px;">When the "Show Change Sizes As Colored Bars" user preference is disabled, the
+colored bar is not shown.  For added and renamed files, the <code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif">Size</code> column
+shows the number of inserted and deleted lines. For new files, the column only
+shows the total number of lines in the new file. No size is shown for binary
+files and deleted files.</p>
+</div>
+<div style="box-sizing:border-box;margin:0px;padding:0px;direction:ltr;margin-bottom:1.25em;">
+<div style="box-sizing:border-box;margin:0px;padding:0px;direction:ltr;">
+<a style="background:transparent;box-sizing:border-box;color:rgb(33, 86, 165);line-height:inherit;display:inline-block;text-decoration:none;"><div class="media-placeholder">[图片/附件]</div></en-media></a>
+</div>
+</div>
+<div style="box-sizing:border-box;margin:0px;padding:0px;direction:ltr;">
+<p style="box-sizing:border-box;margin:0px;padding:0px;direction:ltr;font-family:inherit;font-weight:400;line-height:1.6;text-rendering:optimizelegibility;letter-spacing:-0.01em;font-size:17px;margin-bottom:20px;">In the header of the file list, the <code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif">Diff Against</code> selection can be
+changed. This selection allows one to choose if the currently viewed
+patch set should be compared against its base or against another patch
+set of this change. The file list is updated accordingly.</p>
+</div>
+<div style="box-sizing:border-box;margin:0px;padding:0px;direction:ltr;">
+<p style="box-sizing:border-box;margin:0px;padding:0px;direction:ltr;font-family:inherit;font-weight:400;line-height:1.6;text-rendering:optimizelegibility;letter-spacing:-0.01em;font-size:17px;margin-bottom:20px;">The file list header also provides an <code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif">Open All</code> button that opens the
+diff views for all files in the file list.</p>
+</div>
+<div style="box-sizing:border-box;margin:0px;padding:0px;direction:ltr;margin-bottom:1.25em;">
+<div style="box-sizing:border-box;margin:0px;padding:0px;direction:ltr;">
+<a style="background:transparent;box-sizing:border-box;color:rgb(33, 86, 165);line-height:inherit;display:inline-block;text-decoration:none;"><div class="media-placeholder">[图片/附件]</div></en-media></a>
+</div>
+</div>
+</div>
+<div style="box-sizing:border-box;margin:0px;padding:0px;direction:ltr;">
+<h3 style="box-sizing:border-box;margin:0px;padding:0px;direction:ltr;font-family:&quot;Open Sans&quot;, &quot;DejaVu Sans&quot;, sans-serif;font-weight:300;font-style:normal;color:rgb(186, 57, 37);text-rendering:optimizelegibility;margin-top:1em;margin-bottom:0.5em;font-size:1.6875em;word-spacing:-0.05em;line-height:1.2;">Patch Sets</h3>
+<div style="box-sizing:border-box;margin:0px;padding:0px;direction:ltr;">
+<p style="box-sizing:border-box;margin:0px;padding:0px;direction:ltr;font-family:inherit;font-weight:400;line-height:1.6;text-rendering:optimizelegibility;letter-spacing:-0.01em;font-size:17px;margin-bottom:20px;">The change screen only presents one patch set at a time. Which patch
+set is currently viewed can be seen from the <code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif">Patch Sets</code> drop-down
+panel in the change header. It shows the number of the currently viewed
+patch set and the total number of patch sets, in the form: "current
+patch set/number of patch sets".</p>
+</div>
+<div style="box-sizing:border-box;margin:0px;padding:0px;direction:ltr;">
+<p style="box-sizing:border-box;margin:0px;padding:0px;direction:ltr;font-family:inherit;font-weight:400;line-height:1.6;text-rendering:optimizelegibility;letter-spacing:-0.01em;font-size:17px;margin-bottom:20px;">If a non-current patch set is viewed this is indicated by the
+<a href="http://gerrit.kylin.com/Documentation/user-review-ui.html#not-current" style="background:transparent;box-sizing:border-box;color:rgb(33, 86, 165);text-decoration:underline;line-height:inherit;">Not Current</a> change state. Please note that some
+operations are only available on the current patch set.</p>
+</div>
+<div style="box-sizing:border-box;margin:0px;padding:0px;direction:ltr;margin-bottom:1.25em;">
+<div style="box-sizing:border-box;margin:0px;padding:0px;direction:ltr;">
+<a style="background:transparent;box-sizing:border-box;color:rgb(33, 86, 165);line-height:inherit;display:inline-block;text-decoration:none;"><div class="media-placeholder">[图片/附件]</div></en-media></a>
+</div>
+</div>
+<div style="box-sizing:border-box;margin:0px;padding:0px;direction:ltr;">
+<p style="box-sizing:border-box;margin:0px;padding:0px;direction:ltr;font-family:inherit;font-weight:400;line-height:1.6;text-rendering:optimizelegibility;letter-spacing:-0.01em;font-size:17px;margin-bottom:20px;">Another indication is a highlighted drop-down label.</p>
+</div>
+<div style="box-sizing:border-box;margin:0px;padding:0px;direction:ltr;margin-bottom:1.25em;">
+<div style="box-sizing:border-box;margin:0px;padding:0px;direction:ltr;">
+<a style="background:transparent;box-sizing:border-box;color:rgb(33, 86, 165);line-height:inherit;display:inline-block;text-decoration:none;"><div class="media-placeholder">[图片/附件]</div></en-media></a>
+</div>
+</div>
+<div style="box-sizing:border-box;margin:0px;padding:0px;direction:ltr;">
+<p style="box-sizing:border-box;margin:0px;padding:0px;direction:ltr;font-family:inherit;font-weight:400;line-height:1.6;text-rendering:optimizelegibility;letter-spacing:-0.01em;font-size:17px;margin-bottom:20px;">The patch set drop-down list shows the list of patch sets and allows to
+switch between them. The patch sets are sorted in descending order so
+that the current patch set is always on top.</p>
+</div>
+<div style="box-sizing:border-box;margin:0px;padding:0px;direction:ltr;">
+<p style="box-sizing:border-box;margin:0px;padding:0px;direction:ltr;font-family:inherit;font-weight:400;line-height:1.6;text-rendering:optimizelegibility;letter-spacing:-0.01em;font-size:17px;margin-bottom:20px;">Draft patch sets are marked with <code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif">DRAFT</code>.</p>
+</div>
+<div style="box-sizing:border-box;margin:0px;padding:0px;direction:ltr;margin-bottom:1.25em;">
+<div style="box-sizing:border-box;margin:0px;padding:0px;direction:ltr;">
+<a style="background:transparent;box-sizing:border-box;color:rgb(33, 86, 165);line-height:inherit;display:inline-block;text-decoration:none;"><div class="media-placeholder">[图片/附件]</div></en-media></a>
+</div>
+</div>
+</div>
+<div style="box-sizing:border-box;margin:0px;padding:0px;direction:ltr;">
+<h3 style="box-sizing:border-box;margin:0px;padding:0px;direction:ltr;font-family:&quot;Open Sans&quot;, &quot;DejaVu Sans&quot;, sans-serif;font-weight:300;font-style:normal;color:rgb(186, 57, 37);text-rendering:optimizelegibility;margin-top:1em;margin-bottom:0.5em;font-size:1.6875em;word-spacing:-0.05em;line-height:1.2;">Download</h3>
+<div style="box-sizing:border-box;margin:0px;padding:0px;direction:ltr;">
+<p style="box-sizing:border-box;margin:0px;padding:0px;direction:ltr;font-family:inherit;font-weight:400;line-height:1.6;text-rendering:optimizelegibility;letter-spacing:-0.01em;font-size:17px;margin-bottom:20px;">The <code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif">Download</code> drop-down panel in the change header offers commands and
+links for downloading the currently viewed patch set.</p>
+</div>
+<div style="box-sizing:border-box;margin:0px;padding:0px;direction:ltr;margin-bottom:1.25em;">
+<div style="box-sizing:border-box;margin:0px;padding:0px;direction:ltr;">
+<a style="background:transparent;box-sizing:border-box;color:rgb(33, 86, 165);line-height:inherit;display:inline-block;text-decoration:none;"><div class="media-placeholder">[图片/附件]</div></en-media></a>
+</div>
+</div>
+<div style="box-sizing:border-box;margin:0px;padding:0px;direction:ltr;">
+<p style="box-sizing:border-box;margin:0px;padding:0px;direction:ltr;font-family:inherit;font-weight:400;line-height:1.6;text-rendering:optimizelegibility;letter-spacing:-0.01em;font-size:17px;margin-bottom:20px;">The available download commands depend on the installed Gerrit plugins.
+The most popular plugin for download commands, the
+<a href="https://gerrit-review.googlesource.com/admin/repos/plugins/download-commands" target="_blank" rel="noopener" style="background:transparent;box-sizing:border-box;color:rgb(33, 86, 165);text-decoration:underline;line-height:inherit;">
+download-commands</a> plugin, provides commands to checkout, pull and
+cherry-pick a patch set.</p>
+</div>
+<div style="box-sizing:border-box;margin:0px;padding:0px;direction:ltr;">
+<p style="box-sizing:border-box;margin:0px;padding:0px;direction:ltr;font-family:inherit;font-weight:400;line-height:1.6;text-rendering:optimizelegibility;letter-spacing:-0.01em;font-size:17px;margin-bottom:20px;">Each command has a copy-to-clipboard icon that allows the command to be
+copied into the clipboard. This makes it easy to paste and execute the
+command on a Git command line.</p>
+</div>
+<div style="box-sizing:border-box;margin:0px;padding:0px;direction:ltr;">
+<p style="box-sizing:border-box;margin:0px;padding:0px;direction:ltr;font-family:inherit;font-weight:400;line-height:1.6;text-rendering:optimizelegibility;letter-spacing:-0.01em;font-size:17px;margin-bottom:20px;">If several download schemes are configured on the server (e.g. SSH and
+HTTP) there is a drop-down list to switch between the download schemes.
+Gerrit automatically remembers the download scheme that was last chosen
+and selects this download scheme the next time the download commands
+drop-down panel is opened.</p>
+</div>
+<div style="box-sizing:border-box;margin:0px;padding:0px;direction:ltr;">
+<p style="box-sizing:border-box;margin:0px;padding:0px;direction:ltr;font-family:inherit;font-weight:400;line-height:1.6;text-rendering:optimizelegibility;letter-spacing:-0.01em;font-size:17px;margin-bottom:20px;">The <code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif">Patch-File</code> links provide the Git patch file for the currently
+viewed patch set for download. The patch file can be base64 encoded or
+zipped.</p>
+</div>
+<div style="box-sizing:border-box;margin:0px;padding:0px;direction:ltr;">
+<p style="box-sizing:border-box;margin:0px;padding:0px;direction:ltr;font-family:inherit;font-weight:400;line-height:1.6;text-rendering:optimizelegibility;letter-spacing:-0.01em;font-size:17px;margin-bottom:20px;">The <code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif">Archive</code> links allow one to download an archive with the contents
+of the currently viewed patch set. The archive is offered in several
+formats (e.g. tar and tbz2); which formats are available depends on the
+configuration of the server.</p>
+</div>
+<div style="box-sizing:border-box;margin:0px;padding:0px;direction:ltr;margin-bottom:1.25em;">
+<div style="box-sizing:border-box;margin:0px;padding:0px;direction:ltr;">
+<a style="background:transparent;box-sizing:border-box;color:rgb(33, 86, 165);line-height:inherit;display:inline-block;text-decoration:none;"><div class="media-placeholder">[图片/附件]</div></en-media></a>
+</div>
+</div>
+</div>
+<div style="box-sizing:border-box;margin:0px;padding:0px;direction:ltr;">
+<h3 style="box-sizing:border-box;margin:0px;padding:0px;direction:ltr;font-family:&quot;Open Sans&quot;, &quot;DejaVu Sans&quot;, sans-serif;font-weight:300;font-style:normal;color:rgb(186, 57, 37);text-rendering:optimizelegibility;margin-top:1em;margin-bottom:0.5em;font-size:1.6875em;word-spacing:-0.05em;line-height:1.2;">Included In</h3>
+<div style="box-sizing:border-box;margin:0px;padding:0px;direction:ltr;">
+<p style="box-sizing:border-box;margin:0px;padding:0px;direction:ltr;font-family:inherit;font-weight:400;line-height:1.6;text-rendering:optimizelegibility;letter-spacing:-0.01em;font-size:17px;margin-bottom:20px;">For merged changes the <code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif">Included In</code> drop-down panel is available in
+the change header.</p>
+</div>
+<div style="box-sizing:border-box;margin:0px;padding:0px;direction:ltr;margin-bottom:1.25em;">
+<div style="box-sizing:border-box;margin:0px;padding:0px;direction:ltr;">
+<a style="background:transparent;box-sizing:border-box;color:rgb(33, 86, 165);line-height:inherit;display:inline-block;text-decoration:none;"><div class="media-placeholder">[图片/附件]</div></en-media></a>
+</div>
+</div>
+<div style="box-sizing:border-box;margin:0px;padding:0px;direction:ltr;">
+<p style="box-sizing:border-box;margin:0px;padding:0px;direction:ltr;font-family:inherit;font-weight:400;line-height:1.6;text-rendering:optimizelegibility;letter-spacing:-0.01em;font-size:17px;margin-bottom:20px;">The <code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif">Included In</code> drop-down panel shows the branches and tags in which
+the change is included. E.g. if a change fixes a bug, this allows to
+quickly see in which released versions the bug-fix is contained
+(assuming that every release is tagged).</p>
+</div>
+<div style="box-sizing:border-box;margin:0px;padding:0px;direction:ltr;margin-bottom:1.25em;">
+<div style="box-sizing:border-box;margin:0px;padding:0px;direction:ltr;">
+<a style="background:transparent;box-sizing:border-box;color:rgb(33, 86, 165);line-height:inherit;display:inline-block;text-decoration:none;"><div class="media-placeholder">[图片/附件]</div></en-media></a>
+</div>
+</div>
+</div>
+<div style="box-sizing:border-box;margin:0px;padding:0px;direction:ltr;">
+<h3 style="box-sizing:border-box;margin:0px;padding:0px;direction:ltr;font-family:&quot;Open Sans&quot;, &quot;DejaVu Sans&quot;, sans-serif;font-weight:300;font-style:normal;color:rgb(186, 57, 37);text-rendering:optimizelegibility;margin-top:1em;margin-bottom:0.5em;font-size:1.6875em;word-spacing:-0.05em;line-height:1.2;">Star Change</h3>
+<div style="box-sizing:border-box;margin:0px;padding:0px;direction:ltr;">
+<p style="box-sizing:border-box;margin:0px;padding:0px;direction:ltr;font-family:inherit;font-weight:400;line-height:1.6;text-rendering:optimizelegibility;letter-spacing:-0.01em;font-size:17px;margin-bottom:20px;">The star icon in the change header allows to mark the change as a
+favorite. Clicking on the star icon again, unstars the change.</p>
+</div>
+<div style="box-sizing:border-box;margin:0px;padding:0px;direction:ltr;margin-bottom:1.25em;">
+<div style="box-sizing:border-box;margin:0px;padding:0px;direction:ltr;">
+<a style="background:transparent;box-sizing:border-box;color:rgb(33, 86, 165);line-height:inherit;display:inline-block;text-decoration:none;"><div class="media-placeholder">[图片/附件]</div></en-media></a>
+</div>
+</div>
+<div style="box-sizing:border-box;margin:0px;padding:0px;direction:ltr;">
+<p style="box-sizing:border-box;margin:0px;padding:0px;direction:ltr;font-family:inherit;font-weight:400;line-height:1.6;text-rendering:optimizelegibility;letter-spacing:-0.01em;font-size:17px;margin-bottom:20px;">Starring a change turns on email notifications for this change.</p>
+</div>
+<div style="box-sizing:border-box;margin:0px;padding:0px;direction:ltr;">
+<p style="box-sizing:border-box;margin:0px;padding:0px;direction:ltr;font-family:inherit;font-weight:400;line-height:1.6;text-rendering:optimizelegibility;letter-spacing:-0.01em;font-size:17px;margin-bottom:20px;">Starred changed are listed under <code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif">My</code> &gt; <code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif">Starred Changes</code>.
+and can be queried by the <a href="http://gerrit.kylin.com/Documentation/user-search.html#is" style="background:transparent;box-sizing:border-box;color:rgb(33, 86, 165);text-decoration:underline;line-height:inherit;">is:starred</a> search
+operator.</p>
+</div>
+</div>
+<div style="box-sizing:border-box;margin:0px;padding:0px;direction:ltr;">
+<h3 style="box-sizing:border-box;margin:0px;padding:0px;direction:ltr;font-family:&quot;Open Sans&quot;, &quot;DejaVu Sans&quot;, sans-serif;font-weight:300;font-style:normal;color:rgb(186, 57, 37);text-rendering:optimizelegibility;margin-top:1em;margin-bottom:0.5em;font-size:1.6875em;word-spacing:-0.05em;line-height:1.2;">Related Changes</h3>
+<div style="box-sizing:border-box;margin:0px;padding:0px;direction:ltr;">
+<p style="box-sizing:border-box;margin:0px;padding:0px;direction:ltr;font-family:inherit;font-weight:400;line-height:1.6;text-rendering:optimizelegibility;letter-spacing:-0.01em;font-size:17px;margin-bottom:20px;">If there are changes that are related to the currently viewed change
+they are displayed in the third column of the change screen.</p>
+</div>
+<div style="box-sizing:border-box;margin:0px;padding:0px;direction:ltr;">
+<p style="box-sizing:border-box;margin:0px;padding:0px;direction:ltr;font-family:inherit;font-weight:400;line-height:1.6;text-rendering:optimizelegibility;letter-spacing:-0.01em;font-size:17px;margin-bottom:20px;">There are several lists of related changes and a tab control is used to
+display each list of related changes in its own tab.</p>
+</div>
+<div style="box-sizing:border-box;margin:0px;padding:0px;direction:ltr;">
+<p style="box-sizing:border-box;margin:0px;padding:0px;direction:ltr;font-family:inherit;font-weight:400;line-height:1.6;text-rendering:optimizelegibility;letter-spacing:-0.01em;font-size:17px;margin-bottom:20px;">The following tabs may be displayed:</p>
+</div>
+<div style="box-sizing:border-box;margin:0px;padding:0px;direction:ltr;">
+<ul style="box-sizing:border-box;margin:0px;padding:0px;direction:ltr;font-size:1em;line-height:1.6;margin-bottom:1.25em;list-style-position:outside;font-family:inherit;margin-left:1.5em;">
+<li style="box-sizing:border-box;margin:0px;padding:0px;direction:ltr;">
+<p style="box-sizing:border-box;margin:0px;padding:0px;direction:ltr;font-family:inherit;font-weight:400;line-height:1.6;text-rendering:optimizelegibility;letter-spacing:-0.01em;font-size:17px;margin-bottom:10.625px;"><a style="background:transparent;box-sizing:border-box;color:rgb(33, 86, 165);text-decoration:underline;line-height:inherit;"><code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif">Related Changes</code></a>:</p>
+<div style="box-sizing:border-box;margin:0px;padding:0px;direction:ltr;">
+<p style="box-sizing:border-box;margin:0px;padding:0px;direction:ltr;font-family:inherit;font-weight:400;line-height:1.6;text-rendering:optimizelegibility;letter-spacing:-0.01em;font-size:17px;margin-bottom:10.625px;">This tab page shows changes on which the current change depends
+(ancestors) and open changes that depend on the current change
+(descendants). For merge commits it also shows the closed changes that
+will be merged into the destination branch by submitting the merge
+commit.</p>
+</div>
+<div style="box-sizing:border-box;margin:0px;padding:0px;direction:ltr;">
+<p style="box-sizing:border-box;margin:0px;padding:0px;direction:ltr;font-family:inherit;font-weight:400;line-height:1.6;text-rendering:optimizelegibility;letter-spacing:-0.01em;font-size:17px;margin-bottom:10.625px;">The changes are sorted in the same way as the output of 'git log'. This
+means the relationship between the changes can be inferred from the
+position of the changes in the list. Changes listed above the current
+change are descendants; changes below the current change are ancestors.</p>
+</div>
+<div style="box-sizing:border-box;margin:0px;padding:0px;direction:ltr;">
+<p style="box-sizing:border-box;margin:0px;padding:0px;direction:ltr;font-family:inherit;font-weight:400;line-height:1.6;text-rendering:optimizelegibility;letter-spacing:-0.01em;font-size:17px;margin-bottom:10.625px;">For merged changes this tab is only shown if there are open
+descendants.</p>
+</div>
+<div style="box-sizing:border-box;margin:0px;padding:0px;direction:ltr;margin-bottom:1.25em;">
+<div style="box-sizing:border-box;margin:0px;padding:0px;direction:ltr;">
+<a style="background:transparent;box-sizing:border-box;color:rgb(33, 86, 165);line-height:inherit;display:inline-block;text-decoration:none;"><div class="media-placeholder">[图片/附件]</div></en-media></a>
+</div>
+</div>
+<div style="box-sizing:border-box;margin:0px;padding:0px;direction:ltr;">
+<p style="box-sizing:border-box;margin:0px;padding:0px;direction:ltr;font-family:inherit;font-weight:400;line-height:1.6;text-rendering:optimizelegibility;letter-spacing:-0.01em;font-size:17px;margin-bottom:10.625px;">Related changes may be decorated with an icon to signify dependencies
+on outdated patch sets, or commits that are not associated to changes
+under review:</p>
+</div>
+<div style="box-sizing:border-box;margin:0px;padding:0px;direction:ltr;margin-bottom:0.625em;">
+<ul style="box-sizing:border-box;margin:0px;padding:0px;direction:ltr;line-height:1.6;list-style-position:outside;font-family:inherit;font-size:1em;margin-bottom:0px;margin-left:1.25em;">
+<li style="box-sizing:border-box;margin:0px;padding:0px;direction:ltr;">
+<p style="box-sizing:border-box;margin:0px;padding:0px;direction:ltr;font-family:inherit;font-weight:400;line-height:1.6;text-rendering:optimizelegibility;letter-spacing:-0.01em;font-size:17px;margin-bottom:10.625px;"><a style="background:transparent;box-sizing:border-box;color:rgb(33, 86, 165);text-decoration:underline;line-height:inherit;">Orange Dot:</a></p>
+<div style="box-sizing:border-box;margin:0px;padding:0px;direction:ltr;">
+<p style="box-sizing:border-box;margin:0px;padding:0px;direction:ltr;font-family:inherit;font-weight:400;line-height:1.6;text-rendering:optimizelegibility;letter-spacing:-0.01em;font-size:17px;margin-bottom:10.625px;">The selected patch set of the change is outdated; it is not the current
+patch set of the change.</p>
+</div>
+<div style="box-sizing:border-box;margin:0px;padding:0px;direction:ltr;">
+<p style="box-sizing:border-box;margin:0px;padding:0px;direction:ltr;font-family:inherit;font-weight:400;line-height:1.6;text-rendering:optimizelegibility;letter-spacing:-0.01em;font-size:17px;margin-bottom:10.625px;">If an ancestor change is marked with an orange dot it means that the
+currently viewed patch set depends on a outdated patch set of the
+ancestor change. This is because a new patch set for the ancestor
+change was uploaded in the meantime and as result the currently viewed
+patch set now needs to be rebased.</p>
+</div>
+<div style="box-sizing:border-box;margin:0px;padding:0px;direction:ltr;">
+<p style="box-sizing:border-box;margin:0px;padding:0px;direction:ltr;font-family:inherit;font-weight:400;line-height:1.6;text-rendering:optimizelegibility;letter-spacing:-0.01em;font-size:17px;margin-bottom:10.625px;">If a descendant change is marked with an orange dot it means that an
+old patch set of the descendant change depends on the currently viewed
+patch set. It may be that the descendant was rebased in the meantime
+and with the new patch set this dependency was removed.</p>
+</div>
+</li>
+<li style="box-sizing:border-box;margin:0px;padding:0px;direction:ltr;">
+<p style="box-sizing:border-box;margin:0px;padding:0px;direction:ltr;font-family:inherit;font-weight:400;line-height:1.6;text-rendering:optimizelegibility;letter-spacing:-0.01em;font-size:17px;margin-bottom:10.625px;"><a style="background:transparent;box-sizing:border-box;color:rgb(33, 86, 165);text-decoration:underline;line-height:inherit;">Green Tilde:</a></p>
+<div style="box-sizing:border-box;margin:0px;padding:0px;direction:ltr;">
+<p style="box-sizing:border-box;margin:0px;padding:0px;direction:ltr;font-family:inherit;font-weight:400;line-height:1.6;text-rendering:optimizelegibility;letter-spacing:-0.01em;font-size:17px;margin-bottom:10.625px;">The selected patch set of the change is an indirect descendant of the
+currently viewed patch set; it has a dependency to another patch set of
+this change. E.g. this could mean that a new patch set was uploaded for
+this change and the descendant change now needs to be rebased. Please
+note that following the link to an indirect descendant change may
+result in a completely different related changes listing.</p>
+</div>
+</li>
+<li style="box-sizing:border-box;margin:0px;padding:0px;direction:ltr;">
+<p style="box-sizing:border-box;margin:0px;padding:0px;direction:ltr;font-family:inherit;font-weight:400;line-height:1.6;text-rendering:optimizelegibility;letter-spacing:-0.01em;font-size:17px;margin-bottom:10.625px;"><a style="background:transparent;box-sizing:border-box;color:rgb(33, 86, 165);text-decoration:underline;line-height:inherit;">Black Dot:</a></p>
+<div style="box-sizing:border-box;margin:0px;padding:0px;direction:ltr;">
+<p style="box-sizing:border-box;margin:0px;padding:0px;direction:ltr;font-family:inherit;font-weight:400;line-height:1.6;text-rendering:optimizelegibility;letter-spacing:-0.01em;font-size:17px;margin-bottom:10.625px;">Indicates a closed ancestor, e.g. the commit was directly pushed into
+the repository bypassing code review, or the ancestor change was
+reviewed and submitted on another branch. The latter may indicate that
+the user has accidentally pushed the commit to the wrong branch, e.g.
+the commit was done on <code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif">branch-a</code>, but was then pushed to
+<code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif">refs/for/branch-b</code>.
+A black dot is also present if the change was abandoned.</p>
+</div>
+</li>
+<li style="box-sizing:border-box;margin:0px;padding:0px;direction:ltr;">
+<p style="box-sizing:border-box;margin:0px;padding:0px;direction:ltr;font-family:inherit;font-weight:400;line-height:1.6;text-rendering:optimizelegibility;letter-spacing:-0.01em;font-size:17px;margin-bottom:10.625px;"><a style="background:transparent;box-sizing:border-box;color:rgb(33, 86, 165);text-decoration:underline;line-height:inherit;">Strikethrough Subject:</a></p>
+<div style="box-sizing:border-box;margin:0px;padding:0px;direction:ltr;">
+<p style="box-sizing:border-box;margin:0px;padding:0px;direction:ltr;font-family:inherit;font-weight:400;line-height:1.6;text-rendering:optimizelegibility;letter-spacing:-0.01em;font-size:17px;margin-bottom:10.625px;">When the commit is abandoned, its subject line will be striked
+through.</p>
+</div>
+</li>
+</ul>
+</div>
+<div style="box-sizing:border-box;margin:0px;padding:0px;direction:ltr;margin-bottom:1.25em;">
+<div style="box-sizing:border-box;margin:0px;padding:0px;direction:ltr;">
+<a style="background:transparent;box-sizing:border-box;color:rgb(33, 86, 165);line-height:inherit;display:inline-block;text-decoration:none;"><div class="media-placeholder">[图片/附件]</div></en-media></a>
+</div>
+</div>
+</li>
+<li style="box-sizing:border-box;margin:0px;padding:0px;direction:ltr;">
+<p style="box-sizing:border-box;margin:0px;padding:0px;direction:ltr;font-family:inherit;font-weight:400;line-height:1.6;text-rendering:optimizelegibility;letter-spacing:-0.01em;font-size:17px;margin-bottom:10.625px;"><a style="background:transparent;box-sizing:border-box;color:rgb(33, 86, 165);text-decoration:underline;line-height:inherit;"><code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif">Conflicts With</code></a>:</p>
+<div style="box-sizing:border-box;margin:0px;padding:0px;direction:ltr;">
+<p style="box-sizing:border-box;margin:0px;padding:0px;direction:ltr;font-family:inherit;font-weight:400;line-height:1.6;text-rendering:optimizelegibility;letter-spacing:-0.01em;font-size:17px;margin-bottom:10.625px;">This tab page shows changes that conflict with the current change.
+Non-mergeable changes are filtered out; only conflicting changes that
+are mergeable are shown.</p>
+</div>
+<div style="box-sizing:border-box;margin:0px;padding:0px;direction:ltr;">
+<p style="box-sizing:border-box;margin:0px;padding:0px;direction:ltr;font-family:inherit;font-weight:400;line-height:1.6;text-rendering:optimizelegibility;letter-spacing:-0.01em;font-size:17px;margin-bottom:10.625px;">If this change is merged, its conflicting changes will have merge
+conflicts and must be rebased. The rebase of the other changes with the
+conflict resolution must then be done manually.</p>
+</div>
+<div style="box-sizing:border-box;margin:0px;padding:0px;direction:ltr;margin-bottom:1.25em;">
+<div style="box-sizing:border-box;margin:0px;padding:0px;direction:ltr;">
+<a style="background:transparent;box-sizing:border-box;color:rgb(33, 86, 165);line-height:inherit;display:inline-block;text-decoration:none;"><div class="media-placeholder">[图片/附件]</div></en-media></a>
+</div>
+</div>
+</li>
+<li style="box-sizing:border-box;margin:0px;padding:0px;direction:ltr;">
+<p style="box-sizing:border-box;margin:0px;padding:0px;direction:ltr;font-family:inherit;font-weight:400;line-height:1.6;text-rendering:optimizelegibility;letter-spacing:-0.01em;font-size:17px;margin-bottom:10.625px;"><a style="background:transparent;box-sizing:border-box;color:rgb(33, 86, 165);text-decoration:underline;line-height:inherit;"><code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif">Same Topic</code></a>:</p>
+<div style="box-sizing:border-box;margin:0px;padding:0px;direction:ltr;">
+<p style="box-sizing:border-box;margin:0px;padding:0px;direction:ltr;font-family:inherit;font-weight:400;line-height:1.6;text-rendering:optimizelegibility;letter-spacing:-0.01em;font-size:17px;margin-bottom:10.625px;">This tab page shows changes that have the same topic as the current
+change. Only open changes are included in the list.</p>
+</div>
+<div style="box-sizing:border-box;margin:0px;padding:0px;direction:ltr;margin-bottom:1.25em;">
+<div style="box-sizing:border-box;margin:0px;padding:0px;direction:ltr;">
+<a style="background:transparent;box-sizing:border-box;color:rgb(33, 86, 165);line-height:inherit;display:inline-block;text-decoration:none;"><div class="media-placeholder">[图片/附件]</div></en-media></a>
+</div>
+</div>
+</li>
+<li style="box-sizing:border-box;margin:0px;padding:0px;direction:ltr;">
+<p style="box-sizing:border-box;margin:0px;padding:0px;direction:ltr;font-family:inherit;font-weight:400;line-height:1.6;text-rendering:optimizelegibility;letter-spacing:-0.01em;font-size:17px;margin-bottom:10.625px;"><a style="background:transparent;box-sizing:border-box;color:rgb(33, 86, 165);text-decoration:underline;line-height:inherit;"><code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif">Submitted Together</code></a>:</p>
+<div style="box-sizing:border-box;margin:0px;padding:0px;direction:ltr;">
+<p style="box-sizing:border-box;margin:0px;padding:0px;direction:ltr;font-family:inherit;font-weight:400;line-height:1.6;text-rendering:optimizelegibility;letter-spacing:-0.01em;font-size:17px;margin-bottom:10.625px;">This tab page shows changes that will be submitted together with the
+currently viewed change, when clicking the submit button. It includes
+ancestors of the current patch set.</p>
+</div>
+<div style="box-sizing:border-box;margin:0px;padding:0px;direction:ltr;">
+<p style="box-sizing:border-box;margin:0px;padding:0px;direction:ltr;font-family:inherit;font-weight:400;line-height:1.6;text-rendering:optimizelegibility;letter-spacing:-0.01em;font-size:17px;margin-bottom:10.625px;">This may include changes and its ancestors with the same topic if
+<code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif">change.submitWholeTopic</code> is enabled. Only open changes with the
+same topic are included in the list.</p>
+</div>
+</li>
+<li style="box-sizing:border-box;margin:0px;padding:0px;direction:ltr;">
+<p style="box-sizing:border-box;margin:0px;padding:0px;direction:ltr;font-family:inherit;font-weight:400;line-height:1.6;text-rendering:optimizelegibility;letter-spacing:-0.01em;font-size:17px;margin-bottom:10.625px;"><a style="background:transparent;box-sizing:border-box;color:rgb(33, 86, 165);text-decoration:underline;line-height:inherit;"><code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif">Cherry-Picks</code></a>:</p>
+<div style="box-sizing:border-box;margin:0px;padding:0px;direction:ltr;">
+<p style="box-sizing:border-box;margin:0px;padding:0px;direction:ltr;font-family:inherit;font-weight:400;line-height:1.6;text-rendering:optimizelegibility;letter-spacing:-0.01em;font-size:17px;margin-bottom:10.625px;">This tab page shows changes with the same <a href="http://gerrit.kylin.com/Documentation/user-changeid.html" style="background:transparent;box-sizing:border-box;color:rgb(33, 86, 165);text-decoration:underline;line-height:inherit;">
+Change-Id</a> for the current project.</p>
+</div>
+<div style="box-sizing:border-box;margin:0px;padding:0px;direction:ltr;">
+<p style="box-sizing:border-box;margin:0px;padding:0px;direction:ltr;font-family:inherit;font-weight:400;line-height:1.6;text-rendering:optimizelegibility;letter-spacing:-0.01em;font-size:17px;margin-bottom:10.625px;">Abandoned changes are filtered out.</p>
+</div>
+<div style="box-sizing:border-box;margin:0px;padding:0px;direction:ltr;">
+<p style="box-sizing:border-box;margin:0px;padding:0px;direction:ltr;font-family:inherit;font-weight:400;line-height:1.6;text-rendering:optimizelegibility;letter-spacing:-0.01em;font-size:17px;margin-bottom:10.625px;">For each change in this list the destination branch is shown as a
+prefix in front of the change subject.</p>
+</div>
+<div style="box-sizing:border-box;margin:0px;padding:0px;direction:ltr;margin-bottom:1.25em;">
+<div style="box-sizing:border-box;margin:0px;padding:0px;direction:ltr;">
+<a style="background:transparent;box-sizing:border-box;color:rgb(33, 86, 165);line-height:inherit;display:inline-block;text-decoration:none;"><div class="media-placeholder">[图片/附件]</div></en-media></a>
+</div>
+</div>
+</li>
+</ul>
+</div>
+<div style="box-sizing:border-box;margin:0px;padding:0px;direction:ltr;">
+<p style="box-sizing:border-box;margin:0px;padding:0px;direction:ltr;font-family:inherit;font-weight:400;line-height:1.6;text-rendering:optimizelegibility;letter-spacing:-0.01em;font-size:17px;margin-bottom:20px;">If there are no related changes for a tab, the tab is not displayed.</p>
+</div>
+</div>
+<div style="box-sizing:border-box;margin:0px;padding:0px;direction:ltr;">
+<h3 style="box-sizing:border-box;margin:0px;padding:0px;direction:ltr;font-family:&quot;Open Sans&quot;, &quot;DejaVu Sans&quot;, sans-serif;font-weight:300;font-style:normal;color:rgb(186, 57, 37);text-rendering:optimizelegibility;margin-top:1em;margin-bottom:0.5em;font-size:1.6875em;word-spacing:-0.05em;line-height:1.2;">Reply</h3>
+<div style="box-sizing:border-box;margin:0px;padding:0px;direction:ltr;">
+<p style="box-sizing:border-box;margin:0px;padding:0px;direction:ltr;font-family:inherit;font-weight:400;line-height:1.6;text-rendering:optimizelegibility;letter-spacing:-0.01em;font-size:17px;margin-bottom:20px;">The <code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif">Reply…​</code> button in the change header allows to reply to the
+currently viewed patch set; one can add a summary comment, publish
+inline draft comments, and vote on the labels.</p>
+</div>
+<div style="box-sizing:border-box;margin:0px;padding:0px;direction:ltr;margin-bottom:1.25em;">
+<div style="box-sizing:border-box;margin:0px;padding:0px;direction:ltr;">
+<a style="background:transparent;box-sizing:border-box;color:rgb(33, 86, 165);line-height:inherit;display:inline-block;text-decoration:none;"><div class="media-placeholder">[图片/附件]</div></en-media></a>
+</div>
+</div>
+<div style="box-sizing:border-box;margin:0px;padding:0px;direction:ltr;">
+<p style="box-sizing:border-box;margin:0px;padding:0px;direction:ltr;font-family:inherit;font-weight:400;line-height:1.6;text-rendering:optimizelegibility;letter-spacing:-0.01em;font-size:17px;margin-bottom:20px;">Clicking on the <code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif">Reply…​</code> button opens a popup panel.</p>
+</div>
+<div style="box-sizing:border-box;margin:0px;padding:0px;direction:ltr;">
+<p style="box-sizing:border-box;margin:0px;padding:0px;direction:ltr;font-family:inherit;font-weight:400;line-height:1.6;text-rendering:optimizelegibility;letter-spacing:-0.01em;font-size:17px;margin-bottom:20px;">A text box allows to type a summary comment for the currently viewed
+patch set. Some basic markdown-like syntax is supported which renders
+indented lines preformatted, lines starting with "- " or "* " as list
+items, and lines starting with "&gt; " as block quotes (also see replying to
+<a href="http://gerrit.kylin.com/Documentation/user-review-ui.html#reply-to-message" style="background:transparent;box-sizing:border-box;color:rgb(33, 86, 165);text-decoration:underline;line-height:inherit;">messages</a> and <a href="http://gerrit.kylin.com/Documentation/user-review-ui.html#reply-inline-comment" style="background:transparent;box-sizing:border-box;color:rgb(33, 86, 165);text-decoration:underline;line-height:inherit;">inline comments</a>).</p>
+</div>
+<div style="box-sizing:border-box;margin:0px;padding:0px;direction:ltr;">
+<p style="box-sizing:border-box;margin:0px;padding:0px;direction:ltr;font-family:inherit;font-weight:400;line-height:1.6;text-rendering:optimizelegibility;letter-spacing:-0.01em;font-size:17px;margin-bottom:20px;">Note that you can set the text and tooltip of the button in
+<a href="http://gerrit.kylin.com/Documentation/config-gerrit.html#change.replyLabel" style="background:transparent;box-sizing:border-box;color:rgb(33, 86, 165);text-decoration:underline;line-height:inherit;">gerrit.config</a>.</p>
+</div>
+<div style="box-sizing:border-box;margin:0px;padding:0px;direction:ltr;">
+<p style="box-sizing:border-box;margin:0px;padding:0px;direction:ltr;font-family:inherit;font-weight:400;line-height:1.6;text-rendering:optimizelegibility;letter-spacing:-0.01em;font-size:17px;margin-bottom:20px;">If the current patch set is viewed, radio buttons are displayed for
+each label on which the user is allowed to vote. Voting on non-current
+patch sets is not possible.</p>
+</div>
+<div style="box-sizing:border-box;margin:0px;padding:0px;direction:ltr;">
+<p style="box-sizing:border-box;margin:0px;padding:0px;direction:ltr;font-family:inherit;font-weight:400;line-height:1.6;text-rendering:optimizelegibility;letter-spacing:-0.01em;font-size:17px;margin-bottom:20px;">The inline draft comments that will be published are displayed in a
+separate section so that they can be reviewed before publishing. There
+are links to navigate to the inline comments which can be used if a
+comment needs to be edited.</p>
+</div>
+<div style="box-sizing:border-box;margin:0px;padding:0px;direction:ltr;">
+<p style="box-sizing:border-box;margin:0px;padding:0px;direction:ltr;font-family:inherit;font-weight:400;line-height:1.6;text-rendering:optimizelegibility;letter-spacing:-0.01em;font-size:17px;margin-bottom:20px;">The <code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif">Post</code> button publishes the comments and the votes.</p>
+</div>
+<div style="box-sizing:border-box;margin:0px;padding:0px;direction:ltr;margin-bottom:1.25em;">
+<div style="box-sizing:border-box;margin:0px;padding:0px;direction:ltr;">
+<a style="background:transparent;box-sizing:border-box;color:rgb(33, 86, 165);line-height:inherit;display:inline-block;text-decoration:none;"><div class="media-placeholder">[图片/附件]</div></en-media></a>
+</div>
+</div>
+<div style="box-sizing:border-box;margin:0px;padding:0px;direction:ltr;">
+<p style="box-sizing:border-box;margin:0px;padding:0px;direction:ltr;font-family:inherit;font-weight:400;line-height:1.6;text-rendering:optimizelegibility;letter-spacing:-0.01em;font-size:17px;margin-bottom:20px;">If a user can approve a label that is still required, a quick approve
+button appears in the change header that allows to add this missing
+approval by a single click. The quick approve button only appears if
+there is a single label that is still required and can be approved by
+the user.</p>
+</div>
+<div style="box-sizing:border-box;margin:0px;padding:0px;direction:ltr;">
+<p style="box-sizing:border-box;margin:0px;padding:0px;direction:ltr;font-family:inherit;font-weight:400;line-height:1.6;text-rendering:optimizelegibility;letter-spacing:-0.01em;font-size:17px;margin-bottom:20px;">E.g. if a change requires approvals on the 'Code-Review' and the
+'Verified' labels, and there is already a '+1 Verified' vote, then
+if the user is allowed to vote the max score on 'Code-Review', a
+<code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif">Code-Review+2</code> quick approve button appears that approves the
+'Code-Review' label if clicked.</p>
+</div>
+<div style="box-sizing:border-box;margin:0px;padding:0px;direction:ltr;">
+<p style="box-sizing:border-box;margin:0px;padding:0px;direction:ltr;font-family:inherit;font-weight:400;line-height:1.6;text-rendering:optimizelegibility;letter-spacing:-0.01em;font-size:17px;margin-bottom:20px;">Using the quick approve button also publishes all inline draft
+comments; a summary comment is only added if the reply popup panel is
+open when the quick approve button is clicked.</p>
+</div>
+<div style="box-sizing:border-box;margin:0px;padding:0px;direction:ltr;margin-bottom:1.25em;">
+<div style="box-sizing:border-box;margin:0px;padding:0px;direction:ltr;">
+<a style="background:transparent;box-sizing:border-box;color:rgb(33, 86, 165);line-height:inherit;display:inline-block;text-decoration:none;"><div class="media-placeholder">[图片/附件]</div></en-media></a>
+</div>
+</div>
+</div>
+<div style="box-sizing:border-box;margin:0px;padding:0px;direction:ltr;">
+<h3 style="box-sizing:border-box;margin:0px;padding:0px;direction:ltr;font-family:&quot;Open Sans&quot;, &quot;DejaVu Sans&quot;, sans-serif;font-weight:300;font-style:normal;color:rgb(186, 57, 37);text-rendering:optimizelegibility;margin-top:1em;margin-bottom:0.5em;font-size:1.6875em;word-spacing:-0.05em;line-height:1.2;">History</h3>
+<div style="box-sizing:border-box;margin:0px;padding:0px;direction:ltr;">
+<p style="box-sizing:border-box;margin:0px;padding:0px;direction:ltr;font-family:inherit;font-weight:400;line-height:1.6;text-rendering:optimizelegibility;letter-spacing:-0.01em;font-size:17px;margin-bottom:20px;">The history of the change can be seen in the lower part of the screen.</p>
+</div>
+<div style="box-sizing:border-box;margin:0px;padding:0px;direction:ltr;">
+<p style="box-sizing:border-box;margin:0px;padding:0px;direction:ltr;font-family:inherit;font-weight:400;line-height:1.6;text-rendering:optimizelegibility;letter-spacing:-0.01em;font-size:17px;margin-bottom:20px;">The history contains messages for all kinds of change updates, e.g. a
+message is added when a new patch set is uploaded or when a review was
+done.</p>
+</div>
+<div style="box-sizing:border-box;margin:0px;padding:0px;direction:ltr;">
+<p style="box-sizing:border-box;margin:0px;padding:0px;direction:ltr;font-family:inherit;font-weight:400;line-height:1.6;text-rendering:optimizelegibility;letter-spacing:-0.01em;font-size:17px;margin-bottom:20px;">Messages with new comments from other users, that were published after
+the current user last reviewed this change, are automatically expanded.</p>
+</div>
+<div style="box-sizing:border-box;margin:0px;padding:0px;direction:ltr;margin-bottom:1.25em;">
+<div style="box-sizing:border-box;margin:0px;padding:0px;direction:ltr;">
+<a style="background:transparent;box-sizing:border-box;color:rgb(33, 86, 165);line-height:inherit;display:inline-block;text-decoration:none;"><div class="media-placeholder">[图片/附件]</div></en-media></a>
+</div>
+</div>
+<div style="box-sizing:border-box;margin:0px;padding:0px;direction:ltr;">
+<p style="box-sizing:border-box;margin:0px;padding:0px;direction:ltr;font-family:inherit;font-weight:400;line-height:1.6;text-rendering:optimizelegibility;letter-spacing:-0.01em;font-size:17px;margin-bottom:20px;">It is possible to directly reply to a change message by clicking on the
+reply icon in the right upper corner of a change message. This opens
+the reply popup panel and prefills the text box with the quoted comment.
+Then the reply can be written below the quoted comment or inserted
+inline. Lines starting with "&gt; " will be rendered as a block quote.
+Please note that for a correct rendering it is important to leave a blank
+line between a quoted block and the reply to it.</p>
+</div>
+<div style="box-sizing:border-box;margin:0px;padding:0px;direction:ltr;margin-bottom:1.25em;">
+<div style="box-sizing:border-box;margin:0px;padding:0px;direction:ltr;">
+<a style="background:transparent;box-sizing:border-box;color:rgb(33, 86, 165);line-height:inherit;display:inline-block;text-decoration:none;"><div class="media-placeholder">[图片/附件]</div></en-media></a>
+</div>
+</div>
+<div style="box-sizing:border-box;margin:0px;padding:0px;direction:ltr;">
+<p style="box-sizing:border-box;margin:0px;padding:0px;direction:ltr;font-family:inherit;font-weight:400;line-height:1.6;text-rendering:optimizelegibility;letter-spacing:-0.01em;font-size:17px;margin-bottom:20px;">Inline comments are directly displayed in the change history and there
+are links to navigate to the inline comments.</p>
+</div>
+<div style="box-sizing:border-box;margin:0px;padding:0px;direction:ltr;margin-bottom:1.25em;">
+<div style="box-sizing:border-box;margin:0px;padding:0px;direction:ltr;">
+<a style="background:transparent;box-sizing:border-box;color:rgb(33, 86, 165);line-height:inherit;display:inline-block;text-decoration:none;"><div class="media-placeholder">[图片/附件]</div></en-media></a>
+</div>
+</div>
+<div style="box-sizing:border-box;margin:0px;padding:0px;direction:ltr;">
+<p style="box-sizing:border-box;margin:0px;padding:0px;direction:ltr;font-family:inherit;font-weight:400;line-height:1.6;text-rendering:optimizelegibility;letter-spacing:-0.01em;font-size:17px;margin-bottom:20px;">The <code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif">Expand All</code> button expands all messages; the <code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif">Collapse All</code> button
+collapses all messages.</p>
+</div>
+</div>
+<div style="box-sizing:border-box;margin:0px;padding:0px;direction:ltr;">
+<h3 style="box-sizing:border-box;margin:0px;padding:0px;direction:ltr;font-family:&quot;Open Sans&quot;, &quot;DejaVu Sans&quot;, sans-serif;font-weight:300;font-style:normal;color:rgb(186, 57, 37);text-rendering:optimizelegibility;margin-top:1em;margin-bottom:0.5em;font-size:1.6875em;word-spacing:-0.05em;line-height:1.2;">Update Notification</h3>
+<div style="box-sizing:border-box;margin:0px;padding:0px;direction:ltr;">
+<p style="box-sizing:border-box;margin:0px;padding:0px;direction:ltr;font-family:inherit;font-weight:400;line-height:1.6;text-rendering:optimizelegibility;letter-spacing:-0.01em;font-size:17px;margin-bottom:20px;">The change screen automatically polls for updates to the currently
+viewed change. If there is an update the user is informed by a popup
+panel in the bottom right corner.</p>
+</div>
+<div style="box-sizing:border-box;margin:0px;padding:0px;direction:ltr;">
+<p style="box-sizing:border-box;margin:0px;padding:0px;direction:ltr;font-family:inherit;font-weight:400;line-height:1.6;text-rendering:optimizelegibility;letter-spacing:-0.01em;font-size:17px;margin-bottom:20px;">The polling frequency depends on the server configuration; by default
+it is 30 seconds. Polling may also be completely disabled by the
+administrator.</p>
+</div>
+<div style="box-sizing:border-box;margin:0px;padding:0px;direction:ltr;margin-bottom:1.25em;">
+<div style="box-sizing:border-box;margin:0px;padding:0px;direction:ltr;">
+<a style="background:transparent;box-sizing:border-box;color:rgb(33, 86, 165);line-height:inherit;display:inline-block;text-decoration:none;"><div class="media-placeholder">[图片/附件]</div></en-media></a>
+</div>
+</div>
+</div>
+<div style="box-sizing:border-box;margin:0px;padding:0px;direction:ltr;">
+<h3 style="box-sizing:border-box;margin:0px;padding:0px;direction:ltr;font-family:&quot;Open Sans&quot;, &quot;DejaVu Sans&quot;, sans-serif;font-weight:300;font-style:normal;color:rgb(186, 57, 37);text-rendering:optimizelegibility;margin-top:1em;margin-bottom:0.5em;font-size:1.6875em;word-spacing:-0.05em;line-height:1.2;">Plugin Extensions</h3>
+<div style="box-sizing:border-box;margin:0px;padding:0px;direction:ltr;">
+<p style="box-sizing:border-box;margin:0px;padding:0px;direction:ltr;font-family:inherit;font-weight:400;line-height:1.6;text-rendering:optimizelegibility;letter-spacing:-0.01em;font-size:17px;margin-bottom:20px;">Gerrit plugins may extend the change screen; they can add buttons for
+additional actions to the change info block and display arbitrary UI
+controls below the change info block.</p>
+</div>
+<div style="box-sizing:border-box;margin:0px;padding:0px;direction:ltr;margin-bottom:1.25em;">
+<div style="box-sizing:border-box;margin:0px;padding:0px;direction:ltr;">
+<a style="background:transparent;box-sizing:border-box;color:rgb(33, 86, 165);line-height:inherit;display:inline-block;text-decoration:none;"><div class="media-placeholder">[图片/附件]</div></en-media></a>
+</div>
+</div>
+</div>
+</div></div></div></div></div></div></div></div>
+<a class="back-link" href="../articles.html">← 返回笔记列表</a>
+</body></html>

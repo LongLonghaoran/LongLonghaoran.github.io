@@ -1,0 +1,316 @@
+<!DOCTYPE html>
+<html lang="zh-CN" data-theme="light">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>如何使用 Megatron-LM 训练语言模型 - OSCHINA - 中文开源技术交流社区 — 技术笔记</title>
+<style>
+:root {
+  --bg: #ffffff;
+  --text: #1a1a1a;
+  --muted: #666;
+  --border: #e0e0e0;
+  --code-bg: #f5f5f5;
+  --link: #0066cc;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #1a1a1a;
+    --text: #e0e0e0;
+    --muted: #999;
+    --border: #333;
+    --code-bg: #2a2a2a;
+    --link: #66bbff;
+  }
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  line-height: 1.7;
+  color: var(--text);
+  background: var(--bg);
+  max-width: 860px;
+  margin: 0 auto;
+  padding: 2rem 1.5rem;
+}
+.note-header {
+  border-bottom: 2px solid var(--border);
+  padding-bottom: 1rem;
+  margin-bottom: 2rem;
+}
+.note-title {
+  font-size: 1.6rem;
+  font-weight: 700;
+  margin-bottom: 0.3rem;
+}
+.note-meta {
+  color: var(--muted);
+  font-size: 0.85rem;
+}
+.note-content {
+  font-size: 0.95rem;
+}
+.note-content h1 { font-size: 1.4rem; margin: 1.2rem 0 0.6rem; }
+.note-content h2 { font-size: 1.2rem; margin: 1rem 0 0.5rem; }
+.note-content h3 { font-size: 1.05rem; margin: 0.8rem 0 0.4rem; }
+.note-content p { margin: 0.5rem 0; }
+.note-content ul, .note-content ol { margin: 0.5rem 0 0.5rem 2rem; }
+.note-content li { margin: 0.2rem 0; }
+.note-content pre {
+  background: var(--code-bg);
+  padding: 1rem;
+  border-radius: 6px;
+  overflow-x: auto;
+  margin: 0.8rem 0;
+  font-size: 0.85rem;
+}
+.note-content code {
+  background: var(--code-bg);
+  padding: 0.1rem 0.3rem;
+  border-radius: 3px;
+  font-size: 0.88em;
+}
+.note-content pre code {
+  background: none;
+  padding: 0;
+}
+.note-content blockquote {
+  border-left: 3px solid var(--border);
+  padding-left: 1rem;
+  color: var(--muted);
+  margin: 0.8rem 0;
+}
+.note-content a { color: var(--link); }
+.note-content img {
+  max-width: 100%;
+  height: auto;
+  border-radius: 6px;
+  margin: 0.5rem 0;
+}
+.note-content table {
+  border-collapse: collapse;
+  width: 100%;
+  margin: 0.8rem 0;
+}
+.note-content th, .note-content td {
+  border: 1px solid var(--border);
+  padding: 0.5rem;
+}
+.note-content th { background: var(--code-bg); }
+.media-placeholder {
+  background: var(--code-bg);
+  padding: 1rem;
+  text-align: center;
+  color: var(--muted);
+  border-radius: 6px;
+  margin: 0.5rem 0;
+  font-size: 0.85rem;
+}
+.encrypt-placeholder {
+  background: #fff3cd;
+  padding: 0.5rem;
+  text-align: center;
+  color: #856404;
+  border-radius: 6px;
+  margin: 0.5rem 0;
+  font-size: 0.85rem;
+}
+.back-link {
+  display: inline-block;
+  margin-top: 2rem;
+  color: var(--link);
+  text-decoration: none;
+  font-size: 0.85rem;
+}
+</style>
+</head>
+<body>
+<div class="note-header">
+  <div class="note-title">如何使用 Megatron-LM 训练语言模型 - OSCHINA - 中文开源技术交流社区</div>
+  <div class="note-meta">笔记本：AI</div>
+</div>
+<div class="note-content">
+<div style="--en-clipped-content:article">
+<div><br/></div><div style="font-size: 16px; display:block; min-width: 100%; position: relative;"> <div style="box-sizing:border-box;line-height:1.15;text-size-adjust:100%;-webkit-font-smoothing:antialiased;font-size:14px;"><div style="box-sizing:inherit;overflow-x:hidden;min-width:320px;font-family:&quot;PingFang SC&quot;, &quot;Helvetica Neue&quot;, &quot;Microsoft YaHei UI&quot;, &quot;Microsoft YaHei&quot;, &quot;Noto Sans CJK SC&quot;, Sathu, EucrosiaUPC, Arial, Helvetica, sans-serif;font-size:14px;line-height:1.4285em;color:rgb(17, 17, 17);background:rgb(247, 248, 249);"><div style="box-sizing:inherit;"><div style="box-sizing:inherit;"><div style="box-sizing:content-box;"><div style="box-sizing:inherit;"><div style="box-sizing:border-box;"><div style="box-sizing:inherit;-webkit-box-orient:horizontal;-webkit-box-direction:normal;-webkit-box-align:start;"><div style="box-sizing:inherit;-webkit-box-flex:0;min-width:0px;"><div style="box-sizing:inherit;"><div style="box-sizing:inherit;background-color:rgb(255, 255, 255);border-radius:5px;box-shadow:rgba(0, 0, 0, 0.05) 0px 2px 4px 0px;"><div style="box-sizing:border-box;">
+                                                        <div style="box-sizing:inherit;margin-bottom:32px;">
+                                <h1 style="box-sizing:inherit;font-family:&quot;PingFang SC&quot;, &quot;Helvetica Neue&quot;, &quot;Microsoft YaHei UI&quot;, &quot;Microsoft YaHei&quot;, &quot;Noto Sans CJK SC&quot;, Sathu, EucrosiaUPC, Arial, Helvetica, sans-serif;min-height:14px;font-size:30px;margin:0px;line-height:42px;font-weight:600;padding:0px;color:rgb(17, 17, 17);">
+                                    <a href="https://my.oschina.net/HuggingFace/blog/9723019" target="_blank" style="box-sizing:inherit;background-color:transparent;text-decoration:none;color:rgb(17, 17, 17);">如何使用 Megatron-LM 训练语言模型</a>
+                                </h1>
+
+
+                                
+
+
+                            
+                                <div style="box-sizing:inherit;margin-top:16px;color:rgb(153, 153, 153);font-size:14px;line-height:20px;">
+                                    <div style="box-sizing:inherit;display:flex;-webkit-box-orient:horizontal;-webkit-box-direction:normal;flex-flow:wrap;">
+                                                                                    <div style="box-sizing:inherit;margin-right:16px;"><span style="box-sizing:inherit;display:inline-block;background:rgba(33, 179, 81, 0.1);border-radius:3px;color:rgb(33, 179, 81);font-size:14px;line-height:20px;padding:0px 8px;">原创</span></div>
+                                                                                <div style="box-sizing:inherit;margin-right:16px;"><a href="https://my.oschina.net/HuggingFace" target="_blank" style="box-sizing:inherit;background-color:transparent;text-decoration:none;color:rgb(153, 153, 153);">HuggingFace</a><span style="box-sizing:inherit;position:relative;display:inline-block;margin-left:5px;color:rgb(12, 141, 249);"><span style="color:rgb(12, 141, 249);pointer-events:none;position:absolute;font-size:1rem;width:0.714286em;height:0.714286em;background:rgb(255, 255, 255);transform:rotate(45deg) scale(0) !important;z-index:2;box-shadow:rgb(236, 237, 238) 1px 1px 0px 0px;inset:auto auto 100% 50%;margin-left:-0.0714286rem;margin-bottom:0.142857rem;visibility:hidden;opacity:0;transform-origin:center top;transition:all 0.1s ease 0s;"></span><i style="box-sizing:inherit;font-size:inherit;font-style:normal;-webkit-font-smoothing:antialiased;font-family:oicon;"><span style="font-size:inherit;font-style:normal;font-family:oicon;"></span></i><span style="color:rgb(12, 141, 249);pointer-events:none;position:absolute;text-transform:none;text-align:left;white-space:nowrap;font-size:13px;border:1px solid rgb(236, 237, 238);line-height:18px;max-width:none;background:rgb(255, 255, 255);padding:9px 14px;font-weight:400;font-style:normal;border-radius:4px;box-shadow:rgba(0, 0, 0, 0.05) 0px 2px 6px;z-index:1;left:50%;transform:translateX(-50%) scale(0) !important;bottom:100%;margin-bottom:0.5em;visibility:hidden;opacity:1;transform-origin:center bottom;transition:all 0.1s ease 0s;">认证官方账号</span></span></div>
+                                                                                                                            <div style="box-sizing:inherit;margin-right:16px;"><a href="https://my.oschina.net/HuggingFace?tab=newest&amp;catalogId=12505423" style="box-sizing:inherit;background-color:transparent;text-decoration:none;color:rgb(52, 111, 182);">Hugging Face</a></div>
+                                                                                <div style="box-sizing:inherit;margin-right:24px;">2023/05/29 17:58</div>
+                                        <div style="box-sizing:inherit;margin-right:24px;">阅读数 4.5K</div>
+                                                                                
+                                                                                                                    </div>
+                                </div>
+
+                                                                
+
+                                                                                                    <div style="box-sizing:inherit;margin-top:32px;">
+                                        <div style="box-sizing:inherit;display:block;background:rgb(246, 246, 246);border-radius:5px;padding:8px 12px 8px 8px;">
+                                            <div style="box-sizing:inherit;display:flex;-webkit-box-orient:horizontal;-webkit-box-direction:normal;flex-direction:row;">
+                                                <div style="box-sizing:inherit;flex-shrink:0;margin-right:8px;display:block;width:48px;height:48px;border-radius:3px;overflow:hidden;">
+                                                    <a href="https://www.oschina.net/group/skill" target="_blank" title="开发技能" style="box-sizing:inherit;background-color:transparent;text-decoration:none;color:rgb(52, 111, 182);">
+                                                        <div class="media-placeholder">[图片/附件]</div></en-media>
+                                                    </a>
+                                                </div>
+                                                <div style="box-sizing:inherit;-webkit-box-flex:1;flex:1 1 0%;min-width:0px;align-self:center;">
+                                                    <div style="box-sizing:inherit;color:rgb(136, 136, 136);font-size:13px;line-height:18px;">本文被收录于专区</div>
+                                                    <div style="box-sizing:inherit;font-size:16px;line-height:22px;font-weight:600;color:rgb(17, 17, 17);"><a href="https://www.oschina.net/group/skill" target="_blank" title="开发技能" style="box-sizing:inherit;background-color:transparent;text-decoration:none;color:rgb(17, 17, 17);">开发技能</a></div>
+                                                </div>
+                                                <div style="box-sizing:inherit;margin-left:8px;flex-shrink:0;align-self:center;">
+                                                    <a href="https://www.oschina.net/group/skill" target="_blank" title="开发技能" style="box-sizing:inherit;background-color:transparent;text-decoration:none;font-size:14px;line-height:20px;color:rgb(153, 153, 153);">进入专区参与更多专题讨论 <i style="box-sizing:inherit;font-size:inherit;font-style:normal;-webkit-font-smoothing:antialiased;font-family:oicon;"><span style="font-size:inherit;font-style:normal;font-family:oicon;"></span></i></a>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                                            </div>
+
+                                                        <div style="box-sizing:inherit;overflow:hidden;">
+                                                                                                <div style="box-sizing:inherit;padding-bottom:40px;">
+                                    <div style="box-sizing:inherit;">
+                                        <div style="box-sizing:inherit;font-family:-apple-system, BlinkMacSystemFont, &quot;Apple Color Emoji&quot;, &quot;Segoe UI Emoji&quot;, &quot;Segoe UI Symbol&quot;, &quot;Segoe UI&quot;, &quot;PingFang SC&quot;, &quot;Hiragino Sans GB&quot;, &quot;Microsoft YaHei&quot;, &quot;Helvetica Neue&quot;, Helvetica, Arial, sans-serif;font-size:16px;line-height:1.8;color:rgb(51, 51, 51);text-align:left;zoom:1;word-break:break-word;hyphens:auto;overflow-wrap:break-word;margin-top:0px;"><span style="font-family:-apple-system, BlinkMacSystemFont, Apple Color Emoji, Segoe UI Emoji, Segoe UI Symbol, Segoe UI, PingFang SC, Hiragino Sans GB, Microsoft YaHei, Helvetica Neue, Helvetica, Arial, sans-serif;font-size:16px;line-height:1.8;color:rgb(51, 51, 51);text-align:left;display:table;"></span>
+                                                                                                                    <div style="box-sizing:inherit;overflow:hidden;margin-top:0px;margin-bottom:8px;">
+            <div style="box-sizing:inherit;text-align:center;">
+<a href="https://gotc.oschina.net/" target="_blank" style="box-sizing:inherit;background-color:transparent;color:#A00;text-decoration:none;font-weight:bold;">GOTC 2024：两天沉浸式体验，与全球开发者共探 AI 技术边界<img src="https://www.oschina.net/img/hot3.png" align="absmiddle" width="32" height="32" style="margin:0px auto;box-sizing:border-box;max-width:32px;border:0px;vertical-align:middle;height:auto;max-height:32px;margin-top:-4px;"/></a>
+</div>
+            </div>
+                                                                                                                                                    <div style="box-sizing:inherit;"> 
+ <div style="box-sizing:inherit;display:block;font-size:16px;color:black;padding-right:10px;padding-left:10px;line-height:1.6;letter-spacing:0px;word-break:break-word;text-align:left;font-family:Roboto, Oxygen, Ubuntu, Cantarell, PingFangSC-regular, PingFangTC-regular, &quot;Open Sans&quot;, &quot;Helvetica Neue&quot;, sans-serif;"> 
+  <p style="box-sizing:inherit;margin:0px 0px 20px;line-height:1.8em;margin-bottom:20px;color:rgb(58, 58, 58);">在 PyTorch 中训练大语言模型不仅仅是写一个训练循环这么简单。我们通常需要将模型分布在多个设备上，并使用许多优化技术以实现稳定高效的训练。Hugging Face  Accelerate 的创建是为了支持跨 GPU 和 TPU 的分布式训练，并使其能够非常容易的集成到训练代码中。 Transformers 还支持使用 Trainer API 来训练，其在 PyTorch 中提供功能完整的训练接口，甚至不需要自己编写训练的代码。</p> 
+  <p style="box-sizing:inherit;margin:0px 0px 20px;line-height:1.8em;margin-bottom:20px;color:rgb(58, 58, 58);">Megatron-LM 是研究人员用于预训练大型 Transformer 模型的另一个流行工具，它是 NVIDIA 应用深度学习研究团队开发的一个强大框架。与 <code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif">accelerate</code> 和 <code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif">Trainer</code> 不同，Megatron-LM 使用起来并不简单，对于初学者来说可能难以上手。但它针对 GPU 上的训练进行了高度优化。在这篇文章中，你将学习如何使用 Megatron-LM 框架在 NVIDIA GPU 上训练语言模型，并将其与 <code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif">transformers</code> 结合。</p> 
+  <p style="box-sizing:inherit;margin:0px 0px 20px;line-height:1.8em;margin-bottom:20px;color:rgb(58, 58, 58);">我们将分解在此框架中训练 GPT2 模型的不同步骤，包括:</p> 
+  <ul style="box-sizing:inherit;margin:0px 0px 20px;padding:0px 0px 0px 20px;list-style-type:disc;padding-inline-start:40px;margin-top:8px;margin-bottom:8px;padding-left:25px;"> 
+   <li style="box-sizing:inherit;line-height:1.875em;margin-top:0px;"> 
+    <div style="box-sizing:inherit;display:block;margin-top:5px;margin-bottom:5px;line-height:26px;color:rgb(58, 58, 58);">
+      环境设置 
+    </div></li> 
+   <li style="box-sizing:inherit;line-height:1.875em;"> 
+    <div style="box-sizing:inherit;display:block;margin-top:5px;margin-bottom:5px;line-height:26px;color:rgb(58, 58, 58);">
+      数据预处理 
+    </div></li> 
+   <li style="box-sizing:inherit;line-height:1.875em;"> 
+    <div style="box-sizing:inherit;display:block;margin-top:5px;margin-bottom:5px;line-height:26px;color:rgb(58, 58, 58);">
+      训练 
+    </div></li> 
+   <li style="box-sizing:inherit;line-height:1.875em;margin-bottom:0px;"> 
+    <div style="box-sizing:inherit;display:block;margin-top:5px;margin-bottom:5px;line-height:26px;color:rgb(58, 58, 58);">
+      将模型转化为  Transformers 
+    </div></li> 
+  </ul> 
+  <span style="box-sizing:inherit;"></span> 
+  <h2 style="box-sizing:inherit;font-family:&quot;PingFang SC&quot;, &quot;Helvetica Neue&quot;, &quot;Microsoft YaHei UI&quot;, &quot;Microsoft YaHei&quot;, &quot;Noto Sans CJK SC&quot;, Sathu, EucrosiaUPC, Arial, Helvetica, sans-serif;line-height:1.2em;margin:22px 0px 16px;font-weight:bold;padding:0px;font-size:22px;border:none;margin-top:2em;margin-bottom:35px;color:rgb(255, 157, 0);"><span style="box-sizing:inherit;color:rgb(255, 157, 11);visibility:visible;display:inline-block;border-left:5px solid rgb(255, 157, 0);padding:2px 13px;margin-right:3px;height:50%;font-size:18px;">为什么选择 Megatron-LM?</span><span style="box-sizing:inherit;font-size:18px;color:rgb(255, 157, 11);display:inline-block;padding-left:10px;border-left:5px solid rgb(255, 157, 11);visibility:visible;"></span></h2> 
+  <p style="box-sizing:inherit;margin:0px 0px 20px;line-height:1.8em;margin-bottom:20px;color:rgb(58, 58, 58);">在进入训练细节的讲解之前，让我们首先了解是什么让这个框架比其他框架更高效。本节的灵感来自这篇关于使用 Megatron-DeepSpeed 进行 BLOOM 训练的精彩 博客，请参阅该博客以获取更多详细信息，因为该博客旨在对 Megatron-LM 进行详细的介绍。</p> 
+  <span style="box-sizing:inherit;"></span> 
+  <h3 style="box-sizing:inherit;font-family:&quot;PingFang SC&quot;, &quot;Helvetica Neue&quot;, &quot;Microsoft YaHei UI&quot;, &quot;Microsoft YaHei&quot;, &quot;Noto Sans CJK SC&quot;, Sathu, EucrosiaUPC, Arial, Helvetica, sans-serif;line-height:1.4;margin:22px 0px 16px;font-weight:bold;padding:0px;font-size:20px;border:none;padding-top:10px;margin-top:10px;margin-bottom:5px;"><span style="box-sizing:inherit;color:rgb(81, 81, 81);font-size:17px;padding-left:1em;border-left:3px solid rgb(249, 191, 69);">数据加载</span></h3> 
+  <p style="box-sizing:inherit;margin:0px 0px 20px;line-height:1.8em;margin-bottom:20px;color:rgb(58, 58, 58);">Megatron-LM 带有一个高效的 DataLoader，其中数据在训练前被 tokenize 和 shuffle。它还将数据拆分为带有索引的编号序列，并将索引存储，因此 tokenize 只需要计算一次。为了构建索引，首先根据训练参数计算每个 epoch 的数量，并创建一个排序，然后对数据进行 shuffle 操作。这与大多数情况不同，我们通常迭代整个数据集直到其用尽，然后重复第二个 epoch 。这平滑了学习曲线并节省了训练时间。</p> 
+  <span style="box-sizing:inherit;"></span> 
+  <h3 style="box-sizing:inherit;font-family:&quot;PingFang SC&quot;, &quot;Helvetica Neue&quot;, &quot;Microsoft YaHei UI&quot;, &quot;Microsoft YaHei&quot;, &quot;Noto Sans CJK SC&quot;, Sathu, EucrosiaUPC, Arial, Helvetica, sans-serif;line-height:1.4;margin:22px 0px 16px;font-weight:bold;padding:0px;font-size:20px;border:none;padding-top:10px;margin-top:10px;margin-bottom:5px;"><span style="box-sizing:inherit;color:rgb(81, 81, 81);font-size:17px;padding-left:1em;border-left:3px solid rgb(249, 191, 69);">融合 CUDA 内核</span></h3> 
+  <p style="box-sizing:inherit;margin:0px 0px 20px;line-height:1.8em;margin-bottom:20px;color:rgb(58, 58, 58);">当一个计算在 GPU 上运行时，必要的数据会从内存中取出并加载到 GPU 上，然后计算结果被保存回内存。简单来说，融合内核的思想是：将通常由 PyTorch 单独执行的类似操作组合成一个单独的硬件操作。因此可以将多个离散计算合并为一个，从而减少在多个离散计算中的内存移动次数。下图说明了内核融合的思想。它的灵感来自这篇 论文，该论文详细讨论了这个概念。</p> 
+  <div style="box-sizing:inherit;display:flex;margin:1em 40px;margin-top:10px;margin-bottom:10px;flex-direction:column;justify-content:center;align-items:center;"> 
+   <div class="media-placeholder">[图片/附件]</div></en-media> 
+  </div> 
+  <p style="box-sizing:inherit;margin:0px 0px 20px;line-height:1.8em;margin-bottom:20px;color:rgb(58, 58, 58);">当 f、g 和 h 融合在一个内核中时，f 和 g 的中间结果 x' 和 y' 存储在 GPU 寄存器中并立即被 h 使用。但是如果不融合，x' 和 y' 就需要复制到内存中，然后由 h 加载。因此，融合 CUDA 内核显着加快了计算速度。此外，Megatron-LM 还使用 Apex 的 AdamW 融合实现，它比 PyTorch 实现更快。</p> 
+  <p style="box-sizing:inherit;margin:0px 0px 20px;line-height:1.8em;margin-bottom:20px;color:rgb(58, 58, 58);">虽然我们可以在 <code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif">transformers</code> 中自定义 Megatron-LM 中的 DataLoader 和 Apex 的融合优化器，但自定义融合 CUDA 内核对新手来说太不友好了。</p> 
+  <p style="box-sizing:inherit;margin:0px 0px 20px;line-height:1.8em;margin-bottom:20px;color:rgb(58, 58, 58);">现在你已经熟悉了该框架及其优势，让我们进入训练细节吧！</p> 
+  <span style="box-sizing:inherit;"></span> 
+  <h2 style="box-sizing:inherit;font-family:&quot;PingFang SC&quot;, &quot;Helvetica Neue&quot;, &quot;Microsoft YaHei UI&quot;, &quot;Microsoft YaHei&quot;, &quot;Noto Sans CJK SC&quot;, Sathu, EucrosiaUPC, Arial, Helvetica, sans-serif;line-height:1.2em;margin:22px 0px 16px;font-weight:bold;padding:0px;font-size:22px;border:none;margin-top:2em;margin-bottom:35px;color:rgb(255, 157, 0);"><span style="box-sizing:inherit;color:rgb(255, 157, 11);visibility:visible;display:inline-block;border-left:5px solid rgb(255, 157, 0);padding:2px 13px;margin-right:3px;height:50%;font-size:18px;">如何使用 Megatron-LM 框架训练？</span><span style="box-sizing:inherit;font-size:18px;color:rgb(255, 157, 11);display:inline-block;padding-left:10px;border-left:5px solid rgb(255, 157, 11);visibility:visible;"></span></h2> 
+  <span style="box-sizing:inherit;"></span> 
+  <h3 style="box-sizing:inherit;font-family:&quot;PingFang SC&quot;, &quot;Helvetica Neue&quot;, &quot;Microsoft YaHei UI&quot;, &quot;Microsoft YaHei&quot;, &quot;Noto Sans CJK SC&quot;, Sathu, EucrosiaUPC, Arial, Helvetica, sans-serif;line-height:1.4;margin:22px 0px 16px;font-weight:bold;padding:0px;font-size:20px;border:none;padding-top:10px;margin-top:10px;margin-bottom:5px;"><span style="box-sizing:inherit;color:rgb(81, 81, 81);font-size:17px;padding-left:1em;border-left:3px solid rgb(249, 191, 69);">环境设置</span></h3> 
+  <p style="box-sizing:inherit;margin:0px 0px 20px;line-height:1.8em;margin-bottom:20px;color:rgb(58, 58, 58);">设置环境的最简单方法是从 NGC 拉取附带所有所需环境的 NVIDIA PyTorch 容器。有关详细信息，请参阅 文档。如果你不想使用此容器，则需要安装最新的 pytorch、cuda、nccl 和 NVIDIA APEX 版本和 <code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif">nltk</code> 库。</p> 
+  <p style="box-sizing:inherit;margin:0px 0px 20px;line-height:1.8em;margin-bottom:20px;color:rgb(58, 58, 58);">在安装完 Docker 之后，你可以使用以下命令运行容器 (<code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif">xx.xx</code> 表示你的 Docker 版本)，然后在其中克隆 Megatron-LM 库:</p> 
+  <pre style="border-radius:4px;background-color: #fbfaf8;border: 1px solid rgba(0,0,0,.14902);color: #333;font-size: 12px;padding: 8px;font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif;box-sizing: border-box;"><code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span style="box-sizing:inherit;color:rgb(215, 58, 73);">docker</span> <span style="box-sizing:inherit;color:rgb(215, 58, 73);">run</span> <span style="box-sizing:inherit;color:rgb(215, 58, 73);">--gpus</span> <span style="box-sizing:inherit;color:rgb(215, 58, 73);">all</span> <span style="box-sizing:inherit;color:rgb(215, 58, 73);">-it</span> <span style="box-sizing:inherit;color:rgb(215, 58, 73);">--rm</span> <span style="box-sizing:inherit;color:rgb(215, 58, 73);">nvcr</span><span style="box-sizing:inherit;color:rgb(111, 66, 193);">.io</span>/<span style="box-sizing:inherit;color:rgb(215, 58, 73);">nvidia</span>/<span style="box-sizing:inherit;color:rgb(215, 58, 73);">pytorch</span><span style="box-sizing:inherit;color:rgb(111, 66, 193);">:xx.xx-py3</span><br style="box-sizing:inherit;"/><span style="box-sizing:inherit;color:rgb(111, 66, 193);">git</span> <span style="box-sizing:inherit;color:#0086b3;line-height:26px;"><span style="box-sizing:inherit;color:rgb(215, 58, 73);">clone</span></span> <span style="box-sizing:inherit;color:rgb(215, 58, 73);">https</span>:<span style="box-sizing:inherit;color:rgb(106, 115, 125);">//github.com/NVIDIA/Megatron-LM</span><br style="box-sizing:inherit;"/></code></pre> 
+  <p style="box-sizing:inherit;margin:0px 0px 20px;line-height:1.8em;margin-bottom:20px;color:rgb(58, 58, 58);">你还需要在容器的 Megatron-LM 文件夹中添加分词器的词汇文件 <code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif">vocab.json</code> 和合并表 <code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif">merges.txt</code>。这些文件可以在带有权重的模型仓库中找到，请参阅 GPT2 库。你还可以使用 <code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif">transformers</code> 训练自己的分词器。你可以查看 CodeParrot 项目 以获取实际示例。现在，如果你想从容器外部复制这些数据，你可以使用以下命令:</p> 
+  <pre style="border-radius:4px;background-color: #fbfaf8;border: 1px solid rgba(0,0,0,.14902);color: #333;font-size: 12px;padding: 8px;font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif;box-sizing: border-box;"><code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif">sudo docker cp vocab.json CONTAINER_ID:<span style="box-sizing:inherit;">/workspace/</span>Megatron-LM<br style="box-sizing:inherit;"/>sudo docker cp merges.txt CONTAINER_ID:<span style="box-sizing:inherit;">/workspace/</span>Megatron-LM<br style="box-sizing:inherit;"/></code></pre> 
+  <span style="box-sizing:inherit;"></span> 
+  <h3 style="box-sizing:inherit;font-family:&quot;PingFang SC&quot;, &quot;Helvetica Neue&quot;, &quot;Microsoft YaHei UI&quot;, &quot;Microsoft YaHei&quot;, &quot;Noto Sans CJK SC&quot;, Sathu, EucrosiaUPC, Arial, Helvetica, sans-serif;line-height:1.4;margin:22px 0px 16px;font-weight:bold;padding:0px;font-size:20px;border:none;padding-top:10px;margin-top:10px;margin-bottom:5px;"><span style="box-sizing:inherit;color:rgb(81, 81, 81);font-size:17px;padding-left:1em;border-left:3px solid rgb(249, 191, 69);">数据预处理</span></h3> 
+  <p style="box-sizing:inherit;margin:0px 0px 20px;line-height:1.8em;margin-bottom:20px;color:rgb(58, 58, 58);">在本教程的其余部分，我们将使用 CodeParrot 模型和数据作为示例。</p> 
+  <p style="box-sizing:inherit;margin:0px 0px 20px;line-height:1.8em;margin-bottom:20px;color:rgb(58, 58, 58);">我们需要对预训练数据进行预处理。首先，你需要将其转换为 json 格式，一个 json 的一行包含一个文本样本。如果你正在使用  Datasets，这里有一个关于如何做到这一点的例子 (请在 Megatron-LM 文件夹中进行这些操作):</p> 
+  <pre style="border-radius:4px;background-color: #fbfaf8;border: 1px solid rgba(0,0,0,.14902);color: #333;font-size: 12px;padding: 8px;font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif;box-sizing: border-box;"><code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span style="box-sizing:inherit;font-weight:bold;line-height:26px;"><span style="box-sizing:inherit;color:rgb(215, 58, 73);">from</span></span> datasets <span style="box-sizing:inherit;font-weight:bold;line-height:26px;"><span style="box-sizing:inherit;color:rgb(215, 58, 73);">import</span></span> load_dataset<br style="box-sizing:inherit;"/><br style="box-sizing:inherit;"/>train_data = load_dataset(<span style="box-sizing:inherit;color:#d14;line-height:26px;"><span style="box-sizing:inherit;color:rgb(3, 47, 98);">'codeparrot/codeparrot-clean-train'</span></span>, split=<span style="box-sizing:inherit;color:#d14;line-height:26px;"><span style="box-sizing:inherit;color:rgb(3, 47, 98);">'train'</span></span>)<br style="box-sizing:inherit;"/>train_data.to_json(<span style="box-sizing:inherit;color:#d14;line-height:26px;"><span style="box-sizing:inherit;color:rgb(3, 47, 98);">"codeparrot_data.json"</span></span>, lines=<span style="box-sizing:inherit;color:#008080;line-height:26px;"><span style="box-sizing:inherit;color:rgb(0, 92, 197);">True</span></span>)<br style="box-sizing:inherit;"/></code></pre> 
+  <p style="box-sizing:inherit;margin:0px 0px 20px;line-height:1.8em;margin-bottom:20px;color:rgb(58, 58, 58);">然后使用以下命令将数据 tokenize、shuffle 并处理成二进制格式以进行训练:</p> 
+  <pre style="border-radius:4px;background-color: #fbfaf8;border: 1px solid rgba(0,0,0,.14902);color: #333;font-size: 12px;padding: 8px;font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif;box-sizing: border-box;"><code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span style="box-sizing:inherit;color:#998;font-style:italic;line-height:26px;">#<span style="box-sizing:inherit;color:rgb(215, 58, 73);">if</span> nltk isn<span style="box-sizing:inherit;color:rgb(0, 92, 197);">'t</span> installed</span><br style="box-sizing:inherit;"/>pip install nltk<br style="box-sizing:inherit;"/>python tools/preprocess_data.py \<br style="box-sizing:inherit;"/>       --input codeparrot_data.json \<br style="box-sizing:inherit;"/>       --output-prefix codeparrot \<br style="box-sizing:inherit;"/>       --vocab vocab.json \<br style="box-sizing:inherit;"/>       --dataset-<span style="box-sizing:inherit;color:rgb(215, 58, 73);">impl</span> mmap \<br style="box-sizing:inherit;"/>       --tokenizer-<span style="box-sizing:inherit;"><span style="box-sizing:inherit;color:rgb(215, 58, 73);">type</span> <span style="box-sizing:inherit;color:rgb(111, 66, 193);">GPT2BPETokenizer</span></span> \<br style="box-sizing:inherit;"/>       --merge-file merges.txt \<br style="box-sizing:inherit;"/>       --json-keys content \<br style="box-sizing:inherit;"/>       --workers <span style="box-sizing:inherit;">32</span> \<br style="box-sizing:inherit;"/>       --chunk-size <span style="box-sizing:inherit;">25</span> \<br style="box-sizing:inherit;"/>       --append-eod<br style="box-sizing:inherit;"/></code></pre> 
+  <p style="box-sizing:inherit;margin:0px 0px 20px;line-height:1.8em;margin-bottom:20px;color:rgb(58, 58, 58);"><code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif">workers</code> 和 <code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif">chunk_size</code> 选项指的是预处理中使用的线程数量和分配给每个线程的数据块大小。<code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif">dataset-impl</code> 指的是索引数据集的实现方式，包括 ['lazy', 'cached', 'mmap']。这将输出 <code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif">codeparrot_content_document.idx</code> 和  <code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif">codeparrot_content_document.bin</code> 两个文件用于训练。</p> 
+  <span style="box-sizing:inherit;"></span> 
+  <h3 style="box-sizing:inherit;font-family:&quot;PingFang SC&quot;, &quot;Helvetica Neue&quot;, &quot;Microsoft YaHei UI&quot;, &quot;Microsoft YaHei&quot;, &quot;Noto Sans CJK SC&quot;, Sathu, EucrosiaUPC, Arial, Helvetica, sans-serif;line-height:1.4;margin:22px 0px 16px;font-weight:bold;padding:0px;font-size:20px;border:none;padding-top:10px;margin-top:10px;margin-bottom:5px;"><span style="box-sizing:inherit;color:rgb(81, 81, 81);font-size:17px;padding-left:1em;border-left:3px solid rgb(249, 191, 69);">训练</span></h3> 
+  <p style="box-sizing:inherit;margin:0px 0px 20px;line-height:1.8em;margin-bottom:20px;color:rgb(58, 58, 58);">你可以使用如下所示配置模型架构和训练参数，或将其放入你将运行的 bash 脚本中。该命令在 8 个 GPU 上参数为 110M 的 CodeParrot 模型进行预训练。请注意，数据默认按 969:30:1 的比例划分为训练 / 验证 / 测试集。</p> 
+  <pre style="border-radius:4px;background-color: #fbfaf8;border: 1px solid rgba(0,0,0,.14902);color: #333;font-size: 12px;padding: 8px;font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif;box-sizing: border-box;"><code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span style="box-sizing:inherit;color:rgb(3, 47, 98);">GPUS_PER_NODE=8</span><br style="box-sizing:inherit;"/><span style="box-sizing:inherit;color:rgb(3, 47, 98);">MASTER_ADDR=localhost</span><br style="box-sizing:inherit;"/><span style="box-sizing:inherit;color:rgb(3, 47, 98);">MASTER_PORT=6001</span><br style="box-sizing:inherit;"/><span style="box-sizing:inherit;color:rgb(3, 47, 98);">NNODES=1</span><br style="box-sizing:inherit;"/><span style="box-sizing:inherit;color:rgb(3, 47, 98);">NODE_RANK=0</span><br style="box-sizing:inherit;"/><span style="box-sizing:inherit;color:rgb(3, 47, 98);">WORLD_SIZE=$((</span><span style="box-sizing:inherit;color:#008080;line-height:26px;"><span style="box-sizing:inherit;color:rgb(3, 47, 98);">$GPUS_PER_NODE</span></span><span style="box-sizing:inherit;color:rgb(3, 47, 98);">*</span><span style="box-sizing:inherit;color:#008080;line-height:26px;"><span style="box-sizing:inherit;color:rgb(3, 47, 98);">$NNODES</span></span><span style="box-sizing:inherit;color:rgb(3, 47, 98);">))</span><br style="box-sizing:inherit;"/><span style="box-sizing:inherit;color:rgb(3, 47, 98);">DISTRIBUTED_ARGS=</span><span style="box-sizing:inherit;color:#d14;line-height:26px;"><span style="box-sizing:inherit;color:rgb(3, 47, 98);">"--nproc_per_node</span> <span style="box-sizing:inherit;color:#008080;line-height:26px;"><span style="box-sizing:inherit;color:rgb(3, 47, 98);">$GPUS_PER_NODE</span></span> <span style="box-sizing:inherit;color:rgb(3, 47, 98);">--nnodes</span> <span style="box-sizing:inherit;color:#008080;line-height:26px;"><span style="box-sizing:inherit;color:rgb(3, 47, 98);">$NNODES</span></span> <span style="box-sizing:inherit;color:rgb(3, 47, 98);">--node_rank</span> <span style="box-sizing:inherit;color:#008080;line-height:26px;"><span style="box-sizing:inherit;color:rgb(3, 47, 98);">$NODE_RANK</span></span> <span style="box-sizing:inherit;color:rgb(3, 47, 98);">--master_addr</span> <span style="box-sizing:inherit;color:#008080;line-height:26px;"><span style="box-sizing:inherit;color:rgb(3, 47, 98);">$MASTER_ADDR</span></span> <span style="box-sizing:inherit;color:rgb(3, 47, 98);">--master_port</span> <span style="box-sizing:inherit;color:#008080;line-height:26px;"><span style="box-sizing:inherit;color:rgb(3, 47, 98);">$MASTER_PORT</span></span><span style="box-sizing:inherit;color:rgb(3, 47, 98);">"</span></span><br style="box-sizing:inherit;"/><span style="box-sizing:inherit;color:rgb(3, 47, 98);">CHECKPOINT_PATH=/workspace/Megatron-LM/experiments/codeparrot-small</span><br style="box-sizing:inherit;"/><span style="box-sizing:inherit;color:rgb(3, 47, 98);">VOCAB_FILE=vocab.json</span><br style="box-sizing:inherit;"/><span style="box-sizing:inherit;color:rgb(3, 47, 98);">MERGE_FILE=merges.txt</span><br style="box-sizing:inherit;"/><span style="box-sizing:inherit;color:rgb(3, 47, 98);">DATA_PATH=codeparrot_content_document</span><br style="box-sizing:inherit;"/><span style="box-sizing:inherit;color:rgb(3, 47, 98);">GPT_ARGS=</span><span style="box-sizing:inherit;color:#d14;line-height:26px;"><span style="box-sizing:inherit;color:rgb(3, 47, 98);">"--num-layers</span> <span style="box-sizing:inherit;">12</span><br style="box-sizing:inherit;"/><span style="box-sizing:inherit;color:rgb(3, 47, 98);">--hidden-size</span> <span style="box-sizing:inherit;">768</span><br style="box-sizing:inherit;"/><span style="box-sizing:inherit;color:rgb(3, 47, 98);">--num-attention-heads</span> <span style="box-sizing:inherit;">12</span><br style="box-sizing:inherit;"/><span style="box-sizing:inherit;color:rgb(3, 47, 98);">--seq-length</span> <span style="box-sizing:inherit;">1024</span><br style="box-sizing:inherit;"/><span style="box-sizing:inherit;color:rgb(3, 47, 98);">--max-position-embeddings</span> <span style="box-sizing:inherit;">1024</span><br style="box-sizing:inherit;"/><span style="box-sizing:inherit;color:rgb(3, 47, 98);">--micro-batch-size</span> <span style="box-sizing:inherit;">12</span><br style="box-sizing:inherit;"/><span style="box-sizing:inherit;color:rgb(3, 47, 98);">--global-batch-size</span> <span style="box-sizing:inherit;">192</span><br style="box-sizing:inherit;"/><span style="box-sizing:inherit;color:rgb(3, 47, 98);">--lr</span> <span style="box-sizing:inherit;">0.0005</span><br style="box-sizing:inherit;"/><span style="box-sizing:inherit;color:rgb(3, 47, 98);">--train-iters</span> <span style="box-sizing:inherit;">150000</span><br style="box-sizing:inherit;"/><span style="box-sizing:inherit;color:rgb(3, 47, 98);">--lr-decay-iters</span> <span style="box-sizing:inherit;">150000</span><br style="box-sizing:inherit;"/><span style="box-sizing:inherit;color:rgb(3, 47, 98);">--lr-decay-style</span> <span style="box-sizing:inherit;color:rgb(3, 47, 98);">cosine</span><br style="box-sizing:inherit;"/><span style="box-sizing:inherit;color:rgb(3, 47, 98);">--lr-warmup-iters</span> <span style="box-sizing:inherit;">2000</span><br style="box-sizing:inherit;"/><span style="box-sizing:inherit;color:rgb(3, 47, 98);">--weight-decay</span> <span style="box-sizing:inherit;">.1</span><br style="box-sizing:inherit;"/><span style="box-sizing:inherit;color:rgb(3, 47, 98);">--adam-beta2</span> <span style="box-sizing:inherit;">.999</span><br style="box-sizing:inherit;"/><span style="box-sizing:inherit;color:rgb(3, 47, 98);">--fp16</span><br style="box-sizing:inherit;"/><span style="box-sizing:inherit;color:rgb(3, 47, 98);">--log-interval</span> <span style="box-sizing:inherit;">10</span><br style="box-sizing:inherit;"/><span style="box-sizing:inherit;color:rgb(3, 47, 98);">--save-interval</span> <span style="box-sizing:inherit;">2000</span><br style="box-sizing:inherit;"/><span style="box-sizing:inherit;color:rgb(3, 47, 98);">--eval-interval</span> <span style="box-sizing:inherit;">200</span><br style="box-sizing:inherit;"/><span style="box-sizing:inherit;color:rgb(3, 47, 98);">--eval-iters</span> <span style="box-sizing:inherit;">10</span><br style="box-sizing:inherit;"/><span style="box-sizing:inherit;color:rgb(3, 47, 98);">"</span></span><br style="box-sizing:inherit;"/><span style="box-sizing:inherit;color:rgb(3, 47, 98);">TENSORBOARD_ARGS=</span><span style="box-sizing:inherit;color:#d14;line-height:26px;"><span style="box-sizing:inherit;color:rgb(3, 47, 98);">"</span><span style="box-sizing:inherit;color:rgb(3, 47, 98);">--tensorboard-dir</span> <span style="box-sizing:inherit;color:rgb(3, 47, 98);">experiments/tensorboard"</span></span><br style="box-sizing:inherit;"/><span style="box-sizing:inherit;color:rgb(3, 47, 98);">python3</span> <span style="box-sizing:inherit;color:rgb(3, 47, 98);">-m</span> <span style="box-sizing:inherit;color:rgb(3, 47, 98);">torch.distributed.launch</span> <span style="box-sizing:inherit;color:#008080;line-height:26px;"><span style="box-sizing:inherit;color:rgb(3, 47, 98);">$DISTRIBUTED_ARGS</span></span> <span style="box-sizing:inherit;color:rgb(3, 47, 98);">\</span><br style="box-sizing:inherit;"/>        <span style="box-sizing:inherit;color:rgb(3, 47, 98);">pretrain_gpt.py</span> <span style="box-sizing:inherit;color:rgb(3, 47, 98);">\</span><br style="box-sizing:inherit;"/>        <span style="box-sizing:inherit;color:rgb(3, 47, 98);">--tensor-model-parallel-size</span> <span style="box-sizing:inherit;">1</span> <span style="box-sizing:inherit;color:rgb(3, 47, 98);">\</span><br style="box-sizing:inherit;"/>        <span style="box-sizing:inherit;color:rgb(3, 47, 98);">--pipeline-model-parallel-size</span> <span style="box-sizing:inherit;">1</span> <span style="box-sizing:inherit;color:rgb(3, 47, 98);">\</span><br style="box-sizing:inherit;"/>        <span style="box-sizing:inherit;color:#008080;line-height:26px;"><span style="box-sizing:inherit;color:rgb(3, 47, 98);">$GPT_ARGS</span></span> <span style="box-sizing:inherit;color:rgb(3, 47, 98);">\</span><br style="box-sizing:inherit;"/>        <span style="box-sizing:inherit;color:rgb(3, 47, 98);">--vocab-file</span> <span style="box-sizing:inherit;color:#008080;line-height:26px;"><span style="box-sizing:inherit;color:rgb(3, 47, 98);">$VOCAB_FILE</span></span> <span style="box-sizing:inherit;color:rgb(3, 47, 98);">\</span><br style="box-sizing:inherit;"/>        <span style="box-sizing:inherit;color:rgb(3, 47, 98);">--merge-file</span> <span style="box-sizing:inherit;color:#008080;line-height:26px;"><span style="box-sizing:inherit;color:rgb(3, 47, 98);">$MERGE_FILE</span></span> <span style="box-sizing:inherit;color:rgb(3, 47, 98);">\</span><br style="box-sizing:inherit;"/>        <span style="box-sizing:inherit;color:rgb(3, 47, 98);">--save</span> <span style="box-sizing:inherit;color:#008080;line-height:26px;"><span style="box-sizing:inherit;color:rgb(3, 47, 98);">$CHECKPOINT_PATH</span></span> <span style="box-sizing:inherit;color:rgb(3, 47, 98);">\</span><br style="box-sizing:inherit;"/>        <span style="box-sizing:inherit;color:rgb(3, 47, 98);">--load</span> <span style="box-sizing:inherit;color:#008080;line-height:26px;"><span style="box-sizing:inherit;color:rgb(3, 47, 98);">$CHECKPOINT_PATH</span></span> <span style="box-sizing:inherit;color:rgb(3, 47, 98);">\</span><br style="box-sizing:inherit;"/>        <span style="box-sizing:inherit;color:rgb(3, 47, 98);">--data-path</span> <span style="box-sizing:inherit;color:#008080;line-height:26px;"><span style="box-sizing:inherit;color:rgb(3, 47, 98);">$DATA_PATH</span></span> <span style="box-sizing:inherit;color:rgb(3, 47, 98);">\</span><br style="box-sizing:inherit;"/>        <span style="box-sizing:inherit;color:#008080;line-height:26px;"><span style="box-sizing:inherit;color:rgb(3, 47, 98);">$TENSORBOARD_ARGS</span></span><br style="box-sizing:inherit;"/></code></pre> 
+  <p style="box-sizing:inherit;margin:0px 0px 20px;line-height:1.8em;margin-bottom:20px;color:rgb(58, 58, 58);">使用以上设置，训练大约需要 12 个小时。</p> 
+  <p style="box-sizing:inherit;margin:0px 0px 20px;line-height:1.8em;margin-bottom:20px;color:rgb(58, 58, 58);">该设置使用数据并行，但也可以对无法放在单个 GPU 的超大模型使用模型并行。第一种选择是设置张量并行，它将模型中的张量拆分到多个 GPU 上并行运算，你需要将 <code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif">tensor-model-parallel-size</code> 参数更改为所需的 GPU 数量。第二种选择是流水线并行，它将模型按层分成大小相等的几块。参数 <code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif">pipeline-model-parallel-size</code> 表示将模型分成的块数。有关详细信息，请参阅此 博客</p> 
+  <span style="box-sizing:inherit;"></span> 
+  <h3 style="box-sizing:inherit;font-family:&quot;PingFang SC&quot;, &quot;Helvetica Neue&quot;, &quot;Microsoft YaHei UI&quot;, &quot;Microsoft YaHei&quot;, &quot;Noto Sans CJK SC&quot;, Sathu, EucrosiaUPC, Arial, Helvetica, sans-serif;line-height:1.4;margin:22px 0px 16px;font-weight:bold;padding:0px;font-size:20px;border:none;padding-top:10px;margin-top:10px;margin-bottom:5px;"><span style="box-sizing:inherit;color:rgb(81, 81, 81);font-size:17px;padding-left:1em;border-left:3px solid rgb(249, 191, 69);">将模型转换为  Transformers</span></h3> 
+  <p style="box-sizing:inherit;margin:0px 0px 20px;line-height:1.8em;margin-bottom:20px;color:rgb(58, 58, 58);">训练结束后，我们希望使用 <code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif">transformers</code> 库对该模型进行评估或将其部署到生产环境中。你可以按照 教程 将其转换为 <code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif">transformers</code> 模型。例如，在训练完成后，你可以复制第 150k 次迭代的权重，并使用以下命令将文件 <code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif">model_optim_rng.pt</code> 转换为 <code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif">transformers</code> 支持的 <code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif">pytorch_model.bin</code> 文件:</p> 
+  <pre style="border-radius:4px;background-color: #fbfaf8;border: 1px solid rgba(0,0,0,.14902);color: #333;font-size: 12px;padding: 8px;font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif;box-sizing: border-box;"><code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span style="box-sizing:inherit;color:#998;font-style:italic;line-height:26px;"><span style="box-sizing:inherit;color:rgb(106, 115, 125);"># to execute outside the container:</span></span><br style="box-sizing:inherit;"/><span style="box-sizing:inherit;color:rgb(106, 115, 125);">mkdir -p nvidia/megatron-codeparrot-small</span><br style="box-sizing:inherit;"/><span style="box-sizing:inherit;color:#998;font-style:italic;line-height:26px;"><span style="box-sizing:inherit;color:rgb(106, 115, 125);"># copy the weights from the container</span></span><br style="box-sizing:inherit;"/><span style="box-sizing:inherit;color:rgb(106, 115, 125);">sudo docker cp CONTAINER_ID:/workspace/Megatron-LM/experiments/codeparrot-small/iter_0150000/mp_rank_00/model_optim_rng.pt nvidia/megatron-codeparrot-small</span><br style="box-sizing:inherit;"/><span style="box-sizing:inherit;color:rgb(106, 115, 125);">git </span><span style="box-sizing:inherit;color:#0086b3;line-height:26px;"><span style="box-sizing:inherit;color:rgb(106, 115, 125);">clone</span></span><span style="box-sizing:inherit;color:rgb(106, 115, 125);"> https://github.com/huggingface/transformers.git</span><br style="box-sizing:inherit;"/><span style="box-sizing:inherit;color:rgb(106, 115, 125);">git </span><span style="box-sizing:inherit;color:#0086b3;line-height:26px;"><span style="box-sizing:inherit;color:rgb(106, 115, 125);">clone</span></span><span style="box-sizing:inherit;color:rgb(106, 115, 125);"> https://github.com/NVIDIA/Megatron-LM.git</span><br style="box-sizing:inherit;"/><span style="box-sizing:inherit;color:#0086b3;line-height:26px;"><span style="box-sizing:inherit;color:rgb(106, 115, 125);">export</span></span><span style="box-sizing:inherit;color:rgb(106, 115, 125);"> PYTHONPATH=Megatron-LM</span><br style="box-sizing:inherit;"/><span style="box-sizing:inherit;color:rgb(106, 115, 125);">python transformers/src/transformers/models/megatron_gpt2/convert_megatron_gpt2_checkpoint.py nvidia/megatron-codeparrot-small/model_optim_rng.pt</span><br style="box-sizing:inherit;"/></code></pre> 
+  <p style="box-sizing:inherit;margin:0px 0px 20px;line-height:1.8em;margin-bottom:20px;color:rgb(58, 58, 58);">请注意，如果你打算使用原始的分词器，你将需要在转换后将生成的词汇文件和合并表替换为我们之前介绍的原始文件。</p> 
+  <p style="box-sizing:inherit;margin:0px 0px 20px;line-height:1.8em;margin-bottom:20px;color:rgb(58, 58, 58);">不要忘记将你的模型推送到 hub 并与社区分享，只需三行代码 :</p> 
+  <pre style="border-radius:4px;background-color: #fbfaf8;border: 1px solid rgba(0,0,0,.14902);color: #333;font-size: 12px;padding: 8px;font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif;box-sizing: border-box;"><code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span style="box-sizing:inherit;font-weight:bold;line-height:26px;"><span style="box-sizing:inherit;color:rgb(215, 58, 73);">from</span></span> transformers <span style="box-sizing:inherit;font-weight:bold;line-height:26px;"><span style="box-sizing:inherit;color:rgb(215, 58, 73);">import</span></span> AutoModelForCausalLM<br style="box-sizing:inherit;"/><br style="box-sizing:inherit;"/>model = AutoModelForCausalLM.from_pretrained(<span style="box-sizing:inherit;color:#d14;line-height:26px;"><span style="box-sizing:inherit;color:rgb(3, 47, 98);">"nvidia/megatron-codeparrot-small"</span></span>)<br style="box-sizing:inherit;"/><span style="box-sizing:inherit;color:#998;font-style:italic;line-height:26px;"><span style="box-sizing:inherit;color:rgb(106, 115, 125);"># this creates a repository under your username with the model name codeparrot-small</span></span><br style="box-sizing:inherit;"/><span style="box-sizing:inherit;color:rgb(106, 115, 125);">model.push_to_hub(</span><span style="box-sizing:inherit;color:#d14;line-height:26px;"><span style="box-sizing:inherit;color:rgb(106, 115, 125);">"codeparrot-small"</span></span><span style="box-sizing:inherit;color:rgb(106, 115, 125);">)</span><br style="box-sizing:inherit;"/></code></pre> 
+  <p style="box-sizing:inherit;margin:0px 0px 20px;line-height:1.8em;margin-bottom:20px;color:rgb(58, 58, 58);">你还可以轻松地使用它来生成文本:</p> 
+  <pre style="border-radius:4px;background-color: #fbfaf8;border: 1px solid rgba(0,0,0,.14902);color: #333;font-size: 12px;padding: 8px;font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif;box-sizing: border-box;"><code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span style="box-sizing:inherit;font-weight:bold;line-height:26px;">from</span> transformers <span style="box-sizing:inherit;font-weight:bold;line-height:26px;">import</span> pipeline<br style="box-sizing:inherit;"/><br style="box-sizing:inherit;"/>pipe = pipeline(<span style="box-sizing:inherit;color:#d14;line-height:26px;">"text-generation"</span>, model=<span style="box-sizing:inherit;color:#d14;line-height:26px;">"your<span style="box-sizing:inherit;color:rgb(3, 47, 98);">_username/codeparrot-small"</span></span><span style="box-sizing:inherit;color:rgb(3, 47, 98);">)</span><br style="box-sizing:inherit;"/><span style="box-sizing:inherit;color:rgb(3, 47, 98);">outputs = pipe(</span><span style="box-sizing:inherit;color:#d14;line-height:26px;"><span style="box-sizing:inherit;color:rgb(3, 47, 98);">"def hello_</span>world():"</span>)<br style="box-sizing:inherit;"/>print(outputs[<span style="box-sizing:inherit;color:#008080;line-height:26px;"><span style="box-sizing:inherit;color:rgb(3, 47, 98);">0</span></span>][<span style="box-sizing:inherit;color:#d14;line-height:26px;"><span style="box-sizing:inherit;color:rgb(0, 92, 197);">"generated_text"</span></span>])<br style="box-sizing:inherit;"/></code></pre> 
+  <pre style="border-radius:4px;background-color: #fbfaf8;border: 1px solid rgba(0,0,0,.14902);color: #333;font-size: 12px;padding: 8px;font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif;box-sizing: border-box;"><code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"> <span style="box-sizing:inherit;"><span style="box-sizing:inherit;color:rgb(215, 58, 73);">def</span> <span style="box-sizing:inherit;color:rgb(111, 66, 193);">hello_world</span><span style="box-sizing:inherit;">()</span>:</span><br style="box-sizing:inherit;"/>    <span style="box-sizing:inherit;color:#0086b3;line-height:26px;">print</span>(<span style="box-sizing:inherit;color:#d14;line-height:26px;"><span style="box-sizing:inherit;color:rgb(3, 47, 98);">"Hello World!"</span></span>)<br style="box-sizing:inherit;"/></code></pre> 
+  <p style="box-sizing:inherit;margin:0px 0px 20px;line-height:1.8em;margin-bottom:20px;color:rgb(58, 58, 58);">Transformers 还可以有效地处理大模型推理。如果你训练了一个非常大的模型 (例如训练时使用了模型并行)，你可以通过以下命令轻松地进行推理:</p> 
+  <pre style="border-radius:4px;background-color: #fbfaf8;border: 1px solid rgba(0,0,0,.14902);color: #333;font-size: 12px;padding: 8px;font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif;box-sizing: border-box;"><code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span style="box-sizing:inherit;font-weight:bold;line-height:26px;"><span style="box-sizing:inherit;color:rgb(215, 58, 73);">from</span></span> transformers <span style="box-sizing:inherit;font-weight:bold;line-height:26px;"><span style="box-sizing:inherit;color:rgb(215, 58, 73);">import</span></span> AutoModelForCausalLM<br style="box-sizing:inherit;"/><br style="box-sizing:inherit;"/>model = AutoModelForCausalLM.from_pretrained(<span style="box-sizing:inherit;color:#d14;line-height:26px;"><span style="box-sizing:inherit;color:rgb(3, 47, 98);">"your_username/codeparrot-large"</span></span>, device_map=<span style="box-sizing:inherit;color:#d14;line-height:26px;"><span style="box-sizing:inherit;color:rgb(3, 47, 98);">"auto"</span></span>)<br style="box-sizing:inherit;"/></code></pre> 
+  <p style="box-sizing:inherit;margin:0px 0px 20px;line-height:1.8em;margin-bottom:20px;color:rgb(58, 58, 58);">这将在内部调用 accelerate 库 自动在你可用的设备 (GPU、CPU RAM) 之间分配模型权重。</p> 
+  <p style="box-sizing:inherit;margin:0px 0px 20px;line-height:1.8em;margin-bottom:20px;color:rgb(58, 58, 58);">免责声明：我们已经证明任何人都可以使用 Megatron-LM 来训练语言模型。问题是我们需要考虑什么时候使用它。由于额外的预处理和转换步骤，这个框架显然增加了一些时间开销。因此，重要的是你要考虑哪个框架更适合你的需求和模型大小。我们建议将其用于预训练模型或微调，但可能不适用于中型模型的微调。<code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif">APITrainer</code> 和 <code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif">accelerate</code> 库对于模型训练同样也非常方便，并且它们与设备无关，为用户提供了极大的灵活性。</p> 
+  <p style="box-sizing:inherit;margin:0px 0px 20px;line-height:1.8em;margin-bottom:20px;color:rgb(58, 58, 58);">恭喜  现在你学会了如何在 Megatron-LM 框架中训练 GPT2 模型并使其支持 <code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif">transformers</code>！</p> 
+  <p style="box-sizing:inherit;margin:0px 0px 20px;line-height:1.8em;margin-bottom:20px;color:rgb(58, 58, 58);"><strong style="box-sizing:inherit;font-weight:700;">文中提到的链接请访问 <em style="box-sizing:inherit;">阅读原文</em> 查看哦～</strong><br style="box-sizing:inherit;"/></p> 
+  <hr style="box-sizing:content-box;height:1px;overflow:visible;border-right:none;border-bottom:none;border-left:none;border-image:initial;border-top:1px solid rgb(238, 238, 238);background:0px 0px;margin:0px 0px 20px;zoom:1;border-top-style:solid;border-top-color:rgb(249, 191, 69);margin-top:20px;margin-bottom:20px;"><span style="display:table;"></span><span style="display:table;clear:both;"></span></hr> 
+  <blockquote style="box-sizing:inherit;position:relative;margin:0px 0px 20px;padding:20px;background-color:rgb(246, 246, 246);border-left:6px solid rgb(230, 230, 230);font-style:normal;font-weight:400;word-break:break-word;border-top:none;border-right:none;border-bottom:none;color:rgb(91, 91, 91);background:rgba(158, 158, 158, 0.1);padding-top:1px;padding-bottom:1px;padding-left:5px;margin-top:0px;margin-bottom:0px;"> 
+   <blockquote style="box-sizing:inherit;position:relative;margin:0px 0px 20px;padding:20px;background-color:rgb(246, 246, 246);border-left:6px solid rgb(230, 230, 230);font-style:normal;font-weight:400;word-break:break-word;margin-top:0px;margin-bottom:0em;border-width:initial;border-style:none;border-color:initial;padding-top:0px;padding-left:0px;"> 
+    <blockquote style="box-sizing:inherit;position:relative;margin:0px 0px 20px;padding:20px;background-color:rgb(246, 246, 246);border-left:6px solid rgb(230, 230, 230);font-style:normal;font-weight:400;word-break:break-word;margin-top:0px;margin-bottom:0em;border-width:initial;border-style:none;border-color:initial;padding-top:0px;padding-left:0px;"> 
+     <blockquote style="box-sizing:inherit;position:relative;margin:0px 0px 20px;padding:20px;background-color:rgb(246, 246, 246);border-left:6px solid rgb(230, 230, 230);font-style:normal;font-weight:400;word-break:break-word;margin-top:0px;margin-bottom:0em;border-width:initial;border-style:none;border-color:initial;padding-top:0px;padding-left:0px;"> 
+      <p style="box-sizing:inherit;margin:10px;line-height:1.5;margin-top:0px;color:rgb(63, 63, 63);font-size:14px;">英文原文: <span style="box-sizing:inherit;color:rgb(136, 136, 136);letter-spacing:0px;">https://hf.co/blog/megatron-training</span></p> 
+      <p style="box-sizing:inherit;margin:10px;line-height:1.5;color:rgb(63, 63, 63);font-size:14px;">作者: Loubna Ben Allal</p> 
+      <p style="box-sizing:inherit;margin:10px;line-height:1.5;color:rgb(63, 63, 63);font-size:14px;">译者: gxy-gxy</p> 
+      <p style="box-sizing:inherit;margin:10px;line-height:1.5;margin-bottom:0px;color:rgb(63, 63, 63);font-size:14px;">审校 / 排版: zhongdongy (阿东)</p> 
+     </blockquote> 
+    </blockquote> 
+   </blockquote> 
+  </blockquote> 
+ </div> 
+  
+</div> 
+<p style="box-sizing:inherit;margin:0px 0px 20px;line-height:inherit;margin-bottom:0px;color:#858585;font-size:13px;">本文分享自微信公众号 - Hugging Face（gh_504339124f0f）。<br style="box-sizing:inherit;"/>如有侵权，请联系 support@oschina.cn 删除。<br style="box-sizing:inherit;"/>本文参与 “<a href="https://www.oschina.net/sharing-plan" target="_blank" style="box-sizing:inherit;background-color:transparent;text-decoration:none;color:rgb(52, 111, 182);">OSC 源创计划</a>”，欢迎正在阅读的你也加入，一起分享。</p>
+                                        <span style="font-family:-apple-system, BlinkMacSystemFont, Apple Color Emoji, Segoe UI Emoji, Segoe UI Symbol, Segoe UI, PingFang SC, Hiragino Sans GB, Microsoft YaHei, Helvetica Neue, Helvetica, Arial, sans-serif;font-size:16px;line-height:1.8;color:rgb(51, 51, 51);text-align:left;display:table;clear:both;"></span></div>
+                                    </div>
+                                    
+                                </div>
+
+                                                                
+                                                                <div style="box-sizing:inherit;display:flex;margin-bottom:24px;color:rgb(136, 136, 136);font-size:14px;line-height:20px;">
+                                    <div style="box-sizing:inherit;-webkit-box-flex:1;flex:1 1 0%;min-width:0px;word-break:break-all;overflow-wrap:break-word;hyphens:auto;">
+                                                                                    <p style="box-sizing:inherit;line-height:1.4285em;padding:0px;margin:0px;">© 著作权归作者所有</p>
+                                                                            </div>
+                                    <div style="box-sizing:inherit;flex-shrink:0;align-self:flex-end;margin-left:8px;">
+                                        <span style="box-sizing:inherit;cursor:pointer;color:rgb(136, 136, 136);"><i style="box-sizing:inherit;display:inline-block;opacity:1;margin:0px 0.25rem 0px 0px;width:1.18em;height:1em;font-family:Icons;font-style:normal;font-weight:400;text-decoration:inherit;text-align:center;speak:none;-webkit-font-smoothing:antialiased;backface-visibility:hidden;font-size:1em;margin-right:8px;"><span style="font-family:Icons;font-style:normal;font-weight:400;text-align:center;font-size:1em;background:0px 0px !important;"></span></i>举报</span>
+                                    </div>
+                                </div>
+
+                                                                                                                                    <div style="box-sizing:inherit;border-top:1px solid rgb(236, 237, 238);padding-top:42px;">
+                                        <div style="box-sizing:inherit;">
+                                                                                        <div style="box-sizing:inherit;position:relative;">
+        
+
+    <div style="box-sizing:inherit;">
+                            <div style="box-sizing:inherit;"><div style="box-sizing:inherit;display:flex;-webkit-box-orient:horizontal;-webkit-box-direction:normal;flex-direction:row;"><div style="box-sizing:inherit;flex-shrink:0;margin-right:8px;"><div style="box-sizing:inherit;display:inline-block;border-radius:100%;font-size:inherit;vertical-align:middle;box-shadow:rgba(0, 0, 0, 0.3) 0px 0px 1px;overflow:hidden;height:40px;width:40px;"><div class="media-placeholder">[图片/附件]</div></en-media></div></div> <div style="box-sizing:inherit;-webkit-box-flex:1;flex:1 1 0%;min-width:0px;"><div style="box-sizing:inherit;"><div style="box-sizing:inherit;"></div> <div style="box-sizing:inherit;cursor:pointer;min-height:1em;outline:0px;border:none;vertical-align:baseline;background:none rgb(240, 240, 240);font-family:&quot;PingFang SC&quot;, &quot;Helvetica Neue&quot;, &quot;Microsoft YaHei UI&quot;, &quot;Microsoft YaHei&quot;, &quot;Noto Sans CJK SC&quot;, Sathu, EucrosiaUPC, Arial, Helvetica, sans-serif;padding:0.785714em 1.5em;text-transform:none;font-weight:400;line-height:1em;font-style:normal;text-align:center;text-decoration:none;user-select:none;transition:opacity 0.1s ease 0s, background-color 0.1s ease 0s, color 0.1s ease 0s, box-shadow 0.1s ease 0s, background 0.1s ease 0s, -webkit-box-shadow 0.1s ease 0s;-webkit-tap-highlight-color:transparent;font-size:14px;position:relative;display:block;margin:0px;background-color:rgb(50, 170, 102);background-image:none;color:rgb(255, 255, 255);text-shadow:none;border-radius:0px 0px 4px 4px !important;box-shadow:rgba(34, 36, 38, 0.15) 0px 0px 0px 1px;"><span style="box-sizing:inherit;">
+                                                                            点击引领话题<span style="box-sizing:inherit;"></span></span></div></div> </div></div></div>
+        
+    </div>
+</div>
+
+                                        </div>
+                                    </div>
+                                                            </div>
+                        </div></div></div></div></div></div></div></div></div></div></div></div></div>
+</div>
+</div>
+<a class="back-link" href="../articles.html">← 返回笔记列表</a>
+</body>
+</html>

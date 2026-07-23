@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="zh-CN" data-theme="light">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>20220907 — 技术笔记</title>
+<style>
+:root {
+  --bg: #ffffff;
+  --text: #1a1a1a;
+  --muted: #666;
+  --border: #e0e0e0;
+  --code-bg: #f5f5f5;
+  --link: #0066cc;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #1a1a1a;
+    --text: #e0e0e0;
+    --muted: #999;
+    --border: #333;
+    --code-bg: #2a2a2a;
+    --link: #66bbff;
+  }
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  line-height: 1.7;
+  color: var(--text);
+  background: var(--bg);
+  max-width: 860px;
+  margin: 0 auto;
+  padding: 2rem 1.5rem;
+}
+.note-header {
+  border-bottom: 2px solid var(--border);
+  padding-bottom: 1rem;
+  margin-bottom: 2rem;
+}
+.note-title {
+  font-size: 1.6rem;
+  font-weight: 700;
+  margin-bottom: 0.3rem;
+}
+.note-meta {
+  color: var(--muted);
+  font-size: 0.85rem;
+}
+.note-content {
+  font-size: 0.95rem;
+}
+.note-content h1 { font-size: 1.4rem; margin: 1.2rem 0 0.6rem; }
+.note-content h2 { font-size: 1.2rem; margin: 1rem 0 0.5rem; }
+.note-content h3 { font-size: 1.05rem; margin: 0.8rem 0 0.4rem; }
+.note-content p { margin: 0.5rem 0; }
+.note-content ul, .note-content ol { margin: 0.5rem 0 0.5rem 2rem; }
+.note-content li { margin: 0.2rem 0; }
+.note-content pre {
+  background: var(--code-bg);
+  padding: 1rem;
+  border-radius: 6px;
+  overflow-x: auto;
+  margin: 0.8rem 0;
+  font-size: 0.85rem;
+}
+.note-content code {
+  background: var(--code-bg);
+  padding: 0.1rem 0.3rem;
+  border-radius: 3px;
+  font-size: 0.88em;
+}
+.note-content pre code {
+  background: none;
+  padding: 0;
+}
+.note-content blockquote {
+  border-left: 3px solid var(--border);
+  padding-left: 1rem;
+  color: var(--muted);
+  margin: 0.8rem 0;
+}
+.note-content a { color: var(--link); }
+.note-content img {
+  max-width: 100%;
+  height: auto;
+  border-radius: 6px;
+  margin: 0.5rem 0;
+}
+.note-content table {
+  border-collapse: collapse;
+  width: 100%;
+  margin: 0.8rem 0;
+}
+.note-content th, .note-content td {
+  border: 1px solid var(--border);
+  padding: 0.5rem;
+}
+.note-content th { background: var(--code-bg); }
+.media-placeholder {
+  background: var(--code-bg);
+  padding: 1rem;
+  text-align: center;
+  color: var(--muted);
+  border-radius: 6px;
+  margin: 0.5rem 0;
+  font-size: 0.85rem;
+}
+.encrypt-placeholder {
+  background: #fff3cd;
+  padding: 0.5rem;
+  text-align: center;
+  color: #856404;
+  border-radius: 6px;
+  margin: 0.5rem 0;
+  font-size: 0.85rem;
+}
+.back-link {
+  display: inline-block;
+  margin-top: 2rem;
+  color: var(--link);
+  text-decoration: none;
+  font-size: 0.85rem;
+}
+</style>
+</head>
+<body>
+<div class="note-header">
+  <div class="note-title">20220907</div>
+  <div class="note-meta">笔记本：Kubernetes学习笔记</div>
+</div>
+<div class="note-content">
+<div>1.容器是“单进程”模式</div><div>由于容器是单进程的设计模式，也就是一个容器中只运行一个进程，这样子管理容器的时候，就像管理进程一样</div><div>主要是由于容器没有回收孤儿进程的能力，从而导致僵尸进程，首先容器中必定有一个pid=1的进程，这个进程就是应用进程本身，如果再有其他进程的话</div><div>也只能是其子进程了，一旦pid=1进程退出，那么其他几个进程就无从管理了，像Docker，它只有识别主进程的能力，如果主进程正常，则容器状态</div><div>就显示正常</div><div>因为为了通过容器来管理应用，那么我们就需要通过把应用的进程id作为容器内pid=1的进程来运行，这样当pid=1的进程运行异常的时候，可以从容器上反映出来，因为pid=1，所以自然整个容器环境都结束了，而之所以是单进程模式，是因为就算我们同时将几个程序放入容器，作为几个同等级的进程来运行的话，那么一旦pid=1的进程挂了，那么其他进程也就无法管理了，也无法获取它们的状态，所以在容器中是单进程模式</div><div>还有一种用法是，将pid=1的进程用来运行systemd，然后再通过systemd来运行我们的应用程序，通过systemd来管理应用，这样做虽然可以，但是对于容器外的应用或者管理容器的用户而言，我们只是在管理systemd，也就是说我们顶多能够知道systemd是否运行正常，但是却无从得知systemd管理的这些应用是否正常，所以这也是不好的一种实践</div><div><br/></div><div>2.pod就像是linux中的进程组</div><div>而当我们的应用的确有许多个程序需要运行但又不得违反容器的设计模式的时候，那么pod刚好就满足了需要，因为pod是将一组容器作为管理单位</div><div><br/></div><div>如何让多个容器之间最高效的共享某些资源和数据</div><div>容器之间原本是通过cgroups和linux namespace隔离的</div><div>容器之间共享网络</div><div>在k8s中是通过在pod中的各个容器共享一个network namespace来实现的，具体实现是增加了一个pause容器，又称为infra container，给它配置一个</div><div>network namespace，然后将其他容器都加入到这个namespace中来，这样以来，各个容器看到的网络视图就都是一样的了，网络视图指的就是网络</div><div>设备（也就是各个网卡），包括像ip地址、网关地址这些都是一样，也正因为有了infra container，所以整个pod的生命周期和infra容器一致，整个pod中</div><div>也是infra container作为第一个启动的容器，而与其他容器无关，这也是为什么k8s可以单独重启或者更新pod中单个容器的原因</div><div><br/></div><div>存储是怎么实现共享的？</div><div>通过volume，在创建pod的时候可以指定一个volume，然后可以依次给各个容器挂载同一个volume,于是各个容器都可以访问到这个挂载的目录了</div><div><br/></div><div>kubernetes容器设计模式:</div><div>Sidecar:</div><div><span>&nbsp; &nbsp; 专门定义一个容器，来执行主业务需要的辅助工作</span><br/></div>
+</div>
+<a class="back-link" href="../articles.html">← 返回笔记列表</a>
+</body>
+</html>

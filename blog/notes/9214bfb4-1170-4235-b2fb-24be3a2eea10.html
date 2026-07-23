@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="zh-CN" data-theme="light">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>mysql 选择每个group的某一行 — 技术笔记</title>
+<style>
+:root {
+  --bg: #ffffff;
+  --text: #1a1a1a;
+  --muted: #666;
+  --border: #e0e0e0;
+  --code-bg: #f5f5f5;
+  --link: #0066cc;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #1a1a1a;
+    --text: #e0e0e0;
+    --muted: #999;
+    --border: #333;
+    --code-bg: #2a2a2a;
+    --link: #66bbff;
+  }
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  line-height: 1.7;
+  color: var(--text);
+  background: var(--bg);
+  max-width: 860px;
+  margin: 0 auto;
+  padding: 2rem 1.5rem;
+}
+.note-header {
+  border-bottom: 2px solid var(--border);
+  padding-bottom: 1rem;
+  margin-bottom: 2rem;
+}
+.note-title {
+  font-size: 1.6rem;
+  font-weight: 700;
+  margin-bottom: 0.3rem;
+}
+.note-meta {
+  color: var(--muted);
+  font-size: 0.85rem;
+}
+.note-content {
+  font-size: 0.95rem;
+}
+.note-content h1 { font-size: 1.4rem; margin: 1.2rem 0 0.6rem; }
+.note-content h2 { font-size: 1.2rem; margin: 1rem 0 0.5rem; }
+.note-content h3 { font-size: 1.05rem; margin: 0.8rem 0 0.4rem; }
+.note-content p { margin: 0.5rem 0; }
+.note-content ul, .note-content ol { margin: 0.5rem 0 0.5rem 2rem; }
+.note-content li { margin: 0.2rem 0; }
+.note-content pre {
+  background: var(--code-bg);
+  padding: 1rem;
+  border-radius: 6px;
+  overflow-x: auto;
+  margin: 0.8rem 0;
+  font-size: 0.85rem;
+}
+.note-content code {
+  background: var(--code-bg);
+  padding: 0.1rem 0.3rem;
+  border-radius: 3px;
+  font-size: 0.88em;
+}
+.note-content pre code {
+  background: none;
+  padding: 0;
+}
+.note-content blockquote {
+  border-left: 3px solid var(--border);
+  padding-left: 1rem;
+  color: var(--muted);
+  margin: 0.8rem 0;
+}
+.note-content a { color: var(--link); }
+.note-content img {
+  max-width: 100%;
+  height: auto;
+  border-radius: 6px;
+  margin: 0.5rem 0;
+}
+.note-content table {
+  border-collapse: collapse;
+  width: 100%;
+  margin: 0.8rem 0;
+}
+.note-content th, .note-content td {
+  border: 1px solid var(--border);
+  padding: 0.5rem;
+}
+.note-content th { background: var(--code-bg); }
+.media-placeholder {
+  background: var(--code-bg);
+  padding: 1rem;
+  text-align: center;
+  color: var(--muted);
+  border-radius: 6px;
+  margin: 0.5rem 0;
+  font-size: 0.85rem;
+}
+.encrypt-placeholder {
+  background: #fff3cd;
+  padding: 0.5rem;
+  text-align: center;
+  color: #856404;
+  border-radius: 6px;
+  margin: 0.5rem 0;
+  font-size: 0.85rem;
+}
+.back-link {
+  display: inline-block;
+  margin-top: 2rem;
+  color: var(--link);
+  text-decoration: none;
+  font-size: 0.85rem;
+}
+</style>
+</head>
+<body>
+<div class="note-header">
+  <div class="note-title">mysql 选择每个group的某一行</div>
+  <div class="note-meta">笔记本：Mysql</div>
+</div>
+<div class="note-content">
+<div style="font-size: 14px; margin: 0; padding: 0; width: 100%;"><p style="line-height: 160%; box-sizing: content-box; margin: 10px 0; color: #333;">源自oa需求,系统中有两张表: 申请表 <code style="line-height: 160%; box-sizing: content-box; border: 0; border-radius: 0; color: #c1788b; padding: 4px 4px 2px 0; letter-spacing: -.3px;">applies</code> 和 审批<br/>
+表<code style="line-height: 160%; box-sizing: content-box; border: 0; border-radius: 0; color: #c1788b; padding: 4px 4px 2px 0; letter-spacing: -.3px;">audits</code>,applies和audits是一对多的关系，也就是说一张申请单下面会对应多张审批单，但是有个时候会出现这种情况，同一个人在同一个申请单下会有多条审批单记录，即：这条申请单下有多级审批节点都是同一个人，如此一来，在该审批人的审批事务列表中就会出现多条对应于同一个申请单的审批单了，从数据表结构来分析的话，这其实是正常应该出现的情况，因为这个人的确是审批了多次，但是与现在需求要求不一致。</p>
+<h4 style="line-height: 160%; box-sizing: content-box; font-size: 20px; color: #333;">audits</h4>
+<table style="margin: 2px 0 14px; color: #333; width: auto; border-collapse: collapse; box-sizing: border-box;"><thead style="line-height: 160%; box-sizing: content-box;"><tr style="line-height: 160%; box-sizing: content-box;"><th style="line-height: 160%; box-sizing: content-box;  padding: 5px 14px 5px 12px; border: 1px solid #72777b; border-top: 0; background-color: #7b8184; font-weight: 300; color: #fff; padding-top: 6px;">id</th><th style="line-height: 160%; box-sizing: content-box;  padding: 5px 14px 5px 12px; border: 1px solid #72777b; border-top: 0; background-color: #7b8184; font-weight: 300; color: #fff; padding-top: 6px;">apply_id</th><th style="line-height: 160%; box-sizing: content-box;  padding: 5px 14px 5px 12px; border: 1px solid #72777b; border-top: 0; background-color: #7b8184; font-weight: 300; color: #fff; padding-top: 6px;">created_at</th><th style="line-height: 160%; box-sizing: content-box;  padding: 5px 14px 5px 12px; border: 1px solid #72777b; border-top: 0; background-color: #7b8184; font-weight: 300; color: #fff; padding-top: 6px;">其他字段</th></tr></thead><tbody style="line-height: 160%; box-sizing: content-box;"><tr style="line-height: 160%; box-sizing: content-box;"><td style="line-height: 160%; box-sizing: content-box;  padding: 5px 14px 5px 12px; border: 1px solid #eaeaea;">1</td><td style="line-height: 160%; box-sizing: content-box;  padding: 5px 14px 5px 12px; border: 1px solid #eaeaea;">1</td><td style="line-height: 160%; box-sizing: content-box;  padding: 5px 14px 5px 12px; border: 1px solid #eaeaea;">2019-03-27 12:50:00</td><td style="line-height: 160%; box-sizing: content-box;  padding: 5px 14px 5px 12px; border: 1px solid #eaeaea;"></td></tr><tr style="line-height: 160%; box-sizing: content-box;"><td style="line-height: 160%; box-sizing: content-box;  padding: 5px 14px 5px 12px; border: 1px solid #eaeaea;">2</td><td style="line-height: 160%; box-sizing: content-box;  padding: 5px 14px 5px 12px; border: 1px solid #eaeaea;">2</td><td style="line-height: 160%; box-sizing: content-box;  padding: 5px 14px 5px 12px; border: 1px solid #eaeaea;">2019-03-27 12:50:01</td><td style="line-height: 160%; box-sizing: content-box;  padding: 5px 14px 5px 12px; border: 1px solid #eaeaea;"></td></tr><tr style="line-height: 160%; box-sizing: content-box;"><td style="line-height: 160%; box-sizing: content-box;  padding: 5px 14px 5px 12px; border: 1px solid #eaeaea;">3</td><td style="line-height: 160%; box-sizing: content-box;  padding: 5px 14px 5px 12px; border: 1px solid #eaeaea;">2</td><td style="line-height: 160%; box-sizing: content-box;  padding: 5px 14px 5px 12px; border: 1px solid #eaeaea;">2019-03-27 12:50:02</td><td style="line-height: 160%; box-sizing: content-box;  padding: 5px 14px 5px 12px; border: 1px solid #eaeaea;"></td></tr><tr style="line-height: 160%; box-sizing: content-box;"><td style="line-height: 160%; box-sizing: content-box;  padding: 5px 14px 5px 12px; border: 1px solid #eaeaea;">4</td><td style="line-height: 160%; box-sizing: content-box;  padding: 5px 14px 5px 12px; border: 1px solid #eaeaea;">3</td><td style="line-height: 160%; box-sizing: content-box;  padding: 5px 14px 5px 12px; border: 1px solid #eaeaea;">2019-03-27 12:50:03</td><td style="line-height: 160%; box-sizing: content-box;  padding: 5px 14px 5px 12px; border: 1px solid #eaeaea;"></td></tr></tbody></table>
+<h4 style="line-height: 160%; box-sizing: content-box; font-size: 20px; color: #333;">思路</h4>
+<ul style="line-height: 160%; box-sizing: content-box; display: block; list-style-type: disc; padding-left: 30px; margin: 6px 0 10px; color: #333;">
+<li style="line-height: 160%; box-sizing: content-box; position: relative;">利用group by语句，按照 apply_id进行分组，但是这样有个限制，在sql中，select 后面跟随的字段必须是跟group by中进行分组的字段相关联的字段，只能选择与group by 相同的字段，若要选择其他未group by 的字段，则必须通过聚合函数合成为一个字段才能展示出来，比如:</li>
+</ul>
+<pre style="line-height: 160%; box-sizing: content-box; border: 0; border-radius: 0; margin: 2px 0 8px; background-color: #f5f7f8;"><code style="display: block; overflow-x: auto; background: #1e1e1e; line-height: 160%; box-sizing: content-box; border: 0; border-radius: 0; letter-spacing: -.3px; padding: 18px; color: #f4f4f4; white-space: pre-wrap;">select a from A group by a
+</code></pre>
+<p style="line-height: 160%; box-sizing: content-box; margin: 10px 0; color: #333;">或者</p>
+<pre style="line-height: 160%; box-sizing: content-box; border: 0; border-radius: 0; margin: 2px 0 8px; background-color: #f5f7f8;"><code style="display: block; overflow-x: auto; background: #1e1e1e; line-height: 160%; box-sizing: content-box; border: 0; border-radius: 0; letter-spacing: -.3px; padding: 18px; color: #f4f4f4; white-space: pre-wrap;">select a,sum(b) from A group by a
+</code></pre>
+<h4 style="line-height: 160%; box-sizing: content-box; font-size: 20px; color: #333;">但是</h4>
+<p style="line-height: 160%; box-sizing: content-box; margin: 10px 0; color: #333;">当需要选择group by以外的字段的时候，就出现问题了，以上面的样表为例，我们不仅仅需要选择出apply_id,我们还需要选择出created_at以及其他的字段，也就是说，在group by分组完之后，还需要从组里面将其他的字段各选出一个值出来，比如，上面的表中如果group by 之后，数据应该先是这个样子的:</p>
+<table style="margin: 2px 0 14px; color: #333; width: auto; border-collapse: collapse; box-sizing: border-box;"><thead style="line-height: 160%; box-sizing: content-box;"><tr style="line-height: 160%; box-sizing: content-box;"><th style="line-height: 160%; box-sizing: content-box;  padding: 5px 14px 5px 12px; border: 1px solid #72777b; border-top: 0; background-color: #7b8184; font-weight: 300; color: #fff; padding-top: 6px;">id</th><th style="line-height: 160%; box-sizing: content-box;  padding: 5px 14px 5px 12px; border: 1px solid #72777b; border-top: 0; background-color: #7b8184; font-weight: 300; color: #fff; padding-top: 6px;">apply_id</th><th style="line-height: 160%; box-sizing: content-box;  padding: 5px 14px 5px 12px; border: 1px solid #72777b; border-top: 0; background-color: #7b8184; font-weight: 300; color: #fff; padding-top: 6px;">created_at</th><th style="line-height: 160%; box-sizing: content-box;  padding: 5px 14px 5px 12px; border: 1px solid #72777b; border-top: 0; background-color: #7b8184; font-weight: 300; color: #fff; padding-top: 6px;">其他字段</th></tr></thead><tbody style="line-height: 160%; box-sizing: content-box;"><tr style="line-height: 160%; box-sizing: content-box;"><td style="line-height: 160%; box-sizing: content-box;  padding: 5px 14px 5px 12px; border: 1px solid #eaeaea;">2</td><td style="line-height: 160%; box-sizing: content-box;  padding: 5px 14px 5px 12px; border: 1px solid #eaeaea;">2</td><td style="line-height: 160%; box-sizing: content-box;  padding: 5px 14px 5px 12px; border: 1px solid #eaeaea;">2019-03-27 12:50:01</td><td style="line-height: 160%; box-sizing: content-box;  padding: 5px 14px 5px 12px; border: 1px solid #eaeaea;"></td></tr><tr style="line-height: 160%; box-sizing: content-box;"><td style="line-height: 160%; box-sizing: content-box;  padding: 5px 14px 5px 12px; border: 1px solid #eaeaea;">3</td><td style="line-height: 160%; box-sizing: content-box;  padding: 5px 14px 5px 12px; border: 1px solid #eaeaea;">2</td><td style="line-height: 160%; box-sizing: content-box;  padding: 5px 14px 5px 12px; border: 1px solid #eaeaea;">2019-03-27 12:50:02</td><td style="line-height: 160%; box-sizing: content-box;  padding: 5px 14px 5px 12px; border: 1px solid #eaeaea;"></td></tr></tbody></table>
+<p style="line-height: 160%; box-sizing: content-box; margin: 10px 0; color: #333;">apply_id是一样的，但是created_at id 以及其他字段的值，是不一样的！但是我们最终的需要记录只要一条就够了！也就是还得继续从这个分出来的小组里面继续选出一条来。</p>
+<h3 style="line-height: 160%; box-sizing: content-box; font-weight: 700; font-size: 27px; color: #333;">最终解决方案</h3>
+<p style="line-height: 160%; box-sizing: content-box; margin: 10px 0; color: #333;">使用mysql的<code style="line-height: 160%; box-sizing: content-box; border: 0; border-radius: 0; color: #c1788b; padding: 4px 4px 2px 0; letter-spacing: -.3px;">groupconcat</code>函数配合<code style="line-height: 160%; box-sizing: content-box; border: 0; border-radius: 0; color: #c1788b; padding: 4px 4px 2px 0; letter-spacing: -.3px;">substring_index</code>函数</p>
+<pre style="line-height: 160%; box-sizing: content-box; border: 0; border-radius: 0; margin: 2px 0 8px; background-color: #f5f7f8;"><code style="display: block; overflow-x: auto; background: #1e1e1e; line-height: 160%; box-sizing: content-box; border: 0; border-radius: 0; letter-spacing: -.3px; padding: 18px; color: #f4f4f4; white-space: pre-wrap;"><span style="color: #569cd6; line-height: 160%; box-sizing: content-box;">select</span> <span style="color: #569cd6; line-height: 160%; box-sizing: content-box;">distinct</span> (a.apply_id), substring_index(<span style="color: #569cd6; line-height: 160%; box-sizing: content-box;">group_concat</span>(a.created_at <span style="color: #569cd6; line-height: 160%; box-sizing: content-box;">order</span> <span style="color: #569cd6; line-height: 160%; box-sizing: content-box;">by</span> a.id <span style="color: #569cd6; line-height: 160%; box-sizing: content-box;">desc</span>), <span style="color: #d69d85; line-height: 160%; box-sizing: content-box;">','</span>, <span style="color: #b8d7a3; line-height: 160%; box-sizing: content-box;">1</span>) ct 
+<span style="color: #569cd6; line-height: 160%; box-sizing: content-box;">from</span> eams_edu3_test.audits a 
+<span style="color: #569cd6; line-height: 160%; box-sizing: content-box;">inner</span> <span style="color: #569cd6; line-height: 160%; box-sizing: content-box;">join</span> eams_edu3_test.applies ap 
+<span style="color: #569cd6; line-height: 160%; box-sizing: content-box;">on</span> ap.id = a.apply_id <span style="color: #569cd6; line-height: 160%; box-sizing: content-box;">AND</span> ap.school_id = <span style="color: #b8d7a3; line-height: 160%; box-sizing: content-box;">16</span> 
+<span style="color: #569cd6; line-height: 160%; box-sizing: content-box;">WHERE</span> a.<span style="color: #d69d85; line-height: 160%; box-sizing: content-box;">`school_id`</span> = <span style="color: #b8d7a3; line-height: 160%; box-sizing: content-box;">16</span> 
+<span style="color: #569cd6; line-height: 160%; box-sizing: content-box;">group</span> <span style="color: #569cd6; line-height: 160%; box-sizing: content-box;">by</span> a.apply_id <span style="color: #569cd6; line-height: 160%; box-sizing: content-box;">LIMIT</span> <span style="color: #b8d7a3; line-height: 160%; box-sizing: content-box;">11</span>
+</code></pre>
+<p style="line-height: 160%; box-sizing: content-box; margin: 10px 0; color: #333;">groupconcat的作用即是将组中的该字段的值全部用<code style="line-height: 160%; box-sizing: content-box; border: 0; border-radius: 0; color: #c1788b; padding: 4px 4px 2px 0; letter-spacing: -.3px;">,</code><br/>
+拼接起来，这里还有一个小技巧，在groupconcat中还可以使用order by进一步进行排序再进行连接，然后使用substring_index截取第一个元素，这样即得到了我们所需要的元素。</p>
+<p style="line-height: 160%; box-sizing: content-box; margin: 10px 0; color: #333;">另外：我的项目是使用的ruby语言，最终的ruby代码如下:</p>
+<pre style="line-height: 160%; box-sizing: content-box; border: 0; border-radius: 0; margin: 2px 0 8px; background-color: #f5f7f8;"><code style="display: block; overflow-x: auto; background: #1e1e1e; line-height: 160%; box-sizing: content-box; border: 0; border-radius: 0; letter-spacing: -.3px; padding: 18px; color: #f4f4f4; white-space: pre-wrap;">      @search = Audit.joins(<span style="color: #569cd6; line-height: 160%; box-sizing: content-box;">:apply</span>).where(<span style="color: #d69d85; line-height: 160%; box-sizing: content-box;">"applies.business_id != ? and applies.status != ?"</span>, Business::REVERT, Apply::STATE_REVERTED).where(<span style="color: #569cd6; line-height: 160%; box-sizing: content-box;">auditor_id:</span> current_user.id, <span style="color: #569cd6; line-height: 160%; box-sizing: content-box;">available:</span> <span style="color: #569cd6; line-height: 160%; box-sizing: content-box;">true</span>).ransack params[<span style="color: #569cd6; line-height: 160%; box-sizing: content-box;">:q</span>]
+      @audits = @search.result.includes(<span style="color: #569cd6; line-height: 160%; box-sizing: content-box;">apply:</span> [<span style="color: #569cd6; line-height: 160%; box-sizing: content-box;">:repair_sheet</span>, <span style="color: #569cd6; line-height: 160%; box-sizing: content-box;">:leave_sheet</span>, <span style="color: #569cd6; line-height: 160%; box-sizing: content-box;">:purchase_apply_sheet</span>, <span style="color: #569cd6; line-height: 160%; box-sizing: content-box;">:contract_sheet</span>, <span style="color: #569cd6; line-height: 160%; box-sizing: content-box;">:business</span>]).includes(<span style="color: #569cd6; line-height: 160%; box-sizing: content-box;">:applicant</span>).
+          select(<span style="color: #569cd6; line-height: 160%; box-sizing: content-box;">:apply_id</span>, <span style="color: #d69d85; line-height: 160%; box-sizing: content-box;">"substring_index(group_concat(audits.id order by audits.created_at desc), ',', 1) id"</span>,
+                 <span style="color: #d69d85; line-height: 160%; box-sizing: content-box;">"substring_index(group_concat(audits.created_at order by audits.created_at desc), ',', 1) created_at"</span>,
+                 <span style="color: #d69d85; line-height: 160%; box-sizing: content-box;">"substring_index(group_concat(audits.status order by audits.created_at desc), ',', 1) status"</span> ,
+                 <span style="color: #d69d85; line-height: 160%; box-sizing: content-box;">"substring_index(group_concat(audits.remark order by audits.created_at desc), ',', 1) remark"</span>,
+                 <span style="color: #d69d85; line-height: 160%; box-sizing: content-box;">"substring_index(group_concat(audits.stage order by audits.created_at desc), ',', 1) stage"</span>).
+          group(<span style="color: #d69d85; line-height: 160%; box-sizing: content-box;">"audits.apply_id"</span>).
+          order(<span style="color: #d69d85; line-height: 160%; box-sizing: content-box;">"field(substring_index(group_concat(audits.status order by audits.created_at desc), ',', 1), '<span style="color: #dcdcdc; line-height: 160%; box-sizing: content-box;">#{Audit::UNREAD}</span>') desc, created_at desc"</span>).
+          page(params[<span style="color: #569cd6; line-height: 160%; box-sizing: content-box;">:page</span>] <span style="color: #dcdcdc; line-height: 160%; box-sizing: content-box;">||</span> <span style="color: #b8d7a3; line-height: 160%; box-sizing: content-box;">1</span>).per(per_page)
+</code></pre>
+<p style="line-height: 160%; box-sizing: content-box; margin: 10px 0; color: #333;">参考网址:<a href="https://www.periscopedata.com/blog/selecting-only-one-row-per-group" style="line-height: 160%; box-sizing: content-box; text-decoration: underline; color: #5286bc;">https://www.periscopedata.com/blog/selecting-only-one-row-per-group</a></p>
+</div><center style='display:none !important;visibility:collapse !important;height:0 !important;white-space:nowrap;width:100%;overflow:hidden'>%E6%BA%90%E8%87%AAoa%E9%9C%80%E6%B1%82%2C%E7%B3%BB%E7%BB%9F%E4%B8%AD%E6%9C%89%E4%B8%A4%E5%BC%A0%E8%A1%A8%3A%20%E7%94%B3%E8%AF%B7%E8%A1%A8%20%60%60%60applies%60%60%60%20%E5%92%8C%20%E5%AE%A1%E6%89%B9%0A%E8%A1%A8%60%60%60audits%60%60%60%2Capplies%E5%92%8Caudits%E6%98%AF%E4%B8%80%E5%AF%B9%E5%A4%9A%E7%9A%84%E5%85%B3%E7%B3%BB%EF%BC%8C%E4%B9%9F%E5%B0%B1%E6%98%AF%E8%AF%B4%E4%B8%80%E5%BC%A0%E7%94%B3%E8%AF%B7%E5%8D%95%E4%B8%8B%E9%9D%A2%E4%BC%9A%E5%AF%B9%E5%BA%94%E5%A4%9A%E5%BC%A0%E5%AE%A1%E6%89%B9%E5%8D%95%EF%BC%8C%E4%BD%86%E6%98%AF%E6%9C%89%E4%B8%AA%E6%97%B6%E5%80%99%E4%BC%9A%E5%87%BA%E7%8E%B0%E8%BF%99%E7%A7%8D%E6%83%85%E5%86%B5%EF%BC%8C%E5%90%8C%E4%B8%80%E4%B8%AA%E4%BA%BA%E5%9C%A8%E5%90%8C%E4%B8%80%E4%B8%AA%E7%94%B3%E8%AF%B7%E5%8D%95%E4%B8%8B%E4%BC%9A%E6%9C%89%E5%A4%9A%E6%9D%A1%E5%AE%A1%E6%89%B9%E5%8D%95%E8%AE%B0%E5%BD%95%EF%BC%8C%E5%8D%B3%EF%BC%9A%E8%BF%99%E6%9D%A1%E7%94%B3%E8%AF%B7%E5%8D%95%E4%B8%8B%E6%9C%89%E5%A4%9A%E7%BA%A7%E5%AE%A1%E6%89%B9%E8%8A%82%E7%82%B9%E9%83%BD%E6%98%AF%E5%90%8C%E4%B8%80%E4%B8%AA%E4%BA%BA%EF%BC%8C%E5%A6%82%E6%AD%A4%E4%B8%80%E6%9D%A5%EF%BC%8C%E5%9C%A8%E8%AF%A5%E5%AE%A1%E6%89%B9%E4%BA%BA%E7%9A%84%E5%AE%A1%E6%89%B9%E4%BA%8B%E5%8A%A1%E5%88%97%E8%A1%A8%E4%B8%AD%E5%B0%B1%E4%BC%9A%E5%87%BA%E7%8E%B0%E5%A4%9A%E6%9D%A1%E5%AF%B9%E5%BA%94%E4%BA%8E%E5%90%8C%E4%B8%80%E4%B8%AA%E7%94%B3%E8%AF%B7%E5%8D%95%E7%9A%84%E5%AE%A1%E6%89%B9%E5%8D%95%E4%BA%86%EF%BC%8C%E4%BB%8E%E6%95%B0%E6%8D%AE%E8%A1%A8%E7%BB%93%E6%9E%84%E6%9D%A5%E5%88%86%E6%9E%90%E7%9A%84%E8%AF%9D%EF%BC%8C%E8%BF%99%E5%85%B6%E5%AE%9E%E6%98%AF%E6%AD%A3%E5%B8%B8%E5%BA%94%E8%AF%A5%E5%87%BA%E7%8E%B0%E7%9A%84%E6%83%85%E5%86%B5%EF%BC%8C%E5%9B%A0%E4%B8%BA%E8%BF%99%E4%B8%AA%E4%BA%BA%E7%9A%84%E7%A1%AE%E6%98%AF%E5%AE%A1%E6%89%B9%E4%BA%86%E5%A4%9A%E6%AC%A1%EF%BC%8C%E4%BD%86%E6%98%AF%E4%B8%8E%E7%8E%B0%E5%9C%A8%E9%9C%80%E6%B1%82%E8%A6%81%E6%B1%82%E4%B8%8D%E4%B8%80%E8%87%B4%E3%80%82%0A%0A%23%23%23%23%20audits%0A%7C%20id%20%7C%20apply_id%20%7C%20created_at%20%7C%20%E5%85%B6%E4%BB%96%E5%AD%97%E6%AE%B5%20%7C%0A%7C%20---%20%7C%20---%20%7C%20---%20%7C%20---%20%7C%0A%7C%201%20%7C%201%20%7C%202019-03-27%2012%3A50%3A00%20%7C%20%0A%7C%202%20%7C%202%20%7C%202019-03-27%2012%3A50%3A01%20%7C%0A%7C%203%20%7C%202%20%7C%202019-03-27%2012%3A50%3A02%20%7C%0A%7C%204%20%7C%203%20%7C%202019-03-27%2012%3A50%3A03%20%7C%0A%0A%23%23%23%23%20%E6%80%9D%E8%B7%AF%0A*%20%E5%88%A9%E7%94%A8group%20by%E8%AF%AD%E5%8F%A5%EF%BC%8C%E6%8C%89%E7%85%A7%20apply_id%E8%BF%9B%E8%A1%8C%E5%88%86%E7%BB%84%EF%BC%8C%E4%BD%86%E6%98%AF%E8%BF%99%E6%A0%B7%E6%9C%89%E4%B8%AA%E9%99%90%E5%88%B6%EF%BC%8C%E5%9C%A8sql%E4%B8%AD%EF%BC%8Cselect%20%E5%90%8E%E9%9D%A2%E8%B7%9F%E9%9A%8F%E7%9A%84%E5%AD%97%E6%AE%B5%E5%BF%85%E9%A1%BB%E6%98%AF%E8%B7%9Fgroup%20by%E4%B8%AD%E8%BF%9B%E8%A1%8C%E5%88%86%E7%BB%84%E7%9A%84%E5%AD%97%E6%AE%B5%E7%9B%B8%E5%85%B3%E8%81%94%E7%9A%84%E5%AD%97%E6%AE%B5%EF%BC%8C%E5%8F%AA%E8%83%BD%E9%80%89%E6%8B%A9%E4%B8%8Egroup%20by%20%E7%9B%B8%E5%90%8C%E7%9A%84%E5%AD%97%E6%AE%B5%EF%BC%8C%E8%8B%A5%E8%A6%81%E9%80%89%E6%8B%A9%E5%85%B6%E4%BB%96%E6%9C%AAgroup%20by%20%E7%9A%84%E5%AD%97%E6%AE%B5%EF%BC%8C%E5%88%99%E5%BF%85%E9%A1%BB%E9%80%9A%E8%BF%87%E8%81%9A%E5%90%88%E5%87%BD%E6%95%B0%E5%90%88%E6%88%90%E4%B8%BA%E4%B8%80%E4%B8%AA%E5%AD%97%E6%AE%B5%E6%89%8D%E8%83%BD%E5%B1%95%E7%A4%BA%E5%87%BA%E6%9D%A5%EF%BC%8C%E6%AF%94%E5%A6%82%3A%0A%60%60%60%0Aselect%20a%20from%20A%20group%20by%20a%0A%60%60%60%0A%E6%88%96%E8%80%85%20%0A%60%60%60%20%0Aselect%20a%2Csum(b)%20from%20A%20group%20by%20a%0A%60%60%60%0A%23%23%23%23%20%E4%BD%86%E6%98%AF%0A%E5%BD%93%E9%9C%80%E8%A6%81%E9%80%89%E6%8B%A9group%20by%E4%BB%A5%E5%A4%96%E7%9A%84%E5%AD%97%E6%AE%B5%E7%9A%84%E6%97%B6%E5%80%99%EF%BC%8C%E5%B0%B1%E5%87%BA%E7%8E%B0%E9%97%AE%E9%A2%98%E4%BA%86%EF%BC%8C%E4%BB%A5%E4%B8%8A%E9%9D%A2%E7%9A%84%E6%A0%B7%E8%A1%A8%E4%B8%BA%E4%BE%8B%EF%BC%8C%E6%88%91%E4%BB%AC%E4%B8%8D%E4%BB%85%E4%BB%85%E9%9C%80%E8%A6%81%E9%80%89%E6%8B%A9%E5%87%BAapply_id%2C%E6%88%91%E4%BB%AC%E8%BF%98%E9%9C%80%E8%A6%81%E9%80%89%E6%8B%A9%E5%87%BAcreated_at%E4%BB%A5%E5%8F%8A%E5%85%B6%E4%BB%96%E7%9A%84%E5%AD%97%E6%AE%B5%EF%BC%8C%E4%B9%9F%E5%B0%B1%E6%98%AF%E8%AF%B4%EF%BC%8C%E5%9C%A8group%20by%E5%88%86%E7%BB%84%E5%AE%8C%E4%B9%8B%E5%90%8E%EF%BC%8C%E8%BF%98%E9%9C%80%E8%A6%81%E4%BB%8E%E7%BB%84%E9%87%8C%E9%9D%A2%E5%B0%86%E5%85%B6%E4%BB%96%E7%9A%84%E5%AD%97%E6%AE%B5%E5%90%84%E9%80%89%E5%87%BA%E4%B8%80%E4%B8%AA%E5%80%BC%E5%87%BA%E6%9D%A5%EF%BC%8C%E6%AF%94%E5%A6%82%EF%BC%8C%E4%B8%8A%E9%9D%A2%E7%9A%84%E8%A1%A8%E4%B8%AD%E5%A6%82%E6%9E%9Cgroup%20by%20%E4%B9%8B%E5%90%8E%EF%BC%8C%E6%95%B0%E6%8D%AE%E5%BA%94%E8%AF%A5%E5%85%88%E6%98%AF%E8%BF%99%E4%B8%AA%E6%A0%B7%E5%AD%90%E7%9A%84%3A%0A%0A%7C%20id%20%7C%20apply_id%20%7C%20created_at%20%7C%20%E5%85%B6%E4%BB%96%E5%AD%97%E6%AE%B5%20%7C%0A%7C%20---%20%7C%20---%20%7C%20---%20%7C%20---%20%7C%0A%7C%202%20%7C%202%20%7C%202019-03-27%2012%3A50%3A01%20%7C%0A%7C%203%20%7C%202%20%7C%202019-03-27%2012%3A50%3A02%20%7C%0Aapply_id%E6%98%AF%E4%B8%80%E6%A0%B7%E7%9A%84%EF%BC%8C%E4%BD%86%E6%98%AFcreated_at%20id%20%E4%BB%A5%E5%8F%8A%E5%85%B6%E4%BB%96%E5%AD%97%E6%AE%B5%E7%9A%84%E5%80%BC%EF%BC%8C%E6%98%AF%E4%B8%8D%E4%B8%80%E6%A0%B7%E7%9A%84%EF%BC%81%E4%BD%86%E6%98%AF%E6%88%91%E4%BB%AC%E6%9C%80%E7%BB%88%E7%9A%84%E9%9C%80%E8%A6%81%E8%AE%B0%E5%BD%95%E5%8F%AA%E8%A6%81%E4%B8%80%E6%9D%A1%E5%B0%B1%E5%A4%9F%E4%BA%86%EF%BC%81%E4%B9%9F%E5%B0%B1%E6%98%AF%E8%BF%98%E5%BE%97%E7%BB%A7%E7%BB%AD%E4%BB%8E%E8%BF%99%E4%B8%AA%E5%88%86%E5%87%BA%E6%9D%A5%E7%9A%84%E5%B0%8F%E7%BB%84%E9%87%8C%E9%9D%A2%E7%BB%A7%E7%BB%AD%E9%80%89%E5%87%BA%E4%B8%80%E6%9D%A1%E6%9D%A5%E3%80%82%0A%0A%23%23%23%20%E6%9C%80%E7%BB%88%E8%A7%A3%E5%86%B3%E6%96%B9%E6%A1%88%0A%E4%BD%BF%E7%94%A8mysql%E7%9A%84%60%60%60groupconcat%60%60%60%E5%87%BD%E6%95%B0%E9%85%8D%E5%90%88%60%60%60substring_index%60%60%60%E5%87%BD%E6%95%B0%0A%60%60%60sql%0Aselect%20distinct%20(a.apply_id)%2C%20substring_index(group_concat(a.created_at%20order%20by%20a.id%20desc)%2C%20'%2C'%2C%201)%20ct%20%0Afrom%20eams_edu3_test.audits%20a%20%0Ainner%20join%20eams_edu3_test.applies%20ap%20%0Aon%20ap.id%20%3D%20a.apply_id%20AND%20ap.school_id%20%3D%2016%20%0AWHERE%20a.%60school_id%60%20%3D%2016%20%0Agroup%20by%20a.apply_id%20LIMIT%2011%0A%60%60%60%0Agroupconcat%E7%9A%84%E4%BD%9C%E7%94%A8%E5%8D%B3%E6%98%AF%E5%B0%86%E7%BB%84%E4%B8%AD%E7%9A%84%E8%AF%A5%E5%AD%97%E6%AE%B5%E7%9A%84%E5%80%BC%E5%85%A8%E9%83%A8%E7%94%A8%60%60%60%2C%60%60%60%0A%E6%8B%BC%E6%8E%A5%E8%B5%B7%E6%9D%A5%EF%BC%8C%E8%BF%99%E9%87%8C%E8%BF%98%E6%9C%89%E4%B8%80%E4%B8%AA%E5%B0%8F%E6%8A%80%E5%B7%A7%EF%BC%8C%E5%9C%A8groupconcat%E4%B8%AD%E8%BF%98%E5%8F%AF%E4%BB%A5%E4%BD%BF%E7%94%A8order%20by%E8%BF%9B%E4%B8%80%E6%AD%A5%E8%BF%9B%E8%A1%8C%E6%8E%92%E5%BA%8F%E5%86%8D%E8%BF%9B%E8%A1%8C%E8%BF%9E%E6%8E%A5%EF%BC%8C%E7%84%B6%E5%90%8E%E4%BD%BF%E7%94%A8substring_index%E6%88%AA%E5%8F%96%E7%AC%AC%E4%B8%80%E4%B8%AA%E5%85%83%E7%B4%A0%EF%BC%8C%E8%BF%99%E6%A0%B7%E5%8D%B3%E5%BE%97%E5%88%B0%E4%BA%86%E6%88%91%E4%BB%AC%E6%89%80%E9%9C%80%E8%A6%81%E7%9A%84%E5%85%83%E7%B4%A0%E3%80%82%0A%0A%E5%8F%A6%E5%A4%96%EF%BC%9A%E6%88%91%E7%9A%84%E9%A1%B9%E7%9B%AE%E6%98%AF%E4%BD%BF%E7%94%A8%E7%9A%84ruby%E8%AF%AD%E8%A8%80%EF%BC%8C%E6%9C%80%E7%BB%88%E7%9A%84ruby%E4%BB%A3%E7%A0%81%E5%A6%82%E4%B8%8B%3A%0A%60%60%60ruby%0A%20%20%20%20%20%20%40search%20%3D%20Audit.joins(%3Aapply).where(%22applies.business_id%20!%3D%20%3F%20and%20applies.status%20!%3D%20%3F%22%2C%20Business%3A%3AREVERT%2C%20Apply%3A%3ASTATE_REVERTED).where(auditor_id%3A%20current_user.id%2C%20available%3A%20true).ransack%20params%5B%3Aq%5D%0A%20%20%20%20%20%20%40audits%20%3D%20%40search.result.includes(apply%3A%20%5B%3Arepair_sheet%2C%20%3Aleave_sheet%2C%20%3Apurchase_apply_sheet%2C%20%3Acontract_sheet%2C%20%3Abusiness%5D).includes(%3Aapplicant).%0A%20%20%20%20%20%20%20%20%20%20select(%3Aapply_id%2C%20%22substring_index(group_concat(audits.id%20order%20by%20audits.created_at%20desc)%2C%20'%2C'%2C%201)%20id%22%2C%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%22substring_index(group_concat(audits.created_at%20order%20by%20audits.created_at%20desc)%2C%20'%2C'%2C%201)%20created_at%22%2C%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%22substring_index(group_concat(audits.status%20order%20by%20audits.created_at%20desc)%2C%20'%2C'%2C%201)%20status%22%20%2C%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%22substring_index(group_concat(audits.remark%20order%20by%20audits.created_at%20desc)%2C%20'%2C'%2C%201)%20remark%22%2C%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%22substring_index(group_concat(audits.stage%20order%20by%20audits.created_at%20desc)%2C%20'%2C'%2C%201)%20stage%22).%0A%20%20%20%20%20%20%20%20%20%20group(%22audits.apply_id%22).%0A%20%20%20%20%20%20%20%20%20%20order(%22field(substring_index(group_concat(audits.status%20order%20by%20audits.created_at%20desc)%2C%20'%2C'%2C%201)%2C%20'%23%7BAudit%3A%3AUNREAD%7D')%20desc%2C%20created_at%20desc%22).%0A%20%20%20%20%20%20%20%20%20%20page(params%5B%3Apage%5D%20%7C%7C%201).per(per_page)%0A%60%60%60%0A%E5%8F%82%E8%80%83%E7%BD%91%E5%9D%80%3A%5Bhttps%3A%2F%2Fwww.periscopedata.com%2Fblog%2Fselecting-only-one-row-per-group%5D(https%3A%2F%2Fwww.periscopedata.com%2Fblog%2Fselecting-only-one-row-per-group)%0A</center>
+</div>
+<a class="back-link" href="../articles.html">← 返回笔记列表</a>
+</body>
+</html>

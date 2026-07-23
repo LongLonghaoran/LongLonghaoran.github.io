@@ -1,0 +1,236 @@
+<!DOCTYPE html>
+<html lang="zh-CN" data-theme="light">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>分布式缓存读写流程 - 旷 凯 - Confluence — 技术笔记</title>
+<style>
+:root { --bg:#fff; --text:#1a1a1a; --muted:#666; --border:#e0e0e0; --code-bg:#f5f5f5; --link:#0066cc; }
+@media (prefers-color-scheme: dark) { :root { --bg:#1a1a1a; --text:#e0e0e0; --muted:#999; --border:#333; --code-bg:#2a2a2a; --link:#66bbff; } }
+* { box-sizing:border-box; margin:0; padding:0; }
+body { font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Arial,sans-serif; line-height:1.7; color:var(--text); background:var(--bg); max-width:860px; margin:0 auto; padding:2rem 1.5rem; }
+.note-header { border-bottom:2px solid var(--border); padding-bottom:1rem; margin-bottom:2rem; }
+.note-title { font-size:1.6rem; font-weight:700; margin-bottom:0.3rem; }
+.note-meta { color:var(--muted); font-size:0.85rem; }
+.note-content { font-size:0.95rem; }
+.note-content h1 { font-size:1.4rem; margin:1.2rem 0 0.6rem; }
+.note-content h2 { font-size:1.2rem; margin:1rem 0 0.5rem; }
+.note-content h3 { font-size:1.05rem; margin:0.8rem 0 0.4rem; }
+.note-content p { margin:0.5rem 0; }
+.note-content ul,.note-content ol { margin:0.5rem 0 0.5rem 2rem; }
+.note-content li { margin:0.2rem 0; }
+.note-content pre { background:var(--code-bg); padding:1rem; border-radius:6px; overflow-x:auto; margin:0.8rem 0; font-size:0.85rem; }
+.note-content code { background:var(--code-bg); padding:0.1rem 0.3rem; border-radius:3px; font-size:0.88em; }
+.note-content pre code { background:none; padding:0; }
+.note-content blockquote { border-left:3px solid var(--border); padding-left:1rem; color:var(--muted); margin:0.8rem 0; }
+.note-content a { color:var(--link); }
+.note-content img { max-width:100%; height:auto; border-radius:6px; margin:0.5rem 0; }
+.note-content table { border-collapse:collapse; width:100%; margin:0.8rem 0; }
+.note-content th,.note-content td { border:1px solid var(--border); padding:0.5rem; }
+.note-content th { background:var(--code-bg); }
+.media-placeholder { background:var(--code-bg); padding:1rem; text-align:center; color:var(--muted); border-radius:6px; margin:0.5rem 0; font-size:0.85rem; }
+.encrypt-placeholder { background:#fff3cd; padding:0.5rem; text-align:center; color:#856404; border-radius:6px; margin:0.5rem 0; font-size:0.85rem; }
+.back-link { display:inline-block; margin-top:2rem; color:var(--link); text-decoration:none; font-size:0.85rem; }
+</style>
+</head>
+<body>
+<div class="note-header"><div class="note-title">分布式缓存读写流程 - 旷 凯 - Confluence</div><div class="note-meta">笔记本：分布式存储</div></div>
+<div class="note-content"><div style="--en-clipped-content:article"><div style="font-size: 16px; display:block; min-width: 100%; position: relative;"> <div style="font-family:-apple-system, BlinkMacSystemFont, &quot;Segoe UI&quot;, Roboto, Oxygen, Ubuntu, &quot;Fira Sans&quot;, &quot;Droid Sans&quot;, &quot;Helvetica Neue&quot;, sans-serif;"><div style="font-size:14px;font-weight:400;line-height:1.42857;letter-spacing:0px;font-family:-apple-system, BlinkMacSystemFont, &quot;Segoe UI&quot;, Roboto, Oxygen, Ubuntu, &quot;Fira Sans&quot;, &quot;Droid Sans&quot;, &quot;Helvetica Neue&quot;, sans-serif;background:rgb(244, 245, 247);color:rgb(23, 43, 77);"><div><div style="background-color:rgb(245, 245, 245);"><div style="box-sizing:border-box;"><div style="background:rgb(255, 255, 255);border-image:initial;box-sizing:border-box;">
+                        <div style="margin:68px 0px 20px;padding:0px;height:75px;"><h1 style="margin:30px 0px 0px;padding:40px 0px 0px;text-transform:none;line-height:1.25;color:rgb(0, 51, 102);margin-top:0px;font-size:28px;letter-spacing:-0.28px;font-weight:500;display:block;font-family:-apple-system, &quot;system-ui&quot;, &quot;Segoe UI&quot;, Roboto, Oxygen, Ubuntu, &quot;Fira Sans&quot;, &quot;Droid Sans&quot;, &quot;Helvetica Neue&quot;, sans-serif;font-style:normal;text-decoration:none solid rgb(0, 51, 102);text-align:start;margin-right:0px;margin-bottom:0px;margin-left:0px;">
+                                                <a href="https://docs.kylincloud.org/pages/viewpage.action?pageId=117245778" style="color:rgb(23, 43, 77);text-decoration:none solid rgb(23, 43, 77);border-bottom-color:rgb(0, 51, 102);font-family:-apple-system, &quot;system-ui&quot;, &quot;Segoe UI&quot;, Roboto, Oxygen, Ubuntu, &quot;Fira Sans&quot;, &quot;Droid Sans&quot;, &quot;Helvetica Neue&quot;, sans-serif;font-size:28px;font-style:normal;font-weight:500;margin:0px;padding:0px;letter-spacing:-0.28px;text-align:start;">分布式缓存读写流程</a>
+                                    </h1></div>
+        
+        
+
+        <div style="margin:0px;padding:0px;">
+                                    </div>
+
+        
+    
+
+        
+
+
+
+
+            
+    
+
+                                
+    
+
+    
+    
+        
+    
+    
+                    
+    
+
+    
+
+    
+            
+        
+
+    
+    
+
+    
+            
+        
+
+
+
+    
+<div style="box-sizing:border-box;margin:0px;padding:0px;clear:none;position:static;padding-right:137px;"><span style="clear:both;display:none !important;"></span>
+    
+
+
+<div style="margin:0px;padding:0px;">
+                        </div>
+
+
+
+            
+
+
+        
+    
+            
+
+                                                    
+                    
+                            
+    
+
+                    
+
+        
+        <a href="https://docs.kylincloud.org/pages/viewpage.action?pageId=117245778#page-metadata-end" style="text-decoration:none;border:0px;clip:rect(0px, 0px, 0px, 0px);height:1px;margin:-1px;overflow:hidden;padding:0px;position:absolute;width:1px;color:rgb(0, 68, 204);">Skip to end of metadata</a>
+<div style="border:0px;clip:rect(0px, 0px, 0px, 0px);height:1px;overflow:hidden;position:absolute;width:1px;margin:-1px;padding:0px;"></div>
+
+    <div style="padding:0px;margin:-15px 0px 20px;font-size:12px;color:rgb(94, 108, 132);line-height:1.5;font-weight:300;">
+        <ul style="margin:0px;overflow:hidden;list-style-type:none;line-height:16px;padding:0px;">
+            <li style="list-style:none;float:left;padding:0px 5px 0px 0px;margin:0px;line-height:1.5;">
+                
+        
+    
+        
+    
+        
+            
+            Created by <span>     <a href="https://docs.kylincloud.org/display/~kuangkai" title="" style="text-decoration:none;font-size:12px;line-height:1.5;font-weight:300;color:rgb(0, 68, 204);">旷 凯</a></span>, last modified on <a title="Show changes" href="https://docs.kylincloud.org/pages/diffpagesbyversion.action?pageId=117245778&amp;selectedPageVersions=9&amp;selectedPageVersions=10" style="text-decoration:none;font-size:12px;line-height:1.5;font-weight:300;color:rgb(0, 68, 204);">Oct 08, 2024</a>
+                </li>
+        </ul>
+    </div>
+
+
+<a href="https://docs.kylincloud.org/pages/viewpage.action?pageId=117245778#page-metadata-start" style="text-decoration:none;border:0px;clip:rect(0px, 0px, 0px, 0px);height:1px;margin:-1px;overflow:hidden;padding:0px;position:absolute;width:1px;color:rgb(0, 68, 204);">Go to start of metadata</a>
+<div style="border:0px;clip:rect(0px, 0px, 0px, 0px);height:1px;overflow:hidden;position:absolute;width:1px;margin:-1px;padding:0px;"></div>
+
+        
+                                            
+        <div style="margin:0px;padding:0px;position:relative;">
+                           
+        <div style="margin:0px;padding:0px;padding-top:5px;padding-bottom:5px;display:flex;align-items:center;"><i style="width:16px;text-align:center;color:rgb(221, 221, 221);font-family:&quot;Font Awesome 5 Free&quot;;font-weight:900;-webkit-font-smoothing:antialiased;display:inline-block;font-style:normal;font-variant:normal;text-rendering:auto;line-height:1;"><span style="font-family:Font Awesome 5 Free;font-weight:900;font-style:normal;font-variant:normal;line-height:1;text-align:center;color:rgb(221, 221, 221);"></span></i><h1 style="padding:0px;letter-spacing:-0.01em;text-transform:none;margin:30px 0px 0px;font-size:24px;line-height:1.25;font-weight:normal;color:rgb(0, 51, 102);border-bottom-color:rgb(85, 85, 85);display:block;vertical-align:middle;flex:1 1 0%;margin-top:0px;">整体架构</h1></div><div style="margin:0px;padding:0px;padding-top:5px;padding-bottom:5px;padding-left:20px;display:block;"><p style="padding:0px;margin:10px 0px 0px;margin-top:0px;"><br/></p><p style="padding:0px;margin:10px 0px 0px;"><span style="position:relative;display:inline-block;max-width:100%;"><div class="media-placeholder">[图片/附件]</div></en-media></span></p><p style="padding:0px;margin:10px 0px 0px;"><br/></p><p style="padding:0px;margin:10px 0px 0px;"><br/></p><p style="padding:0px;margin:10px 0px 0px;"><br/></p></div><div style="margin:0px;padding:0px;padding-top:5px;padding-bottom:5px;display:flex;align-items:center;margin-top:20px;"><i style="width:16px;text-align:center;color:rgb(221, 221, 221);font-family:&quot;Font Awesome 5 Free&quot;;font-weight:900;-webkit-font-smoothing:antialiased;display:inline-block;font-style:normal;font-variant:normal;text-rendering:auto;line-height:1;"><span style="font-family:Font Awesome 5 Free;font-weight:900;font-style:normal;font-variant:normal;line-height:1;text-align:center;color:rgb(221, 221, 221);"></span></i><h1 style="padding:0px;letter-spacing:-0.01em;text-transform:none;margin:30px 0px 0px;font-size:24px;line-height:1.25;font-weight:normal;color:rgb(0, 51, 102);border-bottom-color:rgb(85, 85, 85);display:block;vertical-align:middle;flex:1 1 0%;margin-top:0px;">读流程</h1></div><div style="margin:0px;padding:0px;padding-top:5px;padding-bottom:5px;display:flex;align-items:center;margin-top:20px;"><i style="width:16px;text-align:center;color:rgb(221, 221, 221);font-family:&quot;Font Awesome 5 Free&quot;;font-weight:900;-webkit-font-smoothing:antialiased;display:inline-block;font-style:normal;font-variant:normal;text-rendering:auto;line-height:1;"><span style="font-family:Font Awesome 5 Free;font-weight:900;font-style:normal;font-variant:normal;line-height:1;text-align:center;color:rgb(221, 221, 221);"></span></i><h1 style="padding:0px;letter-spacing:-0.01em;text-transform:none;margin:30px 0px 0px;font-size:24px;line-height:1.25;font-weight:normal;color:rgb(0, 51, 102);border-bottom-color:rgb(85, 85, 85);display:block;vertical-align:middle;flex:1 1 0%;margin-top:0px;">写流程</h1></div><div style="margin:0px;padding:0px;padding-top:5px;padding-bottom:5px;padding-left:20px;display:block;"><ol style="margin:10px 0px 0px;margin-top:0px;list-style-type:decimal;"><li>用户通过posix 接口发起写请求</li><li>客户端查询元数据信息获取写对象属性信息，文件是否存在，文件大小等信息</li><li>客户端实时获取cache server 存活节点情况，根据cache server数量和block key，通过一致性hash计算block所在cache server节点<ol style="margin:10px 0px 0px;margin-top:0px;list-style-type:lower-alpha;"><li>同步执行数据缓存</li><li>异步向后端PUT数据</li></ol></li><li>cache sever 数据缓存完成则返回客户端<ol style="margin:10px 0px 0px;margin-top:0px;list-style-type:lower-alpha;"><li>cache写完就返回会破坏元数据中记录信息的一致性（元数据记录了block后端实际不存在）</li><li>可以根据用户一致性配置 决定时写完后端再返回还是写完cache就返回</li></ol></li><li>client 收到后段put成功后，更新元数据信息</li><li>如果client 重试写cache多次仍失败，则直接写后端。</li><li>多个客户端并发写同一文件时不保证一致性；</li></ol><p style="padding:0px;margin:10px 0px 0px;"><br/></p></div><h1 style="padding:0px;letter-spacing:-0.01em;text-transform:none;margin:30px 0px 0px;font-size:24px;line-height:1.25;font-weight:normal;color:rgb(0, 51, 102);border-bottom-color:rgb(85, 85, 85);"><span style="position:relative;display:inline-block;max-width:100%;"><div class="media-placeholder">[图片/附件]</div></en-media></span></h1><div style="margin:0px;padding:0px;padding-top:5px;padding-bottom:5px;display:flex;align-items:center;margin-top:20px;"><i style="width:16px;text-align:center;color:rgb(221, 221, 221);font-family:&quot;Font Awesome 5 Free&quot;;font-weight:900;-webkit-font-smoothing:antialiased;display:inline-block;font-style:normal;font-variant:normal;text-rendering:auto;line-height:1;"><span style="font-family:Font Awesome 5 Free;font-weight:900;font-style:normal;font-variant:normal;line-height:1;text-align:center;color:rgb(221, 221, 221);"></span></i><h1 style="padding:0px;letter-spacing:-0.01em;text-transform:none;margin:30px 0px 0px;font-size:24px;line-height:1.25;font-weight:normal;color:rgb(0, 51, 102);border-bottom-color:rgb(85, 85, 85);display:block;vertical-align:middle;flex:1 1 0%;margin-top:0px;">cache server扩缩容</h1></div><div style="margin:0px;padding:0px;padding-top:5px;padding-bottom:5px;padding-left:20px;display:block;"><p style="padding:0px;margin:10px 0px 0px;margin-top:0px;">cache server 根据一致性hash扩容</p><p style="padding:0px;margin:10px 0px 0px;">扩容流程：</p><ol style="margin:10px 0px 0px;list-style-type:decimal;"><li>管理员后台直接增加cache server 节点</li><li>使用warmup命令重新缓存最近读取的数据</li><li>用户发起新的读写请求</li><li>client 通过一致性hash重新计算block所属cache server，如果cache server上没有缓存block数据则从后台读取并重新缓存； </li><li>根据一致性hash计算规则，cache server节点上不属于本节点的缓存数据，可通过以下方式处理<ol style="margin:10px 0px 0px;margin-top:0px;list-style-type:lower-alpha;"><li>缓存过期策略淘汰</li><li>定期扫描cache server上不属于本节点的block缓存数据并清理</li></ol></li></ol><p style="padding:0px;margin:10px 0px 0px;"><br/></p><p style="padding:0px;margin:10px 0px 0px;">缩容流程：</p><ol style="margin:10px 0px 0px;list-style-type:decimal;"><li>管理员后台禁用cache server 节点</li><li>使用warmup命令重新缓存最近读取的数据</li><li>用户发起新的读写请求</li><li>client 通过一致性hash重新计算block所属cache server，如果cache server上没有缓存block数据则从后台读取并重新缓存； </li><li>根据一致性hash计算规则，cache server节点上不属于本节点的缓存数据，可通过以下方式处理<ol style="margin:10px 0px 0px;margin-top:0px;list-style-type:lower-alpha;"><li>缓存过期策略淘汰</li><li>定期扫描cache server上不属于本节点的block缓存数据并清理</li></ol></li><li>管理员后台删除cache server节点</li></ol><p style="padding:0px;margin:10px 0px 0px;"><br/></p><p style="padding:0px;margin:10px 0px 0px;"><br/></p><p style="padding:0px;margin:10px 0px 0px;">实现细节：</p><ol style="margin:10px 0px 0px;list-style-type:decimal;"><li>cache server启动时自动注册到元数据服务中</li><li>cache server被删除或者长期连不上，清理？<ol style="margin:10px 0px 0px;margin-top:0px;list-style-type:lower-alpha;"><li>需要有后台进程处理探活逻辑，client数量多，不适合； cache server互相探活在网络分区时可能异常</li><li>通过命令执行cache server删除逻辑较为合适</li></ol></li></ol></div><div style="margin:0px;padding:0px;padding-top:5px;padding-bottom:5px;display:flex;align-items:center;margin-top:20px;"><i style="width:16px;text-align:center;color:rgb(221, 221, 221);font-family:&quot;Font Awesome 5 Free&quot;;font-weight:900;-webkit-font-smoothing:antialiased;display:inline-block;font-style:normal;font-variant:normal;text-rendering:auto;line-height:1;"><span style="font-family:Font Awesome 5 Free;font-weight:900;font-style:normal;font-variant:normal;line-height:1;text-align:center;color:rgb(221, 221, 221);"></span></i><h1 style="padding:0px;letter-spacing:-0.01em;text-transform:none;margin:30px 0px 0px;font-size:24px;line-height:1.25;font-weight:normal;color:rgb(0, 51, 102);border-bottom-color:rgb(85, 85, 85);display:block;vertical-align:middle;flex:1 1 0%;margin-top:0px;">用户侧cache 空间扩容</h1></div><div style="margin:0px;padding:0px;padding-top:5px;padding-bottom:5px;padding-left:20px;display:block;"><p style="padding:0px;margin:10px 0px 0px;margin-top:0px;">当前架构分布式缓存为中心化服务，只能配置分布式缓存整体容量，比如使用多大的内存空间/SSD盘空间； 单个应用只能用cache，无法配置使用多少缓存容量；</p><p style="padding:0px;margin:10px 0px 0px;"><br/></p></div><div style="margin:0px;padding:0px;padding-top:5px;padding-bottom:5px;display:flex;align-items:center;margin-top:20px;"><i style="width:16px;text-align:center;color:rgb(221, 221, 221);font-family:&quot;Font Awesome 5 Free&quot;;font-weight:900;-webkit-font-smoothing:antialiased;display:inline-block;font-style:normal;font-variant:normal;text-rendering:auto;line-height:1;"><span style="font-family:Font Awesome 5 Free;font-weight:900;font-style:normal;font-variant:normal;line-height:1;text-align:center;color:rgb(221, 221, 221);"></span></i><h1 style="padding:0px;letter-spacing:-0.01em;text-transform:none;margin:30px 0px 0px;font-size:24px;line-height:1.25;font-weight:normal;color:rgb(0, 51, 102);border-bottom-color:rgb(85, 85, 85);display:block;vertical-align:middle;flex:1 1 0%;margin-top:0px;">多级缓存</h1></div><div style="margin:0px;padding:0px;padding-top:5px;padding-bottom:5px;padding-left:20px;display:block;"><p style="padding:0px;margin:10px 0px 0px;margin-top:0px;">本地磁盘缓存需要禁用--cache-size 0，都走分布式缓存</p><p style="padding:0px;margin:10px 0px 0px;">可能需要根据LRU算法构建block 访问时间索引，容量不足时最近最少访问的从一级swap到二级</p><p style="padding:0px;margin:10px 0px 0px;"><br/></p><p style="padding:0px;margin:10px 0px 0px;"><br/></p></div><div style="margin:0px;padding:0px;padding-top:5px;padding-bottom:5px;display:flex;align-items:center;margin-top:20px;"><i style="width:16px;text-align:center;color:rgb(221, 221, 221);font-family:&quot;Font Awesome 5 Free&quot;;font-weight:900;-webkit-font-smoothing:antialiased;display:inline-block;font-style:normal;font-variant:normal;text-rendering:auto;line-height:1;"><span style="font-family:Font Awesome 5 Free;font-weight:900;font-style:normal;font-variant:normal;line-height:1;text-align:center;color:rgb(221, 221, 221);"></span></i><h1 style="padding:0px;letter-spacing:-0.01em;text-transform:none;margin:30px 0px 0px;font-size:24px;line-height:1.25;font-weight:normal;color:rgb(0, 51, 102);border-bottom-color:rgb(85, 85, 85);display:block;vertical-align:middle;flex:1 1 0%;margin-top:0px;">alluxio的一致性</h1></div><div style="margin:0px;padding:0px;padding-top:5px;padding-bottom:5px;padding-left:20px;display:block;"><p style="padding:0px;margin:10px 0px 0px;margin-top:0px;"><strong>Alluxio 与底层存储系统之间的一致性保证</strong>：这部分的一致性较为复杂，取决于配置和底层存储系统的类型：</p><ul style="margin:10px 0px 0px;list-style-type:disc;"><li style="list-style-type:circle;"><strong>Must_Cache 模式</strong>：这种模式下，数据只会缓存在 Alluxio 中，不会写入到底层存储，所以 Alluxio 空间与底层存储是不一致的。这种模式适用于对数据一致性要求不高，更注重读取性能的场景。</li><li style="list-style-type:circle;"><strong>Cache_Through 模式</strong>：在成功返回应用程序之前，会将数据同步写入 Alluxio 和底层存储中。如果底层存储是 HDFS，由于 HDFS 本身的写入也是强一致性的，所以当底层存储中没有其他绕过 Alluxio 的直接更新时，Alluxio 空间将始终与底层存储保持一致；如果底层存储是 S3 等对象存储，写入底层存储是最终一致性的，有可能文件已成功写入 Alluxio，但不会立即显示在底层存储中，会产生一个不一致的短期窗口<span><span>1</span></span>。</li><li style="list-style-type:circle;"><strong>Async_Through 模式</strong>：数据先写入 Alluxio 并返回到应用程序，然后由 Alluxio 将数据异步传播到底层存储。从用户的角度来看，文件可以成功地写入 Alluxio，但是会滞后持久保存到底层存储<span><span>1</span></span>。</li><li style="list-style-type:circle;"><strong>Through 模式</strong>：数据直接写入底层存储，而不在 Alluxio 中缓存数据，但是 Alluxio 知道文件及其状态，所以元数据仍然是一致的。这种模式适用于对底层存储的直接写入操作较多，而对 Alluxio 的缓存需求不高的场景。</li></ul><p style="padding:0px;margin:10px 0px 0px;"><br/></p></div><div style="margin:0px;padding:0px;padding-top:5px;padding-bottom:5px;display:flex;align-items:center;margin-top:20px;"><i style="width:16px;text-align:center;color:rgb(221, 221, 221);font-family:&quot;Font Awesome 5 Free&quot;;font-weight:900;-webkit-font-smoothing:antialiased;display:inline-block;font-style:normal;font-variant:normal;text-rendering:auto;line-height:1;"><span style="font-family:Font Awesome 5 Free;font-weight:900;font-style:normal;font-variant:normal;line-height:1;text-align:center;color:rgb(221, 221, 221);"></span></i><h1 style="padding:0px;letter-spacing:-0.01em;text-transform:none;margin:30px 0px 0px;font-size:24px;line-height:1.25;font-weight:normal;color:rgb(0, 51, 102);border-bottom-color:rgb(85, 85, 85);display:block;vertical-align:middle;flex:1 1 0%;margin-top:0px;">v2版本设计</h1></div><div style="margin:0px;padding:0px;padding-top:5px;padding-bottom:5px;padding-left:20px;display:block;"><p style="padding:0px;margin:10px 0px 0px;margin-top:0px;">v1版本倾向于快速验证cache功能的可用性；cache server和kylinfs使用统一的元数据服务，client使用chunkstore本地磁盘缓存模块来存储缓存数据。</p><p style="padding:0px;margin:10px 0px 0px;"><br/></p><p style="padding:0px;margin:10px 0px 0px;">该版本存在以下问题：</p><ol style="margin:10px 0px 0px;list-style-type:decimal;"><li>元数据统一，无法使用多UFS</li><li>未考虑client本地磁盘缓存和cache 缓存一致性问题； 也是cache元数据和kylinfs元数据一致性问题。</li><li>cache 淘汰算法使用默认的逻辑； 未针对AI场景优化。</li><li>无client co-desgin。</li></ol><p style="padding:0px;margin:10px 0px 0px;"><br/></p><p style="padding:0px;margin:10px 0px 0px;"><br/></p><p style="padding:0px;margin:10px 0px 0px;">cache 元数据设计</p><ol style="margin:10px 0px 0px;list-style-type:decimal;"><li>基于内容hash，client直接拉取hash列表文件； hash列表文件全放缓存；</li><li>client 获得hash列表文件后，找到对应的hash key，读cache，cache存在则直接返回，不存在则代理向UFS读，读完后返回client并save cache</li><li>client cache处理多用户并发。相同cache则复用</li></ol><p style="padding:0px;margin:10px 0px 0px;"><br/></p><p style="padding:0px;margin:10px 0px 0px;">是否要借助于现有的元数据读写逻辑？</p><ol style="margin:10px 0px 0px;list-style-type:decimal;"><li>cache 存储粒度用文件 还是 block？还是 基于内容的hash</li><li>用文件粒度太粗，如果加载一个大的ImageNet，可能直接就存在其中一个cache server，cache server容量不够，这样没有意义</li><li>用block存储，需要维护block元数据，metadata for cache 存储与UFS相同的元数据；无法确保每个UFS元数据都相同，所以不能用chunk-block形式的元数据</li><li>只能用一种通用的元数据存储格式，适合所有UFS的</li><li> </li></ol><p style="padding:0px;margin:10px 0px 0px;"><br/></p><p style="padding:0px;margin:10px 0px 0px;"><br/></p></div><div style="margin:0px;padding:0px;padding-top:5px;padding-bottom:5px;display:flex;align-items:center;margin-top:20px;"><i style="width:16px;text-align:center;color:rgb(221, 221, 221);font-family:&quot;Font Awesome 5 Free&quot;;font-weight:900;-webkit-font-smoothing:antialiased;display:inline-block;font-style:normal;font-variant:normal;text-rendering:auto;line-height:1;"><span style="font-family:Font Awesome 5 Free;font-weight:900;font-style:normal;font-variant:normal;line-height:1;text-align:center;color:rgb(221, 221, 221);"></span></i><h1 style="padding:0px;letter-spacing:-0.01em;text-transform:none;margin:30px 0px 0px;font-size:24px;line-height:1.25;font-weight:normal;color:rgb(0, 51, 102);border-bottom-color:rgb(85, 85, 85);display:block;vertical-align:middle;flex:1 1 0%;margin-top:0px;">任务拆分</h1></div><div style="margin:0px;padding:0px;padding-top:5px;padding-bottom:5px;padding-left:20px;display:block;"><div style="padding:0px;overflow-x:auto;margin:10px 0px 0px;margin-top:0px;"><table style="font-size:inherit;font-weight:inherit;font-style:inherit;font-variant:inherit;position:relative;border-collapse:collapse;margin:10px 0px 0px;overflow-x:auto;margin-top:0px;width:52.6199%;padding:0px;"><colgroup><col style="width:17.8371%;"/><col style="width:43.5393%;"/><col style="width:21.7697%;"/><col style="width:16.8539%;"/></colgroup><thead style="position:static;margin-top:0px;left:345px;z-index:3;width:464px;top:134px;"><tr><th style="border:1px solid rgb(193, 199, 208);padding:7px 10px;vertical-align:top;text-align:left;min-width:8px;font-weight:bold;color:rgb(0, 51, 102);background:right center no-repeat rgb(244, 245, 247);padding-right:15px;cursor:pointer;user-select:none;max-width:none;"><div style="margin:0px;padding:0px;color:rgb(0, 51, 102);">任务</div></th><th style="border:1px solid rgb(193, 199, 208);padding:7px 10px;vertical-align:top;text-align:left;min-width:8px;font-weight:bold;color:rgb(0, 51, 102);background:right center no-repeat rgb(244, 245, 247);padding-right:15px;cursor:pointer;user-select:none;max-width:none;"><div style="margin:0px;padding:0px;color:rgb(0, 51, 102);">交付标准</div></th><th style="border:1px solid rgb(193, 199, 208);padding:7px 10px;vertical-align:top;text-align:left;min-width:8px;font-weight:bold;color:rgb(0, 51, 102);background:right center no-repeat rgb(244, 245, 247);padding-right:15px;cursor:pointer;user-select:none;max-width:none;"><div style="margin:0px;padding:0px;color:rgb(0, 51, 102);">备注</div></th><th colspan="1" style="border:1px solid rgb(193, 199, 208);padding:7px 10px;vertical-align:top;text-align:left;min-width:8px;font-weight:bold;color:rgb(0, 51, 102);background:right center no-repeat rgb(244, 245, 247);padding-right:15px;cursor:pointer;user-select:none;max-width:none;"><div style="margin:0px;padding:0px;color:rgb(0, 51, 102);">owner</div></th></tr></thead><tbody><tr><td style="position:inherit;overflow-wrap:break-word;border:1px solid rgb(193, 199, 208);padding:7px 10px;vertical-align:top;text-align:left;min-width:8px;">一致性hash模块</td><td style="position:inherit;overflow-wrap:break-word;border:1px solid rgb(193, 199, 208);padding:7px 10px;vertical-align:top;text-align:left;min-width:8px;"><ol style="margin:10px 0px 0px;margin-top:0px;margin-left:0px;padding-left:22px;list-style-type:decimal;"><li>提供一个go模块，完成一致性hash计算</li><li>考虑扩缩容</li><li>考虑故障检测和数据库修改</li></ol></td><td style="position:inherit;overflow-wrap:break-word;border:1px solid rgb(193, 199, 208);padding:7px 10px;vertical-align:top;text-align:left;min-width:8px;"><br/></td><td colspan="1" style="position:inherit;overflow-wrap:break-word;border:1px solid rgb(193, 199, 208);padding:7px 10px;vertical-align:top;text-align:left;min-width:8px;"><br/></td></tr><tr><td style="position:inherit;overflow-wrap:break-word;border:1px solid rgb(193, 199, 208);padding:7px 10px;vertical-align:top;text-align:left;min-width:8px;">cache driver</td><td style="position:inherit;overflow-wrap:break-word;border:1px solid rgb(193, 199, 208);padding:7px 10px;vertical-align:top;text-align:left;min-width:8px;"><ol style="margin:10px 0px 0px;margin-top:0px;margin-left:0px;padding-left:22px;list-style-type:decimal;"><li>原读写流程chunk-block不变，支持cache driver读写</li><li>cache driver调用一致性hash模块读写后端cache server</li></ol></td><td style="position:inherit;overflow-wrap:break-word;border:1px solid rgb(193, 199, 208);padding:7px 10px;vertical-align:top;text-align:left;min-width:8px;">根据一致性hash写</td><td colspan="1" style="position:inherit;overflow-wrap:break-word;border:1px solid rgb(193, 199, 208);padding:7px 10px;vertical-align:top;text-align:left;min-width:8px;"><br/></td></tr><tr><td colspan="1" style="position:inherit;overflow-wrap:break-word;border:1px solid rgb(193, 199, 208);padding:7px 10px;vertical-align:top;text-align:left;min-width:8px;">cache server grpc</td><td colspan="1" style="position:inherit;overflow-wrap:break-word;border:1px solid rgb(193, 199, 208);padding:7px 10px;vertical-align:top;text-align:left;min-width:8px;"><ol style="margin:10px 0px 0px;margin-top:0px;margin-left:0px;padding-left:22px;list-style-type:decimal;"><li>处理block级别的读写，需要能透传后端（server+client）</li><li>支持二级缓存</li><li>缓存过期清理</li></ol></td><td colspan="1" style="position:inherit;overflow-wrap:break-word;border:1px solid rgb(193, 199, 208);padding:7px 10px;vertical-align:top;text-align:left;min-width:8px;"><p style="padding:0px;margin:10px 0px 0px;margin-top:0px;">基于server 改，block请求透传到后端shard leader？</p></td><td colspan="1" style="position:inherit;overflow-wrap:break-word;border:1px solid rgb(193, 199, 208);padding:7px 10px;vertical-align:top;text-align:left;min-width:8px;"><br/></td></tr></tbody></table></div><p style="padding:0px;margin:10px 0px 0px;"><br/></p><p style="padding:0px;margin:10px 0px 0px;"><br/></p><p style="padding:0px;margin:10px 0px 0px;"><br/></p><p style="padding:0px;margin:10px 0px 0px;"><br/></p><p style="padding:0px;margin:10px 0px 0px;"><br/></p><span title="Filter column" style="background-image:url(https://docs.kylincloud.org/s/-74b5ic/8506/5d4cfda2b837dbf77e088aa916d969d565373c86/9.7.2/_/download/resources/com.stiltsoft.confluence.plugin.tablefilter.tablefilter:9c5c4235f9fdf8f555e19d5be127aeb8/img/not-filtered.png);background-repeat:no-repeat;cursor:pointer;height:16px;opacity:0;pointer-events:none;position:absolute;transition:opacity 0.3s;width:16px;z-index:101;"></span></div>
+
+                
+        
+    
+        <div dir="ltr" style="margin:0px;padding:0px;pointer-events:none;position:absolute;inset:0px;overflow:hidden;z-index:-1;visibility:hidden;max-width:100%;"><div style="margin:0px;padding:0px;pointer-events:none;position:absolute;inset:0px;overflow:hidden;z-index:-1;visibility:hidden;max-width:100%;"><div style="margin:0px;padding:0px;position:absolute;left:0px;top:0px;transition:all;width:913px;height:4378px;"></div></div><div style="margin:0px;padding:0px;pointer-events:none;position:absolute;inset:0px;overflow:hidden;z-index:-1;visibility:hidden;max-width:100%;"><div style="margin:0px;padding:0px;position:absolute;left:0px;top:0px;transition:all;width:200%;height:200%;"></div></div></div></div>
+
+                        
+    
+
+
+
+<div style="overflow:hidden;clear:both;margin:10px 0px;padding:10px 0px;"><div style="margin:0px;padding:0px;width:48%;float:left;font-size:12px;font-weight:300;color:rgb(63, 76, 102);"><a href="https://docs.kylincloud.org/pages/viewpage.action?pageId=117245778" style="text-decoration:none;color:rgb(0, 68, 204);display:block;float:left;"><span style="background-repeat:no-repeat;background-position:0px 0px;border:none;display:inline-block;margin:0px;padding:0px;text-align:left;text-indent:-999em;vertical-align:text-bottom;line-height:0;position:relative;height:16px;width:16px;color:rgb(80, 95, 121);"><span style="text-align:left;text-indent:-999em;line-height:0;color:rgb(80, 95, 121);-webkit-font-smoothing:antialiased;-webkit-text-stroke-width:0px;font-family:Adgs Icons;font-weight:400;font-style:normal;speak:none;left:0px;position:absolute;top:50%;font-size:16px;margin-top:-8px;"></span></span><span style="padding-left:5px;">Like</span></a><span style="padding-left:20px;"><a href="https://docs.kylincloud.org/display/~pengkunlun" style="text-decoration:none;color:rgb(0, 68, 204);">彭昆仑</a> likes this</span></div><div style="margin:0px;padding:0px;width:48%;float:right;">
+    <div style="margin:0px;padding:0px;">
+	<div style="margin:0px;padding:0px;position:relative;font-size:12px;font-weight:300;vertical-align:middle;">
+		
+    <ul style="padding:0px;color:rgb(94, 108, 132);margin:0px;text-align:right;padding-right:20px;">
+            <li style="display:inline-block;">
+            No labels
+        </li>
+                <li style="display:inline-block;max-width:16px;overflow:hidden;vertical-align:middle;position:absolute;top:0px;right:0px;">
+            <a href="https://docs.kylincloud.org/pages/viewpage.action?pageId=117245778#" title="Edit Labels (Type 'l')" style="text-decoration:none;color:rgb(0, 68, 204);">
+                <span style="background-repeat:no-repeat;background-position:0px 0px;border:none;display:inline-block;margin:0px;padding:0px;text-align:left;text-indent:-999em;vertical-align:text-bottom;line-height:0;position:relative;height:16px;width:16px;color:rgb(80, 95, 121);"><span style="text-align:left;text-indent:-999em;line-height:0;color:rgb(80, 95, 121);-webkit-font-smoothing:antialiased;-webkit-text-stroke-width:0px;font-family:Adgs Icons;font-weight:400;font-style:normal;speak:none;left:0px;position:absolute;top:50%;font-size:16px;margin-top:-8px;"></span>Edit Labels</span>
+            </a>
+        </li>
+        </ul>
+
+    </div>
+</div>
+</div></div>
+        
+		
+            
+
+
+
+
+            
+        
+
+
+
+
+
+
+
+
+                        
+    
+<div style="margin:0px;padding:0px;margin-top:11px;">
+        
+    
+
+
+    <div style="margin:0px;padding:0px;">
+                
+                    
+    
+
+
+        
+        
+    
+    <div style="clear:left;position:relative;overflow-wrap:break-word;margin:0px 0px -1px;padding:10px 0px;margin-top:10px;border-top:0px;"><p style="width:32px;float:left;margin:1px 10px 0px 0px;padding:0px;"><a style="text-decoration:none;display:inline;line-height:30px;color:rgb(0, 68, 204);"><div class="media-placeholder">[图片/附件]</div></en-media></a></p><div style="margin:0px;padding:0px;padding-left:42px;"><div style="margin:0px;padding:0px;"></div><div style="margin:0px;padding:0px;"></div><div style="padding:0px;animation-duration:0.01s;animation-name:StructurePagesNodeInserted;position:relative;margin:20px 0px 0px;margin-top:0px;display:block;"><div title="Add a Comment (Type 'm')" style="margin:0px;padding:0px;color:rgb(52, 69, 99);padding-top:5px;border-radius:3px;height:59px;background-color:rgb(250, 251, 252);border:1px solid rgb(235, 236, 240);"><span style="padding:8px;">Write a comment…</span></div></div></div></div>
+
+            </div>
+
+            
+    </div>
+        
+
+
+                
+    
+            
+<div style="margin:0px;padding:0px;position:absolute;min-width:100px;width:102px;top:168px;left:978px;"></div></div>
+
+    
+
+    
+
+
+
+
+    
+    
+
+    
+    
+    
+
+
+    
+
+        
+
+
+
+            </div></div></div></div></div></div></div></div></div>
+<a class="back-link" href="../articles.html">← 返回笔记列表</a>
+</body></html>

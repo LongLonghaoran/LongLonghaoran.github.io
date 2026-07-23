@@ -1,0 +1,337 @@
+<!DOCTYPE html>
+<html lang="zh-CN" data-theme="light">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Linux Cgroup 入门教程：CPU – 云原生实验室 - Kubernetes|Docker|Istio|Envoy|Hugo|Golang|云原生 — 技术笔记</title>
+<style>
+:root {
+  --bg: #ffffff;
+  --text: #1a1a1a;
+  --muted: #666;
+  --border: #e0e0e0;
+  --code-bg: #f5f5f5;
+  --link: #0066cc;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #1a1a1a;
+    --text: #e0e0e0;
+    --muted: #999;
+    --border: #333;
+    --code-bg: #2a2a2a;
+    --link: #66bbff;
+  }
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  line-height: 1.7;
+  color: var(--text);
+  background: var(--bg);
+  max-width: 860px;
+  margin: 0 auto;
+  padding: 2rem 1.5rem;
+}
+.note-header {
+  border-bottom: 2px solid var(--border);
+  padding-bottom: 1rem;
+  margin-bottom: 2rem;
+}
+.note-title {
+  font-size: 1.6rem;
+  font-weight: 700;
+  margin-bottom: 0.3rem;
+}
+.note-meta {
+  color: var(--muted);
+  font-size: 0.85rem;
+}
+.note-content {
+  font-size: 0.95rem;
+}
+.note-content h1 { font-size: 1.4rem; margin: 1.2rem 0 0.6rem; }
+.note-content h2 { font-size: 1.2rem; margin: 1rem 0 0.5rem; }
+.note-content h3 { font-size: 1.05rem; margin: 0.8rem 0 0.4rem; }
+.note-content p { margin: 0.5rem 0; }
+.note-content ul, .note-content ol { margin: 0.5rem 0 0.5rem 2rem; }
+.note-content li { margin: 0.2rem 0; }
+.note-content pre {
+  background: var(--code-bg);
+  padding: 1rem;
+  border-radius: 6px;
+  overflow-x: auto;
+  margin: 0.8rem 0;
+  font-size: 0.85rem;
+}
+.note-content code {
+  background: var(--code-bg);
+  padding: 0.1rem 0.3rem;
+  border-radius: 3px;
+  font-size: 0.88em;
+}
+.note-content pre code {
+  background: none;
+  padding: 0;
+}
+.note-content blockquote {
+  border-left: 3px solid var(--border);
+  padding-left: 1rem;
+  color: var(--muted);
+  margin: 0.8rem 0;
+}
+.note-content a { color: var(--link); }
+.note-content img {
+  max-width: 100%;
+  height: auto;
+  border-radius: 6px;
+  margin: 0.5rem 0;
+}
+.note-content table {
+  border-collapse: collapse;
+  width: 100%;
+  margin: 0.8rem 0;
+}
+.note-content th, .note-content td {
+  border: 1px solid var(--border);
+  padding: 0.5rem;
+}
+.note-content th { background: var(--code-bg); }
+.media-placeholder {
+  background: var(--code-bg);
+  padding: 1rem;
+  text-align: center;
+  color: var(--muted);
+  border-radius: 6px;
+  margin: 0.5rem 0;
+  font-size: 0.85rem;
+}
+.encrypt-placeholder {
+  background: #fff3cd;
+  padding: 0.5rem;
+  text-align: center;
+  color: #856404;
+  border-radius: 6px;
+  margin: 0.5rem 0;
+  font-size: 0.85rem;
+}
+.back-link {
+  display: inline-block;
+  margin-top: 2rem;
+  color: var(--link);
+  text-decoration: none;
+  font-size: 0.85rem;
+}
+</style>
+</head>
+<body>
+<div class="note-header">
+  <div class="note-title">Linux Cgroup 入门教程：CPU – 云原生实验室 - Kubernetes|Docker|Istio|Envoy|Hugo|Golang|云原生</div>
+  <div class="note-meta">笔记本：Linux</div>
+</div>
+<div class="note-content">
+<div style="--en-clipped-content:simplified; --en-clipped-source-url:https://icloudnative.io/posts/understanding-cgroups-part-2-cpu/; --en-clipped-source-title:Linux Cgroup 入门教程：CPU – 云原生实验室 - Kubernetes|Docker|Istio|Envoy|Hugo|Golang|云原生;">
+<div><br/></div><div style="min-height: 7008px; font-size: 16px; display: block; min-width: 100%; position: relative;"> <div style="background-color:transparent;font:inherit;vertical-align:baseline;"><div style="background-color:transparent;font:inherit;vertical-align:baseline;font-family:&quot;PT Serif&quot;;font-size:16px;line-height:1.5em;color:rgb(31, 9, 9);text-align:left;"><div style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;"><div style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;width:36em;z-index:200;padding-left:2em;padding-right:2em;margin-left:auto;margin-right:auto;position:relative;"><div style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;position:relative;margin-left:-25px;margin-right:25px;"><div style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;padding-top:0px;padding-bottom:9em;position:relative;"><div style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;margin-bottom:1.5em;"><div style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;position:relative;margin-bottom:0px;"><div style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;margin-bottom:0px;"><div style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;margin-bottom:0px;"><h1 style="font-family:&quot;PT Serif&quot;;text-align:left;border:0px;font:inherit;vertical-align:baseline;font-size:35px;font-weight:normal;line-height:35px;margin-bottom:20px;padding:0px;margin:0px;">Linux Cgroup 入门教程：CPU</h1><div style="padding:0px;border:0px;font:inherit;vertical-align:baseline;position:relative;height:1em;line-height:1;text-align:center;margin:0px;padding-top:1.5em;padding-bottom:1.5em;margin-bottom:0px;"><div style="padding:0px;border:0px;font:inherit;vertical-align:baseline;background:-webkit-linear-gradient(0deg, rgb(243, 242, 238) 1%, rgb(31, 9, 9) 50%, rgb(243, 242, 238) 99%);position:absolute;left:-4em;top:50%;z-index:10;width:100%;padding-left:4em;padding-right:4em;height:0.1em;opacity:0.5;margin:0px;margin-bottom:0px;"></div></div></div>
+    <h3 style="font-family:&quot;PT Serif&quot;;text-align:left;margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;font-size:30px;line-height:35px;margin-top:35px;font-weight:normal;margin-bottom:15px;">控制 CPU 的相对使用时间和绝对使用时间</h3>
+    <div style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;margin-bottom:1.5em;">
+      
+<div style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;margin-bottom:0px;">
+  <span style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;"> 2019年05月31日 </span>
+  
+   ·  <span style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;"> ☕ 6 分钟 </span>
+  
+   ·  <span style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;">✍️ 米开朗基杨</span>
+  
+  <span style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;">
+     · <span style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;">1220</span> 阅读
+  </span>
+</div>
+      
+
+    </div>
+    
+
+
+
+<a title="Sealos" href="https://github.com/fanux/sealos" style="color:rgb(6, 85, 136);margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;text-decoration:none;">
+<div style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;margin-bottom:0px;">
+  <span style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;">sealos</span> 以 Kubernetes 为内核的云操作系统 <span style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;">走，看看去！</span>
+</div>
+</a>
+
+    
+      
+      
+        
+
+        
+          
+          <p style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;margin-bottom:1.5em;">该系列文章总共分为三篇：</p>
+<ul style="padding:0px;border:0px;font:inherit;vertical-align:baseline;margin:0px 0px 1.5em 1.5em;list-style:none;margin-top:-1em;list-style-type:disc;">
+<li style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;list-style-type:inherit;list-style-position:outside;">
+
+<a href="https://icloudnative.io/posts/understanding-cgroups-part-1-basics/" style="color:rgb(6, 85, 136);margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;text-decoration:none;">Linux Cgroup 入门教程：基本概念</a></li>
+<li style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;list-style-type:inherit;list-style-position:outside;">
+
+<a href="https://icloudnative.io/posts/understanding-cgroups-part-2-cpu/" style="color:rgb(6, 85, 136);margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;text-decoration:none;">Linux Cgroup 入门教程：CPU</a></li>
+<li style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;list-style-type:inherit;list-style-position:outside;">
+
+<a href="https://icloudnative.io/posts/understanding-cgroups-part-3-memory/" style="color:rgb(6, 85, 136);margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;text-decoration:none;">Linux Cgroup 入门教程：内存</a></li>
+</ul>
+<p style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;margin-bottom:1.5em;">上篇文章主要介绍了 cgroup 的一些基本概念，包括其在 <code style="font-family:Inconsolata;margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;font-size:0.875em;line-height:1.71429em;">CentOS</code> 系统中的默认设置和控制工具，并以 CPU 为例阐述 cgroup 如何对资源进行控制。这篇文章将会通过具体的示例来演示如何通过 cgroup 来限制 <code style="font-family:Inconsolata;margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;font-size:0.875em;line-height:1.71429em;">CPU</code> 的使用以及不同的 cgroup 设置对性能的影响。</p>
+<h2 style="font-family:&quot;PT Serif&quot;;text-align:left;margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;font-weight:bold;font-size:30px;line-height:35px;margin-top:35px;margin-bottom:15px;">1. 查看当前 cgroup 信息</h2>
+<hr style="border-color:rgb(31, 9, 9);border-top:none;border-right:none;border-bottom:1px solid;border-left:none;"/>
+<p style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;margin-bottom:1.5em;">有两种方法来查看系统的当前 cgroup 信息。第一种方法是通过 <code style="font-family:Inconsolata;margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;font-size:0.875em;line-height:1.71429em;">systemd-cgls</code> 命令来查看，它会返回系统的整体 cgroup 层级，cgroup 树的最高层由 <code style="font-family:Inconsolata;margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;font-size:0.875em;line-height:1.71429em;">slice</code> 构成，如下所示：</p>
+<div style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;margin-bottom:1.5em;"><pre style="background-color:rgb(243, 242, 238);font-family:Inconsolata;margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;width:auto;font-size:0.875em;line-height:1.71429em;"><code style="font-family:Inconsolata;margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;line-height:1.71429em;font-size:1.15em;">$ systemd-cgls --no-page
+├─1 /usr/lib/systemd/systemd --switched-root --system --deserialize 22
+├─user.slice
+│ ├─user-1000.slice
+│ │ └─session-11.scope
+│ │   ├─9507 sshd: tom [priv]
+│ │   ├─9509 sshd: tom@pts/3
+│ │   └─9510 -bash
+│ └─user-0.slice
+│   └─session-1.scope
+│     ├─ 6239 sshd: root@pts/0
+│     ├─ 6241 -zsh
+│     └─11537 systemd-cgls --no-page
+└─system.slice
+  ├─rsyslog.service
+  │ └─5831 /usr/sbin/rsyslogd -n
+  ├─sshd.service
+  │ └─5828 /usr/sbin/sshd -D
+  ├─tuned.service
+  │ └─5827 /usr/bin/python2 -Es /usr/sbin/tuned -l -P
+  ├─crond.service
+  │ └─5546 /usr/sbin/crond -n
+</code></pre></div><p style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;margin-bottom:1.5em;">可以看到系统 cgroup 层级的最高层由 <code style="font-family:Inconsolata;margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;font-size:0.875em;line-height:1.71429em;">user.slice</code> 和 <code style="font-family:Inconsolata;margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;font-size:0.875em;line-height:1.71429em;">system.slice</code> 组成。因为系统中没有运行虚拟机和容器，所以没有 <code style="font-family:Inconsolata;margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;font-size:0.875em;line-height:1.71429em;">machine.slice</code>，所以当 CPU 繁忙时，<code style="font-family:Inconsolata;margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;font-size:0.875em;line-height:1.71429em;">user.slice</code> 和 <code style="font-family:Inconsolata;margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;font-size:0.875em;line-height:1.71429em;">system.slice</code> 会各获得 <code style="font-family:Inconsolata;margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;font-size:0.875em;line-height:1.71429em;">50%</code> 的 CPU 使用时间。</p>
+<p style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;margin-bottom:1.5em;">user.slice 下面有两个子 slice：<code style="font-family:Inconsolata;margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;font-size:0.875em;line-height:1.71429em;">user-1000.slice</code> 和 <code style="font-family:Inconsolata;margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;font-size:0.875em;line-height:1.71429em;">user-0.slice</code>，每个子 slice 都用 User ID (<code style="font-family:Inconsolata;margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;font-size:0.875em;line-height:1.71429em;">UID</code>) 来命名，因此我们很容易识别出哪个 slice 属于哪个用户。例如：从上面的输出信息中可以看出 <code style="font-family:Inconsolata;margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;font-size:0.875em;line-height:1.71429em;">user-1000.slice</code> 属于用户 tom，<code style="font-family:Inconsolata;margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;font-size:0.875em;line-height:1.71429em;">user-0.slice</code> 属于用户 root。</p>
+<p style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;margin-bottom:1.5em;"><code style="font-family:Inconsolata;margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;font-size:0.875em;line-height:1.71429em;">systemd-cgls</code> 命令提供的只是 cgroup 层级的静态信息快照，要想查看 cgroup 层级的动态信息，可以通过 <code style="font-family:Inconsolata;margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;font-size:0.875em;line-height:1.71429em;">systemd-cgtop</code> 命令查看：</p>
+<div style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;margin-bottom:1.5em;"><pre style="background-color:rgb(243, 242, 238);font-family:Inconsolata;margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;width:auto;font-size:0.875em;line-height:1.71429em;"><code style="font-family:Inconsolata;margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;line-height:1.71429em;font-size:1.15em;">$ systemd-cgtop
+Path                                                                                                                                       Tasks   %CPU   Memory  Input/s Output/s
+/                                                                                                                                            161    1.2   161.0M        -        -
+/system.slice                                                                                                                                  -    0.1        -        -        -
+/system.slice/vmtoolsd.service                                                                                                                 1    0.1        -        -        -
+/system.slice/tuned.service                                                                                                                    1    0.0        -        -        -
+/system.slice/rsyslog.service                                                                                                                  1    0.0        -        -        -
+/system.slice/auditd.service                                                                                                                   1      -        -        -        -
+/system.slice/chronyd.service                                                                                                                  1      -        -        -        -
+/system.slice/crond.service                                                                                                                    1      -        -        -        -
+/system.slice/dbus.service                                                                                                                     1      -        -        -        -
+/system.slice/gssproxy.service                                                                                                                 1      -        -        -        -
+/system.slice/lvm2-lvmetad.service                                                                                                             1      -        -        -        -
+/system.slice/network.service                                                                                                                  1      -        -        -        -
+/system.slice/polkit.service                                                                                                                   1      -        -        -        -
+/system.slice/rpcbind.service                                                                                                                  1      -        -        -        -
+/system.slice/sshd.service                                                                                                                     1      -        -        -        -
+/system.slice/system-getty.slice/getty@tty1.service                                                                                            1      -        -        -        -
+/system.slice/systemd-journald.service                                                                                                         1      -        -        -        -
+/system.slice/systemd-logind.service                                                                                                           1      -        -        -        -
+/system.slice/systemd-udevd.service                                                                                                            1      -        -        -        -
+/system.slice/vgauthd.service                                                                                                                  1      -        -        -        -
+/user.slice                                                                                                                                    3      -        -        -        -
+/user.slice/user-0.slice/session-1.scope                                                                                                       3      -        -        -        -
+/user.slice/user-1000.slice                                                                                                                    3      -        -        -        -
+/user.slice/user-1000.slice/session-11.scope                                                                                                   3      -        -        -        -
+/user.slice/user-1001.slice/session-8.scope                                                                                                    3      -        -        -        -
+</code></pre></div><p style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;margin-bottom:1.5em;">systemd-cgtop 提供的统计数据和控制选项与 <code style="font-family:Inconsolata;margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;font-size:0.875em;line-height:1.71429em;">top</code> 命令类似，但该命令只显示那些开启了资源统计功能的 service 和 slice。比如：如果你想开启 <code style="font-family:Inconsolata;margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;font-size:0.875em;line-height:1.71429em;">sshd.service</code> 的资源统计功能，可以进行如下操作：</p>
+<div style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;margin-bottom:1.5em;"><pre style="background-color:rgb(243, 242, 238);font-family:Inconsolata;margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;width:auto;font-size:0.875em;line-height:1.71429em;"><code style="font-family:Inconsolata;margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;line-height:1.71429em;font-size:1.15em;">$ systemctl set-property sshd.service CPUAccounting=true MemoryAccounting=true
+</code></pre></div><p style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;margin-bottom:1.5em;">该命令会在 <code style="font-family:Inconsolata;margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;font-size:0.875em;line-height:1.71429em;">/etc/systemd/system/sshd.service.d/</code> 目录下创建相应的配置文件：</p>
+<div style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;margin-bottom:1.5em;"><pre style="background-color:rgb(243, 242, 238);font-family:Inconsolata;margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;width:auto;font-size:0.875em;line-height:1.71429em;"><code style="font-family:Inconsolata;margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;line-height:1.71429em;font-size:1.15em;">$ ll /etc/systemd/system/sshd.service.d/
+总用量 8
+4 -rw-r--r-- 1 root root 28 5月  31 02:24 50-CPUAccounting.conf
+4 -rw-r--r-- 1 root root 31 5月  31 02:24 50-MemoryAccounting.conf
+$ cat /etc/systemd/system/sshd.service.d/50-CPUAccounting.conf
+[Service]
+CPUAccounting=yes
+$ cat /etc/systemd/system/sshd.service.d/50-MemoryAccounting.conf
+[Service]
+MemoryAccounting=yes
+</code></pre></div><p style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;margin-bottom:1.5em;">配置完成之后，再重启 <code style="font-family:Inconsolata;margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;font-size:0.875em;line-height:1.71429em;">sshd</code> 服务：</p>
+<div style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;margin-bottom:1.5em;"><pre style="background-color:rgb(243, 242, 238);font-family:Inconsolata;margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;width:auto;font-size:0.875em;line-height:1.71429em;"><code style="font-family:Inconsolata;margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;line-height:1.71429em;font-size:1.15em;">$ systemctl daemon-reload
+$ systemctl restart sshd
+</code></pre></div><p style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;margin-bottom:1.5em;">这时再重新运行 systemd-cgtop 命令，就能看到 sshd 的资源使用统计了：</p>
+<div style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;margin-bottom:1.5em;">
+  开启资源使用量统计功能可能会增加系统的负载，因为资源统计也要消耗 CPU 和内存，大多数情况下使用 <code style="font-family:Inconsolata;margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;font-size:0.875em;line-height:1.71429em;">top</code> 命令来查看就足够了。当然了，这是 Linux 系统嘛，一切的控制权都在你自己手里，你想怎么做就怎么做。
+</div>
+<h2 style="font-family:&quot;PT Serif&quot;;text-align:left;margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;font-weight:bold;font-size:30px;line-height:35px;margin-top:35px;margin-bottom:15px;">2. 分配 CPU 相对使用时间</h2>
+<hr style="border-color:rgb(31, 9, 9);border-top:none;border-right:none;border-bottom:1px solid;border-left:none;"/>
+<p style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;margin-bottom:1.5em;">通过上篇文章的学习我们知道了 CPU <code style="font-family:Inconsolata;margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;font-size:0.875em;line-height:1.71429em;">shares</code> 可以用来设置 CPU 的相对使用时间，接下来我们就通过实践来验证一下。</p>
+<div style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;margin-bottom:1.5em;">
+  下面所做的实验都是在单核 CPU 的系统上进行的，多核与单核的情况完全不同，文末会单独讨论。
+</div>
+<p style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;margin-bottom:1.5em;">测试对象是 1 个 service 和两个普通用户，其中用户 <code style="font-family:Inconsolata;margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;font-size:0.875em;line-height:1.71429em;">tom</code> 的 UID 是 1000，可以通过以下命令查看：</p>
+<div style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;margin-bottom:1.5em;"><pre style="background-color:rgb(243, 242, 238);font-family:Inconsolata;margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;width:auto;font-size:0.875em;line-height:1.71429em;"><code style="font-family:Inconsolata;margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;line-height:1.71429em;font-size:1.15em;">$ cat /etc/passwd|grep tom
+tom❌1000:1000::/home/tom:/bin/bash
+</code></pre></div><p style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;margin-bottom:1.5em;">创建一个 <code style="font-family:Inconsolata;margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;font-size:0.875em;line-height:1.71429em;">foo.service</code>：</p>
+<div style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;margin-bottom:1.5em;"><pre style="background-color:rgb(243, 242, 238);font-family:Inconsolata;margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;width:auto;font-size:0.875em;line-height:1.71429em;"><code style="font-family:Inconsolata;margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;line-height:1.71429em;font-size:1.15em;">$ cat /etc/systemd/system/foo.service
+[Unit]
+Description=The foo service that does nothing useful
+After=remote-fs.target nss-lookup.target
+[Service]
+ExecStart=/usr/bin/sha1sum /dev/zero
+ExecStop=/bin/kill -WINCH ${MAINPID}
+[Install]
+WantedBy=multi-user.target
+</code></pre></div><p style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;margin-bottom:1.5em;"><code style="font-family:Inconsolata;margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;font-size:0.875em;line-height:1.71429em;">/dev/zero</code> 在 linux 系统中是一个特殊的设备文件，当你读它的时候，它会提供无限的空字符，因此 foo.service 会不断地消耗 CPU 资源。现在我们将 foo.service 的 CPU shares 改为 <code style="font-family:Inconsolata;margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;font-size:0.875em;line-height:1.71429em;">2048</code>：</p>
+<div style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;margin-bottom:1.5em;"><pre style="background-color:rgb(243, 242, 238);font-family:Inconsolata;margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;width:auto;font-size:0.875em;line-height:1.71429em;"><code style="font-family:Inconsolata;margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;line-height:1.71429em;font-size:1.15em;">$ mkdir /etc/systemd/system/foo.service.d
+$ cat &lt;&lt; EOF &gt; /etc/systemd/system/foo.service.d/50-CPUShares.conf
+[Service]
+CPUShares=2048
+EOF
+</code></pre></div><p style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;margin-bottom:1.5em;">由于系统默认的 CPU shares 值为 <code style="font-family:Inconsolata;margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;font-size:0.875em;line-height:1.71429em;">1024</code>，所以设置成 2048 后，在 CPU 繁忙的情况下，<code style="font-family:Inconsolata;margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;font-size:0.875em;line-height:1.71429em;">foo.service</code> 会尽可能获取 <code style="font-family:Inconsolata;margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;font-size:0.875em;line-height:1.71429em;">system.slice</code> 的所有 CPU 使用时间。</p>
+<p style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;margin-bottom:1.5em;">现在通过 <code style="font-family:Inconsolata;margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;font-size:0.875em;line-height:1.71429em;">systemctl start foo.service</code> 启动 foo 服务，并使用 <code style="font-family:Inconsolata;margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;font-size:0.875em;line-height:1.71429em;">top</code> 命令查看 CPU 使用情况：</p>
+<p style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;margin-bottom:1.5em;">目前没有其他进程在消耗 CPU，所以 foo.service 可以使用几乎 100% 的 CPU。</p>
+<p style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;margin-bottom:1.5em;">现在我们让用户 <code style="font-family:Inconsolata;margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;font-size:0.875em;line-height:1.71429em;">tom</code> 也参与进来，先将 <code style="font-family:Inconsolata;margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;font-size:0.875em;line-height:1.71429em;">user-1000.slice</code> 的 CPU shares 设置为 <code style="font-family:Inconsolata;margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;font-size:0.875em;line-height:1.71429em;">256</code>：</p>
+<div style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;margin-bottom:1.5em;"><pre style="background-color:rgb(243, 242, 238);font-family:Inconsolata;margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;width:auto;font-size:0.875em;line-height:1.71429em;"><code style="font-family:Inconsolata;margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;line-height:1.71429em;font-size:1.15em;">$ systemctl set-property user-1000.slice CPUShares=256
+</code></pre></div><p style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;margin-bottom:1.5em;">使用用户 <code style="font-family:Inconsolata;margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;font-size:0.875em;line-height:1.71429em;">tom</code> 登录该系统，然后执行命令 <code style="font-family:Inconsolata;margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;font-size:0.875em;line-height:1.71429em;">sha1sum /dev/zero</code>，再次查看 CPU 使用情况：</p>
+<p style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;margin-bottom:1.5em;">现在是不是感到有点迷惑了？foo.service 的 CPU shares 是 <code style="font-family:Inconsolata;margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;font-size:0.875em;line-height:1.71429em;">2048</code>，而用户 tom 的 CPU shares 只有 <code style="font-family:Inconsolata;margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;font-size:0.875em;line-height:1.71429em;">256</code>，难道用户 <code style="font-family:Inconsolata;margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;font-size:0.875em;line-height:1.71429em;">tom</code> 不是应该只能使用 10% 的 CPU 吗？回忆一下我在上一节提到的，当 CPU 繁忙时，<code style="font-family:Inconsolata;margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;font-size:0.875em;line-height:1.71429em;">user.slice</code> 和 <code style="font-family:Inconsolata;margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;font-size:0.875em;line-height:1.71429em;">system.slice</code> 会各获得 <code style="font-family:Inconsolata;margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;font-size:0.875em;line-height:1.71429em;">50%</code> 的 CPU 使用时间。而这里恰好就是这种场景，同时 <code style="font-family:Inconsolata;margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;font-size:0.875em;line-height:1.71429em;">user.slice</code> 下面只有 sha1sum 进程比较繁忙，所以会获得 50% 的 CPU 使用时间。</p>
+<p style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;margin-bottom:1.5em;">最后让用户 <code style="font-family:Inconsolata;margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;font-size:0.875em;line-height:1.71429em;">jack</code> 也参与进来，他的 CPU shares 是默认值 1024。使用用户 <code style="font-family:Inconsolata;margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;font-size:0.875em;line-height:1.71429em;">jack</code> 登录该系统，然后执行命令 <code style="font-family:Inconsolata;margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;font-size:0.875em;line-height:1.71429em;">sha1sum /dev/zero</code>，再次查看 CPU 使用情况：</p>
+<p style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;margin-bottom:1.5em;">上面我们已经提到，这种场景下 <code style="font-family:Inconsolata;margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;font-size:0.875em;line-height:1.71429em;">user.slice</code> 和 <code style="font-family:Inconsolata;margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;font-size:0.875em;line-height:1.71429em;">system.slice</code> 会各获得 <code style="font-family:Inconsolata;margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;font-size:0.875em;line-height:1.71429em;">50%</code> 的 CPU 使用时间。用户 tom 的 CPU shares 是 <code style="font-family:Inconsolata;margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;font-size:0.875em;line-height:1.71429em;">256</code>，而用户 jack 的 CPU shares 是 <code style="font-family:Inconsolata;margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;font-size:0.875em;line-height:1.71429em;">1024</code>，因此用户 jack 获得的 CPU 使用时间是用户 tom 的 <code style="font-family:Inconsolata;margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;font-size:0.875em;line-height:1.71429em;">4</code> 倍。</p>
+<h2 style="font-family:&quot;PT Serif&quot;;text-align:left;margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;font-weight:bold;font-size:30px;line-height:35px;margin-top:35px;margin-bottom:15px;">3. 分配 CPU 绝对使用时间</h2>
+<hr style="border-color:rgb(31, 9, 9);border-top:none;border-right:none;border-bottom:1px solid;border-left:none;"/>
+<p style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;margin-bottom:1.5em;">上篇文章已经提到，如果想严格控制 CPU 资源，设置 CPU 资源的使用上限，即不管 CPU 是否繁忙，对 CPU 资源的使用都不能超过这个上限，可以通过 <code style="font-family:Inconsolata;margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;font-size:0.875em;line-height:1.71429em;">CPUQuota</code> 参数来设置。下面我们将用户 tom 的 CPUQuota 设置为 <code style="font-family:Inconsolata;margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;font-size:0.875em;line-height:1.71429em;">5%</code>：</p>
+<div style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;margin-bottom:1.5em;"><pre style="background-color:rgb(243, 242, 238);font-family:Inconsolata;margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;width:auto;font-size:0.875em;line-height:1.71429em;"><code style="font-family:Inconsolata;margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;line-height:1.71429em;font-size:1.15em;">$ systemctl set-property user-1000.slice CPUQuota=5%
+</code></pre></div><p style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;margin-bottom:1.5em;">这时你会看到用户 tom 的 sha1sum 进程只能获得 5% 左右的 CPU 使用时间。</p>
+<p style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;margin-bottom:1.5em;">如果此时停止 <code style="font-family:Inconsolata;margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;font-size:0.875em;line-height:1.71429em;">foo.service</code>，关闭用户 jack 的 sha1sum 进程，你会看到用户 tom 的 sha1sum 进程仍然只能获得 <code style="font-family:Inconsolata;margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;font-size:0.875em;line-height:1.71429em;">5%</code> 左右的 CPU 使用时间。</p>
+<p style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;margin-bottom:1.5em;">如果某个非核心服务很消耗 CPU 资源，你可以通过这种方法来严格限制它对 CPU 资源的使用，防止对系统中其他重要的服务产生影响。</p>
+<h2 style="font-family:&quot;PT Serif&quot;;text-align:left;margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;font-weight:bold;font-size:30px;line-height:35px;margin-top:35px;margin-bottom:15px;">4. 动态设置 cgroup</h2>
+<hr style="border-color:rgb(31, 9, 9);border-top:none;border-right:none;border-bottom:1px solid;border-left:none;"/>
+<p style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;margin-bottom:1.5em;">cgroup 相关的所有操作都是基于内核中的 cgroup virtual filesystem，使用 cgroup 很简单，挂载这个文件系统就可以了。系统默认情况下都是挂载到 <code style="font-family:Inconsolata;margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;font-size:0.875em;line-height:1.71429em;">/sys/fs/cgroup</code> 目录下，当 service 启动时，会将自己的 cgroup 挂载到这个目录下的子目录。以 <code style="font-family:Inconsolata;margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;font-size:0.875em;line-height:1.71429em;">foo.service</code> 为例：</p>
+<p style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;margin-bottom:1.5em;">先进入 <code style="font-family:Inconsolata;margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;font-size:0.875em;line-height:1.71429em;">system.slice</code> 的 CPU 子系统：</p>
+<div style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;margin-bottom:1.5em;"><pre style="background-color:rgb(243, 242, 238);font-family:Inconsolata;margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;width:auto;font-size:0.875em;line-height:1.71429em;"><code style="font-family:Inconsolata;margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;line-height:1.71429em;font-size:1.15em;">$ cd /sys/fs/cgroup/cpu,cpuacct/system.slice
+</code></pre></div><p style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;margin-bottom:1.5em;">查看 foo.service 的 cgroup 目录：</p>
+<div style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;margin-bottom:1.5em;"><pre style="background-color:rgb(243, 242, 238);font-family:Inconsolata;margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;width:auto;font-size:0.875em;line-height:1.71429em;"><code style="font-family:Inconsolata;margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;line-height:1.71429em;font-size:1.15em;">$ ls foo.*
+zsh: no matches found: foo.*
+</code></pre></div><p style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;margin-bottom:1.5em;">因为 foo.service 没有启动，所以没有挂载 cgroup 目录，现在启动 foo.service，再次查看它的 cgroup 目录：</p>
+<div style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;margin-bottom:1.5em;"><pre style="background-color:rgb(243, 242, 238);font-family:Inconsolata;margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;width:auto;font-size:0.875em;line-height:1.71429em;"><code style="font-family:Inconsolata;margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;line-height:1.71429em;font-size:1.15em;">$ ls foo.serice
+cgroup.clone_children  cgroup.procs  cpuacct.usage         cpu.cfs_period_us  cpu.rt_period_us   cpu.shares  notify_on_release
+cgroup.event_control   cpuacct.stat  cpuacct.usage_percpu  cpu.cfs_quota_us   cpu.rt_runtime_us  cpu.stat    tasks
+</code></pre></div><p style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;margin-bottom:1.5em;">也可以查看它的 PID 和 CPU shares：</p>
+<div style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;margin-bottom:1.5em;"><pre style="background-color:rgb(243, 242, 238);font-family:Inconsolata;margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;width:auto;font-size:0.875em;line-height:1.71429em;"><code style="font-family:Inconsolata;margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;line-height:1.71429em;font-size:1.15em;">$ cat foo.service/tasks
+20225
+$ cat foo.service/cpu.shares
+2048
+</code></pre></div><div style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;margin-bottom:1.5em;">
+  理论上我们可以在 <code style="font-family:Inconsolata;margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;font-size:0.875em;line-height:1.71429em;">/sys/fs/cgroup</code> 目录中动态改变 cgroup 的配置，但我不建议你在生产环境中这么做。如果你想通过实验来深入理解 cgroup，可以多折腾折腾这个目录。
+</div>
+<h2 style="font-family:&quot;PT Serif&quot;;text-align:left;margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;font-weight:bold;font-size:30px;line-height:35px;margin-top:35px;margin-bottom:15px;">5. 如果是多核 CPU 呢？</h2>
+<hr style="border-color:rgb(31, 9, 9);border-top:none;border-right:none;border-bottom:1px solid;border-left:none;"/>
+<p style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;margin-bottom:1.5em;">上面的所有实验都是在单核 CPU 上进行的，下面我们简单讨论一下多核的场景，以 2 个 CPU 为例。</p>
+<p style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;margin-bottom:1.5em;">首先来说一下 CPU shares，shares 只能针对单核 CPU 进行设置，也就是说，无论你的 shares 值有多大，该 cgroup 最多只能获得 100% 的 CPU 使用时间（即 1 核 CPU）。还是用本文第 2 节的例子，将 foo.service 的 CPU shares 设置为 2048，启动 foo.service，这时你会看到 foo.service 仅仅获得了 100% 的 CPU 使用时间，并没有完全使用两个 CPU 核：</p>
+<p style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;margin-bottom:1.5em;">再使用用户 <code style="font-family:Inconsolata;margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;font-size:0.875em;line-height:1.71429em;">tom</code> 登录系统，执行命令 <code style="font-family:Inconsolata;margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;font-size:0.875em;line-height:1.71429em;">sha1sum /dev/zero</code>，你会发现用户 tom 的 sha1sum 进程和 foo.service 各使用 1 个 CPU 核：</p>
+<p style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;margin-bottom:1.5em;">再来说说 CPUQuota，这个上篇文章结尾已经提过了，如要让一个 cgroup 完全使用两个 CPU 核，可以通过 CPUQuota 参数来设置。例如：</p>
+<div style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;margin-bottom:1.5em;"><pre style="background-color:rgb(243, 242, 238);font-family:Inconsolata;margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;width:auto;font-size:0.875em;line-height:1.71429em;"><code style="font-family:Inconsolata;margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;line-height:1.71429em;font-size:1.15em;">$ systemctl set-property foo.service CPUQuota=200%
+</code></pre></div><p style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;margin-bottom:1.5em;">至于进程最后能不能完全使用两个 CPU 核，就要看它自身的设计支持不支持了。</p>
+<h2 style="font-family:&quot;PT Serif&quot;;text-align:left;margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;font-weight:bold;font-size:30px;line-height:35px;margin-top:35px;margin-bottom:15px;">6. 总结</h2>
+<hr style="border-color:rgb(31, 9, 9);border-top:none;border-right:none;border-bottom:1px solid;border-left:none;"/>
+<p style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;margin-bottom:1.5em;">本文通过具体的示例来观察不同的 cgroup 设置对性能的影响，下面一篇文章将会演示如何通过 cgroup 来限制内存的使用。</p>
+
+        
+	<div style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;margin-bottom:0px;">-------他日江湖相逢  再当杯酒言欢-------</div>
+    </div></div></div></div></div></div></div></div></div></div>
+</div>
+</div>
+<a class="back-link" href="../articles.html">← 返回笔记列表</a>
+</body>
+</html>

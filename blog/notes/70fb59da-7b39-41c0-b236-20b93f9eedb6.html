@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="zh-CN" data-theme="light">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>20190711(作用域、立即执行函数） — 技术笔记</title>
+<style>
+:root { --bg:#fff; --text:#1a1a1a; --muted:#666; --border:#e0e0e0; --code-bg:#f5f5f5; --link:#0066cc; }
+@media (prefers-color-scheme: dark) { :root { --bg:#1a1a1a; --text:#e0e0e0; --muted:#999; --border:#333; --code-bg:#2a2a2a; --link:#66bbff; } }
+* { box-sizing:border-box; margin:0; padding:0; }
+body { font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Arial,sans-serif; line-height:1.7; color:var(--text); background:var(--bg); max-width:860px; margin:0 auto; padding:2rem 1.5rem; }
+.note-header { border-bottom:2px solid var(--border); padding-bottom:1rem; margin-bottom:2rem; }
+.note-title { font-size:1.6rem; font-weight:700; margin-bottom:0.3rem; }
+.note-meta { color:var(--muted); font-size:0.85rem; }
+.note-content { font-size:0.95rem; }
+.note-content h1 { font-size:1.4rem; margin:1.2rem 0 0.6rem; }
+.note-content h2 { font-size:1.2rem; margin:1rem 0 0.5rem; }
+.note-content h3 { font-size:1.05rem; margin:0.8rem 0 0.4rem; }
+.note-content p { margin:0.5rem 0; }
+.note-content ul,.note-content ol { margin:0.5rem 0 0.5rem 2rem; }
+.note-content li { margin:0.2rem 0; }
+.note-content pre { background:var(--code-bg); padding:1rem; border-radius:6px; overflow-x:auto; margin:0.8rem 0; font-size:0.85rem; }
+.note-content code { background:var(--code-bg); padding:0.1rem 0.3rem; border-radius:3px; font-size:0.88em; }
+.note-content pre code { background:none; padding:0; }
+.note-content blockquote { border-left:3px solid var(--border); padding-left:1rem; color:var(--muted); margin:0.8rem 0; }
+.note-content a { color:var(--link); }
+.note-content img { max-width:100%; height:auto; border-radius:6px; margin:0.5rem 0; }
+.note-content table { border-collapse:collapse; width:100%; margin:0.8rem 0; }
+.note-content th,.note-content td { border:1px solid var(--border); padding:0.5rem; }
+.note-content th { background:var(--code-bg); }
+.media-placeholder { background:var(--code-bg); padding:1rem; text-align:center; color:var(--muted); border-radius:6px; margin:0.5rem 0; font-size:0.85rem; }
+.encrypt-placeholder { background:#fff3cd; padding:0.5rem; text-align:center; color:#856404; border-radius:6px; margin:0.5rem 0; font-size:0.85rem; }
+.back-link { display:inline-block; margin-top:2rem; color:var(--link); text-decoration:none; font-size:0.85rem; }
+</style>
+</head>
+<body>
+<div class="note-header"><div class="note-title">20190711(作用域、立即执行函数）</div><div class="note-meta">笔记本：前端学习</div></div>
+<div class="note-content"><div>1.作用域</div><div>&nbsp;&nbsp;&nbsp;&nbsp;函数其实也是一个对象，它有一些属性,比如length(获取形参长度),name(获取函数名称)</div><div>&nbsp;&nbsp;&nbsp;&nbsp;也有一些隐藏属性,比如test.[[scope]]</div><div>&nbsp;&nbsp;&nbsp;&nbsp;[[scope]]:每个javascript函数都是一个对象，对象中有些属性我们可以访问但有些不可以,这些属性仅供javascript引擎存取,scope就是其中一个。scope指的就是我们所说的作用域,其中存储了运行期的上下文的集合。</div><div><br/></div><div>&nbsp;&nbsp;&nbsp;&nbsp;作用域链：[[scope]]中所存储的是执行期的上下文对象的集合，这个集合呈链式链接，我们把这种链式链接叫做作用域链。</div><div><br/></div><div>&nbsp;&nbsp;&nbsp;&nbsp;系统每调用一次函数就会生成一个执行期上下文，每次调用的执行期上下文都是独一无二的，所以多次调用一个函数会导致创建多个执行期上下文.当函数执行完毕，它所产生的执行期上下文被销毁。</div><div><br/></div><div>&nbsp;&nbsp;&nbsp;&nbsp;变量调用时，会在当前函数的作用域链中依次向下查找，函数自身的执行期上下文AO排在作用域链中的第一位,然后时GO全局作用域，如果函数内还有一个函数定义的话，那么</div><div>&nbsp;&nbsp;&nbsp;&nbsp;这个函数在定义的时候，会首先生成一个自己的AO,其作用域链继承其父函数的作用域即&nbsp;&nbsp;AO -&gt; GO,然后在此基础上再生成自己的作用域AO放在作用域链的最顶端。</div><div><br/></div><div>&nbsp;&nbsp;&nbsp;&nbsp;一个复杂的例子:</div><div>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;function (a){</div><div>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;function b(){</div><div>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;var bbb = 234;</div><div>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;console.log(aaa);</div><div>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}</div><div>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;var aaa =123;</div><div>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;return b;</div><div>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}</div><div><br/></div><div>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;var glob = 100;</div><div>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;var demo = a();</div><div>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;demo();</div><div><div class="media-placeholder">[图片/附件]</div>&nbsp;</div><div><br/></div><div><br/></div><div>&nbsp;&nbsp;&nbsp;&nbsp;当内部函数被保存到外部的时候，它将会保存包括它的上级作用域在内直到顶级作用作用域的完整作用域链形成一个闭包,生成闭包会导致原有作用域链不释放，造成内存泄漏。</div><div><br/></div><div>&nbsp;&nbsp;&nbsp;&nbsp;闭包待续。。。</div><div><br/></div><div>2.立即执行函数</div><div>&nbsp;&nbsp;&nbsp;&nbsp;只被执行一次javascript，针对初始化功能的函数。</div><div>&nbsp;&nbsp;&nbsp;&nbsp;格式:</div><div>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(function(){</div><div><br/></div><div>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}())&nbsp;&nbsp;//要注意在{}后面还有一对()</div><div><br/></div><div>&nbsp;&nbsp;&nbsp;&nbsp;这样定义的函数只会执行一次，在浏览器的体现为，在(function(){}())中定义的变量，在浏览器控制台中输出会报错undefined,而不写在(function(){}())中的变量时可以找到的。</div><div>&nbsp;&nbsp;&nbsp;&nbsp;* (function(a, b, c){}(1, 2, 3))立即执行函数也可以带参数。</div><div>&nbsp;&nbsp;&nbsp;&nbsp;* 可以有返回值，var num = (function(a, b, c){ return a+b+c}(1, 2, 3))</div><div>&nbsp;&nbsp;&nbsp;&nbsp;*立即执行函数的第二种写法:</div><div>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(function(){})()</div><div>&nbsp;&nbsp;&nbsp;&nbsp;理论上与第一种方式时等价的,第二种方式表示，在函数定义后通过执行符号()将函数立即执行。</div><div>&nbsp;&nbsp;&nbsp;&nbsp;* 只有表达式才能被执行符号执行</div><div>&nbsp;&nbsp;&nbsp;&nbsp;* var a = function(){}();这样也会执行，但是函数表达式如果执行符号执行后</div><div>&nbsp;&nbsp;&nbsp;&nbsp;那么它的名称将会被忽略,即a为undefined报错</div><div><br/></div></div>
+<a class="back-link" href="../articles.html">← 返回笔记列表</a>
+</body></html>

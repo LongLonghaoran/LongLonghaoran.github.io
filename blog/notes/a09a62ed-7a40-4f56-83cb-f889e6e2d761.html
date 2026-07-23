@@ -1,0 +1,326 @@
+<!DOCTYPE html>
+<html lang="zh-CN" data-theme="light">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Ruby多线程执行中，只有阻塞操作是真正并行的 — 技术笔记</title>
+<style>
+:root {
+  --bg: #ffffff;
+  --text: #1a1a1a;
+  --muted: #666;
+  --border: #e0e0e0;
+  --code-bg: #f5f5f5;
+  --link: #0066cc;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #1a1a1a;
+    --text: #e0e0e0;
+    --muted: #999;
+    --border: #333;
+    --code-bg: #2a2a2a;
+    --link: #66bbff;
+  }
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  line-height: 1.7;
+  color: var(--text);
+  background: var(--bg);
+  max-width: 860px;
+  margin: 0 auto;
+  padding: 2rem 1.5rem;
+}
+.note-header {
+  border-bottom: 2px solid var(--border);
+  padding-bottom: 1rem;
+  margin-bottom: 2rem;
+}
+.note-title {
+  font-size: 1.6rem;
+  font-weight: 700;
+  margin-bottom: 0.3rem;
+}
+.note-meta {
+  color: var(--muted);
+  font-size: 0.85rem;
+}
+.note-content {
+  font-size: 0.95rem;
+}
+.note-content h1 { font-size: 1.4rem; margin: 1.2rem 0 0.6rem; }
+.note-content h2 { font-size: 1.2rem; margin: 1rem 0 0.5rem; }
+.note-content h3 { font-size: 1.05rem; margin: 0.8rem 0 0.4rem; }
+.note-content p { margin: 0.5rem 0; }
+.note-content ul, .note-content ol { margin: 0.5rem 0 0.5rem 2rem; }
+.note-content li { margin: 0.2rem 0; }
+.note-content pre {
+  background: var(--code-bg);
+  padding: 1rem;
+  border-radius: 6px;
+  overflow-x: auto;
+  margin: 0.8rem 0;
+  font-size: 0.85rem;
+}
+.note-content code {
+  background: var(--code-bg);
+  padding: 0.1rem 0.3rem;
+  border-radius: 3px;
+  font-size: 0.88em;
+}
+.note-content pre code {
+  background: none;
+  padding: 0;
+}
+.note-content blockquote {
+  border-left: 3px solid var(--border);
+  padding-left: 1rem;
+  color: var(--muted);
+  margin: 0.8rem 0;
+}
+.note-content a { color: var(--link); }
+.note-content img {
+  max-width: 100%;
+  height: auto;
+  border-radius: 6px;
+  margin: 0.5rem 0;
+}
+.note-content table {
+  border-collapse: collapse;
+  width: 100%;
+  margin: 0.8rem 0;
+}
+.note-content th, .note-content td {
+  border: 1px solid var(--border);
+  padding: 0.5rem;
+}
+.note-content th { background: var(--code-bg); }
+.media-placeholder {
+  background: var(--code-bg);
+  padding: 1rem;
+  text-align: center;
+  color: var(--muted);
+  border-radius: 6px;
+  margin: 0.5rem 0;
+  font-size: 0.85rem;
+}
+.encrypt-placeholder {
+  background: #fff3cd;
+  padding: 0.5rem;
+  text-align: center;
+  color: #856404;
+  border-radius: 6px;
+  margin: 0.5rem 0;
+  font-size: 0.85rem;
+}
+.back-link {
+  display: inline-block;
+  margin-top: 2rem;
+  color: var(--link);
+  text-decoration: none;
+  font-size: 0.85rem;
+}
+</style>
+</head>
+<body>
+<div class="note-header">
+  <div class="note-title">Ruby多线程执行中，只有阻塞操作是真正并行的</div>
+  <div class="note-meta">笔记本：Ruby</div>
+</div>
+<div class="note-content">
+<div style="--en-clipped-content:article; --en-clipped-source-url:https://ruby-china.org/topics/32902; --en-clipped-source-title:Ruby多线程执行中，只有阻塞操作是真正并行的;">
+<div><br/></div><div style="min-height: 3670px; font-size: 16px; display:block; min-width: 100%; position: relative;"> <div style="box-sizing:border-box;font-family:sans-serif;line-height:1.15;text-size-adjust:100%;-webkit-tap-highlight-color:rgba(0, 0, 0, 0);outline-style:none;"><div style="box-sizing:border-box;font-weight:400;line-height:1.5;text-align:left;outline-style:none;background:rgb(246, 247, 250) none repeat scroll 0% 0% / auto padding-box border-box;letter-spacing:0.03em;font-family:&quot;PingFang SC&quot;, &quot;Noto Sans&quot;, Roboto, &quot;Microsoft Yahei&quot;, sans-serif;font-size:14px;color:rgb(64, 64, 64);"><div style="box-sizing:border-box;outline-style:none;"><div style="box-sizing:border-box;outline-style:none;"><div style="box-sizing:border-box;outline-style:none;"><div style="box-sizing:border-box;outline-style:none;display:flex;flex-direction:column;min-width:0px;overflow-wrap:break-word;border-radius:4px;box-shadow:0px 0px 0px;background:rgb(255, 255, 255) none repeat scroll 0% 0% / auto padding-box border-box;">
+      <div style="box-sizing:border-box;outline-style:none;margin-bottom:0px;border-bottom:1px solid rgba(0, 0, 0, 0.125);display:flex;align-items:flex-start;border-radius:calc(0.25rem - 1px) calc(0.25rem - 1px) 0px 0px;font-size:18px;border:0px;transition:all 0.3s ease 0s;padding:25px 25px 0px;background:transparent;">
+  <div style="box-sizing:border-box;outline-style:none;flex:1 1 0%;">
+    <h1 style="box-sizing:border-box;font-weight:500;outline-style:none;color:rgb(64, 64, 64);text-align:left;margin-top:0px;margin-bottom:8px;line-height:150%;font-size:22px;">
+      <a href="https://ruby-china.org/topics/node1" style="box-sizing:border-box;text-decoration:none;background-color:transparent;outline-style:none;margin-right:3px;color:rgb(102, 102, 102);">Ruby</a>
+      <span style="box-sizing:border-box;outline-style:none;">
+        浅谈 Ruby 中的并发， 并行和全局锁
+      </span>
+      
+    </h1>
+    <div style="box-sizing:border-box;outline-style:none;color:rgb(173, 170, 168);font-size:13px;">
+      <a href="https://ruby-china.org/xiongbo" style="box-sizing:border-box;text-decoration:none;background-color:transparent;outline-style:none;font-size:14px;color:rgb(64, 64, 64);">xiongbo</a>
+      <span style="box-sizing:border-box;outline-style:none;">
+      </span>
+       ·
+      <abbr title="2017年04月29日" style="box-sizing:border-box;outline-style:none;text-decoration-skip-ink:none;border-bottom:0px;text-decoration:none;cursor:text;border:0px;">2017年04月29日</abbr>
+      <span style="box-sizing:border-box;outline-style:none;">
+         ·
+        最后由 <a href="https://ruby-china.org/angelew" style="box-sizing:border-box;text-decoration:none;background-color:transparent;outline-style:none;font-size:14px;color:rgb(64, 64, 64);">angelew</a> 回复于 <abbr title="2017年06月15日" style="box-sizing:border-box;outline-style:none;text-decoration-skip-ink:none;border-bottom:0px;text-decoration:none;cursor:text;border:0px;">2017年06月15日</abbr>
+      </span>
+       ·
+      9979 次阅读
+    </div>
+  </div>
+  
+<span style="font-size:18px;display:block;clear:both;"></span></div>
+
+        <div style="box-sizing:border-box;outline-style:none;font-size:16px;margin-top:25px;background:rgba(255, 204, 139, 0.14) none repeat scroll 0% 0% / auto padding-box border-box;border:0px;padding:15px 25px;color:rgb(235, 84, 36);">
+          <i style="box-sizing:border-box;outline-style:none;-webkit-font-smoothing:antialiased;display:inline-block;font-style:normal;font-feature-settings:normal;font-variant:normal;text-rendering:auto;line-height:1;font-family:&quot;Font Awesome 5 Free&quot;;font-weight:900;color:rgb(235, 84, 36);font-size:16px;"><span style="font-style:normal;font-variant:normal;line-height:1;font-family:Font Awesome 5 Free;font-weight:900;font-size:16px;color:rgb(235, 84, 36);"></span></i> 本帖已被设为精华帖！
+        </div>
+      <div style="box-sizing:border-box;outline-style:none;flex:1 1 auto;min-height:1px;position:relative;letter-spacing:0.03em;text-overflow:ellipsis;overflow-wrap:break-word;font-size:16px;padding:25px;padding-top:20px;padding-bottom:20px;"><div style="box-sizing:border-box;outline-style:none;position:relative;float:right;display:block;z-index:999;padding-left:10px;padding-bottom:10px;">
+  
+  
+</div>
+        
+        <p style="box-sizing:border-box;margin-top:0px;outline-style:none;margin-bottom:1.2em;font-size:1em;line-height:1.8em;">最近在看《Working With Ruby Thread》这本书， 以下是我对前几章内容的一点总结 : )</p>
+<h2 style="box-sizing:border-box;outline-style:none;margin-bottom:10px;margin:0px 0px 20px;font-weight:700;line-height:100%;text-align:left;color:rgb(64, 64, 64);font-size:20px;">并发不等于并行</h2>
+<p style="box-sizing:border-box;margin-top:0px;outline-style:none;margin-bottom:1.2em;font-size:1em;line-height:1.8em;">几乎所有谈到并发和并行的文章都会提到一点： 并发并不等于并行。 那么如何理解这句话呢， 这里以餐馆下订单为例子进行说明：</p>
+
+<p style="box-sizing:border-box;margin-top:0px;outline-style:none;margin-bottom:1.2em;font-size:1em;line-height:1.8em;"><strong style="box-sizing:border-box;font-weight:bolder;outline-style:none;">并发</strong>： 同时有 2 桌客人点了菜， 厨师同时接收到了两个菜单<br style="box-sizing:border-box;outline-style:none;"/>
+<strong style="box-sizing:border-box;font-weight:bolder;outline-style:none;">顺序执行</strong>： 如果只有一个厨师， 那么他只能一个菜单， 一个菜单的去完成<br style="box-sizing:border-box;outline-style:none;"/>
+<strong style="box-sizing:border-box;font-weight:bolder;outline-style:none;">并行执行</strong>： 如果有两个厨师， 那么就可以并行， 两个人一起做菜  </p>
+
+<p style="box-sizing:border-box;margin-top:0px;outline-style:none;margin-bottom:1.2em;font-size:1em;line-height:1.8em;">将这个例子扩展到我们的 web 开发中， 就可以这样理解：</p>
+
+<p style="box-sizing:border-box;margin-top:0px;outline-style:none;margin-bottom:1.2em;font-size:1em;line-height:1.8em;"><strong style="box-sizing:border-box;font-weight:bolder;outline-style:none;">并发</strong>：同时有两个客户端对服务器发起了请求<br style="box-sizing:border-box;outline-style:none;"/>
+<strong style="box-sizing:border-box;font-weight:bolder;outline-style:none;">顺序执行</strong>： 服务器只有一个进程（线程）处理请求， 完成了第一个请求才能完成第二个请求， 所以第二个请求就需要等待。<br style="box-sizing:border-box;outline-style:none;"/>
+<strong style="box-sizing:border-box;font-weight:bolder;outline-style:none;">并行执行</strong>： 服务器有两个进程（线程）处理请求， 两个请求都能得到响应， 而不存在先后的问题。  </p>
+<h2 style="box-sizing:border-box;outline-style:none;margin-bottom:10px;margin:0px 0px 20px;font-weight:700;line-height:100%;text-align:left;color:rgb(64, 64, 64);font-size:20px;">线程的处理</h2>
+<p style="box-sizing:border-box;margin-top:0px;outline-style:none;margin-bottom:1.2em;font-size:1em;line-height:1.8em;">那么， ruby 中如何描述一个并发的行为呢， 看这样一段代码：</p>
+<pre style="box-sizing:border-box;display:block;outline-style:none;margin-bottom:1.2em;background-color:rgb(246, 248, 250);border:0px;margin-left:0px;margin-right:0px;padding:15px 25px;border-radius:0px;font-family:Menlo, Monaco, Consolas, &quot;Courier New&quot;, monospace;font-size:0.8em;margin-top:0px;overflow:auto;color:rgb(68, 68, 68);"><code style="box-sizing:border-box;font-family:SFMono-Regular, Menlo, Monaco, Consolas, &quot;Liberation Mono&quot;, &quot;Courier New&quot;, monospace;overflow-wrap:break-word;outline-style:none;line-height:150%;margin:0px 2px;border-radius:3px;word-break:break-all;display:inline-block;color:rgb(102, 102, 102);padding:0px 8px;background-color:rgba(0, 0, 0, 0);border:none;font-size:1em;"><span style="box-sizing:border-box;outline-style:none;">threads</span> <span style="box-sizing:border-box;outline-style:none;color:rgb(102, 102, 102);">=</span> <span style="box-sizing:border-box;outline-style:none;color:rgb(102, 102, 102);">3</span><span style="box-sizing:border-box;outline-style:none;">.</span><span style="box-sizing:border-box;outline-style:none;color:rgb(0, 160, 0);">times</span><span style="box-sizing:border-box;outline-style:none;">.</span><span style="box-sizing:border-box;outline-style:none;color:rgb(0, 160, 0);">map</span> <span style="box-sizing:border-box;outline-style:none;color:rgb(170, 34, 255);">do</span> 
+  <span style="box-sizing:border-box;outline-style:none;color:rgb(136, 0, 0);">Thread</span><span style="box-sizing:border-box;outline-style:none;">.</span><span style="box-sizing:border-box;outline-style:none;color:rgb(0, 160, 0);">new</span> <span style="box-sizing:border-box;outline-style:none;color:rgb(170, 34, 255);">do</span>
+    <span style="box-sizing:border-box;outline-style:none;color:rgb(170, 34, 255);">sleep</span> <span style="box-sizing:border-box;outline-style:none;color:rgb(102, 102, 102);">3</span> 
+  <span style="box-sizing:border-box;outline-style:none;color:rgb(170, 34, 255);">end</span>
+<span style="box-sizing:border-box;outline-style:none;color:rgb(170, 34, 255);">end</span>
+<span style="box-sizing:border-box;outline-style:none;color:rgb(170, 34, 255);">puts</span> <span style="box-sizing:border-box;outline-style:none;color:rgb(187, 68, 68);">"不用等3秒就可以看到我"</span>
+<span style="box-sizing:border-box;outline-style:none;">threads</span><span style="box-sizing:border-box;outline-style:none;">.</span><span style="box-sizing:border-box;outline-style:none;color:rgb(0, 160, 0);">map</span><span style="box-sizing:border-box;outline-style:none;">(</span><span style="box-sizing:border-box;outline-style:none;color:rgb(102, 102, 102);">&amp;</span><span style="box-sizing:border-box;outline-style:none;color:rgb(184, 134, 11);">:join</span><span style="box-sizing:border-box;outline-style:none;">)</span>
+</code></pre>
+<p style="box-sizing:border-box;margin-top:0px;outline-style:none;margin-bottom:1.2em;font-size:1em;line-height:1.8em;">Thread 的创建是非阻塞的， 所以文字立即就可以输出， 这样就模拟了一个并发的行为。<br style="box-sizing:border-box;outline-style:none;"/>
+接下来， 对代码做一点修改：</p>
+<pre style="box-sizing:border-box;display:block;outline-style:none;margin-bottom:1.2em;background-color:rgb(246, 248, 250);border:0px;margin-left:0px;margin-right:0px;padding:15px 25px;border-radius:0px;font-family:Menlo, Monaco, Consolas, &quot;Courier New&quot;, monospace;font-size:0.8em;margin-top:0px;overflow:auto;color:rgb(68, 68, 68);"><code style="box-sizing:border-box;font-family:SFMono-Regular, Menlo, Monaco, Consolas, &quot;Liberation Mono&quot;, &quot;Courier New&quot;, monospace;overflow-wrap:break-word;outline-style:none;line-height:150%;margin:0px 2px;border-radius:3px;word-break:break-all;display:inline-block;color:rgb(102, 102, 102);padding:0px 8px;background-color:rgba(0, 0, 0, 0);border:none;font-size:1em;"><span style="box-sizing:border-box;outline-style:none;">time</span> <span style="box-sizing:border-box;outline-style:none;color:rgb(102, 102, 102);">=</span> <span style="box-sizing:border-box;outline-style:none;color:rgb(136, 0, 0);">Time</span><span style="box-sizing:border-box;outline-style:none;">.</span><span style="box-sizing:border-box;outline-style:none;color:rgb(0, 160, 0);">now</span>
+<span style="box-sizing:border-box;outline-style:none;">threads</span> <span style="box-sizing:border-box;outline-style:none;color:rgb(102, 102, 102);">=</span> <span style="box-sizing:border-box;outline-style:none;color:rgb(102, 102, 102);">3</span><span style="box-sizing:border-box;outline-style:none;">.</span><span style="box-sizing:border-box;outline-style:none;color:rgb(0, 160, 0);">times</span><span style="box-sizing:border-box;outline-style:none;">.</span><span style="box-sizing:border-box;outline-style:none;color:rgb(0, 160, 0);">map</span> <span style="box-sizing:border-box;outline-style:none;color:rgb(170, 34, 255);">do</span> 
+  <span style="box-sizing:border-box;outline-style:none;color:rgb(136, 0, 0);">Thread</span><span style="box-sizing:border-box;outline-style:none;">.</span><span style="box-sizing:border-box;outline-style:none;color:rgb(0, 160, 0);">new</span> <span style="box-sizing:border-box;outline-style:none;color:rgb(170, 34, 255);">do</span>
+    <span style="box-sizing:border-box;outline-style:none;color:rgb(170, 34, 255);">sleep</span> <span style="box-sizing:border-box;outline-style:none;color:rgb(102, 102, 102);">3</span> 
+  <span style="box-sizing:border-box;outline-style:none;color:rgb(170, 34, 255);">end</span>
+<span style="box-sizing:border-box;outline-style:none;color:rgb(170, 34, 255);">end</span>
+<span style="box-sizing:border-box;outline-style:none;">threads</span><span style="box-sizing:border-box;outline-style:none;">.</span><span style="box-sizing:border-box;outline-style:none;color:rgb(0, 160, 0);">map</span><span style="box-sizing:border-box;outline-style:none;">(</span><span style="box-sizing:border-box;outline-style:none;color:rgb(102, 102, 102);">&amp;</span><span style="box-sizing:border-box;outline-style:none;color:rgb(184, 134, 11);">:join</span><span style="box-sizing:border-box;outline-style:none;">)</span>
+<span style="box-sizing:border-box;outline-style:none;color:rgb(170, 34, 255);">puts</span> <span style="box-sizing:border-box;outline-style:none;color:rgb(187, 68, 68);">"现在需要等3秒才可以看到我"</span>
+<span style="box-sizing:border-box;outline-style:none;color:rgb(170, 34, 255);">p</span> <span style="box-sizing:border-box;outline-style:none;color:rgb(136, 0, 0);">Time</span><span style="box-sizing:border-box;outline-style:none;">.</span><span style="box-sizing:border-box;outline-style:none;color:rgb(0, 160, 0);">now</span> <span style="box-sizing:border-box;outline-style:none;color:rgb(102, 102, 102);">-</span> <span style="box-sizing:border-box;outline-style:none;">time</span>
+</code></pre>
+<p style="box-sizing:border-box;margin-top:0px;outline-style:none;margin-bottom:1.2em;font-size:1em;line-height:1.8em;">当我们执行 join 的时候， 只有等到所有线程的任务都执行完成， 才会最后输出。 所以我们需要等待 3 秒才能看到输出的文字。</p>
+
+<p style="box-sizing:border-box;margin-top:0px;outline-style:none;margin-bottom:1.2em;font-size:1em;line-height:1.8em;">但是， 等等， 这里是不是就是实现了并行了呢？<br style="box-sizing:border-box;outline-style:none;"/>
+从表面上来看是这样， 但是很遗憾， 这是一种伪并行， 我们再对代码做一点修改：</p>
+<pre style="box-sizing:border-box;display:block;outline-style:none;margin-bottom:1.2em;background-color:rgb(246, 248, 250);border:0px;margin-left:0px;margin-right:0px;padding:15px 25px;border-radius:0px;font-family:Menlo, Monaco, Consolas, &quot;Courier New&quot;, monospace;font-size:0.8em;margin-top:0px;overflow:auto;color:rgb(68, 68, 68);"><code style="box-sizing:border-box;font-family:SFMono-Regular, Menlo, Monaco, Consolas, &quot;Liberation Mono&quot;, &quot;Courier New&quot;, monospace;overflow-wrap:break-word;outline-style:none;line-height:150%;margin:0px 2px;border-radius:3px;word-break:break-all;display:inline-block;color:rgb(102, 102, 102);padding:0px 8px;background-color:rgba(0, 0, 0, 0);border:none;font-size:1em;"><span style="box-sizing:border-box;outline-style:none;color:rgb(170, 34, 255);">require</span> <span style="box-sizing:border-box;outline-style:none;color:rgb(187, 68, 68);">'benchmark'</span>
+<span style="box-sizing:border-box;outline-style:none;color:rgb(170, 34, 255);">def</span> <span style="box-sizing:border-box;outline-style:none;color:rgb(0, 160, 0);">multiple_threads</span>
+  <span style="box-sizing:border-box;outline-style:none;">count</span> <span style="box-sizing:border-box;outline-style:none;color:rgb(102, 102, 102);">=</span> <span style="box-sizing:border-box;outline-style:none;color:rgb(102, 102, 102);">0</span>
+  <span style="box-sizing:border-box;outline-style:none;">threads</span> <span style="box-sizing:border-box;outline-style:none;color:rgb(102, 102, 102);">=</span> <span style="box-sizing:border-box;outline-style:none;color:rgb(102, 102, 102);">4</span><span style="box-sizing:border-box;outline-style:none;">.</span><span style="box-sizing:border-box;outline-style:none;color:rgb(0, 160, 0);">times</span><span style="box-sizing:border-box;outline-style:none;">.</span><span style="box-sizing:border-box;outline-style:none;color:rgb(0, 160, 0);">map</span> <span style="box-sizing:border-box;outline-style:none;color:rgb(170, 34, 255);">do</span> 
+    <span style="box-sizing:border-box;outline-style:none;color:rgb(136, 0, 0);">Thread</span><span style="box-sizing:border-box;outline-style:none;">.</span><span style="box-sizing:border-box;outline-style:none;color:rgb(0, 160, 0);">new</span> <span style="box-sizing:border-box;outline-style:none;color:rgb(170, 34, 255);">do</span>
+      <span style="box-sizing:border-box;outline-style:none;color:rgb(102, 102, 102);">2_500_000</span><span style="box-sizing:border-box;outline-style:none;">.</span><span style="box-sizing:border-box;outline-style:none;color:rgb(0, 160, 0);">times</span> <span style="box-sizing:border-box;outline-style:none;">{</span> <span style="box-sizing:border-box;outline-style:none;">count</span> <span style="box-sizing:border-box;outline-style:none;color:rgb(102, 102, 102);">+=</span> <span style="box-sizing:border-box;outline-style:none;color:rgb(102, 102, 102);">1</span><span style="box-sizing:border-box;outline-style:none;">}</span>
+    <span style="box-sizing:border-box;outline-style:none;color:rgb(170, 34, 255);">end</span>
+  <span style="box-sizing:border-box;outline-style:none;color:rgb(170, 34, 255);">end</span>
+  <span style="box-sizing:border-box;outline-style:none;">threads</span><span style="box-sizing:border-box;outline-style:none;">.</span><span style="box-sizing:border-box;outline-style:none;color:rgb(0, 160, 0);">map</span><span style="box-sizing:border-box;outline-style:none;">(</span><span style="box-sizing:border-box;outline-style:none;color:rgb(102, 102, 102);">&amp;</span><span style="box-sizing:border-box;outline-style:none;color:rgb(184, 134, 11);">:join</span><span style="box-sizing:border-box;outline-style:none;">)</span>
+<span style="box-sizing:border-box;outline-style:none;color:rgb(170, 34, 255);">end</span>
+
+<span style="box-sizing:border-box;outline-style:none;color:rgb(170, 34, 255);">def</span> <span style="box-sizing:border-box;outline-style:none;color:rgb(0, 160, 0);">single_threads</span>
+  <span style="box-sizing:border-box;outline-style:none;">time</span> <span style="box-sizing:border-box;outline-style:none;color:rgb(102, 102, 102);">=</span> <span style="box-sizing:border-box;outline-style:none;color:rgb(136, 0, 0);">Time</span><span style="box-sizing:border-box;outline-style:none;">.</span><span style="box-sizing:border-box;outline-style:none;color:rgb(0, 160, 0);">now</span>
+  <span style="box-sizing:border-box;outline-style:none;">count</span> <span style="box-sizing:border-box;outline-style:none;color:rgb(102, 102, 102);">=</span> <span style="box-sizing:border-box;outline-style:none;color:rgb(102, 102, 102);">0</span>
+  <span style="box-sizing:border-box;outline-style:none;color:rgb(136, 0, 0);">Thread</span><span style="box-sizing:border-box;outline-style:none;">.</span><span style="box-sizing:border-box;outline-style:none;color:rgb(0, 160, 0);">new</span> <span style="box-sizing:border-box;outline-style:none;color:rgb(170, 34, 255);">do</span>
+    <span style="box-sizing:border-box;outline-style:none;color:rgb(102, 102, 102);">10_000_000</span><span style="box-sizing:border-box;outline-style:none;">.</span><span style="box-sizing:border-box;outline-style:none;color:rgb(0, 160, 0);">times</span> <span style="box-sizing:border-box;outline-style:none;">{</span> <span style="box-sizing:border-box;outline-style:none;">count</span> <span style="box-sizing:border-box;outline-style:none;color:rgb(102, 102, 102);">+=</span> <span style="box-sizing:border-box;outline-style:none;color:rgb(102, 102, 102);">1</span><span style="box-sizing:border-box;outline-style:none;">}</span>
+  <span style="box-sizing:border-box;outline-style:none;color:rgb(170, 34, 255);">end</span><span style="box-sizing:border-box;outline-style:none;">.</span><span style="box-sizing:border-box;outline-style:none;color:rgb(0, 160, 0);">join</span>
+<span style="box-sizing:border-box;outline-style:none;color:rgb(170, 34, 255);">end</span>
+
+<span style="box-sizing:border-box;outline-style:none;color:rgb(136, 0, 0);">Benchmark</span><span style="box-sizing:border-box;outline-style:none;">.</span><span style="box-sizing:border-box;outline-style:none;color:rgb(0, 160, 0);">bm</span> <span style="box-sizing:border-box;outline-style:none;color:rgb(170, 34, 255);">do</span> <span style="box-sizing:border-box;outline-style:none;color:rgb(102, 102, 102);">|</span><span style="box-sizing:border-box;outline-style:none;">b</span><span style="box-sizing:border-box;outline-style:none;color:rgb(102, 102, 102);">|</span>
+  <span style="box-sizing:border-box;outline-style:none;">b</span><span style="box-sizing:border-box;outline-style:none;">.</span><span style="box-sizing:border-box;outline-style:none;color:rgb(0, 160, 0);">report</span> <span style="box-sizing:border-box;outline-style:none;">{</span> <span style="box-sizing:border-box;outline-style:none;">multiple_threads</span> <span style="box-sizing:border-box;outline-style:none;">}</span>
+  <span style="box-sizing:border-box;outline-style:none;">b</span><span style="box-sizing:border-box;outline-style:none;">.</span><span style="box-sizing:border-box;outline-style:none;color:rgb(0, 160, 0);">report</span> <span style="box-sizing:border-box;outline-style:none;">{</span> <span style="box-sizing:border-box;outline-style:none;">single_threads</span> <span style="box-sizing:border-box;outline-style:none;">}</span>
+<span style="box-sizing:border-box;outline-style:none;color:rgb(170, 34, 255);">end</span>
+
+  <span style="box-sizing:border-box;outline-style:none;">user</span>     <span style="box-sizing:border-box;outline-style:none;color:rgb(170, 34, 255);">system</span>      <span style="box-sizing:border-box;outline-style:none;">total</span>        <span style="box-sizing:border-box;outline-style:none;">real</span>
+<span style="box-sizing:border-box;outline-style:none;color:rgb(102, 102, 102);">0.510000</span>   <span style="box-sizing:border-box;outline-style:none;color:rgb(102, 102, 102);">0.000000</span>   <span style="box-sizing:border-box;outline-style:none;color:rgb(102, 102, 102);">0.510000</span> <span style="box-sizing:border-box;outline-style:none;">(</span>  <span style="box-sizing:border-box;outline-style:none;color:rgb(102, 102, 102);">0.508958</span><span style="box-sizing:border-box;outline-style:none;">)</span>
+<span style="box-sizing:border-box;outline-style:none;color:rgb(102, 102, 102);">0.500000</span>   <span style="box-sizing:border-box;outline-style:none;color:rgb(102, 102, 102);">0.000000</span>   <span style="box-sizing:border-box;outline-style:none;color:rgb(102, 102, 102);">0.500000</span> <span style="box-sizing:border-box;outline-style:none;">(</span>  <span style="box-sizing:border-box;outline-style:none;color:rgb(102, 102, 102);">0.506755</span><span style="box-sizing:border-box;outline-style:none;">)</span>
+</code></pre>
+<p style="box-sizing:border-box;margin-top:0px;outline-style:none;margin-bottom:1.2em;font-size:1em;line-height:1.8em;">从这里可以看出， 即便我们将同一个任务分成了 4 个线程并行， 但是时间并没有减少， 这是为什么呢？ </p>
+
+<p style="box-sizing:border-box;margin-top:0px;outline-style:none;margin-bottom:1.2em;font-size:1em;line-height:1.8em;">因为有 GIL 的存在！！！</p>
+<h2 style="box-sizing:border-box;outline-style:none;margin-bottom:10px;margin:0px 0px 20px;font-weight:700;line-height:100%;text-align:left;color:rgb(64, 64, 64);font-size:20px;">全局锁</h2>
+<p style="box-sizing:border-box;margin-top:0px;outline-style:none;margin-bottom:1.2em;font-size:1em;line-height:1.8em;">MRI， 也就是我们通常使用的 ruby 采用了一种称之为 GIL 的机制， 看看它的解释：</p>
+
+<blockquote style="box-sizing:border-box;margin:0px 0px 1rem;outline-style:none;margin-bottom:1.2em;padding:0px 0px 0px 32px;border:0px;quotes:&quot;“&quot; &quot;”&quot; &quot;‘&quot; &quot;’&quot;;position:relative;line-height:1.45;"><span style="quotes:&quot;“&quot; &quot;”&quot; &quot;‘&quot; &quot;’&quot;;line-height:1.45;display:block;font-size:2.8em;position:absolute;font-family:serif;left:0px;top:-10px;color:rgb(204, 204, 204);">“</span>
+<p style="box-sizing:border-box;margin-top:0px;outline-style:none;margin-bottom:1.2em;font-size:1em;line-height:1.8em;display:inline;color:grey;">The GIL is a global lock around the execution of Ruby code</p>
+
+<p style="box-sizing:border-box;margin-top:0px;outline-style:none;margin-bottom:1.2em;font-size:1em;line-height:1.8em;display:inline;color:grey;">If one of those MRI processes spawns multiple threads, that group of threads will share the GIL for that process.</p>
+
+<p style="box-sizing:border-box;margin-top:0px;outline-style:none;margin-bottom:1.2em;font-size:1em;line-height:1.8em;display:inline;color:grey;">If one of these threads wants to execute some Ruby code, it will have to acquire this lock. One, and only one, thread can hold the lock at any given time. While one thread holds the lock, other threads need to wait for their turn to acquire the lock</p>
+
+<p style="box-sizing:border-box;margin-top:0px;outline-style:none;font-size:1em;line-height:1.8em;display:inline;color:grey;margin-bottom:0px;">--------- Working With Ruby Threads By Jesse Storimer -----------</p>
+<span style="quotes:&quot;“&quot; &quot;”&quot; &quot;‘&quot; &quot;’&quot;;line-height:1.45;display:block;font-size:2.8em;position:absolute;font-family:serif;left:0px;top:-10px;color:rgb(204, 204, 204);">“</span></blockquote>
+
+<p style="box-sizing:border-box;margin-top:0px;outline-style:none;margin-bottom:1.2em;font-size:1em;line-height:1.8em;">也就是说， 即便我们希望使用多线程来实现代码的并行， 由于这个全局锁的存在， 每次只有一个线程能够执行代码，至于哪个线程能够执行， 这个取决于底层操作系统的实现。<br style="box-sizing:border-box;outline-style:none;"/>
+即便我们拥有多个 CPU， 也只是为每个线程的执行多提供了几个选择而已。</p>
+
+<p style="box-sizing:border-box;margin-top:0px;outline-style:none;margin-bottom:1.2em;font-size:1em;line-height:1.8em;">但是我们之前<code style="box-sizing:border-box;font-family:SFMono-Regular, Menlo, Monaco, Consolas, &quot;Liberation Mono&quot;, &quot;Courier New&quot;, monospace;overflow-wrap:break-word;outline-style:none;display:inline-block;border:0px;margin:0px 2px;border-radius:3px;word-break:break-all;font-size:0.9em;background-color:rgb(242, 242, 242);padding:0px 8px;color:rgb(102, 102, 102);">sleep</code>的时候， 明明实现了并行啊！ </p>
+
+<p style="box-sizing:border-box;margin-top:0px;outline-style:none;margin-bottom:1.2em;font-size:1em;line-height:1.8em;">这个就是 Ruby 设计高级的地方——所有的阻塞操作是可以并行的， 也就是说包括读写文件， 网络请求在内的操作都是可以并行的， 有代码为证：）</p>
+<pre style="box-sizing:border-box;display:block;outline-style:none;margin-bottom:1.2em;background-color:rgb(246, 248, 250);border:0px;margin-left:0px;margin-right:0px;padding:15px 25px;border-radius:0px;font-family:Menlo, Monaco, Consolas, &quot;Courier New&quot;, monospace;font-size:0.8em;margin-top:0px;overflow:auto;color:rgb(68, 68, 68);"><code style="box-sizing:border-box;font-family:SFMono-Regular, Menlo, Monaco, Consolas, &quot;Liberation Mono&quot;, &quot;Courier New&quot;, monospace;overflow-wrap:break-word;outline-style:none;line-height:150%;margin:0px 2px;border-radius:3px;word-break:break-all;display:inline-block;color:rgb(102, 102, 102);padding:0px 8px;background-color:rgba(0, 0, 0, 0);border:none;font-size:1em;"><span style="box-sizing:border-box;outline-style:none;color:rgb(170, 34, 255);">require</span> <span style="box-sizing:border-box;outline-style:none;color:rgb(187, 68, 68);">'benchmark'</span>
+<span style="box-sizing:border-box;outline-style:none;color:rgb(170, 34, 255);">require</span> <span style="box-sizing:border-box;outline-style:none;color:rgb(187, 68, 68);">'net/http'</span>
+
+<span style="box-sizing:border-box;outline-style:none;color:rgb(170, 34, 255);">def</span> <span style="box-sizing:border-box;outline-style:none;color:rgb(0, 160, 0);">multiple_threads</span>
+  <span style="box-sizing:border-box;outline-style:none;">uri</span> <span style="box-sizing:border-box;outline-style:none;color:rgb(102, 102, 102);">=</span> <span style="box-sizing:border-box;outline-style:none;color:rgb(136, 0, 0);">URI</span><span style="box-sizing:border-box;outline-style:none;">(</span><span style="box-sizing:border-box;outline-style:none;color:rgb(187, 68, 68);">"http://www.baidu.com"</span><span style="box-sizing:border-box;outline-style:none;">)</span>
+  <span style="box-sizing:border-box;outline-style:none;">threads</span> <span style="box-sizing:border-box;outline-style:none;color:rgb(102, 102, 102);">=</span> <span style="box-sizing:border-box;outline-style:none;color:rgb(102, 102, 102);">4</span><span style="box-sizing:border-box;outline-style:none;">.</span><span style="box-sizing:border-box;outline-style:none;color:rgb(0, 160, 0);">times</span><span style="box-sizing:border-box;outline-style:none;">.</span><span style="box-sizing:border-box;outline-style:none;color:rgb(0, 160, 0);">map</span> <span style="box-sizing:border-box;outline-style:none;color:rgb(170, 34, 255);">do</span> 
+    <span style="box-sizing:border-box;outline-style:none;color:rgb(136, 0, 0);">Thread</span><span style="box-sizing:border-box;outline-style:none;">.</span><span style="box-sizing:border-box;outline-style:none;color:rgb(0, 160, 0);">new</span> <span style="box-sizing:border-box;outline-style:none;color:rgb(170, 34, 255);">do</span>
+      <span style="box-sizing:border-box;outline-style:none;color:rgb(102, 102, 102);">25</span><span style="box-sizing:border-box;outline-style:none;">.</span><span style="box-sizing:border-box;outline-style:none;color:rgb(0, 160, 0);">times</span> <span style="box-sizing:border-box;outline-style:none;">{</span> <span style="box-sizing:border-box;outline-style:none;color:rgb(136, 0, 0);">Net</span><span style="box-sizing:border-box;outline-style:none;color:rgb(102, 102, 102);">::</span><span style="box-sizing:border-box;outline-style:none;color:rgb(136, 0, 0);">HTTP</span><span style="box-sizing:border-box;outline-style:none;">.</span><span style="box-sizing:border-box;outline-style:none;color:rgb(0, 160, 0);">get</span><span style="box-sizing:border-box;outline-style:none;">(</span><span style="box-sizing:border-box;outline-style:none;">uri</span><span style="box-sizing:border-box;outline-style:none;">)</span> <span style="box-sizing:border-box;outline-style:none;">}</span>
+    <span style="box-sizing:border-box;outline-style:none;color:rgb(170, 34, 255);">end</span>
+  <span style="box-sizing:border-box;outline-style:none;color:rgb(170, 34, 255);">end</span>
+  <span style="box-sizing:border-box;outline-style:none;">threads</span><span style="box-sizing:border-box;outline-style:none;">.</span><span style="box-sizing:border-box;outline-style:none;color:rgb(0, 160, 0);">map</span><span style="box-sizing:border-box;outline-style:none;">(</span><span style="box-sizing:border-box;outline-style:none;color:rgb(102, 102, 102);">&amp;</span><span style="box-sizing:border-box;outline-style:none;color:rgb(184, 134, 11);">:join</span><span style="box-sizing:border-box;outline-style:none;">)</span>
+<span style="box-sizing:border-box;outline-style:none;color:rgb(170, 34, 255);">end</span>
+
+<span style="box-sizing:border-box;outline-style:none;color:rgb(170, 34, 255);">def</span> <span style="box-sizing:border-box;outline-style:none;color:rgb(0, 160, 0);">single_threads</span>
+  <span style="box-sizing:border-box;outline-style:none;">uri</span> <span style="box-sizing:border-box;outline-style:none;color:rgb(102, 102, 102);">=</span> <span style="box-sizing:border-box;outline-style:none;color:rgb(136, 0, 0);">URI</span><span style="box-sizing:border-box;outline-style:none;">(</span><span style="box-sizing:border-box;outline-style:none;color:rgb(187, 68, 68);">"http://www.baidu.com"</span><span style="box-sizing:border-box;outline-style:none;">)</span>
+  <span style="box-sizing:border-box;outline-style:none;color:rgb(136, 0, 0);">Thread</span><span style="box-sizing:border-box;outline-style:none;">.</span><span style="box-sizing:border-box;outline-style:none;color:rgb(0, 160, 0);">new</span> <span style="box-sizing:border-box;outline-style:none;color:rgb(170, 34, 255);">do</span>
+    <span style="box-sizing:border-box;outline-style:none;color:rgb(102, 102, 102);">100</span><span style="box-sizing:border-box;outline-style:none;">.</span><span style="box-sizing:border-box;outline-style:none;color:rgb(0, 160, 0);">times</span> <span style="box-sizing:border-box;outline-style:none;">{</span> <span style="box-sizing:border-box;outline-style:none;color:rgb(136, 0, 0);">Net</span><span style="box-sizing:border-box;outline-style:none;color:rgb(102, 102, 102);">::</span><span style="box-sizing:border-box;outline-style:none;color:rgb(136, 0, 0);">HTTP</span><span style="box-sizing:border-box;outline-style:none;">.</span><span style="box-sizing:border-box;outline-style:none;color:rgb(0, 160, 0);">get</span><span style="box-sizing:border-box;outline-style:none;">(</span><span style="box-sizing:border-box;outline-style:none;">uri</span><span style="box-sizing:border-box;outline-style:none;">)</span> <span style="box-sizing:border-box;outline-style:none;">}</span>
+  <span style="box-sizing:border-box;outline-style:none;color:rgb(170, 34, 255);">end</span><span style="box-sizing:border-box;outline-style:none;">.</span><span style="box-sizing:border-box;outline-style:none;color:rgb(0, 160, 0);">join</span>
+<span style="box-sizing:border-box;outline-style:none;color:rgb(170, 34, 255);">end</span>
+
+<span style="box-sizing:border-box;outline-style:none;color:rgb(136, 0, 0);">Benchmark</span><span style="box-sizing:border-box;outline-style:none;">.</span><span style="box-sizing:border-box;outline-style:none;color:rgb(0, 160, 0);">bm</span> <span style="box-sizing:border-box;outline-style:none;color:rgb(170, 34, 255);">do</span> <span style="box-sizing:border-box;outline-style:none;color:rgb(102, 102, 102);">|</span><span style="box-sizing:border-box;outline-style:none;">b</span><span style="box-sizing:border-box;outline-style:none;color:rgb(102, 102, 102);">|</span>
+  <span style="box-sizing:border-box;outline-style:none;">b</span><span style="box-sizing:border-box;outline-style:none;">.</span><span style="box-sizing:border-box;outline-style:none;color:rgb(0, 160, 0);">report</span> <span style="box-sizing:border-box;outline-style:none;">{</span> <span style="box-sizing:border-box;outline-style:none;">multiple_threads</span> <span style="box-sizing:border-box;outline-style:none;">}</span>
+  <span style="box-sizing:border-box;outline-style:none;">b</span><span style="box-sizing:border-box;outline-style:none;">.</span><span style="box-sizing:border-box;outline-style:none;color:rgb(0, 160, 0);">report</span> <span style="box-sizing:border-box;outline-style:none;">{</span> <span style="box-sizing:border-box;outline-style:none;">single_threads</span> <span style="box-sizing:border-box;outline-style:none;">}</span>
+<span style="box-sizing:border-box;outline-style:none;color:rgb(170, 34, 255);">end</span>
+
+  <span style="box-sizing:border-box;outline-style:none;">user</span>     <span style="box-sizing:border-box;outline-style:none;color:rgb(170, 34, 255);">system</span>      <span style="box-sizing:border-box;outline-style:none;">total</span>        <span style="box-sizing:border-box;outline-style:none;">real</span>
+<span style="box-sizing:border-box;outline-style:none;color:rgb(102, 102, 102);">0.240000</span>   <span style="box-sizing:border-box;outline-style:none;color:rgb(102, 102, 102);">0.110000</span>   <span style="box-sizing:border-box;outline-style:none;color:rgb(102, 102, 102);">0.350000</span> <span style="box-sizing:border-box;outline-style:none;">(</span>  <span style="box-sizing:border-box;outline-style:none;color:rgb(102, 102, 102);">3.659640</span><span style="box-sizing:border-box;outline-style:none;">)</span>
+<span style="box-sizing:border-box;outline-style:none;color:rgb(102, 102, 102);">0.270000</span>   <span style="box-sizing:border-box;outline-style:none;color:rgb(102, 102, 102);">0.120000</span>   <span style="box-sizing:border-box;outline-style:none;color:rgb(102, 102, 102);">0.390000</span> <span style="box-sizing:border-box;outline-style:none;">(</span> <span style="box-sizing:border-box;outline-style:none;color:rgb(102, 102, 102);">14.167703</span><span style="box-sizing:border-box;outline-style:none;">)</span>
+
+</code></pre>
+<p style="box-sizing:border-box;margin-top:0px;outline-style:none;margin-bottom:1.2em;font-size:1em;line-height:1.8em;">那么， 既然有了这个锁的存在， 是否意味着我们的代码就是线程安全了呢？ 很遗憾， 不是！因为我们无法控制什么时候操作系统会终止我们当前线程的执行， 并切换到另外一个线程上。</p>
+<pre style="box-sizing:border-box;display:block;outline-style:none;margin-bottom:1.2em;background-color:rgb(246, 248, 250);border:0px;margin-left:0px;margin-right:0px;padding:15px 25px;border-radius:0px;font-family:Menlo, Monaco, Consolas, &quot;Courier New&quot;, monospace;font-size:0.8em;margin-top:0px;overflow:auto;color:rgb(68, 68, 68);"><code style="box-sizing:border-box;font-family:SFMono-Regular, Menlo, Monaco, Consolas, &quot;Liberation Mono&quot;, &quot;Courier New&quot;, monospace;overflow-wrap:break-word;outline-style:none;line-height:150%;margin:0px 2px;border-radius:3px;word-break:break-all;display:inline-block;color:rgb(102, 102, 102);padding:0px 8px;background-color:rgba(0, 0, 0, 0);border:none;font-size:1em;"><span style="box-sizing:border-box;outline-style:none;color:rgb(170, 34, 255);">class</span> <span style="box-sizing:border-box;outline-style:none;color:rgb(0, 0, 255);">MultipleThreadTest</span>
+  <span style="box-sizing:border-box;outline-style:none;color:rgb(184, 134, 11);">@n</span> <span style="box-sizing:border-box;outline-style:none;color:rgb(102, 102, 102);">=</span> <span style="box-sizing:border-box;outline-style:none;color:rgb(102, 102, 102);">0</span>
+  <span style="box-sizing:border-box;outline-style:none;color:rgb(170, 34, 255);">def</span> <span style="box-sizing:border-box;outline-style:none;color:rgb(0, 0, 255);">self</span><span style="box-sizing:border-box;outline-style:none;color:rgb(102, 102, 102);">.</span><span style="box-sizing:border-box;outline-style:none;color:rgb(0, 160, 0);">cal</span>
+    <span style="box-sizing:border-box;outline-style:none;color:rgb(102, 102, 102);">10000</span><span style="box-sizing:border-box;outline-style:none;">.</span><span style="box-sizing:border-box;outline-style:none;color:rgb(0, 160, 0);">times</span><span style="box-sizing:border-box;outline-style:none;">.</span><span style="box-sizing:border-box;outline-style:none;color:rgb(0, 160, 0);">map</span> <span style="box-sizing:border-box;outline-style:none;color:rgb(170, 34, 255);">do</span>
+      <span style="box-sizing:border-box;outline-style:none;color:rgb(136, 0, 0);">Thread</span><span style="box-sizing:border-box;outline-style:none;">.</span><span style="box-sizing:border-box;outline-style:none;color:rgb(0, 160, 0);">start</span> <span style="box-sizing:border-box;outline-style:none;">{</span> <span style="box-sizing:border-box;outline-style:none;color:rgb(184, 134, 11);">@n</span> <span style="box-sizing:border-box;outline-style:none;color:rgb(102, 102, 102);">+=</span> <span style="box-sizing:border-box;outline-style:none;color:rgb(102, 102, 102);">1</span>  <span style="box-sizing:border-box;outline-style:none;">}</span>
+    <span style="box-sizing:border-box;outline-style:none;color:rgb(170, 34, 255);">end</span>
+    <span style="box-sizing:border-box;outline-style:none;color:rgb(184, 134, 11);">@n</span>
+  <span style="box-sizing:border-box;outline-style:none;color:rgb(170, 34, 255);">end</span>
+<span style="box-sizing:border-box;outline-style:none;color:rgb(170, 34, 255);">end</span>
+<span style="box-sizing:border-box;outline-style:none;color:rgb(170, 34, 255);">p</span> <span style="box-sizing:border-box;outline-style:none;color:rgb(136, 0, 0);">MultipleThreadTest</span><span style="box-sizing:border-box;outline-style:none;">.</span><span style="box-sizing:border-box;outline-style:none;color:rgb(0, 160, 0);">cal</span> <span style="box-sizing:border-box;outline-style:none;color:rgb(176, 178, 176);font-style:italic;"># 9584</span>
+</code></pre>
+<p style="box-sizing:border-box;margin-top:0px;outline-style:none;margin-bottom:1.2em;font-size:1em;line-height:1.8em;">对于<code style="box-sizing:border-box;font-family:SFMono-Regular, Menlo, Monaco, Consolas, &quot;Liberation Mono&quot;, &quot;Courier New&quot;, monospace;overflow-wrap:break-word;outline-style:none;display:inline-block;border:0px;margin:0px 2px;border-radius:3px;word-break:break-all;font-size:0.9em;background-color:rgb(242, 242, 242);padding:0px 8px;color:rgb(102, 102, 102);">n += 1</code>这种非线程安全的代码， 即便有锁的存在, 依旧是不安全的。</p>
+
+<p style="box-sizing:border-box;margin-top:0px;outline-style:none;margin-bottom:1.2em;font-size:1em;line-height:1.8em;">最后， 我们用 Sidekiq 的作者 Mike Perham 的话来结束这篇入门文章：</p>
+
+<blockquote style="box-sizing:border-box;margin:0px 0px 1rem;outline-style:none;margin-bottom:1.2em;padding:0px 0px 0px 32px;border:0px;quotes:&quot;“&quot; &quot;”&quot; &quot;‘&quot; &quot;’&quot;;position:relative;line-height:1.45;"><span style="quotes:&quot;“&quot; &quot;”&quot; &quot;‘&quot; &quot;’&quot;;line-height:1.45;display:block;font-size:2.8em;position:absolute;font-family:serif;left:0px;top:-10px;color:rgb(204, 204, 204);">“</span>
+<p style="box-sizing:border-box;margin-top:0px;outline-style:none;font-size:1em;line-height:1.8em;display:inline;color:grey;margin-bottom:0px;">As soon as you introduce the Thread constant, you've probably just introduced 5 new bugs into your code.</p>
+<span style="quotes:&quot;“&quot; &quot;”&quot; &quot;‘&quot; &quot;’&quot;;line-height:1.45;display:block;font-size:2.8em;position:absolute;font-family:serif;left:0px;top:-10px;color:rgb(204, 204, 204);">“</span></blockquote>
+
+<p style="box-sizing:border-box;margin-top:0px;outline-style:none;font-size:1em;line-height:1.8em;margin-bottom:0px;">更多的内容请参考：《Working With Ruby Thread》这本书 : )</p>
+        
+      </div>
+      <div style="box-sizing:border-box;outline-style:none;border-top:1px solid rgba(0, 0, 0, 0.125);border-radius:0px 0px calc(0.25rem - 1px) calc(0.25rem - 1px);border:0px;padding:0px 25px 25px;font-size:16px;padding-left:25px;padding-right:25px;background:transparent;">
+        <div style="box-sizing:border-box;outline-style:none;color:rgb(102, 102, 102);">
+    <a href="https://ruby-china.org/topics/32902#" style="box-sizing:border-box;background-color:transparent;outline-style:none;display:inline-block;border-radius:5px;line-height:100%;padding:5px 8px;color:rgb(64, 64, 64);text-decoration:none;"><i style="box-sizing:border-box;outline-style:none;-webkit-font-smoothing:antialiased;display:inline-block;font-style:normal;font-feature-settings:normal;font-variant:normal;text-rendering:auto;line-height:1;font-family:&quot;Font Awesome 5 Free&quot;;font-weight:900;"><span style="font-style:normal;font-variant:normal;line-height:1;font-family:Font Awesome 5 Free;font-weight:900;"></span></i> <span style="box-sizing:border-box;outline-style:none;">53 个赞</span></a>
+    <a href="https://ruby-china.org/topics/32902#" style="box-sizing:border-box;background-color:transparent;outline-style:none;display:inline-block;border-radius:5px;line-height:100%;padding:5px 8px;color:rgb(64, 64, 64);text-decoration:none;"><i style="box-sizing:border-box;outline-style:none;-webkit-font-smoothing:antialiased;display:inline-block;font-style:normal;font-feature-settings:normal;font-variant:normal;text-rendering:auto;line-height:1;font-family:&quot;Font Awesome 5 Free&quot;;font-weight:900;"><span style="font-style:normal;font-variant:normal;line-height:1;font-family:Font Awesome 5 Free;font-weight:900;"></span></i> 订阅</a>
+    <a title="收藏" href="https://ruby-china.org/topics/32902#" style="box-sizing:border-box;background-color:transparent;outline-style:none;display:inline-block;border-radius:5px;line-height:100%;padding:5px 8px;color:rgb(64, 64, 64);text-decoration:none;"><i style="box-sizing:border-box;outline-style:none;-webkit-font-smoothing:antialiased;display:inline-block;font-style:normal;font-feature-settings:normal;font-variant:normal;text-rendering:auto;line-height:1;font-family:&quot;Font Awesome 5 Free&quot;;font-weight:900;"><span style="font-style:normal;font-variant:normal;line-height:1;font-family:Font Awesome 5 Free;font-weight:900;"></span></i> 收藏</a>
+  <span style="box-sizing:border-box;outline-style:none;float:right;color:rgb(102, 102, 102);">
+  </span>
+</div>
+
+      <span style="font-size:16px;display:block;clear:both;"></span></div>
+    </div></div></div></div></div></div></div>
+</div>
+</div>
+<a class="back-link" href="../articles.html">← 返回笔记列表</a>
+</body>
+</html>

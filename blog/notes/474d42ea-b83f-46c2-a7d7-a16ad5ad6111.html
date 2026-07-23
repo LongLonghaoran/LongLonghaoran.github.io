@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="zh-CN" data-theme="light">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>helm — 技术笔记</title>
+<style>
+:root {
+  --bg: #ffffff;
+  --text: #1a1a1a;
+  --muted: #666;
+  --border: #e0e0e0;
+  --code-bg: #f5f5f5;
+  --link: #0066cc;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #1a1a1a;
+    --text: #e0e0e0;
+    --muted: #999;
+    --border: #333;
+    --code-bg: #2a2a2a;
+    --link: #66bbff;
+  }
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  line-height: 1.7;
+  color: var(--text);
+  background: var(--bg);
+  max-width: 860px;
+  margin: 0 auto;
+  padding: 2rem 1.5rem;
+}
+.note-header {
+  border-bottom: 2px solid var(--border);
+  padding-bottom: 1rem;
+  margin-bottom: 2rem;
+}
+.note-title {
+  font-size: 1.6rem;
+  font-weight: 700;
+  margin-bottom: 0.3rem;
+}
+.note-meta {
+  color: var(--muted);
+  font-size: 0.85rem;
+}
+.note-content {
+  font-size: 0.95rem;
+}
+.note-content h1 { font-size: 1.4rem; margin: 1.2rem 0 0.6rem; }
+.note-content h2 { font-size: 1.2rem; margin: 1rem 0 0.5rem; }
+.note-content h3 { font-size: 1.05rem; margin: 0.8rem 0 0.4rem; }
+.note-content p { margin: 0.5rem 0; }
+.note-content ul, .note-content ol { margin: 0.5rem 0 0.5rem 2rem; }
+.note-content li { margin: 0.2rem 0; }
+.note-content pre {
+  background: var(--code-bg);
+  padding: 1rem;
+  border-radius: 6px;
+  overflow-x: auto;
+  margin: 0.8rem 0;
+  font-size: 0.85rem;
+}
+.note-content code {
+  background: var(--code-bg);
+  padding: 0.1rem 0.3rem;
+  border-radius: 3px;
+  font-size: 0.88em;
+}
+.note-content pre code {
+  background: none;
+  padding: 0;
+}
+.note-content blockquote {
+  border-left: 3px solid var(--border);
+  padding-left: 1rem;
+  color: var(--muted);
+  margin: 0.8rem 0;
+}
+.note-content a { color: var(--link); }
+.note-content img {
+  max-width: 100%;
+  height: auto;
+  border-radius: 6px;
+  margin: 0.5rem 0;
+}
+.note-content table {
+  border-collapse: collapse;
+  width: 100%;
+  margin: 0.8rem 0;
+}
+.note-content th, .note-content td {
+  border: 1px solid var(--border);
+  padding: 0.5rem;
+}
+.note-content th { background: var(--code-bg); }
+.media-placeholder {
+  background: var(--code-bg);
+  padding: 1rem;
+  text-align: center;
+  color: var(--muted);
+  border-radius: 6px;
+  margin: 0.5rem 0;
+  font-size: 0.85rem;
+}
+.encrypt-placeholder {
+  background: #fff3cd;
+  padding: 0.5rem;
+  text-align: center;
+  color: #856404;
+  border-radius: 6px;
+  margin: 0.5rem 0;
+  font-size: 0.85rem;
+}
+.back-link {
+  display: inline-block;
+  margin-top: 2rem;
+  color: var(--link);
+  text-decoration: none;
+  font-size: 0.85rem;
+}
+</style>
+</head>
+<body>
+<div class="note-header">
+  <div class="note-title">helm</div>
+  <div class="note-meta">笔记本：Kubernetes学习笔记</div>
+</div>
+<div class="note-content">
+<div>kubernetes包管理器</div><div>教程:</div><div>快速入门:</div><div>1.添加一个仓库: helm repo add bitnami <a href="https://xx/">https://xx</a></div><div>2.可以搜索可以被安装的charts列表: helm search repo bitnami</div><div>3.安装chart: helm repo update &amp;&amp; helm install bitnami/mysql --genetate-name</div><div>4.了解chart基本信息: helm show chart bitnami/mysql</div><div><br /></div><div>使用helm:</div><div>三大概念: </div><div>chart: helm包，包含所有部署所需的资源定义。</div><div>repo: 存放charts的地方。</div><div>release是运行在k8s中的chart的实例</div><div><br /></div><div>helm search:</div><div>helm search hub 从artifact Hub中查找并列出charts。</div><div>helm search repo 从你添加的repo中进行查找,该命令基于本地数据搜索，无需联网</div><div><br /></div><div>helm install:</div><div>最简单的两个参数: release名字  chart名字, 其中chart名字中需要包含repo名字，以repo-name/chart-name的形式表示</div><div><br /></div><div>helm create:</div><div>创建自己的helm chart, helm create mychart,会创建一个mychart目录，里面含有一个空的chart具备的必要文件</div><div>helm package mychart指定chart目录进行打包，打包为mychart-0.0.1.tgz</div><div>安装helm install mychart ./mychart-0.0.1.tgz，安装本地chart</div><div><br /></div><div>Extras:</div><div>将远端的chart下载到本地查看或者修改重新打包:</div><div>helm search hub mysql --list-repo-url 远端仓库名字,并打印远端仓库url</div><div>helm repo add <a href="https://xx">https://xx</a> <span> </span>将远端仓库添加到本地</div><div>helm search repo mysql 以仓库名字搜索本地chart，这样该仓库下的chart都会搜索出来</div><div>helm pull --untardir mysql mysql/xxx 将该chart下载并解压下来到本地目录中</div><div>之后可以查看该chart内容，也可以对其修改后使用helm package来重新打包</div>
+</div>
+<a class="back-link" href="../articles.html">← 返回笔记列表</a>
+</body>
+</html>

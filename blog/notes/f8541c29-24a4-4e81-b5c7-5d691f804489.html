@@ -1,0 +1,209 @@
+<!DOCTYPE html>
+<html lang="zh-CN" data-theme="light">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Grpc: Introduction to gRPC | gRPC — 技术笔记</title>
+<style>
+:root {
+  --bg: #ffffff;
+  --text: #1a1a1a;
+  --muted: #666;
+  --border: #e0e0e0;
+  --code-bg: #f5f5f5;
+  --link: #0066cc;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #1a1a1a;
+    --text: #e0e0e0;
+    --muted: #999;
+    --border: #333;
+    --code-bg: #2a2a2a;
+    --link: #66bbff;
+  }
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  line-height: 1.7;
+  color: var(--text);
+  background: var(--bg);
+  max-width: 860px;
+  margin: 0 auto;
+  padding: 2rem 1.5rem;
+}
+.note-header {
+  border-bottom: 2px solid var(--border);
+  padding-bottom: 1rem;
+  margin-bottom: 2rem;
+}
+.note-title {
+  font-size: 1.6rem;
+  font-weight: 700;
+  margin-bottom: 0.3rem;
+}
+.note-meta {
+  color: var(--muted);
+  font-size: 0.85rem;
+}
+.note-content {
+  font-size: 0.95rem;
+}
+.note-content h1 { font-size: 1.4rem; margin: 1.2rem 0 0.6rem; }
+.note-content h2 { font-size: 1.2rem; margin: 1rem 0 0.5rem; }
+.note-content h3 { font-size: 1.05rem; margin: 0.8rem 0 0.4rem; }
+.note-content p { margin: 0.5rem 0; }
+.note-content ul, .note-content ol { margin: 0.5rem 0 0.5rem 2rem; }
+.note-content li { margin: 0.2rem 0; }
+.note-content pre {
+  background: var(--code-bg);
+  padding: 1rem;
+  border-radius: 6px;
+  overflow-x: auto;
+  margin: 0.8rem 0;
+  font-size: 0.85rem;
+}
+.note-content code {
+  background: var(--code-bg);
+  padding: 0.1rem 0.3rem;
+  border-radius: 3px;
+  font-size: 0.88em;
+}
+.note-content pre code {
+  background: none;
+  padding: 0;
+}
+.note-content blockquote {
+  border-left: 3px solid var(--border);
+  padding-left: 1rem;
+  color: var(--muted);
+  margin: 0.8rem 0;
+}
+.note-content a { color: var(--link); }
+.note-content img {
+  max-width: 100%;
+  height: auto;
+  border-radius: 6px;
+  margin: 0.5rem 0;
+}
+.note-content table {
+  border-collapse: collapse;
+  width: 100%;
+  margin: 0.8rem 0;
+}
+.note-content th, .note-content td {
+  border: 1px solid var(--border);
+  padding: 0.5rem;
+}
+.note-content th { background: var(--code-bg); }
+.media-placeholder {
+  background: var(--code-bg);
+  padding: 1rem;
+  text-align: center;
+  color: var(--muted);
+  border-radius: 6px;
+  margin: 0.5rem 0;
+  font-size: 0.85rem;
+}
+.encrypt-placeholder {
+  background: #fff3cd;
+  padding: 0.5rem;
+  text-align: center;
+  color: #856404;
+  border-radius: 6px;
+  margin: 0.5rem 0;
+  font-size: 0.85rem;
+}
+.back-link {
+  display: inline-block;
+  margin-top: 2rem;
+  color: var(--link);
+  text-decoration: none;
+  font-size: 0.85rem;
+}
+</style>
+</head>
+<body>
+<div class="note-header">
+  <div class="note-title">Grpc: Introduction to gRPC | gRPC</div>
+  <div class="note-meta">笔记本：Grpc</div>
+</div>
+<div class="note-content">
+<div style="--en-clipped-content:article; --en-clipped-source-url:https://grpc.io/docs/what-is-grpc/introduction/; --en-clipped-source-title:Grpc: Introduction to gRPC | gRPC;">
+<div><br/></div><div style="min-height: 2967px; font-size: 16px; display: flex; min-width: 100%; position: relative;"> <div style="box-sizing:border-box;font-family:sans-serif;line-height:1.15;text-size-adjust:100%;-webkit-tap-highlight-color:transparent;"><div style="box-sizing:border-box;font-family:&quot;open sans&quot;, -apple-system, BlinkMacSystemFont, &quot;segoe ui&quot;, Roboto, &quot;helvetica neue&quot;, Arial, sans-serif, &quot;apple color emoji&quot;, &quot;segoe ui emoji&quot;, &quot;segoe ui symbol&quot;;font-size:16px;font-weight:400;line-height:1.5;color:rgb(34, 34, 34);text-align:left;background-color:rgb(255, 255, 255);"><div style="box-sizing:border-box;"><div style="box-sizing:border-box;"><div style="box-sizing:border-box;"><span style="box-sizing:border-box;"><div style="box-sizing:border-box;display:block;"><ol style="box-sizing:border-box;margin-top:0px;display:flex;flex-wrap:wrap;padding:0.75rem 1rem;list-style:none;margin-bottom:16px;background:inherit;padding-left:0px;padding-top:0px;"><li style="box-sizing:border-box;"><a href="https://grpc.io/docs/" style="box-sizing:border-box;color:rgb(55, 156, 156);text-decoration:none;background-color:transparent;">Docs</a></li><li style="box-sizing:border-box;padding-left:8px;"><span style="float:left;padding-right:0.5rem;color:rgb(121, 118, 118);">/</span><a href="https://grpc.io/docs/what-is-grpc/" style="box-sizing:border-box;color:rgb(55, 156, 156);text-decoration:none;background-color:transparent;">What is gRPC?</a></li><li style="box-sizing:border-box;padding-left:8px;color:rgb(121, 118, 118);"><span style="color:rgb(121, 118, 118);float:left;padding-right:0.5rem;">/</span><a href="https://grpc.io/docs/what-is-grpc/introduction/" style="box-sizing:border-box;background-color:transparent;font-weight:400;text-decoration:none;pointer-events:none;color:rgb(121, 118, 118);">Introduction</a></li></ol></div><h1 style="box-sizing:border-box;margin-top:0px;line-height:1.2;font-size:36px;margin-bottom:24px;font-weight:700;">Introduction to gRPC</h1><p style="box-sizing:border-box;margin-top:0px;margin-bottom:16px;font-size:20px;font-weight:300;padding-bottom:8px;">An introduction to gRPC and protocol buffers.</p><div style="box-sizing:border-box;order:1;word-break:break-word;max-width:1140px;margin-top:24px;"><div style="box-sizing:border-box;display:block;margin-bottom:24px;"></div><p style="box-sizing:border-box;margin-top:0px;margin-bottom:16px;max-width:80%;font-weight:400;">This page introduces you to gRPC and protocol buffers. gRPC can use
+protocol buffers as both its Interface Definition Language (<strong style="box-sizing:border-box;font-weight:700;">IDL</strong>) and as its underlying message
+interchange format. If you’re new to gRPC and/or protocol buffers, read this!
+If you just want to dive in and see gRPC in action first,
+<a href="https://grpc.io/docs/languages/" style="box-sizing:border-box;color:rgb(55, 156, 156);text-decoration:none;background-color:transparent;">select a language</a> and try its <strong style="box-sizing:border-box;font-weight:700;">Quick start</strong>.</p><h2 style="box-sizing:border-box;font-weight:500;line-height:1.2;font-size:32px;max-width:80%;margin-bottom:16px;margin-top:48px;"><span style="font-weight:500;line-height:1.2;font-size:32px;display:block;margin-top:-5rem;height:5rem;visibility:hidden;"> </span>Overview<a href="https://grpc.io/docs/what-is-grpc/introduction/#overview" style="box-sizing:border-box;color:rgb(55, 156, 156);text-decoration:none;background-color:transparent;visibility:hidden;"> <div class="media-placeholder">[图片/附件]</div></en-media></a></h2><p style="box-sizing:border-box;margin-top:0px;margin-bottom:16px;max-width:80%;font-weight:400;">In gRPC, a client application can directly call a method on a server application
+on a different machine as if it were a local object, making it easier for you to
+create distributed applications and services. As in many RPC systems, gRPC is
+based around the idea of defining a service, specifying the methods that can be
+called remotely with their parameters and return types. On the server side, the
+server implements this interface and runs a gRPC server to handle client calls.
+On the client side, the client has a stub (referred to as just a client in some
+languages) that provides the same methods as the server.</p><p style="box-sizing:border-box;margin-top:0px;margin-bottom:16px;max-width:80%;font-weight:400;"></p><div style="box-sizing:border-box;display:block;margin:0px 0px 1rem;max-width:80%;text-align:center;"><div class="media-placeholder">[图片/附件]</div></en-media></div><p style="box-sizing:border-box;margin-top:0px;margin-bottom:16px;max-width:80%;font-weight:400;"></p><p style="box-sizing:border-box;margin-top:0px;margin-bottom:16px;max-width:80%;font-weight:400;">gRPC clients and servers can run and talk to each other in a variety of
+environments - from servers inside Google to your own desktop - and can be
+written in any of gRPC’s supported languages. So, for example, you can easily
+create a gRPC server in Java with clients in Go, Python, or Ruby. In addition,
+the latest Google APIs will have gRPC versions of their interfaces, letting you
+easily build Google functionality into your applications.</p><h3 style="box-sizing:border-box;font-weight:500;line-height:1.2;font-size:24px;margin-top:32px;margin-bottom:16px;"><span style="font-weight:500;line-height:1.2;font-size:24px;display:block;margin-top:-5rem;height:5rem;visibility:hidden;"> </span>Working with Protocol Buffers<a href="https://grpc.io/docs/what-is-grpc/introduction/#working-with-protocol-buffers" style="box-sizing:border-box;color:rgb(55, 156, 156);text-decoration:none;background-color:transparent;visibility:hidden;"> <div class="media-placeholder">[图片/附件]</div></en-media></a></h3><p style="box-sizing:border-box;margin-top:0px;margin-bottom:16px;max-width:80%;font-weight:400;">By default, gRPC uses <a href="https://protobuf.dev/overview" target="_blank" rel="noopener" style="box-sizing:border-box;color:rgb(55, 156, 156);text-decoration:none;background-color:transparent;">Protocol Buffers<i style="box-sizing:border-box;-webkit-font-smoothing:antialiased;display:inline-block;font-style:normal;font-variant:normal;text-rendering:auto;line-height:1;font-family:&quot;font awesome 5 free&quot;;font-weight:900;"><span style="font-style:normal;font-variant:normal;line-height:1;font-family:font awesome 5 free;font-weight:900;font-size:50%;margin-left:3px;opacity:0.8;vertical-align:top;"></span></i></a>, Google’s
+mature open source mechanism for serializing structured data (although it
+can be used with other data formats such as JSON). Here’s a quick intro to how
+it works. If you’re already familiar with protocol buffers, feel free to skip
+ahead to the next section.</p><p style="box-sizing:border-box;margin-top:0px;margin-bottom:16px;max-width:80%;font-weight:400;">The first step when working with protocol buffers is to define the structure
+for the data you want to serialize in a <em style="box-sizing:border-box;">proto file</em>: this is an ordinary text
+file with a <code style="box-sizing:border-box;font-family:SFMono-Regular, Menlo, Monaco, Consolas, &quot;liberation mono&quot;, &quot;courier new&quot;, monospace;overflow-wrap:break-word;padding:0.2em 0.4em;margin:0px;word-break:normal;background-color:rgba(0, 0, 0, 0.05);border-radius:4px;font-size:85%;color:inherit;">.proto</code> extension. Protocol buffer data is structured as
+<em style="box-sizing:border-box;">messages</em>, where each message is a small logical record of information
+containing a series of name-value pairs called <em style="box-sizing:border-box;">fields</em>. Here’s a simple
+example:</p><div style="box-sizing:border-box;position:relative;display:flex;flex-direction:column;min-width:0px;overflow-wrap:break-word;background-color:rgb(255, 255, 255);background-clip:border-box;border:1px solid rgba(0, 0, 0, 0.125);max-width:80%;margin:2rem 0px;padding:0px;"><pre style="box-sizing:border-box;font-family:SFMono-Regular, Menlo, Monaco, Consolas, &quot;liberation mono&quot;, &quot;courier new&quot;, monospace;overflow:auto;display:block;color:rgb(34, 34, 34);font-size:87.5%;overflow-wrap:normal;margin:0px;padding:16px;background-color:#f0f3f3;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code style="box-sizing:border-box;font-family:SFMono-Regular, Menlo, Monaco, Consolas, &quot;liberation mono&quot;, &quot;courier new&quot;, monospace;overflow-wrap:break-word;color:inherit;padding:0px;margin:0px;white-space:pre;border:0px;font-size:100%;word-break:normal;background-color:inherit;"><span style="box-sizing:border-box;display:flex;"><span style="box-sizing:border-box;"><span style="box-sizing:border-box;color:#069;font-weight:700;">message</span> <span style="box-sizing:border-box;color:#0a8;font-weight:700;">Person</span> {<span style="box-sizing:border-box;color:#a00;background-color:#faa;">
+</span></span></span><span style="box-sizing:border-box;display:flex;"><span style="box-sizing:border-box;"><span style="box-sizing:border-box;color:#a00;background-color:#faa;"></span>  <span style="box-sizing:border-box;color:#078;font-weight:700;">string</span> name <span style="box-sizing:border-box;color:#555;">=</span> <span style="box-sizing:border-box;color:#f60;">1</span>;<span style="box-sizing:border-box;color:#a00;background-color:#faa;">
+</span></span></span><span style="box-sizing:border-box;display:flex;"><span style="box-sizing:border-box;"><span style="box-sizing:border-box;color:#a00;background-color:#faa;"></span>  <span style="box-sizing:border-box;color:#078;font-weight:700;">int32</span> id <span style="box-sizing:border-box;color:#555;">=</span> <span style="box-sizing:border-box;color:#f60;">2</span>;<span style="box-sizing:border-box;color:#a00;background-color:#faa;">
+</span></span></span><span style="box-sizing:border-box;display:flex;"><span style="box-sizing:border-box;"><span style="box-sizing:border-box;color:#a00;background-color:#faa;"></span>  <span style="box-sizing:border-box;color:#078;font-weight:700;">bool</span> has_ponycopter <span style="box-sizing:border-box;color:#555;">=</span> <span style="box-sizing:border-box;color:#f60;">3</span>;<span style="box-sizing:border-box;color:#a00;background-color:#faa;">
+</span></span></span><span style="box-sizing:border-box;display:flex;"><span style="box-sizing:border-box;"><span style="box-sizing:border-box;color:#a00;background-color:#faa;"></span>}<span style="box-sizing:border-box;color:#a00;background-color:#faa;">
+</span></span></span></code></pre></div><p style="box-sizing:border-box;margin-top:0px;margin-bottom:16px;max-width:80%;font-weight:400;">Then, once you’ve specified your data structures, you use the protocol buffer
+compiler <code style="box-sizing:border-box;font-family:SFMono-Regular, Menlo, Monaco, Consolas, &quot;liberation mono&quot;, &quot;courier new&quot;, monospace;overflow-wrap:break-word;padding:0.2em 0.4em;margin:0px;word-break:normal;background-color:rgba(0, 0, 0, 0.05);border-radius:4px;font-size:85%;color:inherit;">protoc</code> to generate data access classes in your preferred language(s)
+from your proto definition. These provide simple accessors for each field,
+like <code style="box-sizing:border-box;font-family:SFMono-Regular, Menlo, Monaco, Consolas, &quot;liberation mono&quot;, &quot;courier new&quot;, monospace;overflow-wrap:break-word;padding:0.2em 0.4em;margin:0px;word-break:normal;background-color:rgba(0, 0, 0, 0.05);border-radius:4px;font-size:85%;color:inherit;">name()</code> and <code style="box-sizing:border-box;font-family:SFMono-Regular, Menlo, Monaco, Consolas, &quot;liberation mono&quot;, &quot;courier new&quot;, monospace;overflow-wrap:break-word;padding:0.2em 0.4em;margin:0px;word-break:normal;background-color:rgba(0, 0, 0, 0.05);border-radius:4px;font-size:85%;color:inherit;">set_name()</code>, as well as methods to serialize/parse
+the whole structure to/from raw bytes. So, for instance, if your chosen
+language is C++, running the compiler on the example above will generate a
+class called <code style="box-sizing:border-box;font-family:SFMono-Regular, Menlo, Monaco, Consolas, &quot;liberation mono&quot;, &quot;courier new&quot;, monospace;overflow-wrap:break-word;padding:0.2em 0.4em;margin:0px;word-break:normal;background-color:rgba(0, 0, 0, 0.05);border-radius:4px;font-size:85%;color:inherit;">Person</code>. You can then use this class in your application to
+populate, serialize, and retrieve <code style="box-sizing:border-box;font-family:SFMono-Regular, Menlo, Monaco, Consolas, &quot;liberation mono&quot;, &quot;courier new&quot;, monospace;overflow-wrap:break-word;padding:0.2em 0.4em;margin:0px;word-break:normal;background-color:rgba(0, 0, 0, 0.05);border-radius:4px;font-size:85%;color:inherit;">Person</code> protocol buffer messages.</p><p style="box-sizing:border-box;margin-top:0px;margin-bottom:16px;max-width:80%;font-weight:400;">You define gRPC services
+in ordinary proto files, with RPC method parameters and return types specified as
+protocol buffer messages:</p><div style="box-sizing:border-box;position:relative;display:flex;flex-direction:column;min-width:0px;overflow-wrap:break-word;background-color:rgb(255, 255, 255);background-clip:border-box;border:1px solid rgba(0, 0, 0, 0.125);max-width:80%;margin:2rem 0px;padding:0px;"><pre style="box-sizing:border-box;font-family:SFMono-Regular, Menlo, Monaco, Consolas, &quot;liberation mono&quot;, &quot;courier new&quot;, monospace;overflow:auto;display:block;color:rgb(34, 34, 34);font-size:87.5%;overflow-wrap:normal;margin:0px;padding:16px;background-color:#f0f3f3;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code style="box-sizing:border-box;font-family:SFMono-Regular, Menlo, Monaco, Consolas, &quot;liberation mono&quot;, &quot;courier new&quot;, monospace;overflow-wrap:break-word;color:inherit;padding:0px;margin:0px;white-space:pre;border:0px;font-size:100%;word-break:normal;background-color:inherit;"><span style="box-sizing:border-box;display:flex;"><span style="box-sizing:border-box;"><span style="box-sizing:border-box;color:#09f;font-style:italic;">// The greeter service definition.
+</span></span></span><span style="box-sizing:border-box;display:flex;"><span style="box-sizing:border-box;"><span style="box-sizing:border-box;color:#09f;font-style:italic;"></span><span style="box-sizing:border-box;color:#069;font-weight:700;">service</span> Greeter {<span style="box-sizing:border-box;color:#a00;background-color:#faa;">
+</span></span></span><span style="box-sizing:border-box;display:flex;"><span style="box-sizing:border-box;"><span style="box-sizing:border-box;color:#a00;background-color:#faa;"></span>  <span style="box-sizing:border-box;color:#09f;font-style:italic;">// Sends a greeting
+</span></span></span><span style="box-sizing:border-box;display:flex;"><span style="box-sizing:border-box;"><span style="box-sizing:border-box;color:#09f;font-style:italic;"></span>  <span style="box-sizing:border-box;color:#069;font-weight:700;">rpc</span> SayHello (HelloRequest) <span style="box-sizing:border-box;color:#069;font-weight:700;">returns</span> (HelloReply) {}<span style="box-sizing:border-box;color:#a00;background-color:#faa;">
+</span></span></span><span style="box-sizing:border-box;display:flex;"><span style="box-sizing:border-box;"><span style="box-sizing:border-box;color:#a00;background-color:#faa;"></span>}<span style="box-sizing:border-box;color:#a00;background-color:#faa;">
+</span></span></span><span style="box-sizing:border-box;display:flex;"><span style="box-sizing:border-box;"><span style="box-sizing:border-box;color:#a00;background-color:#faa;">
+</span></span></span><span style="box-sizing:border-box;display:flex;"><span style="box-sizing:border-box;"><span style="box-sizing:border-box;color:#a00;background-color:#faa;"></span><span style="box-sizing:border-box;color:#09f;font-style:italic;">// The request message containing the user&apos;s name.
+</span></span></span><span style="box-sizing:border-box;display:flex;"><span style="box-sizing:border-box;"><span style="box-sizing:border-box;color:#09f;font-style:italic;"></span><span style="box-sizing:border-box;color:#069;font-weight:700;">message</span> <span style="box-sizing:border-box;color:#0a8;font-weight:700;">HelloRequest</span> {<span style="box-sizing:border-box;color:#a00;background-color:#faa;">
+</span></span></span><span style="box-sizing:border-box;display:flex;"><span style="box-sizing:border-box;"><span style="box-sizing:border-box;color:#a00;background-color:#faa;"></span>  <span style="box-sizing:border-box;color:#078;font-weight:700;">string</span> name <span style="box-sizing:border-box;color:#555;">=</span> <span style="box-sizing:border-box;color:#f60;">1</span>;<span style="box-sizing:border-box;color:#a00;background-color:#faa;">
+</span></span></span><span style="box-sizing:border-box;display:flex;"><span style="box-sizing:border-box;"><span style="box-sizing:border-box;color:#a00;background-color:#faa;"></span>}<span style="box-sizing:border-box;color:#a00;background-color:#faa;">
+</span></span></span><span style="box-sizing:border-box;display:flex;"><span style="box-sizing:border-box;"><span style="box-sizing:border-box;color:#a00;background-color:#faa;">
+</span></span></span><span style="box-sizing:border-box;display:flex;"><span style="box-sizing:border-box;"><span style="box-sizing:border-box;color:#a00;background-color:#faa;"></span><span style="box-sizing:border-box;color:#09f;font-style:italic;">// The response message containing the greetings
+</span></span></span><span style="box-sizing:border-box;display:flex;"><span style="box-sizing:border-box;"><span style="box-sizing:border-box;color:#09f;font-style:italic;"></span><span style="box-sizing:border-box;color:#069;font-weight:700;">message</span> <span style="box-sizing:border-box;color:#0a8;font-weight:700;">HelloReply</span> {<span style="box-sizing:border-box;color:#a00;background-color:#faa;">
+</span></span></span><span style="box-sizing:border-box;display:flex;"><span style="box-sizing:border-box;"><span style="box-sizing:border-box;color:#a00;background-color:#faa;"></span>  <span style="box-sizing:border-box;color:#078;font-weight:700;">string</span> <span style="box-sizing:border-box;color:#069;font-weight:700;">message</span> <span style="box-sizing:border-box;color:#555;">=</span> <span style="box-sizing:border-box;color:#f60;">1</span>;<span style="box-sizing:border-box;color:#a00;background-color:#faa;">
+</span></span></span><span style="box-sizing:border-box;display:flex;"><span style="box-sizing:border-box;"><span style="box-sizing:border-box;color:#a00;background-color:#faa;"></span>}<span style="box-sizing:border-box;color:#a00;background-color:#faa;">
+</span></span></span></code></pre></div><p style="box-sizing:border-box;margin-top:0px;margin-bottom:16px;max-width:80%;font-weight:400;">gRPC uses <code style="box-sizing:border-box;font-family:SFMono-Regular, Menlo, Monaco, Consolas, &quot;liberation mono&quot;, &quot;courier new&quot;, monospace;overflow-wrap:break-word;padding:0.2em 0.4em;margin:0px;word-break:normal;background-color:rgba(0, 0, 0, 0.05);border-radius:4px;font-size:85%;color:inherit;">protoc</code> with a special gRPC plugin to
+generate code from your proto file: you get
+generated gRPC client and server code, as well as the regular protocol buffer
+code for populating, serializing, and retrieving your message types. To learn more about protocol buffers, including how to install <code style="box-sizing:border-box;font-family:SFMono-Regular, Menlo, Monaco, Consolas, &quot;liberation mono&quot;, &quot;courier new&quot;, monospace;overflow-wrap:break-word;padding:0.2em 0.4em;margin:0px;word-break:normal;background-color:rgba(0, 0, 0, 0.05);border-radius:4px;font-size:85%;color:inherit;">protoc</code> with the
+gRPC plugin in your chosen language, see the <a href="https://protobuf.dev/overview" target="_blank" rel="noopener" style="box-sizing:border-box;color:rgb(55, 156, 156);text-decoration:none;background-color:transparent;">protocol buffers documentation<i style="box-sizing:border-box;-webkit-font-smoothing:antialiased;display:inline-block;font-style:normal;font-variant:normal;text-rendering:auto;line-height:1;font-family:&quot;font awesome 5 free&quot;;font-weight:900;"><span style="font-style:normal;font-variant:normal;line-height:1;font-family:font awesome 5 free;font-weight:900;font-size:50%;margin-left:3px;opacity:0.8;vertical-align:top;"></span></i></a>.</p><h2 style="box-sizing:border-box;font-weight:500;line-height:1.2;font-size:32px;max-width:80%;margin-bottom:16px;margin-top:48px;"><span style="font-weight:500;line-height:1.2;font-size:32px;display:block;margin-top:-5rem;height:5rem;visibility:hidden;"> </span>Protocol buffer versions<a href="https://grpc.io/docs/what-is-grpc/introduction/#protocol-buffer-versions" style="box-sizing:border-box;color:rgb(55, 156, 156);text-decoration:none;background-color:transparent;visibility:hidden;"> <div class="media-placeholder">[图片/附件]</div></en-media></a></h2><p style="box-sizing:border-box;margin-top:0px;margin-bottom:16px;max-width:80%;font-weight:400;">While <a href="https://protobuf.dev/overview" target="_blank" rel="noopener" style="box-sizing:border-box;color:rgb(55, 156, 156);text-decoration:none;background-color:transparent;">protocol buffers<i style="box-sizing:border-box;-webkit-font-smoothing:antialiased;display:inline-block;font-style:normal;font-variant:normal;text-rendering:auto;line-height:1;font-family:&quot;font awesome 5 free&quot;;font-weight:900;"><span style="font-style:normal;font-variant:normal;line-height:1;font-family:font awesome 5 free;font-weight:900;font-size:50%;margin-left:3px;opacity:0.8;vertical-align:top;"></span></i></a> have been available to open source users for some time,
+most examples from this site use protocol buffers version 3 (proto3), which has
+a slightly simplified syntax, some useful new features, and supports more
+languages. Proto3 is currently available in Java, C++, Dart, Python,
+Objective-C, C#, a lite-runtime (Android Java), Ruby, and JavaScript from the
+<a href="https://github.com/google/protobuf/releases" target="_blank" rel="noopener" style="box-sizing:border-box;color:rgb(55, 156, 156);text-decoration:none;background-color:transparent;">protocol buffers GitHub repo<i style="box-sizing:border-box;-webkit-font-smoothing:antialiased;display:inline-block;font-style:normal;font-variant:normal;text-rendering:auto;line-height:1;font-family:&quot;font awesome 5 free&quot;;font-weight:900;"><span style="font-style:normal;font-variant:normal;line-height:1;font-family:font awesome 5 free;font-weight:900;font-size:50%;margin-left:3px;opacity:0.8;vertical-align:top;"></span></i></a>, as well as a Go language generator from the
+<a href="https://pkg.go.dev/google.golang.org/protobuf" target="_blank" rel="noopener" style="box-sizing:border-box;color:rgb(55, 156, 156);text-decoration:none;background-color:transparent;">golang/protobuf official package<i style="box-sizing:border-box;-webkit-font-smoothing:antialiased;display:inline-block;font-style:normal;font-variant:normal;text-rendering:auto;line-height:1;font-family:&quot;font awesome 5 free&quot;;font-weight:900;"><span style="font-style:normal;font-variant:normal;line-height:1;font-family:font awesome 5 free;font-weight:900;font-size:50%;margin-left:3px;opacity:0.8;vertical-align:top;"></span></i></a>, with more languages in development. You can
+find out more in the <a href="https://protobuf.dev/programming-guides/proto3" target="_blank" rel="noopener" style="box-sizing:border-box;color:rgb(55, 156, 156);text-decoration:none;background-color:transparent;">proto3 language guide<i style="box-sizing:border-box;-webkit-font-smoothing:antialiased;display:inline-block;font-style:normal;font-variant:normal;text-rendering:auto;line-height:1;font-family:&quot;font awesome 5 free&quot;;font-weight:900;"><span style="font-style:normal;font-variant:normal;line-height:1;font-family:font awesome 5 free;font-weight:900;font-size:50%;margin-left:3px;opacity:0.8;vertical-align:top;"></span></i></a> and the <a href="https://protobuf.dev/reference" target="_blank" rel="noopener" style="box-sizing:border-box;color:rgb(55, 156, 156);text-decoration:none;background-color:transparent;">reference
+documentation<i style="box-sizing:border-box;-webkit-font-smoothing:antialiased;display:inline-block;font-style:normal;font-variant:normal;text-rendering:auto;line-height:1;font-family:&quot;font awesome 5 free&quot;;font-weight:900;"><span style="font-style:normal;font-variant:normal;line-height:1;font-family:font awesome 5 free;font-weight:900;font-size:50%;margin-left:3px;opacity:0.8;vertical-align:top;"></span></i></a> available for each language. The reference documentation also
+includes a <a href="https://protobuf.dev/reference/protobuf/proto3-spec" target="_blank" rel="noopener" style="box-sizing:border-box;color:rgb(55, 156, 156);text-decoration:none;background-color:transparent;">formal specification<i style="box-sizing:border-box;-webkit-font-smoothing:antialiased;display:inline-block;font-style:normal;font-variant:normal;text-rendering:auto;line-height:1;font-family:&quot;font awesome 5 free&quot;;font-weight:900;"><span style="font-style:normal;font-variant:normal;line-height:1;font-family:font awesome 5 free;font-weight:900;font-size:50%;margin-left:3px;opacity:0.8;vertical-align:top;"></span></i></a> for the <code style="box-sizing:border-box;font-family:SFMono-Regular, Menlo, Monaco, Consolas, &quot;liberation mono&quot;, &quot;courier new&quot;, monospace;overflow-wrap:break-word;padding:0.2em 0.4em;margin:0px;word-break:normal;background-color:rgba(0, 0, 0, 0.05);border-radius:4px;font-size:85%;color:inherit;">.proto</code> file format.</p><p style="box-sizing:border-box;margin-top:0px;margin-bottom:16px;max-width:80%;font-weight:400;">In general, while you can use proto2 (the current default protocol buffers
+version), we recommend that you use proto3 with gRPC as it lets you use the
+full range of gRPC-supported languages, as well as avoiding compatibility
+issues with proto2 clients talking to proto3 servers and vice versa.</p><div style="box-sizing:border-box;border-top:1px solid rgb(222, 226, 230);margin-top:48px;padding-top:16px;color:rgb(121, 118, 118);">Last modified February 16, 2023: <a href="https://github.com/grpc/grpc.io/commit/852a74470f7b200d6cd32a0522419e49c750bf57" style="box-sizing:border-box;color:rgb(55, 156, 156);text-decoration:none;background-color:transparent;">Update Protocol Buffers documentation URL (#1092) (852a744)</a></div></div></span></div></div></div></div></div></div>
+</div>
+</div>
+<a class="back-link" href="../articles.html">← 返回笔记列表</a>
+</body>
+</html>

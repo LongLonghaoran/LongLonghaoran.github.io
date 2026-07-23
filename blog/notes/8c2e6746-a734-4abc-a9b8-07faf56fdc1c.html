@@ -1,0 +1,973 @@
+<!DOCTYPE html>
+<html lang="zh-CN" data-theme="light">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>一篇搞懂TCP、HTTP、Socket、Socket连接池_个人文章 - SegmentFault 思否 — 技术笔记</title>
+<style>
+:root { --bg:#fff; --text:#1a1a1a; --muted:#666; --border:#e0e0e0; --code-bg:#f5f5f5; --link:#0066cc; }
+@media (prefers-color-scheme: dark) { :root { --bg:#1a1a1a; --text:#e0e0e0; --muted:#999; --border:#333; --code-bg:#2a2a2a; --link:#66bbff; } }
+* { box-sizing:border-box; margin:0; padding:0; }
+body { font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Arial,sans-serif; line-height:1.7; color:var(--text); background:var(--bg); max-width:860px; margin:0 auto; padding:2rem 1.5rem; }
+.note-header { border-bottom:2px solid var(--border); padding-bottom:1rem; margin-bottom:2rem; }
+.note-title { font-size:1.6rem; font-weight:700; margin-bottom:0.3rem; }
+.note-meta { color:var(--muted); font-size:0.85rem; }
+.note-content { font-size:0.95rem; }
+.note-content h1 { font-size:1.4rem; margin:1.2rem 0 0.6rem; }
+.note-content h2 { font-size:1.2rem; margin:1rem 0 0.5rem; }
+.note-content h3 { font-size:1.05rem; margin:0.8rem 0 0.4rem; }
+.note-content p { margin:0.5rem 0; }
+.note-content ul,.note-content ol { margin:0.5rem 0 0.5rem 2rem; }
+.note-content li { margin:0.2rem 0; }
+.note-content pre { background:var(--code-bg); padding:1rem; border-radius:6px; overflow-x:auto; margin:0.8rem 0; font-size:0.85rem; }
+.note-content code { background:var(--code-bg); padding:0.1rem 0.3rem; border-radius:3px; font-size:0.88em; }
+.note-content pre code { background:none; padding:0; }
+.note-content blockquote { border-left:3px solid var(--border); padding-left:1rem; color:var(--muted); margin:0.8rem 0; }
+.note-content a { color:var(--link); }
+.note-content img { max-width:100%; height:auto; border-radius:6px; margin:0.5rem 0; }
+.note-content table { border-collapse:collapse; width:100%; margin:0.8rem 0; }
+.note-content th,.note-content td { border:1px solid var(--border); padding:0.5rem; }
+.note-content th { background:var(--code-bg); }
+.media-placeholder { background:var(--code-bg); padding:1rem; text-align:center; color:var(--muted); border-radius:6px; margin:0.5rem 0; font-size:0.85rem; }
+.encrypt-placeholder { background:#fff3cd; padding:0.5rem; text-align:center; color:#856404; border-radius:6px; margin:0.5rem 0; font-size:0.85rem; }
+.back-link { display:inline-block; margin-top:2rem; color:var(--link); text-decoration:none; font-size:0.85rem; }
+</style>
+</head>
+<body>
+<div class="note-header"><div class="note-title">一篇搞懂TCP、HTTP、Socket、Socket连接池_个人文章 - SegmentFault 思否</div><div class="note-meta">笔记本：计算机网络</div></div>
+<div class="note-content"><div style="--en-clipped-content:article; --en-clipped-source-url:https://segmentfault.com/a/1190000014044351; --en-clipped-source-title:一篇搞懂TCP、HTTP、Socket、Socket连接池_个人文章 - SegmentFault 思否;">
+<div><br/></div><div style="font-size: 16px; display:block; min-width: 100%; position: relative;"> <div style="box-sizing:border-box;font-family:sans-serif;line-height:1.15;text-size-adjust:100%;-webkit-tap-highlight-color:rgba(0, 0, 0, 0);"><div style="box-sizing:border-box;font-family:-apple-system, BlinkMacSystemFont, &quot;Segoe UI&quot;, Roboto, &quot;Helvetica Neue&quot;, Arial, &quot;Noto Sans&quot;, sans-serif, &quot;Apple Color Emoji&quot;, &quot;Segoe UI Emoji&quot;, &quot;Segoe UI Symbol&quot;, &quot;Noto Color Emoji&quot;;font-size:16px;font-weight:400;line-height:1.5;color:rgb(33, 37, 41);text-align:left;background-color:rgb(255, 255, 255);"><div style="box-sizing:border-box;"><div style="box-sizing:border-box;"><div style="box-sizing:border-box;"><div style="box-sizing:border-box;"><div style="box-sizing:border-box;"><div style="box-sizing:border-box;">
+                                            <div style="box-sizing:border-box;">
+                                                <div style="box-sizing:border-box;">
+                                                    <a href="https://segmentfault.com/u/rebareba" style="box-sizing:border-box;color:rgb(0, 150, 94);background-color:transparent;text-decoration:none;">
+                                                        <div style="box-sizing:border-box;">
+                                                            <div class="media-placeholder">[图片/附件]</div></en-media>
+                                                        </div>
+                                                        <strong style="box-sizing:border-box;font-weight:bolder;">rebareba</strong>
+                                                    </a>
+                                                    <ul style="box-sizing:border-box;margin-bottom:16px;margin-top:0px;padding-left:0px;list-style:none;">
+                                                                                                                <li style="box-sizing:border-box;display:inline-block;margin-right:8px;">
+                                                            <img style="box-sizing:border-box;display:inline-block;font-size:inherit;height:1em;vertical-align:-0.125em;width:1em;overflow:visible;" src="data:image/svg+xml,%3csvg class='svg-inline--fa fa-dice-d8 fa-w-16 js-evernote-checked' style='color: %23BF7158%3b' aria-hidden='true' focusable='false' data-prefix='fas' data-icon='dice-d8' role='img' xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512' data-fa-i2svg='' data-evernote-id='1'%3e%3cpath fill='currentColor' d='M225.53 2.52L2.36 233.83c-4.21 4.37-2.56 11.71 3.1 13.77l234.13 85.06V8.39c-.01-7.49-8.91-11.21-14.06-5.87zm284.11 231.31L286.47 2.52C281.32-2.82 272.41.9 272.41 8.4v324.27l234.13-85.06c5.66-2.07 7.31-9.42 3.1-13.78zM33.53 310.38l192 199.1c5.15 5.34 14.06 1.62 14.06-5.88V368.29L42.13 296.61c-8.21-2.98-14.72 7.43-8.6 13.77zm436.34-13.77l-197.46 71.68V503.6c0 7.5 8.91 11.22 14.06 5.88l192-199.1c6.12-6.34-.39-16.75-8.6-13.77z' data-evernote-id='161' class='js-evernote-checked'%3e%3c/path%3e%3c/svg%3e"/>
+                                                            <span style="box-sizing:border-box;">259</span>
+                                                        </li>
+                                                                                                                                                                                    <li style="box-sizing:border-box;display:inline-block;">
+                                                                    <a href="https://github.com/rebareba" target="_blank" style="box-sizing:border-box;color:rgb(0, 150, 94);background-color:transparent;text-decoration:none;">
+                                                                        <img style="box-sizing:border-box;display:inline-block;font-size:inherit;height:1em;vertical-align:-0.125em;width:1em;overflow:visible;" src="data:image/svg+xml,%3csvg class='svg-inline--fa fa-github fa-w-16 js-evernote-checked' aria-hidden='true' focusable='false' data-prefix='fab' data-icon='github' role='img' xmlns='http://www.w3.org/2000/svg' viewBox='0 0 496 512' data-fa-i2svg='' data-evernote-id='2'%3e%3cpath fill='currentColor' d='M165.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6zm-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3zm44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9zM244.8 8C106.1 8 0 113.3 0 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C428.2 457.8 496 362.9 496 252 496 113.3 383.5 8 244.8 8zM97.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1zm-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7zm32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1zm-11.4-14.7c-1.6 1-1.6 3.6 0 5.9 1.6 2.3 4.3 3.3 5.6 2.3 1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2z' data-evernote-id='165' class='js-evernote-checked'%3e%3c/path%3e%3c/svg%3e"/>
+                                                                    </a>
+                                                                </li>
+                                                                                                                    
+                                                                                                            </ul>
+                                                </div>
+
+                                            </div><div style="box-sizing:border-box;"></div>
+                                            <div style="box-sizing:border-box;"><div style="box-sizing:border-box;"><div style="box-sizing:border-box;position:relative;display:inline-flex;vertical-align:middle;">
+            </div><a href="https://segmentfault.com/a/1190000014044351#comment-area" style="box-sizing:border-box;text-decoration:none;display:inline-block;font-weight:400;text-align:center;vertical-align:middle;cursor:pointer;user-select:none;border:1px solid transparent;padding:0.375rem 0.75rem;font-size:16px;line-height:1.5;border-radius:4px;transition:color 0.15s ease-in-out 0s, background-color 0.15s ease-in-out 0s, border-color 0.15s ease-in-out 0s, box-shadow 0.15s ease-in-out 0s;background-color:transparent;border-color:rgb(108, 117, 125);color:rgb(108, 117, 125);">
+                            <img style="box-sizing:border-box;display:inline-block;font-size:inherit;height:1em;vertical-align:-0.125em;width:1em;overflow:visible;" src="data:image/svg+xml,%3csvg class='svg-inline--fa fa-comment-alt-lines fa-w-16 js-evernote-checked' aria-hidden='true' focusable='false' data-prefix='far' data-icon='comment-alt-lines' role='img' xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512' data-fa-i2svg='' data-evernote-id='5'%3e%3cpath fill='currentColor' d='M448 0H64C28.7 0 0 28.7 0 64v288c0 35.3 28.7 64 64 64h96v84c0 7.1 5.8 12 12 12 2.4 0 4.9-.7 7.1-2.4L304 416h144c35.3 0 64-28.7 64-64V64c0-35.3-28.7-64-64-64zm16 352c0 8.8-7.2 16-16 16H288l-12.8 9.6L208 428v-60H64c-8.8 0-16-7.2-16-16V64c0-8.8 7.2-16 16-16h384c8.8 0 16 7.2 16 16v288zm-96-216H144c-8.8 0-16 7.2-16 16v16c0 8.8 7.2 16 16 16h224c8.8 0 16-7.2 16-16v-16c0-8.8-7.2-16-16-16zm-96 96H144c-8.8 0-16 7.2-16 16v16c0 8.8 7.2 16 16 16h128c8.8 0 16-7.2 16-16v-16c0-8.8-7.2-16-16-16z' data-evernote-id='176' class='js-evernote-checked'%3e%3c/path%3e%3c/svg%3e"/>
+                            
+                        </a><div style="box-sizing:border-box;position:relative;">
+                        
+                        
+                    </div></div></div>
+                                            <h1 style="box-sizing:border-box;margin-top:0px;font-weight:600;line-height:1.2;margin-bottom:8px;font-size:32px;">
+                                                <a href="https://segmentfault.com/a/1190000014044351" style="box-sizing:border-box;color:rgb(0, 150, 94);background-color:transparent;text-decoration:none;">一篇搞懂TCP、HTTP、Socket、Socket连接池</a>
+                                            </h1>
+                                            <div style="box-sizing:border-box;">
+                                                <div style="box-sizing:border-box;"><a href="https://segmentfault.com/t/tcp" style="box-sizing:border-box;color:rgb(0, 150, 94);background-color:transparent;text-decoration:none;">
+                                                                                                                            tcp
+                                                            </a><a href="https://segmentfault.com/t/socket" style="box-sizing:border-box;color:rgb(0, 150, 94);background-color:transparent;text-decoration:none;">
+                                                                                                                            socket
+                                                            </a><a href="https://segmentfault.com/t/%E8%BF%9E%E6%8E%A5%E6%B1%A0" style="box-sizing:border-box;color:rgb(0, 150, 94);background-color:transparent;text-decoration:none;">
+                                                                                                                            连接池
+                                                            </a><a href="https://segmentfault.com/t/node.js" style="box-sizing:border-box;color:rgb(0, 150, 94);background-color:transparent;text-decoration:none;">
+                                                                                                                            node.js
+                                                            </a><a href="https://segmentfault.com/t/http" style="box-sizing:border-box;color:rgb(0, 150, 94);background-color:transparent;text-decoration:none;">
+                                                                                                                            http
+                                                            </a></div>
+                                                    <div style="box-sizing:border-box;">
+                                                                                                                    <span title="" style="box-sizing:border-box;">发布于
+                                                                2018-03-28 </span>
+                                                                                                                                                                                                                                                                                    </div>
+                                                </div>
+
+                                                <div style="box-sizing:border-box;"><div style="box-sizing:border-box;"><div class="media-placeholder">[图片/附件]</div></en-media></div>
+</div>
+
+                                                <div style="box-sizing:border-box;display:block;">
+                                                    
+<h2 style="box-sizing:border-box;margin-top:0px;font-weight:600;line-height:1.2;margin-bottom:8px;font-size:32px;">前言</h2>
+<p style="box-sizing:border-box;margin-top:0px;margin-bottom:16px;">​    作为一名开发人员我们经常会听到<code style="box-sizing:border-box;font-family:SFMono-Regular, Menlo, Monaco, Consolas, &quot;Liberation Mono&quot;, &quot;Courier New&quot;, monospace;color:rgb(232, 62, 140);overflow-wrap:break-word;font-size:87.5%;">HTTP协议、TCP/IP协议、UDP协议、Socket、Socket长连接、Socket连接池</code>等字眼，然而它们之间的关系、区别及原理并不是所有人都能理解清楚，这篇文章就从网络协议基础开始到Socket连接池，一步一步解释他们之间的关系。</p>
+<h2 style="box-sizing:border-box;margin-top:0px;font-weight:600;line-height:1.2;margin-bottom:8px;font-size:32px;">七层网络模型</h2>
+<p style="box-sizing:border-box;margin-top:0px;margin-bottom:16px;">​    首先从网络通信的分层模型讲起：七层模型，亦称<code style="box-sizing:border-box;font-family:SFMono-Regular, Menlo, Monaco, Consolas, &quot;Liberation Mono&quot;, &quot;Courier New&quot;, monospace;color:rgb(232, 62, 140);overflow-wrap:break-word;font-size:87.5%;">OSI(Open System Interconnection)</code>模型。自下往上分为：物理层、数据链路层、网络层、传输层、会话层、表示层和应用层。所有有关通信的都离不开它，下面这张图片介绍了各层所对应的一些协议和硬件</p>
+<p style="box-sizing:border-box;margin-top:0px;margin-bottom:16px;"><span style="box-sizing:border-box;"><div class="media-placeholder">[图片/附件]</div></en-media></span></p>
+<p style="box-sizing:border-box;margin-top:0px;margin-bottom:16px;">通过上图，我知道IP协议对应于网络层，TCP、UDP协议对应于传输层，而HTTP协议对应于应用层，OSI并没有Socket，那什么是Socket，后面我们将结合代码具体详细介绍。</p>
+<h2 style="box-sizing:border-box;margin-top:0px;font-weight:600;line-height:1.2;margin-bottom:8px;font-size:32px;">TCP和UDP连接</h2>
+<p style="box-sizing:border-box;margin-top:0px;margin-bottom:16px;">​    关于传输层TCP、UDP协议可能我们平时遇见的会比较多，有人说TCP是安全的，UDP是不安全的，UDP传输比TCP快，那为什么呢，我们先从TCP的连接建立的过程开始分析，然后解释UDP和TCP的区别。</p>
+<h4 style="box-sizing:border-box;margin-top:0px;font-weight:600;line-height:1.2;margin-bottom:8px;font-size:24px;">TCP的三次握手和四次分手</h4>
+<p style="box-sizing:border-box;margin-top:0px;margin-bottom:16px;">​    我们知道TCP建立连接需要经过三次握手，而断开连接需要经过四次分手，那三次握手和四次分手分别做了什么和如何进行的。</p>
+<p style="box-sizing:border-box;margin-top:0px;margin-bottom:16px;"><span style="box-sizing:border-box;"><div class="media-placeholder">[图片/附件]</div></en-media></span></p>
+<p style="box-sizing:border-box;margin-top:0px;margin-bottom:16px;"><strong style="box-sizing:border-box;font-weight:bolder;">第一次握手：</strong>建立连接。客户端发送连接请求报文段，将SYN位置为1，Sequence Number为x；然后，客户端进入<code style="box-sizing:border-box;font-family:SFMono-Regular, Menlo, Monaco, Consolas, &quot;Liberation Mono&quot;, &quot;Courier New&quot;, monospace;color:rgb(232, 62, 140);overflow-wrap:break-word;font-size:87.5%;">SYN_SEND</code>状态，等待服务器的确认；<br style="box-sizing:border-box;"/><strong style="box-sizing:border-box;font-weight:bolder;">第二次握手：</strong>服务器收到客户端的SYN报文段，需要对这个SYN报文段进行确认，设置Acknowledgment Number为x+1(Sequence Number+1)；同时，自己自己还要发送SYN请求信息，将SYN位置为1，Sequence Number为y；服务器端将上述所有信息放到一个报文段（即SYN+ACK报文段）中，一并发送给客户端，此时服务器进入<code style="box-sizing:border-box;font-family:SFMono-Regular, Menlo, Monaco, Consolas, &quot;Liberation Mono&quot;, &quot;Courier New&quot;, monospace;color:rgb(232, 62, 140);overflow-wrap:break-word;font-size:87.5%;">SYN_RECV</code>状态；<br style="box-sizing:border-box;"/><strong style="box-sizing:border-box;font-weight:bolder;">第三次握手：</strong>客户端收到服务器的<code style="box-sizing:border-box;font-family:SFMono-Regular, Menlo, Monaco, Consolas, &quot;Liberation Mono&quot;, &quot;Courier New&quot;, monospace;color:rgb(232, 62, 140);overflow-wrap:break-word;font-size:87.5%;">SYN+ACK</code>报文段。然后将Acknowledgment Number设置为y+1，向服务器发送ACK报文段，这个报文段发送完毕以后，客户端和服务器端都进入<code style="box-sizing:border-box;font-family:SFMono-Regular, Menlo, Monaco, Consolas, &quot;Liberation Mono&quot;, &quot;Courier New&quot;, monospace;color:rgb(232, 62, 140);overflow-wrap:break-word;font-size:87.5%;">ESTABLISHED</code>状态，完成TCP三次握手。</p>
+<p style="box-sizing:border-box;margin-top:0px;margin-bottom:16px;">完成了三次握手，客户端和服务器端就可以开始传送数据。以上就是TCP三次握手的总体介绍。通信结束客户端和服务端就断开连接，需要经过四次分手确认。</p>
+<p style="box-sizing:border-box;margin-top:0px;margin-bottom:16px;"><strong style="box-sizing:border-box;font-weight:bolder;">第一次分手：</strong>主机1（可以使客户端，也可以是服务器端），设置Sequence Number和Acknowledgment Number，向主机2发送一个FIN报文段；此时，主机1进入<code style="box-sizing:border-box;font-family:SFMono-Regular, Menlo, Monaco, Consolas, &quot;Liberation Mono&quot;, &quot;Courier New&quot;, monospace;color:rgb(232, 62, 140);overflow-wrap:break-word;font-size:87.5%;">FIN_WAIT_1</code>状态；这表示主机1没有数据要发送给主机2了；<br style="box-sizing:border-box;"/><strong style="box-sizing:border-box;font-weight:bolder;">第二次分手：</strong>主机2收到了主机1发送的FIN报文段，向主机1回一个ACK报文段，Acknowledgment Number为Sequence Number加1；主机1进入<code style="box-sizing:border-box;font-family:SFMono-Regular, Menlo, Monaco, Consolas, &quot;Liberation Mono&quot;, &quot;Courier New&quot;, monospace;color:rgb(232, 62, 140);overflow-wrap:break-word;font-size:87.5%;">FIN_WAIT_2</code>状态；主机2告诉主机1，我“同意”你的关闭请求；<br style="box-sizing:border-box;"/><strong style="box-sizing:border-box;font-weight:bolder;">第三次分手：</strong>主机2向主机1发送FIN报文段，请求关闭连接，同时主机2进入<code style="box-sizing:border-box;font-family:SFMono-Regular, Menlo, Monaco, Consolas, &quot;Liberation Mono&quot;, &quot;Courier New&quot;, monospace;color:rgb(232, 62, 140);overflow-wrap:break-word;font-size:87.5%;">LAST_ACK</code>状态；<br style="box-sizing:border-box;"/><strong style="box-sizing:border-box;font-weight:bolder;">第四次分手</strong>：主机1收到主机2发送的FIN报文段，向主机2发送ACK报文段，然后主机1进入<code style="box-sizing:border-box;font-family:SFMono-Regular, Menlo, Monaco, Consolas, &quot;Liberation Mono&quot;, &quot;Courier New&quot;, monospace;color:rgb(232, 62, 140);overflow-wrap:break-word;font-size:87.5%;">TIME_WAIT</code>状态；主机2收到主机1的ACK报文段以后，就关闭连接；此时，主机1等待2MSL后依然没有收到回复，则证明Server端已正常关闭，那好，主机1也可以关闭连接了。</p>
+<p style="box-sizing:border-box;margin-top:0px;margin-bottom:16px;">可以看到一次tcp请求的建立及关闭至少进行7次通信，这还不包过数据的通信，而UDP不需3次握手和4次分手。</p>
+<h4 style="box-sizing:border-box;margin-top:0px;font-weight:600;line-height:1.2;margin-bottom:8px;font-size:24px;">TCP和UDP的区别</h4>
+<p style="box-sizing:border-box;margin-top:0px;margin-bottom:16px;">　1、TCP是面向链接的，虽然说网络的不安全不稳定特性决定了多少次握手都不能保证连接的可靠性，但TCP的三次握手在最低限度上(实际上也很大程度上保证了)保证了连接的可靠性;而UDP不是面向连接的，UDP传送数据前并不与对方建立连接，对接收到的数据也不发送确认信号，发送端不知道数据是否会正确接收，当然也不用重发，所以说UDP是无连接的、不可靠的一种数据传输协议。　<br style="box-sizing:border-box;"/>　2、也正由于1所说的特点，使得UDP的开销更小数据传输速率更高，因为不必进行收发数据的确认，所以UDP的实时性更好。知道了TCP和UDP的区别，就不难理解为何采用TCP传输协议的MSN比采用UDP的QQ传输文件慢了，但并不能说QQ的通信是不安全的，因为程序员可以手动对UDP的数据收发进行验证，比如发送方对每个数据包进行编号然后由接收方进行验证啊什么的，即使是这样，UDP因为在底层协议的封装上没有采用类似TCP的“三次握手”而实现了TCP所无法达到的传输效率。</p>
+<h4 style="box-sizing:border-box;margin-top:0px;font-weight:600;line-height:1.2;margin-bottom:8px;font-size:24px;">问题</h4>
+<p style="box-sizing:border-box;margin-top:0px;margin-bottom:16px;">关于传输层我们会经常听到一些问题</p>
+<p style="box-sizing:border-box;margin-top:0px;margin-bottom:16px;">1．TCP服务器最大并发连接数是多少？</p>
+<p style="box-sizing:border-box;margin-top:0px;margin-bottom:16px;">关于TCP服务器最大并发连接数有一种误解就是“因为端口号上限为65535,所以TCP服务器理论上的可承载的最大并发连接数也是65535”。首先需要理解一条TCP连接的组成部分：<strong style="box-sizing:border-box;font-weight:bolder;">客户端IP、客户端端口、服务端IP、服务端端口</strong>。所以对于TCP服务端进程来说，他可以同时连接的客户端数量并不受限于可用端口号，理论上一个服务器的一个端口能建立的连接数是<code style="box-sizing:border-box;font-family:SFMono-Regular, Menlo, Monaco, Consolas, &quot;Liberation Mono&quot;, &quot;Courier New&quot;, monospace;color:rgb(232, 62, 140);overflow-wrap:break-word;font-size:87.5%;">全球的IP数*每台机器的端口数</code>。实际并发连接数受限于linux可打开文件数，这个数是可以配置的，可以非常大，所以实际上受限于系统性能。通过<code style="box-sizing:border-box;font-family:SFMono-Regular, Menlo, Monaco, Consolas, &quot;Liberation Mono&quot;, &quot;Courier New&quot;, monospace;color:rgb(232, 62, 140);overflow-wrap:break-word;font-size:87.5%;">#ulimit -n</code> 查看服务的最大文件句柄数，通过<code style="box-sizing:border-box;font-family:SFMono-Regular, Menlo, Monaco, Consolas, &quot;Liberation Mono&quot;, &quot;Courier New&quot;, monospace;color:rgb(232, 62, 140);overflow-wrap:break-word;font-size:87.5%;">ulimit -n xxx</code> 修改 xxx是你想要能打开的数量。也可以通过修改系统参数：</p>
+<pre style="box-sizing:border-box;font-family:SFMono-Regular, Menlo, Monaco, Consolas, &quot;Liberation Mono&quot;, &quot;Courier New&quot;, monospace;margin-top:0px;margin-bottom:16px;overflow:auto;font-size:87.5%;overflow-x:auto;padding:0.5em;background:rgb(248, 248, 248);display:block;color:rgb(51, 51, 51);"><code style="box-sizing:border-box;font-family:SFMono-Regular, Menlo, Monaco, Consolas, &quot;Liberation Mono&quot;, &quot;Courier New&quot;, monospace;overflow-wrap:break-word;word-break:normal;font-size:inherit;color:inherit;"><span style="box-sizing:border-box;color:rgb(153, 153, 136);font-style:italic;">#vi /etc/security/limits.conf</span>
+<span style="box-sizing:border-box;color:rgb(221, 17, 68);">*</span>　　<span style="box-sizing:border-box;color:rgb(221, 17, 68);">soft</span>　　<span style="box-sizing:border-box;color:rgb(221, 17, 68);">nofile</span>　　<span style="box-sizing:border-box;color:teal;">65536</span>
+<span style="box-sizing:border-box;color:rgb(221, 17, 68);">*</span>　　<span style="box-sizing:border-box;color:rgb(221, 17, 68);">hard</span>　　<span style="box-sizing:border-box;color:rgb(221, 17, 68);">nofile</span>　　<span style="box-sizing:border-box;color:teal;">65536</span></code></pre>
+<p style="box-sizing:border-box;margin-top:0px;margin-bottom:16px;">2．为什么<code style="box-sizing:border-box;font-family:SFMono-Regular, Menlo, Monaco, Consolas, &quot;Liberation Mono&quot;, &quot;Courier New&quot;, monospace;color:rgb(232, 62, 140);overflow-wrap:break-word;font-size:87.5%;">TIME_WAIT</code>状态还需要等<code style="box-sizing:border-box;font-family:SFMono-Regular, Menlo, Monaco, Consolas, &quot;Liberation Mono&quot;, &quot;Courier New&quot;, monospace;color:rgb(232, 62, 140);overflow-wrap:break-word;font-size:87.5%;">2MSL</code>后才能返回到<code style="box-sizing:border-box;font-family:SFMono-Regular, Menlo, Monaco, Consolas, &quot;Liberation Mono&quot;, &quot;Courier New&quot;, monospace;color:rgb(232, 62, 140);overflow-wrap:break-word;font-size:87.5%;">CLOSED</code>状态？</p>
+<p style="box-sizing:border-box;margin-top:0px;margin-bottom:16px;">这是因为虽然双方都同意关闭连接了，而且握手的4个报文也都协调和发送完毕，按理可以直接回到CLOSED状态（就好比从<code style="box-sizing:border-box;font-family:SFMono-Regular, Menlo, Monaco, Consolas, &quot;Liberation Mono&quot;, &quot;Courier New&quot;, monospace;color:rgb(232, 62, 140);overflow-wrap:break-word;font-size:87.5%;">SYN_SEND</code>状态到<code style="box-sizing:border-box;font-family:SFMono-Regular, Menlo, Monaco, Consolas, &quot;Liberation Mono&quot;, &quot;Courier New&quot;, monospace;color:rgb(232, 62, 140);overflow-wrap:break-word;font-size:87.5%;">ESTABLISH</code>状态那样）；但是因为我们必须要假想网络是不可靠的，你无法保证你最后发送的ACK报文会一定被对方收到，因此对方处于<code style="box-sizing:border-box;font-family:SFMono-Regular, Menlo, Monaco, Consolas, &quot;Liberation Mono&quot;, &quot;Courier New&quot;, monospace;color:rgb(232, 62, 140);overflow-wrap:break-word;font-size:87.5%;">LAST_ACK</code>状态下的<code style="box-sizing:border-box;font-family:SFMono-Regular, Menlo, Monaco, Consolas, &quot;Liberation Mono&quot;, &quot;Courier New&quot;, monospace;color:rgb(232, 62, 140);overflow-wrap:break-word;font-size:87.5%;">Socket</code>可能会因为超时未收到<code style="box-sizing:border-box;font-family:SFMono-Regular, Menlo, Monaco, Consolas, &quot;Liberation Mono&quot;, &quot;Courier New&quot;, monospace;color:rgb(232, 62, 140);overflow-wrap:break-word;font-size:87.5%;">ACK</code>报文，而重发<code style="box-sizing:border-box;font-family:SFMono-Regular, Menlo, Monaco, Consolas, &quot;Liberation Mono&quot;, &quot;Courier New&quot;, monospace;color:rgb(232, 62, 140);overflow-wrap:break-word;font-size:87.5%;">FIN</code>报文，所以这个<code style="box-sizing:border-box;font-family:SFMono-Regular, Menlo, Monaco, Consolas, &quot;Liberation Mono&quot;, &quot;Courier New&quot;, monospace;color:rgb(232, 62, 140);overflow-wrap:break-word;font-size:87.5%;">TIME_WAIT</code>状态的作用就是用来重发可能丢失的<code style="box-sizing:border-box;font-family:SFMono-Regular, Menlo, Monaco, Consolas, &quot;Liberation Mono&quot;, &quot;Courier New&quot;, monospace;color:rgb(232, 62, 140);overflow-wrap:break-word;font-size:87.5%;">ACK</code>报文。</p>
+<p style="box-sizing:border-box;margin-top:0px;margin-bottom:16px;">3．TIME_WAIT状态还需要等2MSL后才能返回到CLOSED状态会产生什么问题</p>
+<p style="box-sizing:border-box;margin-top:0px;margin-bottom:16px;">通信双方建立TCP连接后，主动关闭连接的一方就会进入<code style="box-sizing:border-box;font-family:SFMono-Regular, Menlo, Monaco, Consolas, &quot;Liberation Mono&quot;, &quot;Courier New&quot;, monospace;color:rgb(232, 62, 140);overflow-wrap:break-word;font-size:87.5%;">TIME_WAIT</code>状态，<code style="box-sizing:border-box;font-family:SFMono-Regular, Menlo, Monaco, Consolas, &quot;Liberation Mono&quot;, &quot;Courier New&quot;, monospace;color:rgb(232, 62, 140);overflow-wrap:break-word;font-size:87.5%;">TIME_WAIT</code>状态维持时间是两个MSL时间长度，也就是在1-4分钟，Windows操作系统就是4分钟。进入<code style="box-sizing:border-box;font-family:SFMono-Regular, Menlo, Monaco, Consolas, &quot;Liberation Mono&quot;, &quot;Courier New&quot;, monospace;color:rgb(232, 62, 140);overflow-wrap:break-word;font-size:87.5%;">TIME_WAIT</code>状态的一般情况下是客户端，一个<code style="box-sizing:border-box;font-family:SFMono-Regular, Menlo, Monaco, Consolas, &quot;Liberation Mono&quot;, &quot;Courier New&quot;, monospace;color:rgb(232, 62, 140);overflow-wrap:break-word;font-size:87.5%;">TIME_WAIT</code>状态的连接就占用了一个本地端口。一台机器上端口号数量的上限是65536个，如果在同一台机器上进行压力测试模拟上万的客户请求，并且循环与服务端进行短连接通信，那么这台机器将产生4000个左右的<code style="box-sizing:border-box;font-family:SFMono-Regular, Menlo, Monaco, Consolas, &quot;Liberation Mono&quot;, &quot;Courier New&quot;, monospace;color:rgb(232, 62, 140);overflow-wrap:break-word;font-size:87.5%;">TIME_WAIT</code> Socket，后续的短连接就会产生<code style="box-sizing:border-box;font-family:SFMono-Regular, Menlo, Monaco, Consolas, &quot;Liberation Mono&quot;, &quot;Courier New&quot;, monospace;color:rgb(232, 62, 140);overflow-wrap:break-word;font-size:87.5%;">address already in use : connect</code>的异常，如果使用<code style="box-sizing:border-box;font-family:SFMono-Regular, Menlo, Monaco, Consolas, &quot;Liberation Mono&quot;, &quot;Courier New&quot;, monospace;color:rgb(232, 62, 140);overflow-wrap:break-word;font-size:87.5%;">Nginx</code>作为方向代理也需要考虑<code style="box-sizing:border-box;font-family:SFMono-Regular, Menlo, Monaco, Consolas, &quot;Liberation Mono&quot;, &quot;Courier New&quot;, monospace;color:rgb(232, 62, 140);overflow-wrap:break-word;font-size:87.5%;">TIME_WAIT</code>状态，发现系统存在大量<code style="box-sizing:border-box;font-family:SFMono-Regular, Menlo, Monaco, Consolas, &quot;Liberation Mono&quot;, &quot;Courier New&quot;, monospace;color:rgb(232, 62, 140);overflow-wrap:break-word;font-size:87.5%;">TIME_WAIT</code>状态的连接，通过调整内核参数解决。</p>
+<pre style="box-sizing:border-box;font-family:SFMono-Regular, Menlo, Monaco, Consolas, &quot;Liberation Mono&quot;, &quot;Courier New&quot;, monospace;margin-top:0px;margin-bottom:16px;overflow:auto;font-size:87.5%;overflow-x:auto;padding:0.5em;background:rgb(248, 248, 248);display:block;color:rgb(51, 51, 51);"><code style="box-sizing:border-box;font-family:SFMono-Regular, Menlo, Monaco, Consolas, &quot;Liberation Mono&quot;, &quot;Courier New&quot;, monospace;overflow-wrap:break-word;font-size:inherit;color:inherit;word-break:break-word;"><span style="box-sizing:border-box;color:navy;font-weight:400;">vi</span> /etc/sysctl.conf</code></pre>
+<p style="box-sizing:border-box;margin-top:0px;margin-bottom:16px;">编辑文件，加入以下内容：</p>
+<pre style="box-sizing:border-box;font-family:SFMono-Regular, Menlo, Monaco, Consolas, &quot;Liberation Mono&quot;, &quot;Courier New&quot;, monospace;margin-top:0px;margin-bottom:16px;overflow:auto;font-size:87.5%;overflow-x:auto;padding:0.5em;background:rgb(248, 248, 248);display:block;color:rgb(51, 51, 51);"><code style="box-sizing:border-box;font-family:SFMono-Regular, Menlo, Monaco, Consolas, &quot;Liberation Mono&quot;, &quot;Courier New&quot;, monospace;overflow-wrap:break-word;word-break:normal;font-size:inherit;color:inherit;"><span style="box-sizing:border-box;">net.ipv4.tcp_syncookies</span> = <span style="box-sizing:border-box;color:teal;">1</span>
+<span style="box-sizing:border-box;">net.ipv4.tcp_tw_reuse</span> = <span style="box-sizing:border-box;color:teal;">1</span>
+<span style="box-sizing:border-box;">net.ipv4.tcp_tw_recycle</span> = <span style="box-sizing:border-box;color:teal;">1</span>
+<span style="box-sizing:border-box;">net.ipv4.tcp_fin_timeout</span> = <span style="box-sizing:border-box;color:teal;">30</span></code></pre>
+<p style="box-sizing:border-box;margin-top:0px;margin-bottom:16px;">然后执行 <code style="box-sizing:border-box;font-family:SFMono-Regular, Menlo, Monaco, Consolas, &quot;Liberation Mono&quot;, &quot;Courier New&quot;, monospace;color:rgb(232, 62, 140);overflow-wrap:break-word;font-size:87.5%;">/sbin/sysctl -p</code> 让参数生效。</p>
+<p style="box-sizing:border-box;margin-top:0px;margin-bottom:16px;">net.ipv4.tcp_syncookies = 1 表示开启SYN Cookies。当出现SYN等待队列溢出时，启用cookies来处理，可防范少量SYN攻击，默认为0，表示关闭；<br style="box-sizing:border-box;"/>net.ipv4.tcp_tw_reuse = 1 表示开启重用。允许将TIME-WAIT sockets重新用于新的TCP连接，默认为0，表示关闭；<br style="box-sizing:border-box;"/>net.ipv4.tcp_tw_recycle = 1 表示开启TCP连接中TIME-WAIT sockets的快速回收，默认为0，表示关闭。<br style="box-sizing:border-box;"/>net.ipv4.tcp_fin_timeout 修改系統默认的<code style="box-sizing:border-box;font-family:SFMono-Regular, Menlo, Monaco, Consolas, &quot;Liberation Mono&quot;, &quot;Courier New&quot;, monospace;color:rgb(232, 62, 140);overflow-wrap:break-word;font-size:87.5%;">TIMEOUT</code>时间</p>
+<h2 style="box-sizing:border-box;margin-top:0px;font-weight:600;line-height:1.2;margin-bottom:8px;font-size:32px;">HTTP协议</h2>
+<p style="box-sizing:border-box;margin-top:0px;margin-bottom:16px;">关于TCP/IP和HTTP协议的关系，网络有一段比较容易理解的介绍：“我们在传输数据时，可以只使用(传输层)TCP/IP协议，但是那样的话，如果没有应用层，便无法识别数据内容。如果想要使传输的数据有意义，则必须使用到应用层协议。应用层协议有很多，比如HTTP、FTP、TELNET等，也可以自己定义应用层协议。<br style="box-sizing:border-box;"/>HTTP协议即超文本传送协议(Hypertext Transfer Protocol )，是Web联网的基础，也是手机联网常用的协议之一，WEB使用HTTP协议作应用层协议，以封装HTTP文本信息，然后使用TCP/IP做传输层协议将它发到网络上。<br style="box-sizing:border-box;"/>由于HTTP在每次请求结束后都会主动释放连接，因此HTTP连接是一种“短连接”，要保持客户端程序的在线状态，需要不断地向服务器发起连接请求。通常 的做法是即时不需要获得任何数据，客户端也保持每隔一段固定的时间向服务器发送一次“保持连接”的请求，服务器在收到该请求后对客户端进行回复，表明知道 客户端“在线”。若服务器长时间无法收到客户端的请求，则认为客户端“下线”，若客户端长时间无法收到服务器的回复，则认为网络已经断开。<br style="box-sizing:border-box;"/>下面是一个简单的HTTP Post application/json数据内容的请求：</p>
+<pre style="box-sizing:border-box;font-family:SFMono-Regular, Menlo, Monaco, Consolas, &quot;Liberation Mono&quot;, &quot;Courier New&quot;, monospace;margin-top:0px;margin-bottom:16px;overflow:auto;font-size:87.5%;overflow-x:auto;padding:0.5em;background:rgb(248, 248, 248);display:block;color:rgb(51, 51, 51);"><code style="box-sizing:border-box;font-family:SFMono-Regular, Menlo, Monaco, Consolas, &quot;Liberation Mono&quot;, &quot;Courier New&quot;, monospace;overflow-wrap:break-word;word-break:normal;font-size:inherit;color:inherit;"><span style="box-sizing:border-box;color:rgb(51, 51, 51);font-weight:700;">POST</span> <span style="box-sizing:border-box;color:rgb(221, 17, 68);"></span> HTTP/1.1
+<span style="box-sizing:border-box;color:navy;font-weight:400;">Host</span>: 127.0.0.1:9017
+<span style="box-sizing:border-box;color:navy;font-weight:400;">Content-Type</span>: application/json
+<span style="box-sizing:border-box;color:navy;font-weight:400;">Cache-Control</span>: no-cache
+
+<span style="box-sizing:border-box;">{<span style="box-sizing:border-box;">"a"</span>:<span style="box-sizing:border-box;color:rgb(221, 17, 68);">"a"</span>}</span></code></pre>
+<h2 style="box-sizing:border-box;margin-top:0px;font-weight:600;line-height:1.2;margin-bottom:8px;font-size:32px;">关于Socket（套接字）</h2>
+<p style="box-sizing:border-box;margin-top:0px;margin-bottom:16px;">现在我们了解到TCP/IP只是一个协议栈，就像操作系统的运行机制一样，必须要具体实现，同时还要提供对外的操作接口。就像操作系统会提供标准的编程接口，比如Win32编程接口一样，TCP/IP也必须对外提供编程接口，这就是Socket。现在我们知道，Socket跟TCP/IP并没有必然的联系。Socket编程接口在设计的时候，就希望也能适应其他的网络协议。所以，Socket的出现只是可以更方便的使用TCP/IP协议栈而已，其对TCP/IP进行了抽象，形成了几个最基本的函数接口。比如create，listen，accept，connect，read和write等等。<br style="box-sizing:border-box;"/>不同语言都有对应的建立Socket服务端和客户端的库，下面举例Nodejs如何创建服务端和客户端：<br style="box-sizing:border-box;"/><strong style="box-sizing:border-box;font-weight:bolder;">服务端：</strong></p>
+<pre style="box-sizing:border-box;font-family:SFMono-Regular, Menlo, Monaco, Consolas, &quot;Liberation Mono&quot;, &quot;Courier New&quot;, monospace;margin-top:0px;margin-bottom:16px;overflow:auto;font-size:87.5%;overflow-x:auto;padding:0.5em;background:rgb(248, 248, 248);display:block;color:rgb(51, 51, 51);"><code style="box-sizing:border-box;font-family:SFMono-Regular, Menlo, Monaco, Consolas, &quot;Liberation Mono&quot;, &quot;Courier New&quot;, monospace;overflow-wrap:break-word;word-break:normal;font-size:inherit;color:inherit;"><span style="box-sizing:border-box;color:rgb(51, 51, 51);font-weight:700;">const</span> net = <span style="box-sizing:border-box;color:rgb(0, 134, 179);">require</span>(<span style="box-sizing:border-box;color:rgb(221, 17, 68);">'net'</span>);
+<span style="box-sizing:border-box;color:rgb(51, 51, 51);font-weight:700;">const</span> server = net.createServer();
+server.on(<span style="box-sizing:border-box;color:rgb(221, 17, 68);">'connection'</span>, (client) =&gt; {
+  client.write(<span style="box-sizing:border-box;color:rgb(221, 17, 68);">'Hi!\n'</span>); <span style="box-sizing:border-box;color:rgb(153, 153, 136);font-style:italic;">// 服务端向客户端输出信息，使用 write() 方法</span>
+  client.write(<span style="box-sizing:border-box;color:rgb(221, 17, 68);">'Bye!\n'</span>);
+  <span style="box-sizing:border-box;color:rgb(153, 153, 136);font-style:italic;">//client.end(); // 服务端结束该次会话</span>
+});
+server.listen(<span style="box-sizing:border-box;color:teal;">9000</span>);</code></pre>
+<p style="box-sizing:border-box;margin-top:0px;margin-bottom:16px;">服务监听9000端口<br style="box-sizing:border-box;"/>下面使用命令行发送http请求和telnet</p>
+<pre style="box-sizing:border-box;font-family:SFMono-Regular, Menlo, Monaco, Consolas, &quot;Liberation Mono&quot;, &quot;Courier New&quot;, monospace;margin-top:0px;margin-bottom:16px;overflow:auto;font-size:87.5%;overflow-x:auto;padding:0.5em;background:rgb(248, 248, 248);display:block;color:rgb(51, 51, 51);"><code style="box-sizing:border-box;font-family:SFMono-Regular, Menlo, Monaco, Consolas, &quot;Liberation Mono&quot;, &quot;Courier New&quot;, monospace;overflow-wrap:break-word;word-break:normal;font-size:inherit;color:inherit;"><span style="box-sizing:border-box;color:rgb(221, 17, 68);">$</span> <span style="box-sizing:border-box;color:rgb(221, 17, 68);">curl</span> <span style="box-sizing:border-box;color:rgb(221, 17, 68);">http://127.0.0.1:9000</span>
+<span style="box-sizing:border-box;color:rgb(221, 17, 68);">Bye!</span>
+
+<span style="box-sizing:border-box;color:rgb(221, 17, 68);">$telnet</span> <span style="box-sizing:border-box;color:teal;">127.0</span><span style="box-sizing:border-box;color:teal;">.0</span><span style="box-sizing:border-box;color:teal;">.1</span> <span style="box-sizing:border-box;color:teal;">9000</span>
+<span style="box-sizing:border-box;color:rgb(221, 17, 68);">Trying</span> <span style="box-sizing:border-box;color:teal;">192.168</span><span style="box-sizing:border-box;color:teal;">.1</span><span style="box-sizing:border-box;color:teal;">.21</span><span style="box-sizing:border-box;color:rgb(221, 17, 68);">...</span>
+<span style="box-sizing:border-box;color:rgb(221, 17, 68);">Connected</span> <span style="box-sizing:border-box;color:rgb(221, 17, 68);">to</span> <span style="box-sizing:border-box;color:teal;">192.168</span><span style="box-sizing:border-box;color:teal;">.1</span><span style="box-sizing:border-box;color:teal;">.21</span><span style="box-sizing:border-box;color:rgb(221, 17, 68);">.</span>
+<span style="box-sizing:border-box;color:rgb(221, 17, 68);">Escape</span> <span style="box-sizing:border-box;color:rgb(221, 17, 68);">character</span> <span style="box-sizing:border-box;color:rgb(221, 17, 68);">is</span> <span style="box-sizing:border-box;color:rgb(221, 17, 68);">'^]'</span><span style="box-sizing:border-box;color:rgb(221, 17, 68);">.</span>
+<span style="box-sizing:border-box;color:rgb(221, 17, 68);">Hi!</span>
+<span style="box-sizing:border-box;color:rgb(221, 17, 68);">Bye!</span>
+<span style="box-sizing:border-box;color:rgb(221, 17, 68);">Connection</span> <span style="box-sizing:border-box;color:rgb(221, 17, 68);">closed</span> <span style="box-sizing:border-box;color:rgb(221, 17, 68);">by</span> <span style="box-sizing:border-box;color:rgb(221, 17, 68);">foreign</span> <span style="box-sizing:border-box;color:rgb(221, 17, 68);">host.</span></code></pre>
+<p style="box-sizing:border-box;margin-top:0px;margin-bottom:16px;">注意到curl只处理了一次报文。<br style="box-sizing:border-box;"/><strong style="box-sizing:border-box;font-weight:bolder;">客户端</strong></p>
+<pre style="box-sizing:border-box;font-family:SFMono-Regular, Menlo, Monaco, Consolas, &quot;Liberation Mono&quot;, &quot;Courier New&quot;, monospace;margin-top:0px;margin-bottom:16px;overflow:auto;font-size:87.5%;overflow-x:auto;padding:0.5em;background:rgb(248, 248, 248);display:block;color:rgb(51, 51, 51);"><code style="box-sizing:border-box;font-family:SFMono-Regular, Menlo, Monaco, Consolas, &quot;Liberation Mono&quot;, &quot;Courier New&quot;, monospace;overflow-wrap:break-word;word-break:normal;font-size:inherit;color:inherit;"><span style="box-sizing:border-box;color:rgb(51, 51, 51);font-weight:700;">const</span> client = <span style="box-sizing:border-box;color:rgb(51, 51, 51);font-weight:700;">new</span> net.Socket();
+client.connect(<span style="box-sizing:border-box;color:teal;">9000</span>, <span style="box-sizing:border-box;color:rgb(221, 17, 68);">'127.0.0.1'</span>, <span style="box-sizing:border-box;"><span style="box-sizing:border-box;color:rgb(51, 51, 51);font-weight:700;">function</span> (<span style="box-sizing:border-box;"></span>) </span>{
+});
+client.on(<span style="box-sizing:border-box;color:rgb(221, 17, 68);">'data'</span>, (chunk) =&gt; {
+  <span style="box-sizing:border-box;color:rgb(0, 134, 179);">console</span>.log(<span style="box-sizing:border-box;color:rgb(221, 17, 68);">'data'</span>, chunk.toString())
+  <span style="box-sizing:border-box;color:rgb(153, 153, 136);font-style:italic;">//data Hi!</span>
+  <span style="box-sizing:border-box;color:rgb(153, 153, 136);font-style:italic;">//Bye!</span>
+});</code></pre>
+<h4 style="box-sizing:border-box;margin-top:0px;font-weight:600;line-height:1.2;margin-bottom:8px;font-size:24px;">Socket长连接</h4>
+<p style="box-sizing:border-box;margin-top:0px;margin-bottom:16px;">所谓长连接，指在一个TCP连接上可以连续发送多个数据包，在TCP连接保持期间，如果没有数据包发送，需要双方发检测包以维持此连接(心跳包)，一般需要自己做在线维持。 短连接是指通信双方有数据交互时，就建立一个TCP连接，数据发送完成后，则断开此TCP连接。比如Http的，只是连接、请求、关闭，过程时间较短,服务器若是一段时间内没有收到请求即可关闭连接。其实长连接是相对于通常的短连接而说的，也就是长时间保持客户端与服务端的连接状态。 <br style="box-sizing:border-box;"/>通常的短连接操作步骤是： <br style="box-sizing:border-box;"/>连接→数据传输→关闭连接；</p>
+<p style="box-sizing:border-box;margin-top:0px;margin-bottom:16px;">而长连接通常就是： <br style="box-sizing:border-box;"/>连接→数据传输→保持连接(心跳)→数据传输→保持连接(心跳)→……→关闭连接；  </p>
+<p style="box-sizing:border-box;margin-top:0px;margin-bottom:16px;">什么时候用长连接，短连接？<br style="box-sizing:border-box;"/>长连接多用于操作频繁，点对点的通讯，而且连接数不能太多情况，。每个TCP连接都需要三步握手，这需要时间，如果每个操作都是先连接，再操作的话那么处理 速度会降低很多，所以每个操作完后都不断开，次处理时直接发送数据包就OK了，不用建立TCP连接。例如：数据库的连接用长连接， 如果用短连接频繁的通信会造成Socket错误，而且频繁的Socket创建也是对资源的浪费。</p>
+<p style="box-sizing:border-box;margin-top:0px;margin-bottom:16px;"><strong style="box-sizing:border-box;font-weight:bolder;"> 什么是心跳包为什么需要：</strong><br style="box-sizing:border-box;"/>心跳包就是在客户端和服务端间定时通知对方自己状态的一个自己定义的命令字，按照一定的时间间隔发送，类似于心跳，所以叫做心跳包。网络中的接收和发送数据都是使用Socket进行实现。但是如果此套接字已经断开（比如一方断网了），那发送数据和接收数据的时候就一定会有问题。可是如何判断这个套接字是否还可以使用呢？这个就需要在系统中创建心跳机制。其实TCP中已经为我们实现了一个叫做心跳的机制。如果你设置了心跳，那TCP就会在一定的时间（比如你设置的是3秒钟）内发送你设置的次数的心跳（比如说2次），并且此信息不会影响你自己定义的协议。也可以自己定义，所谓“心跳”就是定时发送一个自定义的结构体（心跳包或心跳帧），让对方知道自己“在线”,以确保链接的有效性。<br style="box-sizing:border-box;"/><strong style="box-sizing:border-box;font-weight:bolder;">实现：</strong><br style="box-sizing:border-box;"/>服务端：</p>
+<pre style="box-sizing:border-box;font-family:SFMono-Regular, Menlo, Monaco, Consolas, &quot;Liberation Mono&quot;, &quot;Courier New&quot;, monospace;margin-top:0px;margin-bottom:16px;overflow:auto;font-size:87.5%;overflow-x:auto;padding:0.5em;background:rgb(248, 248, 248);display:block;color:rgb(51, 51, 51);"><code style="box-sizing:border-box;font-family:SFMono-Regular, Menlo, Monaco, Consolas, &quot;Liberation Mono&quot;, &quot;Courier New&quot;, monospace;overflow-wrap:break-word;word-break:normal;font-size:inherit;color:inherit;"><span style="box-sizing:border-box;color:rgb(51, 51, 51);font-weight:700;">const</span> net = <span style="box-sizing:border-box;color:rgb(0, 134, 179);">require</span>(<span style="box-sizing:border-box;color:rgb(221, 17, 68);">'net'</span>);
+
+<span style="box-sizing:border-box;color:rgb(51, 51, 51);font-weight:700;">let</span> clientList = [];
+<span style="box-sizing:border-box;color:rgb(51, 51, 51);font-weight:700;">const</span> heartbeat = <span style="box-sizing:border-box;color:rgb(221, 17, 68);">'HEARTBEAT'</span>; <span style="box-sizing:border-box;color:rgb(153, 153, 136);font-style:italic;">// 定义心跳包内容确保和平时发送的数据不会冲突</span>
+
+<span style="box-sizing:border-box;color:rgb(51, 51, 51);font-weight:700;">const</span> server = net.createServer();
+server.on(<span style="box-sizing:border-box;color:rgb(221, 17, 68);">'connection'</span>, (client) =&gt; {
+  <span style="box-sizing:border-box;color:rgb(0, 134, 179);">console</span>.log(<span style="box-sizing:border-box;color:rgb(221, 17, 68);">'客户端建立连接:'</span>, client.remoteAddress + <span style="box-sizing:border-box;color:rgb(221, 17, 68);">':'</span> + client.remotePort);
+  clientList.push(client);
+  client.on(<span style="box-sizing:border-box;color:rgb(221, 17, 68);">'data'</span>, (chunk) =&gt; {
+    <span style="box-sizing:border-box;color:rgb(51, 51, 51);font-weight:700;">let</span> content = chunk.toString();
+    <span style="box-sizing:border-box;color:rgb(51, 51, 51);font-weight:700;">if</span> (content === heartbeat) {
+      <span style="box-sizing:border-box;color:rgb(0, 134, 179);">console</span>.log(<span style="box-sizing:border-box;color:rgb(221, 17, 68);">'收到客户端发过来的一个心跳包'</span>);
+    } <span style="box-sizing:border-box;color:rgb(51, 51, 51);font-weight:700;">else</span> {
+      <span style="box-sizing:border-box;color:rgb(0, 134, 179);">console</span>.log(<span style="box-sizing:border-box;color:rgb(221, 17, 68);">'收到客户端发过来的数据:'</span>, content);
+      client.write(<span style="box-sizing:border-box;color:rgb(221, 17, 68);">'服务端的数据:'</span> + content);
+    }
+  });
+  client.on(<span style="box-sizing:border-box;color:rgb(221, 17, 68);">'end'</span>, () =&gt; {
+    <span style="box-sizing:border-box;color:rgb(0, 134, 179);">console</span>.log(<span style="box-sizing:border-box;color:rgb(221, 17, 68);">'收到客户端end'</span>);
+    clientList.splice(clientList.indexOf(client), <span style="box-sizing:border-box;color:teal;">1</span>);
+  });
+  client.on(<span style="box-sizing:border-box;color:rgb(221, 17, 68);">'error'</span>, () =&gt; {
+    clientList.splice(clientList.indexOf(client), <span style="box-sizing:border-box;color:teal;">1</span>);
+  })
+});
+server.listen(<span style="box-sizing:border-box;color:teal;">9000</span>);
+setInterval(broadcast, <span style="box-sizing:border-box;color:teal;">10000</span>); <span style="box-sizing:border-box;color:rgb(153, 153, 136);font-style:italic;">// 定时发送心跳包</span>
+<span style="box-sizing:border-box;"><span style="box-sizing:border-box;color:rgb(51, 51, 51);font-weight:700;">function</span> <span style="box-sizing:border-box;color:rgb(153, 0, 0);font-weight:700;">broadcast</span>(<span style="box-sizing:border-box;"></span>) </span>{
+  <span style="box-sizing:border-box;color:rgb(0, 134, 179);">console</span>.log(<span style="box-sizing:border-box;color:rgb(221, 17, 68);">'broadcast heartbeat'</span>, clientList.length);
+  <span style="box-sizing:border-box;color:rgb(51, 51, 51);font-weight:700;">let</span> cleanup = []
+  <span style="box-sizing:border-box;color:rgb(51, 51, 51);font-weight:700;">for</span> (<span style="box-sizing:border-box;color:rgb(51, 51, 51);font-weight:700;">let</span> i=<span style="box-sizing:border-box;color:teal;">0</span>;i&lt;clientList.length;i+=<span style="box-sizing:border-box;color:teal;">1</span>) {
+    <span style="box-sizing:border-box;color:rgb(51, 51, 51);font-weight:700;">if</span> (clientList[i].writable) { <span style="box-sizing:border-box;color:rgb(153, 153, 136);font-style:italic;">// 先检查 sockets 是否可写</span>
+      clientList[i].write(heartbeat);
+    } <span style="box-sizing:border-box;color:rgb(51, 51, 51);font-weight:700;">else</span> {
+      <span style="box-sizing:border-box;color:rgb(0, 134, 179);">console</span>.log(<span style="box-sizing:border-box;color:rgb(221, 17, 68);">'一个无效的客户端'</span>);
+      cleanup.push(clientList[i]); <span style="box-sizing:border-box;color:rgb(153, 153, 136);font-style:italic;">// 如果不可写，收集起来销毁。销毁之前要 Socket.destroy() 用 API 的方法销毁。</span>
+      clientList[i].destroy();
+    }
+  }
+  <span style="box-sizing:border-box;color:rgb(153, 153, 136);font-style:italic;">//Remove dead Nodes out of write loop to avoid trashing loop index</span>
+  <span style="box-sizing:border-box;color:rgb(51, 51, 51);font-weight:700;">for</span> (<span style="box-sizing:border-box;color:rgb(51, 51, 51);font-weight:700;">let</span> i=<span style="box-sizing:border-box;color:teal;">0</span>; i&lt;cleanup.length; i+=<span style="box-sizing:border-box;color:teal;">1</span>) {
+    <span style="box-sizing:border-box;color:rgb(0, 134, 179);">console</span>.log(<span style="box-sizing:border-box;color:rgb(221, 17, 68);">'删除无效的客户端:'</span>, cleanup[i].name);
+    clientList.splice(clientList.indexOf(cleanup[i]), <span style="box-sizing:border-box;color:teal;">1</span>);
+  }
+}</code></pre>
+<p style="box-sizing:border-box;margin-top:0px;margin-bottom:16px;">服务端输出结果：</p>
+<pre style="box-sizing:border-box;font-family:SFMono-Regular, Menlo, Monaco, Consolas, &quot;Liberation Mono&quot;, &quot;Courier New&quot;, monospace;margin-top:0px;margin-bottom:16px;overflow:auto;font-size:87.5%;overflow-x:auto;padding:0.5em;background:rgb(248, 248, 248);display:block;color:rgb(51, 51, 51);"><code style="box-sizing:border-box;font-family:SFMono-Regular, Menlo, Monaco, Consolas, &quot;Liberation Mono&quot;, &quot;Courier New&quot;, monospace;overflow-wrap:break-word;word-break:normal;font-size:inherit;color:inherit;">客户端建立连接: ::ffff:127.0.0.1:57125
+broadcast heartbeat 1
+收到客户端发过来的数据: Thu, 29 Mar 2018 03:45:15 GMT
+收到客户端发过来的一个心跳包
+收到客户端发过来的数据: Thu, 29 Mar 2018 03:45:20 GMT
+broadcast heartbeat 1
+收到客户端发过来的数据: Thu, 29 Mar 2018 03:45:25 GMT
+收到客户端发过来的一个心跳包
+客户端建立连接: ::ffff:127.0.0.1:57129
+收到客户端发过来的一个心跳包
+收到客户端发过来的数据: Thu, 29 Mar 2018 03:46:00 GMT
+收到客户端发过来的数据: Thu, 29 Mar 2018 03:46:04 GMT
+broadcast heartbeat 2
+收到客户端发过来的数据: Thu, 29 Mar 2018 03:46:05 GMT
+收到客户端发过来的一个心跳包</code></pre>
+<p style="box-sizing:border-box;margin-top:0px;margin-bottom:16px;">客户端代码：</p>
+<pre style="box-sizing:border-box;font-family:SFMono-Regular, Menlo, Monaco, Consolas, &quot;Liberation Mono&quot;, &quot;Courier New&quot;, monospace;margin-top:0px;margin-bottom:16px;overflow:auto;font-size:87.5%;overflow-x:auto;padding:0.5em;background:rgb(248, 248, 248);display:block;color:rgb(51, 51, 51);"><code style="box-sizing:border-box;font-family:SFMono-Regular, Menlo, Monaco, Consolas, &quot;Liberation Mono&quot;, &quot;Courier New&quot;, monospace;overflow-wrap:break-word;word-break:normal;font-size:inherit;color:inherit;"><span style="box-sizing:border-box;color:rgb(51, 51, 51);font-weight:700;">const</span> net = <span style="box-sizing:border-box;color:rgb(0, 134, 179);">require</span>(<span style="box-sizing:border-box;color:rgb(221, 17, 68);">'net'</span>);
+
+<span style="box-sizing:border-box;color:rgb(51, 51, 51);font-weight:700;">const</span> heartbeat = <span style="box-sizing:border-box;color:rgb(221, 17, 68);">'HEARTBEAT'</span>; 
+<span style="box-sizing:border-box;color:rgb(51, 51, 51);font-weight:700;">const</span> client = <span style="box-sizing:border-box;color:rgb(51, 51, 51);font-weight:700;">new</span> net.Socket();
+client.connect(<span style="box-sizing:border-box;color:teal;">9000</span>, <span style="box-sizing:border-box;color:rgb(221, 17, 68);">'127.0.0.1'</span>, () =&gt; {});
+client.on(<span style="box-sizing:border-box;color:rgb(221, 17, 68);">'data'</span>, (chunk) =&gt; {
+  <span style="box-sizing:border-box;color:rgb(51, 51, 51);font-weight:700;">let</span> content = chunk.toString();
+  <span style="box-sizing:border-box;color:rgb(51, 51, 51);font-weight:700;">if</span> (content === heartbeat) {
+    <span style="box-sizing:border-box;color:rgb(0, 134, 179);">console</span>.log(<span style="box-sizing:border-box;color:rgb(221, 17, 68);">'收到心跳包：'</span>, content);
+  } <span style="box-sizing:border-box;color:rgb(51, 51, 51);font-weight:700;">else</span> {
+    <span style="box-sizing:border-box;color:rgb(0, 134, 179);">console</span>.log(<span style="box-sizing:border-box;color:rgb(221, 17, 68);">'收到数据：'</span>, content);
+  }
+});
+
+<span style="box-sizing:border-box;color:rgb(153, 153, 136);font-style:italic;">// 定时发送数据</span>
+setInterval(<span style="box-sizing:border-box;"><span style="box-sizing:border-box;">()</span> =&gt;</span> {
+  <span style="box-sizing:border-box;color:rgb(0, 134, 179);">console</span>.log(<span style="box-sizing:border-box;color:rgb(221, 17, 68);">'发送数据'</span>, <span style="box-sizing:border-box;color:rgb(51, 51, 51);font-weight:700;">new</span> <span style="box-sizing:border-box;color:rgb(0, 134, 179);">Date</span>().toUTCString());
+  client.write(<span style="box-sizing:border-box;color:rgb(51, 51, 51);font-weight:700;">new</span> <span style="box-sizing:border-box;color:rgb(0, 134, 179);">Date</span>().toUTCString());
+}, <span style="box-sizing:border-box;color:teal;">5000</span>);
+
+<span style="box-sizing:border-box;color:rgb(153, 153, 136);font-style:italic;">// 定时发送心跳包</span>
+setInterval(<span style="box-sizing:border-box;"><span style="box-sizing:border-box;color:rgb(51, 51, 51);font-weight:700;">function</span> (<span style="box-sizing:border-box;"></span>) </span>{
+  client.write(heartbeat);
+}, <span style="box-sizing:border-box;color:teal;">10000</span>);</code></pre>
+<p style="box-sizing:border-box;margin-top:0px;margin-bottom:16px;">客户端输出结果：</p>
+<pre style="box-sizing:border-box;font-family:SFMono-Regular, Menlo, Monaco, Consolas, &quot;Liberation Mono&quot;, &quot;Courier New&quot;, monospace;margin-top:0px;margin-bottom:16px;overflow:auto;font-size:87.5%;overflow-x:auto;padding:0.5em;background:rgb(248, 248, 248);display:block;color:rgb(51, 51, 51);"><code style="box-sizing:border-box;font-family:SFMono-Regular, Menlo, Monaco, Consolas, &quot;Liberation Mono&quot;, &quot;Courier New&quot;, monospace;overflow-wrap:break-word;word-break:normal;font-size:inherit;color:inherit;"><span style="box-sizing:border-box;color:rgb(221, 17, 68);">发送数据</span> <span style="box-sizing:border-box;color:rgb(221, 17, 68);">Thu,</span> <span style="box-sizing:border-box;color:teal;">29</span> <span style="box-sizing:border-box;color:rgb(221, 17, 68);">Mar</span> <span style="box-sizing:border-box;color:teal;">2018</span> <span style="box-sizing:border-box;color:teal;">03</span><span style="box-sizing:border-box;color:rgb(221, 17, 68);">:46:04</span> <span style="box-sizing:border-box;color:rgb(221, 17, 68);">GMT</span>
+<span style="box-sizing:border-box;color:rgb(221, 17, 68);">收到数据：</span> <span style="box-sizing:border-box;color:rgb(221, 17, 68);">服务端的数据:Thu,</span> <span style="box-sizing:border-box;color:teal;">29</span> <span style="box-sizing:border-box;color:rgb(221, 17, 68);">Mar</span> <span style="box-sizing:border-box;color:teal;">2018</span> <span style="box-sizing:border-box;color:teal;">03</span><span style="box-sizing:border-box;color:rgb(221, 17, 68);">:46:04</span> <span style="box-sizing:border-box;color:rgb(221, 17, 68);">GMT</span>
+<span style="box-sizing:border-box;color:rgb(221, 17, 68);">收到心跳包：</span> <span style="box-sizing:border-box;color:rgb(221, 17, 68);">HEARTBEAT</span>
+<span style="box-sizing:border-box;color:rgb(221, 17, 68);">发送数据</span> <span style="box-sizing:border-box;color:rgb(221, 17, 68);">Thu,</span> <span style="box-sizing:border-box;color:teal;">29</span> <span style="box-sizing:border-box;color:rgb(221, 17, 68);">Mar</span> <span style="box-sizing:border-box;color:teal;">2018</span> <span style="box-sizing:border-box;color:teal;">03</span><span style="box-sizing:border-box;color:rgb(221, 17, 68);">:46:09</span> <span style="box-sizing:border-box;color:rgb(221, 17, 68);">GMT</span>
+<span style="box-sizing:border-box;color:rgb(221, 17, 68);">收到数据：</span> <span style="box-sizing:border-box;color:rgb(221, 17, 68);">服务端的数据:Thu,</span> <span style="box-sizing:border-box;color:teal;">29</span> <span style="box-sizing:border-box;color:rgb(221, 17, 68);">Mar</span> <span style="box-sizing:border-box;color:teal;">2018</span> <span style="box-sizing:border-box;color:teal;">03</span><span style="box-sizing:border-box;color:rgb(221, 17, 68);">:46:09</span> <span style="box-sizing:border-box;color:rgb(221, 17, 68);">GMT</span>
+<span style="box-sizing:border-box;color:rgb(221, 17, 68);">发送数据</span> <span style="box-sizing:border-box;color:rgb(221, 17, 68);">Thu,</span> <span style="box-sizing:border-box;color:teal;">29</span> <span style="box-sizing:border-box;color:rgb(221, 17, 68);">Mar</span> <span style="box-sizing:border-box;color:teal;">2018</span> <span style="box-sizing:border-box;color:teal;">03</span><span style="box-sizing:border-box;color:rgb(221, 17, 68);">:46:14</span> <span style="box-sizing:border-box;color:rgb(221, 17, 68);">GMT</span>
+<span style="box-sizing:border-box;color:rgb(221, 17, 68);">收到数据：</span> <span style="box-sizing:border-box;color:rgb(221, 17, 68);">服务端的数据:Thu,</span> <span style="box-sizing:border-box;color:teal;">29</span> <span style="box-sizing:border-box;color:rgb(221, 17, 68);">Mar</span> <span style="box-sizing:border-box;color:teal;">2018</span> <span style="box-sizing:border-box;color:teal;">03</span><span style="box-sizing:border-box;color:rgb(221, 17, 68);">:46:14</span> <span style="box-sizing:border-box;color:rgb(221, 17, 68);">GMT</span>
+<span style="box-sizing:border-box;color:rgb(221, 17, 68);">收到心跳包：</span> <span style="box-sizing:border-box;color:rgb(221, 17, 68);">HEARTBEAT</span>
+<span style="box-sizing:border-box;color:rgb(221, 17, 68);">发送数据</span> <span style="box-sizing:border-box;color:rgb(221, 17, 68);">Thu,</span> <span style="box-sizing:border-box;color:teal;">29</span> <span style="box-sizing:border-box;color:rgb(221, 17, 68);">Mar</span> <span style="box-sizing:border-box;color:teal;">2018</span> <span style="box-sizing:border-box;color:teal;">03</span><span style="box-sizing:border-box;color:rgb(221, 17, 68);">:46:19</span> <span style="box-sizing:border-box;color:rgb(221, 17, 68);">GMT</span>
+<span style="box-sizing:border-box;color:rgb(221, 17, 68);">收到数据：</span> <span style="box-sizing:border-box;color:rgb(221, 17, 68);">服务端的数据:Thu,</span> <span style="box-sizing:border-box;color:teal;">29</span> <span style="box-sizing:border-box;color:rgb(221, 17, 68);">Mar</span> <span style="box-sizing:border-box;color:teal;">2018</span> <span style="box-sizing:border-box;color:teal;">03</span><span style="box-sizing:border-box;color:rgb(221, 17, 68);">:46:19</span> <span style="box-sizing:border-box;color:rgb(221, 17, 68);">GMT</span>
+<span style="box-sizing:border-box;color:rgb(221, 17, 68);">发送数据</span> <span style="box-sizing:border-box;color:rgb(221, 17, 68);">Thu,</span> <span style="box-sizing:border-box;color:teal;">29</span> <span style="box-sizing:border-box;color:rgb(221, 17, 68);">Mar</span> <span style="box-sizing:border-box;color:teal;">2018</span> <span style="box-sizing:border-box;color:teal;">03</span><span style="box-sizing:border-box;color:rgb(221, 17, 68);">:46:24</span> <span style="box-sizing:border-box;color:rgb(221, 17, 68);">GMT</span>
+<span style="box-sizing:border-box;color:rgb(221, 17, 68);">收到数据：</span> <span style="box-sizing:border-box;color:rgb(221, 17, 68);">服务端的数据:Thu,</span> <span style="box-sizing:border-box;color:teal;">29</span> <span style="box-sizing:border-box;color:rgb(221, 17, 68);">Mar</span> <span style="box-sizing:border-box;color:teal;">2018</span> <span style="box-sizing:border-box;color:teal;">03</span><span style="box-sizing:border-box;color:rgb(221, 17, 68);">:46:24</span> <span style="box-sizing:border-box;color:rgb(221, 17, 68);">GMT</span>
+<span style="box-sizing:border-box;color:rgb(221, 17, 68);">收到心跳包：</span> <span style="box-sizing:border-box;color:rgb(221, 17, 68);">HEARTBEAT</span></code></pre>
+<h4 style="box-sizing:border-box;margin-top:0px;font-weight:600;line-height:1.2;margin-bottom:8px;font-size:24px;">定义自己的协议</h4>
+<p style="box-sizing:border-box;margin-top:0px;margin-bottom:16px;">如果想要使传输的数据有意义，则必须使用到应用层协议比如Http、Mqtt、Dubbo等。基于TCP协议上自定义自己的应用层的协议需要解决的几个问题：</p>
+<ol style="box-sizing:border-box;margin-bottom:16px;margin-top:0px;">
+<li style="box-sizing:border-box;">心跳包格式的定义及处理</li>
+<li style="box-sizing:border-box;">报文头的定义，就是你发送数据的时候需要先发送报文头，报文里面能解析出你将要发送的数据长度</li>
+<li style="box-sizing:border-box;">你发送数据包的格式，是json的还是其他序列化的方式</li>
+</ol>
+<p style="box-sizing:border-box;margin-top:0px;margin-bottom:16px;">下面我们就一起来定义自己的协议，并编写服务的和客户端进行调用：<br style="box-sizing:border-box;"/>定义报文头格式： <code style="box-sizing:border-box;font-family:SFMono-Regular, Menlo, Monaco, Consolas, &quot;Liberation Mono&quot;, &quot;Courier New&quot;, monospace;color:rgb(232, 62, 140);overflow-wrap:break-word;font-size:87.5%;">length:000000000xxxx</code>; xxxx代表数据的长度，总长度20,举例子不严谨。<br style="box-sizing:border-box;"/>数据表的格式: Json <br style="box-sizing:border-box;"/>服务端:</p>
+<pre style="box-sizing:border-box;font-family:SFMono-Regular, Menlo, Monaco, Consolas, &quot;Liberation Mono&quot;, &quot;Courier New&quot;, monospace;margin-top:0px;margin-bottom:16px;overflow:auto;font-size:87.5%;overflow-x:auto;padding:0.5em;background:rgb(248, 248, 248);display:block;color:rgb(51, 51, 51);"><code style="box-sizing:border-box;font-family:SFMono-Regular, Menlo, Monaco, Consolas, &quot;Liberation Mono&quot;, &quot;Courier New&quot;, monospace;overflow-wrap:break-word;word-break:normal;font-size:inherit;color:inherit;"><span style="box-sizing:border-box;color:rgb(51, 51, 51);font-weight:700;">const</span> net = <span style="box-sizing:border-box;color:rgb(0, 134, 179);">require</span>(<span style="box-sizing:border-box;color:rgb(221, 17, 68);">'net'</span>);
+<span style="box-sizing:border-box;color:rgb(51, 51, 51);font-weight:700;">const</span> server = net.createServer();
+<span style="box-sizing:border-box;color:rgb(51, 51, 51);font-weight:700;">let</span> clientList = [];
+<span style="box-sizing:border-box;color:rgb(51, 51, 51);font-weight:700;">const</span> heartBeat = <span style="box-sizing:border-box;color:rgb(221, 17, 68);">'HeartBeat'</span>; <span style="box-sizing:border-box;color:rgb(153, 153, 136);font-style:italic;">// 定义心跳包内容确保和平时发送的数据不会冲突</span>
+<span style="box-sizing:border-box;color:rgb(51, 51, 51);font-weight:700;">const</span> getHeader = <span style="box-sizing:border-box;">(<span style="box-sizing:border-box;">num</span>) =&gt;</span> {
+  <span style="box-sizing:border-box;color:rgb(51, 51, 51);font-weight:700;">return</span> <span style="box-sizing:border-box;color:rgb(221, 17, 68);">'length:'</span> + (<span style="box-sizing:border-box;color:rgb(0, 134, 179);">Array</span>(<span style="box-sizing:border-box;color:teal;">13</span>).join(<span style="box-sizing:border-box;color:teal;">0</span>) + num).slice(<span style="box-sizing:border-box;color:teal;">-13</span>);
+}
+server.on(<span style="box-sizing:border-box;color:rgb(221, 17, 68);">'connection'</span>, <span style="box-sizing:border-box;">(<span style="box-sizing:border-box;">client</span>) =&gt;</span> {
+  client.name = client.remoteAddress + <span style="box-sizing:border-box;color:rgb(221, 17, 68);">':'</span> + client.remotePort
+  <span style="box-sizing:border-box;color:rgb(153, 153, 136);font-style:italic;">// client.write('Hi ' + client.name + '!\n');</span>
+  <span style="box-sizing:border-box;color:rgb(0, 134, 179);">console</span>.log(<span style="box-sizing:border-box;color:rgb(221, 17, 68);">'客户端建立连接'</span>, client.name);
+
+  clientList.push(client)
+  <span style="box-sizing:border-box;color:rgb(51, 51, 51);font-weight:700;">let</span> chunks = [];
+  <span style="box-sizing:border-box;color:rgb(51, 51, 51);font-weight:700;">let</span> length = <span style="box-sizing:border-box;color:teal;">0</span>;
+  client.on(<span style="box-sizing:border-box;color:rgb(221, 17, 68);">'data'</span>, <span style="box-sizing:border-box;">(<span style="box-sizing:border-box;">chunk</span>) =&gt;</span> {
+    <span style="box-sizing:border-box;color:rgb(51, 51, 51);font-weight:700;">let</span> content = chunk.toString();
+    <span style="box-sizing:border-box;color:rgb(0, 134, 179);">console</span>.log(<span style="box-sizing:border-box;color:rgb(221, 17, 68);">"content:"</span>, content, content.length);
+    <span style="box-sizing:border-box;color:rgb(51, 51, 51);font-weight:700;">if</span> (content === heartBeat) {
+      <span style="box-sizing:border-box;color:rgb(0, 134, 179);">console</span>.log(<span style="box-sizing:border-box;color:rgb(221, 17, 68);">'收到客户端发过来的一个心跳包'</span>);
+    } <span style="box-sizing:border-box;color:rgb(51, 51, 51);font-weight:700;">else</span> {
+      <span style="box-sizing:border-box;color:rgb(51, 51, 51);font-weight:700;">if</span> (content.indexOf(<span style="box-sizing:border-box;color:rgb(221, 17, 68);">'length:'</span>) === <span style="box-sizing:border-box;color:teal;">0</span>){
+        length = <span style="box-sizing:border-box;color:rgb(0, 134, 179);">parseInt</span>(content.substring(<span style="box-sizing:border-box;color:teal;">7</span>,<span style="box-sizing:border-box;color:teal;">20</span>));
+        <span style="box-sizing:border-box;color:rgb(0, 134, 179);">console</span>.log(<span style="box-sizing:border-box;color:rgb(221, 17, 68);">'length'</span>, length);
+        chunks =[chunk.slice(<span style="box-sizing:border-box;color:teal;">20</span>, chunk.length)];
+      } <span style="box-sizing:border-box;color:rgb(51, 51, 51);font-weight:700;">else</span> {
+        chunks.push(chunk);
+      }
+      <span style="box-sizing:border-box;color:rgb(51, 51, 51);font-weight:700;">let</span> heap = Buffer.concat(chunks);
+      <span style="box-sizing:border-box;color:rgb(0, 134, 179);">console</span>.log(<span style="box-sizing:border-box;color:rgb(221, 17, 68);">'heap.length'</span>, heap.length)
+      <span style="box-sizing:border-box;color:rgb(51, 51, 51);font-weight:700;">if</span> (heap.length &gt;= length) {
+        <span style="box-sizing:border-box;color:rgb(51, 51, 51);font-weight:700;">try</span> {
+          <span style="box-sizing:border-box;color:rgb(0, 134, 179);">console</span>.log(<span style="box-sizing:border-box;color:rgb(221, 17, 68);">'收到数据'</span>, <span style="box-sizing:border-box;color:rgb(0, 134, 179);">JSON</span>.parse(heap.toString()));
+          <span style="box-sizing:border-box;color:rgb(51, 51, 51);font-weight:700;">let</span> data = <span style="box-sizing:border-box;color:rgb(221, 17, 68);">'服务端的数据数据:'</span> + heap.toString();;
+          <span style="box-sizing:border-box;color:rgb(51, 51, 51);font-weight:700;">let</span> dataBuff =  Buffer.from(<span style="box-sizing:border-box;color:rgb(0, 134, 179);">JSON</span>.stringify(data));
+          <span style="box-sizing:border-box;color:rgb(51, 51, 51);font-weight:700;">let</span> header = getHeader(dataBuff.length)
+          client.write(header);
+          client.write(dataBuff);
+        } <span style="box-sizing:border-box;color:rgb(51, 51, 51);font-weight:700;">catch</span> (err) {
+          <span style="box-sizing:border-box;color:rgb(0, 134, 179);">console</span>.log(<span style="box-sizing:border-box;color:rgb(221, 17, 68);">'数据解析失败'</span>);
+        }
+      }
+    }
+  })
+
+  client.on(<span style="box-sizing:border-box;color:rgb(221, 17, 68);">'end'</span>, <span style="box-sizing:border-box;"><span style="box-sizing:border-box;">()</span> =&gt;</span> {
+    <span style="box-sizing:border-box;color:rgb(0, 134, 179);">console</span>.log(<span style="box-sizing:border-box;color:rgb(221, 17, 68);">'收到客户端end'</span>);
+    clientList.splice(clientList.indexOf(client), <span style="box-sizing:border-box;color:teal;">1</span>);
+  });
+  client.on(<span style="box-sizing:border-box;color:rgb(221, 17, 68);">'error'</span>, <span style="box-sizing:border-box;"><span style="box-sizing:border-box;">()</span> =&gt;</span> {
+    clientList.splice(clientList.indexOf(client), <span style="box-sizing:border-box;color:teal;">1</span>);
+  })
+});
+server.listen(<span style="box-sizing:border-box;color:teal;">9000</span>);
+setInterval(broadcast, <span style="box-sizing:border-box;color:teal;">10000</span>); <span style="box-sizing:border-box;color:rgb(153, 153, 136);font-style:italic;">// 定时检查客户端 并发送心跳包</span>
+<span style="box-sizing:border-box;"><span style="box-sizing:border-box;color:rgb(51, 51, 51);font-weight:700;">function</span> <span style="box-sizing:border-box;color:rgb(153, 0, 0);font-weight:700;">broadcast</span>(<span style="box-sizing:border-box;"></span>) </span>{
+  <span style="box-sizing:border-box;color:rgb(0, 134, 179);">console</span>.log(<span style="box-sizing:border-box;color:rgb(221, 17, 68);">'broadcast heartbeat'</span>, clientList.length);
+  <span style="box-sizing:border-box;color:rgb(51, 51, 51);font-weight:700;">let</span> cleanup = []
+  <span style="box-sizing:border-box;color:rgb(51, 51, 51);font-weight:700;">for</span>(<span style="box-sizing:border-box;color:rgb(51, 51, 51);font-weight:700;">var</span> i=<span style="box-sizing:border-box;color:teal;">0</span>;i&lt;clientList.length;i+=<span style="box-sizing:border-box;color:teal;">1</span>) {
+    <span style="box-sizing:border-box;color:rgb(51, 51, 51);font-weight:700;">if</span>(clientList[i].writable) { <span style="box-sizing:border-box;color:rgb(153, 153, 136);font-style:italic;">// 先检查 sockets 是否可写</span>
+      <span style="box-sizing:border-box;color:rgb(153, 153, 136);font-style:italic;">// clientList[i].write(heartBeat); // 发送心跳数据</span>
+    } <span style="box-sizing:border-box;color:rgb(51, 51, 51);font-weight:700;">else</span> {
+      <span style="box-sizing:border-box;color:rgb(0, 134, 179);">console</span>.log(<span style="box-sizing:border-box;color:rgb(221, 17, 68);">'一个无效的客户端'</span>)
+      cleanup.push(clientList[i]) <span style="box-sizing:border-box;color:rgb(153, 153, 136);font-style:italic;">// 如果不可写，收集起来销毁。销毁之前要 Socket.destroy() 用 API 的方法销毁。</span>
+      clientList[i].destroy();
+    }
+  }
+  <span style="box-sizing:border-box;color:rgb(153, 153, 136);font-style:italic;">// 删除无效的客户端</span>
+  <span style="box-sizing:border-box;color:rgb(51, 51, 51);font-weight:700;">for</span>(i=<span style="box-sizing:border-box;color:teal;">0</span>; i&lt;cleanup.length; i+=<span style="box-sizing:border-box;color:teal;">1</span>) {
+    <span style="box-sizing:border-box;color:rgb(0, 134, 179);">console</span>.log(<span style="box-sizing:border-box;color:rgb(221, 17, 68);">'删除无效的客户端:'</span>, cleanup[i].name);
+    clientList.splice(clientList.indexOf(cleanup[i]), <span style="box-sizing:border-box;color:teal;">1</span>)
+  }
+}</code></pre>
+<p style="box-sizing:border-box;margin-top:0px;margin-bottom:16px;">日志打印：</p>
+<pre style="box-sizing:border-box;font-family:SFMono-Regular, Menlo, Monaco, Consolas, &quot;Liberation Mono&quot;, &quot;Courier New&quot;, monospace;margin-top:0px;margin-bottom:16px;overflow:auto;font-size:87.5%;overflow-x:auto;padding:0.5em;background:rgb(248, 248, 248);display:block;color:rgb(51, 51, 51);"><code style="box-sizing:border-box;font-family:SFMono-Regular, Menlo, Monaco, Consolas, &quot;Liberation Mono&quot;, &quot;Courier New&quot;, monospace;overflow-wrap:break-word;word-break:normal;font-size:inherit;color:inherit;"> <span style="box-sizing:border-box;color:rgb(221, 17, 68);">客户端建立连接</span> <span style="box-sizing:border-box;color:rgb(221, 17, 68);">::ffff:127.0.0.1:50178</span>
+ <span style="box-sizing:border-box;">content:</span> <span style="box-sizing:border-box;color:rgb(221, 17, 68);">length:0000000000031</span> <span style="box-sizing:border-box;color:teal;">20</span>
+ <span style="box-sizing:border-box;color:rgb(221, 17, 68);">length</span> <span style="box-sizing:border-box;color:teal;">31</span>
+ <span style="box-sizing:border-box;color:rgb(221, 17, 68);">heap.length</span> <span style="box-sizing:border-box;color:teal;">0</span>
+ <span style="box-sizing:border-box;">content:</span> <span style="box-sizing:border-box;color:rgb(221, 17, 68);">"Tue, 03 Apr 2018 06:12:37 GMT"</span> <span style="box-sizing:border-box;color:teal;">31</span>
+ <span style="box-sizing:border-box;color:rgb(221, 17, 68);">heap.length</span> <span style="box-sizing:border-box;color:teal;">31</span>
+ <span style="box-sizing:border-box;color:rgb(221, 17, 68);">收到数据</span> <span style="box-sizing:border-box;color:rgb(221, 17, 68);">Tue,</span> <span style="box-sizing:border-box;color:teal;">03</span> <span style="box-sizing:border-box;color:rgb(221, 17, 68);">Apr</span> <span style="box-sizing:border-box;color:teal;">2018</span> <span style="box-sizing:border-box;color:teal;">06</span><span style="box-sizing:border-box;color:rgb(221, 17, 68);">:12:37</span> <span style="box-sizing:border-box;color:rgb(221, 17, 68);">GMT</span>
+ <span style="box-sizing:border-box;color:rgb(221, 17, 68);">broadcast</span> <span style="box-sizing:border-box;color:rgb(221, 17, 68);">heartbeat</span> <span style="box-sizing:border-box;color:teal;">1</span>
+ <span style="box-sizing:border-box;">content:</span> <span style="box-sizing:border-box;color:rgb(221, 17, 68);">HeartBeat</span> <span style="box-sizing:border-box;color:teal;">9</span>
+ <span style="box-sizing:border-box;color:rgb(221, 17, 68);">收到客户端发过来的一个心跳包</span>
+ <span style="box-sizing:border-box;">content:</span> <span style="box-sizing:border-box;color:rgb(221, 17, 68);">length:0000000000031"Tue,</span> <span style="box-sizing:border-box;color:teal;">03</span> <span style="box-sizing:border-box;color:rgb(221, 17, 68);">Apr</span> <span style="box-sizing:border-box;color:teal;">2018</span> <span style="box-sizing:border-box;color:teal;">06</span><span style="box-sizing:border-box;color:rgb(221, 17, 68);">:12:42</span> <span style="box-sizing:border-box;color:rgb(221, 17, 68);">GMT"</span> <span style="box-sizing:border-box;color:teal;">51</span>
+ <span style="box-sizing:border-box;color:rgb(221, 17, 68);">length</span> <span style="box-sizing:border-box;color:teal;">31</span>
+ <span style="box-sizing:border-box;color:rgb(221, 17, 68);">heap.length</span> <span style="box-sizing:border-box;color:teal;">31</span>
+ <span style="box-sizing:border-box;color:rgb(221, 17, 68);">收到数据</span> <span style="box-sizing:border-box;color:rgb(221, 17, 68);">Tue,</span> <span style="box-sizing:border-box;color:teal;">03</span> <span style="box-sizing:border-box;color:rgb(221, 17, 68);">Apr</span> <span style="box-sizing:border-box;color:teal;">2018</span> <span style="box-sizing:border-box;color:teal;">06</span><span style="box-sizing:border-box;color:rgb(221, 17, 68);">:12:42</span> <span style="box-sizing:border-box;color:rgb(221, 17, 68);">GMT</span></code></pre>
+<p style="box-sizing:border-box;margin-top:0px;margin-bottom:16px;">客户端</p>
+<pre style="box-sizing:border-box;font-family:SFMono-Regular, Menlo, Monaco, Consolas, &quot;Liberation Mono&quot;, &quot;Courier New&quot;, monospace;margin-top:0px;margin-bottom:16px;overflow:auto;font-size:87.5%;overflow-x:auto;padding:0.5em;background:rgb(248, 248, 248);display:block;color:rgb(51, 51, 51);"><code style="box-sizing:border-box;font-family:SFMono-Regular, Menlo, Monaco, Consolas, &quot;Liberation Mono&quot;, &quot;Courier New&quot;, monospace;overflow-wrap:break-word;word-break:normal;font-size:inherit;color:inherit;"><span style="box-sizing:border-box;color:rgb(51, 51, 51);font-weight:700;">const</span> net = <span style="box-sizing:border-box;color:rgb(0, 134, 179);">require</span>(<span style="box-sizing:border-box;color:rgb(221, 17, 68);">'net'</span>);
+<span style="box-sizing:border-box;color:rgb(51, 51, 51);font-weight:700;">const</span> client = <span style="box-sizing:border-box;color:rgb(51, 51, 51);font-weight:700;">new</span> net.Socket();
+<span style="box-sizing:border-box;color:rgb(51, 51, 51);font-weight:700;">const</span> heartBeat = <span style="box-sizing:border-box;color:rgb(221, 17, 68);">'HeartBeat'</span>; <span style="box-sizing:border-box;color:rgb(153, 153, 136);font-style:italic;">// 定义心跳包内容确保和平时发送的数据不会冲突</span>
+<span style="box-sizing:border-box;color:rgb(51, 51, 51);font-weight:700;">const</span> getHeader = <span style="box-sizing:border-box;">(<span style="box-sizing:border-box;">num</span>) =&gt;</span> {
+  <span style="box-sizing:border-box;color:rgb(51, 51, 51);font-weight:700;">return</span> <span style="box-sizing:border-box;color:rgb(221, 17, 68);">'length:'</span> + (<span style="box-sizing:border-box;color:rgb(0, 134, 179);">Array</span>(<span style="box-sizing:border-box;color:teal;">13</span>).join(<span style="box-sizing:border-box;color:teal;">0</span>) + num).slice(<span style="box-sizing:border-box;color:teal;">-13</span>);
+}
+client.connect(<span style="box-sizing:border-box;color:teal;">9000</span>, <span style="box-sizing:border-box;color:rgb(221, 17, 68);">'127.0.0.1'</span>, <span style="box-sizing:border-box;"><span style="box-sizing:border-box;color:rgb(51, 51, 51);font-weight:700;">function</span> (<span style="box-sizing:border-box;"></span>) </span>{});
+<span style="box-sizing:border-box;color:rgb(51, 51, 51);font-weight:700;">let</span> chunks = [];
+<span style="box-sizing:border-box;color:rgb(51, 51, 51);font-weight:700;">let</span> length = <span style="box-sizing:border-box;color:teal;">0</span>;
+client.on(<span style="box-sizing:border-box;color:rgb(221, 17, 68);">'data'</span>, (chunk) =&gt; {
+  <span style="box-sizing:border-box;color:rgb(51, 51, 51);font-weight:700;">let</span> content = chunk.toString();
+  <span style="box-sizing:border-box;color:rgb(0, 134, 179);">console</span>.log(<span style="box-sizing:border-box;color:rgb(221, 17, 68);">"content:"</span>, content, content.length);
+  <span style="box-sizing:border-box;color:rgb(51, 51, 51);font-weight:700;">if</span> (content === heartBeat) {
+    <span style="box-sizing:border-box;color:rgb(0, 134, 179);">console</span>.log(<span style="box-sizing:border-box;color:rgb(221, 17, 68);">'收到服务端发过来的一个心跳包'</span>);
+  } <span style="box-sizing:border-box;color:rgb(51, 51, 51);font-weight:700;">else</span> {
+    <span style="box-sizing:border-box;color:rgb(51, 51, 51);font-weight:700;">if</span> (content.indexOf(<span style="box-sizing:border-box;color:rgb(221, 17, 68);">'length:'</span>) === <span style="box-sizing:border-box;color:teal;">0</span>){
+      length = <span style="box-sizing:border-box;color:rgb(0, 134, 179);">parseInt</span>(content.substring(<span style="box-sizing:border-box;color:teal;">7</span>,<span style="box-sizing:border-box;color:teal;">20</span>));
+      <span style="box-sizing:border-box;color:rgb(0, 134, 179);">console</span>.log(<span style="box-sizing:border-box;color:rgb(221, 17, 68);">'length'</span>, length);
+      chunks =[chunk.slice(<span style="box-sizing:border-box;color:teal;">20</span>, chunk.length)];
+    } <span style="box-sizing:border-box;color:rgb(51, 51, 51);font-weight:700;">else</span> {
+      chunks.push(chunk);
+    }
+    <span style="box-sizing:border-box;color:rgb(51, 51, 51);font-weight:700;">let</span> heap = Buffer.concat(chunks);
+    <span style="box-sizing:border-box;color:rgb(0, 134, 179);">console</span>.log(<span style="box-sizing:border-box;color:rgb(221, 17, 68);">'heap.length'</span>, heap.length)
+    <span style="box-sizing:border-box;color:rgb(51, 51, 51);font-weight:700;">if</span> (heap.length &gt;= length) {
+      <span style="box-sizing:border-box;color:rgb(51, 51, 51);font-weight:700;">try</span> {
+        <span style="box-sizing:border-box;color:rgb(0, 134, 179);">console</span>.log(<span style="box-sizing:border-box;color:rgb(221, 17, 68);">'收到数据'</span>, <span style="box-sizing:border-box;color:rgb(0, 134, 179);">JSON</span>.parse(heap.toString()));
+      } <span style="box-sizing:border-box;color:rgb(51, 51, 51);font-weight:700;">catch</span> (err) {
+        <span style="box-sizing:border-box;color:rgb(0, 134, 179);">console</span>.log(<span style="box-sizing:border-box;color:rgb(221, 17, 68);">'数据解析失败'</span>);
+      }
+    }
+  }
+});
+<span style="box-sizing:border-box;color:rgb(153, 153, 136);font-style:italic;">// 定时发送数据</span>
+setInterval(<span style="box-sizing:border-box;"><span style="box-sizing:border-box;color:rgb(51, 51, 51);font-weight:700;">function</span> (<span style="box-sizing:border-box;"></span>) </span>{
+  <span style="box-sizing:border-box;color:rgb(51, 51, 51);font-weight:700;">let</span> data = <span style="box-sizing:border-box;color:rgb(51, 51, 51);font-weight:700;">new</span> <span style="box-sizing:border-box;color:rgb(0, 134, 179);">Date</span>().toUTCString();
+  <span style="box-sizing:border-box;color:rgb(51, 51, 51);font-weight:700;">let</span> dataBuff =  Buffer.from(<span style="box-sizing:border-box;color:rgb(0, 134, 179);">JSON</span>.stringify(data));
+  <span style="box-sizing:border-box;color:rgb(51, 51, 51);font-weight:700;">let</span> header =getHeader(dataBuff.length);
+  client.write(header);
+  client.write(dataBuff);
+}, <span style="box-sizing:border-box;color:teal;">5000</span>);
+<span style="box-sizing:border-box;color:rgb(153, 153, 136);font-style:italic;">// 定时发送心跳包</span>
+setInterval(<span style="box-sizing:border-box;"><span style="box-sizing:border-box;color:rgb(51, 51, 51);font-weight:700;">function</span> (<span style="box-sizing:border-box;"></span>) </span>{
+  client.write(heartBeat);
+}, <span style="box-sizing:border-box;color:teal;">10000</span>);</code></pre>
+<p style="box-sizing:border-box;margin-top:0px;margin-bottom:16px;">日志打印：</p>
+<pre style="box-sizing:border-box;font-family:SFMono-Regular, Menlo, Monaco, Consolas, &quot;Liberation Mono&quot;, &quot;Courier New&quot;, monospace;margin-top:0px;margin-bottom:16px;overflow:auto;font-size:87.5%;overflow-x:auto;padding:0.5em;background:rgb(248, 248, 248);display:block;color:rgb(51, 51, 51);"><code style="box-sizing:border-box;font-family:SFMono-Regular, Menlo, Monaco, Consolas, &quot;Liberation Mono&quot;, &quot;Courier New&quot;, monospace;overflow-wrap:break-word;word-break:normal;font-size:inherit;color:inherit;"> <span style="box-sizing:border-box;">content:</span> <span style="box-sizing:border-box;color:rgb(221, 17, 68);">length:0000000000060</span> <span style="box-sizing:border-box;color:teal;">20</span>
+ <span style="box-sizing:border-box;color:rgb(221, 17, 68);">length</span> <span style="box-sizing:border-box;color:teal;">60</span>
+ <span style="box-sizing:border-box;color:rgb(221, 17, 68);">heap.length</span> <span style="box-sizing:border-box;color:teal;">0</span>
+ <span style="box-sizing:border-box;">content:</span> <span style="box-sizing:border-box;color:rgb(221, 17, 68);">"服务端的数据数据:\"Tue, 03 Apr 2018 06:12:37 GMT\""</span> <span style="box-sizing:border-box;color:teal;">44</span>
+ <span style="box-sizing:border-box;color:rgb(221, 17, 68);">heap.length</span> <span style="box-sizing:border-box;color:teal;">60</span>
+ <span style="box-sizing:border-box;color:rgb(221, 17, 68);">收到数据</span> <span style="box-sizing:border-box;color:rgb(221, 17, 68);">服务端的数据数据:"Tue,</span> <span style="box-sizing:border-box;color:teal;">03</span> <span style="box-sizing:border-box;color:rgb(221, 17, 68);">Apr</span> <span style="box-sizing:border-box;color:teal;">2018</span> <span style="box-sizing:border-box;color:teal;">06</span><span style="box-sizing:border-box;color:rgb(221, 17, 68);">:12:37</span> <span style="box-sizing:border-box;color:rgb(221, 17, 68);">GMT"</span>
+ <span style="box-sizing:border-box;">content:</span> <span style="box-sizing:border-box;color:rgb(221, 17, 68);">length:0000000000060"服务端的数据数据:\"Tue,</span> <span style="box-sizing:border-box;color:teal;">03</span> <span style="box-sizing:border-box;color:rgb(221, 17, 68);">Apr</span> <span style="box-sizing:border-box;color:teal;">2018</span> <span style="box-sizing:border-box;color:teal;">06</span><span style="box-sizing:border-box;color:rgb(221, 17, 68);">:12:42</span> <span style="box-sizing:border-box;color:rgb(221, 17, 68);">GMT\""</span> <span style="box-sizing:border-box;color:teal;">64</span>
+ <span style="box-sizing:border-box;color:rgb(221, 17, 68);">length</span> <span style="box-sizing:border-box;color:teal;">60</span>
+ <span style="box-sizing:border-box;color:rgb(221, 17, 68);">heap.length</span> <span style="box-sizing:border-box;color:teal;">60</span>
+ <span style="box-sizing:border-box;color:rgb(221, 17, 68);">收到数据</span> <span style="box-sizing:border-box;color:rgb(221, 17, 68);">服务端的数据数据:"Tue,</span> <span style="box-sizing:border-box;color:teal;">03</span> <span style="box-sizing:border-box;color:rgb(221, 17, 68);">Apr</span> <span style="box-sizing:border-box;color:teal;">2018</span> <span style="box-sizing:border-box;color:teal;">06</span><span style="box-sizing:border-box;color:rgb(221, 17, 68);">:12:42</span> <span style="box-sizing:border-box;color:rgb(221, 17, 68);">GMT"</span></code></pre>
+<p style="box-sizing:border-box;margin-top:0px;margin-bottom:16px;">客户端定时发送自定义协议数据到服务端，先发送头数据，在发送内容数据，另外一个定时器发送心跳数据，服务端判断是心跳数据，再判断是不是头数据，再是内容数据，然后解析后再发送数据给客户端。从日志的打印可以看出客户端先后<code style="box-sizing:border-box;font-family:SFMono-Regular, Menlo, Monaco, Consolas, &quot;Liberation Mono&quot;, &quot;Courier New&quot;, monospace;color:rgb(232, 62, 140);overflow-wrap:break-word;font-size:87.5%;">write</code> <code style="box-sizing:border-box;font-family:SFMono-Regular, Menlo, Monaco, Consolas, &quot;Liberation Mono&quot;, &quot;Courier New&quot;, monospace;color:rgb(232, 62, 140);overflow-wrap:break-word;font-size:87.5%;">header</code>和<code style="box-sizing:border-box;font-family:SFMono-Regular, Menlo, Monaco, Consolas, &quot;Liberation Mono&quot;, &quot;Courier New&quot;, monospace;color:rgb(232, 62, 140);overflow-wrap:break-word;font-size:87.5%;">data</code>数据，服务端可能在一个<code style="box-sizing:border-box;font-family:SFMono-Regular, Menlo, Monaco, Consolas, &quot;Liberation Mono&quot;, &quot;Courier New&quot;, monospace;color:rgb(232, 62, 140);overflow-wrap:break-word;font-size:87.5%;">data</code>事件里面接收到。<br style="box-sizing:border-box;"/>这里可以看到一个客户端在同一个时间内处理一个请求可以很好的工作，但是想象这么一个场景，如果同一时间内让同一个客户端去多次调用服务端请求，发送多次头数据和内容数据，服务端的data事件收到的数据就很难区别哪些数据是哪次请求的，比如两次头数据同时到达服务端，服务端就会忽略其中一次，而后面的内容数据也不一定就对应于这个头的。所以想复用长连接并能很好的高并发处理服务端请求，就需要连接池这种方式了。</p>
+<h2 style="box-sizing:border-box;margin-top:0px;font-weight:600;line-height:1.2;margin-bottom:8px;font-size:32px;">Socket连接池</h2>
+<p style="box-sizing:border-box;margin-top:0px;margin-bottom:16px;">什么是Socket连接池,池的概念可以联想到是一种资源的集合，所以Socket连接池，就是维护着一定数量Socket长连接的集合。它能自动检测Socket长连接的有效性，剔除无效的连接，补充连接池的长连接的数量。从代码层次上其实是人为实现这种功能的类，一般一个连接池包含下面几个属性：</p>
+<ol style="box-sizing:border-box;margin-bottom:16px;margin-top:0px;">
+<li style="box-sizing:border-box;">空闲可使用的长连接队列</li>
+<li style="box-sizing:border-box;">正在运行的通信的长连接队列</li>
+<li style="box-sizing:border-box;">等待去获取一个空闲长连接的请求的队列</li>
+<li style="box-sizing:border-box;">无效长连接的剔除功能</li>
+<li style="box-sizing:border-box;">长连接资源池的数量配置</li>
+<li style="box-sizing:border-box;">长连接资源的新建功能</li>
+</ol>
+<p style="box-sizing:border-box;margin-top:0px;margin-bottom:16px;">场景： 一个请求过来，首先去资源池要求获取一个长连接资源，如果空闲队列里面有长连接，就获取到这个长连接Socket,并把这个Socket移到正在运行的长连接队列。如果空闲队列里面没有，且正在运行的队列长度小于配置的连接池资源的数量，就新建一个长连接到正在运行的队列去，如果正在运行的不下于配置的资源池长度，则这个请求进入到等待队列去。当一个正在运行的Socket完成了请求，就从正在运行的队列移到空闲的队列，并触发等待请求队列去获取空闲资源，如果有等待的情况。</p>
+<p style="box-sizing:border-box;margin-top:0px;margin-bottom:16px;">这里简单介绍Nodejs的Socket连接池<a href="https://github.com/coopernurse/node-pool" rel="nofollow noreferrer" target="_blank" style="box-sizing:border-box;color:rgb(0, 150, 94);background-color:transparent;text-decoration:none;">generic-pool</a>模块的源码。<br style="box-sizing:border-box;"/><strong style="box-sizing:border-box;font-weight:bolder;">主要文件目录结构</strong></p>
+<pre style="box-sizing:border-box;font-family:SFMono-Regular, Menlo, Monaco, Consolas, &quot;Liberation Mono&quot;, &quot;Courier New&quot;, monospace;margin-top:0px;margin-bottom:16px;overflow:auto;font-size:87.5%;overflow-x:auto;padding:0.5em;background:rgb(248, 248, 248);display:block;color:rgb(51, 51, 51);"><code style="box-sizing:border-box;font-family:SFMono-Regular, Menlo, Monaco, Consolas, &quot;Liberation Mono&quot;, &quot;Courier New&quot;, monospace;overflow-wrap:break-word;word-break:normal;font-size:inherit;color:inherit;">.
+|————lib  <span style="box-sizing:border-box;color:rgb(153, 153, 136);font-style:italic;">------------------------- 代码库</span>
+| |————DefaultEvictor.js <span style="box-sizing:border-box;color:rgb(153, 153, 136);font-style:italic;">---------- </span>
+| |————Deferred.js <span style="box-sizing:border-box;color:rgb(153, 153, 136);font-style:italic;">---------------- </span>
+| |————Deque.js <span style="box-sizing:border-box;color:rgb(153, 153, 136);font-style:italic;">------------------- </span>
+| |————DequeIterator.js <span style="box-sizing:border-box;color:rgb(153, 153, 136);font-style:italic;">----------- </span>
+| |————DoublyLinkedList.js <span style="box-sizing:border-box;color:rgb(153, 153, 136);font-style:italic;">-------- </span>
+| |————DoublyLinkedListIterator.js- 
+| |————factoryValidator.js <span style="box-sizing:border-box;color:rgb(153, 153, 136);font-style:italic;">-------- </span>
+| |————Pool.js <span style="box-sizing:border-box;color:rgb(153, 153, 136);font-style:italic;">-------------------- 连接池主要代码</span>
+| |————PoolDefaults.js <span style="box-sizing:border-box;color:rgb(153, 153, 136);font-style:italic;">------------ </span>
+| |————PooledResource.js <span style="box-sizing:border-box;color:rgb(153, 153, 136);font-style:italic;">---------- </span>
+| |————Queue.js <span style="box-sizing:border-box;color:rgb(153, 153, 136);font-style:italic;">------------------- 队列</span>
+| |————ResourceLoan.js <span style="box-sizing:border-box;color:rgb(153, 153, 136);font-style:italic;">------------ </span>
+| |————ResourceRequest.js <span style="box-sizing:border-box;color:rgb(153, 153, 136);font-style:italic;">--------- </span>
+| |————utils.js <span style="box-sizing:border-box;color:rgb(153, 153, 136);font-style:italic;">------------------- 工具</span>
+|————test <span style="box-sizing:border-box;color:rgb(153, 153, 136);font-style:italic;">------------------------- 测试目录</span>
+|————README.md  <span style="box-sizing:border-box;color:rgb(153, 153, 136);font-style:italic;">------------------- 项目描述文件</span>
+|————.eslintrc  <span style="box-sizing:border-box;color:rgb(153, 153, 136);font-style:italic;">------------------- eslint静态检查配置文件</span>
+|————.eslintignore  <span style="box-sizing:border-box;color:rgb(153, 153, 136);font-style:italic;">--------------- eslint静态检查忽略的文件</span>
+|————<span style="box-sizing:border-box;color:rgb(0, 134, 179);">package</span>.json <span style="box-sizing:border-box;color:rgb(153, 153, 136);font-style:italic;">----------------- npm包依赖配置</span></code></pre>
+<p style="box-sizing:border-box;margin-top:0px;margin-bottom:16px;">下面介绍库的使用：</p>
+<h4 style="box-sizing:border-box;margin-top:0px;font-weight:600;line-height:1.2;margin-bottom:8px;font-size:24px;">初始化连接池</h4>
+<pre style="box-sizing:border-box;font-family:SFMono-Regular, Menlo, Monaco, Consolas, &quot;Liberation Mono&quot;, &quot;Courier New&quot;, monospace;margin-top:0px;margin-bottom:16px;overflow:auto;font-size:87.5%;overflow-x:auto;padding:0.5em;background:rgb(248, 248, 248);display:block;color:rgb(51, 51, 51);"><code style="box-sizing:border-box;font-family:SFMono-Regular, Menlo, Monaco, Consolas, &quot;Liberation Mono&quot;, &quot;Courier New&quot;, monospace;overflow-wrap:break-word;word-break:normal;font-size:inherit;color:inherit;"><span style="box-sizing:border-box;color:rgb(153, 153, 153);font-weight:700;">'use strict'</span>;
+<span style="box-sizing:border-box;color:rgb(51, 51, 51);font-weight:700;">const</span> net = <span style="box-sizing:border-box;color:rgb(0, 134, 179);">require</span>(<span style="box-sizing:border-box;color:rgb(221, 17, 68);">'net'</span>);
+<span style="box-sizing:border-box;color:rgb(51, 51, 51);font-weight:700;">const</span> genericPool = <span style="box-sizing:border-box;color:rgb(0, 134, 179);">require</span>(<span style="box-sizing:border-box;color:rgb(221, 17, 68);">'generic-pool'</span>);
+
+<span style="box-sizing:border-box;"><span style="box-sizing:border-box;color:rgb(51, 51, 51);font-weight:700;">function</span> <span style="box-sizing:border-box;color:rgb(153, 0, 0);font-weight:700;">createPool</span>(<span style="box-sizing:border-box;">conifg</span>) </span>{
+  <span style="box-sizing:border-box;color:rgb(51, 51, 51);font-weight:700;">let</span> options = <span style="box-sizing:border-box;color:rgb(0, 134, 179);">Object</span>.assign({
+    <span style="box-sizing:border-box;">fifo</span>: <span style="box-sizing:border-box;color:teal;">true</span>,                             <span style="box-sizing:border-box;color:rgb(153, 153, 136);font-style:italic;">// 是否优先使用老的资源</span>
+    <span style="box-sizing:border-box;">priorityRange</span>: <span style="box-sizing:border-box;color:teal;">1</span>,                       <span style="box-sizing:border-box;color:rgb(153, 153, 136);font-style:italic;">// 优先级</span>
+    <span style="box-sizing:border-box;">testOnBorrow</span>: <span style="box-sizing:border-box;color:teal;">true</span>,                     <span style="box-sizing:border-box;color:rgb(153, 153, 136);font-style:italic;">// 是否开启获取验证</span>
+    <span style="box-sizing:border-box;color:rgb(153, 153, 136);font-style:italic;">// acquireTimeoutMillis: 10 * 1000,     // 获取的超时时间</span>
+    <span style="box-sizing:border-box;">autostart</span>: <span style="box-sizing:border-box;color:teal;">true</span>,                        <span style="box-sizing:border-box;color:rgb(153, 153, 136);font-style:italic;">// 自动初始化和释放调度启用</span>
+    <span style="box-sizing:border-box;">min</span>: <span style="box-sizing:border-box;color:teal;">10</span>,                                <span style="box-sizing:border-box;color:rgb(153, 153, 136);font-style:italic;">// 初始化连接池保持的长连接最小数量</span>
+    <span style="box-sizing:border-box;">max</span>: <span style="box-sizing:border-box;color:teal;">0</span>,                                 <span style="box-sizing:border-box;color:rgb(153, 153, 136);font-style:italic;">// 最大连接池保持的长连接数量</span>
+    <span style="box-sizing:border-box;">evictionRunIntervalMillis</span>: <span style="box-sizing:border-box;color:teal;">0</span>,           <span style="box-sizing:border-box;color:rgb(153, 153, 136);font-style:italic;">// 资源释放检验间隔检查 设置了下面几个参数才起效果</span>
+    <span style="box-sizing:border-box;">numTestsPerEvictionRun</span>: <span style="box-sizing:border-box;color:teal;">3</span>,              <span style="box-sizing:border-box;color:rgb(153, 153, 136);font-style:italic;">// 每次释放资源数量</span>
+    <span style="box-sizing:border-box;">softIdleTimeoutMillis</span>: <span style="box-sizing:border-box;color:teal;">-1</span>,              <span style="box-sizing:border-box;color:rgb(153, 153, 136);font-style:italic;">// 可用的超过了最小的min 且空闲时间时间 达到释放</span>
+    <span style="box-sizing:border-box;">idleTimeoutMillis</span>: <span style="box-sizing:border-box;color:teal;">30000</span>                <span style="box-sizing:border-box;color:rgb(153, 153, 136);font-style:italic;">// 强制释放</span>
+    <span style="box-sizing:border-box;color:rgb(153, 153, 136);font-style:italic;">// maxWaitingClients: 50                // 最大等待</span>
+  }, conifg.options);
+  <span style="box-sizing:border-box;color:rgb(51, 51, 51);font-weight:700;">const</span> factory = {
+
+    <span style="box-sizing:border-box;">create</span>: <span style="box-sizing:border-box;"><span style="box-sizing:border-box;color:rgb(51, 51, 51);font-weight:700;">function</span> (<span style="box-sizing:border-box;"></span>) </span>{
+      <span style="box-sizing:border-box;color:rgb(51, 51, 51);font-weight:700;">return</span> <span style="box-sizing:border-box;color:rgb(51, 51, 51);font-weight:700;">new</span> <span style="box-sizing:border-box;color:rgb(0, 134, 179);">Promise</span>(<span style="box-sizing:border-box;">(<span style="box-sizing:border-box;">resolve, reject</span>) =&gt;</span> {
+        <span style="box-sizing:border-box;color:rgb(51, 51, 51);font-weight:700;">let</span> socket = <span style="box-sizing:border-box;color:rgb(51, 51, 51);font-weight:700;">new</span> net.Socket();
+        socket.setKeepAlive(<span style="box-sizing:border-box;color:teal;">true</span>);
+        socket.connect(conifg.port, conifg.host);
+        <span style="box-sizing:border-box;color:rgb(153, 153, 136);font-style:italic;">// TODO 心跳包的处理逻辑</span>
+        socket.on(<span style="box-sizing:border-box;color:rgb(221, 17, 68);">'connect'</span>, () =&gt; {
+          <span style="box-sizing:border-box;color:rgb(0, 134, 179);">console</span>.log(<span style="box-sizing:border-box;color:rgb(221, 17, 68);">'socket_pool'</span>, conifg.host, conifg.port, <span style="box-sizing:border-box;color:rgb(221, 17, 68);">'connect'</span> );
+          resolve(socket);
+        });
+        socket.on(<span style="box-sizing:border-box;color:rgb(221, 17, 68);">'close'</span>, (err) =&gt; { <span style="box-sizing:border-box;color:rgb(153, 153, 136);font-style:italic;">// 先end 事件再close事件</span>
+          <span style="box-sizing:border-box;color:rgb(0, 134, 179);">console</span>.log(<span style="box-sizing:border-box;color:rgb(221, 17, 68);">'socket_pool'</span>, conifg.host, conifg.port, <span style="box-sizing:border-box;color:rgb(221, 17, 68);">'close'</span>, err);
+        });
+        socket.on(<span style="box-sizing:border-box;color:rgb(221, 17, 68);">'error'</span>, (err) =&gt; {
+          <span style="box-sizing:border-box;color:rgb(0, 134, 179);">console</span>.log(<span style="box-sizing:border-box;color:rgb(221, 17, 68);">'socket_pool'</span>, conifg.host, conifg.port, <span style="box-sizing:border-box;color:rgb(221, 17, 68);">'error'</span>, err);
+          reject(err);
+        });
+      });
+    },
+    <span style="box-sizing:border-box;color:rgb(153, 153, 136);font-style:italic;">//销毁连接</span>
+    <span style="box-sizing:border-box;">destroy</span>: <span style="box-sizing:border-box;"><span style="box-sizing:border-box;color:rgb(51, 51, 51);font-weight:700;">function</span> (<span style="box-sizing:border-box;">socket</span>) </span>{
+      <span style="box-sizing:border-box;color:rgb(51, 51, 51);font-weight:700;">return</span> <span style="box-sizing:border-box;color:rgb(51, 51, 51);font-weight:700;">new</span> <span style="box-sizing:border-box;color:rgb(0, 134, 179);">Promise</span>(<span style="box-sizing:border-box;">(<span style="box-sizing:border-box;">resolve</span>) =&gt;</span> {
+        socket.destroy(); <span style="box-sizing:border-box;color:rgb(153, 153, 136);font-style:italic;">// 不会触发end 事件 第一次会触发发close事件 如果有message会触发error事件</span>
+        resolve();
+      });
+    },
+    <span style="box-sizing:border-box;">validate</span>: <span style="box-sizing:border-box;"><span style="box-sizing:border-box;color:rgb(51, 51, 51);font-weight:700;">function</span> (<span style="box-sizing:border-box;">socket</span>) </span>{ <span style="box-sizing:border-box;color:rgb(153, 153, 136);font-style:italic;">//获取资源池校验资源有效性</span>
+      <span style="box-sizing:border-box;color:rgb(51, 51, 51);font-weight:700;">return</span> <span style="box-sizing:border-box;color:rgb(51, 51, 51);font-weight:700;">new</span> <span style="box-sizing:border-box;color:rgb(0, 134, 179);">Promise</span>(<span style="box-sizing:border-box;">(<span style="box-sizing:border-box;">resolve</span>) =&gt;</span> {
+        <span style="box-sizing:border-box;color:rgb(153, 153, 136);font-style:italic;">// console.log('socket.destroyed:', socket.destroyed, 'socket.readable:', socket.readable, 'socket.writable:', socket.writable);</span>
+        <span style="box-sizing:border-box;color:rgb(51, 51, 51);font-weight:700;">if</span> (socket.destroyed || !socket.readable || !socket.writable) {
+          <span style="box-sizing:border-box;color:rgb(51, 51, 51);font-weight:700;">return</span> resolve(<span style="box-sizing:border-box;color:teal;">false</span>);
+        } <span style="box-sizing:border-box;color:rgb(51, 51, 51);font-weight:700;">else</span> {
+          <span style="box-sizing:border-box;color:rgb(51, 51, 51);font-weight:700;">return</span> resolve(<span style="box-sizing:border-box;color:teal;">true</span>);
+        }
+      });
+    }
+  };
+  <span style="box-sizing:border-box;color:rgb(51, 51, 51);font-weight:700;">const</span> pool = genericPool.createPool(factory, options);
+  pool.on(<span style="box-sizing:border-box;color:rgb(221, 17, 68);">'factoryCreateError'</span>, (err) =&gt; { <span style="box-sizing:border-box;color:rgb(153, 153, 136);font-style:italic;">// 监听新建长连接出错 让请求直接返回错误</span>
+    <span style="box-sizing:border-box;color:rgb(51, 51, 51);font-weight:700;">const</span> clientResourceRequest = pool._waitingClientsQueue.dequeue();
+    <span style="box-sizing:border-box;color:rgb(51, 51, 51);font-weight:700;">if</span> (clientResourceRequest) {
+      clientResourceRequest.reject(err);
+    }
+  });
+  <span style="box-sizing:border-box;color:rgb(51, 51, 51);font-weight:700;">return</span> pool;
+};
+
+<span style="box-sizing:border-box;color:rgb(51, 51, 51);font-weight:700;">let</span> pool = createPool({
+  <span style="box-sizing:border-box;">port</span>: <span style="box-sizing:border-box;color:teal;">9000</span>,
+  <span style="box-sizing:border-box;">host</span>: <span style="box-sizing:border-box;color:rgb(221, 17, 68);">'127.0.0.1'</span>,
+  <span style="box-sizing:border-box;">options</span>: {<span style="box-sizing:border-box;">min</span>: <span style="box-sizing:border-box;color:teal;">0</span>, <span style="box-sizing:border-box;">max</span>: <span style="box-sizing:border-box;color:teal;">10</span>}
+});</code></pre>
+<h4 style="box-sizing:border-box;margin-top:0px;font-weight:600;line-height:1.2;margin-bottom:8px;font-size:24px;">使用连接池</h4>
+<p style="box-sizing:border-box;margin-top:0px;margin-bottom:16px;">下面连接池的使用，使用的协议是我们之前自定义的协议。</p>
+<pre style="box-sizing:border-box;font-family:SFMono-Regular, Menlo, Monaco, Consolas, &quot;Liberation Mono&quot;, &quot;Courier New&quot;, monospace;margin-top:0px;margin-bottom:16px;overflow:auto;font-size:87.5%;overflow-x:auto;padding:0.5em;background:rgb(248, 248, 248);display:block;color:rgb(51, 51, 51);"><code style="box-sizing:border-box;font-family:SFMono-Regular, Menlo, Monaco, Consolas, &quot;Liberation Mono&quot;, &quot;Courier New&quot;, monospace;overflow-wrap:break-word;word-break:normal;font-size:inherit;color:inherit;"><span style="box-sizing:border-box;color:rgb(51, 51, 51);font-weight:700;">let</span> pool = createPool({
+  port: <span style="box-sizing:border-box;color:teal;">9000</span>,
+  host: <span style="box-sizing:border-box;color:rgb(221, 17, 68);">'127.0.0.1'</span>,
+  options: {min: <span style="box-sizing:border-box;color:teal;">0</span>, max: <span style="box-sizing:border-box;color:teal;">10</span>}
+});
+<span style="box-sizing:border-box;color:rgb(51, 51, 51);font-weight:700;">const</span> getHeader = <span style="box-sizing:border-box;">(<span style="box-sizing:border-box;">num</span>) =&gt;</span> {
+  <span style="box-sizing:border-box;color:rgb(51, 51, 51);font-weight:700;">return</span> <span style="box-sizing:border-box;color:rgb(221, 17, 68);">'length:'</span> + (<span style="box-sizing:border-box;color:rgb(0, 134, 179);">Array</span>(<span style="box-sizing:border-box;color:teal;">13</span>).join(<span style="box-sizing:border-box;color:teal;">0</span>) + num).slice(<span style="box-sizing:border-box;color:teal;">-13</span>);
+}
+<span style="box-sizing:border-box;color:rgb(51, 51, 51);font-weight:700;">const</span> request = <span style="box-sizing:border-box;color:rgb(51, 51, 51);font-weight:700;">async</span> (requestDataBuff) =&gt; {
+  <span style="box-sizing:border-box;color:rgb(51, 51, 51);font-weight:700;">let</span> client;
+  <span style="box-sizing:border-box;color:rgb(51, 51, 51);font-weight:700;">try</span> {
+    client = <span style="box-sizing:border-box;color:rgb(51, 51, 51);font-weight:700;">await</span> pool.acquire();
+  } <span style="box-sizing:border-box;color:rgb(51, 51, 51);font-weight:700;">catch</span> (e) {
+    <span style="box-sizing:border-box;color:rgb(0, 134, 179);">console</span>.log(<span style="box-sizing:border-box;color:rgb(221, 17, 68);">'acquire socket client failed: '</span>, e);
+    <span style="box-sizing:border-box;color:rgb(51, 51, 51);font-weight:700;">throw</span> e;
+  }
+  <span style="box-sizing:border-box;color:rgb(51, 51, 51);font-weight:700;">let</span> timeout = <span style="box-sizing:border-box;color:teal;">10000</span>;
+  <span style="box-sizing:border-box;color:rgb(51, 51, 51);font-weight:700;">return</span> <span style="box-sizing:border-box;color:rgb(51, 51, 51);font-weight:700;">new</span> <span style="box-sizing:border-box;color:rgb(0, 134, 179);">Promise</span>(<span style="box-sizing:border-box;">(<span style="box-sizing:border-box;">resolve, reject</span>) =&gt;</span> {
+    <span style="box-sizing:border-box;color:rgb(51, 51, 51);font-weight:700;">let</span> chunks = [];
+    <span style="box-sizing:border-box;color:rgb(51, 51, 51);font-weight:700;">let</span> length = <span style="box-sizing:border-box;color:teal;">0</span>;
+    client.setTimeout(timeout);
+    client.removeAllListeners(<span style="box-sizing:border-box;color:rgb(221, 17, 68);">'error'</span>);
+    client.on(<span style="box-sizing:border-box;color:rgb(221, 17, 68);">'error'</span>, <span style="box-sizing:border-box;">(<span style="box-sizing:border-box;">err</span>) =&gt;</span> {
+      client.removeAllListeners(<span style="box-sizing:border-box;color:rgb(221, 17, 68);">'error'</span>);
+      client.removeAllListeners(<span style="box-sizing:border-box;color:rgb(221, 17, 68);">'data'</span>);
+      client.removeAllListeners(<span style="box-sizing:border-box;color:rgb(221, 17, 68);">'timeout'</span>);
+      pool.destroyed(client);
+      reject(err);
+    });
+    client.on(<span style="box-sizing:border-box;color:rgb(221, 17, 68);">'timeout'</span>, <span style="box-sizing:border-box;"><span style="box-sizing:border-box;">()</span> =&gt;</span> {
+      client.removeAllListeners(<span style="box-sizing:border-box;color:rgb(221, 17, 68);">'error'</span>);
+      client.removeAllListeners(<span style="box-sizing:border-box;color:rgb(221, 17, 68);">'data'</span>);
+      client.removeAllListeners(<span style="box-sizing:border-box;color:rgb(221, 17, 68);">'timeout'</span>);
+      <span style="box-sizing:border-box;color:rgb(153, 153, 136);font-style:italic;">// 应该销毁以防下一个req的data事件监听才返回数据</span>
+      pool.destroy(client);
+      <span style="box-sizing:border-box;color:rgb(153, 153, 136);font-style:italic;">// pool.release(client);</span>
+      reject(<span style="box-sizing:border-box;color:rgb(221, 17, 68);">`socket connect timeout set <span style="box-sizing:border-box;color:rgb(51, 51, 51);font-weight:400;">${timeout}</span>`</span>);
+    });
+    <span style="box-sizing:border-box;color:rgb(51, 51, 51);font-weight:700;">let</span> header = getHeader(requestDataBuff.length);
+    client.write(header);
+    client.write(requestDataBuff);
+    client.on(<span style="box-sizing:border-box;color:rgb(221, 17, 68);">'data'</span>, <span style="box-sizing:border-box;">(<span style="box-sizing:border-box;">chunk</span>) =&gt;</span> {
+      <span style="box-sizing:border-box;color:rgb(51, 51, 51);font-weight:700;">let</span> content = chunk.toString();
+      <span style="box-sizing:border-box;color:rgb(0, 134, 179);">console</span>.log(<span style="box-sizing:border-box;color:rgb(221, 17, 68);">'content'</span>, content, content.length);
+      <span style="box-sizing:border-box;color:rgb(153, 153, 136);font-style:italic;">// TODO 过滤心跳包</span>
+      <span style="box-sizing:border-box;color:rgb(51, 51, 51);font-weight:700;">if</span> (content.indexOf(<span style="box-sizing:border-box;color:rgb(221, 17, 68);">'length:'</span>) === <span style="box-sizing:border-box;color:teal;">0</span>){
+        length = <span style="box-sizing:border-box;color:rgb(0, 134, 179);">parseInt</span>(content.substring(<span style="box-sizing:border-box;color:teal;">7</span>,<span style="box-sizing:border-box;color:teal;">20</span>));
+        <span style="box-sizing:border-box;color:rgb(0, 134, 179);">console</span>.log(<span style="box-sizing:border-box;color:rgb(221, 17, 68);">'length'</span>, length);
+        chunks =[chunk.slice(<span style="box-sizing:border-box;color:teal;">20</span>, chunk.length)];
+      } <span style="box-sizing:border-box;color:rgb(51, 51, 51);font-weight:700;">else</span> {
+        chunks.push(chunk);
+      }
+      <span style="box-sizing:border-box;color:rgb(51, 51, 51);font-weight:700;">let</span> heap = Buffer.concat(chunks);
+      <span style="box-sizing:border-box;color:rgb(0, 134, 179);">console</span>.log(<span style="box-sizing:border-box;color:rgb(221, 17, 68);">'heap.length'</span>, heap.length);
+      <span style="box-sizing:border-box;color:rgb(51, 51, 51);font-weight:700;">if</span> (heap.length &gt;= length) {
+        pool.release(client);
+        client.removeAllListeners(<span style="box-sizing:border-box;color:rgb(221, 17, 68);">'error'</span>);
+        client.removeAllListeners(<span style="box-sizing:border-box;color:rgb(221, 17, 68);">'data'</span>);
+        client.removeAllListeners(<span style="box-sizing:border-box;color:rgb(221, 17, 68);">'timeout'</span>);
+        <span style="box-sizing:border-box;color:rgb(51, 51, 51);font-weight:700;">try</span> {
+          <span style="box-sizing:border-box;color:rgb(153, 153, 136);font-style:italic;">// console.log('收到数据', JSON.parse(heap.toString()));</span>
+          resolve(<span style="box-sizing:border-box;color:rgb(0, 134, 179);">JSON</span>.parse(heap.toString()));
+        } <span style="box-sizing:border-box;color:rgb(51, 51, 51);font-weight:700;">catch</span> (err) {
+          reject(err);
+          <span style="box-sizing:border-box;color:rgb(0, 134, 179);">console</span>.log(<span style="box-sizing:border-box;color:rgb(221, 17, 68);">'数据解析失败'</span>);
+        }
+      }
+    });
+  });
+}
+request(Buffer.from(<span style="box-sizing:border-box;color:rgb(0, 134, 179);">JSON</span>.stringify({a: <span style="box-sizing:border-box;color:rgb(221, 17, 68);">'a'</span>})))
+  .then(<span style="box-sizing:border-box;">(<span style="box-sizing:border-box;">data</span>) =&gt;</span> {
+    <span style="box-sizing:border-box;color:rgb(0, 134, 179);">console</span>.log(<span style="box-sizing:border-box;color:rgb(221, 17, 68);">'收到服务的数据'</span>,data)
+  }).catch(<span style="box-sizing:border-box;"><span style="box-sizing:border-box;">err</span> =&gt;</span> {
+    <span style="box-sizing:border-box;color:rgb(0, 134, 179);">console</span>.log(err);
+  });
+
+request(Buffer.from(<span style="box-sizing:border-box;color:rgb(0, 134, 179);">JSON</span>.stringify({b: <span style="box-sizing:border-box;color:rgb(221, 17, 68);">'b'</span>})))
+  .then(<span style="box-sizing:border-box;">(<span style="box-sizing:border-box;">data</span>) =&gt;</span> {
+    <span style="box-sizing:border-box;color:rgb(0, 134, 179);">console</span>.log(<span style="box-sizing:border-box;color:rgb(221, 17, 68);">'收到服务的数据'</span>,data)
+  }).catch(<span style="box-sizing:border-box;"><span style="box-sizing:border-box;">err</span> =&gt;</span> {
+    <span style="box-sizing:border-box;color:rgb(0, 134, 179);">console</span>.log(err);
+  });
+
+setTimeout(<span style="box-sizing:border-box;"><span style="box-sizing:border-box;color:rgb(51, 51, 51);font-weight:700;">function</span> (<span style="box-sizing:border-box;"></span>) </span>{ <span style="box-sizing:border-box;color:rgb(153, 153, 136);font-style:italic;">//查看是否会复用Socket 有没有建立新的连接</span>
+  request(Buffer.from(<span style="box-sizing:border-box;color:rgb(0, 134, 179);">JSON</span>.stringify({c: <span style="box-sizing:border-box;color:rgb(221, 17, 68);">'c'</span>})))
+    .then(<span style="box-sizing:border-box;">(<span style="box-sizing:border-box;">data</span>) =&gt;</span> {
+      <span style="box-sizing:border-box;color:rgb(0, 134, 179);">console</span>.log(<span style="box-sizing:border-box;color:rgb(221, 17, 68);">'收到服务的数据'</span>,data)
+    }).catch(<span style="box-sizing:border-box;"><span style="box-sizing:border-box;">err</span> =&gt;</span> {
+    <span style="box-sizing:border-box;color:rgb(0, 134, 179);">console</span>.log(err);
+  });
+
+  request(Buffer.from(<span style="box-sizing:border-box;color:rgb(0, 134, 179);">JSON</span>.stringify({d: <span style="box-sizing:border-box;color:rgb(221, 17, 68);">'d'</span>})))
+    .then(<span style="box-sizing:border-box;">(<span style="box-sizing:border-box;">data</span>) =&gt;</span> {
+      <span style="box-sizing:border-box;color:rgb(0, 134, 179);">console</span>.log(<span style="box-sizing:border-box;color:rgb(221, 17, 68);">'收到服务的数据'</span>,data)
+    }).catch(<span style="box-sizing:border-box;"><span style="box-sizing:border-box;">err</span> =&gt;</span> {
+    <span style="box-sizing:border-box;color:rgb(0, 134, 179);">console</span>.log(err);
+  });
+}, <span style="box-sizing:border-box;color:teal;">1000</span>)</code></pre>
+<p style="box-sizing:border-box;margin-top:0px;margin-bottom:16px;">日志打印：</p>
+<pre style="box-sizing:border-box;font-family:SFMono-Regular, Menlo, Monaco, Consolas, &quot;Liberation Mono&quot;, &quot;Courier New&quot;, monospace;margin-top:0px;margin-bottom:16px;overflow:auto;font-size:87.5%;overflow-x:auto;padding:0.5em;background:rgb(248, 248, 248);display:block;color:rgb(51, 51, 51);"><code style="box-sizing:border-box;font-family:SFMono-Regular, Menlo, Monaco, Consolas, &quot;Liberation Mono&quot;, &quot;Courier New&quot;, monospace;overflow-wrap:break-word;word-break:normal;font-size:inherit;color:inherit;"> socket_pool <span style="box-sizing:border-box;color:teal;">127.0</span><span style="box-sizing:border-box;color:teal;">.0</span><span style="box-sizing:border-box;color:teal;">.1</span> <span style="box-sizing:border-box;color:teal;">9000</span> connect
+ socket_pool <span style="box-sizing:border-box;color:teal;">127.0</span><span style="box-sizing:border-box;color:teal;">.0</span><span style="box-sizing:border-box;color:teal;">.1</span> <span style="box-sizing:border-box;color:teal;">9000</span> connect
+ content <span style="box-sizing:border-box;color:rgb(0, 134, 179);">length</span>:<span style="box-sizing:border-box;color:teal;">0000000000040</span><span style="box-sizing:border-box;color:rgb(221, 17, 68);">"服务端的数据数据:{\"a\":\"a\"}"</span> <span style="box-sizing:border-box;color:teal;">44</span>
+ <span style="box-sizing:border-box;color:rgb(0, 134, 179);">length</span> <span style="box-sizing:border-box;color:teal;">40</span>
+ heap.<span style="box-sizing:border-box;color:rgb(0, 134, 179);">length</span> <span style="box-sizing:border-box;color:teal;">40</span>
+ 收到服务的数据 服务端的数据数据:{<span style="box-sizing:border-box;color:rgb(221, 17, 68);">"a"</span>:<span style="box-sizing:border-box;color:rgb(221, 17, 68);">"a"</span>}
+ content <span style="box-sizing:border-box;color:rgb(0, 134, 179);">length</span>:<span style="box-sizing:border-box;color:teal;">0000000000040</span><span style="box-sizing:border-box;color:rgb(221, 17, 68);">"服务端的数据数据:{\"b\":\"b\"}"</span> <span style="box-sizing:border-box;color:teal;">44</span>
+ <span style="box-sizing:border-box;color:rgb(0, 134, 179);">length</span> <span style="box-sizing:border-box;color:teal;">40</span>
+ heap.<span style="box-sizing:border-box;color:rgb(0, 134, 179);">length</span> <span style="box-sizing:border-box;color:teal;">40</span>
+ 收到服务的数据 服务端的数据数据:{<span style="box-sizing:border-box;color:rgb(221, 17, 68);">"b"</span>:<span style="box-sizing:border-box;color:rgb(221, 17, 68);">"b"</span>}
+ content <span style="box-sizing:border-box;color:rgb(0, 134, 179);">length</span>:<span style="box-sizing:border-box;color:teal;">0000000000040</span> <span style="box-sizing:border-box;color:teal;">20</span>
+ <span style="box-sizing:border-box;color:rgb(0, 134, 179);">length</span> <span style="box-sizing:border-box;color:teal;">40</span>
+ heap.<span style="box-sizing:border-box;color:rgb(0, 134, 179);">length</span> <span style="box-sizing:border-box;color:teal;">0</span>
+ content <span style="box-sizing:border-box;color:rgb(221, 17, 68);">"服务端的数据数据:{\"c\":\"c\"}"</span> <span style="box-sizing:border-box;color:teal;">24</span>
+ heap.<span style="box-sizing:border-box;color:rgb(0, 134, 179);">length</span> <span style="box-sizing:border-box;color:teal;">40</span>
+ 收到服务的数据 服务端的数据数据:{<span style="box-sizing:border-box;color:rgb(221, 17, 68);">"c"</span>:<span style="box-sizing:border-box;color:rgb(221, 17, 68);">"c"</span>}
+ content <span style="box-sizing:border-box;color:rgb(0, 134, 179);">length</span>:<span style="box-sizing:border-box;color:teal;">0000000000040</span><span style="box-sizing:border-box;color:rgb(221, 17, 68);">"服务端的数据数据:{\"d\":\"d\"}"</span> <span style="box-sizing:border-box;color:teal;">44</span>
+ <span style="box-sizing:border-box;color:rgb(0, 134, 179);">length</span> <span style="box-sizing:border-box;color:teal;">40</span>
+ heap.<span style="box-sizing:border-box;color:rgb(0, 134, 179);">length</span> <span style="box-sizing:border-box;color:teal;">40</span>
+ 收到服务的数据 服务端的数据数据:{<span style="box-sizing:border-box;color:rgb(221, 17, 68);">"d"</span>:<span style="box-sizing:border-box;color:rgb(221, 17, 68);">"d"</span>}</code></pre>
+<p style="box-sizing:border-box;margin-top:0px;margin-bottom:16px;">这里看到前面两个请求都建立了新的Socket连接<code style="box-sizing:border-box;font-family:SFMono-Regular, Menlo, Monaco, Consolas, &quot;Liberation Mono&quot;, &quot;Courier New&quot;, monospace;color:rgb(232, 62, 140);overflow-wrap:break-word;font-size:87.5%;"> socket_pool 127.0.0.1 9000 connect</code>，定时器结束后重新发起两个请求就没有建立新的Socket连接了，直接从连接池里面获取Socket连接资源。</p>
+<h4 style="box-sizing:border-box;margin-top:0px;font-weight:600;line-height:1.2;margin-bottom:8px;font-size:24px;">源码分析</h4>
+<p style="box-sizing:border-box;margin-top:0px;margin-bottom:16px;">发现主要的代码就位于lib文件夹中的Pool.js<br style="box-sizing:border-box;"/>构造函数：<br style="box-sizing:border-box;"/><code style="box-sizing:border-box;font-family:SFMono-Regular, Menlo, Monaco, Consolas, &quot;Liberation Mono&quot;, &quot;Courier New&quot;, monospace;color:rgb(232, 62, 140);overflow-wrap:break-word;font-size:87.5%;">lib/Pool.js</code></p>
+<pre style="box-sizing:border-box;font-family:SFMono-Regular, Menlo, Monaco, Consolas, &quot;Liberation Mono&quot;, &quot;Courier New&quot;, monospace;margin-top:0px;margin-bottom:16px;overflow:auto;font-size:87.5%;overflow-x:auto;padding:0.5em;background:rgb(248, 248, 248);display:block;color:rgb(51, 51, 51);"><code style="box-sizing:border-box;font-family:SFMono-Regular, Menlo, Monaco, Consolas, &quot;Liberation Mono&quot;, &quot;Courier New&quot;, monospace;overflow-wrap:break-word;word-break:normal;font-size:inherit;color:inherit;">  <span style="box-sizing:border-box;color:rgb(153, 153, 136);font-style:italic;"><span style="box-sizing:border-box;">/**
+<span style="box-sizing:border-box;color:rgb(153, 0, 115);">   * </span>Generate </span>an<span style="box-sizing:border-box;"> Object pool with </span>a<span style="box-sizing:border-box;"> specified <span style="box-sizing:border-box;">`factory`</span> and <span style="box-sizing:border-box;">`config`</span>.
+<span style="box-sizing:border-box;color:rgb(153, 0, 115);">   *
+   </span>* @param {typeof DefaultEvictor} Evictor
+<span style="box-sizing:border-box;color:rgb(153, 0, 115);">   * </span>@param {typeof Deque} Deque
+<span style="box-sizing:border-box;color:rgb(153, 0, 115);">   * </span>@param {typeof PriorityQueue} PriorityQueue
+<span style="box-sizing:border-box;color:rgb(153, 0, 115);">   * </span>@param {Object} factory
+<span style="box-sizing:border-box;color:rgb(153, 0, 115);">   *   </span>Factory to be used for generating and destroying </span>the<span style="box-sizing:border-box;"> items.
+<span style="box-sizing:border-box;color:rgb(153, 0, 115);">   * </span>@param {Function} factory.create
+<span style="box-sizing:border-box;color:rgb(153, 0, 115);">   *   </span>Should create </span>the<span style="box-sizing:border-box;"> item to be acquired,
+<span style="box-sizing:border-box;color:rgb(153, 0, 115);">   *   </span>and call it's first callback argument with </span>the<span style="box-sizing:border-box;"> generated item as it's argument.
+<span style="box-sizing:border-box;color:rgb(153, 0, 115);">   * </span>@param {Function} factory.destroy
+<span style="box-sizing:border-box;color:rgb(153, 0, 115);">   *   </span>Should gently close any resources that </span>the<span style="box-sizing:border-box;"> item is using.
+<span style="box-sizing:border-box;color:rgb(153, 0, 115);">   *   </span>Called before </span>the<span style="box-sizing:border-box;"> items is destroyed.
+<span style="box-sizing:border-box;color:rgb(153, 0, 115);">   * </span>@param {Function} factory.validate
+<span style="box-sizing:border-box;color:rgb(153, 0, 115);">   *   </span>Test if </span>a<span style="box-sizing:border-box;"> resource is still valid .Should return </span>a<span style="box-sizing:border-box;"> promise that resolves to </span>a<span style="box-sizing:border-box;"> boolean, true if resource is still valid and false
+<span style="box-sizing:border-box;color:rgb(153, 0, 115);">   *   </span>If it </span>should<span style="box-sizing:border-box;"> be removed from pool.
+<span style="box-sizing:border-box;color:rgb(153, 0, 115);">   * </span>@param {Object} options
+   */</span></span>
+  constructor(Evictor, Deque, PriorityQueue, <span style="box-sizing:border-box;color:rgb(51, 51, 51);font-weight:700;">factory</span>, options) {
+    <span style="box-sizing:border-box;color:rgb(51, 51, 51);font-weight:700;">super</span>();
+    factoryValidator(<span style="box-sizing:border-box;color:rgb(51, 51, 51);font-weight:700;">factory</span>); <span style="box-sizing:border-box;color:rgb(153, 153, 136);font-style:italic;">// 检验我们定义的factory的有效性包含create destroy validate</span>
+    <span style="box-sizing:border-box;color:rgb(51, 51, 51);font-weight:700;">this</span>._config = <span style="box-sizing:border-box;color:rgb(51, 51, 51);font-weight:700;">new</span> PoolOptions(options); <span style="box-sizing:border-box;color:rgb(153, 153, 136);font-style:italic;">// 连接池配置</span>
+    <span style="box-sizing:border-box;color:rgb(153, 153, 136);font-style:italic;">// <span style="box-sizing:border-box;color:rgb(221, 17, 68);">TODO:</span> fix up this ugly glue-ing</span>
+    <span style="box-sizing:border-box;color:rgb(51, 51, 51);font-weight:700;">this</span>._Promise = <span style="box-sizing:border-box;color:rgb(51, 51, 51);font-weight:700;">this</span>._config.Promise;
+
+    <span style="box-sizing:border-box;color:rgb(51, 51, 51);font-weight:700;">this</span>._factory = <span style="box-sizing:border-box;color:rgb(51, 51, 51);font-weight:700;">factory</span>;
+    <span style="box-sizing:border-box;color:rgb(51, 51, 51);font-weight:700;">this</span>._draining = <span style="box-sizing:border-box;color:rgb(51, 51, 51);font-weight:700;">false</span>;
+    <span style="box-sizing:border-box;color:rgb(51, 51, 51);font-weight:700;">this</span>._started = <span style="box-sizing:border-box;color:rgb(51, 51, 51);font-weight:700;">false</span>;
+    <span style="box-sizing:border-box;color:rgb(153, 153, 136);font-style:italic;"><span style="box-sizing:border-box;">/**
+<span style="box-sizing:border-box;color:rgb(153, 0, 115);">     * </span>Holds waiting clients
+<span style="box-sizing:border-box;color:rgb(153, 0, 115);">     * </span>@type {PriorityQueue}
+<span style="box-sizing:border-box;">     */</span></span></span>
+    <span style="box-sizing:border-box;color:rgb(51, 51, 51);font-weight:700;">this</span>._waitingClientsQueue = <span style="box-sizing:border-box;color:rgb(51, 51, 51);font-weight:700;">new</span> PriorityQueue(<span style="box-sizing:border-box;color:rgb(51, 51, 51);font-weight:700;">this</span>._config.priorityRange); <span style="box-sizing:border-box;color:rgb(153, 153, 136);font-style:italic;">// 请求的对象管管理队列queue 初始化queue的size 1 { _size: 1, _slots: [ Queue { _list: [Object] } ] }</span>
+    <span style="box-sizing:border-box;color:rgb(153, 153, 136);font-style:italic;"><span style="box-sizing:border-box;">/**
+<span style="box-sizing:border-box;color:rgb(153, 0, 115);">     * </span>Collection of promises for resource creation calls made by </span>the<span style="box-sizing:border-box;"> pool to factory.create
+<span style="box-sizing:border-box;color:rgb(153, 0, 115);">     * </span>@type {Set}
+<span style="box-sizing:border-box;">     */</span></span></span>
+    <span style="box-sizing:border-box;color:rgb(51, 51, 51);font-weight:700;">this</span>._factoryCreateOperations = <span style="box-sizing:border-box;color:rgb(51, 51, 51);font-weight:700;">new</span> <span style="box-sizing:border-box;color:rgb(0, 134, 179);">Set</span>(); <span style="box-sizing:border-box;color:rgb(153, 153, 136);font-style:italic;">// 正在创建的长连接</span>
+
+    <span style="box-sizing:border-box;color:rgb(153, 153, 136);font-style:italic;"><span style="box-sizing:border-box;">/**
+<span style="box-sizing:border-box;color:rgb(153, 0, 115);">     * </span>Collection of promises for resource destruction calls made by </span>the<span style="box-sizing:border-box;"> pool to factory.destroy
+<span style="box-sizing:border-box;color:rgb(153, 0, 115);">     * </span>@type {Set}
+<span style="box-sizing:border-box;">     */</span></span></span>
+    <span style="box-sizing:border-box;color:rgb(51, 51, 51);font-weight:700;">this</span>._factoryDestroyOperations = <span style="box-sizing:border-box;color:rgb(51, 51, 51);font-weight:700;">new</span> <span style="box-sizing:border-box;color:rgb(0, 134, 179);">Set</span>(); <span style="box-sizing:border-box;color:rgb(153, 153, 136);font-style:italic;">// 正在销毁的长连接</span>
+
+    <span style="box-sizing:border-box;color:rgb(153, 153, 136);font-style:italic;"><span style="box-sizing:border-box;">/**
+<span style="box-sizing:border-box;color:rgb(153, 0, 115);">     * </span>A queue/stack of pooledResources awaiting acquisition
+<span style="box-sizing:border-box;color:rgb(153, 0, 115);">     * </span></span><span style="box-sizing:border-box;color:rgb(221, 17, 68);">TODO:</span><span style="box-sizing:border-box;"> replace with LinkedList backed array
+<span style="box-sizing:border-box;color:rgb(153, 0, 115);">     * </span>@type {Deque}
+<span style="box-sizing:border-box;">     */</span></span></span>
+    <span style="box-sizing:border-box;color:rgb(51, 51, 51);font-weight:700;">this</span>._availableObjects = <span style="box-sizing:border-box;color:rgb(51, 51, 51);font-weight:700;">new</span> Deque(); <span style="box-sizing:border-box;color:rgb(153, 153, 136);font-style:italic;">// 空闲的资源长连接</span>
+
+    <span style="box-sizing:border-box;color:rgb(153, 153, 136);font-style:italic;"><span style="box-sizing:border-box;">/**
+<span style="box-sizing:border-box;color:rgb(153, 0, 115);">     * </span>Collection of references for any resource that </span>are<span style="box-sizing:border-box;"> undergoing validation before being acquired
+<span style="box-sizing:border-box;color:rgb(153, 0, 115);">     * </span>@type {Set}
+<span style="box-sizing:border-box;">     */</span></span></span>
+    <span style="box-sizing:border-box;color:rgb(51, 51, 51);font-weight:700;">this</span>._testOnBorrowResources = <span style="box-sizing:border-box;color:rgb(51, 51, 51);font-weight:700;">new</span> <span style="box-sizing:border-box;color:rgb(0, 134, 179);">Set</span>(); <span style="box-sizing:border-box;color:rgb(153, 153, 136);font-style:italic;">// 正在检验有效性的资源</span>
+
+    <span style="box-sizing:border-box;color:rgb(153, 153, 136);font-style:italic;"><span style="box-sizing:border-box;">/**
+<span style="box-sizing:border-box;color:rgb(153, 0, 115);">     * </span>Collection of references for any resource that </span>are<span style="box-sizing:border-box;"> undergoing validation before being returned
+<span style="box-sizing:border-box;color:rgb(153, 0, 115);">     * </span>@type {Set}
+<span style="box-sizing:border-box;">     */</span></span></span>
+    <span style="box-sizing:border-box;color:rgb(51, 51, 51);font-weight:700;">this</span>._testOnReturnResources = <span style="box-sizing:border-box;color:rgb(51, 51, 51);font-weight:700;">new</span> <span style="box-sizing:border-box;color:rgb(0, 134, 179);">Set</span>();
+
+    <span style="box-sizing:border-box;color:rgb(153, 153, 136);font-style:italic;"><span style="box-sizing:border-box;">/**
+<span style="box-sizing:border-box;color:rgb(153, 0, 115);">     * </span>Collection of promises for any validations currently in process
+<span style="box-sizing:border-box;color:rgb(153, 0, 115);">     * </span>@type {Set}
+<span style="box-sizing:border-box;">     */</span></span></span>
+    <span style="box-sizing:border-box;color:rgb(51, 51, 51);font-weight:700;">this</span>._validationOperations = <span style="box-sizing:border-box;color:rgb(51, 51, 51);font-weight:700;">new</span> <span style="box-sizing:border-box;color:rgb(0, 134, 179);">Set</span>();<span style="box-sizing:border-box;color:rgb(153, 153, 136);font-style:italic;">// 正在校验的中间temp</span>
+
+    <span style="box-sizing:border-box;color:rgb(153, 153, 136);font-style:italic;"><span style="box-sizing:border-box;">/**
+<span style="box-sizing:border-box;color:rgb(153, 0, 115);">     * </span>All objects associated with this pool in any state (except destroyed)
+<span style="box-sizing:border-box;color:rgb(153, 0, 115);">     * </span>@type {Set}
+<span style="box-sizing:border-box;">     */</span></span></span>
+    <span style="box-sizing:border-box;color:rgb(51, 51, 51);font-weight:700;">this</span>._allObjects = <span style="box-sizing:border-box;color:rgb(51, 51, 51);font-weight:700;">new</span> <span style="box-sizing:border-box;color:rgb(0, 134, 179);">Set</span>(); <span style="box-sizing:border-box;color:rgb(153, 153, 136);font-style:italic;">// 所有的链接资源 是一个 PooledResource对象</span>
+
+    <span style="box-sizing:border-box;color:rgb(153, 153, 136);font-style:italic;"><span style="box-sizing:border-box;">/**
+<span style="box-sizing:border-box;color:rgb(153, 0, 115);">     * </span>Loans keyed by </span>the<span style="box-sizing:border-box;"> borrowed resource
+<span style="box-sizing:border-box;color:rgb(153, 0, 115);">     * </span>@type {Map}
+<span style="box-sizing:border-box;">     */</span></span></span>
+    <span style="box-sizing:border-box;color:rgb(51, 51, 51);font-weight:700;">this</span>._resourceLoans = <span style="box-sizing:border-box;color:rgb(51, 51, 51);font-weight:700;">new</span> <span style="box-sizing:border-box;color:rgb(0, 134, 179);">Map</span>(); <span style="box-sizing:border-box;color:rgb(153, 153, 136);font-style:italic;">// 被借用的对象的map release的时候用到</span>
+
+    <span style="box-sizing:border-box;color:rgb(153, 153, 136);font-style:italic;"><span style="box-sizing:border-box;">/**
+<span style="box-sizing:border-box;color:rgb(153, 0, 115);">     * </span>Infinitely looping iterator over available object
+<span style="box-sizing:border-box;color:rgb(153, 0, 115);">     * </span>@type {DequeIterator}
+<span style="box-sizing:border-box;">     */</span></span></span>
+    <span style="box-sizing:border-box;color:rgb(51, 51, 51);font-weight:700;">this</span>._evictionIterator = <span style="box-sizing:border-box;color:rgb(51, 51, 51);font-weight:700;">this</span>._availableObjects.iterator(); <span style="box-sizing:border-box;color:rgb(153, 153, 136);font-style:italic;">// 一个迭代器</span>
+
+    <span style="box-sizing:border-box;color:rgb(51, 51, 51);font-weight:700;">this</span>._evictor = <span style="box-sizing:border-box;color:rgb(51, 51, 51);font-weight:700;">new</span> Evictor();
+
+    <span style="box-sizing:border-box;color:rgb(153, 153, 136);font-style:italic;"><span style="box-sizing:border-box;">/**
+<span style="box-sizing:border-box;color:rgb(153, 0, 115);">     * </span>handle for setTimeout for next eviction run
+<span style="box-sizing:border-box;color:rgb(153, 0, 115);">     * </span>@type {(number|null)}
+<span style="box-sizing:border-box;">     */</span></span></span>
+    <span style="box-sizing:border-box;color:rgb(51, 51, 51);font-weight:700;">this</span>._scheduledEviction = <span style="box-sizing:border-box;color:rgb(51, 51, 51);font-weight:700;">null</span>;
+
+    <span style="box-sizing:border-box;color:rgb(153, 153, 136);font-style:italic;">// create initial resources (if factory.min &gt; 0)</span>
+    <span style="box-sizing:border-box;color:rgb(51, 51, 51);font-weight:700;">if</span> (<span style="box-sizing:border-box;color:rgb(51, 51, 51);font-weight:700;">this</span>._config.autostart === <span style="box-sizing:border-box;color:rgb(51, 51, 51);font-weight:700;">true</span>) { <span style="box-sizing:border-box;color:rgb(153, 153, 136);font-style:italic;">// 初始化最小的连接数量</span>
+      <span style="box-sizing:border-box;color:rgb(51, 51, 51);font-weight:700;">this</span>.start();
+    }
+  }</code></pre>
+<p style="box-sizing:border-box;margin-top:0px;margin-bottom:16px;">可以看到包含之前说的空闲的资源队列，正在请求的资源队列，正在等待的请求队列等。<br style="box-sizing:border-box;"/>下面查看 Pool.acquire 方法<br style="box-sizing:border-box;"/><code style="box-sizing:border-box;font-family:SFMono-Regular, Menlo, Monaco, Consolas, &quot;Liberation Mono&quot;, &quot;Courier New&quot;, monospace;color:rgb(232, 62, 140);overflow-wrap:break-word;font-size:87.5%;">lib/Pool.js</code></p>
+<pre style="box-sizing:border-box;font-family:SFMono-Regular, Menlo, Monaco, Consolas, &quot;Liberation Mono&quot;, &quot;Courier New&quot;, monospace;margin-top:0px;margin-bottom:16px;overflow:auto;font-size:87.5%;overflow-x:auto;padding:0.5em;background:rgb(248, 248, 248);display:block;color:rgb(51, 51, 51);"><code style="box-sizing:border-box;font-family:SFMono-Regular, Menlo, Monaco, Consolas, &quot;Liberation Mono&quot;, &quot;Courier New&quot;, monospace;overflow-wrap:break-word;word-break:normal;font-size:inherit;color:inherit;"><span style="box-sizing:border-box;color:rgb(153, 153, 136);font-style:italic;">/**
+   * Request a new resource. The callback will be called,
+   * when a new resource is available, passing the resource to the callback.
+   * <span style="box-sizing:border-box;color:rgb(221, 17, 68);">TODO:</span> should we add a seperate "acquireWithPriority" function
+   *
+   * <span style="box-sizing:border-box;color:rgb(221, 17, 68);">@param</span> {Number} [priority=0]
+   *   Optional.  Integer between 0 and (priorityRange - 1).  Specifies the priority
+   *   of the caller if there are no available resources.  Lower numbers mean higher
+   *   priority.
+   *
+   * <span style="box-sizing:border-box;color:rgb(221, 17, 68);">@returns</span> {Promise}
+   */</span>
+  acquire(priority) { <span style="box-sizing:border-box;color:rgb(153, 153, 136);font-style:italic;">// 空闲资源队列资源是有优先等级的 </span>
+    <span style="box-sizing:border-box;color:rgb(51, 51, 51);font-weight:700;">if</span> (<span style="box-sizing:border-box;color:rgb(51, 51, 51);font-weight:700;">this</span>._started === <span style="box-sizing:border-box;color:teal;">false</span> &amp;&amp; <span style="box-sizing:border-box;color:rgb(51, 51, 51);font-weight:700;">this</span>._config.autostart === <span style="box-sizing:border-box;color:teal;">false</span>) {
+      <span style="box-sizing:border-box;color:rgb(51, 51, 51);font-weight:700;">this</span>.start(); <span style="box-sizing:border-box;color:rgb(153, 153, 136);font-style:italic;">// 会在this._allObjects 添加min的连接对象数</span>
+    }
+    <span style="box-sizing:border-box;color:rgb(51, 51, 51);font-weight:700;">if</span> (<span style="box-sizing:border-box;color:rgb(51, 51, 51);font-weight:700;">this</span>._draining) { <span style="box-sizing:border-box;color:rgb(153, 153, 136);font-style:italic;">// 如果是在资源释放阶段就不能再请求资源了</span>
+      <span style="box-sizing:border-box;color:rgb(51, 51, 51);font-weight:700;">return</span> <span style="box-sizing:border-box;color:rgb(51, 51, 51);font-weight:700;">this</span>._Promise.reject(
+        new Error(<span style="box-sizing:border-box;color:rgb(221, 17, 68);">"pool is draining and cannot accept work"</span>)
+      );
+    }
+    <span style="box-sizing:border-box;color:rgb(153, 153, 136);font-style:italic;">// 如果要设置了等待队列的长度且要等待 如果超过了就返回资源不可获取</span>
+    <span style="box-sizing:border-box;color:rgb(153, 153, 136);font-style:italic;">// <span style="box-sizing:border-box;color:rgb(221, 17, 68);">TODO:</span> should we defer this check till after this event loop incase "the situation" changes in the meantime</span>
+    <span style="box-sizing:border-box;color:rgb(51, 51, 51);font-weight:700;">if</span> (
+      <span style="box-sizing:border-box;color:rgb(51, 51, 51);font-weight:700;">this</span>._config.maxWaitingClients !== undefined &amp;&amp;
+      <span style="box-sizing:border-box;color:rgb(51, 51, 51);font-weight:700;">this</span>._waitingClientsQueue.length &gt;= <span style="box-sizing:border-box;color:rgb(51, 51, 51);font-weight:700;">this</span>._config.maxWaitingClients
+    ) {
+      <span style="box-sizing:border-box;color:rgb(51, 51, 51);font-weight:700;">return</span> <span style="box-sizing:border-box;color:rgb(51, 51, 51);font-weight:700;">this</span>._Promise.reject(
+        new Error(<span style="box-sizing:border-box;color:rgb(221, 17, 68);">"max waitingClients count exceeded"</span>)
+      );
+    }
+
+    <span style="box-sizing:border-box;color:rgb(51, 51, 51);font-weight:700;">const</span> resourceRequest = new ResourceRequest(
+      <span style="box-sizing:border-box;color:rgb(51, 51, 51);font-weight:700;">this</span>._config.acquireTimeoutMillis, <span style="box-sizing:border-box;color:rgb(153, 153, 136);font-style:italic;">// 对象里面的超时配置 表示等待时间 会启动一个定时 超时了就触发resourceRequest.promise 的reject触发</span>
+      <span style="box-sizing:border-box;color:rgb(51, 51, 51);font-weight:700;">this</span>._Promise
+    );
+    <span style="box-sizing:border-box;color:rgb(153, 153, 136);font-style:italic;">// console.log(resourceRequest)</span>
+    <span style="box-sizing:border-box;color:rgb(51, 51, 51);font-weight:700;">this</span>._waitingClientsQueue.enqueue(resourceRequest, priority); <span style="box-sizing:border-box;color:rgb(153, 153, 136);font-style:italic;">// 请求进入等待请求队列</span>
+    <span style="box-sizing:border-box;color:rgb(51, 51, 51);font-weight:700;">this</span>._dispense(); <span style="box-sizing:border-box;color:rgb(153, 153, 136);font-style:italic;">// 进行资源分发 最终会触发resourceRequest.promise的resolve(client) </span>
+
+    <span style="box-sizing:border-box;color:rgb(51, 51, 51);font-weight:700;">return</span> resourceRequest.promise; <span style="box-sizing:border-box;color:rgb(153, 153, 136);font-style:italic;">// 返回的是一个promise对象resolve却是在其他地方触发</span>
+  }</code></pre>
+<pre style="box-sizing:border-box;font-family:SFMono-Regular, Menlo, Monaco, Consolas, &quot;Liberation Mono&quot;, &quot;Courier New&quot;, monospace;margin-top:0px;margin-bottom:16px;overflow:auto;font-size:87.5%;overflow-x:auto;padding:0.5em;background:rgb(248, 248, 248);display:block;color:rgb(51, 51, 51);"><code style="box-sizing:border-box;font-family:SFMono-Regular, Menlo, Monaco, Consolas, &quot;Liberation Mono&quot;, &quot;Courier New&quot;, monospace;overflow-wrap:break-word;word-break:normal;font-size:inherit;color:inherit;">  <span style="box-sizing:border-box;color:rgb(153, 153, 136);font-style:italic;">/**
+   * Attempt to resolve an outstanding resource request using an available resource from
+   * the pool, or creating new ones
+   *
+   * <span style="box-sizing:border-box;color:rgb(221, 17, 68);">@private</span>
+   */</span>
+  _dispense() {
+    <span style="box-sizing:border-box;color:rgb(153, 153, 136);font-style:italic;">/**
+     * Local variables for ease of reading/writing
+     * these don't (shouldn't) change across the execution of this fn
+     */</span>
+    <span style="box-sizing:border-box;color:rgb(51, 51, 51);font-weight:700;">const</span> numWaitingClients = <span style="box-sizing:border-box;color:rgb(51, 51, 51);font-weight:700;">this</span>._waitingClientsQueue.length; <span style="box-sizing:border-box;color:rgb(153, 153, 136);font-style:italic;">// 正在等待的请求的队列长度 各个优先级的总和</span>
+    console.log(<span style="box-sizing:border-box;color:rgb(221, 17, 68);">'numWaitingClients'</span>, numWaitingClients)  <span style="box-sizing:border-box;color:rgb(153, 153, 136);font-style:italic;">// 1</span>
+
+    <span style="box-sizing:border-box;color:rgb(153, 153, 136);font-style:italic;">// If there aren't any waiting requests then there is nothing to do</span>
+    <span style="box-sizing:border-box;color:rgb(153, 153, 136);font-style:italic;">// so lets short-circuit</span>
+    <span style="box-sizing:border-box;color:rgb(51, 51, 51);font-weight:700;">if</span> (numWaitingClients &lt; <span style="box-sizing:border-box;color:teal;">1</span>) {
+      <span style="box-sizing:border-box;color:rgb(51, 51, 51);font-weight:700;">return</span>;
+    }
+    <span style="box-sizing:border-box;color:rgb(153, 153, 136);font-style:italic;">//  max: 10, min: 4</span>
+    console.log(<span style="box-sizing:border-box;color:rgb(221, 17, 68);">'_potentiallyAllocableResourceCount'</span>, <span style="box-sizing:border-box;color:rgb(51, 51, 51);font-weight:700;">this</span>._potentiallyAllocableResourceCount) <span style="box-sizing:border-box;color:rgb(153, 153, 136);font-style:italic;">// 目前潜在空闲可用的连接数量</span>
+    <span style="box-sizing:border-box;color:rgb(51, 51, 51);font-weight:700;">const</span> resourceShortfall =
+      numWaitingClients - <span style="box-sizing:border-box;color:rgb(51, 51, 51);font-weight:700;">this</span>._potentiallyAllocableResourceCount; <span style="box-sizing:border-box;color:rgb(153, 153, 136);font-style:italic;">// 还差几个可用的 小于零表示不需要 大于0表示需要新建长连接的数量</span>
+    console.log(<span style="box-sizing:border-box;color:rgb(221, 17, 68);">'spareResourceCapacity'</span>, <span style="box-sizing:border-box;color:rgb(51, 51, 51);font-weight:700;">this</span>.spareResourceCapacity) <span style="box-sizing:border-box;color:rgb(153, 153, 136);font-style:italic;">// 距离max数量的还有几个没有创建</span>
+    <span style="box-sizing:border-box;color:rgb(51, 51, 51);font-weight:700;">const</span> actualNumberOfResourcesToCreate = Math.min(
+      <span style="box-sizing:border-box;color:rgb(51, 51, 51);font-weight:700;">this</span>.spareResourceCapacity, <span style="box-sizing:border-box;color:rgb(153, 153, 136);font-style:italic;">// -6</span>
+      resourceShortfall <span style="box-sizing:border-box;color:rgb(153, 153, 136);font-style:italic;">// 这个是 -3</span>
+    ); <span style="box-sizing:border-box;color:rgb(153, 153, 136);font-style:italic;">// 如果resourceShortfall&gt;0 表示需要新建但是这新建的数量不能超过spareResourceCapacity最多可创建的</span>
+    console.log(<span style="box-sizing:border-box;color:rgb(221, 17, 68);">'actualNumberOfResourcesToCreate'</span>, actualNumberOfResourcesToCreate) <span style="box-sizing:border-box;color:rgb(153, 153, 136);font-style:italic;">// 如果actualNumberOfResourcesToCreate &gt;0 表示需要创建连接</span>
+    <span style="box-sizing:border-box;color:rgb(51, 51, 51);font-weight:700;">for</span> (let i = <span style="box-sizing:border-box;color:teal;">0</span>; actualNumberOfResourcesToCreate &gt; i; i++) {
+      <span style="box-sizing:border-box;color:rgb(51, 51, 51);font-weight:700;">this</span>._createResource(); <span style="box-sizing:border-box;color:rgb(153, 153, 136);font-style:italic;">// 新增新的长连接</span>
+    }
+
+    <span style="box-sizing:border-box;color:rgb(153, 153, 136);font-style:italic;">// If we are doing test-on-borrow see how many more resources need to be moved into test</span>
+    <span style="box-sizing:border-box;color:rgb(153, 153, 136);font-style:italic;">// to help satisfy waitingClients</span>
+    <span style="box-sizing:border-box;color:rgb(51, 51, 51);font-weight:700;">if</span> (<span style="box-sizing:border-box;color:rgb(51, 51, 51);font-weight:700;">this</span>._config.testOnBorrow === <span style="box-sizing:border-box;color:teal;">true</span>) { <span style="box-sizing:border-box;color:rgb(153, 153, 136);font-style:italic;">// 如果开启了使用前校验资源的有效性</span>
+      <span style="box-sizing:border-box;color:rgb(153, 153, 136);font-style:italic;">// how many available resources do we need to shift into test</span>
+      <span style="box-sizing:border-box;color:rgb(51, 51, 51);font-weight:700;">const</span> desiredNumberOfResourcesToMoveIntoTest =
+        numWaitingClients - <span style="box-sizing:border-box;color:rgb(51, 51, 51);font-weight:700;">this</span>._testOnBorrowResources.size;<span style="box-sizing:border-box;color:rgb(153, 153, 136);font-style:italic;">// 1</span>
+      <span style="box-sizing:border-box;color:rgb(51, 51, 51);font-weight:700;">const</span> actualNumberOfResourcesToMoveIntoTest = Math.min(
+        <span style="box-sizing:border-box;color:rgb(51, 51, 51);font-weight:700;">this</span>._availableObjects.length, <span style="box-sizing:border-box;color:rgb(153, 153, 136);font-style:italic;">// 3</span>
+        desiredNumberOfResourcesToMoveIntoTest <span style="box-sizing:border-box;color:rgb(153, 153, 136);font-style:italic;">// 1</span>
+      );
+      <span style="box-sizing:border-box;color:rgb(51, 51, 51);font-weight:700;">for</span> (let i = <span style="box-sizing:border-box;color:teal;">0</span>; actualNumberOfResourcesToMoveIntoTest &gt; i; i++) { <span style="box-sizing:border-box;color:rgb(153, 153, 136);font-style:italic;">// 需要有效性校验的数量 至少满足最小的waiting clinet</span>
+        <span style="box-sizing:border-box;color:rgb(51, 51, 51);font-weight:700;">this</span>._testOnBorrow(); <span style="box-sizing:border-box;color:rgb(153, 153, 136);font-style:italic;">// 资源有效校验后再分发</span>
+      }
+    }
+
+    <span style="box-sizing:border-box;color:rgb(153, 153, 136);font-style:italic;">// if we aren't testing-on-borrow then lets try to allocate what we can</span>
+    <span style="box-sizing:border-box;color:rgb(51, 51, 51);font-weight:700;">if</span> (<span style="box-sizing:border-box;color:rgb(51, 51, 51);font-weight:700;">this</span>._config.testOnBorrow === <span style="box-sizing:border-box;color:teal;">false</span>) { <span style="box-sizing:border-box;color:rgb(153, 153, 136);font-style:italic;">// 如果没有开启有效性校验 就开启有效资源的分发</span>
+      <span style="box-sizing:border-box;color:rgb(51, 51, 51);font-weight:700;">const</span> actualNumberOfResourcesToDispatch = Math.min(
+        <span style="box-sizing:border-box;color:rgb(51, 51, 51);font-weight:700;">this</span>._availableObjects.length,
+        numWaitingClients
+      );
+      <span style="box-sizing:border-box;color:rgb(51, 51, 51);font-weight:700;">for</span> (let i = <span style="box-sizing:border-box;color:teal;">0</span>; actualNumberOfResourcesToDispatch &gt; i; i++) { <span style="box-sizing:border-box;color:rgb(153, 153, 136);font-style:italic;">// 开始分发资源</span>
+        <span style="box-sizing:border-box;color:rgb(51, 51, 51);font-weight:700;">this</span>._dispatchResource();
+      }
+    }
+  }
+</code></pre>
+<pre style="box-sizing:border-box;font-family:SFMono-Regular, Menlo, Monaco, Consolas, &quot;Liberation Mono&quot;, &quot;Courier New&quot;, monospace;margin-top:0px;margin-bottom:16px;overflow:auto;font-size:87.5%;overflow-x:auto;padding:0.5em;background:rgb(248, 248, 248);display:block;color:rgb(51, 51, 51);"><code style="box-sizing:border-box;font-family:SFMono-Regular, Menlo, Monaco, Consolas, &quot;Liberation Mono&quot;, &quot;Courier New&quot;, monospace;overflow-wrap:break-word;word-break:normal;font-size:inherit;color:inherit;">  <span style="box-sizing:border-box;color:rgb(153, 153, 136);font-style:italic;">/**
+   * Attempt to move an available resource to a waiting client
+   * <span style="box-sizing:border-box;color:rgb(221, 17, 68);">@return</span> {Boolean} [description]
+   */</span>
+  _dispatchResource() {
+    <span style="box-sizing:border-box;color:rgb(51, 51, 51);font-weight:700;">if</span> (<span style="box-sizing:border-box;color:rgb(51, 51, 51);font-weight:700;">this</span>._availableObjects.length &lt; <span style="box-sizing:border-box;color:teal;">1</span>) {
+      <span style="box-sizing:border-box;color:rgb(51, 51, 51);font-weight:700;">return</span> <span style="box-sizing:border-box;color:teal;">false</span>;
+    }
+
+    <span style="box-sizing:border-box;color:rgb(51, 51, 51);font-weight:700;">const</span> pooledResource = <span style="box-sizing:border-box;color:rgb(51, 51, 51);font-weight:700;">this</span>._availableObjects.shift(); <span style="box-sizing:border-box;color:rgb(153, 153, 136);font-style:italic;">// 从可以资源池里面取出一个</span>
+    <span style="box-sizing:border-box;color:rgb(51, 51, 51);font-weight:700;">this</span>._dispatchPooledResourceToNextWaitingClient(pooledResource); <span style="box-sizing:border-box;color:rgb(153, 153, 136);font-style:italic;">// 分发</span>
+    <span style="box-sizing:border-box;color:rgb(51, 51, 51);font-weight:700;">return</span> <span style="box-sizing:border-box;color:teal;">false</span>;
+  }
+  <span style="box-sizing:border-box;color:rgb(153, 153, 136);font-style:italic;">/**
+   * Dispatches a pooledResource to the next waiting client (if any) else
+   * puts the PooledResource back on the available list
+   * <span style="box-sizing:border-box;color:rgb(221, 17, 68);">@param</span>  {PooledResource} pooledResource [description]
+   * <span style="box-sizing:border-box;color:rgb(221, 17, 68);">@return</span> {Boolean}                [description]
+   */</span>
+  _dispatchPooledResourceToNextWaitingClient(pooledResource) {
+    <span style="box-sizing:border-box;color:rgb(51, 51, 51);font-weight:700;">const</span> clientResourceRequest = <span style="box-sizing:border-box;color:rgb(51, 51, 51);font-weight:700;">this</span>._waitingClientsQueue.dequeue(); <span style="box-sizing:border-box;color:rgb(153, 153, 136);font-style:italic;">// 可能是undefined 取出一个等待的quene</span>
+    console.log(<span style="box-sizing:border-box;color:rgb(221, 17, 68);">'clientResourceRequest.state'</span>, clientResourceRequest.state);
+    <span style="box-sizing:border-box;color:rgb(51, 51, 51);font-weight:700;">if</span> (clientResourceRequest === undefined ||
+      clientResourceRequest.state !== Deferred.PENDING) {
+      console.log(<span style="box-sizing:border-box;color:rgb(221, 17, 68);">'没有等待的'</span>)
+      <span style="box-sizing:border-box;color:rgb(153, 153, 136);font-style:italic;">// While we were away either all the waiting clients timed out</span>
+      <span style="box-sizing:border-box;color:rgb(153, 153, 136);font-style:italic;">// or were somehow fulfilled. put our pooledResource back.</span>
+      <span style="box-sizing:border-box;color:rgb(51, 51, 51);font-weight:700;">this</span>._addPooledResourceToAvailableObjects(pooledResource); <span style="box-sizing:border-box;color:rgb(153, 153, 136);font-style:italic;">// 在可用的资源里面添加一个</span>
+      <span style="box-sizing:border-box;color:rgb(153, 153, 136);font-style:italic;">// <span style="box-sizing:border-box;color:rgb(221, 17, 68);">TODO:</span> do need to trigger anything before we leave?</span>
+      <span style="box-sizing:border-box;color:rgb(51, 51, 51);font-weight:700;">return</span> <span style="box-sizing:border-box;color:teal;">false</span>;
+    }
+    <span style="box-sizing:border-box;color:rgb(153, 153, 136);font-style:italic;">// TODO clientResourceRequest 的state是否需要判断 如果已经是resolve的状态 已经超时回去了 这个是否有问题</span>
+    <span style="box-sizing:border-box;color:rgb(51, 51, 51);font-weight:700;">const</span> loan = new ResourceLoan(pooledResource, <span style="box-sizing:border-box;color:rgb(51, 51, 51);font-weight:700;">this</span>._Promise); 
+    <span style="box-sizing:border-box;color:rgb(51, 51, 51);font-weight:700;">this</span>._resourceLoans.<span style="box-sizing:border-box;color:rgb(51, 51, 51);font-weight:700;">set</span>(pooledResource.obj, loan); <span style="box-sizing:border-box;color:rgb(153, 153, 136);font-style:italic;">// _resourceLoans 是个map k=&gt;value  pooledResource.obj 就是socket本身</span>
+    pooledResource.allocate(); <span style="box-sizing:border-box;color:rgb(153, 153, 136);font-style:italic;">// 标识资源的状态是正在被使用</span>
+    clientResourceRequest.resolve(pooledResource.obj); <span style="box-sizing:border-box;color:rgb(153, 153, 136);font-style:italic;">//  acquire方法返回的promise对象的resolve在这里执行的</span>
+    <span style="box-sizing:border-box;color:rgb(51, 51, 51);font-weight:700;">return</span> <span style="box-sizing:border-box;color:teal;">true</span>;
+  }</code></pre>
+<p style="box-sizing:border-box;margin-top:0px;margin-bottom:16px;">上面的代码就按种情况一直走下到最终获取到长连接的资源，其他更多代码大家可以自己去深入了解。</p>
+
+                                                </div>
+
+                                                <div style="box-sizing:border-box;"><div style="box-sizing:border-box;">
+
+
+<ins style="box-sizing:border-box;"><ins style="box-sizing:border-box;"><ins style="box-sizing:border-box;"><div style="box-sizing:border-box;width:728px;height:90px;position:relative;"><div style="font-size: 16px; display:block; min-width: 100%; "> <div><div><div style="margin:0px;padding:0px;"><div style="margin:0px;padding:0px;"></div><div style="position:relative;"><div style="font-size: 16px; display:block; min-width: 100%; "> <div><div></div></div></div></div><div style="margin:0px;padding:0px;"><div style="margin:0px;padding:0px;"><div style="margin:0px;padding:0px;"><div style="margin:0px;padding:0px;"><a target="_blank" href="https://adclick.g.doubleclick.net/pcs/click?xai=AKAOjsvfNDYGtc0JFal8BIOSEApzYL73adpNFo_BYD76XOXniQoVRRGIfztp-BXIQ0Xiqa1v4OCPHTQR0lsyweooiXygjSg0l-mRXfbTOtCEMc3PJAIyzVzIJpDvoOszR7GY9oODeAm92IQxh7qom_vpFNOtxSNtR5qGl6qsPj8sre8o3wquOfbJ4Hz48EpP_uZ3zvkrqYfJ8A7umUdTScVApwXZvRudhwc-lvE9_ILNU2wiKdI1xwfjnFqC1aMiLuhykxDveOkSsLjbaWBVB_cGsuEkw15SloHiWwmcqtho5OvLSZ5T141T218sPsD3m3clY4yCNL2KBNXY_D9OsWthHRJul20fEegA_aidDilqXUyOVcAeY5MbKxT6XThpj_Pz5NtT7d3ZkRt9ljZLJSrGA-fQlXEJeHuhSoeiBn3hYuuKLnYImNUjQPiNM3cdjBJoJVi2IXtjAmmxYMltrtnzozWogwNdt1WnVCmMr0AoDY9pnC2Cm1HZZmAnYSK5tcaKnzxvYzMQiuBn0MZTffUndfznu2WFzGMZozB4QDO3002_-VlaPlA2dKcPm3hTVyeCLfuDZVr_RHbrGCaUdQPMSvxo-na6pv16vuFueNoUn8b8UpV8PTalVW_bcDn0OM9r2HLeExIy3dsWJee1maxCPSfzUNmLXQ23UcoA0pRngcZH8BW-cmrYiNrLCAmmd8cGZnkjzcClZU6AdkNqK50dn0tpWKXLOyV8FbwTurbGKMNxMymgY3YKkxbzEwwpxnw4ty_r-of4t-fmjJVplHnQfmesUsnA7ieN8r4jwIEqmGr_4ab_aDKzCuTwq_XRD8hS4g9ecofSoYmahA5v0bsP9kR7aaVmLxsnPSEt2aQx0fAA1em2Y8KLAfNUDlXJ1M4Dpa97gQ8u7zsoNErbzVUyL-0lp1dsmPkh8BaWcdwLEAKOOjPnASxMiaNazqWF_ti0dt7q29vTxPUSaD0I1F1c50rPWCXYf1fCYUzJH6TAz57LopSmBDi4RJW6ddYelorBI5PBhAyvjOxM8iJ_KhUtGRhgimCOTru9IXw7nTld2ZJLoQQjvyUAQZL_cba06OdwYy_r9FPCfZGlEzIoAg&amp;sai=AMfl-YSHJnIHoyc86vJ4XYSq2tDjewhyTxbDE-rp6sch8MOyn6zLnWVbH4018mO2QzGwJijOcken6iJ6T2cq0CM61-uz7lo2ejUVfaBomPoH8oG9V1YIVqVSah_MJUt6QVB5jQkSidt7r1HMRjesV5LnhVkXRH47M1WGFmjEvUnC&amp;sig=Cg0ArKJSzJrn_a9-41Es&amp;urlfix=1&amp;adurl=https://www.citibank.com.hk/chinese/credit-cards/octopus-cards%3Fecid%3DDIAMNHKOTACNBA"><div class="media-placeholder">[图片/附件]</div></en-media></a></div><div style="margin:0px;height:15px;right:0px;top:0px;position:absolute;width:31px;z-index:2147483646;padding:1px 1px 9px 9px;opacity:1;"><div dir="ltr" style="margin:0px;padding:0px;display:block;height:15px;position:absolute;right:1px;top:1px;text-rendering:geometricprecision;z-index:2147483646;cursor:pointer;opacity:1;"><div style="margin:0px;padding:0px;display:inline-block;height:15px;position:absolute;right:16px;top:0px;"><div style="margin:0px;padding:0px;background-color:rgb(255, 255, 255);height:15px;white-space:nowrap;"><div style="margin:0px;padding:0px;display:inline-block;height:15px;width:15px;"><img style="display:inline-block;height:15px;width:auto;vertical-align:top;fill:rgb(0, 174, 205);" src="data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' xmlns:xlink='http://www.w3.org/1999/xlink' viewBox='0 0 15 15' data-evernote-id='22' class='js-evernote-checked'%3e%3cpath d='M7.5%2c1.5a6%2c6%2c0%2c1%2c0%2c0%2c12a6%2c6%2c0%2c1%2c0%2c0%2c-12m0%2c1a5%2c5%2c0%2c1%2c1%2c0%2c10a5%2c5%2c0%2c1%2c1%2c0%2c-10ZM6.625%2c11l1.75%2c0l0%2c-4.5l-1.75%2c0ZM7.5%2c3.75a1%2c1%2c0%2c1%2c0%2c0%2c2a1%2c1%2c0%2c1%2c0%2c0%2c-2Z'%3e%3c/path%3e%3c/svg%3e"/></div></div></div><div style="margin:0px;padding:0px;cursor:pointer;height:15px;width:15px;z-index:2147483646;background-color:rgb(255, 255, 255);position:absolute;right:0px;top:0px;opacity:1;"><img style="position:absolute;top:0px;right:0px;height:15px;width:15px;stroke:rgb(0, 174, 205);stroke-width:1.25;" src="data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' xmlns:xlink='http://www.w3.org/1999/xlink' viewBox='0 0 15 15' data-evernote-id='20' class='js-evernote-checked'%3e%3cpath d='M3.25%2c3.25l8.5%2c8.5M11.75%2c3.25l-8.5%2c8.5'%3e%3c/path%3e%3c/svg%3e"/></div></div></div><div style="margin:0px;padding:0px;z-index:2147483646;"></div>
+</div></div></div></div><div style="width:0px;height:0px;position:relative;"><div style="font-size: 16px; display:block; min-width: 100%; "> <div><div></div></div></div></div><div style="width:0px;height:0px;position:relative;"><div style="font-size: 16px; display:block; min-width: 100%; "> <div><div>
+
+</div></div></div></div><div style="margin:0px;padding:0px;"></div></div></div></div></div></ins></ins></ins>
+<div style="box-sizing:border-box;"><div class="media-placeholder">[图片/附件]</div></en-media></div></div>
+</div>
+
+                                                <div style="box-sizing:border-box;display:flex;flex-wrap:wrap;margin-right:-12px;margin-left:-12px;">
+                                                                                                            <div style="box-sizing:border-box;position:relative;width:100%;padding-right:12px;padding-left:12px;flex:0 0 50%;max-width:50%;">阅读
+                                                            35.3k<span style="box-sizing:border-box;"></span>
+                                                            <span title="" style="box-sizing:border-box;">更新于
+                                                                2018-04-03 </span>
+                                                        </div>
+                                                                                                        <div style="box-sizing:border-box;position:relative;width:100%;padding-right:12px;padding-left:12px;flex:0 0 50%;max-width:50%;">
+                                                                                                                                                                                                                                                                                                                                                    
+                                                                                                                                                                    </div>
+                                                </div>
+
+                                                <div style="box-sizing:border-box;"><div style="box-sizing:border-box;"><div style="box-sizing:border-box;position:relative;display:inline-flex;vertical-align:middle;">
+            </div><div style="box-sizing:border-box;position:relative;">
+                        
+                        
+                    </div></div></div>
+
+                                                <div style="box-sizing:border-box;">
+                                                    本作品系
+                                                    原创，                                                                                                            <a target="_blank" href="https://creativecommons.org/licenses/by-nc-nd/4.0/" style="box-sizing:border-box;color:rgb(0, 150, 94);background-color:transparent;text-decoration:none;">采用《署名-非商业性使用-禁止演绎 4.0
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                国际》许可协议</a>
+                                                                                                    </div>
+                                                <hr style="height:0px;overflow:visible;box-sizing:content-box;margin-top:16px;margin-bottom:16px;border-width:1px 0px 0px;border-right-style:initial;border-bottom-style:initial;border-left-style:initial;border-right-color:initial;border-bottom-color:initial;border-left-color:initial;border-image:initial;border-top-style:solid;border-top-color:rgba(0, 0, 0, 0.1);"/>
+                                                <div style="box-sizing:border-box;display:flex;flex-wrap:wrap;margin-right:-12px;margin-left:-12px;">
+                                                    <div style="box-sizing:border-box;position:relative;width:100%;padding-right:12px;padding-left:12px;flex:0 0 75%;max-width:75%;">
+                                                        <a href="https://segmentfault.com/u/rebareba" style="box-sizing:border-box;color:rgb(0, 150, 94);background-color:transparent;text-decoration:none;">
+                                                            <div class="media-placeholder">[图片/附件]</div></en-media>
+                                                        </a>
+                                                        <div style="box-sizing:border-box;">
+                                                            <h5 style="box-sizing:border-box;margin-top:0px;font-weight:600;line-height:1.2;margin-bottom:8px;font-size:20px;">
+                                                                <a href="https://segmentfault.com/u/rebareba" style="box-sizing:border-box;color:rgb(0, 150, 94);background-color:transparent;text-decoration:none;">rebareba</a>
+                                                            </h5>
+                                                            <ul style="box-sizing:border-box;margin-bottom:16px;margin-top:0px;padding-left:0px;list-style:none;">
+                                                                                                                                <li style="box-sizing:border-box;display:inline-block;margin-right:8px;">
+                                                                    <img style="box-sizing:border-box;display:inline-block;font-size:inherit;height:1em;vertical-align:-0.125em;width:1em;overflow:visible;" src="data:image/svg+xml,%3csvg class='svg-inline--fa fa-dice-d8 fa-w-16 js-evernote-checked' style='color: %23BF7158%3b' aria-hidden='true' focusable='false' data-prefix='fas' data-icon='dice-d8' role='img' xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512' data-fa-i2svg='' data-evernote-id='16'%3e%3cpath fill='currentColor' d='M225.53 2.52L2.36 233.83c-4.21 4.37-2.56 11.71 3.1 13.77l234.13 85.06V8.39c-.01-7.49-8.91-11.21-14.06-5.87zm284.11 231.31L286.47 2.52C281.32-2.82 272.41.9 272.41 8.4v324.27l234.13-85.06c5.66-2.07 7.31-9.42 3.1-13.78zM33.53 310.38l192 199.1c5.15 5.34 14.06 1.62 14.06-5.88V368.29L42.13 296.61c-8.21-2.98-14.72 7.43-8.6 13.77zm436.34-13.77l-197.46 71.68V503.6c0 7.5 8.91 11.22 14.06 5.88l192-199.1c6.12-6.34-.39-16.75-8.6-13.77z' data-evernote-id='1600' class='js-evernote-checked'%3e%3c/path%3e%3c/svg%3e"/>
+                                                                    <span style="box-sizing:border-box;">259</span>
+                                                                </li>
+                                                                                                                                                                                                            <li style="box-sizing:border-box;display:inline-block;">
+                                                                            <a href="https://github.com/rebareba" target="_blank" style="box-sizing:border-box;color:rgb(0, 150, 94);background-color:transparent;text-decoration:none;">
+                                                                                <img style="box-sizing:border-box;display:inline-block;font-size:inherit;height:1em;vertical-align:-0.125em;width:1em;overflow:visible;" src="data:image/svg+xml,%3csvg class='svg-inline--fa fa-github fa-w-16 js-evernote-checked' aria-hidden='true' focusable='false' data-prefix='fab' data-icon='github' role='img' xmlns='http://www.w3.org/2000/svg' viewBox='0 0 496 512' data-fa-i2svg='' data-evernote-id='17'%3e%3cpath fill='currentColor' d='M165.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6zm-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3zm44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9zM244.8 8C106.1 8 0 113.3 0 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C428.2 457.8 496 362.9 496 252 496 113.3 383.5 8 244.8 8zM97.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1zm-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7zm32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1zm-11.4-14.7c-1.6 1-1.6 3.6 0 5.9 1.6 2.3 4.3 3.3 5.6 2.3 1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2z' data-evernote-id='1604' class='js-evernote-checked'%3e%3c/path%3e%3c/svg%3e"/>
+                                                                            </a>
+                                                                        </li>
+                                                                                                                                                                                                </ul>
+                                                        </div>
+                                                    </div>
+                                                    <div style="box-sizing:border-box;position:relative;width:100%;padding-right:12px;padding-left:12px;flex:0 0 25%;max-width:25%;">
+                                                                                                                                                                            
+                                                                                                            </div>
+                                                </div>
+                                            </div></div></div></div></div></div></div></div></div>
+</div></div>
+<a class="back-link" href="../articles.html">← 返回笔记列表</a>
+</body></html>

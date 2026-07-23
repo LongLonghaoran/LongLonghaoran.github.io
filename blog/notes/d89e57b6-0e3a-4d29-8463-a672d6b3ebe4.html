@@ -1,0 +1,317 @@
+<!DOCTYPE html>
+<html lang="zh-CN" data-theme="light">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>eBPF Maps — Cilium 1.14.5 documentation — 技术笔记</title>
+<style>
+:root {
+  --bg: #ffffff;
+  --text: #1a1a1a;
+  --muted: #666;
+  --border: #e0e0e0;
+  --code-bg: #f5f5f5;
+  --link: #0066cc;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #1a1a1a;
+    --text: #e0e0e0;
+    --muted: #999;
+    --border: #333;
+    --code-bg: #2a2a2a;
+    --link: #66bbff;
+  }
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  line-height: 1.7;
+  color: var(--text);
+  background: var(--bg);
+  max-width: 860px;
+  margin: 0 auto;
+  padding: 2rem 1.5rem;
+}
+.note-header {
+  border-bottom: 2px solid var(--border);
+  padding-bottom: 1rem;
+  margin-bottom: 2rem;
+}
+.note-title {
+  font-size: 1.6rem;
+  font-weight: 700;
+  margin-bottom: 0.3rem;
+}
+.note-meta {
+  color: var(--muted);
+  font-size: 0.85rem;
+}
+.note-content {
+  font-size: 0.95rem;
+}
+.note-content h1 { font-size: 1.4rem; margin: 1.2rem 0 0.6rem; }
+.note-content h2 { font-size: 1.2rem; margin: 1rem 0 0.5rem; }
+.note-content h3 { font-size: 1.05rem; margin: 0.8rem 0 0.4rem; }
+.note-content p { margin: 0.5rem 0; }
+.note-content ul, .note-content ol { margin: 0.5rem 0 0.5rem 2rem; }
+.note-content li { margin: 0.2rem 0; }
+.note-content pre {
+  background: var(--code-bg);
+  padding: 1rem;
+  border-radius: 6px;
+  overflow-x: auto;
+  margin: 0.8rem 0;
+  font-size: 0.85rem;
+}
+.note-content code {
+  background: var(--code-bg);
+  padding: 0.1rem 0.3rem;
+  border-radius: 3px;
+  font-size: 0.88em;
+}
+.note-content pre code {
+  background: none;
+  padding: 0;
+}
+.note-content blockquote {
+  border-left: 3px solid var(--border);
+  padding-left: 1rem;
+  color: var(--muted);
+  margin: 0.8rem 0;
+}
+.note-content a { color: var(--link); }
+.note-content img {
+  max-width: 100%;
+  height: auto;
+  border-radius: 6px;
+  margin: 0.5rem 0;
+}
+.note-content table {
+  border-collapse: collapse;
+  width: 100%;
+  margin: 0.8rem 0;
+}
+.note-content th, .note-content td {
+  border: 1px solid var(--border);
+  padding: 0.5rem;
+}
+.note-content th { background: var(--code-bg); }
+.media-placeholder {
+  background: var(--code-bg);
+  padding: 1rem;
+  text-align: center;
+  color: var(--muted);
+  border-radius: 6px;
+  margin: 0.5rem 0;
+  font-size: 0.85rem;
+}
+.encrypt-placeholder {
+  background: #fff3cd;
+  padding: 0.5rem;
+  text-align: center;
+  color: #856404;
+  border-radius: 6px;
+  margin: 0.5rem 0;
+  font-size: 0.85rem;
+}
+.back-link {
+  display: inline-block;
+  margin-top: 2rem;
+  color: var(--link);
+  text-decoration: none;
+  font-size: 0.85rem;
+}
+</style>
+</head>
+<body>
+<div class="note-header">
+  <div class="note-title">eBPF Maps — Cilium 1.14.5 documentation</div>
+  <div class="note-meta">笔记本：ebpf</div>
+</div>
+<div class="note-content">
+<div style="--en-clipped-content:article">
+<div><br/></div><div style="font-size: 16px; display:block; min-width: 100%; position: relative;"> <div style="box-sizing:border-box;text-size-adjust:100%;font-family:Verdana, sans-serif;line-height:1.5;font-size:15px;overflow-x:hidden;"><div style="overflow-x:hidden;font-weight:400;color:rgb(0, 0, 0);box-sizing:inherit;font-size:15px;line-height:1.5;font-family:Verdana, sans-serif;background:rgb(255, 255, 255);"><div style="box-sizing:inherit;"><div style="box-sizing:inherit;background:rgb(255, 255, 255);"><div style="box-sizing:inherit;background:rgb(255, 255, 255);"><div style="box-sizing:inherit;"><div style="box-sizing:inherit;"><div style="box-sizing:inherit;"><div style="box-sizing:inherit;">
+<span style="box-sizing:inherit;"></span><h1 style="box-sizing:inherit;font-size:36px;margin:10px 0px;font-weight:400;font-family:&quot;Segoe UI&quot;, Arial, sans-serif;margin-bottom:24px;">eBPF Maps<a href="https://docs.cilium.io/en/stable/network/ebpf/maps/#ebpf-maps" title="Permalink to this heading" style="text-decoration:none;cursor:pointer;box-sizing:inherit;background-color:transparent;color:inherit;display:inline-block;font-style:normal;font-variant:normal;font-kerning:auto;font-optical-sizing:auto;font-feature-settings:normal;font-variation-settings:normal;font-weight:normal;font-stretch:normal;line-height:1;text-rendering:auto;-webkit-font-smoothing:antialiased;margin-left:0.5em;font-family:FontAwesome;font-size:14px;opacity:1;"><span style="font-style:normal;font-variant:normal;font-weight:400;line-height:1;font-family:FontAwesome;font-size:14px;color:inherit;cursor:pointer;-webkit-font-smoothing:antialiased;display:inline-block;text-decoration:inherit;"></span></a></h1>
+<p style="line-height:24px;font-size:16px;margin:0px 0px 24px;box-sizing:inherit;">All BPF maps are created with upper capacity limits. Insertion beyond the limit
+will fail and thus limits the scalability of the datapath. The following table
+shows the default values of the maps. Each limit can be bumped in the source
+code. Configuration options will be added on request if demand arises.</p>
+<div style="box-sizing:inherit;margin-bottom:24px;max-width:100%;overflow:auto;"><table style="font-size:inherit;font-weight:inherit;font-style:inherit;font-variant:inherit;box-sizing:inherit;empty-cells:show;border-collapse:collapse;border-spacing:0px;border:1px solid rgb(225, 228, 229);margin-bottom:0px;">
+<thead style="box-sizing:inherit;color:rgb(0, 0, 0);text-align:left;vertical-align:bottom;white-space:nowrap;">
+<tr style="box-sizing:inherit;"><th style="box-sizing:inherit;white-space:nowrap;font-size:90%;margin:0px;overflow:visible;padding:8px 16px;font-weight:700;border-bottom:2px solid rgb(225, 228, 229);border-left-width:0px;border:1px solid rgb(225, 228, 229);"><p style="margin:0px 0px 24px;box-sizing:inherit;margin-bottom:0px;line-height:15px;font-size:13.5px;">Map Name</p></th>
+<th style="box-sizing:inherit;white-space:nowrap;font-size:90%;margin:0px;overflow:visible;padding:8px 16px;font-weight:700;border-bottom:2px solid rgb(225, 228, 229);border:1px solid rgb(225, 228, 229);"><p style="margin:0px 0px 24px;box-sizing:inherit;margin-bottom:0px;line-height:15px;font-size:13.5px;">Scope</p></th>
+<th style="box-sizing:inherit;white-space:nowrap;font-size:90%;margin:0px;overflow:visible;padding:8px 16px;font-weight:700;border-bottom:2px solid rgb(225, 228, 229);border:1px solid rgb(225, 228, 229);"><p style="margin:0px 0px 24px;box-sizing:inherit;margin-bottom:0px;line-height:15px;font-size:13.5px;">Default Limit</p></th>
+<th style="box-sizing:inherit;white-space:nowrap;font-size:90%;margin:0px;overflow:visible;padding:8px 16px;font-weight:700;border-bottom:2px solid rgb(225, 228, 229);border:1px solid rgb(225, 228, 229);"><p style="margin:0px 0px 24px;box-sizing:inherit;margin-bottom:0px;line-height:15px;font-size:13.5px;">Scale Implications</p></th>
+</tr>
+</thead>
+<tbody style="box-sizing:inherit;">
+<tr style="box-sizing:inherit;"><td style="box-sizing:inherit;white-space:nowrap;font-size:90%;margin:0px;overflow:visible;padding:8px 16px;vertical-align:middle;border-bottom:1px solid rgb(225, 228, 229);border-left:1px solid rgb(225, 228, 229);border-left-width:1px;background-color:rgb(243, 246, 246);"><p style="margin:0px 0px 24px;box-sizing:inherit;line-height:15px;margin-bottom:0px;font-size:13.5px;">Auth</p></td>
+<td style="box-sizing:inherit;white-space:nowrap;font-size:90%;margin:0px;overflow:visible;padding:8px 16px;vertical-align:middle;border-bottom:1px solid rgb(225, 228, 229);border-left:1px solid rgb(225, 228, 229);background-color:rgb(243, 246, 246);"><p style="margin:0px 0px 24px;box-sizing:inherit;line-height:15px;margin-bottom:0px;font-size:13.5px;">node</p></td>
+<td style="box-sizing:inherit;white-space:nowrap;font-size:90%;margin:0px;overflow:visible;padding:8px 16px;vertical-align:middle;border-bottom:1px solid rgb(225, 228, 229);border-left:1px solid rgb(225, 228, 229);background-color:rgb(243, 246, 246);"><p style="margin:0px 0px 24px;box-sizing:inherit;line-height:15px;margin-bottom:0px;font-size:13.5px;">512k</p></td>
+<td style="box-sizing:inherit;white-space:nowrap;font-size:90%;margin:0px;overflow:visible;padding:8px 16px;vertical-align:middle;border-bottom:1px solid rgb(225, 228, 229);border-left:1px solid rgb(225, 228, 229);background-color:rgb(243, 246, 246);"><p style="margin:0px 0px 24px;box-sizing:inherit;line-height:15px;margin-bottom:0px;font-size:13.5px;">Max 512k authenticated relations per node</p></td>
+</tr>
+<tr style="box-sizing:inherit;"><td style="box-sizing:inherit;white-space:nowrap;font-size:90%;margin:0px;overflow:visible;padding:8px 16px;background-color:transparent;vertical-align:middle;border-bottom:1px solid rgb(225, 228, 229);border-left:1px solid rgb(225, 228, 229);border-left-width:1px;"><p style="margin:0px 0px 24px;box-sizing:inherit;line-height:15px;margin-bottom:0px;font-size:13.5px;">Connection Tracking</p></td>
+<td style="box-sizing:inherit;white-space:nowrap;font-size:90%;margin:0px;overflow:visible;padding:8px 16px;background-color:transparent;vertical-align:middle;border-bottom:1px solid rgb(225, 228, 229);border-left:1px solid rgb(225, 228, 229);"><p style="margin:0px 0px 24px;box-sizing:inherit;line-height:15px;margin-bottom:0px;font-size:13.5px;">node or endpoint</p></td>
+<td style="box-sizing:inherit;white-space:nowrap;font-size:90%;margin:0px;overflow:visible;padding:8px 16px;background-color:transparent;vertical-align:middle;border-bottom:1px solid rgb(225, 228, 229);border-left:1px solid rgb(225, 228, 229);"><p style="margin:0px 0px 24px;box-sizing:inherit;line-height:15px;margin-bottom:0px;font-size:13.5px;">1M TCP/256k UDP</p></td>
+<td style="box-sizing:inherit;white-space:nowrap;font-size:90%;margin:0px;overflow:visible;padding:8px 16px;background-color:transparent;vertical-align:middle;border-bottom:1px solid rgb(225, 228, 229);border-left:1px solid rgb(225, 228, 229);"><p style="margin:0px 0px 24px;box-sizing:inherit;line-height:15px;margin-bottom:0px;font-size:13.5px;">Max 1M concurrent TCP connections, max 256k expected UDP answers</p></td>
+</tr>
+<tr style="box-sizing:inherit;"><td style="box-sizing:inherit;white-space:nowrap;font-size:90%;margin:0px;overflow:visible;padding:8px 16px;vertical-align:middle;border-bottom:1px solid rgb(225, 228, 229);border-left:1px solid rgb(225, 228, 229);border-left-width:1px;background-color:rgb(243, 246, 246);"><p style="margin:0px 0px 24px;box-sizing:inherit;line-height:15px;margin-bottom:0px;font-size:13.5px;">NAT</p></td>
+<td style="box-sizing:inherit;white-space:nowrap;font-size:90%;margin:0px;overflow:visible;padding:8px 16px;vertical-align:middle;border-bottom:1px solid rgb(225, 228, 229);border-left:1px solid rgb(225, 228, 229);background-color:rgb(243, 246, 246);"><p style="margin:0px 0px 24px;box-sizing:inherit;line-height:15px;margin-bottom:0px;font-size:13.5px;">node</p></td>
+<td style="box-sizing:inherit;white-space:nowrap;font-size:90%;margin:0px;overflow:visible;padding:8px 16px;vertical-align:middle;border-bottom:1px solid rgb(225, 228, 229);border-left:1px solid rgb(225, 228, 229);background-color:rgb(243, 246, 246);"><p style="margin:0px 0px 24px;box-sizing:inherit;line-height:15px;margin-bottom:0px;font-size:13.5px;">512k</p></td>
+<td style="box-sizing:inherit;white-space:nowrap;font-size:90%;margin:0px;overflow:visible;padding:8px 16px;vertical-align:middle;border-bottom:1px solid rgb(225, 228, 229);border-left:1px solid rgb(225, 228, 229);background-color:rgb(243, 246, 246);"><p style="margin:0px 0px 24px;box-sizing:inherit;line-height:15px;margin-bottom:0px;font-size:13.5px;">Max 512k NAT entries</p></td>
+</tr>
+<tr style="box-sizing:inherit;"><td style="box-sizing:inherit;white-space:nowrap;font-size:90%;margin:0px;overflow:visible;padding:8px 16px;background-color:transparent;vertical-align:middle;border-bottom:1px solid rgb(225, 228, 229);border-left:1px solid rgb(225, 228, 229);border-left-width:1px;"><p style="margin:0px 0px 24px;box-sizing:inherit;line-height:15px;margin-bottom:0px;font-size:13.5px;">Neighbor Table</p></td>
+<td style="box-sizing:inherit;white-space:nowrap;font-size:90%;margin:0px;overflow:visible;padding:8px 16px;background-color:transparent;vertical-align:middle;border-bottom:1px solid rgb(225, 228, 229);border-left:1px solid rgb(225, 228, 229);"><p style="margin:0px 0px 24px;box-sizing:inherit;line-height:15px;margin-bottom:0px;font-size:13.5px;">node</p></td>
+<td style="box-sizing:inherit;white-space:nowrap;font-size:90%;margin:0px;overflow:visible;padding:8px 16px;background-color:transparent;vertical-align:middle;border-bottom:1px solid rgb(225, 228, 229);border-left:1px solid rgb(225, 228, 229);"><p style="margin:0px 0px 24px;box-sizing:inherit;line-height:15px;margin-bottom:0px;font-size:13.5px;">512k</p></td>
+<td style="box-sizing:inherit;white-space:nowrap;font-size:90%;margin:0px;overflow:visible;padding:8px 16px;background-color:transparent;vertical-align:middle;border-bottom:1px solid rgb(225, 228, 229);border-left:1px solid rgb(225, 228, 229);"><p style="margin:0px 0px 24px;box-sizing:inherit;line-height:15px;margin-bottom:0px;font-size:13.5px;">Max 512k neighbor entries</p></td>
+</tr>
+<tr style="box-sizing:inherit;"><td style="box-sizing:inherit;white-space:nowrap;font-size:90%;margin:0px;overflow:visible;padding:8px 16px;vertical-align:middle;border-bottom:1px solid rgb(225, 228, 229);border-left:1px solid rgb(225, 228, 229);border-left-width:1px;background-color:rgb(243, 246, 246);"><p style="margin:0px 0px 24px;box-sizing:inherit;line-height:15px;margin-bottom:0px;font-size:13.5px;">Endpoints</p></td>
+<td style="box-sizing:inherit;white-space:nowrap;font-size:90%;margin:0px;overflow:visible;padding:8px 16px;vertical-align:middle;border-bottom:1px solid rgb(225, 228, 229);border-left:1px solid rgb(225, 228, 229);background-color:rgb(243, 246, 246);"><p style="margin:0px 0px 24px;box-sizing:inherit;line-height:15px;margin-bottom:0px;font-size:13.5px;">node</p></td>
+<td style="box-sizing:inherit;white-space:nowrap;font-size:90%;margin:0px;overflow:visible;padding:8px 16px;vertical-align:middle;border-bottom:1px solid rgb(225, 228, 229);border-left:1px solid rgb(225, 228, 229);background-color:rgb(243, 246, 246);"><p style="margin:0px 0px 24px;box-sizing:inherit;line-height:15px;margin-bottom:0px;font-size:13.5px;">64k</p></td>
+<td style="box-sizing:inherit;white-space:nowrap;font-size:90%;margin:0px;overflow:visible;padding:8px 16px;vertical-align:middle;border-bottom:1px solid rgb(225, 228, 229);border-left:1px solid rgb(225, 228, 229);background-color:rgb(243, 246, 246);"><p style="margin:0px 0px 24px;box-sizing:inherit;line-height:15px;margin-bottom:0px;font-size:13.5px;">Max 64k local endpoints + host IPs per node</p></td>
+</tr>
+<tr style="box-sizing:inherit;"><td style="box-sizing:inherit;white-space:nowrap;font-size:90%;margin:0px;overflow:visible;padding:8px 16px;background-color:transparent;vertical-align:middle;border-bottom:1px solid rgb(225, 228, 229);border-left:1px solid rgb(225, 228, 229);border-left-width:1px;"><p style="margin:0px 0px 24px;box-sizing:inherit;line-height:15px;margin-bottom:0px;font-size:13.5px;">IP cache</p></td>
+<td style="box-sizing:inherit;white-space:nowrap;font-size:90%;margin:0px;overflow:visible;padding:8px 16px;background-color:transparent;vertical-align:middle;border-bottom:1px solid rgb(225, 228, 229);border-left:1px solid rgb(225, 228, 229);"><p style="margin:0px 0px 24px;box-sizing:inherit;line-height:15px;margin-bottom:0px;font-size:13.5px;">node</p></td>
+<td style="box-sizing:inherit;white-space:nowrap;font-size:90%;margin:0px;overflow:visible;padding:8px 16px;background-color:transparent;vertical-align:middle;border-bottom:1px solid rgb(225, 228, 229);border-left:1px solid rgb(225, 228, 229);"><p style="margin:0px 0px 24px;box-sizing:inherit;line-height:15px;margin-bottom:0px;font-size:13.5px;">512k</p></td>
+<td style="box-sizing:inherit;white-space:nowrap;font-size:90%;margin:0px;overflow:visible;padding:8px 16px;background-color:transparent;vertical-align:middle;border-bottom:1px solid rgb(225, 228, 229);border-left:1px solid rgb(225, 228, 229);"><p style="margin:0px 0px 24px;box-sizing:inherit;line-height:15px;margin-bottom:0px;font-size:13.5px;">Max 256k endpoints (IPv4+IPv6), max 512k endpoints (IPv4 or IPv6) across all clusters</p></td>
+</tr>
+<tr style="box-sizing:inherit;"><td style="box-sizing:inherit;white-space:nowrap;font-size:90%;margin:0px;overflow:visible;padding:8px 16px;vertical-align:middle;border-bottom:1px solid rgb(225, 228, 229);border-left:1px solid rgb(225, 228, 229);border-left-width:1px;background-color:rgb(243, 246, 246);"><p style="margin:0px 0px 24px;box-sizing:inherit;line-height:15px;margin-bottom:0px;font-size:13.5px;">Load Balancer</p></td>
+<td style="box-sizing:inherit;white-space:nowrap;font-size:90%;margin:0px;overflow:visible;padding:8px 16px;vertical-align:middle;border-bottom:1px solid rgb(225, 228, 229);border-left:1px solid rgb(225, 228, 229);background-color:rgb(243, 246, 246);"><p style="margin:0px 0px 24px;box-sizing:inherit;line-height:15px;margin-bottom:0px;font-size:13.5px;">node</p></td>
+<td style="box-sizing:inherit;white-space:nowrap;font-size:90%;margin:0px;overflow:visible;padding:8px 16px;vertical-align:middle;border-bottom:1px solid rgb(225, 228, 229);border-left:1px solid rgb(225, 228, 229);background-color:rgb(243, 246, 246);"><p style="margin:0px 0px 24px;box-sizing:inherit;line-height:15px;margin-bottom:0px;font-size:13.5px;">64k</p></td>
+<td style="box-sizing:inherit;white-space:nowrap;font-size:90%;margin:0px;overflow:visible;padding:8px 16px;vertical-align:middle;border-bottom:1px solid rgb(225, 228, 229);border-left:1px solid rgb(225, 228, 229);background-color:rgb(243, 246, 246);"><p style="margin:0px 0px 24px;box-sizing:inherit;line-height:15px;margin-bottom:0px;font-size:13.5px;">Max 64k cumulative backends across all services across all clusters</p></td>
+</tr>
+<tr style="box-sizing:inherit;"><td style="box-sizing:inherit;white-space:nowrap;font-size:90%;margin:0px;overflow:visible;padding:8px 16px;background-color:transparent;vertical-align:middle;border-bottom:1px solid rgb(225, 228, 229);border-left:1px solid rgb(225, 228, 229);border-left-width:1px;"><p style="margin:0px 0px 24px;box-sizing:inherit;line-height:15px;margin-bottom:0px;font-size:13.5px;">Policy</p></td>
+<td style="box-sizing:inherit;white-space:nowrap;font-size:90%;margin:0px;overflow:visible;padding:8px 16px;background-color:transparent;vertical-align:middle;border-bottom:1px solid rgb(225, 228, 229);border-left:1px solid rgb(225, 228, 229);"><p style="margin:0px 0px 24px;box-sizing:inherit;line-height:15px;margin-bottom:0px;font-size:13.5px;">endpoint</p></td>
+<td style="box-sizing:inherit;white-space:nowrap;font-size:90%;margin:0px;overflow:visible;padding:8px 16px;background-color:transparent;vertical-align:middle;border-bottom:1px solid rgb(225, 228, 229);border-left:1px solid rgb(225, 228, 229);"><p style="margin:0px 0px 24px;box-sizing:inherit;line-height:15px;margin-bottom:0px;font-size:13.5px;">16k</p></td>
+<td style="box-sizing:inherit;white-space:nowrap;font-size:90%;margin:0px;overflow:visible;padding:8px 16px;background-color:transparent;vertical-align:middle;border-bottom:1px solid rgb(225, 228, 229);border-left:1px solid rgb(225, 228, 229);"><p style="margin:0px 0px 24px;box-sizing:inherit;line-height:15px;margin-bottom:0px;font-size:13.5px;">Max 16k allowed identity + port + protocol pairs for specific endpoint</p></td>
+</tr>
+<tr style="box-sizing:inherit;"><td style="box-sizing:inherit;white-space:nowrap;font-size:90%;margin:0px;overflow:visible;padding:8px 16px;vertical-align:middle;border-bottom:1px solid rgb(225, 228, 229);border-left:1px solid rgb(225, 228, 229);border-left-width:1px;background-color:rgb(243, 246, 246);"><p style="margin:0px 0px 24px;box-sizing:inherit;line-height:15px;margin-bottom:0px;font-size:13.5px;">Proxy Map</p></td>
+<td style="box-sizing:inherit;white-space:nowrap;font-size:90%;margin:0px;overflow:visible;padding:8px 16px;vertical-align:middle;border-bottom:1px solid rgb(225, 228, 229);border-left:1px solid rgb(225, 228, 229);background-color:rgb(243, 246, 246);"><p style="margin:0px 0px 24px;box-sizing:inherit;line-height:15px;margin-bottom:0px;font-size:13.5px;">node</p></td>
+<td style="box-sizing:inherit;white-space:nowrap;font-size:90%;margin:0px;overflow:visible;padding:8px 16px;vertical-align:middle;border-bottom:1px solid rgb(225, 228, 229);border-left:1px solid rgb(225, 228, 229);background-color:rgb(243, 246, 246);"><p style="margin:0px 0px 24px;box-sizing:inherit;line-height:15px;margin-bottom:0px;font-size:13.5px;">512k</p></td>
+<td style="box-sizing:inherit;white-space:nowrap;font-size:90%;margin:0px;overflow:visible;padding:8px 16px;vertical-align:middle;border-bottom:1px solid rgb(225, 228, 229);border-left:1px solid rgb(225, 228, 229);background-color:rgb(243, 246, 246);"><p style="margin:0px 0px 24px;box-sizing:inherit;line-height:15px;margin-bottom:0px;font-size:13.5px;">Max 512k concurrent redirected TCP connections to proxy</p></td>
+</tr>
+<tr style="box-sizing:inherit;"><td style="box-sizing:inherit;white-space:nowrap;font-size:90%;margin:0px;overflow:visible;padding:8px 16px;background-color:transparent;vertical-align:middle;border-bottom:1px solid rgb(225, 228, 229);border-left:1px solid rgb(225, 228, 229);border-left-width:1px;"><p style="margin:0px 0px 24px;box-sizing:inherit;line-height:15px;margin-bottom:0px;font-size:13.5px;">Tunnel</p></td>
+<td style="box-sizing:inherit;white-space:nowrap;font-size:90%;margin:0px;overflow:visible;padding:8px 16px;background-color:transparent;vertical-align:middle;border-bottom:1px solid rgb(225, 228, 229);border-left:1px solid rgb(225, 228, 229);"><p style="margin:0px 0px 24px;box-sizing:inherit;line-height:15px;margin-bottom:0px;font-size:13.5px;">node</p></td>
+<td style="box-sizing:inherit;white-space:nowrap;font-size:90%;margin:0px;overflow:visible;padding:8px 16px;background-color:transparent;vertical-align:middle;border-bottom:1px solid rgb(225, 228, 229);border-left:1px solid rgb(225, 228, 229);"><p style="margin:0px 0px 24px;box-sizing:inherit;line-height:15px;margin-bottom:0px;font-size:13.5px;">64k</p></td>
+<td style="box-sizing:inherit;white-space:nowrap;font-size:90%;margin:0px;overflow:visible;padding:8px 16px;background-color:transparent;vertical-align:middle;border-bottom:1px solid rgb(225, 228, 229);border-left:1px solid rgb(225, 228, 229);"><p style="margin:0px 0px 24px;box-sizing:inherit;line-height:15px;margin-bottom:0px;font-size:13.5px;">Max 32k nodes (IPv4+IPv6) or 64k nodes (IPv4 or IPv6) across all clusters</p></td>
+</tr>
+<tr style="box-sizing:inherit;"><td style="box-sizing:inherit;white-space:nowrap;font-size:90%;margin:0px;overflow:visible;padding:8px 16px;vertical-align:middle;border-bottom:1px solid rgb(225, 228, 229);border-left:1px solid rgb(225, 228, 229);border-left-width:1px;background-color:rgb(243, 246, 246);"><p style="margin:0px 0px 24px;box-sizing:inherit;line-height:15px;margin-bottom:0px;font-size:13.5px;">IPv4 Fragmentation</p></td>
+<td style="box-sizing:inherit;white-space:nowrap;font-size:90%;margin:0px;overflow:visible;padding:8px 16px;vertical-align:middle;border-bottom:1px solid rgb(225, 228, 229);border-left:1px solid rgb(225, 228, 229);background-color:rgb(243, 246, 246);"><p style="margin:0px 0px 24px;box-sizing:inherit;line-height:15px;margin-bottom:0px;font-size:13.5px;">node</p></td>
+<td style="box-sizing:inherit;white-space:nowrap;font-size:90%;margin:0px;overflow:visible;padding:8px 16px;vertical-align:middle;border-bottom:1px solid rgb(225, 228, 229);border-left:1px solid rgb(225, 228, 229);background-color:rgb(243, 246, 246);"><p style="margin:0px 0px 24px;box-sizing:inherit;line-height:15px;margin-bottom:0px;font-size:13.5px;">8k</p></td>
+<td style="box-sizing:inherit;white-space:nowrap;font-size:90%;margin:0px;overflow:visible;padding:8px 16px;vertical-align:middle;border-bottom:1px solid rgb(225, 228, 229);border-left:1px solid rgb(225, 228, 229);background-color:rgb(243, 246, 246);"><p style="margin:0px 0px 24px;box-sizing:inherit;line-height:15px;margin-bottom:0px;font-size:13.5px;">Max 8k fragmented datagrams in flight simultaneously on the node</p></td>
+</tr>
+<tr style="box-sizing:inherit;"><td style="box-sizing:inherit;white-space:nowrap;font-size:90%;margin:0px;overflow:visible;padding:8px 16px;background-color:transparent;vertical-align:middle;border-bottom:1px solid rgb(225, 228, 229);border-left:1px solid rgb(225, 228, 229);border-left-width:1px;"><p style="margin:0px 0px 24px;box-sizing:inherit;line-height:15px;margin-bottom:0px;font-size:13.5px;">Session Affinity</p></td>
+<td style="box-sizing:inherit;white-space:nowrap;font-size:90%;margin:0px;overflow:visible;padding:8px 16px;background-color:transparent;vertical-align:middle;border-bottom:1px solid rgb(225, 228, 229);border-left:1px solid rgb(225, 228, 229);"><p style="margin:0px 0px 24px;box-sizing:inherit;line-height:15px;margin-bottom:0px;font-size:13.5px;">node</p></td>
+<td style="box-sizing:inherit;white-space:nowrap;font-size:90%;margin:0px;overflow:visible;padding:8px 16px;background-color:transparent;vertical-align:middle;border-bottom:1px solid rgb(225, 228, 229);border-left:1px solid rgb(225, 228, 229);"><p style="margin:0px 0px 24px;box-sizing:inherit;line-height:15px;margin-bottom:0px;font-size:13.5px;">64k</p></td>
+<td style="box-sizing:inherit;white-space:nowrap;font-size:90%;margin:0px;overflow:visible;padding:8px 16px;background-color:transparent;vertical-align:middle;border-bottom:1px solid rgb(225, 228, 229);border-left:1px solid rgb(225, 228, 229);"><p style="margin:0px 0px 24px;box-sizing:inherit;line-height:15px;margin-bottom:0px;font-size:13.5px;">Max 64k affinities from different clients</p></td>
+</tr>
+<tr style="box-sizing:inherit;"><td style="box-sizing:inherit;white-space:nowrap;font-size:90%;margin:0px;overflow:visible;padding:8px 16px;vertical-align:middle;border-bottom:1px solid rgb(225, 228, 229);border-left:1px solid rgb(225, 228, 229);border-left-width:1px;background-color:rgb(243, 246, 246);"><p style="margin:0px 0px 24px;box-sizing:inherit;line-height:15px;margin-bottom:0px;font-size:13.5px;">IPv4 Masq</p></td>
+<td style="box-sizing:inherit;white-space:nowrap;font-size:90%;margin:0px;overflow:visible;padding:8px 16px;vertical-align:middle;border-bottom:1px solid rgb(225, 228, 229);border-left:1px solid rgb(225, 228, 229);background-color:rgb(243, 246, 246);"><p style="margin:0px 0px 24px;box-sizing:inherit;line-height:15px;margin-bottom:0px;font-size:13.5px;">node</p></td>
+<td style="box-sizing:inherit;white-space:nowrap;font-size:90%;margin:0px;overflow:visible;padding:8px 16px;vertical-align:middle;border-bottom:1px solid rgb(225, 228, 229);border-left:1px solid rgb(225, 228, 229);background-color:rgb(243, 246, 246);"><p style="margin:0px 0px 24px;box-sizing:inherit;line-height:15px;margin-bottom:0px;font-size:13.5px;">16k</p></td>
+<td style="box-sizing:inherit;white-space:nowrap;font-size:90%;margin:0px;overflow:visible;padding:8px 16px;vertical-align:middle;border-bottom:1px solid rgb(225, 228, 229);border-left:1px solid rgb(225, 228, 229);background-color:rgb(243, 246, 246);"><p style="margin:0px 0px 24px;box-sizing:inherit;line-height:15px;margin-bottom:0px;font-size:13.5px;">Max 16k IPv4 cidrs used by BPF-based ip-masq-agent</p></td>
+</tr>
+<tr style="box-sizing:inherit;"><td style="box-sizing:inherit;white-space:nowrap;font-size:90%;margin:0px;overflow:visible;padding:8px 16px;background-color:transparent;vertical-align:middle;border-bottom:1px solid rgb(225, 228, 229);border-left:1px solid rgb(225, 228, 229);border-left-width:1px;"><p style="margin:0px 0px 24px;box-sizing:inherit;line-height:15px;margin-bottom:0px;font-size:13.5px;">IPv6 Masq</p></td>
+<td style="box-sizing:inherit;white-space:nowrap;font-size:90%;margin:0px;overflow:visible;padding:8px 16px;background-color:transparent;vertical-align:middle;border-bottom:1px solid rgb(225, 228, 229);border-left:1px solid rgb(225, 228, 229);"><p style="margin:0px 0px 24px;box-sizing:inherit;line-height:15px;margin-bottom:0px;font-size:13.5px;">node</p></td>
+<td style="box-sizing:inherit;white-space:nowrap;font-size:90%;margin:0px;overflow:visible;padding:8px 16px;background-color:transparent;vertical-align:middle;border-bottom:1px solid rgb(225, 228, 229);border-left:1px solid rgb(225, 228, 229);"><p style="margin:0px 0px 24px;box-sizing:inherit;line-height:15px;margin-bottom:0px;font-size:13.5px;">16k</p></td>
+<td style="box-sizing:inherit;white-space:nowrap;font-size:90%;margin:0px;overflow:visible;padding:8px 16px;background-color:transparent;vertical-align:middle;border-bottom:1px solid rgb(225, 228, 229);border-left:1px solid rgb(225, 228, 229);"><p style="margin:0px 0px 24px;box-sizing:inherit;line-height:15px;margin-bottom:0px;font-size:13.5px;">Max 16k IPv6 cidrs used by BPF-based ip-masq-agent</p></td>
+</tr>
+<tr style="box-sizing:inherit;"><td style="box-sizing:inherit;white-space:nowrap;font-size:90%;margin:0px;overflow:visible;padding:8px 16px;vertical-align:middle;border-bottom:1px solid rgb(225, 228, 229);border-left:1px solid rgb(225, 228, 229);border-left-width:1px;background-color:rgb(243, 246, 246);"><p style="margin:0px 0px 24px;box-sizing:inherit;line-height:15px;margin-bottom:0px;font-size:13.5px;">Service Source Ranges</p></td>
+<td style="box-sizing:inherit;white-space:nowrap;font-size:90%;margin:0px;overflow:visible;padding:8px 16px;vertical-align:middle;border-bottom:1px solid rgb(225, 228, 229);border-left:1px solid rgb(225, 228, 229);background-color:rgb(243, 246, 246);"><p style="margin:0px 0px 24px;box-sizing:inherit;line-height:15px;margin-bottom:0px;font-size:13.5px;">node</p></td>
+<td style="box-sizing:inherit;white-space:nowrap;font-size:90%;margin:0px;overflow:visible;padding:8px 16px;vertical-align:middle;border-bottom:1px solid rgb(225, 228, 229);border-left:1px solid rgb(225, 228, 229);background-color:rgb(243, 246, 246);"><p style="margin:0px 0px 24px;box-sizing:inherit;line-height:15px;margin-bottom:0px;font-size:13.5px;">64k</p></td>
+<td style="box-sizing:inherit;white-space:nowrap;font-size:90%;margin:0px;overflow:visible;padding:8px 16px;vertical-align:middle;border-bottom:1px solid rgb(225, 228, 229);border-left:1px solid rgb(225, 228, 229);background-color:rgb(243, 246, 246);"><p style="margin:0px 0px 24px;box-sizing:inherit;line-height:15px;margin-bottom:0px;font-size:13.5px;">Max 64k cumulative LB source ranges across all services</p></td>
+</tr>
+<tr style="box-sizing:inherit;"><td style="box-sizing:inherit;white-space:nowrap;font-size:90%;margin:0px;overflow:visible;padding:8px 16px;background-color:transparent;vertical-align:middle;border-bottom:1px solid rgb(225, 228, 229);border-left:1px solid rgb(225, 228, 229);border-bottom-width:0px;border-left-width:1px;"><p style="margin:0px 0px 24px;box-sizing:inherit;line-height:15px;margin-bottom:0px;font-size:13.5px;">Egress Policy</p></td>
+<td style="box-sizing:inherit;white-space:nowrap;font-size:90%;margin:0px;overflow:visible;padding:8px 16px;background-color:transparent;vertical-align:middle;border-bottom:1px solid rgb(225, 228, 229);border-left:1px solid rgb(225, 228, 229);border-bottom-width:0px;"><p style="margin:0px 0px 24px;box-sizing:inherit;line-height:15px;margin-bottom:0px;font-size:13.5px;">endpoint</p></td>
+<td style="box-sizing:inherit;white-space:nowrap;font-size:90%;margin:0px;overflow:visible;padding:8px 16px;background-color:transparent;vertical-align:middle;border-bottom:1px solid rgb(225, 228, 229);border-left:1px solid rgb(225, 228, 229);border-bottom-width:0px;"><p style="margin:0px 0px 24px;box-sizing:inherit;line-height:15px;margin-bottom:0px;font-size:13.5px;">16k</p></td>
+<td style="box-sizing:inherit;white-space:nowrap;font-size:90%;margin:0px;overflow:visible;padding:8px 16px;background-color:transparent;vertical-align:middle;border-bottom:1px solid rgb(225, 228, 229);border-left:1px solid rgb(225, 228, 229);border-bottom-width:0px;"><p style="margin:0px 0px 24px;box-sizing:inherit;line-height:15px;margin-bottom:0px;font-size:13.5px;">Max 16k endpoints across all destination CIDRs across all clusters</p></td>
+</tr>
+</tbody>
+</table></div>
+<p style="line-height:24px;font-size:16px;margin:0px 0px 24px;box-sizing:inherit;">For some BPF maps, the upper capacity limit can be overridden using command
+line options for <code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span style="box-sizing:inherit;">cilium-agent</span></code>. A given capacity can be set using
+<code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span style="box-sizing:inherit;">--bpf-auth-map-max</span></code>, <code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span style="box-sizing:inherit;">--bpf-ct-global-tcp-max</span></code>, <code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span style="box-sizing:inherit;">--bpf-ct-global-any-max</span></code>,
+<code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span style="box-sizing:inherit;">--bpf-nat-global-max</span></code>, <code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span style="box-sizing:inherit;">--bpf-neigh-global-max</span></code>, <code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span style="box-sizing:inherit;">--bpf-policy-map-max</span></code>,
+<code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span style="box-sizing:inherit;">--bpf-fragments-map-max</span></code> and <code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span style="box-sizing:inherit;">--bpf-lb-map-max</span></code>.</p>
+<div style="box-sizing:inherit;-webkit-font-smoothing:antialiased;padding:12px;line-height:24px;margin-bottom:24px;background:rgb(231, 242, 250);clear:both;border-radius:2px;"><span style="line-height:24px;-webkit-font-smoothing:antialiased;"></span>
+<p style="box-sizing:inherit;font-style:normal;font-variant:normal;font-kerning:auto;font-optical-sizing:auto;font-feature-settings:normal;font-variation-settings:normal;font-stretch:normal;text-rendering:auto;-webkit-font-smoothing:antialiased;line-height:1;font-size:inherit;font-family:inherit;color:rgb(255, 255, 255);padding:6px 12px;display:block;font-weight:700;margin:-12px -12px 12px;border-top-left-radius:2px;border-top-right-radius:2px;background:rgb(106, 176, 222);"><span style="font-style:normal;font-variant:normal;font-weight:700;line-height:1;font-family:inherit;font-size:inherit;color:rgb(255, 255, 255);-webkit-font-smoothing:antialiased;display:inline-block;text-decoration:inherit;margin-right:4px;"></span>Note</p>
+<p style="line-height:24px;font-size:16px;margin:0px 0px 24px;box-sizing:inherit;margin-bottom:0px;">In case the <code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span style="box-sizing:inherit;">--bpf-ct-global-tcp-max</span></code> and/or <code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span style="box-sizing:inherit;">--bpf-ct-global-any-max</span></code>
+are specified, the NAT table size (<code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span style="box-sizing:inherit;">--bpf-nat-global-max</span></code>) must not exceed
+2/3 of the combined CT table size (TCP + UDP). This will automatically be set
+if either <code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span style="box-sizing:inherit;">--bpf-nat-global-max</span></code> is not explicitly set or if dynamic BPF
+map sizing is used (see below).</p>
+</div>
+<p style="line-height:24px;font-size:16px;margin:0px 0px 24px;box-sizing:inherit;">Using the <code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span style="box-sizing:inherit;">--bpf-map-dynamic-size-ratio</span></code> flag, the upper capacity limits of
+several large BPF maps are determined at agent startup based on the given ratio
+of the total system memory. For example, a given ratio of 0.0025 leads to 0.25%
+of the total system memory to be used for these maps.</p>
+<p style="line-height:24px;font-size:16px;margin:0px 0px 24px;box-sizing:inherit;">This flag affects the following BPF maps that consume most memory in the system:
+<code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span style="box-sizing:inherit;">cilium_ct_{4,6}_global</span></code>, <code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span style="box-sizing:inherit;">cilium_ct_{4,6}_any</span></code>,
+<code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span style="box-sizing:inherit;">cilium_nodeport_neigh{4,6}</span></code>, <code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span style="box-sizing:inherit;">cilium_snat_v{4,6}_external</span></code> and
+<code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span style="box-sizing:inherit;">cilium_lb{4,6}_reverse_sk</span></code>.</p>
+<p style="line-height:24px;font-size:16px;margin:0px 0px 24px;box-sizing:inherit;"><code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span style="box-sizing:inherit;">kube-proxy</span></code> sets as the maximum number entries in the linux’s connection
+tracking table based on the number of cores the machine has. <code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span style="box-sizing:inherit;">kube-proxy</span></code> has
+a default of <code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span style="box-sizing:inherit;">32768</span></code> maximum entries per core with a minimum of <code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span style="box-sizing:inherit;">131072</span></code>
+entries regardless of the number of cores the machine has.</p>
+<p style="line-height:24px;font-size:16px;margin:0px 0px 24px;box-sizing:inherit;">Cilium has its own connection tracking tables as BPF Maps and the number of
+entries of such maps is calculated based on the amount of total memory in the
+node with a minimum of <code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span style="box-sizing:inherit;">131072</span></code> entries regardless the amount of memory the
+machine has.</p>
+<p style="line-height:24px;font-size:16px;margin:0px 0px 24px;box-sizing:inherit;">The following table presents the value that <code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span style="box-sizing:inherit;">kube-proxy</span></code> and Cilium sets for
+their own connection tracking tables when Cilium is configured with
+<code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span style="box-sizing:inherit;">--bpf-map-dynamic-size-ratio:</span> <span style="box-sizing:inherit;">0.0025</span></code>.</p>
+<div style="box-sizing:inherit;margin-bottom:24px;max-width:100%;overflow:auto;"><table style="font-size:inherit;font-weight:inherit;font-style:inherit;font-variant:inherit;box-sizing:inherit;empty-cells:show;border-collapse:collapse;border-spacing:0px;border:1px solid rgb(225, 228, 229);margin-bottom:0px;">
+<tbody style="box-sizing:inherit;">
+<tr style="box-sizing:inherit;"><td style="box-sizing:inherit;white-space:nowrap;font-size:90%;margin:0px;overflow:visible;padding:8px 16px;vertical-align:middle;border-bottom:1px solid rgb(225, 228, 229);border-left:1px solid rgb(225, 228, 229);border-left-width:1px;background-color:rgb(243, 246, 246);"><p style="margin:0px 0px 24px;box-sizing:inherit;line-height:15px;margin-bottom:0px;font-size:13.5px;">vCPU</p></td>
+<td style="box-sizing:inherit;white-space:nowrap;font-size:90%;margin:0px;overflow:visible;padding:8px 16px;vertical-align:middle;border-bottom:1px solid rgb(225, 228, 229);border-left:1px solid rgb(225, 228, 229);background-color:rgb(243, 246, 246);"><p style="margin:0px 0px 24px;box-sizing:inherit;line-height:15px;margin-bottom:0px;font-size:13.5px;">Memory (GiB)</p></td>
+<td style="box-sizing:inherit;white-space:nowrap;font-size:90%;margin:0px;overflow:visible;padding:8px 16px;vertical-align:middle;border-bottom:1px solid rgb(225, 228, 229);border-left:1px solid rgb(225, 228, 229);background-color:rgb(243, 246, 246);"><p style="margin:0px 0px 24px;box-sizing:inherit;line-height:15px;margin-bottom:0px;font-size:13.5px;">Kube-proxy CT entries</p></td>
+<td style="box-sizing:inherit;white-space:nowrap;font-size:90%;margin:0px;overflow:visible;padding:8px 16px;vertical-align:middle;border-bottom:1px solid rgb(225, 228, 229);border-left:1px solid rgb(225, 228, 229);background-color:rgb(243, 246, 246);"><p style="margin:0px 0px 24px;box-sizing:inherit;line-height:15px;margin-bottom:0px;font-size:13.5px;">Cilium CT entries</p></td>
+</tr>
+<tr style="box-sizing:inherit;"><td style="box-sizing:inherit;white-space:nowrap;font-size:90%;margin:0px;overflow:visible;padding:8px 16px;background-color:transparent;vertical-align:middle;border-bottom:1px solid rgb(225, 228, 229);border-left:1px solid rgb(225, 228, 229);border-left-width:1px;"><p style="margin:0px 0px 24px;box-sizing:inherit;line-height:15px;margin-bottom:0px;font-size:13.5px;">1</p></td>
+<td style="box-sizing:inherit;white-space:nowrap;font-size:90%;margin:0px;overflow:visible;padding:8px 16px;background-color:transparent;vertical-align:middle;border-bottom:1px solid rgb(225, 228, 229);border-left:1px solid rgb(225, 228, 229);"><p style="margin:0px 0px 24px;box-sizing:inherit;line-height:15px;margin-bottom:0px;font-size:13.5px;">3.75</p></td>
+<td style="box-sizing:inherit;white-space:nowrap;font-size:90%;margin:0px;overflow:visible;padding:8px 16px;background-color:transparent;vertical-align:middle;border-bottom:1px solid rgb(225, 228, 229);border-left:1px solid rgb(225, 228, 229);"><p style="margin:0px 0px 24px;box-sizing:inherit;line-height:15px;margin-bottom:0px;font-size:13.5px;">131072</p></td>
+<td style="box-sizing:inherit;white-space:nowrap;font-size:90%;margin:0px;overflow:visible;padding:8px 16px;background-color:transparent;vertical-align:middle;border-bottom:1px solid rgb(225, 228, 229);border-left:1px solid rgb(225, 228, 229);"><p style="margin:0px 0px 24px;box-sizing:inherit;line-height:15px;margin-bottom:0px;font-size:13.5px;">131072</p></td>
+</tr>
+<tr style="box-sizing:inherit;"><td style="box-sizing:inherit;white-space:nowrap;font-size:90%;margin:0px;overflow:visible;padding:8px 16px;vertical-align:middle;border-bottom:1px solid rgb(225, 228, 229);border-left:1px solid rgb(225, 228, 229);border-left-width:1px;background-color:rgb(243, 246, 246);"><p style="margin:0px 0px 24px;box-sizing:inherit;line-height:15px;margin-bottom:0px;font-size:13.5px;">2</p></td>
+<td style="box-sizing:inherit;white-space:nowrap;font-size:90%;margin:0px;overflow:visible;padding:8px 16px;vertical-align:middle;border-bottom:1px solid rgb(225, 228, 229);border-left:1px solid rgb(225, 228, 229);background-color:rgb(243, 246, 246);"><p style="margin:0px 0px 24px;box-sizing:inherit;line-height:15px;margin-bottom:0px;font-size:13.5px;">7.5</p></td>
+<td style="box-sizing:inherit;white-space:nowrap;font-size:90%;margin:0px;overflow:visible;padding:8px 16px;vertical-align:middle;border-bottom:1px solid rgb(225, 228, 229);border-left:1px solid rgb(225, 228, 229);background-color:rgb(243, 246, 246);"><p style="margin:0px 0px 24px;box-sizing:inherit;line-height:15px;margin-bottom:0px;font-size:13.5px;">131072</p></td>
+<td style="box-sizing:inherit;white-space:nowrap;font-size:90%;margin:0px;overflow:visible;padding:8px 16px;vertical-align:middle;border-bottom:1px solid rgb(225, 228, 229);border-left:1px solid rgb(225, 228, 229);background-color:rgb(243, 246, 246);"><p style="margin:0px 0px 24px;box-sizing:inherit;line-height:15px;margin-bottom:0px;font-size:13.5px;">131072</p></td>
+</tr>
+<tr style="box-sizing:inherit;"><td style="box-sizing:inherit;white-space:nowrap;font-size:90%;margin:0px;overflow:visible;padding:8px 16px;background-color:transparent;vertical-align:middle;border-bottom:1px solid rgb(225, 228, 229);border-left:1px solid rgb(225, 228, 229);border-left-width:1px;"><p style="margin:0px 0px 24px;box-sizing:inherit;line-height:15px;margin-bottom:0px;font-size:13.5px;">4</p></td>
+<td style="box-sizing:inherit;white-space:nowrap;font-size:90%;margin:0px;overflow:visible;padding:8px 16px;background-color:transparent;vertical-align:middle;border-bottom:1px solid rgb(225, 228, 229);border-left:1px solid rgb(225, 228, 229);"><p style="margin:0px 0px 24px;box-sizing:inherit;line-height:15px;margin-bottom:0px;font-size:13.5px;">15</p></td>
+<td style="box-sizing:inherit;white-space:nowrap;font-size:90%;margin:0px;overflow:visible;padding:8px 16px;background-color:transparent;vertical-align:middle;border-bottom:1px solid rgb(225, 228, 229);border-left:1px solid rgb(225, 228, 229);"><p style="margin:0px 0px 24px;box-sizing:inherit;line-height:15px;margin-bottom:0px;font-size:13.5px;">131072</p></td>
+<td style="box-sizing:inherit;white-space:nowrap;font-size:90%;margin:0px;overflow:visible;padding:8px 16px;background-color:transparent;vertical-align:middle;border-bottom:1px solid rgb(225, 228, 229);border-left:1px solid rgb(225, 228, 229);"><p style="margin:0px 0px 24px;box-sizing:inherit;line-height:15px;margin-bottom:0px;font-size:13.5px;">131072</p></td>
+</tr>
+<tr style="box-sizing:inherit;"><td style="box-sizing:inherit;white-space:nowrap;font-size:90%;margin:0px;overflow:visible;padding:8px 16px;vertical-align:middle;border-bottom:1px solid rgb(225, 228, 229);border-left:1px solid rgb(225, 228, 229);border-left-width:1px;background-color:rgb(243, 246, 246);"><p style="margin:0px 0px 24px;box-sizing:inherit;line-height:15px;margin-bottom:0px;font-size:13.5px;">8</p></td>
+<td style="box-sizing:inherit;white-space:nowrap;font-size:90%;margin:0px;overflow:visible;padding:8px 16px;vertical-align:middle;border-bottom:1px solid rgb(225, 228, 229);border-left:1px solid rgb(225, 228, 229);background-color:rgb(243, 246, 246);"><p style="margin:0px 0px 24px;box-sizing:inherit;line-height:15px;margin-bottom:0px;font-size:13.5px;">30</p></td>
+<td style="box-sizing:inherit;white-space:nowrap;font-size:90%;margin:0px;overflow:visible;padding:8px 16px;vertical-align:middle;border-bottom:1px solid rgb(225, 228, 229);border-left:1px solid rgb(225, 228, 229);background-color:rgb(243, 246, 246);"><p style="margin:0px 0px 24px;box-sizing:inherit;line-height:15px;margin-bottom:0px;font-size:13.5px;">262144</p></td>
+<td style="box-sizing:inherit;white-space:nowrap;font-size:90%;margin:0px;overflow:visible;padding:8px 16px;vertical-align:middle;border-bottom:1px solid rgb(225, 228, 229);border-left:1px solid rgb(225, 228, 229);background-color:rgb(243, 246, 246);"><p style="margin:0px 0px 24px;box-sizing:inherit;line-height:15px;margin-bottom:0px;font-size:13.5px;">284560</p></td>
+</tr>
+<tr style="box-sizing:inherit;"><td style="box-sizing:inherit;white-space:nowrap;font-size:90%;margin:0px;overflow:visible;padding:8px 16px;background-color:transparent;vertical-align:middle;border-bottom:1px solid rgb(225, 228, 229);border-left:1px solid rgb(225, 228, 229);border-left-width:1px;"><p style="margin:0px 0px 24px;box-sizing:inherit;line-height:15px;margin-bottom:0px;font-size:13.5px;">16</p></td>
+<td style="box-sizing:inherit;white-space:nowrap;font-size:90%;margin:0px;overflow:visible;padding:8px 16px;background-color:transparent;vertical-align:middle;border-bottom:1px solid rgb(225, 228, 229);border-left:1px solid rgb(225, 228, 229);"><p style="margin:0px 0px 24px;box-sizing:inherit;line-height:15px;margin-bottom:0px;font-size:13.5px;">60</p></td>
+<td style="box-sizing:inherit;white-space:nowrap;font-size:90%;margin:0px;overflow:visible;padding:8px 16px;background-color:transparent;vertical-align:middle;border-bottom:1px solid rgb(225, 228, 229);border-left:1px solid rgb(225, 228, 229);"><p style="margin:0px 0px 24px;box-sizing:inherit;line-height:15px;margin-bottom:0px;font-size:13.5px;">524288</p></td>
+<td style="box-sizing:inherit;white-space:nowrap;font-size:90%;margin:0px;overflow:visible;padding:8px 16px;background-color:transparent;vertical-align:middle;border-bottom:1px solid rgb(225, 228, 229);border-left:1px solid rgb(225, 228, 229);"><p style="margin:0px 0px 24px;box-sizing:inherit;line-height:15px;margin-bottom:0px;font-size:13.5px;">569120</p></td>
+</tr>
+<tr style="box-sizing:inherit;"><td style="box-sizing:inherit;white-space:nowrap;font-size:90%;margin:0px;overflow:visible;padding:8px 16px;vertical-align:middle;border-bottom:1px solid rgb(225, 228, 229);border-left:1px solid rgb(225, 228, 229);border-left-width:1px;background-color:rgb(243, 246, 246);"><p style="margin:0px 0px 24px;box-sizing:inherit;line-height:15px;margin-bottom:0px;font-size:13.5px;">32</p></td>
+<td style="box-sizing:inherit;white-space:nowrap;font-size:90%;margin:0px;overflow:visible;padding:8px 16px;vertical-align:middle;border-bottom:1px solid rgb(225, 228, 229);border-left:1px solid rgb(225, 228, 229);background-color:rgb(243, 246, 246);"><p style="margin:0px 0px 24px;box-sizing:inherit;line-height:15px;margin-bottom:0px;font-size:13.5px;">120</p></td>
+<td style="box-sizing:inherit;white-space:nowrap;font-size:90%;margin:0px;overflow:visible;padding:8px 16px;vertical-align:middle;border-bottom:1px solid rgb(225, 228, 229);border-left:1px solid rgb(225, 228, 229);background-color:rgb(243, 246, 246);"><p style="margin:0px 0px 24px;box-sizing:inherit;line-height:15px;margin-bottom:0px;font-size:13.5px;">1048576</p></td>
+<td style="box-sizing:inherit;white-space:nowrap;font-size:90%;margin:0px;overflow:visible;padding:8px 16px;vertical-align:middle;border-bottom:1px solid rgb(225, 228, 229);border-left:1px solid rgb(225, 228, 229);background-color:rgb(243, 246, 246);"><p style="margin:0px 0px 24px;box-sizing:inherit;line-height:15px;margin-bottom:0px;font-size:13.5px;">1138240</p></td>
+</tr>
+<tr style="box-sizing:inherit;"><td style="box-sizing:inherit;white-space:nowrap;font-size:90%;margin:0px;overflow:visible;padding:8px 16px;background-color:transparent;vertical-align:middle;border-bottom:1px solid rgb(225, 228, 229);border-left:1px solid rgb(225, 228, 229);border-left-width:1px;"><p style="margin:0px 0px 24px;box-sizing:inherit;line-height:15px;margin-bottom:0px;font-size:13.5px;">64</p></td>
+<td style="box-sizing:inherit;white-space:nowrap;font-size:90%;margin:0px;overflow:visible;padding:8px 16px;background-color:transparent;vertical-align:middle;border-bottom:1px solid rgb(225, 228, 229);border-left:1px solid rgb(225, 228, 229);"><p style="margin:0px 0px 24px;box-sizing:inherit;line-height:15px;margin-bottom:0px;font-size:13.5px;">240</p></td>
+<td style="box-sizing:inherit;white-space:nowrap;font-size:90%;margin:0px;overflow:visible;padding:8px 16px;background-color:transparent;vertical-align:middle;border-bottom:1px solid rgb(225, 228, 229);border-left:1px solid rgb(225, 228, 229);"><p style="margin:0px 0px 24px;box-sizing:inherit;line-height:15px;margin-bottom:0px;font-size:13.5px;">2097152</p></td>
+<td style="box-sizing:inherit;white-space:nowrap;font-size:90%;margin:0px;overflow:visible;padding:8px 16px;background-color:transparent;vertical-align:middle;border-bottom:1px solid rgb(225, 228, 229);border-left:1px solid rgb(225, 228, 229);"><p style="margin:0px 0px 24px;box-sizing:inherit;line-height:15px;margin-bottom:0px;font-size:13.5px;">2276480</p></td>
+</tr>
+<tr style="box-sizing:inherit;"><td style="box-sizing:inherit;white-space:nowrap;font-size:90%;margin:0px;overflow:visible;padding:8px 16px;vertical-align:middle;border-bottom:1px solid rgb(225, 228, 229);border-left:1px solid rgb(225, 228, 229);border-bottom-width:0px;border-left-width:1px;background-color:rgb(243, 246, 246);"><p style="margin:0px 0px 24px;box-sizing:inherit;line-height:15px;margin-bottom:0px;font-size:13.5px;">96</p></td>
+<td style="box-sizing:inherit;white-space:nowrap;font-size:90%;margin:0px;overflow:visible;padding:8px 16px;vertical-align:middle;border-bottom:1px solid rgb(225, 228, 229);border-left:1px solid rgb(225, 228, 229);border-bottom-width:0px;background-color:rgb(243, 246, 246);"><p style="margin:0px 0px 24px;box-sizing:inherit;line-height:15px;margin-bottom:0px;font-size:13.5px;">360</p></td>
+<td style="box-sizing:inherit;white-space:nowrap;font-size:90%;margin:0px;overflow:visible;padding:8px 16px;vertical-align:middle;border-bottom:1px solid rgb(225, 228, 229);border-left:1px solid rgb(225, 228, 229);border-bottom-width:0px;background-color:rgb(243, 246, 246);"><p style="margin:0px 0px 24px;box-sizing:inherit;line-height:15px;margin-bottom:0px;font-size:13.5px;">3145728</p></td>
+<td style="box-sizing:inherit;white-space:nowrap;font-size:90%;margin:0px;overflow:visible;padding:8px 16px;vertical-align:middle;border-bottom:1px solid rgb(225, 228, 229);border-left:1px solid rgb(225, 228, 229);border-bottom-width:0px;background-color:rgb(243, 246, 246);"><p style="margin:0px 0px 24px;box-sizing:inherit;line-height:15px;margin-bottom:0px;font-size:13.5px;">4552960</p></td>
+</tr>
+</tbody>
+</table></div>
+</div></div></div></div></div></div></div></div></div></div>
+</div>
+</div>
+<a class="back-link" href="../articles.html">← 返回笔记列表</a>
+</body>
+</html>

@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="zh-CN" data-theme="light">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>长连接和http流式传输 chunked transfer encoding不是一个概念 — 技术笔记</title>
+<style>
+:root {
+  --bg: #ffffff;
+  --text: #1a1a1a;
+  --muted: #666;
+  --border: #e0e0e0;
+  --code-bg: #f5f5f5;
+  --link: #0066cc;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #1a1a1a;
+    --text: #e0e0e0;
+    --muted: #999;
+    --border: #333;
+    --code-bg: #2a2a2a;
+    --link: #66bbff;
+  }
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  line-height: 1.7;
+  color: var(--text);
+  background: var(--bg);
+  max-width: 860px;
+  margin: 0 auto;
+  padding: 2rem 1.5rem;
+}
+.note-header {
+  border-bottom: 2px solid var(--border);
+  padding-bottom: 1rem;
+  margin-bottom: 2rem;
+}
+.note-title {
+  font-size: 1.6rem;
+  font-weight: 700;
+  margin-bottom: 0.3rem;
+}
+.note-meta {
+  color: var(--muted);
+  font-size: 0.85rem;
+}
+.note-content {
+  font-size: 0.95rem;
+}
+.note-content h1 { font-size: 1.4rem; margin: 1.2rem 0 0.6rem; }
+.note-content h2 { font-size: 1.2rem; margin: 1rem 0 0.5rem; }
+.note-content h3 { font-size: 1.05rem; margin: 0.8rem 0 0.4rem; }
+.note-content p { margin: 0.5rem 0; }
+.note-content ul, .note-content ol { margin: 0.5rem 0 0.5rem 2rem; }
+.note-content li { margin: 0.2rem 0; }
+.note-content pre {
+  background: var(--code-bg);
+  padding: 1rem;
+  border-radius: 6px;
+  overflow-x: auto;
+  margin: 0.8rem 0;
+  font-size: 0.85rem;
+}
+.note-content code {
+  background: var(--code-bg);
+  padding: 0.1rem 0.3rem;
+  border-radius: 3px;
+  font-size: 0.88em;
+}
+.note-content pre code {
+  background: none;
+  padding: 0;
+}
+.note-content blockquote {
+  border-left: 3px solid var(--border);
+  padding-left: 1rem;
+  color: var(--muted);
+  margin: 0.8rem 0;
+}
+.note-content a { color: var(--link); }
+.note-content img {
+  max-width: 100%;
+  height: auto;
+  border-radius: 6px;
+  margin: 0.5rem 0;
+}
+.note-content table {
+  border-collapse: collapse;
+  width: 100%;
+  margin: 0.8rem 0;
+}
+.note-content th, .note-content td {
+  border: 1px solid var(--border);
+  padding: 0.5rem;
+}
+.note-content th { background: var(--code-bg); }
+.media-placeholder {
+  background: var(--code-bg);
+  padding: 1rem;
+  text-align: center;
+  color: var(--muted);
+  border-radius: 6px;
+  margin: 0.5rem 0;
+  font-size: 0.85rem;
+}
+.encrypt-placeholder {
+  background: #fff3cd;
+  padding: 0.5rem;
+  text-align: center;
+  color: #856404;
+  border-radius: 6px;
+  margin: 0.5rem 0;
+  font-size: 0.85rem;
+}
+.back-link {
+  display: inline-block;
+  margin-top: 2rem;
+  color: var(--link);
+  text-decoration: none;
+  font-size: 0.85rem;
+}
+</style>
+</head>
+<body>
+<div class="note-header">
+  <div class="note-title">长连接和http流式传输 chunked transfer encoding不是一个概念</div>
+  <div class="note-meta">笔记本：HTTP</div>
+</div>
+<div class="note-content">
+<div>`Chunked Transfer Encoding` 是一种 HTTP 数据传输方式，用于在不知道内容长度的情况下逐块发送响应数据。它并不直接定义连接的类型（长连接或短连接），但常与长连接（`Keep-Alive`）结合使用。</div><div><br /></div><div>### Chunked Transfer Encoding 的工作原理</div><div>在 HTTP/1.1 中，服务器可以使用 `Chunked Transfer Encoding` 来逐块发送数据，而不是一次性发送完整的响应。这种传输方式特别适用于生成内容时无法预先知道总长度的情况。每个块（chunk）都有一个大小标识，最后一个块的大小为 0，表示数据传输结束。</div><div><br /></div><div>### 长连接 (Keep-Alive)</div><div>长连接是一种允许多个请求和响应在同一个 TCP 连接上进行的机制。HTTP/1.1 默认启用了长连接，这意味着在完成一个请求和响应后，连接不会立即关闭，而是保持打开状态以供后续请求使用。这种方式减少了建立和关闭连接的开销，提高了网络性能。</div><div><br /></div><div>### Chunked Transfer Encoding 和长连接的关系</div><div>`Chunked Transfer Encoding` 技术本身并不决定连接的长度。它只是传输数据的一种方式，用于在传输数据时可以分块发送，适合在流式传输内容或内容大小不确定的情况下使用。</div><div><br /></div><div>- **短连接**：如果使用 `Chunked Transfer Encoding`，但每次请求后都关闭连接（如使用 HTTP/1.0 或显式关闭 HTTP/1.1 连接），则仍然是短连接。</div><div>- **长连接**：如果连接保持打开（即启用了 `Keep-Alive`），那么多个请求可以在同一连接上进行，即使使用 `Chunked Transfer Encoding`，也是长连接。</div><div><br /></div><div>### 总结</div><div>`Chunked Transfer Encoding` 技术本身并不等同于长连接，但它通常和长连接一起使用。它解决的是数据传输时的块传输问题，而长连接解决的是在多个请求和响应之间保持连接的问题。这两个概念可以相互独立，但在实际应用中，常常结合使用以提高传输效率和灵活性。</div>
+</div>
+<a class="back-link" href="../articles.html">← 返回笔记列表</a>
+</body>
+</html>

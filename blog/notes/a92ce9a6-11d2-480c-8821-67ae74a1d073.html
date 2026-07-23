@@ -1,0 +1,756 @@
+<!DOCTYPE html>
+<html lang="zh-CN" data-theme="light">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>vueday04 — 技术笔记</title>
+<style>
+:root { --bg:#fff; --text:#1a1a1a; --muted:#666; --border:#e0e0e0; --code-bg:#f5f5f5; --link:#0066cc; }
+@media (prefers-color-scheme: dark) { :root { --bg:#1a1a1a; --text:#e0e0e0; --muted:#999; --border:#333; --code-bg:#2a2a2a; --link:#66bbff; } }
+* { box-sizing:border-box; margin:0; padding:0; }
+body { font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Arial,sans-serif; line-height:1.7; color:var(--text); background:var(--bg); max-width:860px; margin:0 auto; padding:2rem 1.5rem; }
+.note-header { border-bottom:2px solid var(--border); padding-bottom:1rem; margin-bottom:2rem; }
+.note-title { font-size:1.6rem; font-weight:700; margin-bottom:0.3rem; }
+.note-meta { color:var(--muted); font-size:0.85rem; }
+.note-content { font-size:0.95rem; }
+.note-content h1 { font-size:1.4rem; margin:1.2rem 0 0.6rem; }
+.note-content h2 { font-size:1.2rem; margin:1rem 0 0.5rem; }
+.note-content h3 { font-size:1.05rem; margin:0.8rem 0 0.4rem; }
+.note-content p { margin:0.5rem 0; }
+.note-content ul,.note-content ol { margin:0.5rem 0 0.5rem 2rem; }
+.note-content li { margin:0.2rem 0; }
+.note-content pre { background:var(--code-bg); padding:1rem; border-radius:6px; overflow-x:auto; margin:0.8rem 0; font-size:0.85rem; }
+.note-content code { background:var(--code-bg); padding:0.1rem 0.3rem; border-radius:3px; font-size:0.88em; }
+.note-content pre code { background:none; padding:0; }
+.note-content blockquote { border-left:3px solid var(--border); padding-left:1rem; color:var(--muted); margin:0.8rem 0; }
+.note-content a { color:var(--link); }
+.note-content img { max-width:100%; height:auto; border-radius:6px; margin:0.5rem 0; }
+.note-content table { border-collapse:collapse; width:100%; margin:0.8rem 0; }
+.note-content th,.note-content td { border:1px solid var(--border); padding:0.5rem; }
+.note-content th { background:var(--code-bg); }
+.media-placeholder { background:var(--code-bg); padding:1rem; text-align:center; color:var(--muted); border-radius:6px; margin:0.5rem 0; font-size:0.85rem; }
+.encrypt-placeholder { background:#fff3cd; padding:0.5rem; text-align:center; color:#856404; border-radius:6px; margin:0.5rem 0; font-size:0.85rem; }
+.back-link { display:inline-block; margin-top:2rem; color:var(--link); text-decoration:none; font-size:0.85rem; }
+</style>
+</head>
+<body>
+<div class="note-header"><div class="note-title">vueday04</div><div class="note-meta">笔记本：前端学习</div></div>
+<div class="note-content"><div style="font-size: 14px; margin: 0; padding: 0; width: 100%;"><h2 style="line-height: 160%; box-sizing: content-box; font-weight: 700; font-size: 34px; border-bottom: 1px solid #dbdbdb; color: #333;">本资源由 itjc8.com 收集</h2>
+<h3 style="line-height: 160%; box-sizing: content-box; font-weight: 700; font-size: 27px; color: #333;">接口调用方式</h3>
+<ul style="line-height: 160%; box-sizing: content-box; display: block; list-style-type: disc; padding-left: 30px; margin: 6px 0 10px; color: #333;">
+<li style="line-height: 160%; box-sizing: content-box; position: relative;">原生ajax</li>
+<li style="line-height: 160%; box-sizing: content-box; position: relative;">基于jQuery的ajax</li>
+<li style="line-height: 160%; box-sizing: content-box; position: relative;">fetch</li>
+<li style="line-height: 160%; box-sizing: content-box; position: relative;">axios</li>
+</ul>
+<h3 style="line-height: 160%; box-sizing: content-box; font-weight: 700; font-size: 27px; color: #333;">异步</h3>
+<ul style="line-height: 160%; box-sizing: content-box; display: block; list-style-type: disc; padding-left: 30px; margin: 6px 0 10px; color: #333;">
+<li style="line-height: 160%; box-sizing: content-box; position: relative;">JavaScript的执行环境是「单线程」</li>
+<li style="line-height: 160%; box-sizing: content-box; position: relative;">所谓单线程，是指JS引擎中负责解释和执行JavaScript代码的线程只有一个，也就是一次只能完成一项任务，这个任务执行完后才能执行下一个，它会「阻塞」其他任务。这个任务可称为主线程</li>
+<li style="line-height: 160%; box-sizing: content-box; position: relative;">异步模式可以一起执行<strong style="line-height: 160%; box-sizing: content-box; font-weight: 700;">多个任务</strong></li>
+<li style="line-height: 160%; box-sizing: content-box; position: relative;">JS中常见的异步调用
+<ul style="line-height: 160%; box-sizing: content-box; display: block; list-style-type: disc; padding-left: 30px; margin: 6px 0 10px; color: #333; margin-top: 0; margin-bottom: 0;">
+<li style="line-height: 160%; box-sizing: content-box; position: relative;">定时任何</li>
+<li style="line-height: 160%; box-sizing: content-box; position: relative;">ajax</li>
+<li style="line-height: 160%; box-sizing: content-box; position: relative;">事件函数</li>
+</ul>
+</li>
+</ul>
+<h3 style="line-height: 160%; box-sizing: content-box; font-weight: 700; font-size: 27px; color: #333;">promise</h3>
+<ul style="line-height: 160%; box-sizing: content-box; display: block; list-style-type: disc; padding-left: 30px; margin: 6px 0 10px; color: #333;">
+<li style="line-height: 160%; box-sizing: content-box; position: relative;">主要解决异步深层嵌套的问题</li>
+<li style="line-height: 160%; box-sizing: content-box; position: relative;">promise 提供了简洁的API  使得异步操作更加容易</li>
+</ul>
+<pre style="line-height: 160%; box-sizing: content-box; border: 0; border-radius: 0; margin: 2px 0 8px; background-color: #f5f7f8;"><code style="display: block; overflow-x: auto; background: #1e1e1e; line-height: 160%; box-sizing: content-box; border: 0; border-radius: 0; letter-spacing: -.3px; padding: 18px; color: #f4f4f4; white-space: pre-wrap;"> 
+  <span style="color: #9b9b9b; line-height: 160%; box-sizing: content-box;">&lt;<span style="color: #569cd6; line-height: 160%; box-sizing: content-box;">script</span> <span style="color: #9cdcfe; line-height: 160%; box-sizing: content-box;">type</span>=<span style="color: #d69d85; line-height: 160%; box-sizing: content-box;">"text/javascript"</span>&gt;</span><span style="line-height: 160%; box-sizing: content-box;">
+    <span style="color: #57a64a; font-style: italic; line-height: 160%; box-sizing: content-box;">/*
+     1. Promise基本使用
+           我们使用new来构建一个Promise  Promise的构造函数接收一个参数，是函数，并且传入两个参数：		   resolve，reject， 分别表示异步操作执行成功后的回调函数和异步操作执行失败后的回调函数
+    */</span>
+
+
+    <span style="color: #569cd6; line-height: 160%; box-sizing: content-box;">var</span> p = <span style="color: #569cd6; line-height: 160%; box-sizing: content-box;">new</span> <span style="color: #4ec9b0; line-height: 160%; box-sizing: content-box;">Promise</span>(<span style="color: #dcdcdc; line-height: 160%; box-sizing: content-box;"><span style="color: #569cd6; line-height: 160%; box-sizing: content-box;">function</span>(<span style="color: #dcdcdc; line-height: 160%; box-sizing: content-box;">resolve, reject</span>)</span>{
+      <span style="color: #57a64a; font-style: italic; line-height: 160%; box-sizing: content-box;">//2. 这里用于实现异步任务  setTimeout</span>
+      setTimeout(<span style="color: #dcdcdc; line-height: 160%; box-sizing: content-box;"><span style="color: #569cd6; line-height: 160%; box-sizing: content-box;">function</span>(<span style="color: #dcdcdc; line-height: 160%; box-sizing: content-box;"></span>)</span>{
+        <span style="color: #569cd6; line-height: 160%; box-sizing: content-box;">var</span> flag = <span style="color: #569cd6; line-height: 160%; box-sizing: content-box;">false</span>;
+        <span style="color: #569cd6; line-height: 160%; box-sizing: content-box;">if</span>(flag) {
+          <span style="color: #57a64a; font-style: italic; line-height: 160%; box-sizing: content-box;">//3. 正常情况</span>
+          resolve(<span style="color: #d69d85; line-height: 160%; box-sizing: content-box;">'hello'</span>);
+        }<span style="color: #569cd6; line-height: 160%; box-sizing: content-box;">else</span>{
+          <span style="color: #57a64a; font-style: italic; line-height: 160%; box-sizing: content-box;">//4. 异常情况</span>
+          reject(<span style="color: #d69d85; line-height: 160%; box-sizing: content-box;">'出错了'</span>);
+        }
+      }, <span style="color: #b8d7a3; line-height: 160%; box-sizing: content-box;">100</span>);
+    });
+    <span style="color: #57a64a; font-style: italic; line-height: 160%; box-sizing: content-box;">//  5 Promise实例生成以后，可以用then方法指定resolved状态和reject状态的回调函数 </span>
+    <span style="color: #57a64a; font-style: italic; line-height: 160%; box-sizing: content-box;">//  在then方法中，你也可以直接return数据而不是Promise对象，在后面的then中就可以接收到数据了  </span>
+    p.then(<span style="color: #dcdcdc; line-height: 160%; box-sizing: content-box;"><span style="color: #569cd6; line-height: 160%; box-sizing: content-box;">function</span>(<span style="color: #dcdcdc; line-height: 160%; box-sizing: content-box;">data</span>)</span>{
+      <span style="color: #4ec9b0; line-height: 160%; box-sizing: content-box;">console</span>.log(data)
+    },<span style="color: #dcdcdc; line-height: 160%; box-sizing: content-box;"><span style="color: #569cd6; line-height: 160%; box-sizing: content-box;">function</span>(<span style="color: #dcdcdc; line-height: 160%; box-sizing: content-box;">info</span>)</span>{
+      <span style="color: #4ec9b0; line-height: 160%; box-sizing: content-box;">console</span>.log(info)
+    });
+  </span><span style="color: #9b9b9b; line-height: 160%; box-sizing: content-box;">&lt;/<span style="color: #569cd6; line-height: 160%; box-sizing: content-box;">script</span>&gt;</span>
+</code></pre>
+<h3 style="line-height: 160%; box-sizing: content-box; font-weight: 700; font-size: 27px; color: #333;">基于Promise发送Ajax请求</h3>
+<pre style="line-height: 160%; box-sizing: content-box; border: 0; border-radius: 0; margin: 2px 0 8px; background-color: #f5f7f8;"><code style="display: block; overflow-x: auto; background: #1e1e1e; line-height: 160%; box-sizing: content-box; border: 0; border-radius: 0; letter-spacing: -.3px; padding: 18px; color: #f4f4f4; white-space: pre-wrap;"> 
+  <span style="color: #9b9b9b; line-height: 160%; box-sizing: content-box;">&lt;<span style="color: #569cd6; line-height: 160%; box-sizing: content-box;">script</span> <span style="color: #9cdcfe; line-height: 160%; box-sizing: content-box;">type</span>=<span style="color: #d69d85; line-height: 160%; box-sizing: content-box;">"text/javascript"</span>&gt;</span><span style="line-height: 160%; box-sizing: content-box;">
+    /*
+      基于Promise发送Ajax请求
+    */
+    function queryData(url) {
+     #   1.1 创建一个Promise实例
+      var p = new Promise(function(resolve, reject){
+        var xhr = new XMLHttpRequest();
+        xhr.onreadystatechange = function(){
+          if(xhr.readyState != 4) return;
+          if(xhr.readyState == 4 &amp;&amp; xhr.status == 200) {
+            # 1.2 处理正常的情况
+            resolve(xhr.responseText);
+          }else{
+            # 1.3 处理异常情况
+            reject('服务器错误');
+          }
+        };
+        xhr.open('get', url);
+        xhr.send(null);
+      });
+      return p;
+    }
+	# 注意：  这里需要开启一个服务 
+    # 在then方法中，你也可以直接return数据而不是Promise对象，在后面的then中就可以接收到数据了
+    queryData('http://localhost:3000/data')
+      .then(function(data){
+        console.log(data)
+        #  1.4 想要继续链式编程下去 需要 return  
+        return queryData('http://localhost:3000/data1');
+      })
+      .then(function(data){
+        console.log(data);
+        return queryData('http://localhost:3000/data2');
+      })
+      .then(function(data){
+        console.log(data)
+      });
+  </span><span style="color: #9b9b9b; line-height: 160%; box-sizing: content-box;">&lt;/<span style="color: #569cd6; line-height: 160%; box-sizing: content-box;">script</span>&gt;</span>
+</code></pre>
+<h3 style="line-height: 160%; box-sizing: content-box; font-weight: 700; font-size: 27px; color: #333;">Promise  基本API</h3>
+<h4 style="line-height: 160%; box-sizing: content-box; font-size: 20px; color: #333;">实例方法</h4>
+<h5 style="line-height: 160%; box-sizing: content-box; font-weight: 700; font-size: 16px; color: #333;">.then()</h5>
+<ul style="line-height: 160%; box-sizing: content-box; display: block; list-style-type: disc; padding-left: 30px; margin: 6px 0 10px; color: #333;">
+<li style="line-height: 160%; box-sizing: content-box; position: relative;">得到异步任务正确的结果</li>
+</ul>
+<h5 style="line-height: 160%; box-sizing: content-box; font-weight: 700; font-size: 16px; color: #333;">.catch()</h5>
+<ul style="line-height: 160%; box-sizing: content-box; display: block; list-style-type: disc; padding-left: 30px; margin: 6px 0 10px; color: #333;">
+<li style="line-height: 160%; box-sizing: content-box; position: relative;">获取异常信息</li>
+</ul>
+<h5 style="line-height: 160%; box-sizing: content-box; font-weight: 700; font-size: 16px; color: #333;">.finally()</h5>
+<ul style="line-height: 160%; box-sizing: content-box; display: block; list-style-type: disc; padding-left: 30px; margin: 6px 0 10px; color: #333;">
+<li style="line-height: 160%; box-sizing: content-box; position: relative;">成功与否都会执行（不是正式标准）</li>
+</ul>
+<pre style="line-height: 160%; box-sizing: content-box; border: 0; border-radius: 0; margin: 2px 0 8px; background-color: #f5f7f8;"><code style="display: block; overflow-x: auto; background: #1e1e1e; line-height: 160%; box-sizing: content-box; border: 0; border-radius: 0; letter-spacing: -.3px; padding: 18px; color: #f4f4f4; white-space: pre-wrap;">  
+  <span style="color: #9b9b9b; line-height: 160%; box-sizing: content-box;">&lt;<span style="color: #569cd6; line-height: 160%; box-sizing: content-box;">script</span> <span style="color: #9cdcfe; line-height: 160%; box-sizing: content-box;">type</span>=<span style="color: #d69d85; line-height: 160%; box-sizing: content-box;">"text/javascript"</span>&gt;</span><span style="line-height: 160%; box-sizing: content-box;">
+    /*
+      Promise常用API-实例方法
+    */
+    // console.dir(Promise);
+    function foo() {
+      return new Promise(function(resolve, reject){
+        setTimeout(function(){
+          // resolve(123);
+          reject('error');
+        }, 100);
+      })
+    }
+    // foo()
+    //   .then(function(data){
+    //     console.log(data)
+    //   })
+    //   .catch(function(data){
+    //     console.log(data)
+    //   })
+    //   .finally(function(){
+    //     console.log('finished')
+    //   });
+
+    // --------------------------
+    // 两种写法是等效的
+    foo()
+      .then(function(data){
+        # 得到异步任务正确的结果
+        console.log(data)
+      },function(data){
+        # 获取异常信息
+        console.log(data)
+      })
+      # 成功与否都会执行（不是正式标准） 
+      .finally(function(){
+        console.log('finished')
+      });
+  </span><span style="color: #9b9b9b; line-height: 160%; box-sizing: content-box;">&lt;/<span style="color: #569cd6; line-height: 160%; box-sizing: content-box;">script</span>&gt;</span>
+</code></pre>
+<h4 style="line-height: 160%; box-sizing: content-box; font-size: 20px; color: #333;">静态方法</h4>
+<h5 style="line-height: 160%; box-sizing: content-box; font-weight: 700; font-size: 16px; color: #333;">.all()</h5>
+<ul style="line-height: 160%; box-sizing: content-box; display: block; list-style-type: disc; padding-left: 30px; margin: 6px 0 10px; color: #333;">
+<li style="line-height: 160%; box-sizing: content-box; position: relative;"><code style="line-height: 160%; box-sizing: content-box; border: 0; border-radius: 0; color: #c1788b; padding: 4px 4px 2px 0; letter-spacing: -.3px;">Promise.all</code>方法接受一个数组作参数，数组中的对象（p1、p2、p3）均为promise实例（如果不是一个promise，该项会被用<code style="line-height: 160%; box-sizing: content-box; border: 0; border-radius: 0; color: #c1788b; padding: 4px 4px 2px 0; letter-spacing: -.3px;">Promise.resolve</code>转换为一个promise)。它的状态由这三个promise实例决定</li>
+</ul>
+<h5 style="line-height: 160%; box-sizing: content-box; font-weight: 700; font-size: 16px; color: #333;">.race()</h5>
+<ul style="line-height: 160%; box-sizing: content-box; display: block; list-style-type: disc; padding-left: 30px; margin: 6px 0 10px; color: #333;">
+<li style="line-height: 160%; box-sizing: content-box; position: relative;"><code style="line-height: 160%; box-sizing: content-box; border: 0; border-radius: 0; color: #c1788b; padding: 4px 4px 2px 0; letter-spacing: -.3px;">Promise.race</code>方法同样接受一个数组作参数。当p1, p2, p3中有一个实例的状态发生改变（变为<code style="line-height: 160%; box-sizing: content-box; border: 0; border-radius: 0; color: #c1788b; padding: 4px 4px 2px 0; letter-spacing: -.3px;">fulfilled</code>或<code style="line-height: 160%; box-sizing: content-box; border: 0; border-radius: 0; color: #c1788b; padding: 4px 4px 2px 0; letter-spacing: -.3px;">rejected</code>），p的状态就跟着改变。并把第一个改变状态的promise的返回值，传给p的回调函数</li>
+</ul>
+<p style="line-height: 160%; box-sizing: content-box; margin: 10px 0; color: #333;">​</p>
+<pre style="line-height: 160%; box-sizing: content-box; border: 0; border-radius: 0; margin: 2px 0 8px; background-color: #f5f7f8;"><code style="display: block; overflow-x: auto; background: #1e1e1e; line-height: 160%; box-sizing: content-box; border: 0; border-radius: 0; letter-spacing: -.3px; padding: 18px; color: #f4f4f4; white-space: pre-wrap;">  <span style="color: #9b9b9b; line-height: 160%; box-sizing: content-box;">&lt;<span style="color: #569cd6; line-height: 160%; box-sizing: content-box;">script</span> <span style="color: #9cdcfe; line-height: 160%; box-sizing: content-box;">type</span>=<span style="color: #d69d85; line-height: 160%; box-sizing: content-box;">"text/javascript"</span>&gt;</span><span style="line-height: 160%; box-sizing: content-box;">
+    <span style="color: #57a64a; font-style: italic; line-height: 160%; box-sizing: content-box;">/*
+      Promise常用API-对象方法
+    */</span>
+    <span style="color: #57a64a; font-style: italic; line-height: 160%; box-sizing: content-box;">// console.dir(Promise)</span>
+    <span style="color: #dcdcdc; line-height: 160%; box-sizing: content-box;"><span style="color: #569cd6; line-height: 160%; box-sizing: content-box;">function</span> <span style="color: #dcdcdc; line-height: 160%; box-sizing: content-box;">queryData</span>(<span style="color: #dcdcdc; line-height: 160%; box-sizing: content-box;">url</span>) </span>{
+      <span style="color: #569cd6; line-height: 160%; box-sizing: content-box;">return</span> <span style="color: #569cd6; line-height: 160%; box-sizing: content-box;">new</span> <span style="color: #4ec9b0; line-height: 160%; box-sizing: content-box;">Promise</span>(<span style="color: #dcdcdc; line-height: 160%; box-sizing: content-box;"><span style="color: #569cd6; line-height: 160%; box-sizing: content-box;">function</span>(<span style="color: #dcdcdc; line-height: 160%; box-sizing: content-box;">resolve, reject</span>)</span>{
+        <span style="color: #569cd6; line-height: 160%; box-sizing: content-box;">var</span> xhr = <span style="color: #569cd6; line-height: 160%; box-sizing: content-box;">new</span> XMLHttpRequest();
+        xhr.onreadystatechange = <span style="color: #dcdcdc; line-height: 160%; box-sizing: content-box;"><span style="color: #569cd6; line-height: 160%; box-sizing: content-box;">function</span>(<span style="color: #dcdcdc; line-height: 160%; box-sizing: content-box;"></span>)</span>{
+          <span style="color: #569cd6; line-height: 160%; box-sizing: content-box;">if</span>(xhr.readyState != <span style="color: #b8d7a3; line-height: 160%; box-sizing: content-box;">4</span>) <span style="color: #569cd6; line-height: 160%; box-sizing: content-box;">return</span>;
+          <span style="color: #569cd6; line-height: 160%; box-sizing: content-box;">if</span>(xhr.readyState == <span style="color: #b8d7a3; line-height: 160%; box-sizing: content-box;">4</span> &amp;&amp; xhr.status == <span style="color: #b8d7a3; line-height: 160%; box-sizing: content-box;">200</span>) {
+            <span style="color: #57a64a; font-style: italic; line-height: 160%; box-sizing: content-box;">// 处理正常的情况</span>
+            resolve(xhr.responseText);
+          }<span style="color: #569cd6; line-height: 160%; box-sizing: content-box;">else</span>{
+            <span style="color: #57a64a; font-style: italic; line-height: 160%; box-sizing: content-box;">// 处理异常情况</span>
+            reject(<span style="color: #d69d85; line-height: 160%; box-sizing: content-box;">'服务器错误'</span>);
+          }
+        };
+        xhr.open(<span style="color: #d69d85; line-height: 160%; box-sizing: content-box;">'get'</span>, url);
+        xhr.send(<span style="color: #569cd6; line-height: 160%; box-sizing: content-box;">null</span>);
+      });
+    }
+
+    <span style="color: #569cd6; line-height: 160%; box-sizing: content-box;">var</span> p1 = queryData(<span style="color: #d69d85; line-height: 160%; box-sizing: content-box;">'http://localhost:3000/a1'</span>);
+    <span style="color: #569cd6; line-height: 160%; box-sizing: content-box;">var</span> p2 = queryData(<span style="color: #d69d85; line-height: 160%; box-sizing: content-box;">'http://localhost:3000/a2'</span>);
+    <span style="color: #569cd6; line-height: 160%; box-sizing: content-box;">var</span> p3 = queryData(<span style="color: #d69d85; line-height: 160%; box-sizing: content-box;">'http://localhost:3000/a3'</span>);
+     <span style="color: #4ec9b0; line-height: 160%; box-sizing: content-box;">Promise</span>.all([p1,p2,p3]).then(<span style="color: #dcdcdc; line-height: 160%; box-sizing: content-box;"><span style="color: #569cd6; line-height: 160%; box-sizing: content-box;">function</span>(<span style="color: #dcdcdc; line-height: 160%; box-sizing: content-box;">result</span>)</span>{
+       <span style="color: #57a64a; font-style: italic; line-height: 160%; box-sizing: content-box;">//   all 中的参数  [p1,p2,p3]   和 返回的结果一 一对应["HELLO TOM", "HELLO JERRY", "HELLO SPIKE"]</span>
+       <span style="color: #4ec9b0; line-height: 160%; box-sizing: content-box;">console</span>.log(result) <span style="color: #57a64a; font-style: italic; line-height: 160%; box-sizing: content-box;">//["HELLO TOM", "HELLO JERRY", "HELLO SPIKE"]</span>
+     })
+    <span style="color: #4ec9b0; line-height: 160%; box-sizing: content-box;">Promise</span>.race([p1,p2,p3]).then(<span style="color: #dcdcdc; line-height: 160%; box-sizing: content-box;"><span style="color: #569cd6; line-height: 160%; box-sizing: content-box;">function</span>(<span style="color: #dcdcdc; line-height: 160%; box-sizing: content-box;">result</span>)</span>{
+      <span style="color: #57a64a; font-style: italic; line-height: 160%; box-sizing: content-box;">// 由于p1执行较快，Promise的then()将获得结果'P1'。p2,p3仍在继续执行，但执行结果将被丢弃。</span>
+      <span style="color: #4ec9b0; line-height: 160%; box-sizing: content-box;">console</span>.log(result) <span style="color: #57a64a; font-style: italic; line-height: 160%; box-sizing: content-box;">// "HELLO TOM"</span>
+    })
+  </span><span style="color: #9b9b9b; line-height: 160%; box-sizing: content-box;">&lt;/<span style="color: #569cd6; line-height: 160%; box-sizing: content-box;">script</span>&gt;</span>
+</code></pre>
+<h3 style="line-height: 160%; box-sizing: content-box; font-weight: 700; font-size: 27px; color: #333;">fetch</h3>
+<ul style="line-height: 160%; box-sizing: content-box; display: block; list-style-type: disc; padding-left: 30px; margin: 6px 0 10px; color: #333;">
+<li style="line-height: 160%; box-sizing: content-box; position: relative;">Fetch API是新的ajax解决方案 Fetch会返回Promise</li>
+<li style="line-height: 160%; box-sizing: content-box; position: relative;"><strong style="line-height: 160%; box-sizing: content-box; font-weight: 700;">fetch不是ajax的进一步封装，而是原生js，没有使用XMLHttpRequest对象</strong>。</li>
+<li style="line-height: 160%; box-sizing: content-box; position: relative;">fetch(url, options).then(）</li>
+</ul>
+<pre style="line-height: 160%; box-sizing: content-box; border: 0; border-radius: 0; margin: 2px 0 8px; background-color: #f5f7f8;"><code style="display: block; overflow-x: auto; background: #1e1e1e; line-height: 160%; box-sizing: content-box; border: 0; border-radius: 0; letter-spacing: -.3px; padding: 18px; color: #f4f4f4; white-space: pre-wrap;">  <span style="color: #9b9b9b; line-height: 160%; box-sizing: content-box;">&lt;<span style="color: #569cd6; line-height: 160%; box-sizing: content-box;">script</span> <span style="color: #9cdcfe; line-height: 160%; box-sizing: content-box;">type</span>=<span style="color: #d69d85; line-height: 160%; box-sizing: content-box;">"text/javascript"</span>&gt;</span><span style="line-height: 160%; box-sizing: content-box;">
+    <span style="color: #57a64a; font-style: italic; line-height: 160%; box-sizing: content-box;">/*
+      Fetch API 基本用法
+      	fetch(url).then()
+     	第一个参数请求的路径   Fetch会返回Promise   所以我们可以使用then 拿到请求成功的结果 
+    */</span>
+    fetch(<span style="color: #d69d85; line-height: 160%; box-sizing: content-box;">'http://localhost:3000/fdata'</span>).then(<span style="color: #dcdcdc; line-height: 160%; box-sizing: content-box;"><span style="color: #569cd6; line-height: 160%; box-sizing: content-box;">function</span>(<span style="color: #dcdcdc; line-height: 160%; box-sizing: content-box;">data</span>)</span>{
+      <span style="color: #57a64a; font-style: italic; line-height: 160%; box-sizing: content-box;">// text()方法属于fetchAPI的一部分，它返回一个Promise实例对象，用于获取后台返回的数据</span>
+      <span style="color: #569cd6; line-height: 160%; box-sizing: content-box;">return</span> data.text();
+    }).then(<span style="color: #dcdcdc; line-height: 160%; box-sizing: content-box;"><span style="color: #569cd6; line-height: 160%; box-sizing: content-box;">function</span>(<span style="color: #dcdcdc; line-height: 160%; box-sizing: content-box;">data</span>)</span>{
+      <span style="color: #57a64a; font-style: italic; line-height: 160%; box-sizing: content-box;">//   在这个then里面我们能拿到最终的数据  </span>
+      <span style="color: #4ec9b0; line-height: 160%; box-sizing: content-box;">console</span>.log(data);
+    })
+  </span><span style="color: #9b9b9b; line-height: 160%; box-sizing: content-box;">&lt;/<span style="color: #569cd6; line-height: 160%; box-sizing: content-box;">script</span>&gt;</span>
+</code></pre>
+<h4 style="line-height: 160%; box-sizing: content-box; font-size: 20px; color: #333;">fetch API  中的 HTTP  请求</h4>
+<ul style="line-height: 160%; box-sizing: content-box; display: block; list-style-type: disc; padding-left: 30px; margin: 6px 0 10px; color: #333;">
+<li style="line-height: 160%; box-sizing: content-box; position: relative;">fetch(url, options).then(）</li>
+<li style="line-height: 160%; box-sizing: content-box; position: relative;">HTTP协议，它给我们提供了很多的方法，如POST，GET，DELETE，UPDATE，PATCH和PUT
+<ul style="line-height: 160%; box-sizing: content-box; display: block; list-style-type: disc; padding-left: 30px; margin: 6px 0 10px; color: #333; margin-top: 0; margin-bottom: 0;">
+<li style="line-height: 160%; box-sizing: content-box; position: relative;">默认的是 GET 请求</li>
+<li style="line-height: 160%; box-sizing: content-box; position: relative;">需要在 options 对象中 指定对应的 method       method:请求使用的方法</li>
+<li style="line-height: 160%; box-sizing: content-box; position: relative;">post 和 普通 请求的时候 需要在options 中 设置  请求头 headers   和  body</li>
+</ul>
+</li>
+</ul>
+<pre style="line-height: 160%; box-sizing: content-box; border: 0; border-radius: 0; margin: 2px 0 8px; background-color: #f5f7f8;"><code style="display: block; overflow-x: auto; background: #1e1e1e; line-height: 160%; box-sizing: content-box; border: 0; border-radius: 0; letter-spacing: -.3px; padding: 18px; color: #f4f4f4; white-space: pre-wrap;">   <span style="color: #9b9b9b; line-height: 160%; box-sizing: content-box;">&lt;<span style="color: #569cd6; line-height: 160%; box-sizing: content-box;">script</span> <span style="color: #9cdcfe; line-height: 160%; box-sizing: content-box;">type</span>=<span style="color: #d69d85; line-height: 160%; box-sizing: content-box;">"text/javascript"</span>&gt;</span><span style="line-height: 160%; box-sizing: content-box;">
+        /*
+              Fetch API 调用接口传递参数
+        */
+       #1.1 GET参数传递 - 传统URL  通过url  ？ 的形式传参 
+        fetch('http://localhost:3000/books?id=123', {
+            	# get 请求可以省略不写 默认的是GET 
+                method: 'get'
+            })
+            .then(function(data) {
+            	# 它返回一个Promise实例对象，用于获取后台返回的数据
+                return data.text();
+            }).then(function(data) {
+            	# 在这个then里面我们能拿到最终的数据  
+                console.log(data)
+            });
+
+      #1.2  GET参数传递  restful形式的URL  通过/ 的形式传递参数  即  id = 456 和id后台的配置有关   
+        fetch('http://localhost:3000/books/456', {
+            	# get 请求可以省略不写 默认的是GET 
+                method: 'get'
+            })
+            .then(function(data) {
+                return data.text();
+            }).then(function(data) {
+                console.log(data)
+            });
+
+       #2.1  DELETE请求方式参数传递      删除id  是  id=789
+        fetch('http://localhost:3000/books/789', {
+                method: 'delete'
+            })
+            .then(function(data) {
+                return data.text();
+            }).then(function(data) {
+                console.log(data)
+            });
+
+       #3 POST请求传参
+        fetch('http://localhost:3000/books', {
+                method: 'post',
+            	# 3.1  传递数据 
+                body: 'uname=lisi&amp;pwd=123',
+            	#  3.2  设置请求头 
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded'
+                }
+            })
+            .then(function(data) {
+                return data.text();
+            }).then(function(data) {
+                console.log(data)
+            });
+
+       # POST请求传参
+        fetch('http://localhost:3000/books', {
+                method: 'post',
+                body: JSON.stringify({
+                    uname: '张三',
+                    pwd: '456'
+                }),
+                headers: {
+                    'Content-Type': 'application/json'
+                }
+            })
+            .then(function(data) {
+                return data.text();
+            }).then(function(data) {
+                console.log(data)
+            });
+
+        # PUT请求传参     修改id 是 123 的 
+        fetch('http://localhost:3000/books/123', {
+                method: 'put',
+                body: JSON.stringify({
+                    uname: '张三',
+                    pwd: '789'
+                }),
+                headers: {
+                    'Content-Type': 'application/json'
+                }
+            })
+            .then(function(data) {
+                return data.text();
+            }).then(function(data) {
+                console.log(data)
+            });
+    </span><span style="color: #9b9b9b; line-height: 160%; box-sizing: content-box;">&lt;/<span style="color: #569cd6; line-height: 160%; box-sizing: content-box;">script</span>&gt;</span>
+</code></pre>
+<h4 style="line-height: 160%; box-sizing: content-box; font-size: 20px; color: #333;">fetchAPI 中 响应格式</h4>
+<ul style="line-height: 160%; box-sizing: content-box; display: block; list-style-type: disc; padding-left: 30px; margin: 6px 0 10px; color: #333;">
+<li style="line-height: 160%; box-sizing: content-box; position: relative;">用fetch来获取数据，如果响应正常返回，我们首先看到的是一个response对象，其中包括返回的一堆原始字节，这些字节需要在收到后，需要我们通过调用方法将其转换为相应格式的数据，比如<code style="line-height: 160%; box-sizing: content-box; border: 0; border-radius: 0; color: #c1788b; padding: 4px 4px 2px 0; letter-spacing: -.3px;">JSON</code>，<code style="line-height: 160%; box-sizing: content-box; border: 0; border-radius: 0; color: #c1788b; padding: 4px 4px 2px 0; letter-spacing: -.3px;">BLOB</code>或者<code style="line-height: 160%; box-sizing: content-box; border: 0; border-radius: 0; color: #c1788b; padding: 4px 4px 2px 0; letter-spacing: -.3px;">TEXT</code>等等</li>
+</ul>
+<pre style="line-height: 160%; box-sizing: content-box; border: 0; border-radius: 0; margin: 2px 0 8px; background-color: #f5f7f8;"><code style="display: block; overflow-x: auto; background: #1e1e1e; line-height: 160%; box-sizing: content-box; border: 0; border-radius: 0; letter-spacing: -.3px; padding: 18px; color: #f4f4f4; white-space: pre-wrap;">
+    <span style="color: #57a64a; font-style: italic; line-height: 160%; box-sizing: content-box;">/*
+      Fetch响应结果的数据格式
+    */</span>
+    fetch(<span style="color: #d69d85; line-height: 160%; box-sizing: content-box;">'http://localhost:3000/json'</span>).then(<span style="color: #dcdcdc; line-height: 160%; box-sizing: content-box;"><span style="color: #569cd6; line-height: 160%; box-sizing: content-box;">function</span>(<span style="color: #dcdcdc; line-height: 160%; box-sizing: content-box;">data</span>)</span>{
+      <span style="color: #57a64a; font-style: italic; line-height: 160%; box-sizing: content-box;">// return data.json();   //  将获取到的数据使用 json 转换对象</span>
+      <span style="color: #569cd6; line-height: 160%; box-sizing: content-box;">return</span> data.text(); <span style="color: #57a64a; font-style: italic; line-height: 160%; box-sizing: content-box;">//  //  将获取到的数据 转换成字符串 </span>
+    }).then(<span style="color: #dcdcdc; line-height: 160%; box-sizing: content-box;"><span style="color: #569cd6; line-height: 160%; box-sizing: content-box;">function</span>(<span style="color: #dcdcdc; line-height: 160%; box-sizing: content-box;">data</span>)</span>{
+      <span style="color: #57a64a; font-style: italic; line-height: 160%; box-sizing: content-box;">// console.log(data.uname)</span>
+      <span style="color: #57a64a; font-style: italic; line-height: 160%; box-sizing: content-box;">// console.log(typeof data)</span>
+      <span style="color: #569cd6; line-height: 160%; box-sizing: content-box;">var</span> obj = <span style="color: #4ec9b0; line-height: 160%; box-sizing: content-box;">JSON</span>.parse(data);
+      <span style="color: #4ec9b0; line-height: 160%; box-sizing: content-box;">console</span>.log(obj.uname,obj.age,obj.gender)
+    })
+
+</code></pre>
+<h3 style="line-height: 160%; box-sizing: content-box; font-weight: 700; font-size: 27px; color: #333;">axios</h3>
+<ul style="line-height: 160%; box-sizing: content-box; display: block; list-style-type: disc; padding-left: 30px; margin: 6px 0 10px; color: #333;">
+<li style="line-height: 160%; box-sizing: content-box; position: relative;">基于promise用于浏览器和node.js的http客户端</li>
+<li style="line-height: 160%; box-sizing: content-box; position: relative;">支持浏览器和node.js</li>
+<li style="line-height: 160%; box-sizing: content-box; position: relative;">支持promise</li>
+<li style="line-height: 160%; box-sizing: content-box; position: relative;">能拦截请求和响应</li>
+<li style="line-height: 160%; box-sizing: content-box; position: relative;">自动转换JSON数据</li>
+<li style="line-height: 160%; box-sizing: content-box; position: relative;">能转换请求和响应数据</li>
+</ul>
+<h4 style="line-height: 160%; box-sizing: content-box; font-size: 20px; color: #333;">axios基础用法</h4>
+<ul style="line-height: 160%; box-sizing: content-box; display: block; list-style-type: disc; padding-left: 30px; margin: 6px 0 10px; color: #333;">
+<li style="line-height: 160%; box-sizing: content-box; position: relative;">get和 delete请求传递参数
+<ul style="line-height: 160%; box-sizing: content-box; display: block; list-style-type: disc; padding-left: 30px; margin: 6px 0 10px; color: #333; margin-top: 0; margin-bottom: 0;">
+<li style="line-height: 160%; box-sizing: content-box; position: relative;">通过传统的url  以 ? 的形式传递参数</li>
+<li style="line-height: 160%; box-sizing: content-box; position: relative;">restful 形式传递参数</li>
+<li style="line-height: 160%; box-sizing: content-box; position: relative;">通过params  形式传递参数</li>
+</ul>
+</li>
+<li style="line-height: 160%; box-sizing: content-box; position: relative;">post  和 put  请求传递参数
+<ul style="line-height: 160%; box-sizing: content-box; display: block; list-style-type: disc; padding-left: 30px; margin: 6px 0 10px; color: #333; margin-top: 0; margin-bottom: 0;">
+<li style="line-height: 160%; box-sizing: content-box; position: relative;">通过选项传递参数</li>
+<li style="line-height: 160%; box-sizing: content-box; position: relative;">通过 URLSearchParams  传递参数</li>
+</ul>
+</li>
+</ul>
+<pre style="line-height: 160%; box-sizing: content-box; border: 0; border-radius: 0; margin: 2px 0 8px; background-color: #f5f7f8;"><code style="display: block; overflow-x: auto; background: #1e1e1e; line-height: 160%; box-sizing: content-box; border: 0; border-radius: 0; letter-spacing: -.3px; padding: 18px; color: #f4f4f4; white-space: pre-wrap;">    # 1. 发送get 请求 
+	axios.get('http://localhost:3000/adata').then(function(ret){ 
+      #  拿到 ret 是一个对象      所有的对象都存在 ret 的data 属性里面
+      // 注意data属性是固定的用法，用于获取后台的实际数据
+      // console.log(ret.data)
+      console.log(ret)
+    })
+	# 2.  get 请求传递参数
+    # 2.1  通过传统的url  以 ? 的形式传递参数
+	axios.get('http://localhost:3000/axios?id=123').then(function(ret){
+      console.log(ret.data)
+    })
+    # 2.2  restful 形式传递参数 
+    axios.get('http://localhost:3000/axios/123').then(function(ret){
+      console.log(ret.data)
+    })
+	# 2.3  通过params  形式传递参数 
+    axios.get('http://localhost:3000/axios', {
+      params: {
+        id: 789
+      }
+    }).then(function(ret){
+      console.log(ret.data)
+    })
+	#3 axios delete 请求传参     传参的形式和 get 请求一样
+    axios.delete('http://localhost:3000/axios', {
+      params: {
+        id: 111
+      }
+    }).then(function(ret){
+      console.log(ret.data)
+    })
+
+	# 4  axios 的 post 请求
+    # 4.1  通过选项传递参数
+    axios.post('http://localhost:3000/axios', {
+      uname: 'lisi',
+      pwd: 123
+    }).then(function(ret){
+      console.log(ret.data)
+    })
+	# 4.2  通过 URLSearchParams  传递参数 
+    var params = new URLSearchParams();
+    params.append('uname', 'zhangsan');
+    params.append('pwd', '111');
+    axios.post('http://localhost:3000/axios', params).then(function(ret){
+      console.log(ret.data)
+    })
+
+ 	#5  axios put 请求传参   和 post 请求一样 
+    axios.put('http://localhost:3000/axios/123', {
+      uname: 'lisi',
+      pwd: 123
+    }).then(function(ret){
+      console.log(ret.data)
+    })
+
+</code></pre>
+<h4 style="line-height: 160%; box-sizing: content-box; font-size: 20px; color: #333;">axios 全局配置</h4>
+<pre style="line-height: 160%; box-sizing: content-box; border: 0; border-radius: 0; margin: 2px 0 8px; background-color: #f5f7f8;"><code style="display: block; overflow-x: auto; background: #1e1e1e; line-height: 160%; box-sizing: content-box; border: 0; border-radius: 0; letter-spacing: -.3px; padding: 18px; color: #f4f4f4; white-space: pre-wrap;">#  配置公共的请求头 
+axios.defaults.baseURL = 'https://api.example.com';
+#  配置 超时时间
+axios.defaults.timeout = 2500;
+#  配置公共的请求头
+axios.defaults.headers.common['Authorization'] = AUTH_TOKEN;
+# 配置公共的 post 的 Content-Type
+axios.defaults.headers.post['Content-Type'] = 'application/x-www-form-urlencoded';
+
+
+</code></pre>
+<h4 style="line-height: 160%; box-sizing: content-box; font-size: 20px; color: #333;">axios 拦截器</h4>
+<ul style="line-height: 160%; box-sizing: content-box; display: block; list-style-type: disc; padding-left: 30px; margin: 6px 0 10px; color: #333;">
+<li style="line-height: 160%; box-sizing: content-box; position: relative;">请求拦截器
+<ul style="line-height: 160%; box-sizing: content-box; display: block; list-style-type: disc; padding-left: 30px; margin: 6px 0 10px; color: #333; margin-top: 0; margin-bottom: 0;">
+<li style="line-height: 160%; box-sizing: content-box; position: relative;">请求拦截器的作用是在请求发送前进行一些操作
+<ul style="line-height: 160%; box-sizing: content-box; display: block; list-style-type: disc; padding-left: 30px; margin: 6px 0 10px; color: #333; margin-top: 0; margin-bottom: 0;">
+<li style="line-height: 160%; box-sizing: content-box; position: relative;">例如在每个请求体里加上token，统一做了处理如果以后要改也非常容易</li>
+</ul>
+</li>
+</ul>
+</li>
+<li style="line-height: 160%; box-sizing: content-box; position: relative;">响应拦截器
+<ul style="line-height: 160%; box-sizing: content-box; display: block; list-style-type: disc; padding-left: 30px; margin: 6px 0 10px; color: #333; margin-top: 0; margin-bottom: 0;">
+<li style="line-height: 160%; box-sizing: content-box; position: relative;">响应拦截器的作用是在接收到响应后进行一些操作
+<ul style="line-height: 160%; box-sizing: content-box; display: block; list-style-type: disc; padding-left: 30px; margin: 6px 0 10px; color: #333; margin-top: 0; margin-bottom: 0;">
+<li style="line-height: 160%; box-sizing: content-box; position: relative;">例如在服务器返回登录状态失效，需要重新登录的时候，跳转到登录页</li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+<pre style="line-height: 160%; box-sizing: content-box; border: 0; border-radius: 0; margin: 2px 0 8px; background-color: #f5f7f8;"><code style="display: block; overflow-x: auto; background: #1e1e1e; line-height: 160%; box-sizing: content-box; border: 0; border-radius: 0; letter-spacing: -.3px; padding: 18px; color: #f4f4f4; white-space: pre-wrap;">	# 1. 请求拦截器 
+	axios.interceptors.request.use(function(config) {
+      console.log(config.url)
+      # 1.1  任何请求都会经过这一步   在发送请求之前做些什么   
+      config.headers.mytoken = 'nihao';
+      # 1.2  这里一定要return   否则配置不成功  
+      return config;
+    }, function(err){
+       #1.3 对请求错误做点什么    
+      console.log(err)
+    })
+	#2. 响应拦截器 
+    axios.interceptors.response.use(function(res) {
+      #2.1  在接收响应做些什么  
+      var data = res.data;
+      return data;
+    }, function(err){
+      #2.2 对响应错误做点什么  
+      console.log(err)
+    })
+</code></pre>
+<h3 style="line-height: 160%; box-sizing: content-box; font-weight: 700; font-size: 27px; color: #333;">async  和 await</h3>
+<ul style="line-height: 160%; box-sizing: content-box; display: block; list-style-type: disc; padding-left: 30px; margin: 6px 0 10px; color: #333;">
+<li style="line-height: 160%; box-sizing: content-box; position: relative;">async作为一个关键字放到函数前面
+<ul style="line-height: 160%; box-sizing: content-box; display: block; list-style-type: disc; padding-left: 30px; margin: 6px 0 10px; color: #333; margin-top: 0; margin-bottom: 0;">
+<li style="line-height: 160%; box-sizing: content-box; position: relative;">任何一个<code style="line-height: 160%; box-sizing: content-box; border: 0; border-radius: 0; color: #c1788b; padding: 4px 4px 2px 0; letter-spacing: -.3px;">async</code>函数都会隐式返回一个<code style="line-height: 160%; box-sizing: content-box; border: 0; border-radius: 0; color: #c1788b; padding: 4px 4px 2px 0; letter-spacing: -.3px;">promise</code></li>
+</ul>
+</li>
+<li style="line-height: 160%; box-sizing: content-box; position: relative;"><code style="line-height: 160%; box-sizing: content-box; border: 0; border-radius: 0; color: #c1788b; padding: 4px 4px 2px 0; letter-spacing: -.3px;">await</code>关键字只能在使用<code style="line-height: 160%; box-sizing: content-box; border: 0; border-radius: 0; color: #c1788b; padding: 4px 4px 2px 0; letter-spacing: -.3px;">async</code>定义的函数中使用
+<ul style="line-height: 160%; box-sizing: content-box; display: block; list-style-type: disc; padding-left: 30px; margin: 6px 0 10px; color: #333; margin-top: 0; margin-bottom: 0;">
+<li style="line-height: 160%; box-sizing: content-box; position: relative;">​    await后面可以直接跟一个 Promise实例对象</li>
+<li style="line-height: 160%; box-sizing: content-box; position: relative;">​     await函数不能单独使用</li>
+</ul>
+</li>
+<li style="line-height: 160%; box-sizing: content-box; position: relative;"><strong style="line-height: 160%; box-sizing: content-box; font-weight: 700;">async/await 让异步代码看起来、表现起来更像同步代码</strong></li>
+</ul>
+<pre style="line-height: 160%; box-sizing: content-box; border: 0; border-radius: 0; margin: 2px 0 8px; background-color: #f5f7f8;"><code style="display: block; overflow-x: auto; background: #1e1e1e; line-height: 160%; box-sizing: content-box; border: 0; border-radius: 0; letter-spacing: -.3px; padding: 18px; color: #f4f4f4; white-space: pre-wrap;"> 	# 1.  async 基础用法
+    # 1.1 async作为一个关键字放到函数前面
+	async function queryData() {
+      # 1.2 await关键字只能在使用async定义的函数中使用      await后面可以直接跟一个 Promise实例对象
+      var ret = await new Promise(function(resolve, reject){
+        setTimeout(function(){
+          resolve('nihao')
+        },1000);
+      })
+      // console.log(ret.data)
+      return ret;
+    }
+	# 1.3 任何一个async函数都会隐式返回一个promise   我们可以使用then 进行链式编程
+    queryData().then(function(data){
+      console.log(data)
+    })
+
+	#2.  async    函数处理多个异步函数
+    axios.defaults.baseURL = 'http://localhost:3000';
+
+    async function queryData() {
+      # 2.1  添加await之后 当前的await 返回结果之后才会执行后面的代码   
+      
+      var info = await axios.get('async1');
+      #2.2  让异步代码看起来、表现起来更像同步代码
+      var ret = await axios.get('async2?info=' + info.data);
+      return ret.data;
+    }
+
+    queryData().then(function(data){
+      console.log(data)
+    })
+</code></pre>
+<h3 style="line-height: 160%; box-sizing: content-box; font-weight: 700; font-size: 27px; color: #333;">图书列表案例</h3>
+<h4 style="line-height: 160%; box-sizing: content-box; font-size: 20px; color: #333;">1. 基于接口案例-获取图书列表</h4>
+<ul style="line-height: 160%; box-sizing: content-box; display: block; list-style-type: disc; padding-left: 30px; margin: 6px 0 10px; color: #333;">
+<li style="line-height: 160%; box-sizing: content-box; position: relative;">导入axios   用来发送ajax</li>
+<li style="line-height: 160%; box-sizing: content-box; position: relative;">把获取到的数据渲染到页面上</li>
+</ul>
+<pre style="line-height: 160%; box-sizing: content-box; border: 0; border-radius: 0; margin: 2px 0 8px; background-color: #f5f7f8;"><code style="display: block; overflow-x: auto; background: #1e1e1e; line-height: 160%; box-sizing: content-box; border: 0; border-radius: 0; letter-spacing: -.3px; padding: 18px; color: #f4f4f4; white-space: pre-wrap;">  <span style="color: #9b9b9b; line-height: 160%; box-sizing: content-box;">&lt;<span style="color: #569cd6; line-height: 160%; box-sizing: content-box;">div</span> <span style="color: #9cdcfe; line-height: 160%; box-sizing: content-box;">id</span>=<span style="color: #d69d85; line-height: 160%; box-sizing: content-box;">"app"</span>&gt;</span>
+        <span style="color: #9b9b9b; line-height: 160%; box-sizing: content-box;">&lt;<span style="color: #569cd6; line-height: 160%; box-sizing: content-box;">div</span> <span style="color: #9cdcfe; line-height: 160%; box-sizing: content-box;">class</span>=<span style="color: #d69d85; line-height: 160%; box-sizing: content-box;">"grid"</span>&gt;</span>
+            <span style="color: #9b9b9b; line-height: 160%; box-sizing: content-box;">&lt;<span style="color: #569cd6; line-height: 160%; box-sizing: content-box;">table</span>&gt;</span>
+                <span style="color: #9b9b9b; line-height: 160%; box-sizing: content-box;">&lt;<span style="color: #569cd6; line-height: 160%; box-sizing: content-box;">thead</span>&gt;</span>
+                    <span style="color: #9b9b9b; line-height: 160%; box-sizing: content-box;">&lt;<span style="color: #569cd6; line-height: 160%; box-sizing: content-box;">tr</span>&gt;</span>
+                        <span style="color: #9b9b9b; line-height: 160%; box-sizing: content-box;">&lt;<span style="color: #569cd6; line-height: 160%; box-sizing: content-box;">th</span>&gt;</span>编号<span style="color: #9b9b9b; line-height: 160%; box-sizing: content-box;">&lt;/<span style="color: #569cd6; line-height: 160%; box-sizing: content-box;">th</span>&gt;</span>
+                        <span style="color: #9b9b9b; line-height: 160%; box-sizing: content-box;">&lt;<span style="color: #569cd6; line-height: 160%; box-sizing: content-box;">th</span>&gt;</span>名称<span style="color: #9b9b9b; line-height: 160%; box-sizing: content-box;">&lt;/<span style="color: #569cd6; line-height: 160%; box-sizing: content-box;">th</span>&gt;</span>
+                        <span style="color: #9b9b9b; line-height: 160%; box-sizing: content-box;">&lt;<span style="color: #569cd6; line-height: 160%; box-sizing: content-box;">th</span>&gt;</span>时间<span style="color: #9b9b9b; line-height: 160%; box-sizing: content-box;">&lt;/<span style="color: #569cd6; line-height: 160%; box-sizing: content-box;">th</span>&gt;</span>
+                        <span style="color: #9b9b9b; line-height: 160%; box-sizing: content-box;">&lt;<span style="color: #569cd6; line-height: 160%; box-sizing: content-box;">th</span>&gt;</span>操作<span style="color: #9b9b9b; line-height: 160%; box-sizing: content-box;">&lt;/<span style="color: #569cd6; line-height: 160%; box-sizing: content-box;">th</span>&gt;</span>
+                    <span style="color: #9b9b9b; line-height: 160%; box-sizing: content-box;">&lt;/<span style="color: #569cd6; line-height: 160%; box-sizing: content-box;">tr</span>&gt;</span>
+                <span style="color: #9b9b9b; line-height: 160%; box-sizing: content-box;">&lt;/<span style="color: #569cd6; line-height: 160%; box-sizing: content-box;">thead</span>&gt;</span>
+                <span style="color: #9b9b9b; line-height: 160%; box-sizing: content-box;">&lt;<span style="color: #569cd6; line-height: 160%; box-sizing: content-box;">tbody</span>&gt;</span>
+                    <span style="color: #57a64a; font-style: italic; line-height: 160%; box-sizing: content-box;">&lt;!-- 5.  把books  中的数据渲染到页面上   --&gt;</span>
+                    <span style="color: #9b9b9b; line-height: 160%; box-sizing: content-box;">&lt;<span style="color: #569cd6; line-height: 160%; box-sizing: content-box;">tr</span> <span style="color: #9cdcfe; line-height: 160%; box-sizing: content-box;">:key</span>=<span style="color: #d69d85; line-height: 160%; box-sizing: content-box;">'item.id'</span> <span style="color: #9cdcfe; line-height: 160%; box-sizing: content-box;">v-for</span>=<span style="color: #d69d85; line-height: 160%; box-sizing: content-box;">'item in books'</span>&gt;</span>
+                        <span style="color: #9b9b9b; line-height: 160%; box-sizing: content-box;">&lt;<span style="color: #569cd6; line-height: 160%; box-sizing: content-box;">td</span>&gt;</span>{{item.id}}<span style="color: #9b9b9b; line-height: 160%; box-sizing: content-box;">&lt;/<span style="color: #569cd6; line-height: 160%; box-sizing: content-box;">td</span>&gt;</span>
+                        <span style="color: #9b9b9b; line-height: 160%; box-sizing: content-box;">&lt;<span style="color: #569cd6; line-height: 160%; box-sizing: content-box;">td</span>&gt;</span>{{item.name}}<span style="color: #9b9b9b; line-height: 160%; box-sizing: content-box;">&lt;/<span style="color: #569cd6; line-height: 160%; box-sizing: content-box;">td</span>&gt;</span>
+                        <span style="color: #9b9b9b; line-height: 160%; box-sizing: content-box;">&lt;<span style="color: #569cd6; line-height: 160%; box-sizing: content-box;">td</span>&gt;</span>{{item.date }}<span style="color: #9b9b9b; line-height: 160%; box-sizing: content-box;">&lt;/<span style="color: #569cd6; line-height: 160%; box-sizing: content-box;">td</span>&gt;</span>
+                        <span style="color: #9b9b9b; line-height: 160%; box-sizing: content-box;">&lt;<span style="color: #569cd6; line-height: 160%; box-sizing: content-box;">td</span>&gt;</span>
+                            <span style="color: #9b9b9b; line-height: 160%; box-sizing: content-box;">&lt;<span style="color: #569cd6; line-height: 160%; box-sizing: content-box;">a</span> <span style="color: #9cdcfe; line-height: 160%; box-sizing: content-box;">href</span>=<span style="color: #d69d85; line-height: 160%; box-sizing: content-box;">""</span>&gt;</span>修改<span style="color: #9b9b9b; line-height: 160%; box-sizing: content-box;">&lt;/<span style="color: #569cd6; line-height: 160%; box-sizing: content-box;">a</span>&gt;</span>
+                            <span style="color: #9b9b9b; line-height: 160%; box-sizing: content-box;">&lt;<span style="color: #569cd6; line-height: 160%; box-sizing: content-box;">span</span>&gt;</span>|<span style="color: #9b9b9b; line-height: 160%; box-sizing: content-box;">&lt;/<span style="color: #569cd6; line-height: 160%; box-sizing: content-box;">span</span>&gt;</span>
+                            <span style="color: #9b9b9b; line-height: 160%; box-sizing: content-box;">&lt;<span style="color: #569cd6; line-height: 160%; box-sizing: content-box;">a</span> <span style="color: #9cdcfe; line-height: 160%; box-sizing: content-box;">href</span>=<span style="color: #d69d85; line-height: 160%; box-sizing: content-box;">""</span>&gt;</span>删除<span style="color: #9b9b9b; line-height: 160%; box-sizing: content-box;">&lt;/<span style="color: #569cd6; line-height: 160%; box-sizing: content-box;">a</span>&gt;</span>
+                        <span style="color: #9b9b9b; line-height: 160%; box-sizing: content-box;">&lt;/<span style="color: #569cd6; line-height: 160%; box-sizing: content-box;">td</span>&gt;</span>
+                    <span style="color: #9b9b9b; line-height: 160%; box-sizing: content-box;">&lt;/<span style="color: #569cd6; line-height: 160%; box-sizing: content-box;">tr</span>&gt;</span>
+                <span style="color: #9b9b9b; line-height: 160%; box-sizing: content-box;">&lt;/<span style="color: #569cd6; line-height: 160%; box-sizing: content-box;">tbody</span>&gt;</span>
+            <span style="color: #9b9b9b; line-height: 160%; box-sizing: content-box;">&lt;/<span style="color: #569cd6; line-height: 160%; box-sizing: content-box;">table</span>&gt;</span>
+        <span style="color: #9b9b9b; line-height: 160%; box-sizing: content-box;">&lt;/<span style="color: #569cd6; line-height: 160%; box-sizing: content-box;">div</span>&gt;</span>
+    <span style="color: #9b9b9b; line-height: 160%; box-sizing: content-box;">&lt;/<span style="color: #569cd6; line-height: 160%; box-sizing: content-box;">div</span>&gt;</span>
+    <span style="color: #9b9b9b; line-height: 160%; box-sizing: content-box;">&lt;<span style="color: #569cd6; line-height: 160%; box-sizing: content-box;">script</span> <span style="color: #9cdcfe; line-height: 160%; box-sizing: content-box;">type</span>=<span style="color: #d69d85; line-height: 160%; box-sizing: content-box;">"text/javascript"</span> <span style="color: #9cdcfe; line-height: 160%; box-sizing: content-box;">src</span>=<span style="color: #d69d85; line-height: 160%; box-sizing: content-box;">"js/vue.js"</span>&gt;</span><span style="line-height: 160%; box-sizing: content-box;"></span><span style="color: #9b9b9b; line-height: 160%; box-sizing: content-box;">&lt;/<span style="color: #569cd6; line-height: 160%; box-sizing: content-box;">script</span>&gt;</span>
+	1.  导入axios   
+    <span style="color: #9b9b9b; line-height: 160%; box-sizing: content-box;">&lt;<span style="color: #569cd6; line-height: 160%; box-sizing: content-box;">script</span> <span style="color: #9cdcfe; line-height: 160%; box-sizing: content-box;">type</span>=<span style="color: #d69d85; line-height: 160%; box-sizing: content-box;">"text/javascript"</span> <span style="color: #9cdcfe; line-height: 160%; box-sizing: content-box;">src</span>=<span style="color: #d69d85; line-height: 160%; box-sizing: content-box;">"js/axios.js"</span>&gt;</span><span style="line-height: 160%; box-sizing: content-box;"></span><span style="color: #9b9b9b; line-height: 160%; box-sizing: content-box;">&lt;/<span style="color: #569cd6; line-height: 160%; box-sizing: content-box;">script</span>&gt;</span>
+    <span style="color: #9b9b9b; line-height: 160%; box-sizing: content-box;">&lt;<span style="color: #569cd6; line-height: 160%; box-sizing: content-box;">script</span> <span style="color: #9cdcfe; line-height: 160%; box-sizing: content-box;">type</span>=<span style="color: #d69d85; line-height: 160%; box-sizing: content-box;">"text/javascript"</span>&gt;</span><span style="line-height: 160%; box-sizing: content-box;">
+        /*
+             图书管理-添加图书
+         */
+        # 2   配置公共的url地址  简化后面的调用方式
+        axios.defaults.baseURL = 'http://localhost:3000/';
+        axios.interceptors.response.use(function(res) {
+            return res.data;
+        }, function(error) {
+            console.log(error)
+        });
+
+        var vm = new Vue({
+            el: '#app',
+            data: {
+                flag: false,
+                submitFlag: false,
+                id: '',
+                name: '',
+                books: []
+            },
+            methods: {
+                # 3 定义一个方法 用来发送 ajax 
+                # 3.1  使用 async  来 让异步的代码  以同步的形式书写 
+                queryData: async function() {
+                    // 调用后台接口获取图书列表数据
+                    // var ret = await axios.get('books');
+                    // this.books = ret.data;
+					# 3.2  发送ajax请求  把拿到的数据放在books 里面   
+                    this.books = await axios.get('books');
+                }
+            },
+
+            mounted: function() {
+				#  4 mounted  里面 DOM已经加载完毕  在这里调用函数  
+                this.queryData();
+            }
+        });
+    </span><span style="color: #9b9b9b; line-height: 160%; box-sizing: content-box;">&lt;/<span style="color: #569cd6; line-height: 160%; box-sizing: content-box;">script</span>&gt;</span>
+</code></pre>
+<h4 style="line-height: 160%; box-sizing: content-box; font-size: 20px; color: #333;">2   添加图书</h4>
+<ul style="line-height: 160%; box-sizing: content-box; display: block; list-style-type: disc; padding-left: 30px; margin: 6px 0 10px; color: #333;">
+<li style="line-height: 160%; box-sizing: content-box; position: relative;">获取用户输入的数据   发送到后台</li>
+<li style="line-height: 160%; box-sizing: content-box; position: relative;">渲染最新的数据到页面上</li>
+</ul>
+<pre style="line-height: 160%; box-sizing: content-box; border: 0; border-radius: 0; margin: 2px 0 8px; background-color: #f5f7f8;"><code style="display: block; overflow-x: auto; background: #1e1e1e; line-height: 160%; box-sizing: content-box; border: 0; border-radius: 0; letter-spacing: -.3px; padding: 18px; color: #f4f4f4; white-space: pre-wrap;"> methods: {
+    handle: async function(){
+          if(this.flag) {
+            // 编辑图书
+            // 就是根据当前的ID去更新数组中对应的数据
+            this.books.some((item) =&gt; {
+              if(item.id == this.id) {
+                item.name = this.name;
+                // 完成更新操作之后，需要终止循环
+                return true;
+              }
+            });
+            this.flag = false;
+          }else{
+            # 1.1  在前面封装好的 handle 方法中  发送ajax请求  
+            # 1.2  使用async  和 await 简化操作 需要在 function 前面添加 async   
+            var ret = await axios.post('books', {
+              name: this.name
+            })
+            # 1.3  根据后台返回的状态码判断是否加载数据 
+            if(ret.status == 200) {
+             # 1.4  调用 queryData 这个方法  渲染最新的数据 
+              this.queryData();
+            }
+          }
+          // 清空表单
+          this.;
+          this.name = '';
+        },        
+ }         
+</code></pre>
+<h4 style="line-height: 160%; box-sizing: content-box; font-size: 20px; color: #333;">3  验证图书名称是否存在</h4>
+<ul style="line-height: 160%; box-sizing: content-box; display: block; list-style-type: disc; padding-left: 30px; margin: 6px 0 10px; color: #333;">
+<li style="line-height: 160%; box-sizing: content-box; position: relative;">添加图书之前发送请求验证图示是否已经存在</li>
+<li style="line-height: 160%; box-sizing: content-box; position: relative;">如果不存在 往后台里面添加图书名称
+<ul style="line-height: 160%; box-sizing: content-box; display: block; list-style-type: disc; padding-left: 30px; margin: 6px 0 10px; color: #333; margin-top: 0; margin-bottom: 0;">
+<li style="line-height: 160%; box-sizing: content-box; position: relative;">图书存在与否只需要修改submitFlag的值即可</li>
+</ul>
+</li>
+</ul>
+<pre style="line-height: 160%; box-sizing: content-box; border: 0; border-radius: 0; margin: 2px 0 8px; background-color: #f5f7f8;"><code style="display: block; overflow-x: auto; background: #1e1e1e; line-height: 160%; box-sizing: content-box; border: 0; border-radius: 0; letter-spacing: -.3px; padding: 18px; color: #f4f4f4; white-space: pre-wrap;"> watch: {
+        <span style="color: #9cdcfe; line-height: 160%; box-sizing: content-box;">name</span>: <span style="color: #569cd6; line-height: 160%; box-sizing: content-box;">async</span> <span style="color: #dcdcdc; line-height: 160%; box-sizing: content-box;"><span style="color: #569cd6; line-height: 160%; box-sizing: content-box;">function</span>(<span style="color: #dcdcdc; line-height: 160%; box-sizing: content-box;">val</span>) </span>{
+          <span style="color: #57a64a; font-style: italic; line-height: 160%; box-sizing: content-box;">// 验证图书名称是否已经存在</span>
+          <span style="color: #57a64a; font-style: italic; line-height: 160%; box-sizing: content-box;">// var flag = this.books.some(function(item){</span>
+          <span style="color: #57a64a; font-style: italic; line-height: 160%; box-sizing: content-box;">//   return item.name == val;</span>
+          <span style="color: #57a64a; font-style: italic; line-height: 160%; box-sizing: content-box;">// });</span>
+          <span style="color: #569cd6; line-height: 160%; box-sizing: content-box;">var</span> ret = <span style="color: #569cd6; line-height: 160%; box-sizing: content-box;">await</span> axios.get(<span style="color: #d69d85; line-height: 160%; box-sizing: content-box;">'/books/book/'</span> + <span style="color: #569cd6; line-height: 160%; box-sizing: content-box;">this</span>.name);
+          <span style="color: #569cd6; line-height: 160%; box-sizing: content-box;">if</span>(ret.status == <span style="color: #b8d7a3; line-height: 160%; box-sizing: content-box;">1</span>) {
+            <span style="color: #57a64a; font-style: italic; line-height: 160%; box-sizing: content-box;">// 图书名称存在</span>
+            <span style="color: #569cd6; line-height: 160%; box-sizing: content-box;">this</span>.submitFlag = <span style="color: #569cd6; line-height: 160%; box-sizing: content-box;">true</span>;
+          }<span style="color: #569cd6; line-height: 160%; box-sizing: content-box;">else</span>{
+            <span style="color: #57a64a; font-style: italic; line-height: 160%; box-sizing: content-box;">// 图书名称不存在</span>
+            <span style="color: #569cd6; line-height: 160%; box-sizing: content-box;">this</span>.submitFlag = <span style="color: #569cd6; line-height: 160%; box-sizing: content-box;">false</span>;
+          }
+        }
+},
+</code></pre>
+<h4 style="line-height: 160%; box-sizing: content-box; font-size: 20px; color: #333;">4.  编辑图书</h4>
+<ul style="line-height: 160%; box-sizing: content-box; display: block; list-style-type: disc; padding-left: 30px; margin: 6px 0 10px; color: #333;">
+<li style="line-height: 160%; box-sizing: content-box; position: relative;">根据当前书的id 查询需要编辑的书籍</li>
+<li style="line-height: 160%; box-sizing: content-box; position: relative;">需要根据状态位判断是添加还是编辑</li>
+</ul>
+<pre style="line-height: 160%; box-sizing: content-box; border: 0; border-radius: 0; margin: 2px 0 8px; background-color: #f5f7f8;"><code style="display: block; overflow-x: auto; background: #1e1e1e; line-height: 160%; box-sizing: content-box; border: 0; border-radius: 0; letter-spacing: -.3px; padding: 18px; color: #f4f4f4; white-space: pre-wrap;"> methods: {
+        handle: async function(){
+          if(this.flag) {
+            #4.3 编辑图书   把用户输入的信息提交到后台
+            var ret = await axios.put('books/' + this.id, {
+              name: this.name
+            });
+            if(ret.status == 200){
+              #4.4  完成添加后 重新加载列表数据
+              this.queryData();
+            }
+            this.flag = false;
+          }else{
+            // 添加图书
+            var ret = await axios.post('books', {
+              name: this.name
+            })
+            if(ret.status == 200) {
+              // 重新加载列表数据
+              this.queryData();
+            }
+          }
+          // 清空表单
+          this.;
+          this.name = '';
+        },
+        toEdit: async function(id){
+          #4.1  flag状态位用于区分编辑和添加操作
+          this.flag = true;
+          #4.2  根据id查询出对应的图书信息  页面中可以加载出来最新的信息
+          # 调用接口发送ajax 请求  
+          var ret = await axios.get('books/' + id);
+          this.id = ret.id;
+          this.name = ret.name;
+        },
+</code></pre>
+<h4 style="line-height: 160%; box-sizing: content-box; font-size: 20px; color: #333;">5 删除图书</h4>
+<ul style="line-height: 160%; box-sizing: content-box; display: block; list-style-type: disc; padding-left: 30px; margin: 6px 0 10px; color: #333;">
+<li style="line-height: 160%; box-sizing: content-box; position: relative;">把需要删除的id书籍 通过参数的形式传递到后台</li>
+</ul>
+<pre style="line-height: 160%; box-sizing: content-box; border: 0; border-radius: 0; margin: 2px 0 8px; background-color: #f5f7f8;"><code style="display: block; overflow-x: auto; background: #1e1e1e; line-height: 160%; box-sizing: content-box; border: 0; border-radius: 0; letter-spacing: -.3px; padding: 18px; color: #f4f4f4; white-space: pre-wrap;">   deleteBook: <span style="color: #569cd6; line-height: 160%; box-sizing: content-box;">async</span> <span style="color: #dcdcdc; line-height: 160%; box-sizing: content-box;"><span style="color: #569cd6; line-height: 160%; box-sizing: content-box;">function</span>(<span style="color: #dcdcdc; line-height: 160%; box-sizing: content-box;">id</span>)</span>{
+          <span style="color: #57a64a; font-style: italic; line-height: 160%; box-sizing: content-box;">// 删除图书</span>
+          <span style="color: #569cd6; line-height: 160%; box-sizing: content-box;">var</span> ret = <span style="color: #569cd6; line-height: 160%; box-sizing: content-box;">await</span> axios.delete(<span style="color: #d69d85; line-height: 160%; box-sizing: content-box;">'books/'</span> + id);
+          <span style="color: #569cd6; line-height: 160%; box-sizing: content-box;">if</span>(ret.status == <span style="color: #b8d7a3; line-height: 160%; box-sizing: content-box;">200</span>) {
+            <span style="color: #57a64a; font-style: italic; line-height: 160%; box-sizing: content-box;">// 重新加载列表数据</span>
+            <span style="color: #569cd6; line-height: 160%; box-sizing: content-box;">this</span>.queryData();
+          }
+   }
+</code></pre>
+</div><center style='display:none !important;visibility:collapse !important;height:0 !important;white-space:nowrap;width:100%;overflow:hidden'>%23%23%20%E6%9C%AC%E8%B5%84%E6%BA%90%E7%94%B1%20itjc8.com%20%E6%94%B6%E9%9B%86%0A%23%23%23%20%E6%8E%A5%E5%8F%A3%E8%B0%83%E7%94%A8%E6%96%B9%E5%BC%8F%0A%0A-%20%E5%8E%9F%E7%94%9Fajax%0A-%20%E5%9F%BA%E4%BA%8EjQuery%E7%9A%84ajax%0A-%20fetch%0A-%20axios%0A%0A%23%23%23%20%20%E5%BC%82%E6%AD%A5%0A%0A-%20JavaScript%E7%9A%84%E6%89%A7%E8%A1%8C%E7%8E%AF%E5%A2%83%E6%98%AF%E3%80%8C%E5%8D%95%E7%BA%BF%E7%A8%8B%E3%80%8D%0A-%20%E6%89%80%E8%B0%93%E5%8D%95%E7%BA%BF%E7%A8%8B%EF%BC%8C%E6%98%AF%E6%8C%87JS%E5%BC%95%E6%93%8E%E4%B8%AD%E8%B4%9F%E8%B4%A3%E8%A7%A3%E9%87%8A%E5%92%8C%E6%89%A7%E8%A1%8CJavaScript%E4%BB%A3%E7%A0%81%E7%9A%84%E7%BA%BF%E7%A8%8B%E5%8F%AA%E6%9C%89%E4%B8%80%E4%B8%AA%EF%BC%8C%E4%B9%9F%E5%B0%B1%E6%98%AF%E4%B8%80%E6%AC%A1%E5%8F%AA%E8%83%BD%E5%AE%8C%E6%88%90%E4%B8%80%E9%A1%B9%E4%BB%BB%E5%8A%A1%EF%BC%8C%E8%BF%99%E4%B8%AA%E4%BB%BB%E5%8A%A1%E6%89%A7%E8%A1%8C%E5%AE%8C%E5%90%8E%E6%89%8D%E8%83%BD%E6%89%A7%E8%A1%8C%E4%B8%8B%E4%B8%80%E4%B8%AA%EF%BC%8C%E5%AE%83%E4%BC%9A%E3%80%8C%E9%98%BB%E5%A1%9E%E3%80%8D%E5%85%B6%E4%BB%96%E4%BB%BB%E5%8A%A1%E3%80%82%E8%BF%99%E4%B8%AA%E4%BB%BB%E5%8A%A1%E5%8F%AF%E7%A7%B0%E4%B8%BA%E4%B8%BB%E7%BA%BF%E7%A8%8B%0A-%20%E5%BC%82%E6%AD%A5%E6%A8%A1%E5%BC%8F%E5%8F%AF%E4%BB%A5%E4%B8%80%E8%B5%B7%E6%89%A7%E8%A1%8C**%E5%A4%9A%E4%B8%AA%E4%BB%BB%E5%8A%A1**%0A-%20JS%E4%B8%AD%E5%B8%B8%E8%A7%81%E7%9A%84%E5%BC%82%E6%AD%A5%E8%B0%83%E7%94%A8%0A%20%20-%20%E5%AE%9A%E6%97%B6%E4%BB%BB%E4%BD%95%0A%20%20-%20ajax%0A%20%20-%20%E4%BA%8B%E4%BB%B6%E5%87%BD%E6%95%B0%0A%0A%0A%0A%23%23%23%20promise%0A%0A-%20%E4%B8%BB%E8%A6%81%E8%A7%A3%E5%86%B3%E5%BC%82%E6%AD%A5%E6%B7%B1%E5%B1%82%E5%B5%8C%E5%A5%97%E7%9A%84%E9%97%AE%E9%A2%98%0A-%20promise%20%E6%8F%90%E4%BE%9B%E4%BA%86%E7%AE%80%E6%B4%81%E7%9A%84API%20%20%E4%BD%BF%E5%BE%97%E5%BC%82%E6%AD%A5%E6%93%8D%E4%BD%9C%E6%9B%B4%E5%8A%A0%E5%AE%B9%E6%98%93%0A%0A%60%60%60html%0A%20%0A%20%20%3Cscript%20type%3D%22text%2Fjavascript%22%3E%0A%20%20%20%20%2F*%0A%20%20%20%20%201.%20Promise%E5%9F%BA%E6%9C%AC%E4%BD%BF%E7%94%A8%0A%20%20%20%20%20%20%20%20%20%20%20%E6%88%91%E4%BB%AC%E4%BD%BF%E7%94%A8new%E6%9D%A5%E6%9E%84%E5%BB%BA%E4%B8%80%E4%B8%AAPromise%20%20Promise%E7%9A%84%E6%9E%84%E9%80%A0%E5%87%BD%E6%95%B0%E6%8E%A5%E6%94%B6%E4%B8%80%E4%B8%AA%E5%8F%82%E6%95%B0%EF%BC%8C%E6%98%AF%E5%87%BD%E6%95%B0%EF%BC%8C%E5%B9%B6%E4%B8%94%E4%BC%A0%E5%85%A5%E4%B8%A4%E4%B8%AA%E5%8F%82%E6%95%B0%EF%BC%9A%09%09%20%20%20resolve%EF%BC%8Creject%EF%BC%8C%20%E5%88%86%E5%88%AB%E8%A1%A8%E7%A4%BA%E5%BC%82%E6%AD%A5%E6%93%8D%E4%BD%9C%E6%89%A7%E8%A1%8C%E6%88%90%E5%8A%9F%E5%90%8E%E7%9A%84%E5%9B%9E%E8%B0%83%E5%87%BD%E6%95%B0%E5%92%8C%E5%BC%82%E6%AD%A5%E6%93%8D%E4%BD%9C%E6%89%A7%E8%A1%8C%E5%A4%B1%E8%B4%A5%E5%90%8E%E7%9A%84%E5%9B%9E%E8%B0%83%E5%87%BD%E6%95%B0%0A%20%20%20%20*%2F%0A%0A%0A%20%20%20%20var%20p%20%3D%20new%20Promise(function(resolve%2C%20reject)%7B%0A%20%20%20%20%20%20%2F%2F2.%20%E8%BF%99%E9%87%8C%E7%94%A8%E4%BA%8E%E5%AE%9E%E7%8E%B0%E5%BC%82%E6%AD%A5%E4%BB%BB%E5%8A%A1%20%20setTimeout%0A%20%20%20%20%20%20setTimeout(function()%7B%0A%20%20%20%20%20%20%20%20var%20flag%20%3D%20false%3B%0A%20%20%20%20%20%20%20%20if(flag)%20%7B%0A%20%20%20%20%20%20%20%20%20%20%2F%2F3.%20%E6%AD%A3%E5%B8%B8%E6%83%85%E5%86%B5%0A%20%20%20%20%20%20%20%20%20%20resolve('hello')%3B%0A%20%20%20%20%20%20%20%20%7Delse%7B%0A%20%20%20%20%20%20%20%20%20%20%2F%2F4.%20%E5%BC%82%E5%B8%B8%E6%83%85%E5%86%B5%0A%20%20%20%20%20%20%20%20%20%20reject('%E5%87%BA%E9%94%99%E4%BA%86')%3B%0A%20%20%20%20%20%20%20%20%7D%0A%20%20%20%20%20%20%7D%2C%20100)%3B%0A%20%20%20%20%7D)%3B%0A%20%20%20%20%2F%2F%20%205%20Promise%E5%AE%9E%E4%BE%8B%E7%94%9F%E6%88%90%E4%BB%A5%E5%90%8E%EF%BC%8C%E5%8F%AF%E4%BB%A5%E7%94%A8then%E6%96%B9%E6%B3%95%E6%8C%87%E5%AE%9Aresolved%E7%8A%B6%E6%80%81%E5%92%8Creject%E7%8A%B6%E6%80%81%E7%9A%84%E5%9B%9E%E8%B0%83%E5%87%BD%E6%95%B0%20%0A%20%20%20%20%2F%2F%20%20%E5%9C%A8then%E6%96%B9%E6%B3%95%E4%B8%AD%EF%BC%8C%E4%BD%A0%E4%B9%9F%E5%8F%AF%E4%BB%A5%E7%9B%B4%E6%8E%A5return%E6%95%B0%E6%8D%AE%E8%80%8C%E4%B8%8D%E6%98%AFPromise%E5%AF%B9%E8%B1%A1%EF%BC%8C%E5%9C%A8%E5%90%8E%E9%9D%A2%E7%9A%84then%E4%B8%AD%E5%B0%B1%E5%8F%AF%E4%BB%A5%E6%8E%A5%E6%94%B6%E5%88%B0%E6%95%B0%E6%8D%AE%E4%BA%86%20%20%0A%20%20%20%20p.then(function(data)%7B%0A%20%20%20%20%20%20console.log(data)%0A%20%20%20%20%7D%2Cfunction(info)%7B%0A%20%20%20%20%20%20console.log(info)%0A%20%20%20%20%7D)%3B%0A%20%20%3C%2Fscript%3E%0A%60%60%60%0A%0A%23%23%23%20%20%E5%9F%BA%E4%BA%8EPromise%E5%8F%91%E9%80%81Ajax%E8%AF%B7%E6%B1%82%0A%0A%60%60%60html%0A%20%0A%20%20%3Cscript%20type%3D%22text%2Fjavascript%22%3E%0A%20%20%20%20%2F*%0A%20%20%20%20%20%20%E5%9F%BA%E4%BA%8EPromise%E5%8F%91%E9%80%81Ajax%E8%AF%B7%E6%B1%82%0A%20%20%20%20*%2F%0A%20%20%20%20function%20queryData(url)%20%7B%0A%20%20%20%20%20%23%20%20%201.1%20%E5%88%9B%E5%BB%BA%E4%B8%80%E4%B8%AAPromise%E5%AE%9E%E4%BE%8B%0A%20%20%20%20%20%20var%20p%20%3D%20new%20Promise(function(resolve%2C%20reject)%7B%0A%20%20%20%20%20%20%20%20var%20xhr%20%3D%20new%20XMLHttpRequest()%3B%0A%20%20%20%20%20%20%20%20xhr.onreadystatechange%20%3D%20function()%7B%0A%20%20%20%20%20%20%20%20%20%20if(xhr.readyState%20!%3D%204)%20return%3B%0A%20%20%20%20%20%20%20%20%20%20if(xhr.readyState%20%3D%3D%204%20%26%26%20xhr.status%20%3D%3D%20200)%20%7B%0A%20%20%20%20%20%20%20%20%20%20%20%20%23%201.2%20%E5%A4%84%E7%90%86%E6%AD%A3%E5%B8%B8%E7%9A%84%E6%83%85%E5%86%B5%0A%20%20%20%20%20%20%20%20%20%20%20%20resolve(xhr.responseText)%3B%0A%20%20%20%20%20%20%20%20%20%20%7Delse%7B%0A%20%20%20%20%20%20%20%20%20%20%20%20%23%201.3%20%E5%A4%84%E7%90%86%E5%BC%82%E5%B8%B8%E6%83%85%E5%86%B5%0A%20%20%20%20%20%20%20%20%20%20%20%20reject('%E6%9C%8D%E5%8A%A1%E5%99%A8%E9%94%99%E8%AF%AF')%3B%0A%20%20%20%20%20%20%20%20%20%20%7D%0A%20%20%20%20%20%20%20%20%7D%3B%0A%20%20%20%20%20%20%20%20xhr.open('get'%2C%20url)%3B%0A%20%20%20%20%20%20%20%20xhr.send(null)%3B%0A%20%20%20%20%20%20%7D)%3B%0A%20%20%20%20%20%20return%20p%3B%0A%20%20%20%20%7D%0A%09%23%20%E6%B3%A8%E6%84%8F%EF%BC%9A%20%20%E8%BF%99%E9%87%8C%E9%9C%80%E8%A6%81%E5%BC%80%E5%90%AF%E4%B8%80%E4%B8%AA%E6%9C%8D%E5%8A%A1%20%0A%20%20%20%20%23%20%E5%9C%A8then%E6%96%B9%E6%B3%95%E4%B8%AD%EF%BC%8C%E4%BD%A0%E4%B9%9F%E5%8F%AF%E4%BB%A5%E7%9B%B4%E6%8E%A5return%E6%95%B0%E6%8D%AE%E8%80%8C%E4%B8%8D%E6%98%AFPromise%E5%AF%B9%E8%B1%A1%EF%BC%8C%E5%9C%A8%E5%90%8E%E9%9D%A2%E7%9A%84then%E4%B8%AD%E5%B0%B1%E5%8F%AF%E4%BB%A5%E6%8E%A5%E6%94%B6%E5%88%B0%E6%95%B0%E6%8D%AE%E4%BA%86%0A%20%20%20%20queryData('http%3A%2F%2Flocalhost%3A3000%2Fdata')%0A%20%20%20%20%20%20.then(function(data)%7B%0A%20%20%20%20%20%20%20%20console.log(data)%0A%20%20%20%20%20%20%20%20%23%20%201.4%20%E6%83%B3%E8%A6%81%E7%BB%A7%E7%BB%AD%E9%93%BE%E5%BC%8F%E7%BC%96%E7%A8%8B%E4%B8%8B%E5%8E%BB%20%E9%9C%80%E8%A6%81%20return%20%20%0A%20%20%20%20%20%20%20%20return%20queryData('http%3A%2F%2Flocalhost%3A3000%2Fdata1')%3B%0A%20%20%20%20%20%20%7D)%0A%20%20%20%20%20%20.then(function(data)%7B%0A%20%20%20%20%20%20%20%20console.log(data)%3B%0A%20%20%20%20%20%20%20%20return%20queryData('http%3A%2F%2Flocalhost%3A3000%2Fdata2')%3B%0A%20%20%20%20%20%20%7D)%0A%20%20%20%20%20%20.then(function(data)%7B%0A%20%20%20%20%20%20%20%20console.log(data)%0A%20%20%20%20%20%20%7D)%3B%0A%20%20%3C%2Fscript%3E%0A%60%60%60%0A%0A%23%23%23%20Promise%20%20%E5%9F%BA%E6%9C%ACAPI%0A%0A%23%23%23%23%20%20%E5%AE%9E%E4%BE%8B%E6%96%B9%E6%B3%95%0A%0A%23%23%23%23%23%20.then()%0A%0A-%20%E5%BE%97%E5%88%B0%E5%BC%82%E6%AD%A5%E4%BB%BB%E5%8A%A1%E6%AD%A3%E7%A1%AE%E7%9A%84%E7%BB%93%E6%9E%9C%0A%0A%23%23%23%23%23%20.catch()%0A%0A-%20%E8%8E%B7%E5%8F%96%E5%BC%82%E5%B8%B8%E4%BF%A1%E6%81%AF%0A%0A%23%23%23%23%23%20.finally()%0A%0A-%20%E6%88%90%E5%8A%9F%E4%B8%8E%E5%90%A6%E9%83%BD%E4%BC%9A%E6%89%A7%E8%A1%8C%EF%BC%88%E4%B8%8D%E6%98%AF%E6%AD%A3%E5%BC%8F%E6%A0%87%E5%87%86%EF%BC%89%20%0A%0A%60%60%60html%0A%20%20%0A%20%20%3Cscript%20type%3D%22text%2Fjavascript%22%3E%0A%20%20%20%20%2F*%0A%20%20%20%20%20%20Promise%E5%B8%B8%E7%94%A8API-%E5%AE%9E%E4%BE%8B%E6%96%B9%E6%B3%95%0A%20%20%20%20*%2F%0A%20%20%20%20%2F%2F%20console.dir(Promise)%3B%0A%20%20%20%20function%20foo()%20%7B%0A%20%20%20%20%20%20return%20new%20Promise(function(resolve%2C%20reject)%7B%0A%20%20%20%20%20%20%20%20setTimeout(function()%7B%0A%20%20%20%20%20%20%20%20%20%20%2F%2F%20resolve(123)%3B%0A%20%20%20%20%20%20%20%20%20%20reject('error')%3B%0A%20%20%20%20%20%20%20%20%7D%2C%20100)%3B%0A%20%20%20%20%20%20%7D)%0A%20%20%20%20%7D%0A%20%20%20%20%2F%2F%20foo()%0A%20%20%20%20%2F%2F%20%20%20.then(function(data)%7B%0A%20%20%20%20%2F%2F%20%20%20%20%20console.log(data)%0A%20%20%20%20%2F%2F%20%20%20%7D)%0A%20%20%20%20%2F%2F%20%20%20.catch(function(data)%7B%0A%20%20%20%20%2F%2F%20%20%20%20%20console.log(data)%0A%20%20%20%20%2F%2F%20%20%20%7D)%0A%20%20%20%20%2F%2F%20%20%20.finally(function()%7B%0A%20%20%20%20%2F%2F%20%20%20%20%20console.log('finished')%0A%20%20%20%20%2F%2F%20%20%20%7D)%3B%0A%0A%20%20%20%20%2F%2F%20--------------------------%0A%20%20%20%20%2F%2F%20%E4%B8%A4%E7%A7%8D%E5%86%99%E6%B3%95%E6%98%AF%E7%AD%89%E6%95%88%E7%9A%84%0A%20%20%20%20foo()%0A%20%20%20%20%20%20.then(function(data)%7B%0A%20%20%20%20%20%20%20%20%23%20%E5%BE%97%E5%88%B0%E5%BC%82%E6%AD%A5%E4%BB%BB%E5%8A%A1%E6%AD%A3%E7%A1%AE%E7%9A%84%E7%BB%93%E6%9E%9C%0A%20%20%20%20%20%20%20%20console.log(data)%0A%20%20%20%20%20%20%7D%2Cfunction(data)%7B%0A%20%20%20%20%20%20%20%20%23%20%E8%8E%B7%E5%8F%96%E5%BC%82%E5%B8%B8%E4%BF%A1%E6%81%AF%0A%20%20%20%20%20%20%20%20console.log(data)%0A%20%20%20%20%20%20%7D)%0A%20%20%20%20%20%20%23%20%E6%88%90%E5%8A%9F%E4%B8%8E%E5%90%A6%E9%83%BD%E4%BC%9A%E6%89%A7%E8%A1%8C%EF%BC%88%E4%B8%8D%E6%98%AF%E6%AD%A3%E5%BC%8F%E6%A0%87%E5%87%86%EF%BC%89%20%0A%20%20%20%20%20%20.finally(function()%7B%0A%20%20%20%20%20%20%20%20console.log('finished')%0A%20%20%20%20%20%20%7D)%3B%0A%20%20%3C%2Fscript%3E%0A%60%60%60%0A%0A%23%23%23%23%20%E9%9D%99%E6%80%81%E6%96%B9%E6%B3%95%0A%0A%23%23%23%23%23%20%20.all()%0A%0A-%20%60Promise.all%60%E6%96%B9%E6%B3%95%E6%8E%A5%E5%8F%97%E4%B8%80%E4%B8%AA%E6%95%B0%E7%BB%84%E4%BD%9C%E5%8F%82%E6%95%B0%EF%BC%8C%E6%95%B0%E7%BB%84%E4%B8%AD%E7%9A%84%E5%AF%B9%E8%B1%A1%EF%BC%88p1%E3%80%81p2%E3%80%81p3%EF%BC%89%E5%9D%87%E4%B8%BApromise%E5%AE%9E%E4%BE%8B%EF%BC%88%E5%A6%82%E6%9E%9C%E4%B8%8D%E6%98%AF%E4%B8%80%E4%B8%AApromise%EF%BC%8C%E8%AF%A5%E9%A1%B9%E4%BC%9A%E8%A2%AB%E7%94%A8%60Promise.resolve%60%E8%BD%AC%E6%8D%A2%E4%B8%BA%E4%B8%80%E4%B8%AApromise)%E3%80%82%E5%AE%83%E7%9A%84%E7%8A%B6%E6%80%81%E7%94%B1%E8%BF%99%E4%B8%89%E4%B8%AApromise%E5%AE%9E%E4%BE%8B%E5%86%B3%E5%AE%9A%0A%0A%23%23%23%23%23%20%20.race()%0A%0A-%20%60Promise.race%60%E6%96%B9%E6%B3%95%E5%90%8C%E6%A0%B7%E6%8E%A5%E5%8F%97%E4%B8%80%E4%B8%AA%E6%95%B0%E7%BB%84%E4%BD%9C%E5%8F%82%E6%95%B0%E3%80%82%E5%BD%93p1%2C%20p2%2C%20p3%E4%B8%AD%E6%9C%89%E4%B8%80%E4%B8%AA%E5%AE%9E%E4%BE%8B%E7%9A%84%E7%8A%B6%E6%80%81%E5%8F%91%E7%94%9F%E6%94%B9%E5%8F%98%EF%BC%88%E5%8F%98%E4%B8%BA%60fulfilled%60%E6%88%96%60rejected%60%EF%BC%89%EF%BC%8Cp%E7%9A%84%E7%8A%B6%E6%80%81%E5%B0%B1%E8%B7%9F%E7%9D%80%E6%94%B9%E5%8F%98%E3%80%82%E5%B9%B6%E6%8A%8A%E7%AC%AC%E4%B8%80%E4%B8%AA%E6%94%B9%E5%8F%98%E7%8A%B6%E6%80%81%E7%9A%84promise%E7%9A%84%E8%BF%94%E5%9B%9E%E5%80%BC%EF%BC%8C%E4%BC%A0%E7%BB%99p%E7%9A%84%E5%9B%9E%E8%B0%83%E5%87%BD%E6%95%B0%0A%0A%E2%80%8B%09%0A%0A%60%60%60html%0A%20%20%3Cscript%20type%3D%22text%2Fjavascript%22%3E%0A%20%20%20%20%2F*%0A%20%20%20%20%20%20Promise%E5%B8%B8%E7%94%A8API-%E5%AF%B9%E8%B1%A1%E6%96%B9%E6%B3%95%0A%20%20%20%20*%2F%0A%20%20%20%20%2F%2F%20console.dir(Promise)%0A%20%20%20%20function%20queryData(url)%20%7B%0A%20%20%20%20%20%20return%20new%20Promise(function(resolve%2C%20reject)%7B%0A%20%20%20%20%20%20%20%20var%20xhr%20%3D%20new%20XMLHttpRequest()%3B%0A%20%20%20%20%20%20%20%20xhr.onreadystatechange%20%3D%20function()%7B%0A%20%20%20%20%20%20%20%20%20%20if(xhr.readyState%20!%3D%204)%20return%3B%0A%20%20%20%20%20%20%20%20%20%20if(xhr.readyState%20%3D%3D%204%20%26%26%20xhr.status%20%3D%3D%20200)%20%7B%0A%20%20%20%20%20%20%20%20%20%20%20%20%2F%2F%20%E5%A4%84%E7%90%86%E6%AD%A3%E5%B8%B8%E7%9A%84%E6%83%85%E5%86%B5%0A%20%20%20%20%20%20%20%20%20%20%20%20resolve(xhr.responseText)%3B%0A%20%20%20%20%20%20%20%20%20%20%7Delse%7B%0A%20%20%20%20%20%20%20%20%20%20%20%20%2F%2F%20%E5%A4%84%E7%90%86%E5%BC%82%E5%B8%B8%E6%83%85%E5%86%B5%0A%20%20%20%20%20%20%20%20%20%20%20%20reject('%E6%9C%8D%E5%8A%A1%E5%99%A8%E9%94%99%E8%AF%AF')%3B%0A%20%20%20%20%20%20%20%20%20%20%7D%0A%20%20%20%20%20%20%20%20%7D%3B%0A%20%20%20%20%20%20%20%20xhr.open('get'%2C%20url)%3B%0A%20%20%20%20%20%20%20%20xhr.send(null)%3B%0A%20%20%20%20%20%20%7D)%3B%0A%20%20%20%20%7D%0A%0A%20%20%20%20var%20p1%20%3D%20queryData('http%3A%2F%2Flocalhost%3A3000%2Fa1')%3B%0A%20%20%20%20var%20p2%20%3D%20queryData('http%3A%2F%2Flocalhost%3A3000%2Fa2')%3B%0A%20%20%20%20var%20p3%20%3D%20queryData('http%3A%2F%2Flocalhost%3A3000%2Fa3')%3B%0A%20%20%20%20%20Promise.all(%5Bp1%2Cp2%2Cp3%5D).then(function(result)%7B%0A%20%20%20%20%20%20%20%2F%2F%20%20%20all%20%E4%B8%AD%E7%9A%84%E5%8F%82%E6%95%B0%20%20%5Bp1%2Cp2%2Cp3%5D%20%20%20%E5%92%8C%20%E8%BF%94%E5%9B%9E%E7%9A%84%E7%BB%93%E6%9E%9C%E4%B8%80%20%E4%B8%80%E5%AF%B9%E5%BA%94%5B%22HELLO%20TOM%22%2C%20%22HELLO%20JERRY%22%2C%20%22HELLO%20SPIKE%22%5D%0A%20%20%20%20%20%20%20console.log(result)%20%2F%2F%5B%22HELLO%20TOM%22%2C%20%22HELLO%20JERRY%22%2C%20%22HELLO%20SPIKE%22%5D%0A%20%20%20%20%20%7D)%0A%20%20%20%20Promise.race(%5Bp1%2Cp2%2Cp3%5D).then(function(result)%7B%0A%20%20%20%20%20%20%2F%2F%20%E7%94%B1%E4%BA%8Ep1%E6%89%A7%E8%A1%8C%E8%BE%83%E5%BF%AB%EF%BC%8CPromise%E7%9A%84then()%E5%B0%86%E8%8E%B7%E5%BE%97%E7%BB%93%E6%9E%9C'P1'%E3%80%82p2%2Cp3%E4%BB%8D%E5%9C%A8%E7%BB%A7%E7%BB%AD%E6%89%A7%E8%A1%8C%EF%BC%8C%E4%BD%86%E6%89%A7%E8%A1%8C%E7%BB%93%E6%9E%9C%E5%B0%86%E8%A2%AB%E4%B8%A2%E5%BC%83%E3%80%82%0A%20%20%20%20%20%20console.log(result)%20%2F%2F%20%22HELLO%20TOM%22%0A%20%20%20%20%7D)%0A%20%20%3C%2Fscript%3E%0A%60%60%60%0A%0A%23%23%23%20%20fetch%0A%0A-%20Fetch%20API%E6%98%AF%E6%96%B0%E7%9A%84ajax%E8%A7%A3%E5%86%B3%E6%96%B9%E6%A1%88%20Fetch%E4%BC%9A%E8%BF%94%E5%9B%9EPromise%0A-%20**fetch%E4%B8%8D%E6%98%AFajax%E7%9A%84%E8%BF%9B%E4%B8%80%E6%AD%A5%E5%B0%81%E8%A3%85%EF%BC%8C%E8%80%8C%E6%98%AF%E5%8E%9F%E7%94%9Fjs%EF%BC%8C%E6%B2%A1%E6%9C%89%E4%BD%BF%E7%94%A8XMLHttpRequest%E5%AF%B9%E8%B1%A1**%E3%80%82%0A-%20fetch(url%2C%20options).then(%EF%BC%89%0A%0A%60%60%60html%0A%20%20%3Cscript%20type%3D%22text%2Fjavascript%22%3E%0A%20%20%20%20%2F*%0A%20%20%20%20%20%20Fetch%20API%20%E5%9F%BA%E6%9C%AC%E7%94%A8%E6%B3%95%0A%20%20%20%20%20%20%09fetch(url).then()%0A%20%20%20%20%20%09%E7%AC%AC%E4%B8%80%E4%B8%AA%E5%8F%82%E6%95%B0%E8%AF%B7%E6%B1%82%E7%9A%84%E8%B7%AF%E5%BE%84%20%20%20Fetch%E4%BC%9A%E8%BF%94%E5%9B%9EPromise%20%20%20%E6%89%80%E4%BB%A5%E6%88%91%E4%BB%AC%E5%8F%AF%E4%BB%A5%E4%BD%BF%E7%94%A8then%20%E6%8B%BF%E5%88%B0%E8%AF%B7%E6%B1%82%E6%88%90%E5%8A%9F%E7%9A%84%E7%BB%93%E6%9E%9C%20%0A%20%20%20%20*%2F%0A%20%20%20%20fetch('http%3A%2F%2Flocalhost%3A3000%2Ffdata').then(function(data)%7B%0A%20%20%20%20%20%20%2F%2F%20text()%E6%96%B9%E6%B3%95%E5%B1%9E%E4%BA%8EfetchAPI%E7%9A%84%E4%B8%80%E9%83%A8%E5%88%86%EF%BC%8C%E5%AE%83%E8%BF%94%E5%9B%9E%E4%B8%80%E4%B8%AAPromise%E5%AE%9E%E4%BE%8B%E5%AF%B9%E8%B1%A1%EF%BC%8C%E7%94%A8%E4%BA%8E%E8%8E%B7%E5%8F%96%E5%90%8E%E5%8F%B0%E8%BF%94%E5%9B%9E%E7%9A%84%E6%95%B0%E6%8D%AE%0A%20%20%20%20%20%20return%20data.text()%3B%0A%20%20%20%20%7D).then(function(data)%7B%0A%20%20%20%20%20%20%2F%2F%20%20%20%E5%9C%A8%E8%BF%99%E4%B8%AAthen%E9%87%8C%E9%9D%A2%E6%88%91%E4%BB%AC%E8%83%BD%E6%8B%BF%E5%88%B0%E6%9C%80%E7%BB%88%E7%9A%84%E6%95%B0%E6%8D%AE%20%20%0A%20%20%20%20%20%20console.log(data)%3B%0A%20%20%20%20%7D)%0A%20%20%3C%2Fscript%3E%0A%60%60%60%0A%0A%23%23%23%23%20%20fetch%20API%20%20%E4%B8%AD%E7%9A%84%20HTTP%20%20%E8%AF%B7%E6%B1%82%0A%0A-%20fetch(url%2C%20options).then(%EF%BC%89%0A-%20HTTP%E5%8D%8F%E8%AE%AE%EF%BC%8C%E5%AE%83%E7%BB%99%E6%88%91%E4%BB%AC%E6%8F%90%E4%BE%9B%E4%BA%86%E5%BE%88%E5%A4%9A%E7%9A%84%E6%96%B9%E6%B3%95%EF%BC%8C%E5%A6%82POST%EF%BC%8CGET%EF%BC%8CDELETE%EF%BC%8CUPDATE%EF%BC%8CPATCH%E5%92%8CPUT%0A%20%20-%20%E9%BB%98%E8%AE%A4%E7%9A%84%E6%98%AF%20GET%20%E8%AF%B7%E6%B1%82%0A%20%20-%20%E9%9C%80%E8%A6%81%E5%9C%A8%20options%20%E5%AF%B9%E8%B1%A1%E4%B8%AD%20%E6%8C%87%E5%AE%9A%E5%AF%B9%E5%BA%94%E7%9A%84%20method%20%20%20%20%20%20%20method%3A%E8%AF%B7%E6%B1%82%E4%BD%BF%E7%94%A8%E7%9A%84%E6%96%B9%E6%B3%95%20%0A%20%20-%20post%20%E5%92%8C%20%E6%99%AE%E9%80%9A%20%E8%AF%B7%E6%B1%82%E7%9A%84%E6%97%B6%E5%80%99%20%E9%9C%80%E8%A6%81%E5%9C%A8options%20%E4%B8%AD%20%E8%AE%BE%E7%BD%AE%20%20%E8%AF%B7%E6%B1%82%E5%A4%B4%20headers%20%20%20%E5%92%8C%20%20body%0A%0A%60%60%60html%0A%20%20%20%3Cscript%20type%3D%22text%2Fjavascript%22%3E%0A%20%20%20%20%20%20%20%20%2F*%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20Fetch%20API%20%E8%B0%83%E7%94%A8%E6%8E%A5%E5%8F%A3%E4%BC%A0%E9%80%92%E5%8F%82%E6%95%B0%0A%20%20%20%20%20%20%20%20*%2F%0A%20%20%20%20%20%20%20%231.1%20GET%E5%8F%82%E6%95%B0%E4%BC%A0%E9%80%92%20-%20%E4%BC%A0%E7%BB%9FURL%20%20%E9%80%9A%E8%BF%87url%20%20%EF%BC%9F%20%E7%9A%84%E5%BD%A2%E5%BC%8F%E4%BC%A0%E5%8F%82%20%0A%20%20%20%20%20%20%20%20fetch('http%3A%2F%2Flocalhost%3A3000%2Fbooks%3Fid%3D123'%2C%20%7B%0A%20%20%20%20%20%20%20%20%20%20%20%20%09%23%20get%20%E8%AF%B7%E6%B1%82%E5%8F%AF%E4%BB%A5%E7%9C%81%E7%95%A5%E4%B8%8D%E5%86%99%20%E9%BB%98%E8%AE%A4%E7%9A%84%E6%98%AFGET%20%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20method%3A%20'get'%0A%20%20%20%20%20%20%20%20%20%20%20%20%7D)%0A%20%20%20%20%20%20%20%20%20%20%20%20.then(function(data)%20%7B%0A%20%20%20%20%20%20%20%20%20%20%20%20%09%23%20%E5%AE%83%E8%BF%94%E5%9B%9E%E4%B8%80%E4%B8%AAPromise%E5%AE%9E%E4%BE%8B%E5%AF%B9%E8%B1%A1%EF%BC%8C%E7%94%A8%E4%BA%8E%E8%8E%B7%E5%8F%96%E5%90%8E%E5%8F%B0%E8%BF%94%E5%9B%9E%E7%9A%84%E6%95%B0%E6%8D%AE%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20return%20data.text()%3B%0A%20%20%20%20%20%20%20%20%20%20%20%20%7D).then(function(data)%20%7B%0A%20%20%20%20%20%20%20%20%20%20%20%20%09%23%20%E5%9C%A8%E8%BF%99%E4%B8%AAthen%E9%87%8C%E9%9D%A2%E6%88%91%E4%BB%AC%E8%83%BD%E6%8B%BF%E5%88%B0%E6%9C%80%E7%BB%88%E7%9A%84%E6%95%B0%E6%8D%AE%20%20%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20console.log(data)%0A%20%20%20%20%20%20%20%20%20%20%20%20%7D)%3B%0A%0A%20%20%20%20%20%20%231.2%20%20GET%E5%8F%82%E6%95%B0%E4%BC%A0%E9%80%92%20%20restful%E5%BD%A2%E5%BC%8F%E7%9A%84URL%20%20%E9%80%9A%E8%BF%87%2F%20%E7%9A%84%E5%BD%A2%E5%BC%8F%E4%BC%A0%E9%80%92%E5%8F%82%E6%95%B0%20%20%E5%8D%B3%20%20id%20%3D%20456%20%E5%92%8Cid%E5%90%8E%E5%8F%B0%E7%9A%84%E9%85%8D%E7%BD%AE%E6%9C%89%E5%85%B3%20%20%20%0A%20%20%20%20%20%20%20%20fetch('http%3A%2F%2Flocalhost%3A3000%2Fbooks%2F456'%2C%20%7B%0A%20%20%20%20%20%20%20%20%20%20%20%20%09%23%20get%20%E8%AF%B7%E6%B1%82%E5%8F%AF%E4%BB%A5%E7%9C%81%E7%95%A5%E4%B8%8D%E5%86%99%20%E9%BB%98%E8%AE%A4%E7%9A%84%E6%98%AFGET%20%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20method%3A%20'get'%0A%20%20%20%20%20%20%20%20%20%20%20%20%7D)%0A%20%20%20%20%20%20%20%20%20%20%20%20.then(function(data)%20%7B%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20return%20data.text()%3B%0A%20%20%20%20%20%20%20%20%20%20%20%20%7D).then(function(data)%20%7B%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20console.log(data)%0A%20%20%20%20%20%20%20%20%20%20%20%20%7D)%3B%0A%0A%20%20%20%20%20%20%20%232.1%20%20DELETE%E8%AF%B7%E6%B1%82%E6%96%B9%E5%BC%8F%E5%8F%82%E6%95%B0%E4%BC%A0%E9%80%92%20%20%20%20%20%20%E5%88%A0%E9%99%A4id%20%20%E6%98%AF%20%20id%3D789%0A%20%20%20%20%20%20%20%20fetch('http%3A%2F%2Flocalhost%3A3000%2Fbooks%2F789'%2C%20%7B%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20method%3A%20'delete'%0A%20%20%20%20%20%20%20%20%20%20%20%20%7D)%0A%20%20%20%20%20%20%20%20%20%20%20%20.then(function(data)%20%7B%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20return%20data.text()%3B%0A%20%20%20%20%20%20%20%20%20%20%20%20%7D).then(function(data)%20%7B%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20console.log(data)%0A%20%20%20%20%20%20%20%20%20%20%20%20%7D)%3B%0A%0A%20%20%20%20%20%20%20%233%20POST%E8%AF%B7%E6%B1%82%E4%BC%A0%E5%8F%82%0A%20%20%20%20%20%20%20%20fetch('http%3A%2F%2Flocalhost%3A3000%2Fbooks'%2C%20%7B%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20method%3A%20'post'%2C%0A%20%20%20%20%20%20%20%20%20%20%20%20%09%23%203.1%20%20%E4%BC%A0%E9%80%92%E6%95%B0%E6%8D%AE%20%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20body%3A%20'uname%3Dlisi%26pwd%3D123'%2C%0A%20%20%20%20%20%20%20%20%20%20%20%20%09%23%20%203.2%20%20%E8%AE%BE%E7%BD%AE%E8%AF%B7%E6%B1%82%E5%A4%B4%20%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20headers%3A%20%7B%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20'Content-Type'%3A%20'application%2Fx-www-form-urlencoded'%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%7D%0A%20%20%20%20%20%20%20%20%20%20%20%20%7D)%0A%20%20%20%20%20%20%20%20%20%20%20%20.then(function(data)%20%7B%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20return%20data.text()%3B%0A%20%20%20%20%20%20%20%20%20%20%20%20%7D).then(function(data)%20%7B%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20console.log(data)%0A%20%20%20%20%20%20%20%20%20%20%20%20%7D)%3B%0A%0A%20%20%20%20%20%20%20%23%20POST%E8%AF%B7%E6%B1%82%E4%BC%A0%E5%8F%82%0A%20%20%20%20%20%20%20%20fetch('http%3A%2F%2Flocalhost%3A3000%2Fbooks'%2C%20%7B%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20method%3A%20'post'%2C%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20body%3A%20JSON.stringify(%7B%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20uname%3A%20'%E5%BC%A0%E4%B8%89'%2C%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20pwd%3A%20'456'%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%7D)%2C%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20headers%3A%20%7B%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20'Content-Type'%3A%20'application%2Fjson'%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%7D%0A%20%20%20%20%20%20%20%20%20%20%20%20%7D)%0A%20%20%20%20%20%20%20%20%20%20%20%20.then(function(data)%20%7B%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20return%20data.text()%3B%0A%20%20%20%20%20%20%20%20%20%20%20%20%7D).then(function(data)%20%7B%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20console.log(data)%0A%20%20%20%20%20%20%20%20%20%20%20%20%7D)%3B%0A%0A%20%20%20%20%20%20%20%20%23%20PUT%E8%AF%B7%E6%B1%82%E4%BC%A0%E5%8F%82%20%20%20%20%20%E4%BF%AE%E6%94%B9id%20%E6%98%AF%20123%20%E7%9A%84%20%0A%20%20%20%20%20%20%20%20fetch('http%3A%2F%2Flocalhost%3A3000%2Fbooks%2F123'%2C%20%7B%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20method%3A%20'put'%2C%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20body%3A%20JSON.stringify(%7B%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20uname%3A%20'%E5%BC%A0%E4%B8%89'%2C%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20pwd%3A%20'789'%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%7D)%2C%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20headers%3A%20%7B%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20'Content-Type'%3A%20'application%2Fjson'%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%7D%0A%20%20%20%20%20%20%20%20%20%20%20%20%7D)%0A%20%20%20%20%20%20%20%20%20%20%20%20.then(function(data)%20%7B%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20return%20data.text()%3B%0A%20%20%20%20%20%20%20%20%20%20%20%20%7D).then(function(data)%20%7B%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20console.log(data)%0A%20%20%20%20%20%20%20%20%20%20%20%20%7D)%3B%0A%20%20%20%20%3C%2Fscript%3E%0A%60%60%60%0A%0A%23%23%23%23%20%20fetchAPI%20%E4%B8%AD%20%E5%93%8D%E5%BA%94%E6%A0%BC%E5%BC%8F%0A%0A-%20%E7%94%A8fetch%E6%9D%A5%E8%8E%B7%E5%8F%96%E6%95%B0%E6%8D%AE%EF%BC%8C%E5%A6%82%E6%9E%9C%E5%93%8D%E5%BA%94%E6%AD%A3%E5%B8%B8%E8%BF%94%E5%9B%9E%EF%BC%8C%E6%88%91%E4%BB%AC%E9%A6%96%E5%85%88%E7%9C%8B%E5%88%B0%E7%9A%84%E6%98%AF%E4%B8%80%E4%B8%AAresponse%E5%AF%B9%E8%B1%A1%EF%BC%8C%E5%85%B6%E4%B8%AD%E5%8C%85%E6%8B%AC%E8%BF%94%E5%9B%9E%E7%9A%84%E4%B8%80%E5%A0%86%E5%8E%9F%E5%A7%8B%E5%AD%97%E8%8A%82%EF%BC%8C%E8%BF%99%E4%BA%9B%E5%AD%97%E8%8A%82%E9%9C%80%E8%A6%81%E5%9C%A8%E6%94%B6%E5%88%B0%E5%90%8E%EF%BC%8C%E9%9C%80%E8%A6%81%E6%88%91%E4%BB%AC%E9%80%9A%E8%BF%87%E8%B0%83%E7%94%A8%E6%96%B9%E6%B3%95%E5%B0%86%E5%85%B6%E8%BD%AC%E6%8D%A2%E4%B8%BA%E7%9B%B8%E5%BA%94%E6%A0%BC%E5%BC%8F%E7%9A%84%E6%95%B0%E6%8D%AE%EF%BC%8C%E6%AF%94%E5%A6%82%60JSON%60%EF%BC%8C%60BLOB%60%E6%88%96%E8%80%85%60TEXT%60%E7%AD%89%E7%AD%89%0A%0A%60%60%60js%0A%0A%20%20%20%20%2F*%0A%20%20%20%20%20%20Fetch%E5%93%8D%E5%BA%94%E7%BB%93%E6%9E%9C%E7%9A%84%E6%95%B0%E6%8D%AE%E6%A0%BC%E5%BC%8F%0A%20%20%20%20*%2F%0A%20%20%20%20fetch('http%3A%2F%2Flocalhost%3A3000%2Fjson').then(function(data)%7B%0A%20%20%20%20%20%20%2F%2F%20return%20data.json()%3B%20%20%20%2F%2F%20%20%E5%B0%86%E8%8E%B7%E5%8F%96%E5%88%B0%E7%9A%84%E6%95%B0%E6%8D%AE%E4%BD%BF%E7%94%A8%20json%20%E8%BD%AC%E6%8D%A2%E5%AF%B9%E8%B1%A1%0A%20%20%20%20%20%20return%20data.text()%3B%20%2F%2F%20%20%2F%2F%20%20%E5%B0%86%E8%8E%B7%E5%8F%96%E5%88%B0%E7%9A%84%E6%95%B0%E6%8D%AE%20%E8%BD%AC%E6%8D%A2%E6%88%90%E5%AD%97%E7%AC%A6%E4%B8%B2%20%0A%20%20%20%20%7D).then(function(data)%7B%0A%20%20%20%20%20%20%2F%2F%20console.log(data.uname)%0A%20%20%20%20%20%20%2F%2F%20console.log(typeof%20data)%0A%20%20%20%20%20%20var%20obj%20%3D%20JSON.parse(data)%3B%0A%20%20%20%20%20%20console.log(obj.uname%2Cobj.age%2Cobj.gender)%0A%20%20%20%20%7D)%0A%0A%60%60%60%0A%0A%23%23%23%20%20axios%0A%0A-%20%E5%9F%BA%E4%BA%8Epromise%E7%94%A8%E4%BA%8E%E6%B5%8F%E8%A7%88%E5%99%A8%E5%92%8Cnode.js%E7%9A%84http%E5%AE%A2%E6%88%B7%E7%AB%AF%0A-%20%E6%94%AF%E6%8C%81%E6%B5%8F%E8%A7%88%E5%99%A8%E5%92%8Cnode.js%0A-%20%E6%94%AF%E6%8C%81promise%0A-%20%E8%83%BD%E6%8B%A6%E6%88%AA%E8%AF%B7%E6%B1%82%E5%92%8C%E5%93%8D%E5%BA%94%0A-%20%E8%87%AA%E5%8A%A8%E8%BD%AC%E6%8D%A2JSON%E6%95%B0%E6%8D%AE%0A-%20%E8%83%BD%E8%BD%AC%E6%8D%A2%E8%AF%B7%E6%B1%82%E5%92%8C%E5%93%8D%E5%BA%94%E6%95%B0%E6%8D%AE%0A%0A%23%23%23%23%20axios%E5%9F%BA%E7%A1%80%E7%94%A8%E6%B3%95%0A%0A-%20get%E5%92%8C%20delete%E8%AF%B7%E6%B1%82%E4%BC%A0%E9%80%92%E5%8F%82%E6%95%B0%0A%20%20-%20%E9%80%9A%E8%BF%87%E4%BC%A0%E7%BB%9F%E7%9A%84url%20%20%E4%BB%A5%20%3F%20%E7%9A%84%E5%BD%A2%E5%BC%8F%E4%BC%A0%E9%80%92%E5%8F%82%E6%95%B0%0A%20%20-%20%20restful%20%E5%BD%A2%E5%BC%8F%E4%BC%A0%E9%80%92%E5%8F%82%E6%95%B0%20%0A%20%20-%20%E9%80%9A%E8%BF%87params%20%20%E5%BD%A2%E5%BC%8F%E4%BC%A0%E9%80%92%E5%8F%82%E6%95%B0%20%0A-%20post%20%20%E5%92%8C%20put%20%20%E8%AF%B7%E6%B1%82%E4%BC%A0%E9%80%92%E5%8F%82%E6%95%B0%0A%20%20-%20%E9%80%9A%E8%BF%87%E9%80%89%E9%A1%B9%E4%BC%A0%E9%80%92%E5%8F%82%E6%95%B0%0A%20%20-%20%20%E9%80%9A%E8%BF%87%20URLSearchParams%20%20%E4%BC%A0%E9%80%92%E5%8F%82%E6%95%B0%20%0A%0A%60%60%60js%0A%20%20%20%20%23%201.%20%E5%8F%91%E9%80%81get%20%E8%AF%B7%E6%B1%82%20%0A%09axios.get('http%3A%2F%2Flocalhost%3A3000%2Fadata').then(function(ret)%7B%20%0A%20%20%20%20%20%20%23%20%20%E6%8B%BF%E5%88%B0%20ret%20%E6%98%AF%E4%B8%80%E4%B8%AA%E5%AF%B9%E8%B1%A1%20%20%20%20%20%20%E6%89%80%E6%9C%89%E7%9A%84%E5%AF%B9%E8%B1%A1%E9%83%BD%E5%AD%98%E5%9C%A8%20ret%20%E7%9A%84data%20%E5%B1%9E%E6%80%A7%E9%87%8C%E9%9D%A2%0A%20%20%20%20%20%20%2F%2F%20%E6%B3%A8%E6%84%8Fdata%E5%B1%9E%E6%80%A7%E6%98%AF%E5%9B%BA%E5%AE%9A%E7%9A%84%E7%94%A8%E6%B3%95%EF%BC%8C%E7%94%A8%E4%BA%8E%E8%8E%B7%E5%8F%96%E5%90%8E%E5%8F%B0%E7%9A%84%E5%AE%9E%E9%99%85%E6%95%B0%E6%8D%AE%0A%20%20%20%20%20%20%2F%2F%20console.log(ret.data)%0A%20%20%20%20%20%20console.log(ret)%0A%20%20%20%20%7D)%0A%09%23%202.%20%20get%20%E8%AF%B7%E6%B1%82%E4%BC%A0%E9%80%92%E5%8F%82%E6%95%B0%0A%20%20%20%20%23%202.1%20%20%E9%80%9A%E8%BF%87%E4%BC%A0%E7%BB%9F%E7%9A%84url%20%20%E4%BB%A5%20%3F%20%E7%9A%84%E5%BD%A2%E5%BC%8F%E4%BC%A0%E9%80%92%E5%8F%82%E6%95%B0%0A%09axios.get('http%3A%2F%2Flocalhost%3A3000%2Faxios%3Fid%3D123').then(function(ret)%7B%0A%20%20%20%20%20%20console.log(ret.data)%0A%20%20%20%20%7D)%0A%20%20%20%20%23%202.2%20%20restful%20%E5%BD%A2%E5%BC%8F%E4%BC%A0%E9%80%92%E5%8F%82%E6%95%B0%20%0A%20%20%20%20axios.get('http%3A%2F%2Flocalhost%3A3000%2Faxios%2F123').then(function(ret)%7B%0A%20%20%20%20%20%20console.log(ret.data)%0A%20%20%20%20%7D)%0A%09%23%202.3%20%20%E9%80%9A%E8%BF%87params%20%20%E5%BD%A2%E5%BC%8F%E4%BC%A0%E9%80%92%E5%8F%82%E6%95%B0%20%0A%20%20%20%20axios.get('http%3A%2F%2Flocalhost%3A3000%2Faxios'%2C%20%7B%0A%20%20%20%20%20%20params%3A%20%7B%0A%20%20%20%20%20%20%20%20id%3A%20789%0A%20%20%20%20%20%20%7D%0A%20%20%20%20%7D).then(function(ret)%7B%0A%20%20%20%20%20%20console.log(ret.data)%0A%20%20%20%20%7D)%0A%09%233%20axios%20delete%20%E8%AF%B7%E6%B1%82%E4%BC%A0%E5%8F%82%20%20%20%20%20%E4%BC%A0%E5%8F%82%E7%9A%84%E5%BD%A2%E5%BC%8F%E5%92%8C%20get%20%E8%AF%B7%E6%B1%82%E4%B8%80%E6%A0%B7%0A%20%20%20%20axios.delete('http%3A%2F%2Flocalhost%3A3000%2Faxios'%2C%20%7B%0A%20%20%20%20%20%20params%3A%20%7B%0A%20%20%20%20%20%20%20%20id%3A%20111%0A%20%20%20%20%20%20%7D%0A%20%20%20%20%7D).then(function(ret)%7B%0A%20%20%20%20%20%20console.log(ret.data)%0A%20%20%20%20%7D)%0A%0A%09%23%204%20%20axios%20%E7%9A%84%20post%20%E8%AF%B7%E6%B1%82%0A%20%20%20%20%23%204.1%20%20%E9%80%9A%E8%BF%87%E9%80%89%E9%A1%B9%E4%BC%A0%E9%80%92%E5%8F%82%E6%95%B0%0A%20%20%20%20axios.post('http%3A%2F%2Flocalhost%3A3000%2Faxios'%2C%20%7B%0A%20%20%20%20%20%20uname%3A%20'lisi'%2C%0A%20%20%20%20%20%20pwd%3A%20123%0A%20%20%20%20%7D).then(function(ret)%7B%0A%20%20%20%20%20%20console.log(ret.data)%0A%20%20%20%20%7D)%0A%09%23%204.2%20%20%E9%80%9A%E8%BF%87%20URLSearchParams%20%20%E4%BC%A0%E9%80%92%E5%8F%82%E6%95%B0%20%0A%20%20%20%20var%20params%20%3D%20new%20URLSearchParams()%3B%0A%20%20%20%20params.append('uname'%2C%20'zhangsan')%3B%0A%20%20%20%20params.append('pwd'%2C%20'111')%3B%0A%20%20%20%20axios.post('http%3A%2F%2Flocalhost%3A3000%2Faxios'%2C%20params).then(function(ret)%7B%0A%20%20%20%20%20%20console.log(ret.data)%0A%20%20%20%20%7D)%0A%0A%20%09%235%20%20axios%20put%20%E8%AF%B7%E6%B1%82%E4%BC%A0%E5%8F%82%20%20%20%E5%92%8C%20post%20%E8%AF%B7%E6%B1%82%E4%B8%80%E6%A0%B7%20%0A%20%20%20%20axios.put('http%3A%2F%2Flocalhost%3A3000%2Faxios%2F123'%2C%20%7B%0A%20%20%20%20%20%20uname%3A%20'lisi'%2C%0A%20%20%20%20%20%20pwd%3A%20123%0A%20%20%20%20%7D).then(function(ret)%7B%0A%20%20%20%20%20%20console.log(ret.data)%0A%20%20%20%20%7D)%0A%0A%60%60%60%0A%0A%23%23%23%23%20axios%20%E5%85%A8%E5%B1%80%E9%85%8D%E7%BD%AE%0A%0A%60%60%60js%0A%23%20%20%E9%85%8D%E7%BD%AE%E5%85%AC%E5%85%B1%E7%9A%84%E8%AF%B7%E6%B1%82%E5%A4%B4%20%0Aaxios.defaults.baseURL%20%3D%20'https%3A%2F%2Fapi.example.com'%3B%0A%23%20%20%E9%85%8D%E7%BD%AE%20%E8%B6%85%E6%97%B6%E6%97%B6%E9%97%B4%0Aaxios.defaults.timeout%20%3D%202500%3B%0A%23%20%20%E9%85%8D%E7%BD%AE%E5%85%AC%E5%85%B1%E7%9A%84%E8%AF%B7%E6%B1%82%E5%A4%B4%0Aaxios.defaults.headers.common%5B'Authorization'%5D%20%3D%20AUTH_TOKEN%3B%0A%23%20%E9%85%8D%E7%BD%AE%E5%85%AC%E5%85%B1%E7%9A%84%20post%20%E7%9A%84%20Content-Type%0Aaxios.defaults.headers.post%5B'Content-Type'%5D%20%3D%20'application%2Fx-www-form-urlencoded'%3B%0A%0A%0A%60%60%60%0A%0A%23%23%23%23%20%20axios%20%E6%8B%A6%E6%88%AA%E5%99%A8%0A%0A-%20%E8%AF%B7%E6%B1%82%E6%8B%A6%E6%88%AA%E5%99%A8%0A%20%20-%20%E8%AF%B7%E6%B1%82%E6%8B%A6%E6%88%AA%E5%99%A8%E7%9A%84%E4%BD%9C%E7%94%A8%E6%98%AF%E5%9C%A8%E8%AF%B7%E6%B1%82%E5%8F%91%E9%80%81%E5%89%8D%E8%BF%9B%E8%A1%8C%E4%B8%80%E4%BA%9B%E6%93%8D%E4%BD%9C%0A%20%20%20%20-%20%E4%BE%8B%E5%A6%82%E5%9C%A8%E6%AF%8F%E4%B8%AA%E8%AF%B7%E6%B1%82%E4%BD%93%E9%87%8C%E5%8A%A0%E4%B8%8Atoken%EF%BC%8C%E7%BB%9F%E4%B8%80%E5%81%9A%E4%BA%86%E5%A4%84%E7%90%86%E5%A6%82%E6%9E%9C%E4%BB%A5%E5%90%8E%E8%A6%81%E6%94%B9%E4%B9%9F%E9%9D%9E%E5%B8%B8%E5%AE%B9%E6%98%93%0A-%20%E5%93%8D%E5%BA%94%E6%8B%A6%E6%88%AA%E5%99%A8%0A%20%20-%20%E5%93%8D%E5%BA%94%E6%8B%A6%E6%88%AA%E5%99%A8%E7%9A%84%E4%BD%9C%E7%94%A8%E6%98%AF%E5%9C%A8%E6%8E%A5%E6%94%B6%E5%88%B0%E5%93%8D%E5%BA%94%E5%90%8E%E8%BF%9B%E8%A1%8C%E4%B8%80%E4%BA%9B%E6%93%8D%E4%BD%9C%0A%20%20%20%20-%20%E4%BE%8B%E5%A6%82%E5%9C%A8%E6%9C%8D%E5%8A%A1%E5%99%A8%E8%BF%94%E5%9B%9E%E7%99%BB%E5%BD%95%E7%8A%B6%E6%80%81%E5%A4%B1%E6%95%88%EF%BC%8C%E9%9C%80%E8%A6%81%E9%87%8D%E6%96%B0%E7%99%BB%E5%BD%95%E7%9A%84%E6%97%B6%E5%80%99%EF%BC%8C%E8%B7%B3%E8%BD%AC%E5%88%B0%E7%99%BB%E5%BD%95%E9%A1%B5%0A%0A%60%60%60js%0A%09%23%201.%20%E8%AF%B7%E6%B1%82%E6%8B%A6%E6%88%AA%E5%99%A8%20%0A%09axios.interceptors.request.use(function(config)%20%7B%0A%20%20%20%20%20%20console.log(config.url)%0A%20%20%20%20%20%20%23%201.1%20%20%E4%BB%BB%E4%BD%95%E8%AF%B7%E6%B1%82%E9%83%BD%E4%BC%9A%E7%BB%8F%E8%BF%87%E8%BF%99%E4%B8%80%E6%AD%A5%20%20%20%E5%9C%A8%E5%8F%91%E9%80%81%E8%AF%B7%E6%B1%82%E4%B9%8B%E5%89%8D%E5%81%9A%E4%BA%9B%E4%BB%80%E4%B9%88%20%20%20%0A%20%20%20%20%20%20config.headers.mytoken%20%3D%20'nihao'%3B%0A%20%20%20%20%20%20%23%201.2%20%20%E8%BF%99%E9%87%8C%E4%B8%80%E5%AE%9A%E8%A6%81return%20%20%20%E5%90%A6%E5%88%99%E9%85%8D%E7%BD%AE%E4%B8%8D%E6%88%90%E5%8A%9F%20%20%0A%20%20%20%20%20%20return%20config%3B%0A%20%20%20%20%7D%2C%20function(err)%7B%0A%20%20%20%20%20%20%20%231.3%20%E5%AF%B9%E8%AF%B7%E6%B1%82%E9%94%99%E8%AF%AF%E5%81%9A%E7%82%B9%E4%BB%80%E4%B9%88%20%20%20%20%0A%20%20%20%20%20%20console.log(err)%0A%20%20%20%20%7D)%0A%09%232.%20%E5%93%8D%E5%BA%94%E6%8B%A6%E6%88%AA%E5%99%A8%20%0A%20%20%20%20axios.interceptors.response.use(function(res)%20%7B%0A%20%20%20%20%20%20%232.1%20%20%E5%9C%A8%E6%8E%A5%E6%94%B6%E5%93%8D%E5%BA%94%E5%81%9A%E4%BA%9B%E4%BB%80%E4%B9%88%20%20%0A%20%20%20%20%20%20var%20data%20%3D%20res.data%3B%0A%20%20%20%20%20%20return%20data%3B%0A%20%20%20%20%7D%2C%20function(err)%7B%0A%20%20%20%20%20%20%232.2%20%E5%AF%B9%E5%93%8D%E5%BA%94%E9%94%99%E8%AF%AF%E5%81%9A%E7%82%B9%E4%BB%80%E4%B9%88%20%20%0A%20%20%20%20%20%20console.log(err)%0A%20%20%20%20%7D)%0A%60%60%60%0A%0A%23%23%23%20%20async%20%20%E5%92%8C%20await%0A%0A-%20async%E4%BD%9C%E4%B8%BA%E4%B8%80%E4%B8%AA%E5%85%B3%E9%94%AE%E5%AD%97%E6%94%BE%E5%88%B0%E5%87%BD%E6%95%B0%E5%89%8D%E9%9D%A2%0A%20%20-%20%E4%BB%BB%E4%BD%95%E4%B8%80%E4%B8%AA%60async%60%E5%87%BD%E6%95%B0%E9%83%BD%E4%BC%9A%E9%9A%90%E5%BC%8F%E8%BF%94%E5%9B%9E%E4%B8%80%E4%B8%AA%60promise%60%0A-%20%60await%60%E5%85%B3%E9%94%AE%E5%AD%97%E5%8F%AA%E8%83%BD%E5%9C%A8%E4%BD%BF%E7%94%A8%60async%60%E5%AE%9A%E4%B9%89%E7%9A%84%E5%87%BD%E6%95%B0%E4%B8%AD%E4%BD%BF%E7%94%A8%0A%20%20-%20%E2%80%8B%20%20%20%20await%E5%90%8E%E9%9D%A2%E5%8F%AF%E4%BB%A5%E7%9B%B4%E6%8E%A5%E8%B7%9F%E4%B8%80%E4%B8%AA%20Promise%E5%AE%9E%E4%BE%8B%E5%AF%B9%E8%B1%A1%0A%20%20-%20%E2%80%8B%20%20%20%20%20await%E5%87%BD%E6%95%B0%E4%B8%8D%E8%83%BD%E5%8D%95%E7%8B%AC%E4%BD%BF%E7%94%A8%0A-%20**async%2Fawait%20%E8%AE%A9%E5%BC%82%E6%AD%A5%E4%BB%A3%E7%A0%81%E7%9C%8B%E8%B5%B7%E6%9D%A5%E3%80%81%E8%A1%A8%E7%8E%B0%E8%B5%B7%E6%9D%A5%E6%9B%B4%E5%83%8F%E5%90%8C%E6%AD%A5%E4%BB%A3%E7%A0%81**%0A%0A%60%60%60js%0A%20%09%23%201.%20%20async%20%E5%9F%BA%E7%A1%80%E7%94%A8%E6%B3%95%0A%20%20%20%20%23%201.1%20async%E4%BD%9C%E4%B8%BA%E4%B8%80%E4%B8%AA%E5%85%B3%E9%94%AE%E5%AD%97%E6%94%BE%E5%88%B0%E5%87%BD%E6%95%B0%E5%89%8D%E9%9D%A2%0A%09async%20function%20queryData()%20%7B%0A%20%20%20%20%20%20%23%201.2%20await%E5%85%B3%E9%94%AE%E5%AD%97%E5%8F%AA%E8%83%BD%E5%9C%A8%E4%BD%BF%E7%94%A8async%E5%AE%9A%E4%B9%89%E7%9A%84%E5%87%BD%E6%95%B0%E4%B8%AD%E4%BD%BF%E7%94%A8%20%20%20%20%20%20await%E5%90%8E%E9%9D%A2%E5%8F%AF%E4%BB%A5%E7%9B%B4%E6%8E%A5%E8%B7%9F%E4%B8%80%E4%B8%AA%20Promise%E5%AE%9E%E4%BE%8B%E5%AF%B9%E8%B1%A1%0A%20%20%20%20%20%20var%20ret%20%3D%20await%20new%20Promise(function(resolve%2C%20reject)%7B%0A%20%20%20%20%20%20%20%20setTimeout(function()%7B%0A%20%20%20%20%20%20%20%20%20%20resolve('nihao')%0A%20%20%20%20%20%20%20%20%7D%2C1000)%3B%0A%20%20%20%20%20%20%7D)%0A%20%20%20%20%20%20%2F%2F%20console.log(ret.data)%0A%20%20%20%20%20%20return%20ret%3B%0A%20%20%20%20%7D%0A%09%23%201.3%20%E4%BB%BB%E4%BD%95%E4%B8%80%E4%B8%AAasync%E5%87%BD%E6%95%B0%E9%83%BD%E4%BC%9A%E9%9A%90%E5%BC%8F%E8%BF%94%E5%9B%9E%E4%B8%80%E4%B8%AApromise%20%20%20%E6%88%91%E4%BB%AC%E5%8F%AF%E4%BB%A5%E4%BD%BF%E7%94%A8then%20%E8%BF%9B%E8%A1%8C%E9%93%BE%E5%BC%8F%E7%BC%96%E7%A8%8B%0A%20%20%20%20queryData().then(function(data)%7B%0A%20%20%20%20%20%20console.log(data)%0A%20%20%20%20%7D)%0A%0A%09%232.%20%20async%20%20%20%20%E5%87%BD%E6%95%B0%E5%A4%84%E7%90%86%E5%A4%9A%E4%B8%AA%E5%BC%82%E6%AD%A5%E5%87%BD%E6%95%B0%0A%20%20%20%20axios.defaults.baseURL%20%3D%20'http%3A%2F%2Flocalhost%3A3000'%3B%0A%0A%20%20%20%20async%20function%20queryData()%20%7B%0A%20%20%20%20%20%20%23%202.1%20%20%E6%B7%BB%E5%8A%A0await%E4%B9%8B%E5%90%8E%20%E5%BD%93%E5%89%8D%E7%9A%84await%20%E8%BF%94%E5%9B%9E%E7%BB%93%E6%9E%9C%E4%B9%8B%E5%90%8E%E6%89%8D%E4%BC%9A%E6%89%A7%E8%A1%8C%E5%90%8E%E9%9D%A2%E7%9A%84%E4%BB%A3%E7%A0%81%20%20%20%0A%20%20%20%20%20%20%0A%20%20%20%20%20%20var%20info%20%3D%20await%20axios.get('async1')%3B%0A%20%20%20%20%20%20%232.2%20%20%E8%AE%A9%E5%BC%82%E6%AD%A5%E4%BB%A3%E7%A0%81%E7%9C%8B%E8%B5%B7%E6%9D%A5%E3%80%81%E8%A1%A8%E7%8E%B0%E8%B5%B7%E6%9D%A5%E6%9B%B4%E5%83%8F%E5%90%8C%E6%AD%A5%E4%BB%A3%E7%A0%81%0A%20%20%20%20%20%20var%20ret%20%3D%20await%20axios.get('async2%3Finfo%3D'%20%2B%20info.data)%3B%0A%20%20%20%20%20%20return%20ret.data%3B%0A%20%20%20%20%7D%0A%0A%20%20%20%20queryData().then(function(data)%7B%0A%20%20%20%20%20%20console.log(data)%0A%20%20%20%20%7D)%0A%60%60%60%0A%0A%23%23%23%20%E5%9B%BE%E4%B9%A6%E5%88%97%E8%A1%A8%E6%A1%88%E4%BE%8B%0A%0A%23%23%23%23%201.%20%E5%9F%BA%E4%BA%8E%E6%8E%A5%E5%8F%A3%E6%A1%88%E4%BE%8B-%E8%8E%B7%E5%8F%96%E5%9B%BE%E4%B9%A6%E5%88%97%E8%A1%A8%0A%0A-%20%E5%AF%BC%E5%85%A5axios%20%20%20%E7%94%A8%E6%9D%A5%E5%8F%91%E9%80%81ajax%20%0A-%20%E6%8A%8A%E8%8E%B7%E5%8F%96%E5%88%B0%E7%9A%84%E6%95%B0%E6%8D%AE%E6%B8%B2%E6%9F%93%E5%88%B0%E9%A1%B5%E9%9D%A2%E4%B8%8A%20%0A%0A%60%60%60html%0A%20%20%3Cdiv%20id%3D%22app%22%3E%0A%20%20%20%20%20%20%20%20%3Cdiv%20class%3D%22grid%22%3E%0A%20%20%20%20%20%20%20%20%20%20%20%20%3Ctable%3E%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%3Cthead%3E%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%3Ctr%3E%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%3Cth%3E%E7%BC%96%E5%8F%B7%3C%2Fth%3E%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%3Cth%3E%E5%90%8D%E7%A7%B0%3C%2Fth%3E%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%3Cth%3E%E6%97%B6%E9%97%B4%3C%2Fth%3E%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%3Cth%3E%E6%93%8D%E4%BD%9C%3C%2Fth%3E%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%3C%2Ftr%3E%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%3C%2Fthead%3E%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%3Ctbody%3E%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%3C!--%205.%20%20%E6%8A%8Abooks%20%20%E4%B8%AD%E7%9A%84%E6%95%B0%E6%8D%AE%E6%B8%B2%E6%9F%93%E5%88%B0%E9%A1%B5%E9%9D%A2%E4%B8%8A%20%20%20--%3E%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%3Ctr%20%3Akey%3D'item.id'%20v-for%3D'item%20in%20books'%3E%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%3Ctd%3E%7B%7Bitem.id%7D%7D%3C%2Ftd%3E%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%3Ctd%3E%7B%7Bitem.name%7D%7D%3C%2Ftd%3E%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%3Ctd%3E%7B%7Bitem.date%20%7D%7D%3C%2Ftd%3E%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%3Ctd%3E%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%3Ca%20href%3D%22%22%3E%E4%BF%AE%E6%94%B9%3C%2Fa%3E%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%3Cspan%3E%7C%3C%2Fspan%3E%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%3Ca%20href%3D%22%22%3E%E5%88%A0%E9%99%A4%3C%2Fa%3E%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%3C%2Ftd%3E%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%3C%2Ftr%3E%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%3C%2Ftbody%3E%0A%20%20%20%20%20%20%20%20%20%20%20%20%3C%2Ftable%3E%0A%20%20%20%20%20%20%20%20%3C%2Fdiv%3E%0A%20%20%20%20%3C%2Fdiv%3E%0A%20%20%20%20%3Cscript%20type%3D%22text%2Fjavascript%22%20src%3D%22js%2Fvue.js%22%3E%3C%2Fscript%3E%0A%091.%20%20%E5%AF%BC%E5%85%A5axios%20%20%20%0A%20%20%20%20%3Cscript%20type%3D%22text%2Fjavascript%22%20src%3D%22js%2Faxios.js%22%3E%3C%2Fscript%3E%0A%20%20%20%20%3Cscript%20type%3D%22text%2Fjavascript%22%3E%0A%20%20%20%20%20%20%20%20%2F*%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%E5%9B%BE%E4%B9%A6%E7%AE%A1%E7%90%86-%E6%B7%BB%E5%8A%A0%E5%9B%BE%E4%B9%A6%0A%20%20%20%20%20%20%20%20%20*%2F%0A%20%20%20%20%20%20%20%20%23%202%20%20%20%E9%85%8D%E7%BD%AE%E5%85%AC%E5%85%B1%E7%9A%84url%E5%9C%B0%E5%9D%80%20%20%E7%AE%80%E5%8C%96%E5%90%8E%E9%9D%A2%E7%9A%84%E8%B0%83%E7%94%A8%E6%96%B9%E5%BC%8F%0A%20%20%20%20%20%20%20%20axios.defaults.baseURL%20%3D%20'http%3A%2F%2Flocalhost%3A3000%2F'%3B%0A%20%20%20%20%20%20%20%20axios.interceptors.response.use(function(res)%20%7B%0A%20%20%20%20%20%20%20%20%20%20%20%20return%20res.data%3B%0A%20%20%20%20%20%20%20%20%7D%2C%20function(error)%20%7B%0A%20%20%20%20%20%20%20%20%20%20%20%20console.log(error)%0A%20%20%20%20%20%20%20%20%7D)%3B%0A%0A%20%20%20%20%20%20%20%20var%20vm%20%3D%20new%20Vue(%7B%0A%20%20%20%20%20%20%20%20%20%20%20%20el%3A%20'%23app'%2C%0A%20%20%20%20%20%20%20%20%20%20%20%20data%3A%20%7B%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20flag%3A%20false%2C%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20submitFlag%3A%20false%2C%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20id%3A%20''%2C%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20name%3A%20''%2C%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20books%3A%20%5B%5D%0A%20%20%20%20%20%20%20%20%20%20%20%20%7D%2C%0A%20%20%20%20%20%20%20%20%20%20%20%20methods%3A%20%7B%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%23%203%20%E5%AE%9A%E4%B9%89%E4%B8%80%E4%B8%AA%E6%96%B9%E6%B3%95%20%E7%94%A8%E6%9D%A5%E5%8F%91%E9%80%81%20ajax%20%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%23%203.1%20%20%E4%BD%BF%E7%94%A8%20async%20%20%E6%9D%A5%20%E8%AE%A9%E5%BC%82%E6%AD%A5%E7%9A%84%E4%BB%A3%E7%A0%81%20%20%E4%BB%A5%E5%90%8C%E6%AD%A5%E7%9A%84%E5%BD%A2%E5%BC%8F%E4%B9%A6%E5%86%99%20%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20queryData%3A%20async%20function()%20%7B%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%2F%2F%20%E8%B0%83%E7%94%A8%E5%90%8E%E5%8F%B0%E6%8E%A5%E5%8F%A3%E8%8E%B7%E5%8F%96%E5%9B%BE%E4%B9%A6%E5%88%97%E8%A1%A8%E6%95%B0%E6%8D%AE%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%2F%2F%20var%20ret%20%3D%20await%20axios.get('books')%3B%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%2F%2F%20this.books%20%3D%20ret.data%3B%0A%09%09%09%09%09%23%203.2%20%20%E5%8F%91%E9%80%81ajax%E8%AF%B7%E6%B1%82%20%20%E6%8A%8A%E6%8B%BF%E5%88%B0%E7%9A%84%E6%95%B0%E6%8D%AE%E6%94%BE%E5%9C%A8books%20%E9%87%8C%E9%9D%A2%20%20%20%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20this.books%20%3D%20await%20axios.get('books')%3B%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%7D%0A%20%20%20%20%20%20%20%20%20%20%20%20%7D%2C%0A%0A%20%20%20%20%20%20%20%20%20%20%20%20mounted%3A%20function()%20%7B%0A%09%09%09%09%23%20%204%20mounted%20%20%E9%87%8C%E9%9D%A2%20DOM%E5%B7%B2%E7%BB%8F%E5%8A%A0%E8%BD%BD%E5%AE%8C%E6%AF%95%20%20%E5%9C%A8%E8%BF%99%E9%87%8C%E8%B0%83%E7%94%A8%E5%87%BD%E6%95%B0%20%20%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20this.queryData()%3B%0A%20%20%20%20%20%20%20%20%20%20%20%20%7D%0A%20%20%20%20%20%20%20%20%7D)%3B%0A%20%20%20%20%3C%2Fscript%3E%0A%60%60%60%0A%0A%23%23%23%23%202%20%20%20%E6%B7%BB%E5%8A%A0%E5%9B%BE%E4%B9%A6%0A%0A-%20%E8%8E%B7%E5%8F%96%E7%94%A8%E6%88%B7%E8%BE%93%E5%85%A5%E7%9A%84%E6%95%B0%E6%8D%AE%20%20%20%E5%8F%91%E9%80%81%E5%88%B0%E5%90%8E%E5%8F%B0%0A-%20%E6%B8%B2%E6%9F%93%E6%9C%80%E6%96%B0%E7%9A%84%E6%95%B0%E6%8D%AE%E5%88%B0%E9%A1%B5%E9%9D%A2%E4%B8%8A%0A%0A%60%60%60js%0A%20methods%3A%20%7B%0A%20%20%20%20handle%3A%20async%20function()%7B%0A%20%20%20%20%20%20%20%20%20%20if(this.flag)%20%7B%0A%20%20%20%20%20%20%20%20%20%20%20%20%2F%2F%20%E7%BC%96%E8%BE%91%E5%9B%BE%E4%B9%A6%0A%20%20%20%20%20%20%20%20%20%20%20%20%2F%2F%20%E5%B0%B1%E6%98%AF%E6%A0%B9%E6%8D%AE%E5%BD%93%E5%89%8D%E7%9A%84ID%E5%8E%BB%E6%9B%B4%E6%96%B0%E6%95%B0%E7%BB%84%E4%B8%AD%E5%AF%B9%E5%BA%94%E7%9A%84%E6%95%B0%E6%8D%AE%0A%20%20%20%20%20%20%20%20%20%20%20%20this.books.some((item)%20%3D%3E%20%7B%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20if(item.id%20%3D%3D%20this.id)%20%7B%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20item.name%20%3D%20this.name%3B%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%2F%2F%20%E5%AE%8C%E6%88%90%E6%9B%B4%E6%96%B0%E6%93%8D%E4%BD%9C%E4%B9%8B%E5%90%8E%EF%BC%8C%E9%9C%80%E8%A6%81%E7%BB%88%E6%AD%A2%E5%BE%AA%E7%8E%AF%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20return%20true%3B%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%7D%0A%20%20%20%20%20%20%20%20%20%20%20%20%7D)%3B%0A%20%20%20%20%20%20%20%20%20%20%20%20this.flag%20%3D%20false%3B%0A%20%20%20%20%20%20%20%20%20%20%7Delse%7B%0A%20%20%20%20%20%20%20%20%20%20%20%20%23%201.1%20%20%E5%9C%A8%E5%89%8D%E9%9D%A2%E5%B0%81%E8%A3%85%E5%A5%BD%E7%9A%84%20handle%20%E6%96%B9%E6%B3%95%E4%B8%AD%20%20%E5%8F%91%E9%80%81ajax%E8%AF%B7%E6%B1%82%20%20%0A%20%20%20%20%20%20%20%20%20%20%20%20%23%201.2%20%20%E4%BD%BF%E7%94%A8async%20%20%E5%92%8C%20await%20%E7%AE%80%E5%8C%96%E6%93%8D%E4%BD%9C%20%E9%9C%80%E8%A6%81%E5%9C%A8%20function%20%E5%89%8D%E9%9D%A2%E6%B7%BB%E5%8A%A0%20async%20%20%20%0A%20%20%20%20%20%20%20%20%20%20%20%20var%20ret%20%3D%20await%20axios.post('books'%2C%20%7B%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20name%3A%20this.name%0A%20%20%20%20%20%20%20%20%20%20%20%20%7D)%0A%20%20%20%20%20%20%20%20%20%20%20%20%23%201.3%20%20%E6%A0%B9%E6%8D%AE%E5%90%8E%E5%8F%B0%E8%BF%94%E5%9B%9E%E7%9A%84%E7%8A%B6%E6%80%81%E7%A0%81%E5%88%A4%E6%96%AD%E6%98%AF%E5%90%A6%E5%8A%A0%E8%BD%BD%E6%95%B0%E6%8D%AE%20%0A%20%20%20%20%20%20%20%20%20%20%20%20if(ret.status%20%3D%3D%20200)%20%7B%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%23%201.4%20%20%E8%B0%83%E7%94%A8%20queryData%20%E8%BF%99%E4%B8%AA%E6%96%B9%E6%B3%95%20%20%E6%B8%B2%E6%9F%93%E6%9C%80%E6%96%B0%E7%9A%84%E6%95%B0%E6%8D%AE%20%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20this.queryData()%3B%0A%20%20%20%20%20%20%20%20%20%20%20%20%7D%0A%20%20%20%20%20%20%20%20%20%20%7D%0A%20%20%20%20%20%20%20%20%20%20%2F%2F%20%E6%B8%85%E7%A9%BA%E8%A1%A8%E5%8D%95%0A%20%20%20%20%20%20%20%20%20%20this.id%20%3D%20''%3B%0A%20%20%20%20%20%20%20%20%20%20this.name%20%3D%20''%3B%0A%20%20%20%20%20%20%20%20%7D%2C%20%20%20%20%20%20%20%20%0A%20%7D%20%20%20%20%20%20%20%20%20%0A%60%60%60%0A%0A%23%23%23%23%203%20%20%E9%AA%8C%E8%AF%81%E5%9B%BE%E4%B9%A6%E5%90%8D%E7%A7%B0%E6%98%AF%E5%90%A6%E5%AD%98%E5%9C%A8%0A%0A-%20%E6%B7%BB%E5%8A%A0%E5%9B%BE%E4%B9%A6%E4%B9%8B%E5%89%8D%E5%8F%91%E9%80%81%E8%AF%B7%E6%B1%82%E9%AA%8C%E8%AF%81%E5%9B%BE%E7%A4%BA%E6%98%AF%E5%90%A6%E5%B7%B2%E7%BB%8F%E5%AD%98%E5%9C%A8%0A-%20%E5%A6%82%E6%9E%9C%E4%B8%8D%E5%AD%98%E5%9C%A8%20%E5%BE%80%E5%90%8E%E5%8F%B0%E9%87%8C%E9%9D%A2%E6%B7%BB%E5%8A%A0%E5%9B%BE%E4%B9%A6%E5%90%8D%E7%A7%B0%0A%20%20-%20%E5%9B%BE%E4%B9%A6%E5%AD%98%E5%9C%A8%E4%B8%8E%E5%90%A6%E5%8F%AA%E9%9C%80%E8%A6%81%E4%BF%AE%E6%94%B9submitFlag%E7%9A%84%E5%80%BC%E5%8D%B3%E5%8F%AF%0A%0A%60%60%60js%0A%20watch%3A%20%7B%0A%20%20%20%20%20%20%20%20name%3A%20async%20function(val)%20%7B%0A%20%20%20%20%20%20%20%20%20%20%2F%2F%20%E9%AA%8C%E8%AF%81%E5%9B%BE%E4%B9%A6%E5%90%8D%E7%A7%B0%E6%98%AF%E5%90%A6%E5%B7%B2%E7%BB%8F%E5%AD%98%E5%9C%A8%0A%20%20%20%20%20%20%20%20%20%20%2F%2F%20var%20flag%20%3D%20this.books.some(function(item)%7B%0A%20%20%20%20%20%20%20%20%20%20%2F%2F%20%20%20return%20item.name%20%3D%3D%20val%3B%0A%20%20%20%20%20%20%20%20%20%20%2F%2F%20%7D)%3B%0A%20%20%20%20%20%20%20%20%20%20var%20ret%20%3D%20await%20axios.get('%2Fbooks%2Fbook%2F'%20%2B%20this.name)%3B%0A%20%20%20%20%20%20%20%20%20%20if(ret.status%20%3D%3D%201)%20%7B%0A%20%20%20%20%20%20%20%20%20%20%20%20%2F%2F%20%E5%9B%BE%E4%B9%A6%E5%90%8D%E7%A7%B0%E5%AD%98%E5%9C%A8%0A%20%20%20%20%20%20%20%20%20%20%20%20this.submitFlag%20%3D%20true%3B%0A%20%20%20%20%20%20%20%20%20%20%7Delse%7B%0A%20%20%20%20%20%20%20%20%20%20%20%20%2F%2F%20%E5%9B%BE%E4%B9%A6%E5%90%8D%E7%A7%B0%E4%B8%8D%E5%AD%98%E5%9C%A8%0A%20%20%20%20%20%20%20%20%20%20%20%20this.submitFlag%20%3D%20false%3B%0A%20%20%20%20%20%20%20%20%20%20%7D%0A%20%20%20%20%20%20%20%20%7D%0A%7D%2C%0A%60%60%60%0A%0A%23%23%23%23%204.%20%20%E7%BC%96%E8%BE%91%E5%9B%BE%E4%B9%A6%0A%0A-%20%E6%A0%B9%E6%8D%AE%E5%BD%93%E5%89%8D%E4%B9%A6%E7%9A%84id%20%E6%9F%A5%E8%AF%A2%E9%9C%80%E8%A6%81%E7%BC%96%E8%BE%91%E7%9A%84%E4%B9%A6%E7%B1%8D%0A-%20%E9%9C%80%E8%A6%81%E6%A0%B9%E6%8D%AE%E7%8A%B6%E6%80%81%E4%BD%8D%E5%88%A4%E6%96%AD%E6%98%AF%E6%B7%BB%E5%8A%A0%E8%BF%98%E6%98%AF%E7%BC%96%E8%BE%91%20%0A%0A%60%60%60js%0A%20methods%3A%20%7B%0A%20%20%20%20%20%20%20%20handle%3A%20async%20function()%7B%0A%20%20%20%20%20%20%20%20%20%20if(this.flag)%20%7B%0A%20%20%20%20%20%20%20%20%20%20%20%20%234.3%20%E7%BC%96%E8%BE%91%E5%9B%BE%E4%B9%A6%20%20%20%E6%8A%8A%E7%94%A8%E6%88%B7%E8%BE%93%E5%85%A5%E7%9A%84%E4%BF%A1%E6%81%AF%E6%8F%90%E4%BA%A4%E5%88%B0%E5%90%8E%E5%8F%B0%0A%20%20%20%20%20%20%20%20%20%20%20%20var%20ret%20%3D%20await%20axios.put('books%2F'%20%2B%20this.id%2C%20%7B%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20name%3A%20this.name%0A%20%20%20%20%20%20%20%20%20%20%20%20%7D)%3B%0A%20%20%20%20%20%20%20%20%20%20%20%20if(ret.status%20%3D%3D%20200)%7B%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%234.4%20%20%E5%AE%8C%E6%88%90%E6%B7%BB%E5%8A%A0%E5%90%8E%20%E9%87%8D%E6%96%B0%E5%8A%A0%E8%BD%BD%E5%88%97%E8%A1%A8%E6%95%B0%E6%8D%AE%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20this.queryData()%3B%0A%20%20%20%20%20%20%20%20%20%20%20%20%7D%0A%20%20%20%20%20%20%20%20%20%20%20%20this.flag%20%3D%20false%3B%0A%20%20%20%20%20%20%20%20%20%20%7Delse%7B%0A%20%20%20%20%20%20%20%20%20%20%20%20%2F%2F%20%E6%B7%BB%E5%8A%A0%E5%9B%BE%E4%B9%A6%0A%20%20%20%20%20%20%20%20%20%20%20%20var%20ret%20%3D%20await%20axios.post('books'%2C%20%7B%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20name%3A%20this.name%0A%20%20%20%20%20%20%20%20%20%20%20%20%7D)%0A%20%20%20%20%20%20%20%20%20%20%20%20if(ret.status%20%3D%3D%20200)%20%7B%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%2F%2F%20%E9%87%8D%E6%96%B0%E5%8A%A0%E8%BD%BD%E5%88%97%E8%A1%A8%E6%95%B0%E6%8D%AE%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20this.queryData()%3B%0A%20%20%20%20%20%20%20%20%20%20%20%20%7D%0A%20%20%20%20%20%20%20%20%20%20%7D%0A%20%20%20%20%20%20%20%20%20%20%2F%2F%20%E6%B8%85%E7%A9%BA%E8%A1%A8%E5%8D%95%0A%20%20%20%20%20%20%20%20%20%20this.id%20%3D%20''%3B%0A%20%20%20%20%20%20%20%20%20%20this.name%20%3D%20''%3B%0A%20%20%20%20%20%20%20%20%7D%2C%0A%20%20%20%20%20%20%20%20toEdit%3A%20async%20function(id)%7B%0A%20%20%20%20%20%20%20%20%20%20%234.1%20%20flag%E7%8A%B6%E6%80%81%E4%BD%8D%E7%94%A8%E4%BA%8E%E5%8C%BA%E5%88%86%E7%BC%96%E8%BE%91%E5%92%8C%E6%B7%BB%E5%8A%A0%E6%93%8D%E4%BD%9C%0A%20%20%20%20%20%20%20%20%20%20this.flag%20%3D%20true%3B%0A%20%20%20%20%20%20%20%20%20%20%234.2%20%20%E6%A0%B9%E6%8D%AEid%E6%9F%A5%E8%AF%A2%E5%87%BA%E5%AF%B9%E5%BA%94%E7%9A%84%E5%9B%BE%E4%B9%A6%E4%BF%A1%E6%81%AF%20%20%E9%A1%B5%E9%9D%A2%E4%B8%AD%E5%8F%AF%E4%BB%A5%E5%8A%A0%E8%BD%BD%E5%87%BA%E6%9D%A5%E6%9C%80%E6%96%B0%E7%9A%84%E4%BF%A1%E6%81%AF%0A%20%20%20%20%20%20%20%20%20%20%23%20%E8%B0%83%E7%94%A8%E6%8E%A5%E5%8F%A3%E5%8F%91%E9%80%81ajax%20%E8%AF%B7%E6%B1%82%20%20%0A%20%20%20%20%20%20%20%20%20%20var%20ret%20%3D%20await%20axios.get('books%2F'%20%2B%20id)%3B%0A%20%20%20%20%20%20%20%20%20%20this.id%20%3D%20ret.id%3B%0A%20%20%20%20%20%20%20%20%20%20this.name%20%3D%20ret.name%3B%0A%20%20%20%20%20%20%20%20%7D%2C%0A%60%60%60%0A%0A%23%23%23%23%20%20%205%20%E5%88%A0%E9%99%A4%E5%9B%BE%E4%B9%A6%0A%0A-%20%E6%8A%8A%E9%9C%80%E8%A6%81%E5%88%A0%E9%99%A4%E7%9A%84id%E4%B9%A6%E7%B1%8D%20%E9%80%9A%E8%BF%87%E5%8F%82%E6%95%B0%E7%9A%84%E5%BD%A2%E5%BC%8F%E4%BC%A0%E9%80%92%E5%88%B0%E5%90%8E%E5%8F%B0%0A%0A%60%60%60js%0A%20%20%20deleteBook%3A%20async%20function(id)%7B%0A%20%20%20%20%20%20%20%20%20%20%2F%2F%20%E5%88%A0%E9%99%A4%E5%9B%BE%E4%B9%A6%0A%20%20%20%20%20%20%20%20%20%20var%20ret%20%3D%20await%20axios.delete('books%2F'%20%2B%20id)%3B%0A%20%20%20%20%20%20%20%20%20%20if(ret.status%20%3D%3D%20200)%20%7B%0A%20%20%20%20%20%20%20%20%20%20%20%20%2F%2F%20%E9%87%8D%E6%96%B0%E5%8A%A0%E8%BD%BD%E5%88%97%E8%A1%A8%E6%95%B0%E6%8D%AE%0A%20%20%20%20%20%20%20%20%20%20%20%20this.queryData()%3B%0A%20%20%20%20%20%20%20%20%20%20%7D%0A%20%20%20%7D%0A%60%60%60%0A%0A</center></div>
+<a class="back-link" href="../articles.html">← 返回笔记列表</a>
+</body></html>

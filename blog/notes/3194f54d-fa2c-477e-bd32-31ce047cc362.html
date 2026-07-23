@@ -1,0 +1,555 @@
+<!DOCTYPE html>
+<html lang="zh-CN" data-theme="light">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>加速云端机器学习-Alluxio在小红书的实践 – Alluxio官网 | 分布式超大规模数据编排系统 — 技术笔记</title>
+<style>
+:root {
+  --bg: #ffffff;
+  --text: #1a1a1a;
+  --muted: #666;
+  --border: #e0e0e0;
+  --code-bg: #f5f5f5;
+  --link: #0066cc;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #1a1a1a;
+    --text: #e0e0e0;
+    --muted: #999;
+    --border: #333;
+    --code-bg: #2a2a2a;
+    --link: #66bbff;
+  }
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  line-height: 1.7;
+  color: var(--text);
+  background: var(--bg);
+  max-width: 860px;
+  margin: 0 auto;
+  padding: 2rem 1.5rem;
+}
+.note-header {
+  border-bottom: 2px solid var(--border);
+  padding-bottom: 1rem;
+  margin-bottom: 2rem;
+}
+.note-title {
+  font-size: 1.6rem;
+  font-weight: 700;
+  margin-bottom: 0.3rem;
+}
+.note-meta {
+  color: var(--muted);
+  font-size: 0.85rem;
+}
+.note-content {
+  font-size: 0.95rem;
+}
+.note-content h1 { font-size: 1.4rem; margin: 1.2rem 0 0.6rem; }
+.note-content h2 { font-size: 1.2rem; margin: 1rem 0 0.5rem; }
+.note-content h3 { font-size: 1.05rem; margin: 0.8rem 0 0.4rem; }
+.note-content p { margin: 0.5rem 0; }
+.note-content ul, .note-content ol { margin: 0.5rem 0 0.5rem 2rem; }
+.note-content li { margin: 0.2rem 0; }
+.note-content pre {
+  background: var(--code-bg);
+  padding: 1rem;
+  border-radius: 6px;
+  overflow-x: auto;
+  margin: 0.8rem 0;
+  font-size: 0.85rem;
+}
+.note-content code {
+  background: var(--code-bg);
+  padding: 0.1rem 0.3rem;
+  border-radius: 3px;
+  font-size: 0.88em;
+}
+.note-content pre code {
+  background: none;
+  padding: 0;
+}
+.note-content blockquote {
+  border-left: 3px solid var(--border);
+  padding-left: 1rem;
+  color: var(--muted);
+  margin: 0.8rem 0;
+}
+.note-content a { color: var(--link); }
+.note-content img {
+  max-width: 100%;
+  height: auto;
+  border-radius: 6px;
+  margin: 0.5rem 0;
+}
+.note-content table {
+  border-collapse: collapse;
+  width: 100%;
+  margin: 0.8rem 0;
+}
+.note-content th, .note-content td {
+  border: 1px solid var(--border);
+  padding: 0.5rem;
+}
+.note-content th { background: var(--code-bg); }
+.media-placeholder {
+  background: var(--code-bg);
+  padding: 1rem;
+  text-align: center;
+  color: var(--muted);
+  border-radius: 6px;
+  margin: 0.5rem 0;
+  font-size: 0.85rem;
+}
+.encrypt-placeholder {
+  background: #fff3cd;
+  padding: 0.5rem;
+  text-align: center;
+  color: #856404;
+  border-radius: 6px;
+  margin: 0.5rem 0;
+  font-size: 0.85rem;
+}
+.back-link {
+  display: inline-block;
+  margin-top: 2rem;
+  color: var(--link);
+  text-decoration: none;
+  font-size: 0.85rem;
+}
+</style>
+</head>
+<body>
+<div class="note-header">
+  <div class="note-title">加速云端机器学习-Alluxio在小红书的实践 – Alluxio官网 | 分布式超大规模数据编排系统</div>
+  <div class="note-meta">笔记本：AI</div>
+</div>
+<div class="note-content">
+<div style="--en-clipped-content:article"><div style="font-size: 16px; display:flex; min-width: 100%; position: relative;"> <div style="line-height:1.15;text-size-adjust:100%;box-sizing:border-box;font-size:12.6px;"><div style="box-sizing:border-box;font-size:12.6px;font-weight:400;color:rgb(51, 51, 51);background-color:rgb(255, 255, 255);-webkit-font-smoothing:antialiased;font-family:SYHT, sans-serif;line-height:2em;"><div style="box-sizing:border-box;"><div style="box-sizing:border-box;"><div style="box-sizing:border-box;"><div style="box-sizing:border-box;"><div style="box-sizing:border-box;flex-wrap:wrap;align-content:flex-start;display:flex;"><span style="box-sizing:border-box;"></span>
+						<div style="box-sizing:border-box;flex-basis:auto;flex-grow:0;flex-shrink:1;order:0;align-self:auto;position:relative;width:100%;margin-block-end:20px;flex-direction:row;flex-wrap:nowrap;justify-content:normal;align-items:normal;align-content:normal;gap:normal;margin-bottom:0px;"><span style="box-sizing:border-box;"></span>
+				<div style="box-sizing:border-box;transition:background 0.3s, border 0.3s, border-radius 0.3s, box-shadow 0.3s, transform 0.4s;"><span style="box-sizing:border-box;"></span>
+			<div style="box-sizing:border-box;"><span style="box-sizing:border-box;"></span><ul style="border:0px;outline:0px;font-size:100%;vertical-align:baseline;background:transparent;box-sizing:border-box;padding:0px;margin:0px;display:flex;flex-wrap:wrap;list-style:none;justify-content:flex-start;"><span style="font-size:100%;list-style:none;box-sizing:border-box;"></span><li style="margin-top:0px;margin-bottom:0px;border:0px;outline:0px;font-size:100%;vertical-align:baseline;background:transparent;box-sizing:border-box;flex:0 0 auto;list-style-type:none;"><span style="font-size:100%;list-style-type:none;box-sizing:border-box;"></span><a href="https://www.alluxio.com.cn/" style="background-color:transparent;box-sizing:border-box;box-shadow:none;display:inline-block;text-decoration:none;color:rgb(153, 153, 153);font-size:14px;"><span style="color:rgb(153, 153, 153);font-size:14px;box-sizing:border-box;"></span><span style="box-sizing:border-box;margin-right:5px;"><span style="box-sizing:border-box;"></span> <i style="box-sizing:border-box;speak:none;font-style:normal;font-weight:400;font-variant:normal;text-transform:none;line-height:1;-webkit-font-smoothing:antialiased;font-family:elementskit;"><span style="font-style:normal;font-weight:400;font-variant:normal;text-transform:none;line-height:1;font-family:elementskit;box-sizing:border-box;speak:none;-webkit-font-smoothing:antialiased;"></span><span style="font-style:normal;font-weight:400;font-variant:normal;text-transform:none;line-height:1;font-family:elementskit;box-sizing:border-box;"></span></i> <span style="box-sizing:border-box;"></span></span>Alluxio官网 | 分布式超大规模数据编排系统<span style="color:rgb(153, 153, 153);font-size:14px;box-sizing:border-box;"></span></a><span style="font-size:100%;list-style-type:none;box-sizing:border-box;"></span></li>
+<li style="margin-top:0px;margin-bottom:0px;border:0px;outline:0px;font-size:100%;vertical-align:baseline;background:transparent;box-sizing:border-box;flex:0 0 auto;list-style-type:none;"><span style="font-size:100%;list-style-type:none;box-sizing:border-box;margin:0px 20px;display:inline-block;color:rgb(153, 153, 153);">/</span><a href="https://www.alluxio.com.cn/category/cases/" style="background-color:transparent;box-sizing:border-box;box-shadow:none;display:inline-block;text-decoration:none;color:rgb(153, 153, 153);font-size:14px;"><span style="color:rgb(153, 153, 153);font-size:14px;box-sizing:border-box;"></span>用户案例<span style="color:rgb(153, 153, 153);font-size:14px;box-sizing:border-box;"></span></a> <span style="font-size:100%;list-style-type:none;box-sizing:border-box;"></span></li>
+<li style="margin-top:0px;margin-bottom:0px;border:0px;outline:0px;font-size:100%;vertical-align:baseline;background:transparent;box-sizing:border-box;flex:0 0 auto;list-style-type:none;"><span style="font-size:100%;list-style-type:none;box-sizing:border-box;margin:0px 20px;display:inline-block;color:rgb(153, 153, 153);">/</span><span style="box-sizing:border-box;display:inline-block;text-decoration:none;color:rgb(153, 153, 153);font-size:14px;"><span style="font-size:14px;color:rgb(153, 153, 153);box-sizing:border-box;"></span> 加速云端机器学习-Alluxio在小红书的实践<span style="font-size:14px;color:rgb(153, 153, 153);box-sizing:border-box;"></span></span><span style="font-size:100%;list-style-type:none;box-sizing:border-box;"></span></li>
+<span style="font-size:100%;list-style:none;box-sizing:border-box;"></span></ul><span style="box-sizing:border-box;"></span></div>		<span style="box-sizing:border-box;"></span></div>
+				<span style="box-sizing:border-box;"></span></div>
+				<div style="box-sizing:border-box;flex-basis:auto;flex-grow:0;flex-shrink:1;order:0;align-self:auto;display:block;position:relative;width:100%;margin-block-end:20px;flex-direction:row;flex-wrap:nowrap;justify-content:normal;align-items:normal;align-content:normal;gap:normal;margin-bottom:0px;"><span style="box-sizing:border-box;"></span>
+				<div style="box-sizing:border-box;transition:background 0.3s, border 0.3s, border-radius 0.3s, box-shadow 0.3s, transform 0.4s;margin:20px 0px;"><span style="box-sizing:border-box;"></span>
+			<h1 style="box-sizing:border-box;padding:0px;margin:0px;color:var( --e-global-color-primary );letter-spacing:1px;font-family:Syht, sans-serif;font-weight:600;font-size:24px;line-height:1.4em;"><span style="font-family:Syht, sans-serif;font-weight:600;line-height:1.4em;color:var( --e-global-color-primary );font-size:24px;letter-spacing:1px;box-sizing:border-box;"></span>加速云端机器学习-Alluxio在小红书的实践<span style="font-family:Syht, sans-serif;font-weight:600;line-height:1.4em;color:var( --e-global-color-primary );font-size:24px;letter-spacing:1px;box-sizing:border-box;"></span></h1>		<span style="box-sizing:border-box;"></span></div>
+				<span style="box-sizing:border-box;"></span></div>
+				<div style="box-sizing:border-box;flex-basis:auto;flex-grow:0;flex-shrink:1;order:0;align-self:auto;position:relative;width:100%;margin-block-end:20px;flex-direction:row;flex-wrap:nowrap;justify-content:normal;align-items:normal;align-content:normal;gap:normal;margin-bottom:0px;"><span style="box-sizing:border-box;"></span>
+				<div style="box-sizing:border-box;transition:background 0.3s, border 0.3s, border-radius 0.3s, box-shadow 0.3s, transform 0.4s;"><span style="box-sizing:border-box;"></span>
+					<ul style="border:0px;outline:0px;font-size:100%;vertical-align:baseline;background:transparent;box-sizing:border-box;display:flex;flex-wrap:wrap;list-style-type:none;margin:0px;margin-right:-8px;margin-left:-8px;padding:0px;"><span style="font-size:100%;list-style-type:none;box-sizing:border-box;"></span>
+								<li style="border:0px;outline:0px;vertical-align:baseline;background:transparent;box-sizing:border-box;line-height:var( --e-global-typography-text-line-height );margin:0px;padding:0px;position:relative;display:flex;align-items:center;word-break:break-word;font-family:Syht, sans-serif;font-weight:400;margin-right:8px;margin-left:8px;font-size:14px;"><span style="font-size:14px;font-family:Syht, sans-serif;font-weight:400;line-height:var( --e-global-typography-text-line-height );box-sizing:border-box;"></span>
+						<a href="https://www.alluxio.com.cn/2024/07/24/" style="background-color:transparent;box-sizing:border-box;box-shadow:none;text-decoration:none;color:var( --e-global-color-accent );display:flex;font-size:inherit;align-items:center;"><span style="color:var( --e-global-color-accent );font-size:inherit;box-sizing:border-box;"></span>
+											<span style="box-sizing:border-box;display:flex;position:relative;top:0px;width:14px;"><span style="box-sizing:border-box;"></span>
+								<i style="box-sizing:border-box;speak:none;font-style:normal;font-weight:400;font-variant:normal;text-transform:none;line-height:1;-webkit-font-smoothing:antialiased;width:1.25em;color:rgb(102, 102, 102);font-size:14px;font-family:elementskit;"><span style="color:rgb(102, 102, 102);font-size:14px;font-style:normal;font-weight:400;font-variant:normal;text-transform:none;line-height:1;font-family:elementskit;box-sizing:border-box;speak:none;-webkit-font-smoothing:antialiased;"></span><span style="color:rgb(102, 102, 102);font-size:14px;font-style:normal;font-weight:400;font-variant:normal;text-transform:none;line-height:1;font-family:elementskit;box-sizing:border-box;"></span></i>							<span style="box-sizing:border-box;"></span></span>
+									<span style="box-sizing:border-box;align-self:center;padding-left:5px;display:inline-block;color:rgb(102, 102, 102);"><span style="color:rgb(102, 102, 102);box-sizing:border-box;"></span>
+										2024-07-24					<span style="color:rgb(102, 102, 102);box-sizing:border-box;"></span></span>
+									<span style="color:var( --e-global-color-accent );font-size:inherit;box-sizing:border-box;"></span></a>
+				<span style="font-size:14px;font-family:Syht, sans-serif;font-weight:400;line-height:var( --e-global-typography-text-line-height );box-sizing:border-box;width:100%;left:0px;position:absolute;height:100%;border-width:0px 0px 0px 1px;border-top-color:initial;border-bottom-color:initial;border-right-color:initial;border-style:solid;right:0px;bottom:0px;"></span></li>
+				<span style="font-size:100%;list-style-type:none;box-sizing:border-box;"></span></ul>
+				<span style="box-sizing:border-box;"></span></div>
+				<span style="box-sizing:border-box;"></span></div>
+				<div style="box-sizing:border-box;flex-basis:auto;flex-grow:0;flex-shrink:1;order:0;align-self:auto;position:relative;color:var( --e-global-color-text );width:100%;margin-block-end:20px;font-family:Syht, sans-serif;font-size:16px;font-weight:400;line-height:1.6em;flex-direction:row;flex-wrap:nowrap;justify-content:normal;align-items:normal;align-content:normal;gap:normal;margin-bottom:0px;"><span style="color:var( --e-global-color-text );font-family:Syht, sans-serif;font-size:16px;font-weight:400;line-height:1.6em;box-sizing:border-box;"></span>
+				<div style="box-sizing:border-box;transition:background 0.3s, border 0.3s, border-radius 0.3s, box-shadow 0.3s, transform 0.4s;margin:50px 0px 0px;"><span style="box-sizing:border-box;"></span>
+			<div style="box-sizing:border-box;"><span style="box-sizing:border-box;"></span>
+<div style="box-sizing:border-box;"><span style="box-sizing:border-box;"></span><span style="box-sizing:border-box;"><span style="box-sizing:border-box;"></span>分享嘉宾：李亚斌<span style="box-sizing:border-box;"></span></span><span style="box-sizing:border-box;"><span style="box-sizing:border-box;"></span> <span style="box-sizing:border-box;"></span></span><span style="box-sizing:border-box;"><span style="box-sizing:border-box;"></span>小红书大数据技术专家<span style="box-sizing:border-box;"></span></span><span style="box-sizing:border-box;"><span style="box-sizing:border-box;"></span> <span style="box-sizing:border-box;"></span></span><span style="box-sizing:border-box;"><span style="box-sizing:border-box;"></span>负责小红书多云统一数据加速层的建设<span style="box-sizing:border-box;"></span></span><span style="box-sizing:border-box;"></span></div>
+<span style="box-sizing:border-box;"></span></div>
+<p style="margin-top:0px;margin-bottom:11.34px;box-sizing:border-box;"><span style="box-sizing:border-box;"></span><span style="box-sizing:border-box;"><span style="box-sizing:border-box;"></span><span style="box-sizing:border-box;"></span></span><span style="box-sizing:border-box;"></span></p>
+<p style="margin-top:0px;margin-bottom:11.34px;box-sizing:border-box;"><span style="box-sizing:border-box;"></span><span style="box-sizing:border-box;"></span></p><div style="box-sizing:border-box;"><span style="box-sizing:border-box;"></span><span style="box-sizing:border-box;"></span></div><p style="margin-top:0px;margin-bottom:11.34px;box-sizing:border-box;"><span style="box-sizing:border-box;"></span><span style="box-sizing:border-box;"></span></p>
+<p style="margin-top:0px;margin-bottom:11.34px;box-sizing:border-box;"><span style="box-sizing:border-box;"></span> <span style="box-sizing:border-box;"></span></p>
+<div style="box-sizing:border-box;"><span style="box-sizing:border-box;"></span>
+<div style="box-sizing:border-box;"><span style="box-sizing:border-box;"></span><span style="box-sizing:border-box;"></span></div>
+<span style="box-sizing:border-box;"></span></div>
+<div style="box-sizing:border-box;"><span style="box-sizing:border-box;"></span>
+<div style="box-sizing:border-box;"><span style="box-sizing:border-box;"></span><span style="box-sizing:border-box;"><span style="box-sizing:border-box;"></span>小红书是年轻人的生活记录、分享平台，用户可以通过短视频、图文等形式记录生活点滴，分享生活方式。本文主要介绍小红书多云统一数据加速层的内容，主要会从四个方面展开：1、小红书在复杂的多云环境下面临的挑战；2、如何通过构建多云统一数据加速层来解决这些技术问题 3、结合小红书的具体实践案例，介绍多云统一数据加速层是如何解决这些问题的 4、未来规划<span style="box-sizing:border-box;"></span></span><span style="box-sizing:border-box;"></span></div>
+<p style="margin-top:0px;margin-bottom:11.34px;box-sizing:border-box;"><span style="box-sizing:border-box;"></span> <span style="box-sizing:border-box;"></span></p>
+<div style="box-sizing:border-box;"><span style="box-sizing:border-box;"></span><span style="box-sizing:border-box;"></span></div>
+<span style="box-sizing:border-box;"></span></div>
+<h3 style="margin-top:6.3px;margin-bottom:12.6px;font-weight:500;line-height:1.2;color:inherit;box-sizing:border-box;font-family:SYHT, sans-serif;font-size:24px;"><span style="font-family:SYHT, sans-serif;font-weight:500;line-height:1.2;color:inherit;font-size:24px;box-sizing:border-box;"></span><span style="box-sizing:border-box;"><span style="box-sizing:border-box;"></span>面临的挑战<span style="box-sizing:border-box;"></span></span><span style="font-family:SYHT, sans-serif;font-weight:500;line-height:1.2;color:inherit;font-size:24px;box-sizing:border-box;"></span></h3>
+<div style="box-sizing:border-box;"><span style="box-sizing:border-box;"></span>
+<div style="box-sizing:border-box;"><span style="box-sizing:border-box;"></span><span style="box-sizing:border-box;"><span style="box-sizing:border-box;"></span>我们先看看小红书的一些业务都碰到了哪些挑战。小红书作为云上的原住民，从成立之初就构建在公有云上，下图是小红书多云架构的示意图。<span style="box-sizing:border-box;"></span></span><span style="box-sizing:border-box;"></span></div>
+<div style="box-sizing:border-box;"><span style="box-sizing:border-box;"></span><span style="box-sizing:border-box;"></span></div>
+<span style="box-sizing:border-box;"></span></div>
+<div style="box-sizing:border-box;"><span style="box-sizing:border-box;"></span>
+<div style="box-sizing:border-box;"><span style="box-sizing:border-box;"></span><span style="box-sizing:border-box;"><span style="box-sizing:border-box;"></span> <div class="media-placeholder">[图片/附件]</div></en-media><span style="box-sizing:border-box;"></span></span><span style="box-sizing:border-box;"></span></div>
+<span style="box-sizing:border-box;"></span></div>
+<div style="box-sizing:border-box;"><span style="box-sizing:border-box;"></span>
+<div style="box-sizing:border-box;"><span style="box-sizing:border-box;"></span><span style="box-sizing:border-box;"><span style="box-sizing:border-box;"></span> <span style="box-sizing:border-box;"></span></span><span style="box-sizing:border-box;"></span></div>
+<span style="box-sizing:border-box;"></span></div>
+<div style="box-sizing:border-box;"><span style="box-sizing:border-box;"></span>
+<div style="box-sizing:border-box;"><span style="box-sizing:border-box;"></span><span style="box-sizing:border-box;"><span style="box-sizing:border-box;"></span>图中的三个圈代表两个云厂商的不同Zone（区域），云厂商1是在ZoneA 与ZoneB，云厂商2是在ZoneC。核心业务分别分布在多个云厂商的不同可用区，核心业务如搜广推、社区通常在主要机房都会存在，是多活架构；主要业务如电商直播及部分大数据服务，是双活架构；其他如训练等服务，是单活架构，这个只是个简化后的示意图，真实情况远比这复杂。多云架构对小红书带来了非常明显的成本优势和可用性优势，但业务的通信链路也随之复杂，各种跨专线调用；还有个特点是不同region之间rt差异比较大，且专线容量非常稀缺，因此带来了一些业务使用上的痛点。<span style="box-sizing:border-box;"></span></span><span style="box-sizing:border-box;"></span></div>
+<p style="margin-top:0px;margin-bottom:11.34px;box-sizing:border-box;"><span style="box-sizing:border-box;"></span> <span style="box-sizing:border-box;"></span></p>
+<div style="box-sizing:border-box;"><span style="box-sizing:border-box;"></span><span style="box-sizing:border-box;"></span></div>
+<span style="box-sizing:border-box;"></span></div>
+<div style="box-sizing:border-box;"><span style="box-sizing:border-box;"></span>
+<h4 style="margin-top:6.3px;margin-bottom:12.6px;font-weight:500;line-height:1.2;color:inherit;box-sizing:border-box;font-family:SYHT, sans-serif;font-size:20px;"><span style="font-family:SYHT, sans-serif;font-weight:500;line-height:1.2;color:inherit;font-size:20px;box-sizing:border-box;"></span><span style="box-sizing:border-box;"><span style="box-sizing:border-box;"></span>多云架构下有哪些典型的问题<span style="box-sizing:border-box;"></span></span><span style="font-family:SYHT, sans-serif;font-weight:500;line-height:1.2;color:inherit;font-size:20px;box-sizing:border-box;"></span></h4>
+<span style="box-sizing:border-box;"></span></div>
+<div style="box-sizing:border-box;"><span style="box-sizing:border-box;"></span>
+<div style="box-sizing:border-box;"><span style="box-sizing:border-box;"></span><span style="box-sizing:border-box;"><span style="box-sizing:border-box;"></span>1. 机器学习训练在小红书是资源大户，属于公司 Top 级别，但海量的 CPU 和 GPU 资源的利用率不及预期，训练速度上不去，业务体感比较差。<span style="box-sizing:border-box;"></span></span><span style="box-sizing:border-box;"></span></div>
+<span style="box-sizing:border-box;"></span></div>
+<div style="box-sizing:border-box;"><span style="box-sizing:border-box;"></span>
+<div style="box-sizing:border-box;"><span style="box-sizing:border-box;"></span><span style="box-sizing:border-box;"><span style="box-sizing:border-box;"></span>2. 推荐服务是小红书最核心的服务之一。它的核心逻辑是推荐召回需要有索引分发的过程，比如刷小红书刷到的个性化的笔记列表，就主要用到了索引。索引服务因为索引分发慢，从而导致稳定性比较差，且因为索引数据存储在云盘里，成本也很高。<span style="box-sizing:border-box;"></span></span><span style="box-sizing:border-box;"></span></div>
+<span style="box-sizing:border-box;"></span></div>
+<div style="box-sizing:border-box;"><span style="box-sizing:border-box;"></span>
+<div style="box-sizing:border-box;"><span style="box-sizing:border-box;"></span><span style="box-sizing:border-box;"><span style="box-sizing:border-box;"></span>3. 在AI场景下，有业务面临 60 亿+的元信息小文件场景，需要有一个低成本的解决方案。<span style="box-sizing:border-box;"></span></span><span style="box-sizing:border-box;"></span></div>
+<span style="box-sizing:border-box;"></span></div>
+<div style="box-sizing:border-box;"><span style="box-sizing:border-box;"></span>
+<div style="box-sizing:border-box;"><span style="box-sizing:border-box;"></span><span style="box-sizing:border-box;"><span style="box-sizing:border-box;"></span>而且随着AI的飞速发展， AI 模型从之前的百 GB 级发展到如今的 TB 级别。原来的架构通常先把模型拉到本地盘，再从本地盘加载到内存，才可以进行在线推理。这个过程在模型增大到 TB 级之后，会有两个严重的问题：一个是加载过程非常缓慢，另一个是模型存储在本地盘的成本非常高昂。<span style="box-sizing:border-box;"></span></span><span style="box-sizing:border-box;"></span></div>
+<span style="box-sizing:border-box;"></span></div>
+<div style="box-sizing:border-box;"><span style="box-sizing:border-box;"></span>
+<div style="box-sizing:border-box;"><span style="box-sizing:border-box;"></span><span style="box-sizing:border-box;"><span style="box-sizing:border-box;"></span>4. 多云架构本身带来的网络链路复杂，跨专线传输数据量非常大，专线单价也是非常高昂，有成本和稳定性的双重挑战。<span style="box-sizing:border-box;"></span></span><span style="box-sizing:border-box;"></span></div>
+<p style="margin-top:0px;margin-bottom:11.34px;box-sizing:border-box;"><span style="box-sizing:border-box;"></span> <span style="box-sizing:border-box;"></span></p>
+<span style="box-sizing:border-box;"></span></div>
+<div style="box-sizing:border-box;"><span style="box-sizing:border-box;"></span>
+<div style="box-sizing:border-box;"><span style="box-sizing:border-box;"></span><span style="box-sizing:border-box;"><span style="box-sizing:border-box;"></span> <span style="box-sizing:border-box;"></span></span><span style="box-sizing:border-box;"></span></div>
+<span style="box-sizing:border-box;"></span></div>
+<h3 style="margin-top:6.3px;margin-bottom:12.6px;font-weight:500;line-height:1.2;color:inherit;box-sizing:border-box;font-family:SYHT, sans-serif;font-size:24px;"><span style="font-family:SYHT, sans-serif;font-weight:500;line-height:1.2;color:inherit;font-size:24px;box-sizing:border-box;"></span><span style="box-sizing:border-box;"><span style="box-sizing:border-box;"></span>多云数据加速层<span style="box-sizing:border-box;"></span></span><span style="font-family:SYHT, sans-serif;font-weight:500;line-height:1.2;color:inherit;font-size:24px;box-sizing:border-box;"></span></h3>
+<div style="box-sizing:border-box;"><span style="box-sizing:border-box;"></span>
+<div style="box-sizing:border-box;"><span style="box-sizing:border-box;"></span><span style="box-sizing:border-box;"><span style="box-sizing:border-box;"></span> <span style="box-sizing:border-box;"></span></span><span style="box-sizing:border-box;"></span></div>
+<span style="box-sizing:border-box;"></span></div>
+<div style="box-sizing:border-box;"><span style="box-sizing:border-box;"></span>
+<div style="box-sizing:border-box;"><span style="box-sizing:border-box;"></span><span style="box-sizing:border-box;"><span style="box-sizing:border-box;"></span>接下来介绍下我们是如何通过构建多云统一数据加速层来解决这些痛点的。<span style="box-sizing:border-box;"></span></span><span style="box-sizing:border-box;"></span></div>
+<span style="box-sizing:border-box;"></span></div>
+<div style="box-sizing:border-box;"><span style="box-sizing:border-box;"></span><div class="media-placeholder">[图片/附件]</div></en-media><span style="box-sizing:border-box;"></span></div>
+<div style="box-sizing:border-box;"><span style="box-sizing:border-box;"></span>
+<div style="box-sizing:border-box;"><span style="box-sizing:border-box;"></span><span style="box-sizing:border-box;"><span style="box-sizing:border-box;"></span> 上图是小红书业务架构的示意图。最上层是业务层，主要包括社区、搜广推、直播、电商这些核心服务。接下来是平台层，这里只列了一些和数据强相关的，如机器学习平台、 AI 训练平台，模型发布平台、推荐索引平台、数据平台等。最底层是公有云的存储产品，这里只列了我们主要依赖的对象存储，其实包括异构的 HDFS 等产品都可以适用于这个通用的解决方案。在平台层和存储层之间，我们基于Alluxio构建了一层多云统一数据加速层并研发了对应的智能缓存服务。<span style="box-sizing:border-box;"></span></span><span style="box-sizing:border-box;"></span></div>
+<p style="margin-top:0px;margin-bottom:11.34px;box-sizing:border-box;"><span style="box-sizing:border-box;"></span> <span style="box-sizing:border-box;"></span></p>
+<span style="box-sizing:border-box;"></span></div>
+<h4 style="margin-top:6.3px;margin-bottom:12.6px;font-weight:500;line-height:1.2;color:inherit;box-sizing:border-box;font-family:SYHT, sans-serif;font-size:20px;"><span style="font-family:SYHT, sans-serif;font-weight:500;line-height:1.2;color:inherit;font-size:20px;box-sizing:border-box;"></span><span style="box-sizing:border-box;"><span style="box-sizing:border-box;"></span> <span style="box-sizing:border-box;"></span></span><span style="box-sizing:border-box;"><span style="box-sizing:border-box;"></span>为什么选择了 Alluxio 作为多云统一的加速层？<span style="box-sizing:border-box;"></span></span><span style="font-family:SYHT, sans-serif;font-weight:500;line-height:1.2;color:inherit;font-size:20px;box-sizing:border-box;"></span></h4>
+<div style="box-sizing:border-box;"><span style="box-sizing:border-box;"></span>
+<div style="box-sizing:border-box;"><span style="box-sizing:border-box;"></span><span style="box-sizing:border-box;"><span style="box-sizing:border-box;"></span>首先我们基于面临的问题，抽象出了选型的重点目标：<span style="box-sizing:border-box;"></span></span><span style="box-sizing:border-box;"></span></div>
+<span style="box-sizing:border-box;"></span></div>
+<div style="box-sizing:border-box;"><span style="box-sizing:border-box;"></span>
+<div style="box-sizing:border-box;"><span style="box-sizing:border-box;"></span><span style="box-sizing:border-box;"><span style="box-sizing:border-box;"></span>1. 需要能够复用业务历史上已经存储的数据，不需要再次搬迁或者导入到其他高速存储或文件系统就能享受到数据的加速。以典型的搜广推和训练业务为例，这些业务的存储量大概是数百PB级别，搬迁一遍才能使用不太可行。<span style="box-sizing:border-box;"></span></span><span style="box-sizing:border-box;"></span></div>
+<span style="box-sizing:border-box;"></span></div>
+<div style="box-sizing:border-box;"><span style="box-sizing:border-box;"></span>
+<div style="box-sizing:border-box;"><span style="box-sizing:border-box;"></span><span style="box-sizing:border-box;"><span style="box-sizing:border-box;"></span>2. 需要支持 S3 和 POSIX 协议，以便于与其他平台无缝对接。如机器学习训练通常是 S3 协议， AI 训练通常是 POSIX 协议，如果加速层能够兼容这类协议，业务方就不需要改代码，迁移成本也会低很多。<span style="box-sizing:border-box;"></span></span><span style="box-sizing:border-box;"></span></div>
+<span style="box-sizing:border-box;"></span></div>
+<div style="box-sizing:border-box;"><span style="box-sizing:border-box;"></span>
+<div style="box-sizing:border-box;"><span style="box-sizing:border-box;"></span><span style="box-sizing:border-box;"><span style="box-sizing:border-box;"></span>3. 需要实现跨云专线传输的带宽控制和节省。因为跨云本身业务是多活、多云的。但多云之间本身就有实时的数据同步，如果我们把带宽打爆，那稳定性问题就会立马出来，所以我们一定要能够控制住带宽。<span style="box-sizing:border-box;"></span></span><span style="box-sizing:border-box;"></span></div>
+<span style="box-sizing:border-box;"></span></div>
+<div style="box-sizing:border-box;"><span style="box-sizing:border-box;"></span>
+<div style="box-sizing:border-box;"><span style="box-sizing:border-box;"></span><span style="box-sizing:border-box;"><span style="box-sizing:border-box;"></span>4. 能够支撑百亿级别的 AI 训练，我们有单个训练任务就有60亿+元信息的场景需要支持。<span style="box-sizing:border-box;"></span></span><span style="box-sizing:border-box;"></span></div>
+<span style="box-sizing:border-box;"></span></div>
+<div style="box-sizing:border-box;"><span style="box-sizing:border-box;"></span>
+<div style="box-sizing:border-box;"><span style="box-sizing:border-box;"></span><span style="box-sizing:border-box;"><span style="box-sizing:border-box;"></span>5. 能够支持常见的云存储产品，以主流云厂商的对象存储为主。<span style="box-sizing:border-box;"></span></span><span style="box-sizing:border-box;"></span></div>
+<span style="box-sizing:border-box;"></span></div>
+<div style="box-sizing:border-box;"><span style="box-sizing:border-box;"></span>
+<div style="box-sizing:border-box;"><span style="box-sizing:border-box;"></span><span style="box-sizing:border-box;"><span style="box-sizing:border-box;"></span>经过调研，我们发现业界目前唯一能同时满足上述诉求的产品，就是Alluxio。<span style="box-sizing:border-box;"></span></span><span style="box-sizing:border-box;"></span></div>
+<div style="box-sizing:border-box;"><span style="box-sizing:border-box;"></span><div class="media-placeholder">[图片/附件]</div></en-media><span style="box-sizing:border-box;"></span></div>
+<span style="box-sizing:border-box;"></span></div>
+<div style="box-sizing:border-box;"><span style="box-sizing:border-box;"></span>
+<div style="box-sizing:border-box;"><span style="box-sizing:border-box;"></span><span style="box-sizing:border-box;"><span style="box-sizing:border-box;"></span> <span style="box-sizing:border-box;"></span></span><span style="box-sizing:border-box;"></span></div>
+<span style="box-sizing:border-box;"></span></div>
+<div style="box-sizing:border-box;"><span style="box-sizing:border-box;"></span>
+<div style="box-sizing:border-box;"><span style="box-sizing:border-box;"></span><span style="box-sizing:border-box;"><span style="box-sizing:border-box;"></span>首先简要介绍下Alluxio架构。<span style="box-sizing:border-box;"></span></span><span style="box-sizing:border-box;"></span></div>
+<p style="margin-top:0px;margin-bottom:11.34px;box-sizing:border-box;"><span style="box-sizing:border-box;"></span> <span style="box-sizing:border-box;"></span></p>
+<span style="box-sizing:border-box;"></span></div>
+<h4 style="margin-top:6.3px;margin-bottom:12.6px;font-weight:500;line-height:1.2;color:inherit;box-sizing:border-box;font-family:SYHT, sans-serif;font-size:20px;"><span style="font-family:SYHT, sans-serif;font-weight:500;line-height:1.2;color:inherit;font-size:20px;box-sizing:border-box;"></span><span style="box-sizing:border-box;"><span style="box-sizing:border-box;"></span>Alluxio 主要有五部分模块：<span style="box-sizing:border-box;"></span></span><span style="font-family:SYHT, sans-serif;font-weight:500;line-height:1.2;color:inherit;font-size:20px;box-sizing:border-box;"></span></h4>
+<div style="box-sizing:border-box;"><span style="box-sizing:border-box;"></span>
+<div style="box-sizing:border-box;"><span style="box-sizing:border-box;"></span><span style="box-sizing:border-box;"><span style="box-sizing:border-box;"></span>1. Master：主要负责元信息的服务，维护了文件及其Block的位置信息，并负责处理元信息请求；<span style="box-sizing:border-box;"></span></span><span style="box-sizing:border-box;"></span></div>
+<span style="box-sizing:border-box;"></span></div>
+<div style="box-sizing:border-box;"><span style="box-sizing:border-box;"></span>
+<div style="box-sizing:border-box;"><span style="box-sizing:border-box;"></span><span style="box-sizing:border-box;"><span style="box-sizing:border-box;"></span>2. Worker：主要负责数据的缓存以及读取；<span style="box-sizing:border-box;"></span></span><span style="box-sizing:border-box;"></span></div>
+<span style="box-sizing:border-box;"></span></div>
+<div style="box-sizing:border-box;"><span style="box-sizing:border-box;"></span>
+<div style="box-sizing:border-box;"><span style="box-sizing:border-box;"></span><span style="box-sizing:border-box;"><span style="box-sizing:border-box;"></span>3. Job Master：主要负责一些异步任务的管理，比如加载缓存、淘汰缓存等这些异步的任务的下发及管理<span style="box-sizing:border-box;"></span></span><span style="box-sizing:border-box;"></span></div>
+<span style="box-sizing:border-box;"></span></div>
+<div style="box-sizing:border-box;"><span style="box-sizing:border-box;"></span>
+<div style="box-sizing:border-box;"><span style="box-sizing:border-box;"></span><span style="box-sizing:border-box;"><span style="box-sizing:border-box;"></span>4. Job Worker：主要是负责 Job Master 下发任务的具体执行，其执行状态会在 Job Master 进行维护；<span style="box-sizing:border-box;"></span></span><span style="box-sizing:border-box;"></span></div>
+<span style="box-sizing:border-box;"></span></div>
+<div style="box-sizing:border-box;"><span style="box-sizing:border-box;"></span>
+<div style="box-sizing:border-box;"><span style="box-sizing:border-box;"></span><span style="box-sizing:border-box;"><span style="box-sizing:border-box;"></span>5. Alluxio Client：会通过 Master 去拿文件的元信息，之后会通过元信息知道这个文件的对应位置的数据会在哪个 worker 上存储，接着就可以去对应的 worker 取数据。如果取数据的时候发现这个数据并不在Alluxio缓存里，就会去Under Store取数据（ Under Store 是对底层存储的统称，此案例里主要指对象存储），取下来之后响应给客户端，同时Alluxio会把这个数据缓存下来，当再次读取同样数据的时候就能够命中缓存了，这是非常重要的特性。<span style="box-sizing:border-box;"></span></span><span style="box-sizing:border-box;"></span></div>
+<p style="margin-top:0px;margin-bottom:11.34px;box-sizing:border-box;"><span style="box-sizing:border-box;"></span> <span style="box-sizing:border-box;"></span></p>
+<span style="box-sizing:border-box;"></span></div>
+<div style="box-sizing:border-box;"><span style="box-sizing:border-box;"></span>
+<div style="box-sizing:border-box;"><span style="box-sizing:border-box;"></span><span style="box-sizing:border-box;"><span style="box-sizing:border-box;"></span>对于S3协议，会有个专门的Proxy做代理，来兼容S3协议。该架构图是2.x的架构，而Alluxio最新 3.x 架构已经升级为去中心化的元信息架构，从而大大扩展了元信息的支持能力，这对 AI 训练是非常有帮助的。 <span style="box-sizing:border-box;"></span></span><span style="box-sizing:border-box;"></span></div>
+<span style="box-sizing:border-box;"></span></div>
+<p style="margin-top:0px;margin-bottom:11.34px;box-sizing:border-box;"><span style="box-sizing:border-box;"></span> <span style="box-sizing:border-box;"></span></p>
+<h4 style="margin-top:6.3px;margin-bottom:12.6px;font-weight:500;line-height:1.2;color:inherit;box-sizing:border-box;font-family:SYHT, sans-serif;font-size:20px;"><span style="font-family:SYHT, sans-serif;font-weight:500;line-height:1.2;color:inherit;font-size:20px;box-sizing:border-box;"></span><span style="box-sizing:border-box;"><span style="box-sizing:border-box;"></span>Alluxio主要特性<span style="box-sizing:border-box;"></span></span><span style="font-family:SYHT, sans-serif;font-weight:500;line-height:1.2;color:inherit;font-size:20px;box-sizing:border-box;"></span></h4>
+<div style="box-sizing:border-box;"><span style="box-sizing:border-box;"></span><div class="media-placeholder">[图片/附件]</div></en-media><span style="box-sizing:border-box;"></span></div>
+<div style="box-sizing:border-box;"><span style="box-sizing:border-box;"></span>
+<div style="box-sizing:border-box;"><span style="box-sizing:border-box;"></span><span style="box-sizing:border-box;"><span style="box-sizing:border-box;"></span> <span style="box-sizing:border-box;"></span></span><span style="box-sizing:border-box;"></span></div>
+<span style="box-sizing:border-box;"></span></div>
+<div style="box-sizing:border-box;"><span style="box-sizing:border-box;"></span>
+<div style="box-sizing:border-box;"><span style="box-sizing:border-box;"></span><span style="box-sizing:border-box;"><span style="box-sizing:border-box;"></span>● 特性一：<strong style="font-weight:bolder;box-sizing:border-box;"><span style="font-weight:bolder;box-sizing:border-box;"></span>格式透明<span style="font-weight:bolder;box-sizing:border-box;"></span></strong>，不侵入业务数据存储格式。我们数据湖里的数据量非常大，是不可能再导入进来重复存储的，有了Alluxio，只需要在原来存储上加一层Alluxio，就可以直接去访问那些数据了，让业务直接享受到加速收益，这是非常关键的特性。<span style="box-sizing:border-box;"></span></span><span style="box-sizing:border-box;"></span></div>
+<span style="box-sizing:border-box;"></span></div>
+<div style="box-sizing:border-box;"><span style="box-sizing:border-box;"></span>
+<div style="box-sizing:border-box;"><span style="box-sizing:border-box;"></span><span style="box-sizing:border-box;"><span style="box-sizing:border-box;"></span>● 特性二：<strong style="font-weight:bolder;box-sizing:border-box;"><span style="font-weight:bolder;box-sizing:border-box;"></span>协议兼容<span style="font-weight:bolder;box-sizing:border-box;"></span></strong>。Alluxio 支持非常丰富的S3\POSIX\HDFS\Java File API\REST API等协议，帮助Alluxio上层AI/ML训练引擎（如Pytorch、Ray、TensorFlow）和查询引擎（如Presto、Spark、Trino）与底层存储进行无缝对接。<span style="box-sizing:border-box;"></span></span><span style="box-sizing:border-box;"></span></div>
+<span style="box-sizing:border-box;"></span></div>
+<div style="box-sizing:border-box;"><span style="box-sizing:border-box;"></span>
+<div style="box-sizing:border-box;"><span style="box-sizing:border-box;"></span><span style="box-sizing:border-box;"><span style="box-sizing:border-box;"></span>● 特性三：<strong style="font-weight:bolder;box-sizing:border-box;"><span style="font-weight:bolder;box-sizing:border-box;"></span>多云统一视图<span style="font-weight:bolder;box-sizing:border-box;"></span></strong>。不管底层存储是HDFS、Ceph还是各云厂商的对象存储，对于用户，只要通过Alluxio，任何API都可以去访问不同存储位置的数据，从而可以实现多云统一视图的效果。<span style="box-sizing:border-box;"></span></span><span style="box-sizing:border-box;"></span></div>
+<span style="box-sizing:border-box;"></span></div>
+<div style="box-sizing:border-box;"><span style="box-sizing:border-box;"></span>
+<div style="box-sizing:border-box;"><span style="box-sizing:border-box;"></span><span style="box-sizing:border-box;"><span style="box-sizing:border-box;"></span>● 特性四：<strong style="font-weight:bolder;box-sizing:border-box;"><span style="font-weight:bolder;box-sizing:border-box;"></span>数据仅需通过专线传输一次，后续可通过缓存就近读取<span style="font-weight:bolder;box-sizing:border-box;"></span></strong>，不需要再次跨专线，这个关键特性对我们专线的保护意义重大。<span style="box-sizing:border-box;"></span></span><span style="box-sizing:border-box;"></span></div>
+<span style="box-sizing:border-box;"></span></div>
+<div style="box-sizing:border-box;"><span style="box-sizing:border-box;"></span>
+<div style="box-sizing:border-box;"><span style="box-sizing:border-box;"></span><span style="box-sizing:border-box;"><span style="box-sizing:border-box;"></span>通过合理地利用这些特性，就能够解决上述提到的小红书多云架构的业务痛点。<span style="box-sizing:border-box;"></span></span><span style="box-sizing:border-box;"></span></div>
+<span style="box-sizing:border-box;"></span></div>
+<div style="box-sizing:border-box;"><span style="box-sizing:border-box;"></span>
+<div style="box-sizing:border-box;"><span style="box-sizing:border-box;"></span><span style="box-sizing:border-box;"><span style="box-sizing:border-box;"></span> <span style="box-sizing:border-box;"></span></span><span style="box-sizing:border-box;"></span></div>
+<p style="margin-top:0px;margin-bottom:11.34px;box-sizing:border-box;"><span style="box-sizing:border-box;"></span> <span style="box-sizing:border-box;"></span></p>
+<span style="box-sizing:border-box;"></span></div>
+<h3 style="margin-top:6.3px;margin-bottom:12.6px;font-weight:500;line-height:1.2;color:inherit;box-sizing:border-box;font-family:SYHT, sans-serif;font-size:24px;"><span style="font-family:SYHT, sans-serif;font-weight:500;line-height:1.2;color:inherit;font-size:24px;box-sizing:border-box;"></span><span style="box-sizing:border-box;"><span style="box-sizing:border-box;"></span>小红书实践案例<span style="box-sizing:border-box;"></span></span><span style="font-family:SYHT, sans-serif;font-weight:500;line-height:1.2;color:inherit;font-size:24px;box-sizing:border-box;"></span></h3>
+<h4 style="margin-top:6.3px;margin-bottom:12.6px;font-weight:500;line-height:1.2;color:inherit;box-sizing:border-box;font-family:SYHT, sans-serif;font-size:20px;"><span style="font-family:SYHT, sans-serif;font-weight:500;line-height:1.2;color:inherit;font-size:20px;box-sizing:border-box;"></span><span style="box-sizing:border-box;"><span style="box-sizing:border-box;"></span>机器学习训练场景<span style="box-sizing:border-box;"></span></span><span style="font-family:SYHT, sans-serif;font-weight:500;line-height:1.2;color:inherit;font-size:20px;box-sizing:border-box;"></span></h4>
+<div style="box-sizing:border-box;"><span style="box-sizing:border-box;"></span>
+<div style="box-sizing:border-box;"><span style="box-sizing:border-box;"></span><span style="box-sizing:border-box;"><span style="box-sizing:border-box;"></span> <div class="media-placeholder">[图片/附件]</div></en-media><span style="box-sizing:border-box;"></span></span><span style="box-sizing:border-box;"></span></div>
+<span style="box-sizing:border-box;"></span></div>
+<div style="box-sizing:border-box;"><span style="box-sizing:border-box;"></span>
+<div style="box-sizing:border-box;"><span style="box-sizing:border-box;"></span><span style="box-sizing:border-box;"><span style="box-sizing:border-box;"></span> <span style="box-sizing:border-box;"></span></span><span style="box-sizing:border-box;"></span></div>
+<span style="box-sizing:border-box;"></span></div>
+<div style="box-sizing:border-box;"><span style="box-sizing:border-box;"></span>
+<p style="margin-top:0px;margin-bottom:11.34px;box-sizing:border-box;"><span style="box-sizing:border-box;"></span><strong style="font-weight:bolder;box-sizing:border-box;"><span style="font-weight:bolder;box-sizing:border-box;"></span>机器学习训练原架构<span style="font-weight:bolder;box-sizing:border-box;"></span></strong><span style="box-sizing:border-box;"></span></p>
+<span style="box-sizing:border-box;"></span></div>
+<div style="box-sizing:border-box;"><span style="box-sizing:border-box;"></span>
+<div style="box-sizing:border-box;"><span style="box-sizing:border-box;"></span><span style="box-sizing:border-box;"><span style="box-sizing:border-box;"></span> 机器学习训练最初的架构是直接从对象存储拉取数据（主要是训练样本），拉取完这些训练样本就开始在TensorFlow框架做训练。<span style="box-sizing:border-box;"></span></span><span style="box-sizing:border-box;"></span></div>
+<p style="margin-top:0px;margin-bottom:11.34px;box-sizing:border-box;"><span style="box-sizing:border-box;"></span> <span style="box-sizing:border-box;"></span></p>
+<span style="box-sizing:border-box;"></span></div>
+<div style="box-sizing:border-box;"><span style="box-sizing:border-box;"></span>
+<p style="margin-top:0px;margin-bottom:11.34px;box-sizing:border-box;"><span style="box-sizing:border-box;"></span><strong style="font-weight:bolder;box-sizing:border-box;"><span style="font-weight:bolder;box-sizing:border-box;"></span>主要问题：<span style="font-weight:bolder;box-sizing:border-box;"></span></strong><span style="box-sizing:border-box;"></span></p>
+<span style="box-sizing:border-box;"></span></div>
+<div style="box-sizing:border-box;"><span style="box-sizing:border-box;"></span>
+<div style="box-sizing:border-box;"><span style="box-sizing:border-box;"></span><span style="box-sizing:border-box;"><span style="box-sizing:border-box;"></span>1. 训练速度不太符合预期，导致一些任务训练很慢，以及其他人排队调度不上，体验很差。<span style="box-sizing:border-box;"></span></span><span style="box-sizing:border-box;"></span></div>
+<span style="box-sizing:border-box;"></span></div>
+<div style="box-sizing:border-box;"><span style="box-sizing:border-box;"></span>
+<div style="box-sizing:border-box;"><span style="box-sizing:border-box;"></span><span style="box-sizing:border-box;"><span style="box-sizing:border-box;"></span>2. 海量的集群资源利用率太低对成本也带来了很大挑战。主要原因是一些热点的数据集（如小红书的笔记样本），是公共的样本，总量非常大（大概每天几百TB）。这些公共数据集会被很多任务使用，在我们的场景下大概是 20 倍的扇出，如果是几百TB的数据会有 20 倍的扇出，这个总传输数据量是非常大的，整体流量达到了Tbps级，触达到了对象存储桶的带宽瓶颈。如果数据集大、扇出也大的话，一定会有额外的带宽需要，云厂商的解决方案通常是要么增加存储量，要么对增加带宽进行额外收费，两种方式都不太友好。<span style="box-sizing:border-box;"></span></span><span style="box-sizing:border-box;"></span></div>
+<span style="box-sizing:border-box;"></span></div>
+<div style="box-sizing:border-box;"><span style="box-sizing:border-box;"></span>
+<div style="box-sizing:border-box;"><span style="box-sizing:border-box;"></span><span style="box-sizing:border-box;"><span style="box-sizing:border-box;"></span>3. 因为业务会直连对象存储，而对象存储本身是高吞吐的产品，并不会过分强调单线程有多快，这就需要业务不断的去调优，才能达到适合的吞吐。<span style="box-sizing:border-box;"></span></span><span style="box-sizing:border-box;"></span></div>
+<div style="box-sizing:border-box;"><span style="box-sizing:border-box;"></span><div class="media-placeholder">[图片/附件]</div></en-media><span style="box-sizing:border-box;"></span></div>
+<span style="box-sizing:border-box;"></span></div>
+<div style="box-sizing:border-box;"><span style="box-sizing:border-box;"></span>
+<div style="box-sizing:border-box;"><span style="box-sizing:border-box;"></span><span style="box-sizing:border-box;"><span style="box-sizing:border-box;"></span> <span style="box-sizing:border-box;"></span></span><span style="box-sizing:border-box;"></span></div>
+<span style="box-sizing:border-box;"></span></div>
+<div style="box-sizing:border-box;"><span style="box-sizing:border-box;"></span>
+<p style="margin-top:0px;margin-bottom:11.34px;box-sizing:border-box;"><span style="box-sizing:border-box;"></span><strong style="font-weight:bolder;box-sizing:border-box;"><span style="font-weight:bolder;box-sizing:border-box;"></span>机器学习训练新架构<span style="font-weight:bolder;box-sizing:border-box;"></span></strong><span style="box-sizing:border-box;"></span></p>
+<span style="box-sizing:border-box;"></span></div>
+<div style="box-sizing:border-box;"><span style="box-sizing:border-box;"></span>
+<div style="box-sizing:border-box;"><span style="box-sizing:border-box;"></span><span style="box-sizing:border-box;"><span style="box-sizing:border-box;"></span>基于以上三个问题，机器学习训练架构经过了升级改造，最新架构如上图所示。<span style="box-sizing:border-box;"></span></span><span style="box-sizing:border-box;"></span></div>
+<span style="box-sizing:border-box;"></span></div>
+<div style="box-sizing:border-box;"><span style="box-sizing:border-box;"></span>
+<div style="box-sizing:border-box;"><span style="box-sizing:border-box;"></span><span style="box-sizing:border-box;"><span style="box-sizing:border-box;"></span>新架构对于普通数据还是直接会去对象存储读取，对于笔记这种热点的训练数据集，我们会把它缓存到Alluxio，当业务来Alluxio访问的时候，如果第一次数据不存在，就会去对象存储透传，然后把数据返回给训练框架，如果数据已经在Alluxio上，那就可以命中缓存，直接由Alluxio返回数据。 虽然第一遍读完数据，Alluxio一定会去缓存数据，但这还很难解决业务的问题。<span style="box-sizing:border-box;"></span></span><span style="box-sizing:border-box;"></span></div>
+<p style="margin-top:0px;margin-bottom:11.34px;box-sizing:border-box;"><span style="box-sizing:border-box;"></span> <span style="box-sizing:border-box;"></span></p>
+<span style="box-sizing:border-box;"></span></div>
+<div style="box-sizing:border-box;"><span style="box-sizing:border-box;"></span><span style="box-sizing:border-box;"></span></div>
+<div style="box-sizing:border-box;"><span style="box-sizing:border-box;"></span><span style="box-sizing:border-box;"></span></div>
+<div style="box-sizing:border-box;"><span style="box-sizing:border-box;"></span>
+<div style="box-sizing:border-box;"><span style="box-sizing:border-box;"></span><span style="box-sizing:border-box;"><span style="box-sizing:border-box;"></span>第一种情况是Alluxio缓存是用到本地磁盘把数据缓存下来，但磁盘容量是有限的，如果总训练的样本空间远大于磁盘缓存容量，就会不断的淘汰缓存数据，可能第一个任务缓存了，第二个任务就没有空间缓存了，或是会把别的缓存数据给挤掉。 第二种情况是有些训练任务可能因为计算资源或者故障的原因带来严重的延迟，之后这个业务一旦跑上来，可能需要训练 30 天之前的数据，或者直接回溯很老的数据去训练，那这 30 天的数据很容易就把所有的缓存空间全部用掉。<span style="box-sizing:border-box;"></span></span><span style="box-sizing:border-box;"></span></div>
+<div style="box-sizing:border-box;"><span style="box-sizing:border-box;"></span><span style="box-sizing:border-box;"></span></div>
+<div style="box-sizing:border-box;"><span style="box-sizing:border-box;"></span><span style="box-sizing:border-box;"></span></div>
+<span style="box-sizing:border-box;"></span></div>
+<div style="box-sizing:border-box;"><span style="box-sizing:border-box;"></span>
+<div style="box-sizing:border-box;"><span style="box-sizing:border-box;"></span><span style="box-sizing:border-box;"><span style="box-sizing:border-box;"></span>以上两种场景我们通过研发了智能缓存管理服务来解决。<span style="box-sizing:border-box;"></span></span><span style="box-sizing:border-box;"></span></div>
+<div style="box-sizing:border-box;"><span style="box-sizing:border-box;"></span><span style="box-sizing:border-box;"></span></div>
+<p style="margin-top:0px;margin-bottom:11.34px;box-sizing:border-box;"><span style="box-sizing:border-box;"></span> <span style="box-sizing:border-box;"></span></p>
+<span style="box-sizing:border-box;"></span></div>
+<div style="box-sizing:border-box;"><span style="box-sizing:border-box;"></span>
+<p style="margin-top:0px;margin-bottom:11.34px;box-sizing:border-box;"><span style="box-sizing:border-box;"></span><strong style="font-weight:bolder;box-sizing:border-box;"><span style="font-weight:bolder;box-sizing:border-box;"></span>智能缓存管理服务<span style="font-weight:bolder;box-sizing:border-box;"></span></strong><span style="box-sizing:border-box;"></span></p>
+<span style="box-sizing:border-box;"></span></div>
+<div style="box-sizing:border-box;"><span style="box-sizing:border-box;"></span>
+<div style="box-sizing:border-box;"><span style="box-sizing:border-box;"></span><span style="box-sizing:border-box;"><span style="box-sizing:border-box;"></span>智能缓存管理服务主要是基于任务的历史运行规律，可以基于任务的历史运行规律，更加智能的把数据提前做预加载，这样通常第一次训练就能够命中缓存，而且可以更及时地淘汰掉不使用的缓存。不仅如此，我们还对缓存淘汰场景进行了评估，比如发现最近 1-2 天的笔记训练样本是非常重要的，我们会把这些数据用 Pin 机制固定在磁盘里，就不会被自动淘汰，从而实现重要数据的淘汰完全由智能缓存管理服务去控制。通过这两个措施的共同保障，我们的缓存命中率能跑到90%以上，给对象存储的带宽带来了非常好的节省。 同时，Alluxio也提供了load任务的管理和执行能力，但目前还不完全符合我们的需求。我们需要监控到任务粒度的 load 进展，比如有 10 个任务（有几个是重要的），在按小时提前预加载数据，结果集群故障了，但故障时间也较长，第二天马上又要用新的样本去训练数据，那我们该如何止损呢？措施是通过实现 load 进度的可观测机制，能够观察到每个任务当前正在加载第几小时的数据。当在不及预期的时候，会马上发出告警并做止损。当止损的时候，会基于任务的优先级去判断优先补偿哪些任务，并提供一键补偿的能力，看看这些任务已经错过了哪些小时的缓存数据，然后全部加载进来，从而规避带宽全部透传到对象存储所造成的的稳定性风险。<span style="box-sizing:border-box;"></span></span><span style="box-sizing:border-box;"></span></div>
+<p style="margin-top:0px;margin-bottom:11.34px;box-sizing:border-box;"><span style="box-sizing:border-box;"></span> <span style="box-sizing:border-box;"></span></p>
+<div style="box-sizing:border-box;"><span style="box-sizing:border-box;"></span><span style="box-sizing:border-box;"></span></div>
+<span style="box-sizing:border-box;"></span></div>
+<div style="box-sizing:border-box;"><span style="box-sizing:border-box;"></span>
+<div style="box-sizing:border-box;"><span style="box-sizing:border-box;"></span><span style="box-sizing:border-box;"><span style="box-sizing:border-box;"></span>第三是我们为稳定性实现了一个探针服务，它可以完全模拟业务的读写行为，是一个端到端的探活服务。探活实践下来非常好用，无论是我们代码本身有问题，还是机器磁盘、网络等出现问题，都能反映在探针里，方便我们快速介入。目前我们能达到3分钟发现和1分钟止损的效率。经过将近一年时间的运行，故障告警的准确率几乎达到了100%。 <span style="box-sizing:border-box;"></span></span><span style="box-sizing:border-box;"></span></div>
+<span style="box-sizing:border-box;"></span></div>
+<div style="box-sizing:border-box;"><span style="box-sizing:border-box;"></span><span style="box-sizing:border-box;"><span style="box-sizing:border-box;"></span>训练速度提升效果<span style="box-sizing:border-box;"></span></span><span style="box-sizing:border-box;"></span></div>
+<div style="box-sizing:border-box;"><span style="box-sizing:border-box;"></span><span style="box-sizing:border-box;"></span></div>
+<div style="box-sizing:border-box;"><span style="box-sizing:border-box;"></span><div class="media-placeholder">[图片/附件]</div></en-media><span style="box-sizing:border-box;"></span></div>
+<div style="box-sizing:border-box;"><span style="box-sizing:border-box;"></span><div class="media-placeholder">[图片/附件]</div></en-media><span style="box-sizing:border-box;"></span></div>
+<div style="box-sizing:border-box;"><span style="box-sizing:border-box;"></span>
+<div style="box-sizing:border-box;"><span style="box-sizing:border-box;"></span><span style="box-sizing:border-box;"></span></div>
+<div style="box-sizing:border-box;"><span style="box-sizing:border-box;"></span><span style="box-sizing:border-box;"><span style="box-sizing:border-box;"></span>上图展示的是一个非常典型的笔记训练大任务，其他业务训练效果都差不多。在迁移之前，训练时长达到9小时36分，单一任务就需要消耗2000核，非常消耗资源，而平均 CPU 利用率只有30%，只是到了最后面会有一些上升，这是因为这时候大部分任务已经训练完成，对象存储的带宽有些缓解了。在迁移到Alluxio之后，训练时长直接缩减到了 5 小时 42 分，从图中可以看到，CPU 利用率可以非常均匀的维持在75%，并且再也没有被限流影响到。整体训练速度在时长上优化了41%，虽然很多业务比这个效果更好，但这个例子是一个非常典型的大任务，更具有代表性。<span style="box-sizing:border-box;"></span></span><span style="box-sizing:border-box;"></span></div>
+<span style="box-sizing:border-box;"></span></div>
+<div style="box-sizing:border-box;"><span style="box-sizing:border-box;"></span>
+<div style="box-sizing:border-box;"><span style="box-sizing:border-box;"></span><span style="box-sizing:border-box;"><span style="box-sizing:border-box;"></span> <span style="box-sizing:border-box;"></span></span><span style="box-sizing:border-box;"></span></div>
+<p style="margin-top:0px;margin-bottom:11.34px;box-sizing:border-box;"><span style="box-sizing:border-box;"></span> <span style="box-sizing:border-box;"></span></p>
+<span style="box-sizing:border-box;"></span></div>
+<h4 style="margin-top:6.3px;margin-bottom:12.6px;font-weight:500;line-height:1.2;color:inherit;box-sizing:border-box;font-family:SYHT, sans-serif;font-size:20px;"><span style="font-family:SYHT, sans-serif;font-weight:500;line-height:1.2;color:inherit;font-size:20px;box-sizing:border-box;"></span><span style="box-sizing:border-box;"><span style="box-sizing:border-box;"></span>推荐召回索引下载场景<span style="box-sizing:border-box;"></span></span><span style="font-family:SYHT, sans-serif;font-weight:500;line-height:1.2;color:inherit;font-size:20px;box-sizing:border-box;"></span></h4>
+<div style="box-sizing:border-box;"><span style="box-sizing:border-box;"></span><div class="media-placeholder">[图片/附件]</div></en-media><span style="box-sizing:border-box;"></span></div>
+<div style="box-sizing:border-box;"><span style="box-sizing:border-box;"></span>
+<div style="box-sizing:border-box;"><span style="box-sizing:border-box;"></span><span style="box-sizing:border-box;"><span style="box-sizing:border-box;"></span> 索引对于推荐非常核心，稳定性是非常重要的问题。上图是未引入Alluxio之前的架构图。最上面是搜推平台，会对搜推的索引做一些生成或者更新，更新完了之后会存储到索引存储（一般是就近机房的对象存储）。存储索引之后，搜推平台会通知其他服务下发索引，下发索引的服务会把数据通过专线从原来索引存储的对象存储桶传输到另外一个多云机房的本地磁盘，也就是索引服务的本地磁盘上。以图中的架构为例，共有两个跨区域的机房，当把索引数据下载到本地盘后索引服务就能够把数据加载到内存中，对外提供一些索引的服务。<span style="box-sizing:border-box;"></span></span><span style="box-sizing:border-box;"></span></div>
+<p style="margin-top:0px;margin-bottom:11.34px;box-sizing:border-box;"><span style="box-sizing:border-box;"></span> <span style="box-sizing:border-box;"></span></p>
+<div style="box-sizing:border-box;"><span style="box-sizing:border-box;"></span><span style="box-sizing:border-box;"></span></div>
+<span style="box-sizing:border-box;"></span></div>
+<div style="box-sizing:border-box;"><span style="box-sizing:border-box;"></span>
+<div style="box-sizing:border-box;"><span style="box-sizing:border-box;"></span><strong style="font-weight:bolder;box-sizing:border-box;"><span style="font-weight:bolder;box-sizing:border-box;"></span>这样的架构带来的问题很大：<span style="font-weight:bolder;box-sizing:border-box;"></span></strong><span style="box-sizing:border-box;"></span></div>
+<div style="box-sizing:border-box;"><span style="box-sizing:border-box;"></span><span style="box-sizing:border-box;"></span></div>
+<span style="box-sizing:border-box;"></span></div>
+<div style="box-sizing:border-box;"><span style="box-sizing:border-box;"></span>
+<div style="box-sizing:border-box;"><span style="box-sizing:border-box;"></span><span style="box-sizing:border-box;"><span style="box-sizing:border-box;"></span>1. 以推荐场景下的索引读取速度来说，通常发布一个机房的服务需要 3-4 个小时，因为是多活设计，发布完四个机房整整需要一整天，这是非常令人头疼的问题。同样，当单机房发生故障，止损时长同样也需要 3-4 小时，如果你要把很老的一个索引回滚，就需要重新走这个流程，四个机房就需要一天时间。<span style="box-sizing:border-box;"></span></span><span style="box-sizing:border-box;"></span></div>
+<div style="box-sizing:border-box;"><span style="box-sizing:border-box;"></span><span style="box-sizing:border-box;"></span></div>
+<span style="box-sizing:border-box;"></span></div>
+<div style="box-sizing:border-box;"><span style="box-sizing:border-box;"></span>
+<div style="box-sizing:border-box;"><span style="box-sizing:border-box;"></span><span style="box-sizing:border-box;"><span style="box-sizing:border-box;"></span>2. 磁盘存储成本非常高。因为索引服务本身是一个主从架构，典型的场景是一主两从。同一个索引会有三副本的云盘存储，而云盘本身就是三副本冗余存储，那整体下来就是九副本，而云盘的单价通常比对象存储贵得多，这样计算下来整体成本是非常高的。<span style="box-sizing:border-box;"></span></span><span style="box-sizing:border-box;"></span></div>
+<div style="box-sizing:border-box;"><span style="box-sizing:border-box;"></span><div class="media-placeholder">[图片/附件]</div></en-media><span style="box-sizing:border-box;"></span></div>
+<span style="box-sizing:border-box;"></span></div>
+<div style="box-sizing:border-box;"><span style="box-sizing:border-box;"></span>
+<div style="box-sizing:border-box;"><span style="box-sizing:border-box;"></span><span style="box-sizing:border-box;"><span style="box-sizing:border-box;"></span>上图是我们引入Alluxio之后的架构。从搜推平台生成索引之后，我们会把这个事件发送到消息队列，智能缓存管理服务订阅了该消息队列，收到相应的加载缓存事件后，就会去加载索引。现在的加载流程和之前就不一样了，之前是通过专线传输过来存到本地磁盘，现在是加载到 Alluxio 集群里，然后再告知索引服务，去Alluxio集群把数据再加载到索引服务的内存，从而对外进行服务。这里的关键点是把本地磁盘变成了Alluxio集群，那为什么采用Alluxio之后解决了以上问题呢？<span style="box-sizing:border-box;"></span></span><span style="box-sizing:border-box;"></span></div>
+<p style="margin-top:0px;margin-bottom:11.34px;box-sizing:border-box;"><span style="box-sizing:border-box;"></span> <span style="box-sizing:border-box;"></span></p>
+<div style="box-sizing:border-box;"><span style="box-sizing:border-box;"></span><span style="box-sizing:border-box;"></span></div>
+<span style="box-sizing:border-box;"></span></div>
+<div style="box-sizing:border-box;"><span style="box-sizing:border-box;"></span>
+<div style="box-sizing:border-box;"><span style="box-sizing:border-box;"></span><span style="box-sizing:border-box;"><span style="box-sizing:border-box;"></span>首先，我们把磁盘上浮到了一个远程的集群，实现了索引的存算分离，把原来来自云盘的存储瓶颈，转换成了宿主机的网络瓶颈。云盘的带宽通常在云厂商相对还比较好的规格是 350 MB/s，但是宿主机不一样，我们推荐用的一些机器至少都是 32 Gbps 以上，合4GB/s，这两者的差距超过10 倍，因此下载索引数据这个过程就能提速10倍以上。 第二，Alluxio 并不会把文件存储在固定的一台机器上（和本地盘不一样），一个文件会被切成block 存储。比如一个集群有 100 台机器，一个文件能切 100 个block，那每个机器只会存1个block，这时候整个集群的带宽就是这个文件的吞吐极限。所以，对于一些热点的索引文件或者其他场景都是非常友好的。<span style="box-sizing:border-box;"></span></span><span style="box-sizing:border-box;"></span></div>
+<p style="margin-top:0px;margin-bottom:11.34px;box-sizing:border-box;"><span style="box-sizing:border-box;"></span> <span style="box-sizing:border-box;"></span></p>
+<div style="box-sizing:border-box;"><span style="box-sizing:border-box;"></span><span style="box-sizing:border-box;"></span></div>
+<span style="box-sizing:border-box;"></span></div>
+<div style="box-sizing:border-box;"><span style="box-sizing:border-box;"></span>
+<div style="box-sizing:border-box;"><span style="box-sizing:border-box;"></span><span style="box-sizing:border-box;"><span style="box-sizing:border-box;"></span>但这样直接用Alluxio还是会遇到问题，所以我们还加入了一些增强的功能，这也是为什么引入了智能缓存管理服务的原因。比如load太快会把专线打爆，我们需要Alluxio支持限速，以保障核心服务的稳定性。现在已经支持了限速，当我们限制20-30Gbps的带宽从UFS下载数据，就不会把专线带宽占满。 这套架构主要有三点收益：<span style="box-sizing:border-box;"></span></span><span style="box-sizing:border-box;"></span></div>
+<p style="margin-top:0px;margin-bottom:11.34px;box-sizing:border-box;"><span style="box-sizing:border-box;"></span> <span style="box-sizing:border-box;"></span></p>
+<div style="box-sizing:border-box;"><span style="box-sizing:border-box;"></span><span style="box-sizing:border-box;"></span></div>
+<span style="box-sizing:border-box;"></span></div>
+<div style="box-sizing:border-box;"><span style="box-sizing:border-box;"></span>
+<div style="box-sizing:border-box;"><span style="box-sizing:border-box;"></span><span style="box-sizing:border-box;"><span style="box-sizing:border-box;"></span>1. Alluxio将云盘带宽瓶颈变成了宿主机的网卡瓶颈，索引拉取速度带来 10 倍以上的提升。如果宿主机的核数越大，附带的带宽也会更大，带来的提升倍数还会增大。<span style="box-sizing:border-box;"></span></span><span style="box-sizing:border-box;"></span></div>
+<div style="box-sizing:border-box;"><span style="box-sizing:border-box;"></span><span style="box-sizing:border-box;"></span></div>
+<span style="box-sizing:border-box;"></span></div>
+<div style="box-sizing:border-box;"><span style="box-sizing:border-box;"></span>
+<div style="box-sizing:border-box;"><span style="box-sizing:border-box;"></span><span style="box-sizing:border-box;"><span style="box-sizing:border-box;"></span>2. 索引下发的整体业务体感（含业务逻辑）达到 3 倍的提升。主要是因为除了下载，还有一些业务逻辑在这个索引下发的过程里。<span style="box-sizing:border-box;"></span></span><span style="box-sizing:border-box;"></span></div>
+<div style="box-sizing:border-box;"><span style="box-sizing:border-box;"></span><span style="box-sizing:border-box;"></span></div>
+<span style="box-sizing:border-box;"></span></div>
+<div style="box-sizing:border-box;"><span style="box-sizing:border-box;"></span>
+<div style="box-sizing:border-box;"><span style="box-sizing:border-box;"></span><span style="box-sizing:border-box;"><span style="box-sizing:border-box;"></span>3. 高性能云盘替换成对象存储，节省80%成本。此优化是通过Alluxio把云盘全部省掉，变成了Alluxio的集群本地盘，而这些本地盘可以选择一些更廉价的介质，比如单副本的 HDD 盘。对于小红书的推荐场景，由于索引数据量很大，云盘成本的节省量也是非常可观的。<span style="box-sizing:border-box;"></span></span><span style="box-sizing:border-box;"></span></div>
+<p style="margin-top:0px;margin-bottom:11.34px;box-sizing:border-box;"><span style="box-sizing:border-box;"></span> <span style="box-sizing:border-box;"></span></p>
+<span style="box-sizing:border-box;"></span></div>
+<h4 style="margin-top:6.3px;margin-bottom:12.6px;font-weight:500;line-height:1.2;color:inherit;box-sizing:border-box;font-family:SYHT, sans-serif;font-size:20px;"><span style="font-family:SYHT, sans-serif;font-weight:500;line-height:1.2;color:inherit;font-size:20px;box-sizing:border-box;"></span><span style="box-sizing:border-box;"><span style="box-sizing:border-box;"></span>大模型下载场景<span style="box-sizing:border-box;"></span></span><span style="font-family:SYHT, sans-serif;font-weight:500;line-height:1.2;color:inherit;font-size:20px;box-sizing:border-box;"></span></h4>
+<div style="box-sizing:border-box;"><span style="box-sizing:border-box;"></span>
+<div style="box-sizing:border-box;"><span style="box-sizing:border-box;"></span><span style="box-sizing:border-box;"><span style="box-sizing:border-box;"></span>我们也有大模型的场景，大模型下载的解决方案和推荐索引几乎一模一样，面临的同样是云盘带宽限制和冗余存储高成本以及跨云同步稳定性问题。3-4年前大家通常只做单机训练，现在已经演进到了几乎都是分布式训练的状态。那一定会需要通过远端的存储集群来解决本地数据存放不下的问题，这块架构与收益跟推荐索引一样，就不赘述了。<span style="box-sizing:border-box;"></span></span><span style="box-sizing:border-box;"></span></div>
+<p style="margin-top:0px;margin-bottom:11.34px;box-sizing:border-box;"><span style="box-sizing:border-box;"></span> <span style="box-sizing:border-box;"></span></p>
+<span style="box-sizing:border-box;"></span></div>
+<div style="box-sizing:border-box;"><span style="box-sizing:border-box;"></span>
+<div style="box-sizing:border-box;"><span style="box-sizing:border-box;"></span><span style="box-sizing:border-box;"><span style="box-sizing:border-box;"></span> <span style="box-sizing:border-box;"></span></span><span style="box-sizing:border-box;"></span></div>
+<span style="box-sizing:border-box;"></span></div>
+<h4 style="margin-top:6.3px;margin-bottom:12.6px;font-weight:500;line-height:1.2;color:inherit;box-sizing:border-box;font-family:SYHT, sans-serif;font-size:20px;"><span style="font-family:SYHT, sans-serif;font-weight:500;line-height:1.2;color:inherit;font-size:20px;box-sizing:border-box;"></span><span style="box-sizing:border-box;"><span style="box-sizing:border-box;"></span>AI 训练场景<span style="box-sizing:border-box;"></span></span><span style="font-family:SYHT, sans-serif;font-weight:500;line-height:1.2;color:inherit;font-size:20px;box-sizing:border-box;"></span></h4>
+<div style="box-sizing:border-box;"><span style="box-sizing:border-box;"></span><div class="media-placeholder">[图片/附件]</div></en-media><span style="box-sizing:border-box;"></span></div>
+<div style="box-sizing:border-box;"><span style="box-sizing:border-box;"></span>
+<p style="margin-top:0px;margin-bottom:11.34px;box-sizing:border-box;"><span style="box-sizing:border-box;"></span><span style="box-sizing:border-box;"><span style="box-sizing:border-box;"></span> <span style="box-sizing:border-box;"></span></span><strong style="font-weight:bolder;box-sizing:border-box;"><span style="font-weight:bolder;box-sizing:border-box;"></span>面对的挑战：<span style="font-weight:bolder;box-sizing:border-box;"></span></strong><span style="box-sizing:border-box;"></span></p>
+<span style="box-sizing:border-box;"></span></div>
+<div style="box-sizing:border-box;"><span style="box-sizing:border-box;"></span>
+<div style="box-sizing:border-box;"><span style="box-sizing:border-box;"></span><span style="box-sizing:border-box;"><span style="box-sizing:border-box;"></span>1. 有 60 亿+级别的小文件训练场景，如果把这些元信息存储在一个集中式的元信息服务里，成本非常高，本身技术挑战也很大。<span style="box-sizing:border-box;"></span></span><span style="box-sizing:border-box;"></span></div>
+<span style="box-sizing:border-box;"></span></div>
+<div style="box-sizing:border-box;"><span style="box-sizing:border-box;"></span>
+<div style="box-sizing:border-box;"><span style="box-sizing:border-box;"></span><span style="box-sizing:border-box;"><span style="box-sizing:border-box;"></span>2. 对象存储作为很多存储的底座，最终数据会穿透到对象存储，会面临着存储带宽，或是 IOPS 比较有限的情况（尤其是小文件），云厂商通常一个桶提供几万IOPS，每PB存储量的带宽配额也很低，尤其在小文件场景下，这点 IOPS 承载不了多少访问，因此 GPU 利用率就会很低。<span style="box-sizing:border-box;"></span></span><span style="box-sizing:border-box;"></span></div>
+<p style="margin-top:0px;margin-bottom:11.34px;box-sizing:border-box;"><span style="box-sizing:border-box;"></span> <span style="box-sizing:border-box;"></span></p>
+<span style="box-sizing:border-box;"></span></div>
+<div style="box-sizing:border-box;"><span style="box-sizing:border-box;"></span>
+<p style="margin-top:0px;margin-bottom:11.34px;box-sizing:border-box;"><span style="box-sizing:border-box;"></span><strong style="font-weight:bolder;box-sizing:border-box;"><span style="font-weight:bolder;box-sizing:border-box;"></span>解决方法<span style="font-weight:bolder;box-sizing:border-box;"></span></strong><span style="box-sizing:border-box;"></span></p>
+<span style="box-sizing:border-box;"></span></div>
+<div style="box-sizing:border-box;"><span style="box-sizing:border-box;"></span>
+<div style="box-sizing:border-box;"><span style="box-sizing:border-box;"></span><span style="box-sizing:border-box;"><span style="box-sizing:border-box;"></span>1. <span style="box-sizing:border-box;"></span></span><span style="box-sizing:border-box;"><span style="box-sizing:border-box;"></span>引入Alluxio缓存训练需要的数据。<span style="box-sizing:border-box;"></span></span><span style="box-sizing:border-box;"><span style="box-sizing:border-box;"></span>Alluxio 3.0 版本提供了一个可扩展的元信息能力，让扩展性大幅提升。此外，Alluxio本身支持 POSIX 协议，之前如果训练是在本地盘上，现在会把 Alluxio 集群 mount 到 GPU 机器上，由于Alluxio是透明嵌入，让业务方看其实还是访问的本地盘，背后其实是Alluxio集群。然后，通过Alluxio集群去对象存储里取数据，基于Alluxio的缓存机制，可以有效的避免数据穿透到对象存储。因为通常 AI 训练是多轮的epoch，Alluxio 只会让第一轮epoch走对象存储，后面都可以命中这些缓存。甚至理想情况下，可以错峰把这些数据预加载到Alluxio，这样真正训练的时候，完全不需要走对象存储。<span style="box-sizing:border-box;"></span></span><span style="box-sizing:border-box;"></span></div>
+<div style="box-sizing:border-box;"><span style="box-sizing:border-box;"></span><span style="box-sizing:border-box;"></span></div>
+<span style="box-sizing:border-box;"></span></div>
+<div style="box-sizing:border-box;"><span style="box-sizing:border-box;"></span>
+<div style="box-sizing:border-box;"><span style="box-sizing:border-box;"></span><span style="box-sizing:border-box;"><span style="box-sizing:border-box;"></span>2. 因为GPU 机器上很多磁盘是闲置的，为了避免额外的支出成本，我们会<span style="box-sizing:border-box;"></span></span><span style="box-sizing:border-box;"><span style="box-sizing:border-box;"></span>把Alluxio 和 GPU 机器混合部署<span style="box-sizing:border-box;"></span></span><span style="box-sizing:border-box;"><span style="box-sizing:border-box;"></span>，让这些磁盘都可以被充分使用，也不会有额外的成本支出。<span style="box-sizing:border-box;"></span></span><span style="box-sizing:border-box;"></span></div>
+<div style="box-sizing:border-box;"><span style="box-sizing:border-box;"></span><span style="box-sizing:border-box;"></span></div>
+<span style="box-sizing:border-box;"></span></div>
+<div style="box-sizing:border-box;"><span style="box-sizing:border-box;"></span>
+<div style="box-sizing:border-box;"><span style="box-sizing:border-box;"></span><span style="box-sizing:border-box;"><span style="box-sizing:border-box;"></span>3. Alluxio 相对于别的产品打造的非常成熟的能力是ClusterCache。在同样的总磁盘容量，<span style="box-sizing:border-box;"></span></span><span style="box-sizing:border-box;"><span style="box-sizing:border-box;"></span>ClusterCache相对于Local Cache的命中率可以做到更高<span style="box-sizing:border-box;"></span></span><span style="box-sizing:border-box;"><span style="box-sizing:border-box;"></span>，比如有两个训练任务读同样的文件，如果落在两个不同的机器上，对于 Local Cache 会把数据读两遍，而对于ClusterCache 只需要读一遍，第二次可以通过网络来传输，而 GPU 机器之间的网络带宽也常非常高，通常有百Gbps，同时Alluxio也支持LocalCache，组合起来使用更佳。<span style="box-sizing:border-box;"></span></span><span style="box-sizing:border-box;"></span></div>
+<p style="margin-top:0px;margin-bottom:11.34px;box-sizing:border-box;"><span style="box-sizing:border-box;"></span> <span style="box-sizing:border-box;"></span></p>
+<div style="box-sizing:border-box;"><span style="box-sizing:border-box;"></span><span style="box-sizing:border-box;"></span></div>
+<span style="box-sizing:border-box;"></span></div>
+<p style="margin-top:0px;margin-bottom:11.34px;box-sizing:border-box;"><span style="box-sizing:border-box;"></span><strong style="font-weight:bolder;box-sizing:border-box;"><span style="font-weight:bolder;box-sizing:border-box;"></span>Alluxio为什么能加速AI训练<span style="font-weight:bolder;box-sizing:border-box;"></span></strong><span style="box-sizing:border-box;"></span></p>
+<div style="box-sizing:border-box;"><span style="box-sizing:border-box;"></span><span style="box-sizing:border-box;"></span></div>
+<div style="box-sizing:border-box;"><span style="box-sizing:border-box;"></span>
+<div style="box-sizing:border-box;"><span style="box-sizing:border-box;"></span><span style="box-sizing:border-box;"><span style="box-sizing:border-box;"></span>● 可以在业务训练之前提前把数据加载到缓存中，突破IO限制，相比穿透对象存储读取性能更高；<span style="box-sizing:border-box;"></span></span><span style="box-sizing:border-box;"></span></div>
+<span style="box-sizing:border-box;"></span></div>
+<div style="box-sizing:border-box;"><span style="box-sizing:border-box;"></span>
+<div style="box-sizing:border-box;"><span style="box-sizing:border-box;"></span><span style="box-sizing:border-box;"><span style="box-sizing:border-box;"></span>● 读取数据时通过智能判定是随机读还是顺序读。如果是顺序读可以提前预读数据，从而达到更高的读吞吐；如果是随机读，可以精准地控制要读哪个位置，避免读的放大；<span style="box-sizing:border-box;"></span></span><span style="box-sizing:border-box;"></span></div>
+<span style="box-sizing:border-box;"></span></div>
+<div style="box-sizing:border-box;"><span style="box-sizing:border-box;"></span>
+<div style="box-sizing:border-box;"><span style="box-sizing:border-box;"></span><span style="box-sizing:border-box;"><span style="box-sizing:border-box;"></span>● 无集中式的元信息服务，全量元信息在对象存储，只有热数据及其元数据在缓存中，对海量小文件友好，相比于集中式元信息服务，成本极低。<span style="box-sizing:border-box;"></span></span><span style="box-sizing:border-box;"></span></div>
+<span style="box-sizing:border-box;"></span></div>
+<div style="box-sizing:border-box;"><span style="box-sizing:border-box;"></span>
+<div style="box-sizing:border-box;"><span style="box-sizing:border-box;"></span><span style="box-sizing:border-box;"><span style="box-sizing:border-box;"></span>● 可异步写checkpoint到本地磁盘，再异步上传至对象存储，通过有效缩短IO负载时长，从而大幅缩短GPU等待时间，并显著提升GPU利用率 <span style="box-sizing:border-box;"></span></span><span style="box-sizing:border-box;"></span></div>
+<p style="margin-top:0px;margin-bottom:11.34px;box-sizing:border-box;"><span style="box-sizing:border-box;"></span> <span style="box-sizing:border-box;"></span></p>
+<span style="box-sizing:border-box;"></span></div>
+<h4 style="margin-top:6.3px;margin-bottom:12.6px;font-weight:500;line-height:1.2;color:inherit;box-sizing:border-box;font-family:SYHT, sans-serif;font-size:20px;"><span style="font-family:SYHT, sans-serif;font-weight:500;line-height:1.2;color:inherit;font-size:20px;box-sizing:border-box;"></span><span style="box-sizing:border-box;"><span style="box-sizing:border-box;"></span>技术问题及解法<span style="box-sizing:border-box;"></span></span><span style="font-family:SYHT, sans-serif;font-weight:500;line-height:1.2;color:inherit;font-size:20px;box-sizing:border-box;"></span></h4>
+<div style="box-sizing:border-box;"><span style="box-sizing:border-box;"></span>
+<div style="box-sizing:border-box;"><span style="box-sizing:border-box;"></span><span style="box-sizing:border-box;"><span style="box-sizing:border-box;"></span>在与Alluxio的合作过程中，我们也一起参与解决了非常多的技术问题，这里有几个比较典型的场景：<span style="box-sizing:border-box;"></span></span><span style="box-sizing:border-box;"></span></div>
+<p style="margin-top:0px;margin-bottom:11.34px;box-sizing:border-box;"><span style="box-sizing:border-box;"></span> <span style="box-sizing:border-box;"></span></p>
+<div style="box-sizing:border-box;"><span style="box-sizing:border-box;"></span><span style="box-sizing:border-box;"></span></div>
+<span style="box-sizing:border-box;"></span></div>
+<p style="margin-top:0px;margin-bottom:11.34px;box-sizing:border-box;"><span style="box-sizing:border-box;"></span><strong style="font-weight:bolder;box-sizing:border-box;"><span style="font-weight:bolder;box-sizing:border-box;"></span>读放大问题解决<span style="font-weight:bolder;box-sizing:border-box;"></span></strong><span style="box-sizing:border-box;"></span></p>
+<div style="box-sizing:border-box;"><span style="box-sizing:border-box;"></span>
+<div style="box-sizing:border-box;"><span style="box-sizing:border-box;"></span><span style="box-sizing:border-box;"><span style="box-sizing:border-box;"></span>主要表现在 S3 协议里会有一些 range 读，以及 Alluxio client、fuse 或者其他一些触发随机读的场景。放大主要存在两个环节：一个是 S3 proxy 到 worker 之间；另一个是worker去对象存储（UFS）取数据的时候，都会有一个读放大的情况。比如一个数据是热读（指数据缓存已经在worker里），原来的实现里 proxy 会直接去worker取，虽然S3协议里的 range 参数已经指明了截止位，但并没有透传过去。因为这里可能认为需要做一些预加载来加速后续的读取，实际上业务如果指定了一个 endOffset，后面的数据则是没必要读取的。虽然预读能帮助吞吐的提升，但在这种情况下后面的数据会被完全废掉，反而会转化成带宽的放大。——解决办法： worker 传输数据当传输到endOffset，后面的字节不需要传输过来，这样是更经济，更高效的办法。<span style="box-sizing:border-box;"></span></span><span style="box-sizing:border-box;"></span></div>
+<p style="margin-top:0px;margin-bottom:11.34px;box-sizing:border-box;"><span style="box-sizing:border-box;"></span>&amp;nbsp；<span style="box-sizing:border-box;"></span></p>
+<div style="box-sizing:border-box;"><span style="box-sizing:border-box;"></span><span style="box-sizing:border-box;"></span></div>
+<span style="box-sizing:border-box;"></span></div>
+<div style="box-sizing:border-box;"><span style="box-sizing:border-box;"></span>
+<div style="box-sizing:border-box;"><span style="box-sizing:border-box;"></span><span style="box-sizing:border-box;"><span style="box-sizing:border-box;"></span>第二个放大的问题是因为Alluxio初衷在读数据时，会把需读取数据范围涉及的block全部缓存下来，好处是之后再读这些数据就不需要走带宽了。比如在一个随机读的场景，在一个block里只需要1-2M数据，但Alluxio会缓存整个 block 的大小（默认为 64M）。——解决办法：如果是非缓存block的数据请求，因为协议中本身传了 endOffset，需要将其作为访问对象存储的参数，只需要读取必要的数据即可。endOffset之后的数据本身也会被丢弃掉，读出来就会变成worker机器上网络带宽的开销，从而影响成本和效果。<span style="box-sizing:border-box;"></span></span><span style="box-sizing:border-box;"></span></div>
+<p style="margin-top:0px;margin-bottom:11.34px;box-sizing:border-box;"><span style="box-sizing:border-box;"></span>&amp;nbsp；<span style="box-sizing:border-box;"></span></p>
+<div style="box-sizing:border-box;"><span style="box-sizing:border-box;"></span><span style="box-sizing:border-box;"></span></div>
+<span style="box-sizing:border-box;"></span></div>
+<div style="box-sizing:border-box;"><span style="box-sizing:border-box;"></span>
+<div style="box-sizing:border-box;"><span style="box-sizing:border-box;"></span><span style="box-sizing:border-box;"><span style="box-sizing:border-box;"></span>第三个是冷读 NoCache的场景。NoCache是指经过Alluxio读取但不缓存对应的数据，通常发生在对于延迟太久的任务或者读取大量冷数据的任务，我们不需要将其缓存下来，否则会将本身的热数据给挤掉。——解决办法：以前的实现里，通过S3 proxy直接NoCache读，它会通过worker去UFS取数据。修改和打磨之后，Proxy 会绕过worker直接去 UFS 取数据。这样可以节省worker传输到proxy的带宽，可以省一倍的带宽，对应到机器成本上就是省一倍的机器成本。<span style="box-sizing:border-box;"></span></span><span style="box-sizing:border-box;"></span></div>
+<p style="margin-top:0px;margin-bottom:11.34px;box-sizing:border-box;"><span style="box-sizing:border-box;"></span> <span style="box-sizing:border-box;"></span></p>
+<span style="box-sizing:border-box;"></span></div>
+<div style="box-sizing:border-box;"><span style="box-sizing:border-box;"></span>
+<div style="box-sizing:border-box;"><span style="box-sizing:border-box;"></span><span style="box-sizing:border-box;"><span style="box-sizing:border-box;"></span> <span style="box-sizing:border-box;"></span></span><span style="box-sizing:border-box;"></span></div>
+<span style="box-sizing:border-box;"></span></div>
+<div style="box-sizing:border-box;"><span style="box-sizing:border-box;"></span><strong style="font-weight:bolder;box-sizing:border-box;"><span style="font-weight:bolder;box-sizing:border-box;"></span>专线带宽限流<span style="font-weight:bolder;box-sizing:border-box;"></span></strong><span style="box-sizing:border-box;"></span></div>
+<div style="box-sizing:border-box;"><span style="box-sizing:border-box;"></span>
+<div style="box-sizing:border-box;"><span style="box-sizing:border-box;"></span><span style="box-sizing:border-box;"><span style="box-sizing:border-box;"></span>我们在 UFS 这一层增加了流控能力，保护了专线带宽。在多云环境，业务通常会就近读取，一定不会跨专线访问Alluxio集群，所有跨云专线的流量只有从 worker 到 UFS 这一层，所以我们只需要在访问UFS的地方加限流就可以控制住专线。而客户端和 S3  Proxy的交互，以及 S3 Proxy与 worker的交互都是同机房的一个流量，理论上也需要保护，但不影响专线。<span style="box-sizing:border-box;"></span></span><span style="box-sizing:border-box;"></span></div>
+<p style="margin-top:0px;margin-bottom:11.34px;box-sizing:border-box;"><span style="box-sizing:border-box;"></span> <span style="box-sizing:border-box;"></span></p>
+<div style="box-sizing:border-box;"><span style="box-sizing:border-box;"></span><span style="box-sizing:border-box;"></span></div>
+<span style="box-sizing:border-box;"></span></div>
+<div style="box-sizing:border-box;"><span style="box-sizing:border-box;"></span><strong style="font-weight:bolder;box-sizing:border-box;"><span style="font-weight:bolder;box-sizing:border-box;"></span> 读写性能优化<span style="font-weight:bolder;box-sizing:border-box;"></span></strong><span style="box-sizing:border-box;"></span></div>
+<div style="box-sizing:border-box;"><span style="box-sizing:border-box;"></span>
+<div style="box-sizing:border-box;"><span style="box-sizing:border-box;"></span><span style="box-sizing:border-box;"><span style="box-sizing:border-box;"></span>在读性能优化方面，通常是识别了读的特征之后做预读，通过预读能够明显提升读的性能，尤其是在冷读数据的情况下。在Checkpoint写方面，一定不能阻塞训练，所以支持了WriteBack 能力，WriteBack 是指先异步写到磁盘甚至内存中，然后就可以开始后续训练，通过后台线程异步上传。同样也有一些线程模型的优化，整体对读写的性能也有非常大的提升。<span style="box-sizing:border-box;"></span></span><span style="box-sizing:border-box;"></span></div>
+<p style="margin-top:0px;margin-bottom:11.34px;box-sizing:border-box;"><span style="box-sizing:border-box;"></span> <span style="box-sizing:border-box;"></span></p>
+<span style="box-sizing:border-box;"></span></div>
+<h3 style="margin-top:6.3px;margin-bottom:12.6px;font-weight:500;line-height:1.2;color:inherit;box-sizing:border-box;font-family:SYHT, sans-serif;font-size:24px;"><span style="font-family:SYHT, sans-serif;font-weight:500;line-height:1.2;color:inherit;font-size:24px;box-sizing:border-box;"></span><span style="box-sizing:border-box;"><span style="box-sizing:border-box;"></span> 未来规划<span style="box-sizing:border-box;"></span></span><span style="font-family:SYHT, sans-serif;font-weight:500;line-height:1.2;color:inherit;font-size:24px;box-sizing:border-box;"></span></h3>
+<div style="box-sizing:border-box;"><span style="box-sizing:border-box;"></span>
+<div style="box-sizing:border-box;"><span style="box-sizing:border-box;"></span><span style="box-sizing:border-box;"><span style="box-sizing:border-box;"></span>未来我们会把数据加速层做成什么样子以及还有哪些待解决的问题呢？<span style="box-sizing:border-box;"></span></span><span style="box-sizing:border-box;"></span></div>
+<p style="margin-top:0px;margin-bottom:11.34px;box-sizing:border-box;"><span style="box-sizing:border-box;"></span> <span style="box-sizing:border-box;"></span></p>
+<div style="box-sizing:border-box;"><span style="box-sizing:border-box;"></span><span style="box-sizing:border-box;"></span></div>
+<span style="box-sizing:border-box;"></span></div>
+<p style="margin-top:0px;margin-bottom:11.34px;box-sizing:border-box;"><span style="box-sizing:border-box;"></span><strong style="font-weight:bolder;box-sizing:border-box;"><span style="font-weight:bolder;box-sizing:border-box;"></span>打造统一的多云数据存储产品<span style="font-weight:bolder;box-sizing:border-box;"></span></strong><span style="box-sizing:border-box;"></span></p>
+<div style="box-sizing:border-box;"><span style="box-sizing:border-box;"></span>
+<div style="box-sizing:border-box;"><span style="box-sizing:border-box;"></span><span style="box-sizing:border-box;"><span style="box-sizing:border-box;"></span>因为我们数据存储在多云里，业务需要关心数据到底在哪个云上，是不是会跨专线，到底要用哪个 SDK 去读取，报错了都是什么原因，该去找谁，业务感知的东西非常多。我们期望打造一个统一的多云数据存储产品，让业务方再也不需要在代码中关注数据到底在哪里，专线能否控制好等问题。<span style="box-sizing:border-box;"></span></span><span style="box-sizing:border-box;"></span></div>
+<span style="box-sizing:border-box;"></span></div>
+<div style="box-sizing:border-box;"><span style="box-sizing:border-box;"></span>
+<h4 style="margin-top:6.3px;margin-bottom:12.6px;font-weight:500;line-height:1.2;color:inherit;box-sizing:border-box;font-family:SYHT, sans-serif;font-size:20px;"><span style="font-family:SYHT, sans-serif;font-weight:500;line-height:1.2;color:inherit;font-size:20px;box-sizing:border-box;"></span><span style="box-sizing:border-box;"><span style="box-sizing:border-box;"></span> <span style="box-sizing:border-box;"></span></span><span style="font-family:SYHT, sans-serif;font-weight:500;line-height:1.2;color:inherit;font-size:20px;box-sizing:border-box;"></span></h4>
+<span style="box-sizing:border-box;"></span></div>
+<p style="margin-top:0px;margin-bottom:11.34px;box-sizing:border-box;"><span style="box-sizing:border-box;"></span><strong style="font-weight:bolder;box-sizing:border-box;"><span style="font-weight:bolder;box-sizing:border-box;"></span>AI训练：多地域GPU利用率提升<span style="font-weight:bolder;box-sizing:border-box;"></span></strong><span style="box-sizing:border-box;"></span></p>
+<div style="box-sizing:border-box;"><span style="box-sizing:border-box;"></span>
+<div style="box-sizing:border-box;"><span style="box-sizing:border-box;"></span><span style="box-sizing:border-box;"><span style="box-sizing:border-box;"></span>在 AI 训练场景，因为 GPU 众所周知的供应问题，从各个厂商购买或租赁的 GPU 是分散在非常多的地域。这会造成一个非常严重的问题，有些地方有GPU，但没数据，有些地方有数据，但没有GPU，这会导致 GPU 的分配率不高。后面会探索如何基于Alluxio来提升 GPU 利用率，解决数据和 GPU 在不同地域如何充分利用GPU的问题。<span style="box-sizing:border-box;"></span></span><span style="box-sizing:border-box;"></span></div>
+<span style="box-sizing:border-box;"></span></div>
+<div style="box-sizing:border-box;"><span style="box-sizing:border-box;"></span>
+<div style="box-sizing:border-box;"><span style="box-sizing:border-box;"></span><span style="box-sizing:border-box;"><span style="box-sizing:border-box;"></span> <span style="box-sizing:border-box;"></span></span><span style="box-sizing:border-box;"></span></div>
+<span style="box-sizing:border-box;"></span></div>
+<p style="margin-top:0px;margin-bottom:11.34px;box-sizing:border-box;"><span style="box-sizing:border-box;"></span><strong style="font-weight:bolder;box-sizing:border-box;"><span style="font-weight:bolder;box-sizing:border-box;"></span>大数据查询加速<span style="font-weight:bolder;box-sizing:border-box;"></span></strong><span style="box-sizing:border-box;"></span></p>
+<div style="box-sizing:border-box;"><span style="box-sizing:border-box;"></span>
+<div style="box-sizing:border-box;"><span style="box-sizing:border-box;"></span><span style="box-sizing:border-box;"><span style="box-sizing:border-box;"></span>大数据查询加速在Alluxio社区里的案例非常多，但我们需要探索出一个如何在极低成本的情况下去实现大数据查询的加速。同样的查询效率提升，需要增加的Alluxio的成本要小于直接扩容查询引擎节点的成本才行。<span style="box-sizing:border-box;"></span></span><span style="box-sizing:border-box;"></span></div>
+<span style="box-sizing:border-box;"></span></div>
+<div style="box-sizing:border-box;"><span style="box-sizing:border-box;"></span>
+<div style="box-sizing:border-box;"><span style="box-sizing:border-box;"></span><span style="box-sizing:border-box;"><span style="box-sizing:border-box;"></span> <span style="box-sizing:border-box;"></span></span><span style="box-sizing:border-box;"></span></div>
+<span style="box-sizing:border-box;"></span></div>
+<p style="margin-top:0px;margin-bottom:11.34px;box-sizing:border-box;"><span style="box-sizing:border-box;"></span><strong style="font-weight:bolder;box-sizing:border-box;"><span style="font-weight:bolder;box-sizing:border-box;"></span>低效节点资源利用率提升<span style="font-weight:bolder;box-sizing:border-box;"></span></strong><span style="box-sizing:border-box;"></span></p>
+<div style="box-sizing:border-box;"><span style="box-sizing:border-box;"></span>
+<div style="box-sizing:border-box;"><span style="box-sizing:border-box;"></span><span style="box-sizing:border-box;"><span style="box-sizing:border-box;"></span>现在Alluxio集群规模比较大，与此同时， CPU 利用率是非常低的，每天平均大概3%的利用率，但磁盘容量和带宽全是占满的。如何将这些 CPU 去充分使用是一个非常大的问题，而公司出于成本考虑，也会要求这些低效节点能够被充分利用，从而发挥更多价值。<span style="box-sizing:border-box;"></span></span><span style="box-sizing:border-box;"></span></div>
+<span style="box-sizing:border-box;"></span></div>
+		<span style="box-sizing:border-box;"></span></div>
+				<span style="color:var( --e-global-color-text );font-family:Syht, sans-serif;font-size:16px;font-weight:400;line-height:1.6em;box-sizing:border-box;"></span></div>
+				<div style="box-sizing:border-box;flex-basis:auto;flex-grow:0;flex-shrink:1;order:0;align-self:auto;position:relative;width:100%;flex-direction:row;flex-wrap:nowrap;justify-content:normal;align-items:normal;align-content:normal;gap:normal;"><span style="box-sizing:border-box;"></span>
+				<div style="box-sizing:border-box;transition:background 0.3s, border 0.3s, border-radius 0.3s, box-shadow 0.3s, transform 0.4s;margin:30px 0px 0px;"><span style="box-sizing:border-box;"></span>
+					<div style="box-sizing:border-box;overflow:hidden;display:flex;"><span style="box-sizing:border-box;"></span>
+			<div style="box-sizing:border-box;width:calc(50% - 0.5px);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;"><span style="white-space:nowrap;box-sizing:border-box;"></span>
+				<a href="https://www.alluxio.com.cn/partner-with-volcengine/" rel="prev" style="background-color:transparent;box-sizing:border-box;box-shadow:none;text-decoration:none;color:var( --e-global-color-accent );display:flex;align-items:center;max-width:100%;"><span style="color:var( --e-global-color-accent );box-sizing:border-box;"></span><span style="box-sizing:border-box;color:rgb(213, 216, 220);font-size:30px;padding-right:15px;"><span style="color:rgb(213, 216, 220);font-size:30px;box-sizing:border-box;"></span><img style="display:inline-block;font-size:inherit;height:1em;vertical-align:-0.125em;box-sizing:border-box;width:0.625em;overflow:visible;" src="data:image/svg+xml,%3csvg class='svg-inline--fa fa-chevron-left fa-w-10 js-evernote-checked' aria-hidden='true' focusable='false' data-prefix='fa' data-icon='chevron-left' role='img' xmlns='http://www.w3.org/2000/svg' viewBox='0 0 320 512' data-fa-i2svg='' data-evernote-id='5'%3e%3cpath fill='currentColor' d='M34.52 239.03L228.87 44.69c9.37-9.37 24.57-9.37 33.94 0l22.67 22.67c9.36 9.36 9.37 24.52.04 33.9L131.49 256l154.02 154.75c9.34 9.38 9.32 24.54-.04 33.9l-22.67 22.67c-9.37 9.37-24.57 9.37-33.94 0L34.52 272.97c-9.37-9.37-9.37-24.57 0-33.94z'%3e%3c/path%3e%3c/svg%3e"/><span style="position:absolute;top:-10000em;width:1px;height:1px;margin:-1px;padding:0px;overflow:hidden;clip:rect(0px, 0px, 0px, 0px);border:0px;box-sizing:border-box;"><span style="box-sizing:border-box;"></span>Prev<span style="box-sizing:border-box;"></span></span><span style="color:rgb(213, 216, 220);font-size:30px;box-sizing:border-box;"></span></span><span style="box-sizing:border-box;overflow:hidden;display:flex;flex-direction:column;"><span style="box-sizing:border-box;"></span><span style="box-sizing:border-box;color:var( --e-global-color-text );text-transform:uppercase;font-size:0.8em;overflow:hidden;text-overflow:ellipsis;font-family:Syht, sans-serif;font-weight:600;"><span style="color:var( --e-global-color-text );font-family:Syht, sans-serif;font-size:0.8em;font-weight:600;text-transform:uppercase;box-sizing:border-box;"></span>上一篇<span style="color:var( --e-global-color-text );font-family:Syht, sans-serif;font-size:0.8em;font-weight:600;text-transform:uppercase;box-sizing:border-box;"></span></span><span style="box-sizing:border-box;color:var( --e-global-color-secondary );font-weight:var( --e-global-typography-secondary-font-weight );font-size:0.7em;overflow:hidden;text-overflow:ellipsis;font-family:Syht, sans-serif;"><span style="color:var( --e-global-color-secondary );font-family:Syht, sans-serif;font-size:0.7em;font-weight:var( --e-global-typography-secondary-font-weight );box-sizing:border-box;"></span>Alluxio 携手火山引擎 TOS，为 AI 业务数据存储与访问提速<span style="color:var( --e-global-color-secondary );font-family:Syht, sans-serif;font-size:0.7em;font-weight:var( --e-global-typography-secondary-font-weight );box-sizing:border-box;"></span></span><span style="box-sizing:border-box;"></span></span><span style="color:var( --e-global-color-accent );box-sizing:border-box;"></span></a>			<span style="white-space:nowrap;box-sizing:border-box;"></span></div>
+						<div style="box-sizing:border-box;width:calc(50% - 0.5px);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;text-align:right;"><span style="white-space:nowrap;text-align:right;box-sizing:border-box;"></span>
+				<a href="https://www.alluxio.com.cn/bilibili-ai-case-study/" rel="next" style="background-color:transparent;box-sizing:border-box;box-shadow:none;text-decoration:none;color:var( --e-global-color-accent );display:flex;align-items:center;max-width:100%;justify-content:flex-end;"><span style="color:var( --e-global-color-accent );box-sizing:border-box;"></span><span style="box-sizing:border-box;overflow:hidden;text-align:right;display:flex;flex-direction:column;"><span style="text-align:right;box-sizing:border-box;"></span><span style="box-sizing:border-box;color:var( --e-global-color-text );text-transform:uppercase;font-size:0.8em;overflow:hidden;text-overflow:ellipsis;font-family:Syht, sans-serif;font-weight:600;"><span style="color:var( --e-global-color-text );font-family:Syht, sans-serif;font-size:0.8em;font-weight:600;text-transform:uppercase;box-sizing:border-box;"></span>下一篇<span style="color:var( --e-global-color-text );font-family:Syht, sans-serif;font-size:0.8em;font-weight:600;text-transform:uppercase;box-sizing:border-box;"></span></span><span style="box-sizing:border-box;color:var( --e-global-color-secondary );font-weight:var( --e-global-typography-secondary-font-weight );font-size:0.7em;overflow:hidden;text-overflow:ellipsis;font-family:Syht, sans-serif;"><span style="color:var( --e-global-color-secondary );font-family:Syht, sans-serif;font-size:0.7em;font-weight:var( --e-global-typography-secondary-font-weight );box-sizing:border-box;"></span>Alluxio在B站AI训练场景的应用<span style="color:var( --e-global-color-secondary );font-family:Syht, sans-serif;font-size:0.7em;font-weight:var( --e-global-typography-secondary-font-weight );box-sizing:border-box;"></span></span><span style="text-align:right;box-sizing:border-box;"></span></span><span style="box-sizing:border-box;color:rgb(213, 216, 220);font-size:30px;padding-left:15px;"><span style="color:rgb(213, 216, 220);font-size:30px;box-sizing:border-box;"></span><img style="display:inline-block;font-size:inherit;height:1em;vertical-align:-0.125em;box-sizing:border-box;width:0.625em;overflow:visible;" src="data:image/svg+xml,%3csvg class='svg-inline--fa fa-chevron-right fa-w-10 js-evernote-checked' aria-hidden='true' focusable='false' data-prefix='fa' data-icon='chevron-right' role='img' xmlns='http://www.w3.org/2000/svg' viewBox='0 0 320 512' data-fa-i2svg='' data-evernote-id='6'%3e%3cpath fill='currentColor' d='M285.476 272.971L91.132 467.314c-9.373 9.373-24.569 9.373-33.941 0l-22.667-22.667c-9.357-9.357-9.375-24.522-.04-33.901L188.505 256 34.484 101.255c-9.335-9.379-9.317-24.544.04-33.901l22.667-22.667c9.373-9.373 24.569-9.373 33.941 0L285.475 239.03c9.373 9.372 9.373 24.568.001 33.941z'%3e%3c/path%3e%3c/svg%3e"/><span style="position:absolute;top:-10000em;width:1px;height:1px;margin:-1px;padding:0px;overflow:hidden;clip:rect(0px, 0px, 0px, 0px);border:0px;box-sizing:border-box;"><span style="box-sizing:border-box;"></span>Next<span style="box-sizing:border-box;"></span></span><span style="color:rgb(213, 216, 220);font-size:30px;box-sizing:border-box;"></span></span><span style="color:var( --e-global-color-accent );box-sizing:border-box;"></span></a>			<span style="white-space:nowrap;text-align:right;box-sizing:border-box;"></span></div>
+		<span style="box-sizing:border-box;"></span></div>
+				<span style="box-sizing:border-box;"></span></div>
+				<span style="box-sizing:border-box;"></span></div>
+					<span style="box-sizing:border-box;"></span></div></div></div></div></div></div></div></div></div>
+</div>
+<a class="back-link" href="../articles.html">← 返回笔记列表</a>
+</body>
+</html>

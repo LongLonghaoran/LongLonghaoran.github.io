@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="zh-CN" data-theme="light">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>如何制作一个gem — 技术笔记</title>
+<style>
+:root { --bg:#fff; --text:#1a1a1a; --muted:#666; --border:#e0e0e0; --code-bg:#f5f5f5; --link:#0066cc; }
+@media (prefers-color-scheme: dark) { :root { --bg:#1a1a1a; --text:#e0e0e0; --muted:#999; --border:#333; --code-bg:#2a2a2a; --link:#66bbff; } }
+* { box-sizing:border-box; margin:0; padding:0; }
+body { font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Arial,sans-serif; line-height:1.7; color:var(--text); background:var(--bg); max-width:860px; margin:0 auto; padding:2rem 1.5rem; }
+.note-header { border-bottom:2px solid var(--border); padding-bottom:1rem; margin-bottom:2rem; }
+.note-title { font-size:1.6rem; font-weight:700; margin-bottom:0.3rem; }
+.note-meta { color:var(--muted); font-size:0.85rem; }
+.note-content { font-size:0.95rem; }
+.note-content h1 { font-size:1.4rem; margin:1.2rem 0 0.6rem; }
+.note-content h2 { font-size:1.2rem; margin:1rem 0 0.5rem; }
+.note-content h3 { font-size:1.05rem; margin:0.8rem 0 0.4rem; }
+.note-content p { margin:0.5rem 0; }
+.note-content ul,.note-content ol { margin:0.5rem 0 0.5rem 2rem; }
+.note-content li { margin:0.2rem 0; }
+.note-content pre { background:var(--code-bg); padding:1rem; border-radius:6px; overflow-x:auto; margin:0.8rem 0; font-size:0.85rem; }
+.note-content code { background:var(--code-bg); padding:0.1rem 0.3rem; border-radius:3px; font-size:0.88em; }
+.note-content pre code { background:none; padding:0; }
+.note-content blockquote { border-left:3px solid var(--border); padding-left:1rem; color:var(--muted); margin:0.8rem 0; }
+.note-content a { color:var(--link); }
+.note-content img { max-width:100%; height:auto; border-radius:6px; margin:0.5rem 0; }
+.note-content table { border-collapse:collapse; width:100%; margin:0.8rem 0; }
+.note-content th,.note-content td { border:1px solid var(--border); padding:0.5rem; }
+.note-content th { background:var(--code-bg); }
+.media-placeholder { background:var(--code-bg); padding:1rem; text-align:center; color:var(--muted); border-radius:6px; margin:0.5rem 0; font-size:0.85rem; }
+.encrypt-placeholder { background:#fff3cd; padding:0.5rem; text-align:center; color:#856404; border-radius:6px; margin:0.5rem 0; font-size:0.85rem; }
+.back-link { display:inline-block; margin-top:2rem; color:var(--link); text-decoration:none; font-size:0.85rem; }
+</style>
+</head>
+<body>
+<div class="note-header"><div class="note-title">如何制作一个gem</div><div class="note-meta">笔记本：rubygems</div></div>
+<div class="note-content"><div>1.基础知识</div><div>    1.1快速制作一个叫做hola的gem:</div><div>        创建一个具有如下结构的目录,目录名是hola<div class="media-placeholder">[图片/附件]</div><br /></div><div>    其中lib中放置gem包的业务代码，也就是你将要实现的功能的代码，最好是有一个和你的gem同名的rb文件，这样下次在require ‘hola’的时候，就可以直接加载这个文件的代码了，hola.gemspec用于定义gem包的标准、说明,大致如下:</div><div><div class="media-placeholder">[图片/附件]</div><br /></div><div>这样子制作完成之后，就可以通过gem build hola.gemspec来构建一个gem包了,说是构建其实也可以理解成是打包，因为将来安装这个gem的时候，会再次通过gem unpack hola来将该gem解包，也就是还原成现在的结构再次安装到gems目录</div><div>    之后就可以通过在本地执行 gem install path(到该gem包所在的路径)来安装该gem了，可以通过这种方式在本地验证你的gem包是否能够正常使用</div><div>    1.2引入更多的文件</div><div>        为该gem增加文件也很简单,像常规的ruby模块化一样，一般是新增一个目录，假设增加一个用于翻译的功能，放在hola/translator.rb中,然后在hola.rb文件的最后require ‘hola/translator’</div><div>    1.3添加可执行文件</div><div>        首先在gemspec文件配置好可执行文件所在目录bindir,然后在该目录下新建一个文件，文件首行通过shebang声明该文件执行命令<span style="background-color: rgb(30, 30, 30); font-size: 12px; white-space: pre; color: rgb(106, 153, 85); font-family: Menlo, Monaco, &quot;Courier New&quot;, monospace; line-height: 18px;">#!/usr/bin/env ruby</span></div><div>，注意，必须在gemspec中先声明可执行文件目录，这样子之后在gem install该gem的时候，才会将该可执行文件放入系统的PATH环境变量中</div><div>    </div><div>2.使用bundle来制作gem</div><div>    其实，一般来说更多都是使用bundle这个工具来制作gem，这样会方便快捷很多</div><div>    2.1 bundle gem gem_name</div><div>        按照给定的名称创建一个gem目录，在该目录下自动生成符合gem目录结构的相关文件,如果是第一个使用该命令，那么它将在命令询问你是否要包含产品说明code_of_conduct以及证书文件license.txt</div><div>        以下是默认生成的目录结构以及相关含义:</div><div>            Gemfile:用于管理gem包的依赖关系。在这个文件中会一行gemspec表示bundler将包含在gemspec中指定的依赖。最好的实践就是将该gem包依赖的其他gem包都通过gemspec来定义。</div><div>            Rakefile:引入了bundler并且添加build,install,release等rake任务，通过调用Bundler::GemHelper.install_tasks来完成。在gem所在目录下通过 rake —tasks即可查看所有可执行任务</div><div>            xx.gemspec:gem包的规范说明文件。这里就是提供gem的多种配置的地方</div><div>            lib/gem名称.rb: 这就是gem包的主文件。当由gem被载入的时候将由bundler来将此文件引入。这个文件定义了一个module，这样我们就可以以该gem包名称作为命名空间最外层来引入gem的代码了。最好的实践就是将代码都放在gem名称::这个命名空间下</div><div>            lib/gem名称/目录:这里应该用来放置该gem所有的逻辑代码。</div><div>            lib/gem名称/version.rb：定义了一个 gem名称 模块，在其中有一个VERSION常量。用于说明该gem包的版本，在gemspec文件也会通过它来指定该gem包的版本号</div><div><span>    <span>    <span>    bin/console: 这是一个可执行文件，用于引入该gem包的环境，并开启一个irb控制台，用于开发&amp;调试 gem包</span></span></span><br /></div><div><span><span><span><span>    <span>    <span>    bin/setup: 这个可执行文件，用于设置当前gem包，会进行bundle install来安装当前gem包所需的依赖</span></span></span><br /></span></span></span></div><div>            </div><div>    2.2 给gem包添加依赖，并且使用依赖</div><div>        虽然在Gemfile中也可以直接声明用到的gem，但是相比起在gemspec中声明而言，在gemspec中声明的gem，只要通过gem install来安装就可以连同其依赖一起安装，而在Gemfile中声明的gem则不会安装。在gemspec中声明依赖gem的方式是: add_runtime_dependency 或者 add_development_dependency 或者 add_dependency “gem名称”, “版本信息(格式同Gemfile)”</div><div><span>    <span>    </span></span><br /></div><div><span><span><span>    2.3 在gemspec中声明files、require_paths</span><br /></span></span></div><div><span><span><span><span>    <span>    只有在这里声明了的文件，之后在安装gem的时候才会在gem安装目录生成对应的文件</span></span><br /></span></span></span></div><div><span><span><span><span><span><span>    2.4 安装其他的gem</span><br /></span></span></span></span></span></div><div><span><span><span><span><span><span><span>    <span>    首先在gemspec中声明所依赖的gem包，然后在lib/xx.rb中的就可以require引入了</span></span><br /></span></span></span></span></span></span></div><div><span><span><span><span><span><span><span><span><span>    2.5 在gem包目录中执行bundle install</span><br /></span></span></span></span></span></span></span></span></div><div><span><span><span><span><span><span><span><span><span><span>    <span>    这一步是开发gem包所必须的，执行bundle install来将我们所开发的gem的依赖的gem包安装好，然后在我们的代码文件中就可以使用require来引入了，之后我们可以利用默认生成的 bin/console进入控制来开发&amp;调试我们的gem包</span></span><br /></span></span></span></span></span></span></span></span></span></div><div><span><span><span><span><span><span><span><span><span><span><span><span>    2.6 开发命令行工具，推荐使用thor这个gem包来进行</span><br /></span></span></span></span></span></span></span></span></span></span></span></div><div>    </div></div>
+<a class="back-link" href="../articles.html">← 返回笔记列表</a>
+</body></html>

@@ -1,0 +1,433 @@
+<!DOCTYPE html>
+<html lang="zh-CN" data-theme="light">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>iowait 过高问题的查找及解决linux - 思维无界限 - 博客园 — 技术笔记</title>
+<style>
+:root {
+  --bg: #ffffff;
+  --text: #1a1a1a;
+  --muted: #666;
+  --border: #e0e0e0;
+  --code-bg: #f5f5f5;
+  --link: #0066cc;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #1a1a1a;
+    --text: #e0e0e0;
+    --muted: #999;
+    --border: #333;
+    --code-bg: #2a2a2a;
+    --link: #66bbff;
+  }
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  line-height: 1.7;
+  color: var(--text);
+  background: var(--bg);
+  max-width: 860px;
+  margin: 0 auto;
+  padding: 2rem 1.5rem;
+}
+.note-header {
+  border-bottom: 2px solid var(--border);
+  padding-bottom: 1rem;
+  margin-bottom: 2rem;
+}
+.note-title {
+  font-size: 1.6rem;
+  font-weight: 700;
+  margin-bottom: 0.3rem;
+}
+.note-meta {
+  color: var(--muted);
+  font-size: 0.85rem;
+}
+.note-content {
+  font-size: 0.95rem;
+}
+.note-content h1 { font-size: 1.4rem; margin: 1.2rem 0 0.6rem; }
+.note-content h2 { font-size: 1.2rem; margin: 1rem 0 0.5rem; }
+.note-content h3 { font-size: 1.05rem; margin: 0.8rem 0 0.4rem; }
+.note-content p { margin: 0.5rem 0; }
+.note-content ul, .note-content ol { margin: 0.5rem 0 0.5rem 2rem; }
+.note-content li { margin: 0.2rem 0; }
+.note-content pre {
+  background: var(--code-bg);
+  padding: 1rem;
+  border-radius: 6px;
+  overflow-x: auto;
+  margin: 0.8rem 0;
+  font-size: 0.85rem;
+}
+.note-content code {
+  background: var(--code-bg);
+  padding: 0.1rem 0.3rem;
+  border-radius: 3px;
+  font-size: 0.88em;
+}
+.note-content pre code {
+  background: none;
+  padding: 0;
+}
+.note-content blockquote {
+  border-left: 3px solid var(--border);
+  padding-left: 1rem;
+  color: var(--muted);
+  margin: 0.8rem 0;
+}
+.note-content a { color: var(--link); }
+.note-content img {
+  max-width: 100%;
+  height: auto;
+  border-radius: 6px;
+  margin: 0.5rem 0;
+}
+.note-content table {
+  border-collapse: collapse;
+  width: 100%;
+  margin: 0.8rem 0;
+}
+.note-content th, .note-content td {
+  border: 1px solid var(--border);
+  padding: 0.5rem;
+}
+.note-content th { background: var(--code-bg); }
+.media-placeholder {
+  background: var(--code-bg);
+  padding: 1rem;
+  text-align: center;
+  color: var(--muted);
+  border-radius: 6px;
+  margin: 0.5rem 0;
+  font-size: 0.85rem;
+}
+.encrypt-placeholder {
+  background: #fff3cd;
+  padding: 0.5rem;
+  text-align: center;
+  color: #856404;
+  border-radius: 6px;
+  margin: 0.5rem 0;
+  font-size: 0.85rem;
+}
+.back-link {
+  display: inline-block;
+  margin-top: 2rem;
+  color: var(--link);
+  text-decoration: none;
+  font-size: 0.85rem;
+}
+</style>
+</head>
+<body>
+<div class="note-header">
+  <div class="note-title">iowait 过高问题的查找及解决linux - 思维无界限 - 博客园</div>
+  <div class="note-meta">笔记本：Linux</div>
+</div>
+<div class="note-content">
+<div style="--en-clipped-content:article"><div style="font-size: 16px; display:block; min-width: 100%; position: relative;"> <div style="--olcb-folder-code-block-max-height:80vh;--cnb-code-bg:rgb(245, 245, 245);--cnb-code-font-size:12px;--cnb-code-color:rgb(68, 68, 68);"><div style="tab-size:4;color:rgb(0, 0, 0);background:rgb(210, 216, 222);font-family:&quot;PingFang SC&quot;, &quot;Microsoft YaHei&quot;, &quot;Helvetica Neue&quot;, Helvetica, Arial, sans-serif;text-size-adjust:none;font-size:14px;"><div style="min-width:unset;"><div style="text-align:left;overflow:hidden;min-width:auto;"><div style="text-overflow:ellipsis;overflow:hidden;word-break:break-all;"><div><div><div style="text-overflow:ellipsis;overflow:hidden;word-break:break-all;background:rgb(255, 255, 255);border-radius:7px;box-shadow:rgb(167, 168, 173) 1px 1px 2px;"><div>
+            <h1 style="margin:0px;padding:0px;clear:both;padding-left:5px;font-size:130%;font-weight:bold;border-bottom:1px solid rgb(153, 153, 153);float:left;line-height:2em;width:100%;">
+                <a href="https://www.cnblogs.com/happy-king/p/9234122.html" title="发布于 2018-06-27 15:15" style="margin:0px;padding:0px;text-decoration:none;transition:0.4s linear;color:rgb(51, 153, 0);">
+    <span style="margin:0px;padding:0px;vertical-align:middle;">iowait 过高问题的查找及解决linux</span>
+    
+
+</a>
+
+            </h1>
+            <div style="margin:0px;padding:0px;clear:both;"></div>
+            <div style="margin:0px;line-height:1.8;color:rgb(0, 0, 0);border-bottom:1px solid rgb(204, 204, 204);padding:15px 2px 5px 5px;">
+                <div style="margin:0px;padding:0px;margin-bottom:20px;word-break:break-word;color:black;font:16px / 1.5em 微软雅黑, PTSans, Arial, sans-serif;"><a style="margin:0px;padding:0px;"></a><div style="margin:0px;padding:0px;color:#152e97;"><p style="padding:0px;text-indent:0px;margin:10px auto;font-size:18px;"><b style="margin:0px;padding:0px;">目录</b></p><ul style="margin:0px;padding:0px;word-break:break-all;padding-left:0px;list-style-type:disc;margin-left:30px;"><li style="margin:0px;padding:0px;list-style-type:disc;margin-bottom:1em;list-style:inherit;"><a rel="nofollow noopener" href="https://www.cnblogs.com/happy-king/p/9234122.html#_label0" style="margin:0px;padding:0px;color:rgb(0, 0, 0);text-decoration:underline;">一、iostat和iowait详细解说-查看磁盘瓶颈</a><ul style="margin:0px;padding:0px;word-break:break-all;padding-left:0px;margin-left:30px;list-style-type:circle;"><li style="margin:0px;padding:0px;list-style-type:disc;margin-bottom:1em;list-style:inherit;"><a rel="nofollow noopener" href="https://www.cnblogs.com/happy-king/p/9234122.html#_label0_0" style="margin:0px;padding:0px;color:rgb(0, 0, 0);text-decoration:underline;">  一、iostat基础</a></li><li style="margin:0px;padding:0px;list-style-type:disc;margin-bottom:1em;list-style:inherit;"><a rel="nofollow noopener" href="https://www.cnblogs.com/happy-king/p/9234122.html#_label0_1" style="margin:0px;padding:0px;color:rgb(0, 0, 0);text-decoration:underline;">  二、iostat来对linux硬盘IO性能进行了解</a></li></ul></li><li style="margin:0px;padding:0px;list-style-type:disc;margin-bottom:1em;list-style:inherit;"><a rel="nofollow noopener" href="https://www.cnblogs.com/happy-king/p/9234122.html#_label1" style="margin:0px;padding:0px;color:rgb(0, 0, 0);text-decoration:underline;">二、Linux iowait过高问题的查找及解决</a><ul style="margin:0px;padding:0px;word-break:break-all;padding-left:0px;margin-left:30px;list-style-type:circle;"><li style="margin:0px;padding:0px;list-style-type:disc;margin-bottom:1em;list-style:inherit;"><a rel="nofollow noopener" href="https://www.cnblogs.com/happy-king/p/9234122.html#_label1_0" style="margin:0px;padding:0px;color:rgb(0, 0, 0);text-decoration:underline;">  一、确认是否是I/O问题导致系统缓慢</a></li><li style="margin:0px;padding:0px;list-style-type:disc;margin-bottom:1em;list-style:inherit;"><a rel="nofollow noopener" href="https://www.cnblogs.com/happy-king/p/9234122.html#_label1_1" style="margin:0px;padding:0px;color:rgb(0, 0, 0);text-decoration:underline;">  二、查找哪块磁盘正在被写入</a></li><li style="margin:0px;padding:0px;list-style-type:disc;margin-bottom:1em;list-style:inherit;"><a rel="nofollow noopener" href="https://www.cnblogs.com/happy-king/p/9234122.html#_label1_2" style="margin:0px;padding:0px;color:rgb(0, 0, 0);text-decoration:underline;">  三、查找引起高I/O wait 对应的进程 </a></li><li style="margin:0px;padding:0px;list-style-type:disc;margin-bottom:1em;list-style:inherit;"><a rel="nofollow noopener" href="https://www.cnblogs.com/happy-king/p/9234122.html#_label1_3" style="margin:0px;padding:0px;color:rgb(0, 0, 0);text-decoration:underline;">  四、查找哪个文件引起的I/Owait</a></li></ul></li></ul></div><p style="padding:0px;text-indent:0px;margin:10px auto;"> </p><hr style="border-top:1px dashed #0066CC;padding:0px;border-right-color:rgba(0, 0, 0, 0.15);border-bottom-color:rgba(0, 0, 0, 0.15);border-left-color:rgba(0, 0, 0, 0.15);margin:5px 0px;height:1px;border:none;"/>
+<div style="margin:0px;padding:0px;text-align:right;"><a rel="nofollow noopener" href="https://www.cnblogs.com/happy-king/p/9234122.html#_labelTop" style="margin:0px;padding:0px;color:#f68a33;text-decoration:underline;">回到顶部</a><a style="margin:0px;padding:0px;"></a></div><h2 style="background:rgb(43, 102, 149);border-radius:6px;box-shadow:rgb(95, 90, 75) 0px 0px 0px 1px, rgba(10, 10, 0, 0.5) 1px 1px 6px 1px;color:rgb(255, 255, 255);font-family:微软雅黑, 宋体, 黑体, Arial;text-shadow:rgb(34, 34, 34) 2px 2px 3px;font-size:18px;font-weight:bold;line-height:25px;padding:8px 0px 5px 5px;margin:18px 0px;">一、iostat和iowait详细解说-查看磁盘瓶颈</h2>
+<a style="margin:0px;padding:0px;"></a><h3 style="background:rgb(0, 255, 255);border-radius:6px;box-shadow:rgb(95, 90, 75) 0px 0px 0px 1px, rgba(10, 10, 0, 0.5) 1px 1px 6px 1px;color:rgb(255, 255, 255);font-family:微软雅黑, 宋体, 黑体, Arial;text-shadow:rgb(34, 34, 34) 2px 2px 3px;font-size:15px;font-weight:bold;line-height:23px;padding:5px 0px 5px 10px;margin:12px 0px;">  一、iostat基础</h3>
+<p style="padding:0px;text-indent:0px;margin:10px auto;">　　%iowait并不能反应磁盘瓶颈</p>
+<h4 style="background:rgb(84, 255, 159);border-radius:6px;box-shadow:rgb(95, 90, 75) 0px 0px 0px 1px, rgba(10, 10, 0, 0.5) 1px 1px 6px 1px;font-family:微软雅黑, 宋体, 黑体, Arial;line-height:20px;text-shadow:rgb(34, 34, 34) 2px 2px 3px;font-size:13px;font-weight:bold;padding:5px 0px 5px 10px;color:rgb(255, 255, 255);margin:12px 0px;">　　1、安装iostat</h4>
+<p style="padding:0px;text-indent:0px;margin:10px auto;">　　iostat的包名叫sysstat</p>
+<div style="background-color:rgb(245, 245, 245);border:1px solid rgb(204, 204, 204);overflow:auto;color:rgb(0, 0, 0);padding:5px;margin:5px 0px;font-family:&quot;Courier New&quot;;font-size:12px;">
+<pre style="transition-duration:0.2s;transition-property:background, font-size, border-color, border-radius, border-width, padding, margin, color;overflow:auto;margin:0px;padding:0px;font-family:&quot;Courier New&quot;, serif;font-size:12px;overflow-wrap:break-word;"><span style="margin:0px;padding:0px;font-family:&quot;Courier New&quot;, serif;font-size:inherit;line-height:1.5;color:rgba(0, 0, 255, 1);">yum</span> <span style="margin:0px;padding:0px;font-family:&quot;Courier New&quot;, serif;font-size:inherit;line-height:1.5;color:rgba(0, 0, 255, 1);">install</span> sysstat  -y</pre>
+</div>
+<h4 style="background:rgb(84, 255, 159);border-radius:6px;box-shadow:rgb(95, 90, 75) 0px 0px 0px 1px, rgba(10, 10, 0, 0.5) 1px 1px 6px 1px;font-family:微软雅黑, 宋体, 黑体, Arial;line-height:20px;text-shadow:rgb(34, 34, 34) 2px 2px 3px;font-size:13px;font-weight:bold;padding:5px 0px 5px 10px;color:rgb(255, 255, 255);margin:12px 0px;">　　2、iowait实际测量的是cpu时间：</h4>
+<div style="background-color:rgb(245, 245, 245);border:1px solid rgb(204, 204, 204);overflow:auto;color:rgb(0, 0, 0);padding:5px;margin:5px 0px;font-family:&quot;Courier New&quot;;font-size:12px;">
+<pre style="transition-duration:0.2s;transition-property:background, font-size, border-color, border-radius, border-width, padding, margin, color;overflow:auto;margin:0px;padding:0px;font-family:&quot;Courier New&quot;, serif;font-size:12px;overflow-wrap:break-word;">%iowait = (cpu idle <span style="margin:0px;padding:0px;font-family:&quot;Courier New&quot;, serif;font-size:inherit;line-height:1.5;color:rgba(0, 0, 255, 1);">time</span>)/(all cpu <span style="margin:0px;padding:0px;font-family:&quot;Courier New&quot;, serif;font-size:inherit;line-height:1.5;color:rgba(0, 0, 255, 1);">time</span>)</pre>
+</div>
+<p style="padding:0px;text-indent:0px;margin:10px auto;"><strong style="margin:0px;padding:0px;">　　说明：</strong>高速cpu会造成很高的iowait值，但这并不代表磁盘是系统的瓶颈。唯一能说明磁盘是系统瓶颈的方法，就是很高的read/write时间，一般来说超过20ms，就代表了不太正常的磁盘性能。为什么是20ms呢？一般来说，一次读写就是一次寻到+一次旋转延迟+数据传输的时间。由于，现代硬盘数据传输就是几微秒或者几十微秒的事情，远远小于寻道时间2~20ms和旋转延迟4~8ms，所以只计算这两个时间就差不多了，也就是15~20ms。只要大于20ms，就必须考虑是否交给磁盘读写的次数太多，导致磁盘性能降低了。</p>
+<a style="margin:0px;padding:0px;"></a><h3 style="background:rgb(0, 255, 255);border-radius:6px;box-shadow:rgb(95, 90, 75) 0px 0px 0px 1px, rgba(10, 10, 0, 0.5) 1px 1px 6px 1px;color:rgb(255, 255, 255);font-family:微软雅黑, 宋体, 黑体, Arial;text-shadow:rgb(34, 34, 34) 2px 2px 3px;font-size:15px;font-weight:bold;line-height:23px;padding:5px 0px 5px 10px;margin:12px 0px;">  二、iostat来对linux硬盘IO性能进行了解</h3>
+<h4 style="background:rgb(84, 255, 159);border-radius:6px;box-shadow:rgb(95, 90, 75) 0px 0px 0px 1px, rgba(10, 10, 0, 0.5) 1px 1px 6px 1px;font-family:微软雅黑, 宋体, 黑体, Arial;line-height:20px;text-shadow:rgb(34, 34, 34) 2px 2px 3px;font-size:13px;font-weight:bold;padding:5px 0px 5px 10px;color:rgb(255, 255, 255);margin:12px 0px;">　　1、iostat分析</h4>
+<p style="padding:0px;text-indent:0px;margin:10px auto;">　　使用其工具filemon来检测磁盘每次读写平均耗时。在Linux下，可以通过iostat命令还查看磁盘性能。其中的svctm一项，反应了磁盘的负载情况，如果该项大于15ms，并且util%接近100%，那就说明，磁盘现在是整个系统性能的瓶颈了。</p>
+<div style="background-color:rgb(245, 245, 245);border:1px solid rgb(204, 204, 204);overflow:auto;color:rgb(0, 0, 0);padding:5px;margin:5px 0px;font-family:&quot;Courier New&quot;;font-size:12px;"><div style="margin:0px;padding:0px;background-color:rgb(245, 245, 245);margin-top:5px;"><span style="margin:0px;padding:0px;font-family:&quot;Courier New&quot;, serif;font-size:inherit;line-height:1.5;padding-right:5px;"><a style="margin:0px;padding:0px;color:rgb(0, 0, 0);text-decoration:underline;background-color:rgb(245, 245, 245);border:none;"><div class="media-placeholder">[图片/附件]</div></en-media></a></span></div>
+<pre style="transition-duration:0.2s;transition-property:background, font-size, border-color, border-radius, border-width, padding, margin, color;overflow:auto;margin:0px;padding:0px;font-family:&quot;Courier New&quot;, serif;font-size:12px;overflow-wrap:break-word;"># iostat -x <span style="margin:0px;padding:0px;font-family:&quot;Courier New&quot;, serif;font-size:inherit;line-height:1.5;color:rgba(128, 0, 128, 1);">1</span><span style="margin:0px;padding:0px;font-family:&quot;Courier New&quot;, serif;font-size:inherit;line-height:1.5;color:rgba(0, 0, 0, 1);">
+Linux </span><span style="margin:0px;padding:0px;font-family:&quot;Courier New&quot;, serif;font-size:inherit;line-height:1.5;color:rgba(128, 0, 128, 1);">3.10</span>.<span style="margin:0px;padding:0px;font-family:&quot;Courier New&quot;, serif;font-size:inherit;line-height:1.5;color:rgba(128, 0, 128, 1);">0</span>-<span style="margin:0px;padding:0px;font-family:&quot;Courier New&quot;, serif;font-size:inherit;line-height:1.5;color:rgba(128, 0, 128, 1);">514.26</span>.<span style="margin:0px;padding:0px;font-family:&quot;Courier New&quot;, serif;font-size:inherit;line-height:1.5;color:rgba(128, 0, 128, 1);">2</span>.el7.x86_64 (v01-ops-es03)     2018年06月27日     _x86_64_    (<span style="margin:0px;padding:0px;font-family:&quot;Courier New&quot;, serif;font-size:inherit;line-height:1.5;color:rgba(128, 0, 128, 1);">2</span><span style="margin:0px;padding:0px;font-family:&quot;Courier New&quot;, serif;font-size:inherit;line-height:1.5;color:rgba(0, 0, 0, 1);"> CPU)
+
+avg</span>-cpu:  %user   %<span style="margin:0px;padding:0px;font-family:&quot;Courier New&quot;, serif;font-size:inherit;line-height:1.5;color:rgba(0, 0, 255, 1);">nice</span> %system %iowait  %steal   %<span style="margin:0px;padding:0px;font-family:&quot;Courier New&quot;, serif;font-size:inherit;line-height:1.5;color:rgba(0, 0, 0, 1);">idle
+          </span><span style="margin:0px;padding:0px;font-family:&quot;Courier New&quot;, serif;font-size:inherit;line-height:1.5;color:rgba(128, 0, 128, 1);">15.10</span>    <span style="margin:0px;padding:0px;font-family:&quot;Courier New&quot;, serif;font-size:inherit;line-height:1.5;color:rgba(128, 0, 128, 1);">0.00</span>    <span style="margin:0px;padding:0px;font-family:&quot;Courier New&quot;, serif;font-size:inherit;line-height:1.5;color:rgba(128, 0, 128, 1);">5.72</span>   <span style="margin:0px;padding:0px;font-family:&quot;Courier New&quot;, serif;font-size:inherit;line-height:1.5;color:rgba(128, 0, 128, 1);">18.54</span>    <span style="margin:0px;padding:0px;font-family:&quot;Courier New&quot;, serif;font-size:inherit;line-height:1.5;color:rgba(128, 0, 128, 1);">0.00</span>   <span style="margin:0px;padding:0px;font-family:&quot;Courier New&quot;, serif;font-size:inherit;line-height:1.5;color:rgba(128, 0, 128, 1);">60.64</span><span style="margin:0px;padding:0px;font-family:&quot;Courier New&quot;, serif;font-size:inherit;line-height:1.5;color:rgba(0, 0, 0, 1);">
+
+Device:         rrqm</span>/s   wrqm/s     r/s     <span style="margin:0px;padding:0px;font-family:&quot;Courier New&quot;, serif;font-size:inherit;line-height:1.5;color:rgba(0, 0, 255, 1);">w</span>/s    rkB/s    wkB/s avgrq-sz avgqu-sz   await r_await w_await  svctm  %<span style="margin:0px;padding:0px;font-family:&quot;Courier New&quot;, serif;font-size:inherit;line-height:1.5;color:rgba(0, 0, 0, 1);">util
+sda               </span><span style="margin:0px;padding:0px;font-family:&quot;Courier New&quot;, serif;font-size:inherit;line-height:1.5;color:rgba(128, 0, 128, 1);">0.24</span>     <span style="margin:0px;padding:0px;font-family:&quot;Courier New&quot;, serif;font-size:inherit;line-height:1.5;color:rgba(128, 0, 128, 1);">0.40</span>    <span style="margin:0px;padding:0px;font-family:&quot;Courier New&quot;, serif;font-size:inherit;line-height:1.5;color:rgba(128, 0, 128, 1);">0.15</span>    <span style="margin:0px;padding:0px;font-family:&quot;Courier New&quot;, serif;font-size:inherit;line-height:1.5;color:rgba(128, 0, 128, 1);">0.15</span>     <span style="margin:0px;padding:0px;font-family:&quot;Courier New&quot;, serif;font-size:inherit;line-height:1.5;color:rgba(128, 0, 128, 1);">2.64</span>     <span style="margin:0px;padding:0px;font-family:&quot;Courier New&quot;, serif;font-size:inherit;line-height:1.5;color:rgba(128, 0, 128, 1);">2.65</span>    <span style="margin:0px;padding:0px;font-family:&quot;Courier New&quot;, serif;font-size:inherit;line-height:1.5;color:rgba(128, 0, 128, 1);">35.08</span>     <span style="margin:0px;padding:0px;font-family:&quot;Courier New&quot;, serif;font-size:inherit;line-height:1.5;color:rgba(128, 0, 128, 1);">0.00</span>    <span style="margin:0px;padding:0px;font-family:&quot;Courier New&quot;, serif;font-size:inherit;line-height:1.5;color:rgba(128, 0, 128, 1);">1.55</span>    <span style="margin:0px;padding:0px;font-family:&quot;Courier New&quot;, serif;font-size:inherit;line-height:1.5;color:rgba(128, 0, 128, 1);">2.94</span>    <span style="margin:0px;padding:0px;font-family:&quot;Courier New&quot;, serif;font-size:inherit;line-height:1.5;color:rgba(128, 0, 128, 1);">0.20</span>   <span style="margin:0px;padding:0px;font-family:&quot;Courier New&quot;, serif;font-size:inherit;line-height:1.5;color:rgba(128, 0, 128, 1);">0.69</span>   <span style="margin:0px;padding:0px;font-family:&quot;Courier New&quot;, serif;font-size:inherit;line-height:1.5;color:rgba(128, 0, 128, 1);">0.02</span><span style="margin:0px;padding:0px;font-family:&quot;Courier New&quot;, serif;font-size:inherit;line-height:1.5;color:rgba(0, 0, 0, 1);">
+sdb               </span><span style="margin:0px;padding:0px;font-family:&quot;Courier New&quot;, serif;font-size:inherit;line-height:1.5;color:rgba(128, 0, 128, 1);">0.00</span>     <span style="margin:0px;padding:0px;font-family:&quot;Courier New&quot;, serif;font-size:inherit;line-height:1.5;color:rgba(128, 0, 128, 1);">0.10</span>    <span style="margin:0px;padding:0px;font-family:&quot;Courier New&quot;, serif;font-size:inherit;line-height:1.5;color:rgba(128, 0, 128, 1);">0.06</span>    <span style="margin:0px;padding:0px;font-family:&quot;Courier New&quot;, serif;font-size:inherit;line-height:1.5;color:rgba(128, 0, 128, 1);">0.05</span>     <span style="margin:0px;padding:0px;font-family:&quot;Courier New&quot;, serif;font-size:inherit;line-height:1.5;color:rgba(128, 0, 128, 1);">0.54</span>     <span style="margin:0px;padding:0px;font-family:&quot;Courier New&quot;, serif;font-size:inherit;line-height:1.5;color:rgba(128, 0, 128, 1);">0.69</span>    <span style="margin:0px;padding:0px;font-family:&quot;Courier New&quot;, serif;font-size:inherit;line-height:1.5;color:rgba(128, 0, 128, 1);">22.27</span>     <span style="margin:0px;padding:0px;font-family:&quot;Courier New&quot;, serif;font-size:inherit;line-height:1.5;color:rgba(128, 0, 128, 1);">0.00</span>    <span style="margin:0px;padding:0px;font-family:&quot;Courier New&quot;, serif;font-size:inherit;line-height:1.5;color:rgba(128, 0, 128, 1);">1.68</span>    <span style="margin:0px;padding:0px;font-family:&quot;Courier New&quot;, serif;font-size:inherit;line-height:1.5;color:rgba(128, 0, 128, 1);">3.08</span>    <span style="margin:0px;padding:0px;font-family:&quot;Courier New&quot;, serif;font-size:inherit;line-height:1.5;color:rgba(128, 0, 128, 1);">0.07</span>   <span style="margin:0px;padding:0px;font-family:&quot;Courier New&quot;, serif;font-size:inherit;line-height:1.5;color:rgba(128, 0, 128, 1);">0.42</span>   <span style="margin:0px;padding:0px;font-family:&quot;Courier New&quot;, serif;font-size:inherit;line-height:1.5;color:rgba(128, 0, 128, 1);">0.00</span></pre>
+<div style="margin:0px;padding:0px;background-color:rgb(245, 245, 245);margin-top:5px;"><span style="margin:0px;padding:0px;font-family:&quot;Courier New&quot;, serif;font-size:inherit;line-height:1.5;padding-right:5px;"><a style="margin:0px;padding:0px;color:rgb(0, 0, 0);text-decoration:underline;background-color:rgb(245, 245, 245);border:none;"><div class="media-placeholder">[图片/附件]</div></en-media></a></span></div></div>
+<ul style="margin:0px;padding:0px;word-break:break-all;padding-left:0px;list-style-type:disc;margin-left:30px;">
+<li style="margin:0px;padding:0px;list-style-type:disc;margin-bottom:1em;list-style:inherit;">rrqm/s:          每秒进行 merge 的读操作数目。即 delta(rmerge)/s</li>
+<li style="margin:0px;padding:0px;list-style-type:disc;margin-bottom:1em;list-style:inherit;">wrqm/s:         每秒进行 merge 的写操作数目。即 delta(wmerge)/s</li>
+<li style="margin:0px;padding:0px;list-style-type:disc;margin-bottom:1em;list-style:inherit;">r/s:            每秒完成的读 I/O 设备次数。即 delta(rio)/s</li>
+<li style="margin:0px;padding:0px;list-style-type:disc;margin-bottom:1em;list-style:inherit;">w/s:            每秒完成的写 I/O 设备次数。即 delta(wio)/s</li>
+<li style="margin:0px;padding:0px;list-style-type:disc;margin-bottom:1em;list-style:inherit;">rsec/s:         每秒读扇区数。即 delta(rsect)/s</li>
+<li style="margin:0px;padding:0px;list-style-type:disc;margin-bottom:1em;list-style:inherit;">wsec/s:         每秒写扇区数。即 delta(wsect)/s</li>
+<li style="margin:0px;padding:0px;list-style-type:disc;margin-bottom:1em;list-style:inherit;">rkB/s:          每秒读K字节数。是 rsect/s 的一半，因为每扇区大小为512字节。(需要计算)</li>
+<li style="margin:0px;padding:0px;list-style-type:disc;margin-bottom:1em;list-style:inherit;">wkB/s:          每秒写K字节数。是 wsect/s 的一半。(需要计算)</li>
+<li style="margin:0px;padding:0px;list-style-type:disc;margin-bottom:1em;list-style:inherit;">avgrq-sz:       平均每次设备I/O操作的数据大小 (扇区)。delta(rsect+wsect)/delta(rio+wio)</li>
+<li style="margin:0px;padding:0px;list-style-type:disc;margin-bottom:1em;list-style:inherit;">avgqu-sz:       平均I/O队列长度。即 delta(aveq)/s/1000 (因为aveq的单位为毫秒)。</li>
+<li style="margin:0px;padding:0px;list-style-type:disc;margin-bottom:1em;list-style:inherit;">await:          平均每次设备I/O操作的等待时间 (毫秒)。即 delta(ruse+wuse)/delta(rio+wio)</li>
+<li style="margin:0px;padding:0px;list-style-type:disc;margin-bottom:1em;list-style:inherit;">svctm:          平均每次设备I/O操作的服务时间 (毫秒)。即 delta(use)/delta(rio+wio)</li>
+<li style="margin:0px;padding:0px;list-style-type:disc;margin-bottom:1em;list-style:inherit;">%util:          一秒中有百分之多少的时间用于 I/O 操作，或者说一秒中有多少时间 I/O 队列是非空的。即 delta(use)/s/1000 (因为use的单位为毫秒)</li>
+</ul>
+<p style="padding:0px;text-indent:0px;margin:10px auto;">　　如果 %util 接近 100%，说明产生的I/O请求太多，I/O系统已经满负荷，该磁盘可能存在瓶颈。</p>
+<p style="padding:0px;text-indent:0px;margin:10px auto;">　　idle小于70% IO压力就较大了,一般读取速度有较多的wait。</p>
+<p style="padding:0px;text-indent:0px;margin:10px auto;">　　同时可以结合vmstat 查看查看b参数(等待资源的进程数)和wa参数(IO等待所占用的CPU时间的百分比,高过30%时IO压力高)</p>
+<p style="padding:0px;text-indent:0px;margin:10px auto;"><strong style="margin:0px;padding:0px;">　　await 的参数也要多和 svctm 来参考。差的过高就一定有 IO 的问题。</strong></p>
+<p style="padding:0px;text-indent:0px;margin:10px auto;">　　avgqu-sz 也是个做 IO 调优时需要注意的地方，这个就是直接每次操作的数据的大小，如果次数多，但数据拿的小的话，其实 IO 也会很小.如果数据拿的大，才IO 的数据会高。也可以通过 avgqu-sz × ( r/s or w/s ) = rsec/s or wsec/s.也就是讲，读定速度是这个来决定的。</p>
+<p style="padding:0px;text-indent:0px;margin:10px auto;"><strong style="margin:0px;padding:0px;">　　另外还可以参考</strong></p>
+<p style="padding:0px;text-indent:0px;margin:10px auto;">　　svctm 一般要小于 await (因为同时等待的请求的等待时间被重复计算了)，svctm 的大小一般和磁盘性能有关，CPU/内存的负荷也会对其有影响，请求过多也会间接导致 svctm 的增加。await 的大小一般取决于服务时间(svctm) 以及 I/O 队列的长度和 I/O 请求的发出模式。如果 svctm 比较接近 await，说明 I/O 几乎没有等待时间；如果 await 远大于 svctm，说明 I/O 队列太长，应用得到的响应时间变慢，如果响应时间超过了用户可以容许的范围，这时可以考虑更换更快的磁盘，调整内核 elevator 算法，优化应用，或者升级 CPU。</p>
+<p style="padding:0px;text-indent:0px;margin:10px auto;">　　队列长度(avgqu-sz)也可作为衡量系统 I/O 负荷的指标，但由于 avgqu-sz 是按照单位时间的平均值，所以不能反映瞬间的 I/O 洪水。</p>
+<p style="padding:0px;text-indent:0px;margin:10px auto;">　　别人一个不错的例子(I/O 系统 vs. 超市排队)</p>
+<p style="padding:0px;text-indent:0px;margin:10px auto;">　　举一个例子，我们在超市排队 checkout 时，怎么决定该去哪个交款台呢? 首当是看排的队人数，5个人总比20人要快吧? 除了数人头，我们也常常看看前面人购买的东西多少，如果前面有个采购了一星期食品的大妈，那么可以考虑换个队排了。还有就是收银员的速度了，如果碰上了连 钱都点不清楚的新手，那就有的等了。另外，时机也很重要，可能 5 分钟前还人满为患的收款台，现在已是人去楼空，这时候交款可是很爽啊，当然，前提是那过去的 5 分钟里所做的事情比排队要有意义 (不过我还没发现什么事情比排队还无聊的)。</p>
+<h4 style="background:rgb(84, 255, 159);border-radius:6px;box-shadow:rgb(95, 90, 75) 0px 0px 0px 1px, rgba(10, 10, 0, 0.5) 1px 1px 6px 1px;font-family:微软雅黑, 宋体, 黑体, Arial;line-height:20px;text-shadow:rgb(34, 34, 34) 2px 2px 3px;font-size:13px;font-weight:bold;padding:5px 0px 5px 10px;color:rgb(255, 255, 255);margin:12px 0px;">　　2、I/O 系统也和超市排队有很多类似之处:</h4>
+<ul style="margin:0px;padding:0px;word-break:break-all;padding-left:0px;list-style-type:disc;margin-left:30px;">
+<li style="margin:0px;padding:0px;list-style-type:disc;margin-bottom:1em;list-style:inherit;">r/s+w/s 类似于交款人的总数</li>
+<li style="margin:0px;padding:0px;list-style-type:disc;margin-bottom:1em;list-style:inherit;">平均队列长度(avgqu-sz)类似于单位时间里平均排队人的个数</li>
+<li style="margin:0px;padding:0px;list-style-type:disc;margin-bottom:1em;list-style:inherit;">平均服务时间(svctm)类似于收银员的收款速度</li>
+<li style="margin:0px;padding:0px;list-style-type:disc;margin-bottom:1em;list-style:inherit;">平均等待时间(await)类似于平均每人的等待时间</li>
+<li style="margin:0px;padding:0px;list-style-type:disc;margin-bottom:1em;list-style:inherit;">平均I/O数据(avgrq-sz)类似于平均每人所买的东西多少</li>
+<li style="margin:0px;padding:0px;list-style-type:disc;margin-bottom:1em;list-style:inherit;">I/O 操作率 (%util)类似于收款台前有人排队的时间比例。</li>
+<li style="margin:0px;padding:0px;list-style-type:disc;margin-bottom:1em;list-style:inherit;">我们可以根据这些数据分析出 I/O 请求的模式，以及 I/O 的速度和响应时间。</li>
+</ul>
+<p style="padding:0px;text-indent:0px;margin:10px auto;">　　下面是别人写的这个参数输出的分析</p>
+<div style="background-color:rgb(245, 245, 245);border:1px solid rgb(204, 204, 204);overflow:auto;color:rgb(0, 0, 0);padding:5px;margin:5px 0px;font-family:&quot;Courier New&quot;;font-size:12px;"><div style="margin:0px;padding:0px;background-color:rgb(245, 245, 245);margin-top:5px;"><span style="margin:0px;padding:0px;font-family:&quot;Courier New&quot;, serif;font-size:inherit;line-height:1.5;padding-right:5px;"><a style="margin:0px;padding:0px;color:rgb(0, 0, 0);text-decoration:underline;background-color:rgb(245, 245, 245);border:none;"><div class="media-placeholder">[图片/附件]</div></en-media></a></span></div>
+<pre style="transition-duration:0.2s;transition-property:background, font-size, border-color, border-radius, border-width, padding, margin, color;overflow:auto;margin:0px;padding:0px;font-family:&quot;Courier New&quot;, serif;font-size:12px;overflow-wrap:break-word;"># iostat -x <span style="margin:0px;padding:0px;font-family:&quot;Courier New&quot;, serif;font-size:inherit;line-height:1.5;color:rgba(128, 0, 128, 1);">1</span><span style="margin:0px;padding:0px;font-family:&quot;Courier New&quot;, serif;font-size:inherit;line-height:1.5;color:rgba(0, 0, 0, 1);">
+Linux </span><span style="margin:0px;padding:0px;font-family:&quot;Courier New&quot;, serif;font-size:inherit;line-height:1.5;color:rgba(128, 0, 128, 1);">3.10</span>.<span style="margin:0px;padding:0px;font-family:&quot;Courier New&quot;, serif;font-size:inherit;line-height:1.5;color:rgba(128, 0, 128, 1);">0</span>-<span style="margin:0px;padding:0px;font-family:&quot;Courier New&quot;, serif;font-size:inherit;line-height:1.5;color:rgba(128, 0, 128, 1);">514.26</span>.<span style="margin:0px;padding:0px;font-family:&quot;Courier New&quot;, serif;font-size:inherit;line-height:1.5;color:rgba(128, 0, 128, 1);">2</span>.el7.x86_64 (v01-ops-es03)     2018年06月27日     _x86_64_    (<span style="margin:0px;padding:0px;font-family:&quot;Courier New&quot;, serif;font-size:inherit;line-height:1.5;color:rgba(128, 0, 128, 1);">2</span><span style="margin:0px;padding:0px;font-family:&quot;Courier New&quot;, serif;font-size:inherit;line-height:1.5;color:rgba(0, 0, 0, 1);"> CPU)
+
+avg</span>-cpu:  %user   %<span style="margin:0px;padding:0px;font-family:&quot;Courier New&quot;, serif;font-size:inherit;line-height:1.5;color:rgba(0, 0, 255, 1);">nice</span> %system %iowait  %steal   %<span style="margin:0px;padding:0px;font-family:&quot;Courier New&quot;, serif;font-size:inherit;line-height:1.5;color:rgba(0, 0, 0, 1);">idle
+          </span><span style="margin:0px;padding:0px;font-family:&quot;Courier New&quot;, serif;font-size:inherit;line-height:1.5;color:rgba(128, 0, 128, 1);">15.10</span>    <span style="margin:0px;padding:0px;font-family:&quot;Courier New&quot;, serif;font-size:inherit;line-height:1.5;color:rgba(128, 0, 128, 1);">0.00</span>    <span style="margin:0px;padding:0px;font-family:&quot;Courier New&quot;, serif;font-size:inherit;line-height:1.5;color:rgba(128, 0, 128, 1);">5.72</span>   <span style="margin:0px;padding:0px;font-family:&quot;Courier New&quot;, serif;font-size:inherit;line-height:1.5;color:rgba(128, 0, 128, 1);">18.54</span>    <span style="margin:0px;padding:0px;font-family:&quot;Courier New&quot;, serif;font-size:inherit;line-height:1.5;color:rgba(128, 0, 128, 1);">0.00</span>   <span style="margin:0px;padding:0px;font-family:&quot;Courier New&quot;, serif;font-size:inherit;line-height:1.5;color:rgba(128, 0, 128, 1);">60.64</span><span style="margin:0px;padding:0px;font-family:&quot;Courier New&quot;, serif;font-size:inherit;line-height:1.5;color:rgba(0, 0, 0, 1);">
+
+Device:         rrqm</span>/s   wrqm/s     r/s     <span style="margin:0px;padding:0px;font-family:&quot;Courier New&quot;, serif;font-size:inherit;line-height:1.5;color:rgba(0, 0, 255, 1);">w</span>/s    rkB/s    wkB/s avgrq-sz avgqu-sz   await r_await w_await  svctm  %<span style="margin:0px;padding:0px;font-family:&quot;Courier New&quot;, serif;font-size:inherit;line-height:1.5;color:rgba(0, 0, 0, 1);">util
+sda               </span><span style="margin:0px;padding:0px;font-family:&quot;Courier New&quot;, serif;font-size:inherit;line-height:1.5;color:rgba(128, 0, 128, 1);">0.24</span>     <span style="margin:0px;padding:0px;font-family:&quot;Courier New&quot;, serif;font-size:inherit;line-height:1.5;color:rgba(128, 0, 128, 1);">0.40</span>    <span style="margin:0px;padding:0px;font-family:&quot;Courier New&quot;, serif;font-size:inherit;line-height:1.5;color:rgba(128, 0, 128, 1);">0.15</span>    <span style="margin:0px;padding:0px;font-family:&quot;Courier New&quot;, serif;font-size:inherit;line-height:1.5;color:rgba(128, 0, 128, 1);">0.15</span>     <span style="margin:0px;padding:0px;font-family:&quot;Courier New&quot;, serif;font-size:inherit;line-height:1.5;color:rgba(128, 0, 128, 1);">2.64</span>     <span style="margin:0px;padding:0px;font-family:&quot;Courier New&quot;, serif;font-size:inherit;line-height:1.5;color:rgba(128, 0, 128, 1);">2.65</span>    <span style="margin:0px;padding:0px;font-family:&quot;Courier New&quot;, serif;font-size:inherit;line-height:1.5;color:rgba(128, 0, 128, 1);">35.08</span>     <span style="margin:0px;padding:0px;font-family:&quot;Courier New&quot;, serif;font-size:inherit;line-height:1.5;color:rgba(128, 0, 128, 1);">0.00</span>    <span style="margin:0px;padding:0px;font-family:&quot;Courier New&quot;, serif;font-size:inherit;line-height:1.5;color:rgba(128, 0, 128, 1);">1.55</span>    <span style="margin:0px;padding:0px;font-family:&quot;Courier New&quot;, serif;font-size:inherit;line-height:1.5;color:rgba(128, 0, 128, 1);">2.94</span>    <span style="margin:0px;padding:0px;font-family:&quot;Courier New&quot;, serif;font-size:inherit;line-height:1.5;color:rgba(128, 0, 128, 1);">0.20</span>   <span style="margin:0px;padding:0px;font-family:&quot;Courier New&quot;, serif;font-size:inherit;line-height:1.5;color:rgba(128, 0, 128, 1);">0.69</span>   <span style="margin:0px;padding:0px;font-family:&quot;Courier New&quot;, serif;font-size:inherit;line-height:1.5;color:rgba(128, 0, 128, 1);">0.02</span><span style="margin:0px;padding:0px;font-family:&quot;Courier New&quot;, serif;font-size:inherit;line-height:1.5;color:rgba(0, 0, 0, 1);">
+sdb               </span><span style="margin:0px;padding:0px;font-family:&quot;Courier New&quot;, serif;font-size:inherit;line-height:1.5;color:rgba(128, 0, 128, 1);">0.00</span>     <span style="margin:0px;padding:0px;font-family:&quot;Courier New&quot;, serif;font-size:inherit;line-height:1.5;color:rgba(128, 0, 128, 1);">0.10</span>    <span style="margin:0px;padding:0px;font-family:&quot;Courier New&quot;, serif;font-size:inherit;line-height:1.5;color:rgba(128, 0, 128, 1);">0.06</span>    <span style="margin:0px;padding:0px;font-family:&quot;Courier New&quot;, serif;font-size:inherit;line-height:1.5;color:rgba(128, 0, 128, 1);">0.05</span>     <span style="margin:0px;padding:0px;font-family:&quot;Courier New&quot;, serif;font-size:inherit;line-height:1.5;color:rgba(128, 0, 128, 1);">0.54</span>     <span style="margin:0px;padding:0px;font-family:&quot;Courier New&quot;, serif;font-size:inherit;line-height:1.5;color:rgba(128, 0, 128, 1);">0.69</span>    <span style="margin:0px;padding:0px;font-family:&quot;Courier New&quot;, serif;font-size:inherit;line-height:1.5;color:rgba(128, 0, 128, 1);">22.27</span>     <span style="margin:0px;padding:0px;font-family:&quot;Courier New&quot;, serif;font-size:inherit;line-height:1.5;color:rgba(128, 0, 128, 1);">0.00</span>    <span style="margin:0px;padding:0px;font-family:&quot;Courier New&quot;, serif;font-size:inherit;line-height:1.5;color:rgba(128, 0, 128, 1);">1.68</span>    <span style="margin:0px;padding:0px;font-family:&quot;Courier New&quot;, serif;font-size:inherit;line-height:1.5;color:rgba(128, 0, 128, 1);">3.08</span>    <span style="margin:0px;padding:0px;font-family:&quot;Courier New&quot;, serif;font-size:inherit;line-height:1.5;color:rgba(128, 0, 128, 1);">0.07</span>   <span style="margin:0px;padding:0px;font-family:&quot;Courier New&quot;, serif;font-size:inherit;line-height:1.5;color:rgba(128, 0, 128, 1);">0.42</span>   <span style="margin:0px;padding:0px;font-family:&quot;Courier New&quot;, serif;font-size:inherit;line-height:1.5;color:rgba(128, 0, 128, 1);">0.00</span></pre>
+<div style="margin:0px;padding:0px;background-color:rgb(245, 245, 245);margin-top:5px;"><span style="margin:0px;padding:0px;font-family:&quot;Courier New&quot;, serif;font-size:inherit;line-height:1.5;padding-right:5px;"><a style="margin:0px;padding:0px;color:rgb(0, 0, 0);text-decoration:underline;background-color:rgb(245, 245, 245);border:none;"><div class="media-placeholder">[图片/附件]</div></en-media></a></span></div></div>
+<p style="padding:0px;text-indent:0px;margin:10px auto;"> </p>
+<p style="padding:0px;text-indent:0px;margin:10px auto;">　　上面的 iostat 输出表明秒有 28.57 次设备 I/O 操作: 总IO(io)/s = r/s(读) +w/s(写) = 1.02+27.55 = 28.57 (次/秒) 其中写操作占了主体 (w:r = 27:1)。</p>
+<ul style="margin:0px;padding:0px;word-break:break-all;padding-left:0px;list-style-type:disc;margin-left:30px;">
+<li style="margin:0px;padding:0px;list-style-type:disc;margin-bottom:1em;list-style:inherit;">平均每次设备 I/O 操作只需要 5ms 就可以完成，但每个 I/O 请求却需要等上 78ms，为什么? 因为发出的 I/O 请求太多 (每秒钟约 29 个)，假设这些请求是同时发出的，那么平均等待时间可以这样计算:</li>
+<li style="margin:0px;padding:0px;list-style-type:disc;margin-bottom:1em;list-style:inherit;">平均等待时间 = 单个 I/O 服务时间 * ( 1 + 2 + … + 请求总数-1) / 请求总数</li>
+<li style="margin:0px;padding:0px;list-style-type:disc;margin-bottom:1em;list-style:inherit;">应用到上面的例子: 平均等待时间 = 5ms * (1+2+…+28)/29 = 70ms，和 iostat 给出的78ms 的平均等待时间很接近。这反过来表明 I/O 是同时发起的。</li>
+<li style="margin:0px;padding:0px;list-style-type:disc;margin-bottom:1em;list-style:inherit;">每秒发出的 I/O 请求很多 (约 29 个)，平均队列却不长 (只有 2 个 左右)，这表明这 29 个请求的到来并不均匀，大部分时间 I/O 是空闲的。</li>
+<li style="margin:0px;padding:0px;list-style-type:disc;margin-bottom:1em;list-style:inherit;">一秒中有 14.29% 的时间 I/O 队列中是有请求的，也就是说，85.71% 的时间里 I/O 系统无事可做，所有 29 个 I/O 请求都在142毫秒之内处理掉了。</li>
+</ul>
+<p style="padding:0px;text-indent:0px;margin:10px auto;">　　delta(ruse+wuse)/delta(io) = await = 78.21 =&gt; delta(ruse+wuse)/s =78.21 * delta(io)/s = 78.21*28.57 = 2232.8，表明每秒内的I/O请求总共需要等待2232.8ms。所以平均队列长度应为 2232.8ms/1000ms = 2.23，而 iostat 给出的平均队列长度 (avgqu-sz) 却为 22.35，为什么?! 因为 iostat 中有 bug，avgqu-sz 值应为 2.23，而不是 22.35</p>
+<div style="margin:0px;padding:0px;text-align:right;"><a rel="nofollow noopener" href="https://www.cnblogs.com/happy-king/p/9234122.html#_labelTop" style="margin:0px;padding:0px;color:#f68a33;text-decoration:underline;">回到顶部</a><a style="margin:0px;padding:0px;"></a></div><h2 style="background:rgb(43, 102, 149);border-radius:6px;box-shadow:rgb(95, 90, 75) 0px 0px 0px 1px, rgba(10, 10, 0, 0.5) 1px 1px 6px 1px;color:rgb(255, 255, 255);font-family:微软雅黑, 宋体, 黑体, Arial;text-shadow:rgb(34, 34, 34) 2px 2px 3px;font-size:18px;font-weight:bold;line-height:25px;padding:8px 0px 5px 5px;margin:18px 0px;">二、Linux iowait过高问题的查找及解决</h2>
+<p style="padding:0px;text-indent:0px;margin:10px auto;">　　Linux 有许多可用来查找问题的简单工具，也有许多是更高级的</p>
+<p style="padding:0px;text-indent:0px;margin:10px auto;">　　I/O Wait 就是一个需要使用高级的工具来debug的问题，当然也有许多基本工具的高级用法。I/O wait的问题难以定位的原因是因为我们有很多工具可以告诉你说I/O 受限了，但是并没有告诉你具体是那个进程引起的（哪些进程们）</p>
+<a style="margin:0px;padding:0px;"></a><h3 style="background:rgb(0, 255, 255);border-radius:6px;box-shadow:rgb(95, 90, 75) 0px 0px 0px 1px, rgba(10, 10, 0, 0.5) 1px 1px 6px 1px;color:rgb(255, 255, 255);font-family:微软雅黑, 宋体, 黑体, Arial;text-shadow:rgb(34, 34, 34) 2px 2px 3px;font-size:15px;font-weight:bold;line-height:23px;padding:5px 0px 5px 10px;margin:12px 0px;"><strong style="margin:0px;padding:0px;">  一、确认是否是I/O问题导致系统缓慢</strong></h3>
+<p style="padding:0px;text-indent:0px;margin:10px auto;">　　确认是否是I/O导致的系统缓慢我们可以使用多个命令，但是，最简单的是unix的命令 top</p>
+<div style="background-color:rgb(245, 245, 245);border:1px solid rgb(204, 204, 204);overflow:auto;color:rgb(0, 0, 0);padding:5px;margin:5px 0px;font-family:&quot;Courier New&quot;;font-size:12px;"><div style="margin:0px;padding:0px;background-color:rgb(245, 245, 245);margin-top:5px;"><span style="margin:0px;padding:0px;font-family:&quot;Courier New&quot;, serif;font-size:inherit;line-height:1.5;padding-right:5px;"><a style="margin:0px;padding:0px;color:rgb(0, 0, 0);text-decoration:underline;background-color:rgb(245, 245, 245);border:none;"><div class="media-placeholder">[图片/附件]</div></en-media></a></span></div>
+<div style="margin:0px;padding:0px;background-color:rgb(245, 245, 245);margin-top:5px;"><span style="margin:0px;padding:0px;font-family:&quot;Courier New&quot;, serif;font-size:inherit;line-height:1.5;padding-right:5px;"><a style="margin:0px;padding:0px;"><div class="media-placeholder">[图片/附件]</div></en-media></a></span></div>
+<pre style="transition-duration:0.2s;transition-property:background, font-size, border-color, border-radius, border-width, padding, margin, color;overflow:auto;margin:0px;padding:0px;font-family:&quot;Courier New&quot;, serif;font-size:12px;overflow-wrap:break-word;">[root@localhost ~]# top
+top - 15:19:26 up  6:10,  4 users,  load average: 0.00, 0.01, 0.05
+Tasks: 147 total,   1 running, 146 sleeping,   0 stopped,   0 zombie
+%Cpu(s):  0.0 us,  0.3 sy,  0.0 ni, 99.7 id,  96.0 wa,  0.0 hi,  0.0 si,  0.0 st
+KiB Mem :   999936 total,   121588 free,   328672 used,   549676 buff/cache
+KiB Swap:  2097148 total,  2095792 free,     1356 used.   450460 avail Mem </pre>
+<div style="margin:0px;padding:0px;background-color:rgb(245, 245, 245);margin-top:5px;"><span style="margin:0px;padding:0px;font-family:&quot;Courier New&quot;, serif;font-size:inherit;line-height:1.5;padding-right:5px;"><a style="margin:0px;padding:0px;"><div class="media-placeholder">[图片/附件]</div></en-media></a></span></div>
+<div style="margin:0px;padding:0px;background-color:rgb(245, 245, 245);margin-top:5px;"><span style="margin:0px;padding:0px;font-family:&quot;Courier New&quot;, serif;font-size:inherit;line-height:1.5;padding-right:5px;"><a style="margin:0px;padding:0px;color:rgb(0, 0, 0);text-decoration:underline;background-color:rgb(245, 245, 245);border:none;"><div class="media-placeholder">[图片/附件]</div></en-media></a></span></div></div>
+<p style="padding:0px;text-indent:0px;margin:10px auto;">　　从Cpu一行我们可以看到浪费在I/O Wait上的CPU百分比；这个数字越高说明越多的CPU资源在等待I/O权限</p>
+<div style="background-color:rgb(245, 245, 245);border:1px solid rgb(204, 204, 204);overflow:auto;color:rgb(0, 0, 0);padding:5px;margin:5px 0px;font-family:&quot;Courier New&quot;;font-size:12px;">
+<pre style="transition-duration:0.2s;transition-property:background, font-size, border-color, border-radius, border-width, padding, margin, color;overflow:auto;margin:0px;padding:0px;font-family:&quot;Courier New&quot;, serif;font-size:12px;overflow-wrap:break-word;">wa -- iowait
+ AmountoftimetheCPUhasbeenwaitingfor I/O to complete.</pre>
+</div>
+<a style="margin:0px;padding:0px;"></a><h3 style="background:rgb(0, 255, 255);border-radius:6px;box-shadow:rgb(95, 90, 75) 0px 0px 0px 1px, rgba(10, 10, 0, 0.5) 1px 1px 6px 1px;color:rgb(255, 255, 255);font-family:微软雅黑, 宋体, 黑体, Arial;text-shadow:rgb(34, 34, 34) 2px 2px 3px;font-size:15px;font-weight:bold;line-height:23px;padding:5px 0px 5px 10px;margin:12px 0px;"><strong style="margin:0px;padding:0px;">  二、查找哪块磁盘正在被写入</strong></h3>
+<p style="padding:0px;text-indent:0px;margin:10px auto;">　　上边的top命令从一个整体上说明了I/O wait，但是并没有说明是哪块磁盘影响的，想知道是哪块磁盘引发的问题，我们用到了另外一个命令 iostat 命令</p>
+<div style="background-color:rgb(245, 245, 245);border:1px solid rgb(204, 204, 204);overflow:auto;color:rgb(0, 0, 0);padding:5px;margin:5px 0px;font-family:&quot;Courier New&quot;;font-size:12px;"><div style="margin:0px;padding:0px;background-color:rgb(245, 245, 245);margin-top:5px;"><span style="margin:0px;padding:0px;font-family:&quot;Courier New&quot;, serif;font-size:inherit;line-height:1.5;padding-right:5px;"><a style="margin:0px;padding:0px;color:rgb(0, 0, 0);text-decoration:underline;background-color:rgb(245, 245, 245);border:none;"><div class="media-placeholder">[图片/附件]</div></en-media></a></span></div>
+<div style="margin:0px;padding:0px;background-color:rgb(245, 245, 245);margin-top:5px;"><span style="margin:0px;padding:0px;font-family:&quot;Courier New&quot;, serif;font-size:inherit;line-height:1.5;padding-right:5px;"><a style="margin:0px;padding:0px;"><div class="media-placeholder">[图片/附件]</div></en-media></a></span></div>
+<pre style="transition-duration:0.2s;transition-property:background, font-size, border-color, border-radius, border-width, padding, margin, color;overflow:auto;margin:0px;padding:0px;font-family:&quot;Courier New&quot;, serif;font-size:12px;overflow-wrap:break-word;">[root@localhost ~]# iostat -x 2 5
+Linux 3.10.0-514.el7.x86_64 (localhost.localdomain)     2017年03月03日     _x86_64_    (1 CPU)
+
+avg-cpu:  %user   %nice %system %iowait  %steal   %idle
+           0.34    0.00    0.31    0.01    0.00   99.33
+
+Device:         rrqm/s   wrqm/s     r/s     w/s    rkB/s    wkB/s avgrq-sz avgqu-sz   await r_await w_await  svctm  %util
+sda               0.00     0.05    1.16    0.17    39.00    17.38    84.60     0.00    2.17    0.87   11.14   0.65   111.41
+scd0              0.00     0.00    0.00    0.00     0.00     0.00     8.00     0.00    0.64    0.64    0.00   0.64   0.00
+dm-0              0.00     0.00    1.10    0.20    37.85    17.21    84.71     0.00    2.43    0.90   10.88   0.66   0.09
+dm-1              0.00     0.00    0.01    0.02     0.07     0.08     9.70     0.00    1.42    0.27    2.05   0.09   0.00</pre>
+<div style="margin:0px;padding:0px;background-color:rgb(245, 245, 245);margin-top:5px;"><span style="margin:0px;padding:0px;font-family:&quot;Courier New&quot;, serif;font-size:inherit;line-height:1.5;padding-right:5px;"><a style="margin:0px;padding:0px;"><div class="media-placeholder">[图片/附件]</div></en-media></a></span></div>
+<div style="margin:0px;padding:0px;background-color:rgb(245, 245, 245);margin-top:5px;"><span style="margin:0px;padding:0px;font-family:&quot;Courier New&quot;, serif;font-size:inherit;line-height:1.5;padding-right:5px;"><a style="margin:0px;padding:0px;color:rgb(0, 0, 0);text-decoration:underline;background-color:rgb(245, 245, 245);border:none;"><div class="media-placeholder">[图片/附件]</div></en-media></a></span></div></div>
+<p style="padding:0px;text-indent:0px;margin:10px auto;">　　上边的例子中，iostat 会每2秒更新一次，一共打印5次信息， -x 的选项是打印出扩展信息</p>
+<p style="padding:0px;text-indent:0px;margin:10px auto;">　　第一个iostat 报告会打印出系统最后一次启动后的统计信息，这也就是说，在多数情况下，第一个打印出来的信息应该被忽略，剩下的报告，都是基于上一次间隔的时间。举例子来说，这个命令会打印5次，第二次的报告是从第一次报告出来一个后的统计信息，第三次是基于第二次 ，依次类推</p>
+<p style="padding:0px;text-indent:0px;margin:10px auto;">　　在上面的例子中，sda的%utilized 是111.41%，这个很好的说明了有进程正在写入到sda磁盘中。</p>
+<p style="padding:0px;text-indent:0px;margin:10px auto;">　　除了%utilized 外，我们可以得到更丰富的资源从iostat，例如每毫秒读写请求（rrqm/s &amp; wrqm/s)），每秒读写的（(r/s &amp; w/s)，当然还有更多。在上边的例子中，我们的项目看起来正在读写非常多的信息。这个对我们查找相应的进程非常有用</p>
+<a style="margin:0px;padding:0px;"></a><h3 style="background:rgb(0, 255, 255);border-radius:6px;box-shadow:rgb(95, 90, 75) 0px 0px 0px 1px, rgba(10, 10, 0, 0.5) 1px 1px 6px 1px;color:rgb(255, 255, 255);font-family:微软雅黑, 宋体, 黑体, Arial;text-shadow:rgb(34, 34, 34) 2px 2px 3px;font-size:15px;font-weight:bold;line-height:23px;padding:5px 0px 5px 10px;margin:12px 0px;"><strong style="margin:0px;padding:0px;">  三、查找引起高I/O wait 对应的进程 </strong></h3>
+<div style="background-color:rgb(245, 245, 245);border:1px solid rgb(204, 204, 204);overflow:auto;color:rgb(0, 0, 0);padding:5px;margin:5px 0px;font-family:&quot;Courier New&quot;;font-size:12px;"><div style="margin:0px;padding:0px;background-color:rgb(245, 245, 245);margin-top:5px;"><span style="margin:0px;padding:0px;font-family:&quot;Courier New&quot;, serif;font-size:inherit;line-height:1.5;padding-right:5px;"><a style="margin:0px;padding:0px;color:rgb(0, 0, 0);text-decoration:underline;background-color:rgb(245, 245, 245);border:none;"><div class="media-placeholder">[图片/附件]</div></en-media></a></span></div>
+<div style="margin:0px;padding:0px;background-color:rgb(245, 245, 245);margin-top:5px;"><span style="margin:0px;padding:0px;font-family:&quot;Courier New&quot;, serif;font-size:inherit;line-height:1.5;padding-right:5px;"><a style="margin:0px;padding:0px;"><div class="media-placeholder">[图片/附件]</div></en-media></a></span></div>
+<pre style="transition-duration:0.2s;transition-property:background, font-size, border-color, border-radius, border-width, padding, margin, color;overflow:auto;margin:0px;padding:0px;font-family:&quot;Courier New&quot;, serif;font-size:12px;overflow-wrap:break-word;">[root@localhost ~]# iotop
+
+Total DISK READ :    0.00 B/s | Total DISK WRITE :       0.00 B/s
+Actual DISK READ:    0.00 B/s | Actual DISK WRITE:       0.00 B/s
+   TID  PRIO  USER     DISK READ  DISK WRITE  SWAPIN     IO&gt;    COMMAND   
+  1028 be/4 root        0.00 B/s    0.00 B/s  0.00 %  0.00 % sshd
+                                              </pre>
+<div style="margin:0px;padding:0px;background-color:rgb(245, 245, 245);margin-top:5px;"><span style="margin:0px;padding:0px;font-family:&quot;Courier New&quot;, serif;font-size:inherit;line-height:1.5;padding-right:5px;"><a style="margin:0px;padding:0px;"><div class="media-placeholder">[图片/附件]</div></en-media></a></span></div>
+<div style="margin:0px;padding:0px;background-color:rgb(245, 245, 245);margin-top:5px;"><span style="margin:0px;padding:0px;font-family:&quot;Courier New&quot;, serif;font-size:inherit;line-height:1.5;padding-right:5px;"><a style="margin:0px;padding:0px;color:rgb(0, 0, 0);text-decoration:underline;background-color:rgb(245, 245, 245);border:none;"><div class="media-placeholder">[图片/附件]</div></en-media></a></span></div></div>
+<p style="padding:0px;text-indent:0px;margin:10px auto;">　　最简单的方式来发现罪魁祸首是使用命令iotop，通过查看iotop的统计信息，我们可以很容易的指导sshd就是罪魁祸首</p>
+<p style="padding:0px;text-indent:0px;margin:10px auto;">　　虽然iotop是一个非常强大的工具，并且使用简单，但是它并不是默认安装在所有的linux操作系统中。并且我个人倾向不要太依赖那些默认没有安装的命令。一个系统管理员可能会发现他无法立即安装额外的除默认程序之外的软件，除非等到后边的维护的时间。</p>
+<a style="margin:0px;padding:0px;"></a><h3 style="background:rgb(0, 255, 255);border-radius:6px;box-shadow:rgb(95, 90, 75) 0px 0px 0px 1px, rgba(10, 10, 0, 0.5) 1px 1px 6px 1px;color:rgb(255, 255, 255);font-family:微软雅黑, 宋体, 黑体, Arial;text-shadow:rgb(34, 34, 34) 2px 2px 3px;font-size:15px;font-weight:bold;line-height:23px;padding:5px 0px 5px 10px;margin:12px 0px;"><strong style="margin:0px;padding:0px;">  四、查找哪个文件引起的I/Owait</strong></h3>
+<p style="padding:0px;text-indent:0px;margin:10px auto;"> lsof 命令可以展示一个进程打开的所有文件，或者打开一个文件的所有进程。从这个列表中，我们可以找到具体是什么文件被写入，根据文件的大小和/proc中io文件的具体数据</p>
+<p style="padding:0px;text-indent:0px;margin:10px auto;">我们可以使用-p &lt;pid&gt;的方式来减少输出，pid是具体的进程 </p>
+<div style="background-color:rgb(245, 245, 245);border:1px solid rgb(204, 204, 204);overflow:auto;color:rgb(0, 0, 0);padding:5px;margin:5px 0px;font-family:&quot;Courier New&quot;;font-size:12px;"><div style="margin:0px;padding:0px;background-color:rgb(245, 245, 245);margin-top:5px;"><span style="margin:0px;padding:0px;font-family:&quot;Courier New&quot;, serif;font-size:inherit;line-height:1.5;padding-right:5px;"><a style="margin:0px;padding:0px;color:rgb(0, 0, 0);text-decoration:underline;background-color:rgb(245, 245, 245);border:none;"><div class="media-placeholder">[图片/附件]</div></en-media></a></span></div>
+<div style="margin:0px;padding:0px;background-color:rgb(245, 245, 245);margin-top:5px;"><span style="margin:0px;padding:0px;font-family:&quot;Courier New&quot;, serif;font-size:inherit;line-height:1.5;padding-right:5px;"><a style="margin:0px;padding:0px;"><div class="media-placeholder">[图片/附件]</div></en-media></a></span></div>
+<pre style="transition-duration:0.2s;transition-property:background, font-size, border-color, border-radius, border-width, padding, margin, color;overflow:auto;margin:0px;padding:0px;font-family:&quot;Courier New&quot;, serif;font-size:12px;overflow-wrap:break-word;">[root@localhost ~]# lsof -p 1028
+COMMAND  PID USER   FD   TYPE DEVICE SIZE/OFF    NODE NAME
+sshd    1028 root  cwd    DIR  253,0      233      64 /
+sshd    1028 root  rtd    DIR  253,0      233      64 /
+sshd    1028 root  txt    REG  253,0   819640 2393730 /usr/sbin/sshd
+sshd    1028 root  mem    REG  253,0    61752  180464 /usr/lib64/libnss_files-2.17.so
+sshd    1028 root  mem    REG  253,0    43928  180476 /usr/lib64/librt-2.17.so
+sshd    1028 root  mem    REG  253,0    15688  269136 /usr/lib64/libkeyutils.so.1.5
+sshd    1028 root  mem    REG  253,0    62744  482870 /usr/lib64/libkrb5support.so.0.1
+sshd    1028 root  mem    REG  253,0    11384  180425 /usr/lib64/libfreebl3.so
+sshd    1028 root  mem    REG  253,0   143352  180472 /usr/lib64/libpthread-2.17.so
+sshd    1028 root  mem    REG  253,0   251784  202440 /usr/lib64/libnspr4.so
+sshd    1028 root  mem    REG  253,0    20016  202441 /usr/lib64/libplc4.so
+sshd    1028 root  mem    REG  253,0    15768  202442 /usr/lib64/libplds4.so
+sshd    1028 root  mem    REG  253,0   182056  202443 /usr/lib64/libnssutil3.so
+sshd    1028 root  mem    REG  253,0  1220240  650074 /usr/lib64/libnss3.so
+sshd    1028 root  mem    REG  253,0   164048  650076 /usr/lib64/libsmime3.so
+sshd    1028 root  mem    REG  253,0   276752  650077 /usr/lib64/libssl3.so
+sshd    1028 root  mem    REG  253,0   121296  269112 /usr/lib64/libsasl2.so.3.0.0
+sshd    1028 root  mem    REG  253,0   398264  202404 /usr/lib64/libpcre.so.1.2.0
+sshd    1028 root  mem    REG  253,0  2116736  180446 /usr/lib64/libc-2.17.so
+sshd    1028 root  mem    REG  253,0    15848  202439 /usr/lib64/libcom_err.so.2.1
+sshd    1028 root  mem    REG  253,0   202568  482862 /usr/lib64/libk5crypto.so.3.1
+sshd    1028 root  mem    REG  253,0   959008  482868 /usr/lib64/libkrb5.so.3.3
+sshd    1028 root  mem    REG  253,0   324888  482858 /usr/lib64/libgssapi_krb5.so.2.2
+sshd    1028 root  mem    REG  253,0   110632  180474 /usr/lib64/libresolv-2.17.so
+sshd    1028 root  mem    REG  253,0    40640  180450 /usr/lib64/libcrypt-2.17.so
+sshd    1028 root  mem    REG  253,0   113152  180456 /usr/lib64/libnsl-2.17.so
+sshd    1028 root  mem    REG  253,0    90664  202424 /usr/lib64/libz.so.1.2.7
+sshd    1028 root  mem    REG  253,0    14432  186432 /usr/lib64/libutil-2.17.so
+sshd    1028 root  mem    REG  253,0    61872  766946 /usr/lib64/liblber-2.4.so.2.10.3
+sshd    1028 root  mem    REG  253,0   344280  766948 /usr/lib64/libldap-2.4.so.2.10.3
+sshd    1028 root  mem    REG  253,0    19344  180452 /usr/lib64/libdl-2.17.so
+sshd    1028 root  mem    REG  253,0  2025472  482880 /usr/lib64/libcrypto.so.1.0.1e
+sshd    1028 root  mem    REG  253,0    23968  202508 /usr/lib64/libcap-ng.so.0.0.0
+sshd    1028 root  mem    REG  253,0   155744  202421 /usr/lib64/libselinux.so.1
+sshd    1028 root  mem    REG  253,0    61672  539049 /usr/lib64/libpam.so.0.83.1
+sshd    1028 root  mem    REG  253,0   122936  202512 /usr/lib64/libaudit.so.1.0.0
+sshd    1028 root  mem    REG  253,0    42520  298848 /usr/lib64/libwrap.so.0.7.6
+sshd    1028 root  mem    REG  253,0    11328  568388 /usr/lib64/libfipscheck.so.1.2.1
+sshd    1028 root  mem    REG  253,0   155064  180439 /usr/lib64/ld-2.17.so
+sshd    1028 root    0u   CHR    1,3      0t0    5930 /dev/null
+sshd    1028 root    1u   CHR    1,3      0t0    5930 /dev/null
+sshd    1028 root    2u   CHR    1,3      0t0    5930 /dev/null
+sshd    1028 root    3u  IPv4  21185      0t0     TCP *:ssh (LISTEN)
+sshd    1028 root    4u  IPv6  21194      0t0     TCP *:ssh (LISTEN)</pre>
+<div style="margin:0px;padding:0px;background-color:rgb(245, 245, 245);margin-top:5px;"><span style="margin:0px;padding:0px;font-family:&quot;Courier New&quot;, serif;font-size:inherit;line-height:1.5;padding-right:5px;"><a style="margin:0px;padding:0px;"><div class="media-placeholder">[图片/附件]</div></en-media></a></span></div>
+<div style="margin:0px;padding:0px;background-color:rgb(245, 245, 245);margin-top:5px;"><span style="margin:0px;padding:0px;font-family:&quot;Courier New&quot;, serif;font-size:inherit;line-height:1.5;padding-right:5px;"><a style="margin:0px;padding:0px;color:rgb(0, 0, 0);text-decoration:underline;background-color:rgb(245, 245, 245);border:none;"><div class="media-placeholder">[图片/附件]</div></en-media></a></span></div></div>
+<p style="padding:0px;text-indent:0px;margin:10px auto;">为了更深入的确认这些文件被频繁的读写，我们可以通过如下命令来查看 </p>
+<div style="background-color:rgb(245, 245, 245);border:1px solid rgb(204, 204, 204);overflow:auto;color:rgb(0, 0, 0);padding:5px;margin:5px 0px;font-family:&quot;Courier New&quot;;font-size:12px;">
+<pre style="transition-duration:0.2s;transition-property:background, font-size, border-color, border-radius, border-width, padding, margin, color;overflow:auto;margin:0px;padding:0px;font-family:&quot;Courier New&quot;, serif;font-size:12px;overflow-wrap:break-word;">[root@localhost ~]# df /tmp
+文件系统               1K-块    已用     可用 已用% 挂载点
+/dev/mapper/cl-root 17811456 3981928 13829528   23% /</pre>
+</div>
+<p style="padding:0px;text-indent:0px;margin:10px auto;">　　从上面的命令结果来看，我们可以确定/tmp 是我们环境的逻辑磁盘的根目录</p>
+<div style="background-color:rgb(245, 245, 245);border:1px solid rgb(204, 204, 204);overflow:auto;color:rgb(0, 0, 0);padding:5px;margin:5px 0px;font-family:&quot;Courier New&quot;;font-size:12px;"><div style="margin:0px;padding:0px;background-color:rgb(245, 245, 245);margin-top:5px;"><span style="margin:0px;padding:0px;font-family:&quot;Courier New&quot;, serif;font-size:inherit;line-height:1.5;padding-right:5px;"><a style="margin:0px;padding:0px;color:rgb(0, 0, 0);text-decoration:underline;background-color:rgb(245, 245, 245);border:none;"><div class="media-placeholder">[图片/附件]</div></en-media></a></span></div>
+<div style="margin:0px;padding:0px;background-color:rgb(245, 245, 245);margin-top:5px;"><span style="margin:0px;padding:0px;font-family:&quot;Courier New&quot;, serif;font-size:inherit;line-height:1.5;padding-right:5px;"><a style="margin:0px;padding:0px;"><div class="media-placeholder">[图片/附件]</div></en-media></a></span></div>
+<pre style="transition-duration:0.2s;transition-property:background, font-size, border-color, border-radius, border-width, padding, margin, color;overflow:auto;margin:0px;padding:0px;font-family:&quot;Courier New&quot;, serif;font-size:12px;overflow-wrap:break-word;">[root@localhost ~]# pvdisplay
+  --- Physical volume ---
+  PV Name               /dev/sda2
+  VG Name               cl
+  PV Size               19.00 GiB / not usable 3.00 MiB
+  Allocatable           yes (but full)
+  PE Size               4.00 MiB
+  Total PE              4863
+  Free PE               0
+  Allocated PE          4863
+  PV UUID               4QfaOy-DNSO-niK1-ayn2-K6AY-WZMy-9Nd2It</pre>
+<div style="margin:0px;padding:0px;background-color:rgb(245, 245, 245);margin-top:5px;"><span style="margin:0px;padding:0px;font-family:&quot;Courier New&quot;, serif;font-size:inherit;line-height:1.5;padding-right:5px;"><a style="margin:0px;padding:0px;"><div class="media-placeholder">[图片/附件]</div></en-media></a></span></div>
+<div style="margin:0px;padding:0px;background-color:rgb(245, 245, 245);margin-top:5px;"><span style="margin:0px;padding:0px;font-family:&quot;Courier New&quot;, serif;font-size:inherit;line-height:1.5;padding-right:5px;"><a style="margin:0px;padding:0px;color:rgb(0, 0, 0);text-decoration:underline;background-color:rgb(245, 245, 245);border:none;"><div class="media-placeholder">[图片/附件]</div></en-media></a></span></div></div>
+<p style="padding:0px;text-indent:0px;margin:10px auto;">　　过pvdisplay我们能看到/dev/sda2其实就是我们用来创建逻辑磁盘的具体磁盘。通过以上的信息我们可以放心的说lsof的结果就是我们要查找的文件</p>
+</div>
+<div style="margin:0px;padding:0px;clear:both;"></div>
+<div style="margin:0px;padding:0px;margin-top:20px;">
+
+
+<div style="margin:0px;padding:0px;margin-bottom:10px;">
+    分类: 
+            <a href="https://www.cnblogs.com/happy-king/category/1205188.html" target="_blank" style="margin:0px;padding:0px;color:rgb(0, 0, 0);text-decoration:underline;">Linux系统管理</a>
+</div>
+<div style="margin:0px;padding:0px;font-size:9pt;color:rgb(102, 102, 102);margin-top:0px;">
+    标签: 
+            <a href="https://www.cnblogs.com/happy-king/tag/IO/" style="margin:0px;padding:0px;text-decoration:underline;margin-left:5px;color:rgb(102, 102, 102);">IO</a>
+</div>
+    <div style="margin:0px;padding:0px;">
+<div style="margin:0px;margin-bottom:20px;margin-top:10px;border:1px dashed rgb(192, 192, 192);font-size:12px;text-align:center;padding:10px 0px;width:100%;">
+        <a href="#" style="margin:0px;background:url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAAkCAYAAABIdFAMAAAAGXRFWHRTb2Z0d2FyZQBBZG9iZSBJbWFnZVJlYWR5ccllPAAAAHhJREFUeNo8zjsOxCAMBFB/KEAUFFR0Cbng3nQPw68ArZdAlOZppPFIBhH5EAB8b+Tlt9MYQ6i1BuqFaq1CKSVcxZ2Acs6406KUgpt5/LCKuVgz5BDCSb13ZO99ZOdcZGvt4mJjzMVKqcha68iIePB86GAiOv8CDADlIUQBs7MD3wAAAABJRU5ErkJggg%3D%3D) repeat-x;display:inline-block;font-weight:bold;cursor:pointer;margin-right:10px;border-radius:10px;box-shadow:rgba(0, 0, 0, 0.5) 0px 1px 3px;text-shadow:rgba(0, 0, 0, 0.25) 0px -1px 1px;vertical-align:middle;padding:3px 8px;text-decoration:none;background-color:rgb(45, 174, 191);border:none;color:rgb(255, 255, 255);">好文要顶</a>
+        <a href="#" style="margin:0px;background:url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAAkCAYAAABIdFAMAAAAGXRFWHRTb2Z0d2FyZQBBZG9iZSBJbWFnZVJlYWR5ccllPAAAAHhJREFUeNo8zjsOxCAMBFB/KEAUFFR0Cbng3nQPw68ArZdAlOZppPFIBhH5EAB8b+Tlt9MYQ6i1BuqFaq1CKSVcxZ2Acs6406KUgpt5/LCKuVgz5BDCSb13ZO99ZOdcZGvt4mJjzMVKqcha68iIePB86GAiOv8CDADlIUQBs7MD3wAAAABJRU5ErkJggg%3D%3D) repeat-x;display:inline-block;font-weight:bold;cursor:pointer;margin-right:10px;border-radius:10px;box-shadow:rgba(0, 0, 0, 0.5) 0px 1px 3px;text-shadow:rgba(0, 0, 0, 0.25) 0px -1px 1px;vertical-align:middle;padding:3px 8px;text-decoration:none;background-color:rgb(227, 49, 0);border:none;color:rgb(255, 255, 255);">关注我</a>
+    <a href="#" style="margin:0px;background:url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAAkCAYAAABIdFAMAAAAGXRFWHRTb2Z0d2FyZQBBZG9iZSBJbWFnZVJlYWR5ccllPAAAAHhJREFUeNo8zjsOxCAMBFB/KEAUFFR0Cbng3nQPw68ArZdAlOZppPFIBhH5EAB8b+Tlt9MYQ6i1BuqFaq1CKSVcxZ2Acs6406KUgpt5/LCKuVgz5BDCSb13ZO99ZOdcZGvt4mJjzMVKqcha68iIePB86GAiOv8CDADlIUQBs7MD3wAAAABJRU5ErkJggg%3D%3D) repeat-x;display:inline-block;font-weight:bold;cursor:pointer;margin-right:10px;border-radius:10px;box-shadow:rgba(0, 0, 0, 0.5) 0px 1px 3px;text-shadow:rgba(0, 0, 0, 0.25) 0px -1px 1px;vertical-align:middle;padding:3px 8px;text-decoration:none;background-color:rgb(255, 181, 21);border:none;color:rgb(255, 255, 255);">收藏该文</a>
+    <a href="#" style="margin:0px;background:url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAAkCAYAAABIdFAMAAAAGXRFWHRTb2Z0d2FyZQBBZG9iZSBJbWFnZVJlYWR5ccllPAAAAHhJREFUeNo8zjsOxCAMBFB/KEAUFFR0Cbng3nQPw68ArZdAlOZppPFIBhH5EAB8b+Tlt9MYQ6i1BuqFaq1CKSVcxZ2Acs6406KUgpt5/LCKuVgz5BDCSb13ZO99ZOdcZGvt4mJjzMVKqcha68iIePB86GAiOv8CDADlIUQBs7MD3wAAAABJRU5ErkJggg%3D%3D) repeat-x;display:inline-block;font-weight:bold;cursor:pointer;margin-right:10px;border-radius:10px;box-shadow:rgba(0, 0, 0, 0.5) 0px 1px 3px;text-shadow:rgba(0, 0, 0, 0.25) 0px -1px 1px;vertical-align:middle;padding:3px 8px;text-decoration:none;background-color:rgb(78, 171, 87);border:none;color:rgb(255, 255, 255);">微信分享</a>
+</div>
+<div style="margin:0px;padding:0px;float:left;width:280px;margin-top:0px;margin-bottom:10px;color:rgb(0, 0, 0);margin-left:0px;font-size:12px;">
+    <div style="margin:0px;padding:0px;float:left;line-height:18px;">
+            <a style="margin:0px;padding:0px;color:rgb(0, 0, 0);text-decoration:underline;"><div class="media-placeholder">[图片/附件]</div></en-media></a>
+        <div style="margin:0px;padding:0px;float:left;line-height:18px;">
+            <a href="https://home.cnblogs.com/u/happy-king/" style="margin:0px;padding:0px;color:rgb(0, 0, 0);text-decoration:underline;">思维无界限</a>
+            <br style="margin:0px;padding:0px;"/>
+            <a href="https://home.cnblogs.com/u/happy-king/followers/" style="margin:0px;padding:0px;color:rgb(0, 0, 0);text-decoration:underline;">粉丝 - <span style="margin:0px;padding:0px;">87</span></a>
+            <a href="https://home.cnblogs.com/u/happy-king/followees/" style="margin:0px;padding:0px;color:rgb(0, 0, 0);text-decoration:underline;">关注 - <span style="margin:0px;padding:0px;">18</span></a><br style="margin:0px;padding:0px;"/>
+        </div>
+    </div>
+    <div style="margin:0px;padding:0px;clear:both;"></div>
+    <div style="margin:0px;padding:0px;"></div>
+    <div style="margin:0px;padding:0px;">
+                <a href="#" style="margin:0px;padding:0px;color:rgb(0, 0, 0);text-decoration:underline;">+加关注</a>
+    </div>
+</div>
+<div style="margin:0px;padding:0px;float:right;margin-bottom:10px;margin-right:30px;font-size:12px;width:125px;text-align:center;margin-top:10px;">
+    <div style="margin:0px;padding:0px;float:left;width:46px;height:52px;background:url(https://assets.cnblogs.com/images/upup.gif) no-repeat;text-align:center;cursor:pointer;margin-top:2px;padding-top:5px;">
+        <span style="margin:0px;padding:0px;font-size:14px;color:rgb(7, 93, 179);font-family:Verdana;line-height:1.5em;">5</span>
+    </div>
+    <div style="margin:0px;padding:0px;float:right;margin-left:20px;width:46px;height:52px;background:url(https://assets.cnblogs.com/images/downdown.gif) no-repeat;text-align:center;cursor:pointer;margin-top:2px;padding-top:5px;">
+        <span style="margin:0px;padding:0px;font-size:14px;color:rgb(7, 93, 179);font-family:Verdana;line-height:1.5em;">0</span>
+    </div>
+    <div style="margin:0px;padding:0px;clear:both;"></div>
+    <div style="margin:0px;padding:0px;margin-top:5px;margin-left:0px;font-size:12px;color:rgb(128, 128, 128);">
+    </div>
+</div>
+
+
+</div>
+    <div style="margin:0px;padding:0px;clear:both;"></div>
+    <div style="margin:0px;padding:0px;line-height:1.8;font-size:12px;">
+
+    <a href="https://www.cnblogs.com/happy-king/p/9228801.html" style="margin:0px;padding:0px;color:rgb(0, 0, 0);text-decoration:none;">« </a> 上一篇：    <a href="https://www.cnblogs.com/happy-king/p/9228801.html" title="发布于 2018-06-26 14:07" style="margin:0px;padding:0px;color:rgb(0, 0, 0);text-decoration:underline;">Redis配置文件redis.conf详解</a>
+    <br style="margin:0px;padding:0px;"/>
+    <a href="https://www.cnblogs.com/happy-king/p/9253141.html" style="margin:0px;padding:0px;color:rgb(0, 0, 0);text-decoration:none;">» </a> 下一篇：    <a href="https://www.cnblogs.com/happy-king/p/9253141.html" title="发布于 2018-07-02 14:51" style="margin:0px;padding:0px;color:rgb(0, 0, 0);text-decoration:underline;">git的使用</a>
+
+</div>
+</div>
+            </div>
+            <div style="margin:0px;padding:0px;clear:both;line-height:2.5em;margin-top:5px;float:right;width:100%;text-align:right;padding-right:5px;color:rgb(102, 102, 102);">posted @ 
+<span style="margin:0px;padding:0px;">2018-06-27 15:15</span> 
+<a href="https://www.cnblogs.com/happy-king" style="margin:0px;padding:0px;text-decoration:none;color:rgb(102, 102, 102);">思维无界限</a> 
+阅读(<span style="margin:0px;padding:0px;">51935</span>) 
+评论(<span style="margin:0px;padding:0px;">2</span>) 
+<a href="https://i.cnblogs.com/EditPosts.aspx?postid=9234122" rel="nofollow" style="margin:0px;padding:0px;text-decoration:none;color:rgb(102, 102, 102);">编辑</a> 
+<a href="#" style="margin:0px;padding:0px;text-decoration:none;color:rgb(102, 102, 102);">收藏</a> 
+<a href="#" style="margin:0px;padding:0px;text-decoration:none;color:rgb(102, 102, 102);">举报</a>
+</div>
+        </div></div></div></div></div></div></div></div></div></div></div>
+</div>
+<a class="back-link" href="../articles.html">← 返回笔记列表</a>
+</body>
+</html>

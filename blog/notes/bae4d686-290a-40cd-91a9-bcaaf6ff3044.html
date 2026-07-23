@@ -1,0 +1,489 @@
+<!DOCTYPE html>
+<html lang="zh-CN" data-theme="light">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>deb包制作 - 多弗朗强哥 - 博客园 — 技术笔记</title>
+<style>
+:root {
+  --bg: #ffffff;
+  --text: #1a1a1a;
+  --muted: #666;
+  --border: #e0e0e0;
+  --code-bg: #f5f5f5;
+  --link: #0066cc;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #1a1a1a;
+    --text: #e0e0e0;
+    --muted: #999;
+    --border: #333;
+    --code-bg: #2a2a2a;
+    --link: #66bbff;
+  }
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  line-height: 1.7;
+  color: var(--text);
+  background: var(--bg);
+  max-width: 860px;
+  margin: 0 auto;
+  padding: 2rem 1.5rem;
+}
+.note-header {
+  border-bottom: 2px solid var(--border);
+  padding-bottom: 1rem;
+  margin-bottom: 2rem;
+}
+.note-title {
+  font-size: 1.6rem;
+  font-weight: 700;
+  margin-bottom: 0.3rem;
+}
+.note-meta {
+  color: var(--muted);
+  font-size: 0.85rem;
+}
+.note-content {
+  font-size: 0.95rem;
+}
+.note-content h1 { font-size: 1.4rem; margin: 1.2rem 0 0.6rem; }
+.note-content h2 { font-size: 1.2rem; margin: 1rem 0 0.5rem; }
+.note-content h3 { font-size: 1.05rem; margin: 0.8rem 0 0.4rem; }
+.note-content p { margin: 0.5rem 0; }
+.note-content ul, .note-content ol { margin: 0.5rem 0 0.5rem 2rem; }
+.note-content li { margin: 0.2rem 0; }
+.note-content pre {
+  background: var(--code-bg);
+  padding: 1rem;
+  border-radius: 6px;
+  overflow-x: auto;
+  margin: 0.8rem 0;
+  font-size: 0.85rem;
+}
+.note-content code {
+  background: var(--code-bg);
+  padding: 0.1rem 0.3rem;
+  border-radius: 3px;
+  font-size: 0.88em;
+}
+.note-content pre code {
+  background: none;
+  padding: 0;
+}
+.note-content blockquote {
+  border-left: 3px solid var(--border);
+  padding-left: 1rem;
+  color: var(--muted);
+  margin: 0.8rem 0;
+}
+.note-content a { color: var(--link); }
+.note-content img {
+  max-width: 100%;
+  height: auto;
+  border-radius: 6px;
+  margin: 0.5rem 0;
+}
+.note-content table {
+  border-collapse: collapse;
+  width: 100%;
+  margin: 0.8rem 0;
+}
+.note-content th, .note-content td {
+  border: 1px solid var(--border);
+  padding: 0.5rem;
+}
+.note-content th { background: var(--code-bg); }
+.media-placeholder {
+  background: var(--code-bg);
+  padding: 1rem;
+  text-align: center;
+  color: var(--muted);
+  border-radius: 6px;
+  margin: 0.5rem 0;
+  font-size: 0.85rem;
+}
+.encrypt-placeholder {
+  background: #fff3cd;
+  padding: 0.5rem;
+  text-align: center;
+  color: #856404;
+  border-radius: 6px;
+  margin: 0.5rem 0;
+  font-size: 0.85rem;
+}
+.back-link {
+  display: inline-block;
+  margin-top: 2rem;
+  color: var(--link);
+  text-decoration: none;
+  font-size: 0.85rem;
+}
+</style>
+</head>
+<body>
+<div class="note-header">
+  <div class="note-title">deb包制作 - 多弗朗强哥 - 博客园</div>
+  <div class="note-meta">笔记本：Linux</div>
+</div>
+<div class="note-content">
+<div style="--en-clipped-content:article">
+<div><br/></div><div style="font-size: 16px; display:block; min-width: 100%; position: relative;"> <div style="--olcb-folder-code-block-max-height:80vh;--cnb-code-bg:rgb(19, 21, 19);--cnb-code-font-size:12px;--cnb-code-color:rgb(140, 166, 140);"><div style="tab-size:4;background:rgb(255, 255, 255);text-size-adjust:none;font-family:Lato, &quot;PingFang SC&quot;, &quot;Microsoft YaHei&quot;, sans-serif;color:rgb(49, 70, 89);font-size:14px;"><div style="min-width:initial;"><div style="text-align:left;animation-name:fadeIn;animation-duration:1s;animation-iteration-count:1;min-width:initial;"><div style="text-overflow:ellipsis;overflow:hidden;word-break:break-all;background-color:transparent;"><div><div><div style="text-overflow:ellipsis;overflow:hidden;word-break:break-all;"><div>
+            <h1 style="margin:0px;padding:0px;clear:both;padding-left:5px;float:left;line-height:1.5em;width:100%;font-size:40px;font-weight:300;border-bottom:none;">
+                <a href="https://www.cnblogs.com/chendeqiang/p/14232064.html" title="发布于 2021-01-04 20:30" style="margin:0px;padding:0px;text-decoration:none;color:rgb(49, 70, 89);transition:all 0.3s ease 0s;">
+    <span style="margin:0px;padding:0px;vertical-align:middle;">deb包制作</span>
+    
+
+</a>
+
+            </h1>
+            <div style="margin:0px;padding:0px;clear:both;"></div>
+            <div style="margin:0px;font-weight:300;font-size:16px;line-height:1.75;color:rgb(49, 70, 89);border-bottom:1px solid rgb(238, 242, 248);padding:10px 0px;">
+                <div style="margin:0px;padding:0px;margin-bottom:20px;word-break:break-word;">
+<h1 style="line-height:1.5;font-weight:bold;margin:10px 0px;color:rgb(49, 70, 89);padding:0px 0px 0px 40px;font-size:24px;"><span style="font-size:24px;font-weight:bold;line-height:1.5;color:rgb(49, 70, 89);display:block;position:absolute;margin-left:-40px;margin-top:1px;padding:0px;"> </span>简介<a href="https://www.cnblogs.com/chendeqiang/p/14232064.html#149948660" style="margin:0px;padding:0px;margin-left:8px;text-decoration:underline;transition:all 0.3s ease 0s;color:inherit;opacity:0;">#</a></h1>
+<p style="padding:0px;text-indent:0px;margin:13px auto;">deb编包的本质是：将编译过程自动化，并生成可执行程序，使得可以通过apt-get中安装。</p>
+<p style="padding:0px;text-indent:0px;margin:13px auto;">源码，编译器编译成指定架构版本的二进制，<br style="margin:0px;padding:0px;"/>
+不同架构的二进制组织形式不同，如大小端对齐。</p>
+<h1 style="line-height:1.5;font-weight:bold;margin:10px 0px;color:rgb(49, 70, 89);padding:0px 0px 0px 40px;font-size:24px;"><span style="font-size:24px;font-weight:bold;line-height:1.5;color:rgb(49, 70, 89);display:block;position:absolute;margin-left:-40px;margin-top:1px;padding:0px;"> </span>DEB源码介绍<a href="https://www.cnblogs.com/chendeqiang/p/14232064.html#808729274" style="margin:0px;padding:0px;margin-left:8px;text-decoration:underline;transition:all 0.3s ease 0s;color:inherit;opacity:0;">#</a></h1>
+<p style="padding:0px;text-indent:0px;margin:13px auto;">DEB 包的源码是由:程序源码+debian 目录构成,其中 debian 目录中存放着打包成 DEB 文件所需的全部文件。<br style="margin:0px;padding:0px;"/>
+通过 debian 目录中的文件可以定制软件包的行为。其中最为重要的,对于所有的软件包都必需的基本文件是:</p>
+<ul style="margin:0px;padding:0px;word-break:break-all;padding-left:0px;list-style-type:disc;margin-left:30px;">
+<li style="padding:0px;list-style-type:disc;list-style:inherit;font-size:16px;color:rgb(49, 70, 89);margin:3px 0px;">control :包的一些基本信息(名字、依赖等)
+<ul style="margin:0px;padding:0px;word-break:break-all;padding-left:0px;margin-left:30px;list-style-type:circle;">
+<li style="padding:0px;list-style-type:disc;list-style:inherit;font-size:16px;color:rgb(49, 70, 89);margin:3px 0px;">软件包在构建和运行时的依赖</li>
+<li style="padding:0px;list-style-type:disc;list-style:inherit;font-size:16px;color:rgb(49, 70, 89);margin:3px 0px;">软件包其他主要信息</li>
+</ul>
+</li>
+<li style="padding:0px;list-style-type:disc;list-style:inherit;font-size:16px;color:rgb(49, 70, 89);margin:3px 0px;">rules :构建包时的规则
+<ul style="margin:0px;padding:0px;word-break:break-all;padding-left:0px;margin-left:30px;list-style-type:circle;">
+<li style="padding:0px;list-style-type:disc;list-style:inherit;font-size:16px;color:rgb(49, 70, 89);margin:3px 0px;">是用来指定如何构建软件包的,是包的编译规则文件;</li>
+<li style="padding:0px;list-style-type:disc;list-style:inherit;font-size:16px;color:rgb(49, 70, 89);margin:3px 0px;">默认可以调用软件源码的 make 等编译程序及规则进行;</li>
+<li style="padding:0px;list-style-type:disc;list-style:inherit;font-size:16px;color:rgb(49, 70, 89);margin:3px 0px;">也可对默认的构建编译流程进行覆写,以满足 DEB 打包的特殊需求。</li>
+</ul>
+</li>
+<li style="padding:0px;list-style-type:disc;list-style:inherit;font-size:16px;color:rgb(49, 70, 89);margin:3px 0px;">changelog : Debian 包的修改记录
+<ul style="margin:0px;padding:0px;word-break:break-all;padding-left:0px;margin-left:30px;list-style-type:circle;">
+<li style="padding:0px;list-style-type:disc;list-style:inherit;font-size:16px;color:rgb(49, 70, 89);margin:3px 0px;">记录当前 DEB 包的变更历史;</li>
+<li style="padding:0px;list-style-type:disc;list-style:inherit;font-size:16px;color:rgb(49, 70, 89);margin:3px 0px;">同时 DEB 包的版本号也是在此文件中指定;</li>
+</ul>
+</li>
+<li style="padding:0px;list-style-type:disc;list-style:inherit;font-size:16px;color:rgb(49, 70, 89);margin:3px 0px;">install:安装指定文件到系统目录
+<ul style="margin:0px;padding:0px;word-break:break-all;padding-left:0px;margin-left:30px;list-style-type:circle;">
+<li style="padding:0px;list-style-type:disc;list-style:inherit;font-size:16px;color:rgb(49, 70, 89);margin:3px 0px;">文件拷贝列表,声明 DEB 安装时所需拷贝的文件及目标位置</li>
+</ul>
+</li>
+<li style="padding:0px;list-style-type:disc;list-style:inherit;font-size:16px;color:rgb(49, 70, 89);margin:3px 0px;">copyright :包的版权信息
+<ul style="margin:0px;padding:0px;word-break:break-all;padding-left:0px;margin-left:30px;list-style-type:circle;">
+<li style="padding:0px;list-style-type:disc;list-style:inherit;font-size:16px;color:rgb(49, 70, 89);margin:3px 0px;">包含软件包的版权和授权信息;</li>
+</ul>
+</li>
+</ul>
+<h1 style="line-height:1.5;font-weight:bold;margin:10px 0px;color:rgb(49, 70, 89);padding:0px 0px 0px 40px;font-size:24px;"><span style="font-size:24px;font-weight:bold;line-height:1.5;color:rgb(49, 70, 89);display:block;position:absolute;margin-left:-40px;margin-top:1px;padding:0px;"> </span>准备<a href="https://www.cnblogs.com/chendeqiang/p/14232064.html#396482664" style="margin:0px;padding:0px;opacity:0;margin-left:8px;text-decoration:underline;transition:all 0.3s ease 0s;color:inherit;">#</a></h1>
+<h2 style="padding:0px;line-height:1.5;font-weight:bold;margin:10px 0px;color:rgb(49, 70, 89);border-style:dotted;border-width:0px 0px 1px;border-bottom-color:rgb(211, 211, 219);font-size:20px;">安装依赖<a href="https://www.cnblogs.com/chendeqiang/p/14232064.html#3996807743" style="margin:0px;padding:0px;opacity:0;margin-left:8px;text-decoration:underline;transition:all 0.3s ease 0s;color:inherit;">#</a></h2>
+<pre style="border-radius:4px;background-color: #fbfaf8;border: 1px solid rgba(0,0,0,.14902);color: #333;font-size: 12px;padding: 8px;font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif;box-sizing: border-box;"><div style="margin:0px;font-size:12px;cursor:pointer;position:absolute;right:13px;top:10px;box-shadow:rgba(0, 0, 0, 0.1) 0px 0px 15px 0px;color:rgb(49, 70, 89);border-radius:5px;padding:0px 6px;overflow:hidden;"><span style="font-size:12px;cursor:pointer;color:rgb(255, 255, 255);position:absolute;transition:all 0.3s ease 0s;transform:translate3d(-50%, 0px, 0px);opacity:0;left:50%;z-index:10;border-radius:6px;background-color:rgba(100, 100, 100, 0.8);height:24px;line-height:24px;padding:0px 6px;white-space:nowrap;top:-24px;">复制代码</span>Copy<span style="font-size:12px;cursor:pointer;color:rgb(49, 70, 89);position:absolute;transition:all 0.3s ease 0s;transform:translate3d(-50%, 0px, 0px);opacity:0;left:50%;z-index:10;border-width:5px;border-style:solid;border-image:initial;border-color:rgba(100, 100, 100, 0.8) transparent transparent;top:0px;"></span></div><code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif">sudo apt install dh-make devscripts build-essential dput gedit
+</code></pre>
+<h2 style="padding:0px;line-height:1.5;font-weight:bold;margin:10px 0px;color:rgb(49, 70, 89);border-style:dotted;border-width:0px 0px 1px;border-bottom-color:rgb(211, 211, 219);font-size:20px;">配置用户名和邮箱<a href="https://www.cnblogs.com/chendeqiang/p/14232064.html#705277915" style="margin:0px;padding:0px;opacity:0;margin-left:8px;text-decoration:underline;transition:all 0.3s ease 0s;color:inherit;">#</a></h2>
+<pre style="border-radius:4px;background-color: #fbfaf8;border: 1px solid rgba(0,0,0,.14902);color: #333;font-size: 12px;padding: 8px;font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif;box-sizing: border-box;"><div style="margin:0px;font-size:12px;cursor:pointer;position:absolute;right:13px;top:10px;box-shadow:rgba(0, 0, 0, 0.1) 0px 0px 15px 0px;color:rgb(49, 70, 89);border-radius:5px;padding:0px 6px;overflow:hidden;"><span style="font-size:12px;cursor:pointer;color:rgb(255, 255, 255);position:absolute;transition:all 0.3s ease 0s;transform:translate3d(-50%, 0px, 0px);opacity:0;left:50%;z-index:10;border-radius:6px;background-color:rgba(100, 100, 100, 0.8);height:24px;line-height:24px;padding:0px 6px;white-space:nowrap;top:-24px;">复制代码</span>Copy<span style="font-size:12px;cursor:pointer;color:rgb(49, 70, 89);position:absolute;transition:all 0.3s ease 0s;transform:translate3d(-50%, 0px, 0px);opacity:0;left:50%;z-index:10;border-width:5px;border-style:solid;border-image:initial;border-color:rgba(100, 100, 100, 0.8) transparent transparent;top:0px;"></span></div><code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif">vim ~/.bashrc
+
+DEBEMAIL=<span style="margin:0px;padding:0px;color:rgb(41, 163, 41);">"chendeqiang@kylinos.cn"</span>
+DEBFULLNAME=<span style="margin:0px;padding:0px;color:rgb(41, 163, 41);">"chendeqiang"</span>
+<span style="margin:0px;padding:0px;color:rgb(135, 113, 29);">export</span> DEBEMAIL DEBFULLNAME
+</code></pre>
+<pre style="border-radius:4px;background-color: #fbfaf8;border: 1px solid rgba(0,0,0,.14902);color: #333;font-size: 12px;padding: 8px;font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif;box-sizing: border-box;"><div style="margin:0px;font-size:12px;cursor:pointer;position:absolute;right:13px;top:10px;box-shadow:rgba(0, 0, 0, 0.1) 0px 0px 15px 0px;color:rgb(49, 70, 89);border-radius:5px;padding:0px 6px;overflow:hidden;"><span style="font-size:12px;cursor:pointer;color:rgb(255, 255, 255);position:absolute;transition:all 0.3s ease 0s;transform:translate3d(-50%, 0px, 0px);opacity:0;left:50%;z-index:10;border-radius:6px;background-color:rgba(100, 100, 100, 0.8);height:24px;line-height:24px;padding:0px 6px;white-space:nowrap;top:-24px;">复制代码</span>Copy<span style="font-size:12px;cursor:pointer;color:rgb(49, 70, 89);position:absolute;transition:all 0.3s ease 0s;transform:translate3d(-50%, 0px, 0px);opacity:0;left:50%;z-index:10;border-width:5px;border-style:solid;border-image:initial;border-color:rgba(100, 100, 100, 0.8) transparent transparent;top:0px;"></span></div><code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif">. ~/.bashrc
+</code></pre>
+<h1 style="line-height:1.5;font-weight:bold;margin:10px 0px;color:rgb(49, 70, 89);padding:0px 0px 0px 40px;font-size:24px;"><span style="font-size:24px;font-weight:bold;line-height:1.5;color:rgb(49, 70, 89);display:block;position:absolute;margin-left:-40px;margin-top:1px;padding:0px;"> </span>新建源码文件<a href="https://www.cnblogs.com/chendeqiang/p/14232064.html#1885750022" style="margin:0px;padding:0px;opacity:0;margin-left:8px;text-decoration:underline;transition:all 0.3s ease 0s;color:inherit;">#</a></h1>
+<pre style="border-radius:4px;background-color: #fbfaf8;border: 1px solid rgba(0,0,0,.14902);color: #333;font-size: 12px;padding: 8px;font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif;box-sizing: border-box;"><div style="margin:0px;font-size:12px;cursor:pointer;position:absolute;right:13px;top:10px;box-shadow:rgba(0, 0, 0, 0.1) 0px 0px 15px 0px;color:rgb(49, 70, 89);border-radius:5px;padding:0px 6px;overflow:hidden;"><span style="font-size:12px;cursor:pointer;color:rgb(255, 255, 255);position:absolute;transition:all 0.3s ease 0s;transform:translate3d(-50%, 0px, 0px);opacity:0;left:50%;z-index:10;border-radius:6px;background-color:rgba(100, 100, 100, 0.8);height:24px;line-height:24px;padding:0px 6px;white-space:nowrap;top:-24px;">复制代码</span>Copy<span style="font-size:12px;cursor:pointer;color:rgb(49, 70, 89);position:absolute;transition:all 0.3s ease 0s;transform:translate3d(-50%, 0px, 0px);opacity:0;left:50%;z-index:10;border-width:5px;border-style:solid;border-image:initial;border-color:rgba(100, 100, 100, 0.8) transparent transparent;top:0px;"></span></div><code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span style="margin:0px;padding:0px;color:rgb(128, 153, 128);"># 新建文件夹并进入，这里需要注意的是文件夹构成：包名-版本号</span>
+<span style="margin:0px;padding:0px;color:rgb(135, 113, 29);">mkdir</span> ~/hello-1.0/
+<span style="margin:0px;padding:0px;color:rgb(135, 113, 29);">cd</span> ~/hello-1.0/
+<span style="margin:0px;padding:0px;color:rgb(128, 153, 128);"># 新建源码文件</span>
+gedit hello.bash
+</code></pre>
+<p style="padding:0px;text-indent:0px;margin:13px auto;">hello.bash的文件内容：</p>
+<pre style="border-radius:4px;background-color: #fbfaf8;border: 1px solid rgba(0,0,0,.14902);color: #333;font-size: 12px;padding: 8px;font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif;box-sizing: border-box;"><div style="margin:0px;font-size:12px;cursor:pointer;position:absolute;right:13px;top:10px;box-shadow:rgba(0, 0, 0, 0.1) 0px 0px 15px 0px;color:rgb(49, 70, 89);border-radius:5px;padding:0px 6px;overflow:hidden;"><span style="font-size:12px;cursor:pointer;color:rgb(255, 255, 255);position:absolute;transition:all 0.3s ease 0s;transform:translate3d(-50%, 0px, 0px);opacity:0;left:50%;z-index:10;border-radius:6px;background-color:rgba(100, 100, 100, 0.8);height:24px;line-height:24px;padding:0px 6px;white-space:nowrap;top:-24px;">复制代码</span>Copy<span style="font-size:12px;cursor:pointer;color:rgb(49, 70, 89);position:absolute;transition:all 0.3s ease 0s;transform:translate3d(-50%, 0px, 0px);opacity:0;left:50%;z-index:10;border-width:5px;border-style:solid;border-image:initial;border-color:rgba(100, 100, 100, 0.8) transparent transparent;top:0px;"></span></div><code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span style="margin:0px;padding:0px;color:rgb(135, 113, 29);">#!/bin/bash</span>
+<span style="margin:0px;padding:0px;color:rgb(135, 113, 29);">echo</span> <span style="margin:0px;padding:0px;color:rgb(41, 163, 41);">"Hello World!!!"</span>
+</code></pre>
+<p style="padding:0px;text-indent:0px;margin:13px auto;">加执行权限：</p>
+<pre style="border-radius:4px;background-color: #fbfaf8;border: 1px solid rgba(0,0,0,.14902);color: #333;font-size: 12px;padding: 8px;font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif;box-sizing: border-box;"><div style="margin:0px;font-size:12px;cursor:pointer;position:absolute;right:13px;top:10px;box-shadow:rgba(0, 0, 0, 0.1) 0px 0px 15px 0px;color:rgb(49, 70, 89);border-radius:5px;padding:0px 6px;overflow:hidden;"><span style="font-size:12px;cursor:pointer;color:rgb(255, 255, 255);position:absolute;transition:all 0.3s ease 0s;transform:translate3d(-50%, 0px, 0px);opacity:0;left:50%;z-index:10;border-radius:6px;background-color:rgba(100, 100, 100, 0.8);height:24px;line-height:24px;padding:0px 6px;white-space:nowrap;top:-24px;">复制代码</span>Copy<span style="font-size:12px;cursor:pointer;color:rgb(49, 70, 89);position:absolute;transition:all 0.3s ease 0s;transform:translate3d(-50%, 0px, 0px);opacity:0;left:50%;z-index:10;border-width:5px;border-style:solid;border-image:initial;border-color:rgba(100, 100, 100, 0.8) transparent transparent;top:0px;"></span></div><code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif">sudo <span style="margin:0px;padding:0px;color:rgb(135, 113, 29);">chmod</span> +x hello.bash
+</code></pre>
+<h1 style="line-height:1.5;font-weight:bold;margin:10px 0px;color:rgb(49, 70, 89);padding:0px 0px 0px 40px;font-size:24px;"><span style="font-size:24px;font-weight:bold;line-height:1.5;color:rgb(49, 70, 89);display:block;position:absolute;margin-left:-40px;margin-top:1px;padding:0px;"> </span>制作压缩包<a href="https://www.cnblogs.com/chendeqiang/p/14232064.html#4125740715" style="margin:0px;padding:0px;margin-left:8px;text-decoration:underline;transition:all 0.3s ease 0s;color:inherit;opacity:0;">#</a></h1>
+<pre style="border-radius:4px;background-color: #fbfaf8;border: 1px solid rgba(0,0,0,.14902);color: #333;font-size: 12px;padding: 8px;font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif;box-sizing: border-box;"><div style="margin:0px;font-size:12px;cursor:pointer;position:absolute;right:13px;top:10px;box-shadow:rgba(0, 0, 0, 0.1) 0px 0px 15px 0px;color:rgb(49, 70, 89);border-radius:5px;padding:0px 6px;overflow:hidden;"><span style="font-size:12px;cursor:pointer;color:rgb(255, 255, 255);position:absolute;transition:all 0.3s ease 0s;transform:translate3d(-50%, 0px, 0px);opacity:0;left:50%;z-index:10;border-radius:6px;background-color:rgba(100, 100, 100, 0.8);height:24px;line-height:24px;padding:0px 6px;white-space:nowrap;top:-24px;">复制代码</span>Copy<span style="font-size:12px;cursor:pointer;color:rgb(49, 70, 89);position:absolute;transition:all 0.3s ease 0s;transform:translate3d(-50%, 0px, 0px);opacity:0;left:50%;z-index:10;border-width:5px;border-style:solid;border-image:initial;border-color:rgba(100, 100, 100, 0.8) transparent transparent;top:0px;"></span></div><code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span style="margin:0px;padding:0px;color:rgb(128, 153, 128);"># 制作压缩包</span>
+tar -zcvf ../hello-1.0.tar.gz ../hello-1.0/
+</code></pre>
+<h1 style="line-height:1.5;font-weight:bold;margin:10px 0px;color:rgb(49, 70, 89);padding:0px 0px 0px 40px;font-size:24px;"><span style="font-size:24px;font-weight:bold;line-height:1.5;color:rgb(49, 70, 89);display:block;position:absolute;margin-left:-40px;margin-top:1px;padding:0px;"> </span>生成debian文件夹<a href="https://www.cnblogs.com/chendeqiang/p/14232064.html#2862296971" style="margin:0px;padding:0px;margin-left:8px;text-decoration:underline;transition:all 0.3s ease 0s;color:inherit;opacity:0;">#</a></h1>
+<p style="padding:0px;text-indent:0px;margin:13px auto;">使用<code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif">dh_make</code>命令生成debian文件夹。</p>
+<pre style="border-radius:4px;background-color: #fbfaf8;border: 1px solid rgba(0,0,0,.14902);color: #333;font-size: 12px;padding: 8px;font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif;box-sizing: border-box;"><div style="margin:0px;font-size:12px;cursor:pointer;position:absolute;right:13px;top:10px;box-shadow:rgba(0, 0, 0, 0.1) 0px 0px 15px 0px;color:rgb(49, 70, 89);border-radius:5px;padding:0px 6px;overflow:hidden;"><span style="font-size:12px;cursor:pointer;color:rgb(255, 255, 255);position:absolute;transition:all 0.3s ease 0s;transform:translate3d(-50%, 0px, 0px);opacity:0;left:50%;z-index:10;border-radius:6px;background-color:rgba(100, 100, 100, 0.8);height:24px;line-height:24px;padding:0px 6px;white-space:nowrap;top:-24px;">复制代码</span>Copy<span style="font-size:12px;cursor:pointer;color:rgb(49, 70, 89);position:absolute;transition:all 0.3s ease 0s;transform:translate3d(-50%, 0px, 0px);opacity:0;left:50%;z-index:10;border-width:5px;border-style:solid;border-image:initial;border-color:rgba(100, 100, 100, 0.8) transparent transparent;top:0px;"></span></div><code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif">dh_make -n -f ../hello-1.0.tar.gz <span style="margin:0px;padding:0px;color:rgb(128, 153, 128);">#-n native</span>
+s
+y
+</code></pre>
+<h1 style="line-height:1.5;font-weight:bold;margin:10px 0px;color:rgb(49, 70, 89);padding:0px 0px 0px 40px;font-size:24px;"><span style="font-size:24px;font-weight:bold;line-height:1.5;color:rgb(49, 70, 89);display:block;position:absolute;margin-left:-40px;margin-top:1px;padding:0px;"> </span>修改debian文件夹<a href="https://www.cnblogs.com/chendeqiang/p/14232064.html#2321380570" style="margin:0px;padding:0px;opacity:0;margin-left:8px;text-decoration:underline;transition:all 0.3s ease 0s;color:inherit;">#</a></h1>
+<h2 style="padding:0px;line-height:1.5;font-weight:bold;margin:10px 0px;color:rgb(49, 70, 89);border-style:dotted;border-width:0px 0px 1px;border-bottom-color:rgb(211, 211, 219);font-size:20px;">修改control<a href="https://www.cnblogs.com/chendeqiang/p/14232064.html#1987493453" style="margin:0px;padding:0px;opacity:0;margin-left:8px;text-decoration:underline;transition:all 0.3s ease 0s;color:inherit;">#</a></h2>
+<pre style="border-radius:4px;background-color: #fbfaf8;border: 1px solid rgba(0,0,0,.14902);color: #333;font-size: 12px;padding: 8px;font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif;box-sizing: border-box;"><div style="margin:0px;font-size:12px;cursor:pointer;position:absolute;right:13px;top:10px;box-shadow:rgba(0, 0, 0, 0.1) 0px 0px 15px 0px;color:rgb(49, 70, 89);border-radius:5px;padding:0px 6px;overflow:hidden;"><span style="font-size:12px;cursor:pointer;color:rgb(255, 255, 255);position:absolute;transition:all 0.3s ease 0s;transform:translate3d(-50%, 0px, 0px);opacity:0;left:50%;z-index:10;border-radius:6px;background-color:rgba(100, 100, 100, 0.8);height:24px;line-height:24px;padding:0px 6px;white-space:nowrap;top:-24px;">复制代码</span>Copy<span style="font-size:12px;cursor:pointer;color:rgb(49, 70, 89);position:absolute;transition:all 0.3s ease 0s;transform:translate3d(-50%, 0px, 0px);opacity:0;left:50%;z-index:10;border-width:5px;border-style:solid;border-image:initial;border-color:rgba(100, 100, 100, 0.8) transparent transparent;top:0px;"></span></div><code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif">gedit debian/control
+</code></pre>
+<pre style="border-radius:4px;background-color: #fbfaf8;border: 1px solid rgba(0,0,0,.14902);color: #333;font-size: 12px;padding: 8px;font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif;box-sizing: border-box;"><div style="margin:0px;font-size:12px;cursor:pointer;position:absolute;right:13px;top:10px;box-shadow:rgba(0, 0, 0, 0.1) 0px 0px 15px 0px;color:rgb(49, 70, 89);border-radius:5px;padding:0px 6px;overflow:hidden;"><span style="font-size:12px;cursor:pointer;color:rgb(255, 255, 255);position:absolute;transition:all 0.3s ease 0s;transform:translate3d(-50%, 0px, 0px);opacity:0;left:50%;z-index:10;border-radius:6px;background-color:rgba(100, 100, 100, 0.8);height:24px;line-height:24px;padding:0px 6px;white-space:nowrap;top:-24px;">复制代码</span>Copy<span style="font-size:12px;cursor:pointer;color:rgb(49, 70, 89);position:absolute;transition:all 0.3s ease 0s;transform:translate3d(-50%, 0px, 0px);opacity:0;left:50%;z-index:10;border-width:5px;border-style:solid;border-image:initial;border-color:rgba(100, 100, 100, 0.8) transparent transparent;top:0px;"></span></div><code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif">Source: hello <span style="margin:0px;padding:0px;color:rgb(128, 153, 128);"># 源码包名</span>
+Section: shells <span style="margin:0px;padding:0px;color:rgb(128, 153, 128);"># 其他分类为x11</span>
+Priority: optional
+Maintainer: chendeqiang &lt;chendeqiang@kylinos.cn&gt; <span style="margin:0px;padding:0px;color:rgb(128, 153, 128);"># 修改此处</span>
+Build-Depends: debhelper-compat (= 12) <span style="margin:0px;padding:0px;color:rgb(128, 153, 128);"># 添加编译依赖，debhelper (&gt;= 9)</span>
+Standards-Version: 4.4.1
+<span style="margin:0px;padding:0px;color:rgb(128, 153, 128);">#Homepage: &lt;insert the upstream URL, if relevant&gt;</span>
+<span style="margin:0px;padding:0px;color:rgb(128, 153, 128);">#Vcs-Browser: https://salsa.debian.org/debian/hello</span>
+<span style="margin:0px;padding:0px;color:rgb(128, 153, 128);">#Vcs-Git: https://salsa.debian.org/debian/hello.git</span>
+
+Package: hello <span style="margin:0px;padding:0px;color:rgb(128, 153, 128);"># 二进制包名</span>
+Architecture: any <span style="margin:0px;padding:0px;color:rgb(128, 153, 128);"># any，all</span>
+Depends: <span style="margin:0px;padding:0px;color:rgb(230, 25, 60);">${shlibs:Depends}</span>, <span style="margin:0px;padding:0px;color:rgb(230, 25, 60);">${misc:Depends}</span>  <span style="margin:0px;padding:0px;color:rgb(128, 153, 128);"># 与其他包的关系控制，这里是运行依赖</span>
+Description: &lt;insert up to 60 chars description&gt;
+ &lt;insert long description, indented with spaces&gt;
+</code></pre>
+<h2 style="padding:0px;line-height:1.5;font-weight:bold;margin:10px 0px;color:rgb(49, 70, 89);border-style:dotted;border-width:0px 0px 1px;border-bottom-color:rgb(211, 211, 219);font-size:20px;">修改changelog<a href="https://www.cnblogs.com/chendeqiang/p/14232064.html#3494745319" style="margin:0px;padding:0px;opacity:0;margin-left:8px;text-decoration:underline;transition:all 0.3s ease 0s;color:inherit;">#</a></h2>
+<pre style="border-radius:4px;background-color: #fbfaf8;border: 1px solid rgba(0,0,0,.14902);color: #333;font-size: 12px;padding: 8px;font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif;box-sizing: border-box;"><div style="margin:0px;font-size:12px;cursor:pointer;position:absolute;right:13px;top:10px;box-shadow:rgba(0, 0, 0, 0.1) 0px 0px 15px 0px;color:rgb(49, 70, 89);border-radius:5px;padding:0px 6px;overflow:hidden;"><span style="font-size:12px;cursor:pointer;color:rgb(255, 255, 255);position:absolute;transition:all 0.3s ease 0s;transform:translate3d(-50%, 0px, 0px);opacity:0;left:50%;z-index:10;border-radius:6px;background-color:rgba(100, 100, 100, 0.8);height:24px;line-height:24px;padding:0px 6px;white-space:nowrap;top:-24px;">复制代码</span>Copy<span style="font-size:12px;cursor:pointer;color:rgb(49, 70, 89);position:absolute;transition:all 0.3s ease 0s;transform:translate3d(-50%, 0px, 0px);opacity:0;left:50%;z-index:10;border-width:5px;border-style:solid;border-image:initial;border-color:rgba(100, 100, 100, 0.8) transparent transparent;top:0px;"></span></div><code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif">dch
+</code></pre>
+<pre style="border-radius:4px;background-color: #fbfaf8;border: 1px solid rgba(0,0,0,.14902);color: #333;font-size: 12px;padding: 8px;font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif;box-sizing: border-box;"><div style="margin:0px;font-size:12px;cursor:pointer;position:absolute;right:13px;top:10px;box-shadow:rgba(0, 0, 0, 0.1) 0px 0px 15px 0px;color:rgb(49, 70, 89);border-radius:5px;padding:0px 6px;overflow:hidden;"><span style="font-size:12px;cursor:pointer;color:rgb(255, 255, 255);position:absolute;transition:all 0.3s ease 0s;transform:translate3d(-50%, 0px, 0px);opacity:0;left:50%;z-index:10;border-radius:6px;background-color:rgba(100, 100, 100, 0.8);height:24px;line-height:24px;padding:0px 6px;white-space:nowrap;top:-24px;">复制代码</span>Copy<span style="font-size:12px;cursor:pointer;color:rgb(49, 70, 89);position:absolute;transition:all 0.3s ease 0s;transform:translate3d(-50%, 0px, 0px);opacity:0;left:50%;z-index:10;border-width:5px;border-style:solid;border-image:initial;border-color:rgba(100, 100, 100, 0.8) transparent transparent;top:0px;"></span></div><code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif">hello (1.0-1) v101; urgency=medium
+
+  * Initial release (Closes: <span style="margin:0px;padding:0px;color:rgb(128, 153, 128);">#nnnn)  &lt;nnnn is the bug number of your ITP&gt;</span>
+
+ -- chendeqiang &lt;chendeqiang@kylinos.cn&gt;  Thu, 28 Jan 2021 21:05:06 +0800
+</code></pre>
+<h2 style="padding:0px;line-height:1.5;font-weight:bold;margin:10px 0px;color:rgb(49, 70, 89);border-style:dotted;border-width:0px 0px 1px;border-bottom-color:rgb(211, 211, 219);font-size:20px;">添加install<a href="https://www.cnblogs.com/chendeqiang/p/14232064.html#658179228" style="margin:0px;padding:0px;margin-left:8px;text-decoration:underline;transition:all 0.3s ease 0s;color:inherit;opacity:0;">#</a></h2>
+<p style="padding:0px;text-indent:0px;margin:13px auto;">如果makefile没有指定一些文件的安装目录，则可以在install文件中进行指定。</p>
+<pre style="border-radius:4px;background-color: #fbfaf8;border: 1px solid rgba(0,0,0,.14902);color: #333;font-size: 12px;padding: 8px;font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif;box-sizing: border-box;"><div style="margin:0px;font-size:12px;cursor:pointer;position:absolute;right:13px;top:10px;box-shadow:rgba(0, 0, 0, 0.1) 0px 0px 15px 0px;color:rgb(49, 70, 89);border-radius:5px;padding:0px 6px;overflow:hidden;"><span style="font-size:12px;cursor:pointer;color:rgb(255, 255, 255);position:absolute;transition:all 0.3s ease 0s;transform:translate3d(-50%, 0px, 0px);opacity:0;left:50%;z-index:10;border-radius:6px;background-color:rgba(100, 100, 100, 0.8);height:24px;line-height:24px;padding:0px 6px;white-space:nowrap;top:-24px;">复制代码</span>Copy<span style="font-size:12px;cursor:pointer;color:rgb(49, 70, 89);position:absolute;transition:all 0.3s ease 0s;transform:translate3d(-50%, 0px, 0px);opacity:0;left:50%;z-index:10;border-width:5px;border-style:solid;border-image:initial;border-color:rgba(100, 100, 100, 0.8) transparent transparent;top:0px;"></span></div><code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif">gedit debian/install
+</code></pre>
+<pre style="border-radius:4px;background-color: #fbfaf8;border: 1px solid rgba(0,0,0,.14902);color: #333;font-size: 12px;padding: 8px;font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif;box-sizing: border-box;"><div style="margin:0px;font-size:12px;cursor:pointer;position:absolute;right:13px;top:10px;box-shadow:rgba(0, 0, 0, 0.1) 0px 0px 15px 0px;color:rgb(49, 70, 89);border-radius:5px;padding:0px 6px;overflow:hidden;"><span style="font-size:12px;cursor:pointer;color:rgb(255, 255, 255);position:absolute;transition:all 0.3s ease 0s;transform:translate3d(-50%, 0px, 0px);opacity:0;left:50%;z-index:10;border-radius:6px;background-color:rgba(100, 100, 100, 0.8);height:24px;line-height:24px;padding:0px 6px;white-space:nowrap;top:-24px;">复制代码</span>Copy<span style="font-size:12px;cursor:pointer;color:rgb(49, 70, 89);position:absolute;transition:all 0.3s ease 0s;transform:translate3d(-50%, 0px, 0px);opacity:0;left:50%;z-index:10;border-width:5px;border-style:solid;border-image:initial;border-color:rgba(100, 100, 100, 0.8) transparent transparent;top:0px;"></span></div><code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif">hello.bash /usr/bin/
+</code></pre>
+<p style="padding:0px;text-indent:0px;margin:13px auto;">install 文件格式，目标文件 空格 目标位置</p>
+<h1 style="line-height:1.5;font-weight:bold;margin:10px 0px;color:rgb(49, 70, 89);padding:0px 0px 0px 40px;font-size:24px;"><span style="font-size:24px;font-weight:bold;line-height:1.5;color:rgb(49, 70, 89);display:block;position:absolute;margin-left:-40px;margin-top:1px;padding:0px;"> </span>生成gpg密钥<a href="https://www.cnblogs.com/chendeqiang/p/14232064.html#3293822525" style="margin:0px;padding:0px;opacity:0;margin-left:8px;text-decoration:underline;transition:all 0.3s ease 0s;color:inherit;">#</a></h1>
+<p style="padding:0px;text-indent:0px;margin:13px auto;"><a href="https://www.cnblogs.com/chendeqiang/p/14233944.html" target="_blank" rel="noopener" style="margin:0px;padding:0px;color:rgb(45, 140, 240);text-decoration:none;transition:all 0.3s ease 0s;">GPG入门知识</a>。</p>
+<h2 style="padding:0px;line-height:1.5;font-weight:bold;margin:10px 0px;color:rgb(49, 70, 89);border-style:dotted;border-width:0px 0px 1px;border-bottom-color:rgb(211, 211, 219);font-size:20px;">查看gpg密钥<a href="https://www.cnblogs.com/chendeqiang/p/14232064.html#4271181252" style="margin:0px;padding:0px;margin-left:8px;text-decoration:underline;transition:all 0.3s ease 0s;color:inherit;opacity:0;">#</a></h2>
+<pre style="border-radius:4px;background-color: #fbfaf8;border: 1px solid rgba(0,0,0,.14902);color: #333;font-size: 12px;padding: 8px;font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif;box-sizing: border-box;"><div style="margin:0px;font-size:12px;cursor:pointer;position:absolute;right:13px;top:10px;box-shadow:rgba(0, 0, 0, 0.1) 0px 0px 15px 0px;color:rgb(49, 70, 89);border-radius:5px;padding:0px 6px;overflow:hidden;"><span style="font-size:12px;cursor:pointer;color:rgb(255, 255, 255);position:absolute;transition:all 0.3s ease 0s;transform:translate3d(-50%, 0px, 0px);opacity:0;left:50%;z-index:10;border-radius:6px;background-color:rgba(100, 100, 100, 0.8);height:24px;line-height:24px;padding:0px 6px;white-space:nowrap;top:-24px;">复制代码</span>Copy<span style="font-size:12px;cursor:pointer;color:rgb(49, 70, 89);position:absolute;transition:all 0.3s ease 0s;transform:translate3d(-50%, 0px, 0px);opacity:0;left:50%;z-index:10;border-width:5px;border-style:solid;border-image:initial;border-color:rgba(100, 100, 100, 0.8) transparent transparent;top:0px;"></span></div><code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif">gpg --list-key
+</code></pre>
+<h2 style="padding:0px;line-height:1.5;font-weight:bold;margin:10px 0px;color:rgb(49, 70, 89);border-style:dotted;border-width:0px 0px 1px;border-bottom-color:rgb(211, 211, 219);font-size:20px;">生成gpg密钥<a href="https://www.cnblogs.com/chendeqiang/p/14232064.html#2528699801" style="margin:0px;padding:0px;margin-left:8px;text-decoration:underline;transition:all 0.3s ease 0s;color:inherit;opacity:0;">#</a></h2>
+<p style="padding:0px;text-indent:0px;margin:13px auto;">如果没有gpg密钥，则生成一个gpg密钥</p>
+<pre style="border-radius:4px;background-color: #fbfaf8;border: 1px solid rgba(0,0,0,.14902);color: #333;font-size: 12px;padding: 8px;font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif;box-sizing: border-box;"><div style="margin:0px;font-size:12px;cursor:pointer;position:absolute;right:13px;top:10px;box-shadow:rgba(0, 0, 0, 0.1) 0px 0px 15px 0px;color:rgb(49, 70, 89);border-radius:5px;padding:0px 6px;overflow:hidden;"><span style="font-size:12px;cursor:pointer;color:rgb(255, 255, 255);position:absolute;transition:all 0.3s ease 0s;transform:translate3d(-50%, 0px, 0px);opacity:0;left:50%;z-index:10;border-radius:6px;background-color:rgba(100, 100, 100, 0.8);height:24px;line-height:24px;padding:0px 6px;white-space:nowrap;top:-24px;">复制代码</span>Copy<span style="font-size:12px;cursor:pointer;color:rgb(49, 70, 89);position:absolute;transition:all 0.3s ease 0s;transform:translate3d(-50%, 0px, 0px);opacity:0;left:50%;z-index:10;border-width:5px;border-style:solid;border-image:initial;border-color:rgba(100, 100, 100, 0.8) transparent transparent;top:0px;"></span></div><code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif">gpg --generate-key
+
+真实姓名:chendeqiang
+电子邮箱地址:chendeqiang@kylinos.cn
+o
+输入两次密码
+
+pub   rsa1234 2021-01-28 [SC] [有效至：2023-01-28]
+      9B91BDA0F08C1C82F322B25B660EAA39DB4FF519
+uid                      qiangdechen &lt;chenjjjj@kk.cn&gt;
+sub   rsa1234 2021-01-28 [E] [有效至：2023-01-28]
+</code></pre>
+<p style="padding:0px;text-indent:0px;margin:13px auto;">其中，rsa1234将作为加密的密钥。</p>
+<h2 style="padding:0px;line-height:1.5;font-weight:bold;margin:10px 0px;color:rgb(49, 70, 89);border-style:dotted;border-width:0px 0px 1px;border-bottom-color:rgb(211, 211, 219);font-size:20px;">配置默认签名<a href="https://www.cnblogs.com/chendeqiang/p/14232064.html#24172434" style="margin:0px;padding:0px;margin-left:8px;text-decoration:underline;transition:all 0.3s ease 0s;color:inherit;opacity:0;">#</a></h2>
+<pre style="border-radius:4px;background-color: #fbfaf8;border: 1px solid rgba(0,0,0,.14902);color: #333;font-size: 12px;padding: 8px;font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif;box-sizing: border-box;"><div style="margin:0px;font-size:12px;cursor:pointer;position:absolute;right:13px;top:10px;box-shadow:rgba(0, 0, 0, 0.1) 0px 0px 15px 0px;color:rgb(49, 70, 89);border-radius:5px;padding:0px 6px;overflow:hidden;"><span style="font-size:12px;cursor:pointer;color:rgb(255, 255, 255);position:absolute;transition:all 0.3s ease 0s;transform:translate3d(-50%, 0px, 0px);opacity:0;left:50%;z-index:10;border-radius:6px;background-color:rgba(100, 100, 100, 0.8);height:24px;line-height:24px;padding:0px 6px;white-space:nowrap;top:-24px;">复制代码</span>Copy<span style="font-size:12px;cursor:pointer;color:rgb(49, 70, 89);position:absolute;transition:all 0.3s ease 0s;transform:translate3d(-50%, 0px, 0px);opacity:0;left:50%;z-index:10;border-width:5px;border-style:solid;border-image:initial;border-color:rgba(100, 100, 100, 0.8) transparent transparent;top:0px;"></span></div><code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span style="margin:0px;padding:0px;color:rgb(135, 113, 29);">echo</span> <span style="margin:0px;padding:0px;color:rgb(41, 163, 41);">'DEBSIGN_KEYID="9B91BDA0F08C1C82F322B25B660EAA39DB4FF519"'</span> &gt;&gt; ~/.devscripts
+</code></pre>
+<h1 style="line-height:1.5;font-weight:bold;margin:10px 0px;color:rgb(49, 70, 89);padding:0px 0px 0px 40px;font-size:24px;"><span style="font-size:24px;font-weight:bold;line-height:1.5;color:rgb(49, 70, 89);display:block;position:absolute;margin-left:-40px;margin-top:1px;padding:0px;"> </span>生成deb包<a href="https://www.cnblogs.com/chendeqiang/p/14232064.html#492589511" style="margin:0px;padding:0px;opacity:0;margin-left:8px;text-decoration:underline;transition:all 0.3s ease 0s;color:inherit;">#</a></h1>
+<pre style="border-radius:4px;background-color: #fbfaf8;border: 1px solid rgba(0,0,0,.14902);color: #333;font-size: 12px;padding: 8px;font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif;box-sizing: border-box;"><div style="margin:0px;font-size:12px;cursor:pointer;position:absolute;right:13px;top:10px;box-shadow:rgba(0, 0, 0, 0.1) 0px 0px 15px 0px;color:rgb(49, 70, 89);border-radius:5px;padding:0px 6px;overflow:hidden;"><span style="font-size:12px;cursor:pointer;color:rgb(255, 255, 255);position:absolute;transition:all 0.3s ease 0s;transform:translate3d(-50%, 0px, 0px);opacity:0;left:50%;z-index:10;border-radius:6px;background-color:rgba(100, 100, 100, 0.8);height:24px;line-height:24px;padding:0px 6px;white-space:nowrap;top:-24px;">复制代码</span>Copy<span style="font-size:12px;cursor:pointer;color:rgb(49, 70, 89);position:absolute;transition:all 0.3s ease 0s;transform:translate3d(-50%, 0px, 0px);opacity:0;left:50%;z-index:10;border-width:5px;border-style:solid;border-image:initial;border-color:rgba(100, 100, 100, 0.8) transparent transparent;top:0px;"></span></div><code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif">debuild
+</code></pre>
+<h1 style="line-height:1.5;font-weight:bold;margin:10px 0px;color:rgb(49, 70, 89);padding:0px 0px 0px 40px;font-size:24px;"><span style="font-size:24px;font-weight:bold;line-height:1.5;color:rgb(49, 70, 89);display:block;position:absolute;margin-left:-40px;margin-top:1px;padding:0px;"> </span>本地安装deb包<a href="https://www.cnblogs.com/chendeqiang/p/14232064.html#3308527771" style="margin:0px;padding:0px;opacity:0;margin-left:8px;text-decoration:underline;transition:all 0.3s ease 0s;color:inherit;">#</a></h1>
+<pre style="border-radius:4px;background-color: #fbfaf8;border: 1px solid rgba(0,0,0,.14902);color: #333;font-size: 12px;padding: 8px;font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif;box-sizing: border-box;"><div style="margin:0px;font-size:12px;cursor:pointer;position:absolute;right:13px;top:10px;box-shadow:rgba(0, 0, 0, 0.1) 0px 0px 15px 0px;color:rgb(49, 70, 89);border-radius:5px;padding:0px 6px;overflow:hidden;"><span style="font-size:12px;cursor:pointer;color:rgb(255, 255, 255);position:absolute;transition:all 0.3s ease 0s;transform:translate3d(-50%, 0px, 0px);opacity:0;left:50%;z-index:10;border-radius:6px;background-color:rgba(100, 100, 100, 0.8);height:24px;line-height:24px;padding:0px 6px;white-space:nowrap;top:-24px;">复制代码</span>Copy<span style="font-size:12px;cursor:pointer;color:rgb(49, 70, 89);position:absolute;transition:all 0.3s ease 0s;transform:translate3d(-50%, 0px, 0px);opacity:0;left:50%;z-index:10;border-width:5px;border-style:solid;border-image:initial;border-color:rgba(100, 100, 100, 0.8) transparent transparent;top:0px;"></span></div><code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span style="margin:0px;padding:0px;color:rgb(135, 113, 29);">cd</span> ~
+sudo dpkg -i hello_1.0-1_amd64.deb
+
+<span style="margin:0px;padding:0px;color:rgb(128, 153, 128);"># 卸载deb包</span>
+<span style="margin:0px;padding:0px;color:rgb(128, 153, 128);"># sduo dpkg -r -i hello_1.0-1_amd64.deb</span>
+</code></pre>
+<p style="padding:0px;text-indent:0px;margin:13px auto;">运行可执行文件</p>
+<pre style="border-radius:4px;background-color: #fbfaf8;border: 1px solid rgba(0,0,0,.14902);color: #333;font-size: 12px;padding: 8px;font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif;box-sizing: border-box;"><div style="margin:0px;font-size:12px;cursor:pointer;position:absolute;right:13px;top:10px;box-shadow:rgba(0, 0, 0, 0.1) 0px 0px 15px 0px;color:rgb(49, 70, 89);border-radius:5px;padding:0px 6px;overflow:hidden;"><span style="font-size:12px;cursor:pointer;color:rgb(255, 255, 255);position:absolute;transition:all 0.3s ease 0s;transform:translate3d(-50%, 0px, 0px);opacity:0;left:50%;z-index:10;border-radius:6px;background-color:rgba(100, 100, 100, 0.8);height:24px;line-height:24px;padding:0px 6px;white-space:nowrap;top:-24px;">复制代码</span>Copy<span style="font-size:12px;cursor:pointer;color:rgb(49, 70, 89);position:absolute;transition:all 0.3s ease 0s;transform:translate3d(-50%, 0px, 0px);opacity:0;left:50%;z-index:10;border-width:5px;border-style:solid;border-image:initial;border-color:rgba(100, 100, 100, 0.8) transparent transparent;top:0px;"></span></div><code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif">hello.bash
+<span style="margin:0px;padding:0px;color:rgb(128, 153, 128);">#Hello World!!!</span>
+</code></pre>
+<h1 style="line-height:1.5;font-weight:bold;margin:10px 0px;color:rgb(49, 70, 89);padding:0px 0px 0px 40px;font-size:24px;"><span style="font-size:24px;font-weight:bold;line-height:1.5;color:rgb(49, 70, 89);display:block;position:absolute;margin-left:-40px;margin-top:1px;padding:0px;"> </span>上传公钥到PPA<a href="https://www.cnblogs.com/chendeqiang/p/14232064.html#1542249010" style="margin:0px;padding:0px;opacity:0;margin-left:8px;text-decoration:underline;transition:all 0.3s ease 0s;color:inherit;">#</a></h1>
+<h2 style="padding:0px;line-height:1.5;font-weight:bold;margin:10px 0px;color:rgb(49, 70, 89);border-style:dotted;border-width:0px 0px 1px;border-bottom-color:rgb(211, 211, 219);font-size:20px;">上传gpg公钥<a href="https://www.cnblogs.com/chendeqiang/p/14232064.html#3009948829" style="margin:0px;padding:0px;margin-left:8px;text-decoration:underline;transition:all 0.3s ease 0s;color:inherit;opacity:0;">#</a></h2>
+<pre style="border-radius:4px;background-color: #fbfaf8;border: 1px solid rgba(0,0,0,.14902);color: #333;font-size: 12px;padding: 8px;font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif;box-sizing: border-box;"><div style="margin:0px;font-size:12px;cursor:pointer;position:absolute;right:13px;top:10px;box-shadow:rgba(0, 0, 0, 0.1) 0px 0px 15px 0px;color:rgb(49, 70, 89);border-radius:5px;padding:0px 6px;overflow:hidden;"><span style="font-size:12px;cursor:pointer;color:rgb(255, 255, 255);position:absolute;transition:all 0.3s ease 0s;transform:translate3d(-50%, 0px, 0px);opacity:0;left:50%;z-index:10;border-radius:6px;background-color:rgba(100, 100, 100, 0.8);height:24px;line-height:24px;padding:0px 6px;white-space:nowrap;top:-24px;">复制代码</span>Copy<span style="font-size:12px;cursor:pointer;color:rgb(49, 70, 89);position:absolute;transition:all 0.3s ease 0s;transform:translate3d(-50%, 0px, 0px);opacity:0;left:50%;z-index:10;border-width:5px;border-style:solid;border-image:initial;border-color:rgba(100, 100, 100, 0.8) transparent transparent;top:0px;"></span></div><code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span style="margin:0px;padding:0px;color:rgb(128, 153, 128);"># 查看秘钥</span>
+gpg --fingerprint
+
+<span style="margin:0px;padding:0px;color:rgb(128, 153, 128);"># 上传公钥到服务器，可以通过 `nslookup launchpad.dev`查看ip </span>
+gpg --keyserver 172.0.0.0 --send-key  rsa1234
+</code></pre>
+<p style="padding:0px;text-indent:0px;margin:13px auto;">打开 <a href="https://launchpad.dev/~chendeqiang" target="_blank" rel="noopener" style="margin:0px;padding:0px;color:rgb(45, 140, 240);text-decoration:none;transition:all 0.3s ease 0s;">https://launchpad.dev/~chendeqiang</a> ，修改 OpenPGP keys，<br style="margin:0px;padding:0px;"/>
+之后launchpad将发送一封用GPG加密的邮件到用户的邮箱，<br style="margin:0px;padding:0px;"/>
+然后使用 <code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif">gpg --decrypt</code> 解密，并点击链接完成认证</p>
+<h2 style="padding:0px;line-height:1.5;font-weight:bold;margin:10px 0px;color:rgb(49, 70, 89);border-style:dotted;border-width:0px 0px 1px;border-bottom-color:rgb(211, 211, 219);font-size:20px;">上传ssh公钥<a href="https://www.cnblogs.com/chendeqiang/p/14232064.html#3534496240" style="margin:0px;padding:0px;margin-left:8px;text-decoration:underline;transition:all 0.3s ease 0s;color:inherit;opacity:0;">#</a></h2>
+<pre style="border-radius:4px;background-color: #fbfaf8;border: 1px solid rgba(0,0,0,.14902);color: #333;font-size: 12px;padding: 8px;font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif;box-sizing: border-box;"><div style="margin:0px;font-size:12px;cursor:pointer;position:absolute;right:13px;top:10px;box-shadow:rgba(0, 0, 0, 0.1) 0px 0px 15px 0px;color:rgb(49, 70, 89);border-radius:5px;padding:0px 6px;overflow:hidden;"><span style="font-size:12px;cursor:pointer;color:rgb(255, 255, 255);position:absolute;transition:all 0.3s ease 0s;transform:translate3d(-50%, 0px, 0px);opacity:0;left:50%;z-index:10;border-radius:6px;background-color:rgba(100, 100, 100, 0.8);height:24px;line-height:24px;padding:0px 6px;white-space:nowrap;top:-24px;">复制代码</span>Copy<span style="font-size:12px;cursor:pointer;color:rgb(49, 70, 89);position:absolute;transition:all 0.3s ease 0s;transform:translate3d(-50%, 0px, 0px);opacity:0;left:50%;z-index:10;border-width:5px;border-style:solid;border-image:initial;border-color:rgba(100, 100, 100, 0.8) transparent transparent;top:0px;"></span></div><code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span style="margin:0px;padding:0px;color:rgb(128, 153, 128);"># 生成秘钥</span>
+ssh-keygen  –t  rsa
+<span style="margin:0px;padding:0px;color:rgb(128, 153, 128);"># 一直回车</span>
+
+<span style="margin:0px;padding:0px;color:rgb(128, 153, 128);"># 复制公钥</span>
+vim ~/.ssh/id_rsa.pub
+</code></pre>
+<p style="padding:0px;text-indent:0px;margin:13px auto;">打开 <a href="https://launchpad.dev/~chendeqiang" target="_blank" rel="noopener" style="margin:0px;padding:0px;color:rgb(45, 140, 240);text-decoration:none;transition:all 0.3s ease 0s;">https://launchpad.dev/~chendeqiang</a> ，修改 SSH keys，<br style="margin:0px;padding:0px;"/>
+粘贴刚刚复制的秘钥</p>
+<blockquote style="border:2px solid rgb(239, 239, 239);border-image:initial;padding:0.1rem 0.8rem 0.2rem;border-left:4px solid rgb(66, 101, 185);border-right:none;border-top:none;border-bottom:none;margin:20px 0px;color:rgb(102, 102, 102);background:0px 0px rgba(48, 107, 183, 0.1);min-height:20px;line-height:inherit;">
+<p style="padding:0px;text-indent:0px;margin:13px auto;">可以使用 seahorse 查看和管理gpg和ssh秘钥。<br style="margin:0px;padding:0px;"/>
+更多gpg信息参考：<a href="https://www.cnblogs.com/chendeqiang/p/14233944.html" target="_blank" rel="noopener" style="margin:0px;padding:0px;color:rgb(45, 140, 240);text-decoration:none;transition:all 0.3s ease 0s;">https://www.cnblogs.com/chendeqiang/p/14233944.html</a></p>
+</blockquote>
+<h2 style="padding:0px;line-height:1.5;font-weight:bold;margin:10px 0px;color:rgb(49, 70, 89);border-style:dotted;border-width:0px 0px 1px;border-bottom-color:rgb(211, 211, 219);font-size:20px;">其他<a href="https://www.cnblogs.com/chendeqiang/p/14232064.html#3096550121" style="margin:0px;padding:0px;opacity:0;margin-left:8px;text-decoration:underline;transition:all 0.3s ease 0s;color:inherit;">#</a></h2>
+<p style="padding:0px;text-indent:0px;margin:13px auto;">添加域名/etc/hosts 和 ~/.dput.cf可参考《launchpad平台用户使用手册》</p>
+<h1 style="line-height:1.5;font-weight:bold;margin:10px 0px;color:rgb(49, 70, 89);padding:0px 0px 0px 40px;font-size:24px;"><span style="font-size:24px;font-weight:bold;line-height:1.5;color:rgb(49, 70, 89);display:block;position:absolute;margin-left:-40px;margin-top:1px;padding:0px;"> </span>生成deb源码包，上传到PPA进行编译<a href="https://www.cnblogs.com/chendeqiang/p/14232064.html#2990858419" style="margin:0px;padding:0px;opacity:0;margin-left:8px;text-decoration:underline;transition:all 0.3s ease 0s;color:inherit;">#</a></h1>
+<pre style="border-radius:4px;background-color: #fbfaf8;border: 1px solid rgba(0,0,0,.14902);color: #333;font-size: 12px;padding: 8px;font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif;box-sizing: border-box;"><div style="margin:0px;font-size:12px;cursor:pointer;position:absolute;right:13px;top:10px;box-shadow:rgba(0, 0, 0, 0.1) 0px 0px 15px 0px;color:rgb(49, 70, 89);border-radius:5px;padding:0px 6px;overflow:hidden;"><span style="font-size:12px;cursor:pointer;color:rgb(255, 255, 255);position:absolute;transition:all 0.3s ease 0s;transform:translate3d(-50%, 0px, 0px);opacity:0;left:50%;z-index:10;border-radius:6px;background-color:rgba(100, 100, 100, 0.8);height:24px;line-height:24px;padding:0px 6px;white-space:nowrap;top:-24px;">复制代码</span>Copy<span style="font-size:12px;cursor:pointer;color:rgb(49, 70, 89);position:absolute;transition:all 0.3s ease 0s;transform:translate3d(-50%, 0px, 0px);opacity:0;left:50%;z-index:10;border-width:5px;border-style:solid;border-image:initial;border-color:rgba(100, 100, 100, 0.8) transparent transparent;top:0px;"></span></div><code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span style="margin:0px;padding:0px;color:rgb(128, 153, 128);">#生成源码包，patch需要添加-sa</span>
+debuild -S
+<span style="margin:0px;padding:0px;color:rgb(135, 113, 29);">cd</span> ~/
+dput devppa:chendeqiang/kylinos-desktop/ppatest hello1_1.0-1_source.changes 
+</code></pre>
+<h1 style="line-height:1.5;font-weight:bold;margin:10px 0px;color:rgb(49, 70, 89);padding:0px 0px 0px 40px;font-size:24px;"><span style="font-size:24px;font-weight:bold;line-height:1.5;color:rgb(49, 70, 89);display:block;position:absolute;margin-left:-40px;margin-top:1px;padding:0px;"> </span>添加PPA的apt源<a href="https://www.cnblogs.com/chendeqiang/p/14232064.html#3081432144" style="margin:0px;padding:0px;opacity:0;margin-left:8px;text-decoration:underline;transition:all 0.3s ease 0s;color:inherit;">#</a></h1>
+<p style="padding:0px;text-indent:0px;margin:13px auto;">访问应用主页 <a href="https://launchpad.dev/~chendeqiang/+archive/kylinos-desktop/ppatest" target="_blank" rel="noopener" style="margin:0px;padding:0px;color:rgb(45, 140, 240);text-decoration:none;transition:all 0.3s ease 0s;">https://launchpad.dev/~chendeqiang/+archive/kylinos-desktop/ppatest</a><br style="margin:0px;padding:0px;"/>
+添加<strong style="padding:0px;font-weight:500;color:rgb(15, 16, 17);margin:0px 3px;">Technical details about this PPA</strong>下的两个链接到<strong style="padding:0px;font-weight:500;color:rgb(15, 16, 17);margin:0px 3px;">source.list</strong></p>
+<pre style="border-radius:4px;background-color: #fbfaf8;border: 1px solid rgba(0,0,0,.14902);color: #333;font-size: 12px;padding: 8px;font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif;box-sizing: border-box;"><div style="margin:0px;font-size:12px;cursor:pointer;position:absolute;right:13px;top:10px;box-shadow:rgba(0, 0, 0, 0.1) 0px 0px 15px 0px;color:rgb(49, 70, 89);border-radius:5px;padding:0px 6px;overflow:hidden;"><span style="font-size:12px;cursor:pointer;color:rgb(255, 255, 255);position:absolute;transition:all 0.3s ease 0s;transform:translate3d(-50%, 0px, 0px);opacity:0;left:50%;z-index:10;border-radius:6px;background-color:rgba(100, 100, 100, 0.8);height:24px;line-height:24px;padding:0px 6px;white-space:nowrap;top:-24px;">复制代码</span>Copy<span style="font-size:12px;cursor:pointer;color:rgb(49, 70, 89);position:absolute;transition:all 0.3s ease 0s;transform:translate3d(-50%, 0px, 0px);opacity:0;left:50%;z-index:10;border-width:5px;border-style:solid;border-image:initial;border-color:rgba(100, 100, 100, 0.8) transparent transparent;top:0px;"></span></div><code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif">sudo vim /etc/apt/source.list
+sudo apt-get update
+</code></pre>
+<h1 style="line-height:1.5;font-weight:bold;margin:10px 0px;color:rgb(49, 70, 89);padding:0px 0px 0px 40px;font-size:24px;"><span style="font-size:24px;font-weight:bold;line-height:1.5;color:rgb(49, 70, 89);display:block;position:absolute;margin-left:-40px;margin-top:1px;padding:0px;"> </span>安装应用<a href="https://www.cnblogs.com/chendeqiang/p/14232064.html#685058071" style="margin:0px;padding:0px;opacity:0;margin-left:8px;text-decoration:underline;transition:all 0.3s ease 0s;color:inherit;">#</a></h1>
+<p style="padding:0px;text-indent:0px;margin:13px auto;">重新打开一个终端</p>
+<pre style="border-radius:4px;background-color: #fbfaf8;border: 1px solid rgba(0,0,0,.14902);color: #333;font-size: 12px;padding: 8px;font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif;box-sizing: border-box;"><div style="margin:0px;font-size:12px;cursor:pointer;position:absolute;right:13px;top:10px;box-shadow:rgba(0, 0, 0, 0.1) 0px 0px 15px 0px;color:rgb(49, 70, 89);border-radius:5px;padding:0px 6px;overflow:hidden;"><span style="font-size:12px;cursor:pointer;color:rgb(255, 255, 255);position:absolute;transition:all 0.3s ease 0s;transform:translate3d(-50%, 0px, 0px);opacity:0;left:50%;z-index:10;border-radius:6px;background-color:rgba(100, 100, 100, 0.8);height:24px;line-height:24px;padding:0px 6px;white-space:nowrap;top:-24px;">复制代码</span>Copy<span style="font-size:12px;cursor:pointer;color:rgb(49, 70, 89);position:absolute;transition:all 0.3s ease 0s;transform:translate3d(-50%, 0px, 0px);opacity:0;left:50%;z-index:10;border-width:5px;border-style:solid;border-image:initial;border-color:rgba(100, 100, 100, 0.8) transparent transparent;top:0px;"></span></div><code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif">sudo apt-get install cdqtest
+
+<span style="margin:0px;padding:0px;color:rgb(128, 153, 128);"># 运行应用</span>
+demo
+</code></pre>
+<h1 style="line-height:1.5;font-weight:bold;margin:10px 0px;color:rgb(49, 70, 89);padding:0px 0px 0px 40px;font-size:24px;"><span style="font-size:24px;font-weight:bold;line-height:1.5;color:rgb(49, 70, 89);display:block;position:absolute;margin-left:-40px;margin-top:1px;padding:0px;"> </span>恢复源码包<a href="https://www.cnblogs.com/chendeqiang/p/14232064.html#260033997" style="margin:0px;padding:0px;opacity:0;margin-left:8px;text-decoration:underline;transition:all 0.3s ease 0s;color:inherit;">#</a></h1>
+<p style="padding:0px;text-indent:0px;margin:13px auto;">下载以下三个包：</p>
+<pre style="border-radius:4px;background-color: #fbfaf8;border: 1px solid rgba(0,0,0,.14902);color: #333;font-size: 12px;padding: 8px;font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif;box-sizing: border-box;"><div style="margin:0px;font-size:12px;cursor:pointer;position:absolute;right:13px;top:10px;box-shadow:rgba(0, 0, 0, 0.1) 0px 0px 15px 0px;color:rgb(49, 70, 89);border-radius:5px;padding:0px 6px;overflow:hidden;"><span style="font-size:12px;cursor:pointer;color:rgb(255, 255, 255);position:absolute;transition:all 0.3s ease 0s;transform:translate3d(-50%, 0px, 0px);opacity:0;left:50%;z-index:10;border-radius:6px;background-color:rgba(100, 100, 100, 0.8);height:24px;line-height:24px;padding:0px 6px;white-space:nowrap;top:-24px;">复制代码</span>Copy<span style="font-size:12px;cursor:pointer;color:rgb(49, 70, 89);position:absolute;transition:all 0.3s ease 0s;transform:translate3d(-50%, 0px, 0px);opacity:0;left:50%;z-index:10;border-width:5px;border-style:solid;border-image:initial;border-color:rgba(100, 100, 100, 0.8) transparent transparent;top:0px;"></span></div><code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif">xxx.dsc 
+xxx.<span style="margin:0px;padding:0px;color:rgb(173, 43, 238);">origin.tar.gz </span>
+xxx.debian.tar.xz
+</code></pre>
+<p style="padding:0px;text-indent:0px;margin:13px auto;">然后：</p>
+<pre style="border-radius:4px;background-color: #fbfaf8;border: 1px solid rgba(0,0,0,.14902);color: #333;font-size: 12px;padding: 8px;font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif;box-sizing: border-box;"><div style="margin:0px;font-size:12px;cursor:pointer;position:absolute;right:13px;top:10px;box-shadow:rgba(0, 0, 0, 0.1) 0px 0px 15px 0px;color:rgb(49, 70, 89);border-radius:5px;padding:0px 6px;overflow:hidden;"><span style="font-size:12px;cursor:pointer;color:rgb(255, 255, 255);position:absolute;transition:all 0.3s ease 0s;transform:translate3d(-50%, 0px, 0px);opacity:0;left:50%;z-index:10;border-radius:6px;background-color:rgba(100, 100, 100, 0.8);height:24px;line-height:24px;padding:0px 6px;white-space:nowrap;top:-24px;">复制代码</span>Copy<span style="font-size:12px;cursor:pointer;color:rgb(49, 70, 89);position:absolute;transition:all 0.3s ease 0s;transform:translate3d(-50%, 0px, 0px);opacity:0;left:50%;z-index:10;border-width:5px;border-style:solid;border-image:initial;border-color:rgba(100, 100, 100, 0.8) transparent transparent;top:0px;"></span></div><code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif">dpkg-source -x xxx.dsc 
+</code></pre>
+<h1 style="line-height:1.5;font-weight:bold;margin:10px 0px;color:rgb(49, 70, 89);padding:0px 0px 0px 40px;font-size:24px;"><span style="font-size:24px;font-weight:bold;line-height:1.5;color:rgb(49, 70, 89);display:block;position:absolute;margin-left:-40px;margin-top:1px;padding:0px;"> </span>makefile方式构建源码<a href="https://www.cnblogs.com/chendeqiang/p/14232064.html#832724082" style="margin:0px;padding:0px;opacity:0;margin-left:8px;text-decoration:underline;transition:all 0.3s ease 0s;color:inherit;">#</a></h1>
+<p style="padding:0px;text-indent:0px;margin:13px auto;">hello.c</p>
+<pre style="border-radius:4px;background-color: #fbfaf8;border: 1px solid rgba(0,0,0,.14902);color: #333;font-size: 12px;padding: 8px;font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif;box-sizing: border-box;"><div style="margin:0px;font-size:12px;cursor:pointer;position:absolute;right:13px;top:10px;box-shadow:rgba(0, 0, 0, 0.1) 0px 0px 15px 0px;color:rgb(49, 70, 89);border-radius:5px;padding:0px 6px;overflow:hidden;"><span style="font-size:12px;cursor:pointer;color:rgb(255, 255, 255);position:absolute;transition:all 0.3s ease 0s;transform:translate3d(-50%, 0px, 0px);opacity:0;left:50%;z-index:10;border-radius:6px;background-color:rgba(100, 100, 100, 0.8);height:24px;line-height:24px;padding:0px 6px;white-space:nowrap;top:-24px;">复制代码</span>Copy<span style="font-size:12px;cursor:pointer;color:rgb(49, 70, 89);position:absolute;transition:all 0.3s ease 0s;transform:translate3d(-50%, 0px, 0px);opacity:0;left:50%;z-index:10;border-width:5px;border-style:solid;border-image:initial;border-color:rgba(100, 100, 100, 0.8) transparent transparent;top:0px;"></span></div><code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span style="margin:0px;padding:0px;color:rgb(135, 113, 29);">#<span style="margin:0px;padding:0px;color:rgb(173, 43, 238);">include</span><span style="margin:0px;padding:0px;color:rgb(51, 136, 170);">&lt;stdio.h&gt;</span></span>
+<span style="margin:0px;padding:0px;color:rgb(135, 113, 29);">int</span> <span style="margin:0px;padding:0px;color:rgb(61, 98, 245);">main</span><span style="margin:0px;padding:0px;color:rgb(135, 113, 29);">()</span>
+{
+        <span style="margin:0px;padding:0px;color:rgb(135, 113, 29);">printf</span>(<span style="margin:0px;padding:0px;color:rgb(41, 163, 41);">"helloworld!\n"</span>);
+        <span style="margin:0px;padding:0px;color:rgb(173, 43, 238);">return</span> <span style="margin:0px;padding:0px;color:rgb(135, 113, 29);">0</span>;
+}
+</code></pre>
+<p style="padding:0px;text-indent:0px;margin:13px auto;">Makefile</p>
+<pre style="border-radius:4px;background-color: #fbfaf8;border: 1px solid rgba(0,0,0,.14902);color: #333;font-size: 12px;padding: 8px;font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif;box-sizing: border-box;"><div style="margin:0px;font-size:12px;cursor:pointer;position:absolute;right:13px;top:10px;box-shadow:rgba(0, 0, 0, 0.1) 0px 0px 15px 0px;color:rgb(49, 70, 89);border-radius:5px;padding:0px 6px;overflow:hidden;"><span style="font-size:12px;cursor:pointer;color:rgb(255, 255, 255);position:absolute;transition:all 0.3s ease 0s;transform:translate3d(-50%, 0px, 0px);opacity:0;left:50%;z-index:10;border-radius:6px;background-color:rgba(100, 100, 100, 0.8);height:24px;line-height:24px;padding:0px 6px;white-space:nowrap;top:-24px;">复制代码</span>Copy<span style="font-size:12px;cursor:pointer;color:rgb(49, 70, 89);position:absolute;transition:all 0.3s ease 0s;transform:translate3d(-50%, 0px, 0px);opacity:0;left:50%;z-index:10;border-width:5px;border-style:solid;border-image:initial;border-color:rgba(100, 100, 100, 0.8) transparent transparent;top:0px;"></span></div><code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif">hello : hello.o
+        gcc -o hello hello.o
+
+hello.o : hello.c
+        gcc -c hello.c
+
+<span style="margin:0px;padding:0px;color:rgb(128, 153, 128);">#clean :</span>
+<span style="margin:0px;padding:0px;color:rgb(128, 153, 128);">#      rm hello hello.o</span>
+<span style="margin:0px;padding:0px;color:rgb(128, 153, 128);">#install:</span>
+<span style="margin:0px;padding:0px;color:rgb(128, 153, 128);">#      install hello /usr/bin/</span>
+</code></pre>
+<h1 style="line-height:1.5;font-weight:bold;margin:10px 0px;color:rgb(49, 70, 89);padding:0px 0px 0px 40px;font-size:24px;"><span style="font-size:24px;font-weight:bold;line-height:1.5;color:rgb(49, 70, 89);display:block;position:absolute;margin-left:-40px;margin-top:1px;padding:0px;"> </span>cmake方式构建源码<a href="https://www.cnblogs.com/chendeqiang/p/14232064.html#2338257258" style="margin:0px;padding:0px;opacity:0;margin-left:8px;text-decoration:underline;transition:all 0.3s ease 0s;color:inherit;">#</a></h1>
+<p style="padding:0px;text-indent:0px;margin:13px auto;">hello.c</p>
+<pre style="border-radius:4px;background-color: #fbfaf8;border: 1px solid rgba(0,0,0,.14902);color: #333;font-size: 12px;padding: 8px;font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif;box-sizing: border-box;"><div style="margin:0px;font-size:12px;cursor:pointer;position:absolute;right:13px;top:10px;box-shadow:rgba(0, 0, 0, 0.1) 0px 0px 15px 0px;color:rgb(49, 70, 89);border-radius:5px;padding:0px 6px;overflow:hidden;"><span style="font-size:12px;cursor:pointer;color:rgb(255, 255, 255);position:absolute;transition:all 0.3s ease 0s;transform:translate3d(-50%, 0px, 0px);opacity:0;left:50%;z-index:10;border-radius:6px;background-color:rgba(100, 100, 100, 0.8);height:24px;line-height:24px;padding:0px 6px;white-space:nowrap;top:-24px;">复制代码</span>Copy<span style="font-size:12px;cursor:pointer;color:rgb(49, 70, 89);position:absolute;transition:all 0.3s ease 0s;transform:translate3d(-50%, 0px, 0px);opacity:0;left:50%;z-index:10;border-width:5px;border-style:solid;border-image:initial;border-color:rgba(100, 100, 100, 0.8) transparent transparent;top:0px;"></span></div><code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span style="margin:0px;padding:0px;color:rgb(135, 113, 29);">#<span style="margin:0px;padding:0px;color:rgb(173, 43, 238);">include</span><span style="margin:0px;padding:0px;color:rgb(51, 136, 170);">&lt;stdio.h&gt;</span></span>
+<span style="margin:0px;padding:0px;color:rgb(135, 113, 29);">int</span> <span style="margin:0px;padding:0px;color:rgb(61, 98, 245);">main</span><span style="margin:0px;padding:0px;color:rgb(135, 113, 29);">()</span>
+{
+        <span style="margin:0px;padding:0px;color:rgb(135, 113, 29);">printf</span>(<span style="margin:0px;padding:0px;color:rgb(41, 163, 41);">"helloworld!\n"</span>);
+        <span style="margin:0px;padding:0px;color:rgb(173, 43, 238);">return</span> <span style="margin:0px;padding:0px;color:rgb(135, 113, 29);">0</span>;
+}
+</code></pre>
+<p style="padding:0px;text-indent:0px;margin:13px auto;">CMakeLists.txt</p>
+<pre style="border-radius:4px;background-color: #fbfaf8;border: 1px solid rgba(0,0,0,.14902);color: #333;font-size: 12px;padding: 8px;font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif;box-sizing: border-box;"><div style="margin:0px;font-size:12px;cursor:pointer;position:absolute;right:13px;top:10px;box-shadow:rgba(0, 0, 0, 0.1) 0px 0px 15px 0px;color:rgb(49, 70, 89);border-radius:5px;padding:0px 6px;overflow:hidden;"><span style="font-size:12px;cursor:pointer;color:rgb(255, 255, 255);position:absolute;transition:all 0.3s ease 0s;transform:translate3d(-50%, 0px, 0px);opacity:0;left:50%;z-index:10;border-radius:6px;background-color:rgba(100, 100, 100, 0.8);height:24px;line-height:24px;padding:0px 6px;white-space:nowrap;top:-24px;">复制代码</span>Copy<span style="font-size:12px;cursor:pointer;color:rgb(49, 70, 89);position:absolute;transition:all 0.3s ease 0s;transform:translate3d(-50%, 0px, 0px);opacity:0;left:50%;z-index:10;border-width:5px;border-style:solid;border-image:initial;border-color:rgba(100, 100, 100, 0.8) transparent transparent;top:0px;"></span></div><code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif">cmake_minimum_required(VERSION 2.8)
+project(hellocdq)
+add_executable(hellocdq hello.cpp)
+</code></pre>
+<p style="padding:0px;text-indent:0px;margin:13px auto;">debin/control</p>
+<pre style="border-radius:4px;background-color: #fbfaf8;border: 1px solid rgba(0,0,0,.14902);color: #333;font-size: 12px;padding: 8px;font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif;box-sizing: border-box;"><div style="margin:0px;font-size:12px;cursor:pointer;position:absolute;right:13px;top:10px;box-shadow:rgba(0, 0, 0, 0.1) 0px 0px 15px 0px;color:rgb(49, 70, 89);border-radius:5px;padding:0px 6px;overflow:hidden;"><span style="font-size:12px;cursor:pointer;color:rgb(255, 255, 255);position:absolute;transition:all 0.3s ease 0s;transform:translate3d(-50%, 0px, 0px);opacity:0;left:50%;z-index:10;border-radius:6px;background-color:rgba(100, 100, 100, 0.8);height:24px;line-height:24px;padding:0px 6px;white-space:nowrap;top:-24px;">复制代码</span>Copy<span style="font-size:12px;cursor:pointer;color:rgb(49, 70, 89);position:absolute;transition:all 0.3s ease 0s;transform:translate3d(-50%, 0px, 0px);opacity:0;left:50%;z-index:10;border-width:5px;border-style:solid;border-image:initial;border-color:rgba(100, 100, 100, 0.8) transparent transparent;top:0px;"></span></div><code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif">Build-Depends: debhelper (&gt;=9) , cmake
+</code></pre>
+<p style="padding:0px;text-indent:0px;margin:13px auto;">debian/rules</p>
+<pre style="border-radius:4px;background-color: #fbfaf8;border: 1px solid rgba(0,0,0,.14902);color: #333;font-size: 12px;padding: 8px;font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif;box-sizing: border-box;"><div style="margin:0px;font-size:12px;cursor:pointer;position:absolute;right:13px;top:10px;box-shadow:rgba(0, 0, 0, 0.1) 0px 0px 15px 0px;color:rgb(49, 70, 89);border-radius:5px;padding:0px 6px;overflow:hidden;"><span style="font-size:12px;cursor:pointer;color:rgb(255, 255, 255);position:absolute;transition:all 0.3s ease 0s;transform:translate3d(-50%, 0px, 0px);opacity:0;left:50%;z-index:10;border-radius:6px;background-color:rgba(100, 100, 100, 0.8);height:24px;line-height:24px;padding:0px 6px;white-space:nowrap;top:-24px;">复制代码</span>Copy<span style="font-size:12px;cursor:pointer;color:rgb(49, 70, 89);position:absolute;transition:all 0.3s ease 0s;transform:translate3d(-50%, 0px, 0px);opacity:0;left:50%;z-index:10;border-width:5px;border-style:solid;border-image:initial;border-color:rgba(100, 100, 100, 0.8) transparent transparent;top:0px;"></span></div><code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span style="margin:0px;padding:0px;color:rgb(135, 113, 29);">#!/usr/bin/make -f</span>
+<span style="margin:0px;padding:0px;color:rgb(128, 153, 128);"># See debhelper(7) (uncomment to enable)</span>
+<span style="margin:0px;padding:0px;color:rgb(128, 153, 128);"># output every command that modifies files on the build system.</span>
+<span style="margin:0px;padding:0px;color:rgb(128, 153, 128);">#export DH_VERBOSE = 1</span>
+
+
+<span style="margin:0px;padding:0px;color:rgb(128, 153, 128);"># see FEATURE AREAS in dpkg-buildflags(1)</span>
+<span style="margin:0px;padding:0px;color:rgb(128, 153, 128);">#export DEB_BUILD_MAINT_OPTIONS = hardening=+all</span>
+
+<span style="margin:0px;padding:0px;color:rgb(128, 153, 128);"># see ENVIRONMENT in dpkg-buildflags(1)</span>
+<span style="margin:0px;padding:0px;color:rgb(128, 153, 128);"># package maintainers to append CFLAGS</span>
+<span style="margin:0px;padding:0px;color:rgb(128, 153, 128);">#export DEB_CFLAGS_MAINT_APPEND  = -Wall -pedantic</span>
+<span style="margin:0px;padding:0px;color:rgb(128, 153, 128);"># package maintainers to append LDFLAGS</span>
+<span style="margin:0px;padding:0px;color:rgb(128, 153, 128);">#export DEB_LDFLAGS_MAINT_APPEND = -Wl,--as-needed</span>
+
+%:
+	dh <span style="margin:0px;padding:0px;color:rgb(230, 25, 60);">$@</span> 
+
+<span style="margin:0px;padding:0px;color:rgb(128, 153, 128);"># dh_make generated override targets</span>
+<span style="margin:0px;padding:0px;color:rgb(128, 153, 128);"># This is example for Cmake (See https://bugs.debian.org/641051 )</span>
+override_dh_auto_configure:
+	dh_auto_configure -- <span style="margin:0px;padding:0px;color:rgb(128, 153, 128);">#	-DCMAKE_LIBRARY_PATH=$(DEB_HOST_MULTIARCH)</span>
+</code></pre>
+<h1 style="line-height:1.5;font-weight:bold;margin:10px 0px;color:rgb(49, 70, 89);padding:0px 0px 0px 40px;font-size:24px;"><span style="font-size:24px;font-weight:bold;line-height:1.5;color:rgb(49, 70, 89);display:block;position:absolute;margin-left:-40px;margin-top:1px;padding:0px;"> </span>备注<a href="https://www.cnblogs.com/chendeqiang/p/14232064.html#591583422" style="margin:0px;padding:0px;opacity:0;margin-left:8px;text-decoration:underline;transition:all 0.3s ease 0s;color:inherit;">#</a></h1>
+<p style="padding:0px;text-indent:0px;margin:13px auto;">查询dns<br style="margin:0px;padding:0px;"/>
+nslookup launchpad.dev</p>
+<p style="padding:0px;text-indent:0px;margin:13px auto;">Control和chagelog的包名是除了版本号的包名</p>
+<p style="padding:0px;text-indent:0px;margin:13px auto;">参考链接：<br style="margin:0px;padding:0px;"/>
+<a href="https://blog.csdn.net/kyle__shaw/article/details/8938787?utm_medium=distribute.pc_relevant.none-task-blog-BlogCommendFromBaidu-3.control&amp;depth_1-utm_source=distribute.pc_relevant.none-task-blog-BlogCommendFromBaidu-3.control" target="_blank" rel="noopener" style="margin:0px;padding:0px;color:rgb(45, 140, 240);text-decoration:none;transition:all 0.3s ease 0s;">https://blog.csdn.net/kyle__shaw/article/details/8938787?utm_medium=distribute.pc_relevant.none-task-blog-BlogCommendFromBaidu-3.control&amp;depth_1-utm_source=distribute.pc_relevant.none-task-blog-BlogCommendFromBaidu-3.control</a><br style="margin:0px;padding:0px;"/>
+<a href="https://blog.csdn.net/kyle__shaw/article/details/8938787" target="_blank" rel="noopener" style="margin:0px;padding:0px;color:rgb(45, 140, 240);text-decoration:none;transition:all 0.3s ease 0s;">https://blog.csdn.net/kyle__shaw/article/details/8938787</a></p>
+<p style="padding:0px;text-indent:0px;margin:13px auto;">其他参考资料：</p>
+<ul style="margin:0px;padding:0px;word-break:break-all;padding-left:0px;list-style-type:disc;margin-left:30px;">
+<li style="padding:0px;list-style-type:disc;list-style:inherit;font-size:16px;color:rgb(49, 70, 89);margin:3px 0px;">gdb参考资料：gdb官方手册，《Debugging with GDB》，《GDB Pocket Reference》</li>
+<li style="padding:0px;list-style-type:disc;list-style:inherit;font-size:16px;color:rgb(49, 70, 89);margin:3px 0px;">make手册：《Managing Projects with GNU Make》</li>
+<li style="padding:0px;list-style-type:disc;list-style:inherit;font-size:16px;color:rgb(49, 70, 89);margin:3px 0px;">deb 详细规范和高级用法参考资源:<br style="margin:0px;padding:0px;"/>
+Debian 新维护者指<br style="margin:0px;padding:0px;"/>
+<a href="https://www.debian.org/doc/manuals/maint-guide/index.en.html" target="_blank" rel="noopener" style="margin:0px;padding:0px;color:rgb(45, 140, 240);text-decoration:none;transition:all 0.3s ease 0s;">https://www.debian.org/doc/manuals/maint-guide/index.en.html</a><br style="margin:0px;padding:0px;"/>
+Debian 开发者文档<br style="margin:0px;padding:0px;"/>
+<a href="https://www.debian.org/doc/manuals/developers-reference/index.en.html" target="_blank" rel="noopener" style="margin:0px;padding:0px;color:rgb(45, 140, 240);text-decoration:none;transition:all 0.3s ease 0s;">https://www.debian.org/doc/manuals/developers-reference/index.en.html</a><br style="margin:0px;padding:0px;"/>
+Debian 政策文档 <a href="https://www.debian.org/doc/devel-manuals#policy" target="_blank" rel="noopener" style="margin:0px;padding:0px;color:rgb(45, 140, 240);text-decoration:none;transition:all 0.3s ease 0s;">https://www.debian.org/doc/devel-manuals#policy</a><br style="margin:0px;padding:0px;"/>
+Ubuntu 打包指南 <a href="http://packaging.ubuntu.com/html/" target="_blank" rel="noopener" style="margin:0px;padding:0px;color:rgb(45, 140, 240);text-decoration:none;transition:all 0.3s ease 0s;">http://packaging.ubuntu.com/html/</a></li>
+</ul>
+
+</div>
+<div style="margin:0px;padding:0px;clear:both;"></div>
+<div style="margin:0px;padding:0px;margin-top:20px;">
+
+
+
+
+    <div style="margin:0px;padding:0px;">
+                <div style="margin:0px;padding:0px;position:relative;width:100%;margin-top:70px;height:160px;">
+                    <a href="https://github.com/Kaiyuan/donate-page" target="_blank" title="Github" style="margin:0px;padding:0px;position:absolute;left:calc(50% + 135px);top:calc(50% - 30px);width:24px;height:24px;background:url(https://images.cnblogs.com/cnblogs_com/esofar/1504962/o_github.png) center center / contain no-repeat;opacity:0.3;transform:rotateZ(15deg);color:rgb(45, 140, 240);text-decoration:none;transition:all 0.3s ease 0s;"></a>
+                    <div style="margin:0px;padding:0px;transition:all 0.3s ease 0s;position:absolute;left:calc(50% - 120px);top:calc(50% - 60px);font-size:12px;width:70px;height:70px;line-height:70px;color:rgb(255, 255, 255);background:url(https://images.cnblogs.com/cnblogs_com/esofar/1504962/o_like.png) center 10px / 20px no-repeat rgb(255, 216, 134);border-radius:35px;text-align:center;z-index:-1;transform:rotateZ(-15deg);">Sponsor</div>
+                    <ul style="margin:0px;padding:0px;word-break:break-all;position:absolute;transition:all 0.3s ease 0s;left:calc(50% - 150px);top:calc(50% - 15px);background-color:rgb(255, 255, 255);border:1px solid rgb(221, 221, 221);border-radius:6px;width:299px;height:28px;float:left;z-index:1;margin-left:0px;">
+                        <li style="list-style-type:disc;width:99px;float:left;text-align:center;border-left:1px solid rgb(221, 221, 221);background:center center / 45px no-repeat rgba(204, 217, 220, 0.1);transition:all 0.3s ease 0s;cursor:pointer;overflow:hidden;line-height:600px;height:28px;filter:grayscale(1);opacity:0.5;padding:0px;list-style:none;border-width:0px;background-image:url(https://images.cnblogs.com/cnblogs_com/esofar/1504962/o_paypal.png);font-size:16px;color:rgb(49, 70, 89);margin:0px;">PayPal</li>
+                        <li style="list-style-type:disc;width:99px;float:left;text-align:center;border-left:1px solid rgb(221, 221, 221);background:center center / 45px no-repeat rgba(204, 217, 220, 0.1);transition:all 0.3s ease 0s;cursor:pointer;overflow:hidden;line-height:600px;height:28px;filter:grayscale(1);opacity:0.5;padding:0px;list-style:none;background-image:url(https://images.cnblogs.com/cnblogs_com/esofar/1504962/o_alipay.png);font-size:16px;color:rgb(49, 70, 89);margin:0px;">AliPay</li>
+                        <li style="list-style-type:disc;width:99px;float:left;text-align:center;border-left:1px solid rgb(221, 221, 221);background:center center / 45px no-repeat rgba(204, 217, 220, 0.1);transition:all 0.3s ease 0s;cursor:pointer;overflow:hidden;line-height:600px;height:28px;filter:grayscale(1);opacity:0.5;padding:0px;list-style:none;background-image:url(https://images.cnblogs.com/cnblogs_com/esofar/1504962/o_wechat.png);font-size:16px;color:rgb(49, 70, 89);margin:0px;">WeChat</li>
+                    </ul>
+                    
+                </div>
+
+
+<div style="padding:0px;font-size:12px;text-align:center;position:static;z-index:-1;float:none;width:200px;margin:35px auto 85px;">
+    <div style="float:left;text-align:center;display:inline-block;border-width:0px;color:rgb(255, 255, 255);user-select:none;border-radius:5px;transition:color 0.2s linear 0s, background-color 0.2s linear 0s, border 0.2s linear 0s, box-shadow 0.2s linear 0s;width:auto;height:32px;background:rgb(255, 255, 255);cursor:pointer;margin:0px;padding:0px 10px;background-color:rgb(24, 181, 102);border-color:rgb(24, 181, 102);">
+        <span style="margin:0px;padding:0px;font-family:Verdana;display:inline-block;position:relative;top:5px;width:65px;font-size:15px;color:snow;line-height:1.5em;"><span style="font-size:15px;color:snow;font-family:Verdana;line-height:1.5em;margin-right:5px;">推荐</span>1</span>
+    </div>
+    <div style="float:right;text-align:center;display:inline-block;border-width:0px;color:rgb(255, 255, 255);user-select:none;border-radius:5px;transition:color 0.2s linear 0s, background-color 0.2s linear 0s, border 0.2s linear 0s, box-shadow 0.2s linear 0s;width:auto;height:32px;background:rgb(255, 255, 255);cursor:pointer;margin:0px;padding:0px 10px;background-color:rgb(237, 64, 20);border-color:rgb(237, 64, 20);">
+        <span style="margin:0px;padding:0px;font-family:Verdana;display:inline-block;position:relative;top:5px;width:65px;font-size:15px;color:snow;line-height:1.5em;"><span style="font-size:15px;color:snow;font-family:Verdana;line-height:1.5em;margin-right:5px;">反对</span>0</span>
+    </div>
+    <div style="margin:0px;padding:0px;clear:both;"></div>
+    <div style="margin:0px;padding:0px;margin-top:5px;margin-left:0px;font-size:12px;color:rgb(128, 128, 128);">
+    </div>
+</div>
+
+
+</div>
+    <div style="margin:0px;padding:0px;clear:both;"></div>
+    <div style="margin:0px;padding:0px;line-height:1.8;font-size:13px;">
+
+    <a href="https://www.cnblogs.com/chendeqiang/p/14225039.html" style="margin:0px;padding:0px;text-decoration:none;color:rgb(45, 140, 240);transition:all 0.3s ease 0s;">« </a> 上一篇：    <a href="https://www.cnblogs.com/chendeqiang/p/14225039.html" title="发布于 2021-01-03 11:22" style="margin:0px;padding:0px;color:rgb(45, 140, 240);text-decoration:none;transition:all 0.3s ease 0s;">计算机如何储存数字和字符</a>
+    <br style="margin:0px;padding:0px;"/>
+    <a href="https://www.cnblogs.com/chendeqiang/p/14233944.html" style="margin:0px;padding:0px;text-decoration:none;color:rgb(45, 140, 240);transition:all 0.3s ease 0s;">» </a> 下一篇：    <a href="https://www.cnblogs.com/chendeqiang/p/14233944.html" title="发布于 2021-01-05 09:39" style="margin:0px;padding:0px;color:rgb(45, 140, 240);text-decoration:none;transition:all 0.3s ease 0s;">GPG入门教程</a>
+
+</div>
+</div>
+            </div>
+            <div style="margin:0px;padding:0px;clear:both;font-size:13px;font-weight:300;float:right;width:100%;text-align:right;margin-top:5px;padding-right:0px;color:rgb(49, 70, 89);">posted @ 
+<span style="margin:0px;padding:0px;">2021-01-04 20:30</span> 
+<a href="https://www.cnblogs.com/chendeqiang" style="margin:0px;padding:0px;text-decoration:none;color:rgb(49, 70, 89);transition:all 0.3s ease 0s;">多弗朗强哥</a> 
+阅读(<span style="margin:0px;padding:0px;">2089</span>) 
+评论(<span style="margin:0px;padding:0px;">0</span>) 
+<a href="https://i.cnblogs.com/EditPosts.aspx?postid=14232064" rel="nofollow" style="margin:0px;padding:0px;text-decoration:none;color:rgb(49, 70, 89);transition:all 0.3s ease 0s;">编辑</a> 
+<a href="#" style="margin:0px;padding:0px;text-decoration:none;color:rgb(49, 70, 89);transition:all 0.3s ease 0s;">收藏</a> 
+<a href="#" style="margin:0px;padding:0px;text-decoration:none;color:rgb(49, 70, 89);transition:all 0.3s ease 0s;">举报</a>
+</div>
+        </div></div></div></div></div></div></div></div></div></div>
+</div>
+</div>
+<a class="back-link" href="../articles.html">← 返回笔记列表</a>
+</body>
+</html>

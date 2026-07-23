@@ -1,0 +1,568 @@
+<!DOCTYPE html>
+<html lang="zh-CN" data-theme="light">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>【Linux负载系列-2】Linux CPU 使用率低 Load 负载高场景测试 - Head First eBPF — 技术笔记</title>
+<style>
+:root {
+  --bg: #ffffff;
+  --text: #1a1a1a;
+  --muted: #666;
+  --border: #e0e0e0;
+  --code-bg: #f5f5f5;
+  --link: #0066cc;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #1a1a1a;
+    --text: #e0e0e0;
+    --muted: #999;
+    --border: #333;
+    --code-bg: #2a2a2a;
+    --link: #66bbff;
+  }
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  line-height: 1.7;
+  color: var(--text);
+  background: var(--bg);
+  max-width: 860px;
+  margin: 0 auto;
+  padding: 2rem 1.5rem;
+}
+.note-header {
+  border-bottom: 2px solid var(--border);
+  padding-bottom: 1rem;
+  margin-bottom: 2rem;
+}
+.note-title {
+  font-size: 1.6rem;
+  font-weight: 700;
+  margin-bottom: 0.3rem;
+}
+.note-meta {
+  color: var(--muted);
+  font-size: 0.85rem;
+}
+.note-content {
+  font-size: 0.95rem;
+}
+.note-content h1 { font-size: 1.4rem; margin: 1.2rem 0 0.6rem; }
+.note-content h2 { font-size: 1.2rem; margin: 1rem 0 0.5rem; }
+.note-content h3 { font-size: 1.05rem; margin: 0.8rem 0 0.4rem; }
+.note-content p { margin: 0.5rem 0; }
+.note-content ul, .note-content ol { margin: 0.5rem 0 0.5rem 2rem; }
+.note-content li { margin: 0.2rem 0; }
+.note-content pre {
+  background: var(--code-bg);
+  padding: 1rem;
+  border-radius: 6px;
+  overflow-x: auto;
+  margin: 0.8rem 0;
+  font-size: 0.85rem;
+}
+.note-content code {
+  background: var(--code-bg);
+  padding: 0.1rem 0.3rem;
+  border-radius: 3px;
+  font-size: 0.88em;
+}
+.note-content pre code {
+  background: none;
+  padding: 0;
+}
+.note-content blockquote {
+  border-left: 3px solid var(--border);
+  padding-left: 1rem;
+  color: var(--muted);
+  margin: 0.8rem 0;
+}
+.note-content a { color: var(--link); }
+.note-content img {
+  max-width: 100%;
+  height: auto;
+  border-radius: 6px;
+  margin: 0.5rem 0;
+}
+.note-content table {
+  border-collapse: collapse;
+  width: 100%;
+  margin: 0.8rem 0;
+}
+.note-content th, .note-content td {
+  border: 1px solid var(--border);
+  padding: 0.5rem;
+}
+.note-content th { background: var(--code-bg); }
+.media-placeholder {
+  background: var(--code-bg);
+  padding: 1rem;
+  text-align: center;
+  color: var(--muted);
+  border-radius: 6px;
+  margin: 0.5rem 0;
+  font-size: 0.85rem;
+}
+.encrypt-placeholder {
+  background: #fff3cd;
+  padding: 0.5rem;
+  text-align: center;
+  color: #856404;
+  border-radius: 6px;
+  margin: 0.5rem 0;
+  font-size: 0.85rem;
+}
+.back-link {
+  display: inline-block;
+  margin-top: 2rem;
+  color: var(--link);
+  text-decoration: none;
+  font-size: 0.85rem;
+}
+</style>
+</head>
+<body>
+<div class="note-header">
+  <div class="note-title">【Linux负载系列-2】Linux CPU 使用率低 Load 负载高场景测试 - Head First eBPF</div>
+  <div class="note-meta">笔记本：Linux</div>
+</div>
+<div class="note-content">
+<div style="--en-clipped-content:article">
+<div><br/></div><div style="font-size: 16px; display:block; min-width: 100%; position: relative;"> <div style="line-height:1.15;text-size-adjust:100%;"><div style="background-color:rgb(255, 255, 255);color:rgb(68, 68, 68);font-size:15px;font-family:&quot;Iowan Old Style&quot;, Ovo, &quot;Hoefler Text&quot;, Georgia, &quot;Times New Roman&quot;, TIBch, &quot;Source Han Sans&quot;, PingFangSC-Regular, &quot;Hiragino Sans GB&quot;, STHeiti, &quot;Microsoft Yahei&quot;, &quot;Droid Sans Fallback&quot;, &quot;WenQuanYi Micro Hei&quot;, sans-serif;"><div><div><div style="zoom:1;"><div><div><div>
+        <div style="display:block;">
+            <h1 style="color:rgb(85, 85, 85);text-align:left;font-weight:bold;font-size:1.5em;margin:0px;">【Linux负载系列-2】Linux CPU 使用率低 Load 负载高场景测试</h1>
+        </div>
+        
+  <span style="padding:0px;margin:9px 0px 0px;color:rgb(153, 153, 153);text-align:left;display:inline-block;">
+    2020年11月16日
+  </span>
+
+
+<div style="padding:0px;margin:9px 0px 0px;color:rgb(153, 153, 153);text-align:left;display:inline-block;">
+  <span> |</span>
+  
+    <a href="https://www.ebpf.top/categories/system" target="_blank" style="background-color:transparent;color:rgb(110, 113, 115);text-decoration:none;transition:all 0.1s ease-in 0s;position:relative;">system</a>
+  
+</div>
+
+
+        
+        <div style="padding:0px;margin:9px 0px 0px;color:rgb(153, 153, 153);text-align:left;display:inline-block;">
+            <span style="display:inline;"> |
+                <span>1572</span> <span>阅读</span>
+            </span>
+        </div>
+        
+        
+        <div style="font-size:1em;line-height:1.7;color:rgb(68, 68, 68);padding-top:27px;">
+            <h2 style="color:rgb(186, 57, 37);margin:1.4em 0px 1.1em;border-bottom:1px solid rgb(238, 238, 238);overflow:hidden;font-size:1.28571em;">1. Linux Load 负载高</h2>
+<p style="margin:0px 0px 1.1em;">在 Linux 系统上平均负载包括了运行的进程和正在等待运行的进程，也包括了不可中断状态执行磁盘 I/O 的进程（ <a href="https://en.wikipedia.org/wiki/Uninterruptible_sleep" style="background-color:transparent;text-decoration:none;transition:all 0.1s ease-in 0s;border-bottom:1px solid rgb(221, 221, 221);color:rgb(7, 137, 224);">Uninterruptible Sleep</a>））。这意味着在 Linux 上不能单用 CPU 余量或者饱和度，因为不能单从这个值来推断 CPU 或者磁盘负载。</p>
+<p style="margin:0px 0px 1.1em;">Linux 系统中如果等待 IO 的进程多了，那么也会导致系统的平均负载升高，则是因为平均负载包含了不可中断状态（ <a href="https://en.wikipedia.org/wiki/Uninterruptible_sleep" style="background-color:transparent;text-decoration:none;transition:all 0.1s ease-in 0s;border-bottom:1px solid rgb(221, 221, 221);color:rgb(7, 137, 224);">Uninterruptible Sleep</a>）执行磁盘 I/O 的进程部分的原因，关于 Linux Load 统计方式深入分析参见<a href="https://www.ebpf.top/post/linux_load_avg/" style="background-color:transparent;text-decoration:none;transition:all 0.1s ease-in 0s;border-bottom:1px solid rgb(221, 221, 221);color:rgb(7, 137, 224);">这里</a>。</p>
+<p style="margin:0px 0px 1.1em;"><strong style="font-weight:bolder;">进程一般是我们谈论用户空间来使用的</strong>，一个进程可能会有多个线程；在内核的调度层面来讲进程和线程没有区别，<strong style="font-weight:bolder;">进程中的线程们，在内核中都是调度器独立的调度单元，而且 Load 的统计是在内核中基于线程进行统计的，因此在排查 Load 高的时候我们应该直接面向线程进行排查</strong>，如果是按照进程视图则会掩盖诸多的细节，更加详细的介绍参见<a href="https://www.ebpf.top/linux-process-thread/" style="background-color:transparent;text-decoration:none;transition:all 0.1s ease-in 0s;border-bottom:1px solid rgb(221, 221, 221);color:rgb(7, 137, 224);">这里</a>。</p>
+<h3 style="color:rgb(186, 57, 37);margin:1.4em 0px 1.1em;border-bottom:1px solid rgb(238, 238, 238);overflow:hidden;">1.1 Load 高问题分析</h3>
+<p style="margin:0px 0px 1.1em;">通过上述对于 Linux 系统平均负载的分析，我们可以得知对于 Load 产生影响的主要有以下两种情况：</p>
+<ol>
+<li>系统中的活跃的进程较多，进程占用 CPU 资源高，可能导致频繁的切换， PS 状态为 R；</li>
+<li>系统 CPU 使用率不高，Load 偏高，多数情况下是等待 Disk IO 的进程偏多导致，PS 状态为 D，代表不可中断 <a href="https://en.wikipedia.org/wiki/Uninterruptible_sleep" style="background-color:transparent;text-decoration:none;transition:all 0.1s ease-in 0s;border-bottom:1px solid rgb(221, 221, 221);color:rgb(7, 137, 224);">Uninterruptible Sleep</a> (通常为 Disk IO)。</li>
+</ol>
+<p style="margin:0px 0px 1.1em;">工欲善其事必先利其器，对于整体排查的工具我们使用 <code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif">dstat</code>。<code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif">dstat</code> 命令是一个用来替换 vmstat、iostat、netstat、nfsstat 和 ifstat 这些命令的工具，是一个全能系统信息统计工具，就像一个飞机仪表盘，能够将 cpu/disk/net/paging/system/procs/load 等整体展示。</p>
+<div style="position:relative;margin:1em 0px;"><div style="background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">
+<table style="font-size:inherit;font-weight:inherit;font-style:inherit;font-variant:inherit;margin:0;width:100%;background:transparent;border-collapse:collapse;border-spacing:0;text-align:left;padding:0;border:0;"><tbody style="border:0px;"><tr style="border:0px;background-color:white;"><td style="padding:0;font-size:1em;border:0;text-align:left;vertical-align:top;margin:0;">
+<pre style="border-radius:4px;background-color: #fbfaf8;border: 1px solid rgba(0,0,0,.14902);color: #333;font-size: 12px;padding: 8px;font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif;box-sizing: border-box;"><code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f;">1
+</span><span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f;">2
+</span><span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f;">3
+</span><span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f;">4
+</span><span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f;">5
+</span></code></pre></td>
+<td style="padding:0;font-size:1em;border:0;text-align:left;vertical-align:top;margin:0;width:100%;">
+<pre style="border-radius:4px;background-color: #fbfaf8;border: 1px solid rgba(0,0,0,.14902);color: #333;font-size: 12px;padding: 8px;font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif;box-sizing: border-box;"><code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span style="display:flex;"><span>$ sudo yum install -y dstat
+</span></span><span style="display:flex;"><span>$ dstat -cdngy -p --load --tcp
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#998;font-style:italic;"># 默认参数  dstat -cdngy，-p 包含进程的相关信息，--load 包含负载情况</span>
+</span></span><span style="display:flex;"><span><span style="color:#998;font-style:italic;"># --tcp 包含 tcp 相关统计，包括(listen, established, syn, time_wait, close)</span>
+</span></span></code></pre></td></tr></tbody></table>
+</div>
+</div><p style="margin:0px 0px 1.1em;">运行结果截图如下：</p>
+<p style="margin:0px 0px 1.1em;">
+        <div class="media-placeholder">[图片/附件]</div></en-media>   
+    </p>
+<h2 style="color:rgb(186, 57, 37);margin:1.4em 0px 1.1em;border-bottom:1px solid rgb(238, 238, 238);overflow:hidden;font-size:1.28571em;">2. CPU 使用率低 Load 高场景测试</h2>
+<p style="margin:0px 0px 1.1em;">如果通过 top 或者 mpstat 查看系统的 CPU 使用率（包括 %si，%wa）都不高，通过 vmstat 查看系统 cs 也不高，但是系统的负载却是居高不下，那么多半场景是有服务的进程或者线程陷入了 D 状态（即 Uninterruptible Sleep），特别是在程序对于外部存储 NFS Server 或者 Ceph 等存在依赖的场景中。</p>
+<p style="margin:0px 0px 1.1em;">系统整体负载一栏推荐使用 dstat 查看。处于 R 和 D 状态的线程是 Load 统计的需要来源，下面的脚本可以快速统计 R 和 D 状态的线程数目：</p>
+<div style="position:relative;margin:1em 0px;"><div style="background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">
+<table style="font-size:inherit;font-weight:inherit;font-style:inherit;font-variant:inherit;margin:0;width:100%;background:transparent;border-collapse:collapse;border-spacing:0;text-align:left;padding:0;border:0;"><tbody style="border:0px;"><tr style="border:0px;background-color:white;"><td style="padding:0;font-size:1em;border:0;text-align:left;vertical-align:top;margin:0;">
+<pre style="border-radius:4px;background-color: #fbfaf8;border: 1px solid rgba(0,0,0,.14902);color: #333;font-size: 12px;padding: 8px;font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif;box-sizing: border-box;"><code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f;">1
+</span><span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f;">2
+</span></code></pre></td>
+<td style="padding:0;font-size:1em;border:0;text-align:left;vertical-align:top;margin:0;width:100%;">
+<pre style="border-radius:4px;background-color: #fbfaf8;border: 1px solid rgba(0,0,0,.14902);color: #333;font-size: 12px;padding: 8px;font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif;box-sizing: border-box;"><code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span style="display:flex;"><span><span style="color:#998;font-style:italic;"># 统计 R 和 D 状态的数目</span>
+</span></span><span style="display:flex;"><span>$ ps -e -L h o state,cmd  | awk <span style="color:#d14;">'{if($1=="R"||$1=="D"){print $0}}'</span> | sort | uniq -c | sort -k 1nr
+</span></span></code></pre></td></tr></tbody></table>
+</div>
+</div><p style="margin:0px 0px 1.1em;">更加详细的线程列表可以用以下脚本统计：</p>
+<div style="position:relative;margin:1em 0px;"><div style="background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">
+<table style="font-size:inherit;font-weight:inherit;font-style:inherit;font-variant:inherit;margin:0;width:100%;background:transparent;border-collapse:collapse;border-spacing:0;text-align:left;padding:0;border:0;"><tbody style="border:0px;"><tr style="border:0px;background-color:white;"><td style="padding:0;font-size:1em;border:0;text-align:left;vertical-align:top;margin:0;">
+<pre style="border-radius:4px;background-color: #fbfaf8;border: 1px solid rgba(0,0,0,.14902);color: #333;font-size: 12px;padding: 8px;font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif;box-sizing: border-box;"><code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f;"> 1
+</span><span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f;"> 2
+</span><span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f;"> 3
+</span><span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f;"> 4
+</span><span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f;"> 5
+</span><span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f;"> 6
+</span><span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f;"> 7
+</span><span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f;"> 8
+</span><span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f;"> 9
+</span><span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f;">10
+</span><span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f;">11
+</span><span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f;">12
+</span><span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f;">13
+</span><span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f;">14
+</span><span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f;">15
+</span><span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f;">16
+</span></code></pre></td>
+<td style="padding:0;font-size:1em;border:0;text-align:left;vertical-align:top;margin:0;width:100%;">
+<pre style="border-radius:4px;background-color: #fbfaf8;border: 1px solid rgba(0,0,0,.14902);color: #333;font-size: 12px;padding: 8px;font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif;box-sizing: border-box;"><code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span style="display:flex;"><span><span style="color:#999;font-weight:bold;font-style:italic;">#!/bin/bash
+</span></span></span><span style="display:flex;"><span><span style="color:#999;font-weight:bold;font-style:italic;"></span><span style="color:#008080;">LANG</span><span style="color:#000;font-weight:bold;">=</span>C
+</span></span><span style="display:flex;"><span><span style="color:#008080;">PATH</span><span style="color:#000;font-weight:bold;">=</span>/sbin:/usr/sbin:/bin:/usr/bin
+</span></span><span style="display:flex;"><span><span style="color:#008080;">interval</span><span style="color:#000;font-weight:bold;">=</span><span style="color:#099;">5</span>
+</span></span><span style="display:flex;"><span><span style="color:#008080;">length</span><span style="color:#000;font-weight:bold;">=</span><span style="color:#099;">86400</span>
+</span></span><span style="display:flex;"><span><span style="color:#000;font-weight:bold;">for</span> i in <span style="color:#000;font-weight:bold;">$(</span>seq <span style="color:#099;">1</span> <span style="color:#000;font-weight:bold;">$(</span>expr <span style="color:#d14;">${</span><span style="color:#008080;">length</span><span style="color:#d14;">}</span> / <span style="color:#d14;">${</span><span style="color:#008080;">interval</span><span style="color:#d14;">}</span><span style="color:#000;font-weight:bold;">))</span>;<span style="color:#000;font-weight:bold;">do</span>
+</span></span><span style="display:flex;"><span>  date
+</span></span><span style="display:flex;"><span>  <span style="color:#008080;">LANG</span><span style="color:#000;font-weight:bold;">=</span>C ps -eTo stat,pid,tid,ppid,comm  --no-header | sed -e <span style="color:#d14;">'s/^ \*//'</span> | perl -nE <span style="color:#d14;">'chomp;say if (m!^\S*[RD]+\s*!)'</span>
+</span></span><span style="display:flex;"><span>  <span style="color:#998;font-style:italic;"># LANG=C ps -eTo stat,pid,tid,ppid,comm  --no-header | sed -e 's/^ \*//' | perl -nE 'chomp;say if (m!^\S*[RD]+\s*!)'|wc -l</span>
+</span></span><span style="display:flex;"><span>  date
+</span></span><span style="display:flex;"><span>  cat /proc/loadavg
+</span></span><span style="display:flex;"><span>  <span style="color:#0086b3;">echo</span> -e <span style="color:#d14;">"\n"</span>
+</span></span><span style="display:flex;"><span>  sleep <span style="color:#d14;">${</span><span style="color:#008080;">interval</span><span style="color:#d14;">}</span>
+</span></span><span style="display:flex;"><span><span style="color:#000;font-weight:bold;">done</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#998;font-style:italic;"># R 代表运行中的队列，D 是不可中断的睡眠进程，一般为等待 disk io</span>
+</span></span></code></pre></td></tr></tbody></table>
+</div>
+</div><p style="margin:0px 0px 1.1em;">这里我们使用两种情况来模拟产生 <a href="https://en.wikipedia.org/wiki/Uninterruptible_sleep" style="background-color:transparent;text-decoration:none;transition:all 0.1s ease-in 0s;border-bottom:1px solid rgb(221, 221, 221);color:rgb(7, 137, 224);">Uninterruptible Sleep</a> 状态，并持续观察系统的 Load 负载情况。</p>
+<h3 style="color:rgb(186, 57, 37);margin:1.4em 0px 1.1em;border-bottom:1px solid rgb(238, 238, 238);overflow:hidden;">2.1 神奇的 vfork</h3>
+<p style="margin:0px 0px 1.1em;">Linux 系统中也存在容易捕捉的 TASK_UNINTERRUPTIBLE 状态。执行 vfork 系统调用后，父进程将进入 TASK_UNINTERRUPTIBLE 状态，直到子进程调用 exit 或 exec（参见《<a href="https://developer.aliyun.com/article/8914" style="background-color:transparent;text-decoration:none;transition:all 0.1s ease-in 0s;border-bottom:1px solid rgb(221, 221, 221);color:rgb(7, 137, 224);">神奇的vfork</a>》）。</p>
+<div style="position:relative;margin:1em 0px;"><div style="background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">
+<table style="font-size:inherit;font-weight:inherit;font-style:inherit;font-variant:inherit;margin:0;width:100%;background:transparent;border-collapse:collapse;border-spacing:0;text-align:left;padding:0;border:0;"><tbody style="border:0px;"><tr style="border:0px;background-color:white;"><td style="padding:0;font-size:1em;border:0;text-align:left;vertical-align:top;margin:0;">
+<pre style="border-radius:4px;background-color: #fbfaf8;border: 1px solid rgba(0,0,0,.14902);color: #333;font-size: 12px;padding: 8px;font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif;box-sizing: border-box;"><code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f;">1
+</span><span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f;">2
+</span><span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f;">3
+</span><span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f;">4
+</span><span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f;">5
+</span><span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f;">6
+</span><span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f;">7
+</span><span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f;">8
+</span><span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f;">9
+</span></code></pre></td>
+<td style="padding:0;font-size:1em;border:0;text-align:left;vertical-align:top;margin:0;width:100%;">
+<pre style="border-radius:4px;background-color: #fbfaf8;border: 1px solid rgba(0,0,0,.14902);color: #333;font-size: 12px;padding: 8px;font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif;box-sizing: border-box;"><code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span style="display:flex;"><span><span style="color:#999;font-weight:bold;font-style:italic;">#include</span> <span style="color:#999;font-weight:bold;font-style:italic;">&lt;sys/types.h&gt;</span><span style="color:#999;font-weight:bold;font-style:italic;">
+</span></span></span><span style="display:flex;"><span><span style="color:#999;font-weight:bold;font-style:italic;">#include</span> <span style="color:#999;font-weight:bold;font-style:italic;">&lt;unistd.h&gt;</span><span style="color:#999;font-weight:bold;font-style:italic;">
+</span></span></span><span style="display:flex;"><span><span style="color:#999;font-weight:bold;font-style:italic;"></span>
+</span></span><span style="display:flex;"><span><span style="color:#458;font-weight:bold;">void</span> <span style="color:#900;font-weight:bold;">main</span>() {
+</span></span><span style="display:flex;"><span>    <span style="color:#000;font-weight:bold;">if</span> (<span style="color:#000;font-weight:bold;">!</span>vfork())
+</span></span><span style="display:flex;"><span>    {
+</span></span><span style="display:flex;"><span>        sleep(<span style="color:#099;">100</span>);
+</span></span><span style="display:flex;"><span>    }
+</span></span><span style="display:flex;"><span>}
+</span></span></code></pre></td></tr></tbody></table>
+</div>
+</div><p style="margin:0px 0px 1.1em;">使用 gcc 编译</p>
+<div style="position:relative;margin:1em 0px;"><div style="background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">
+<table style="font-size:inherit;font-weight:inherit;font-style:inherit;font-variant:inherit;margin:0;width:100%;background:transparent;border-collapse:collapse;border-spacing:0;text-align:left;padding:0;border:0;"><tbody style="border:0px;"><tr style="border:0px;background-color:white;"><td style="padding:0;font-size:1em;border:0;text-align:left;vertical-align:top;margin:0;">
+<pre style="border-radius:4px;background-color: #fbfaf8;border: 1px solid rgba(0,0,0,.14902);color: #333;font-size: 12px;padding: 8px;font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif;box-sizing: border-box;"><code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f;">1
+</span></code></pre></td>
+<td style="padding:0;font-size:1em;border:0;text-align:left;vertical-align:top;margin:0;width:100%;">
+<pre style="border-radius:4px;background-color: #fbfaf8;border: 1px solid rgba(0,0,0,.14902);color: #333;font-size: 12px;padding: 8px;font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif;box-sizing: border-box;"><code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span style="display:flex;"><span>$ gcc -o vfork_test vfork.c
+</span></span></code></pre></td></tr></tbody></table>
+</div>
+</div><p style="margin:0px 0px 1.1em;">然后我们写一个脚本产生 30 个 D 状态的进程，并观察系统的负载变化情况：</p>
+<div style="position:relative;margin:1em 0px;"><div style="background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">
+<table style="font-size:inherit;font-weight:inherit;font-style:inherit;font-variant:inherit;margin:0;width:100%;background:transparent;border-collapse:collapse;border-spacing:0;text-align:left;padding:0;border:0;"><tbody style="border:0px;"><tr style="border:0px;background-color:white;"><td style="padding:0;font-size:1em;border:0;text-align:left;vertical-align:top;margin:0;">
+<pre style="border-radius:4px;background-color: #fbfaf8;border: 1px solid rgba(0,0,0,.14902);color: #333;font-size: 12px;padding: 8px;font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif;box-sizing: border-box;"><code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f;">1
+</span><span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f;">2
+</span><span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f;">3
+</span><span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f;">4
+</span><span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f;">5
+</span><span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f;">6
+</span></code></pre></td>
+<td style="padding:0;font-size:1em;border:0;text-align:left;vertical-align:top;margin:0;width:100%;">
+<pre style="border-radius:4px;background-color: #fbfaf8;border: 1px solid rgba(0,0,0,.14902);color: #333;font-size: 12px;padding: 8px;font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif;box-sizing: border-box;"><code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span style="display:flex;"><span><span style="color:#999;font-weight:bold;font-style:italic;">#!/bin/bash
+</span></span></span><span style="display:flex;"><span><span style="color:#999;font-weight:bold;font-style:italic;"></span>
+</span></span><span style="display:flex;"><span><span style="color:#000;font-weight:bold;">for</span> i in <span style="color:#000;font-weight:bold;">$(</span>seq <span style="color:#099;">1</span> 30<span style="color:#000;font-weight:bold;">)</span>
+</span></span><span style="display:flex;"><span><span style="color:#000;font-weight:bold;">do</span>
+</span></span><span style="display:flex;"><span>	./vfork_test &amp;
+</span></span><span style="display:flex;"><span><span style="color:#000;font-weight:bold;">done</span>
+</span></span></code></pre></td></tr></tbody></table>
+</div>
+</div><p style="margin:0px 0px 1.1em;">运行后使用查看进程脚本验证：</p>
+<div style="position:relative;margin:1em 0px;"><div style="background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">
+<table style="font-size:inherit;font-weight:inherit;font-style:inherit;font-variant:inherit;margin:0;width:100%;background:transparent;border-collapse:collapse;border-spacing:0;text-align:left;padding:0;border:0;"><tbody style="border:0px;"><tr style="border:0px;background-color:white;"><td style="padding:0;font-size:1em;border:0;text-align:left;vertical-align:top;margin:0;">
+<pre style="border-radius:4px;background-color: #fbfaf8;border: 1px solid rgba(0,0,0,.14902);color: #333;font-size: 12px;padding: 8px;font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif;box-sizing: border-box;"><code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f;">1
+</span><span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f;">2
+</span></code></pre></td>
+<td style="padding:0;font-size:1em;border:0;text-align:left;vertical-align:top;margin:0;width:100%;">
+<pre style="border-radius:4px;background-color: #fbfaf8;border: 1px solid rgba(0,0,0,.14902);color: #333;font-size: 12px;padding: 8px;font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif;box-sizing: border-box;"><code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span style="display:flex;"><span>$ ps -e -L h o state,cmd  | awk <span style="color:#d14;">'{if($1=="R"||$1=="D"){print $0}}'</span> | sort | uniq -c | sort -k 1nr
+</span></span><span style="display:flex;"><span><span style="color:#099;">30</span> D ./vfork_test
+</span></span></code></pre></td></tr></tbody></table>
+</div>
+</div><p style="margin:0px 0px 1.1em;">我们使用 <code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif">dstat</code> 来查看系统负载：</p>
+<div style="position:relative;margin:1em 0px;"><div style="background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">
+<table style="font-size:inherit;font-weight:inherit;font-style:inherit;font-variant:inherit;margin:0;width:100%;background:transparent;border-collapse:collapse;border-spacing:0;text-align:left;padding:0;border:0;"><tbody style="border:0px;"><tr style="border:0px;background-color:white;"><td style="padding:0;font-size:1em;border:0;text-align:left;vertical-align:top;margin:0;">
+<pre style="border-radius:4px;background-color: #fbfaf8;border: 1px solid rgba(0,0,0,.14902);color: #333;font-size: 12px;padding: 8px;font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif;box-sizing: border-box;"><code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f;"> 1
+</span><span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f;"> 2
+</span><span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f;"> 3
+</span><span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f;"> 4
+</span><span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f;"> 5
+</span><span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f;"> 6
+</span><span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f;"> 7
+</span><span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f;"> 8
+</span><span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f;"> 9
+</span><span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f;">10
+</span></code></pre></td>
+<td style="padding:0;font-size:1em;border:0;text-align:left;vertical-align:top;margin:0;width:100%;">
+<pre style="border-radius:4px;background-color: #fbfaf8;border: 1px solid rgba(0,0,0,.14902);color: #333;font-size: 12px;padding: 8px;font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif;box-sizing: border-box;"><code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span style="display:flex;"><span><span style="color:#998;font-style:italic;"># dstat -t  -p --load</span>
+</span></span><span style="display:flex;"><span>----system---- ---procs--- ---load-avg---
+</span></span><span style="display:flex;"><span>     <span style="color:#0086b3;">time</span>     |run blk new| 1m   5m  15m
+</span></span><span style="display:flex;"><span>30-11 10:52:29|0.0   <span style="color:#099;">0</span>  34|28.4 13.2 5.22
+</span></span><span style="display:flex;"><span>30-11 10:52:30|1.0   <span style="color:#099;">0</span> 172|28.4 13.2 5.22
+</span></span><span style="display:flex;"><span>30-11 10:52:31|  <span style="color:#099;">0</span>   <span style="color:#099;">0</span> 1.0|28.4 13.2 5.22
+</span></span><span style="display:flex;"><span>30-11 10:52:32|  <span style="color:#099;">0</span>   <span style="color:#099;">0</span> 1.0|28.5 13.5 5.36
+</span></span><span style="display:flex;"><span>30-11 10:52:33|  <span style="color:#099;">0</span>   <span style="color:#099;">0</span>  10|28.5 13.5 5.36
+</span></span><span style="display:flex;"><span>30-11 10:52:34|1.0   <span style="color:#099;">0</span>   0|28.5 13.5 5.36
+</span></span><span style="display:flex;"><span>30-11 10:52:35|  <span style="color:#099;">0</span>   <span style="color:#099;">0</span> 1.0|28.5 13.5 5.36
+</span></span></code></pre></td></tr></tbody></table>
+</div>
+</div><p style="margin:0px 0px 1.1em;">我们可以看到负载在持续升高。通过监控的图可以很清楚反应出来，在 CPU 使用率和进程切换无明显变化的情况下，系统的负载一直持续升高，直至最后与 D 状态的进程数目相当，这是因为 Load 的计算公式是按照指数级别的衰减的，需要一定时间才能完全追随真实情况。</p>
+<p style="margin:0px 0px 1.1em;">
+        <div class="media-placeholder">[图片/附件]</div></en-media>   
+    </p>
+<p style="margin:0px 0px 1.1em;">该程序测试完成后会产生不少僵尸进程，使用以下命令进行清理：</p>
+<div style="position:relative;margin:1em 0px;"><div style="background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">
+<table style="font-size:inherit;font-weight:inherit;font-style:inherit;font-variant:inherit;margin:0;width:100%;background:transparent;border-collapse:collapse;border-spacing:0;text-align:left;padding:0;border:0;"><tbody style="border:0px;"><tr style="border:0px;background-color:white;"><td style="padding:0;font-size:1em;border:0;text-align:left;vertical-align:top;margin:0;">
+<pre style="border-radius:4px;background-color: #fbfaf8;border: 1px solid rgba(0,0,0,.14902);color: #333;font-size: 12px;padding: 8px;font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif;box-sizing: border-box;"><code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f;">1
+</span><span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f;">2
+</span></code></pre></td>
+<td style="padding:0;font-size:1em;border:0;text-align:left;vertical-align:top;margin:0;width:100%;">
+<pre style="border-radius:4px;background-color: #fbfaf8;border: 1px solid rgba(0,0,0,.14902);color: #333;font-size: 12px;padding: 8px;font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif;box-sizing: border-box;"><code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span style="display:flex;"><span><span style="color:#998;font-style:italic;"># 或者 killall vfork_test</span>
+</span></span><span style="display:flex;"><span>$ ps aux|grep vfork_test|awk <span style="color:#000;font-weight:bold;">{</span><span style="color:#d14;">'print $2'</span><span style="color:#000;font-weight:bold;">}</span>|xargs <span style="color:#0086b3;">kill</span> -9
+</span></span></code></pre></td></tr></tbody></table>
+</div>
+</div><h3 style="color:rgb(186, 57, 37);margin:1.4em 0px 1.1em;border-bottom:1px solid rgb(238, 238, 238);overflow:hidden;">2.2 NFS 服务器停止服务</h3>
+<h4 style="color:rgb(186, 57, 37);">2.2.1 环境准备</h4>
+<p style="margin:0px 0px 1.1em;">为了模拟 NFS 服务器停止服务的情况下，，需要在准备一台服务器（既做客户端也做服务端），准备环境步骤如下：</p>
+<div style="position:relative;margin:1em 0px;"><div style="background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">
+<table style="font-size:inherit;font-weight:inherit;font-style:inherit;font-variant:inherit;margin:0;width:100%;background:transparent;border-collapse:collapse;border-spacing:0;text-align:left;padding:0;border:0;"><tbody style="border:0px;"><tr style="border:0px;background-color:white;"><td style="padding:0;font-size:1em;border:0;text-align:left;vertical-align:top;margin:0;">
+<pre style="border-radius:4px;background-color: #fbfaf8;border: 1px solid rgba(0,0,0,.14902);color: #333;font-size: 12px;padding: 8px;font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif;box-sizing: border-box;"><code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f;"> 1
+</span><span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f;"> 2
+</span><span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f;"> 3
+</span><span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f;"> 4
+</span><span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f;"> 5
+</span><span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f;"> 6
+</span><span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f;"> 7
+</span><span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f;"> 8
+</span><span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f;"> 9
+</span><span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f;">10
+</span><span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f;">11
+</span><span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f;">12
+</span><span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f;">13
+</span><span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f;">14
+</span><span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f;">15
+</span><span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f;">16
+</span><span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f;">17
+</span><span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f;">18
+</span><span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f;">19
+</span><span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f;">20
+</span><span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f;">21
+</span><span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f;">22
+</span><span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f;">23
+</span><span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f;">24
+</span><span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f;">25
+</span><span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f;">26
+</span></code></pre></td>
+<td style="padding:0;font-size:1em;border:0;text-align:left;vertical-align:top;margin:0;width:100%;">
+<pre style="border-radius:4px;background-color: #fbfaf8;border: 1px solid rgba(0,0,0,.14902);color: #333;font-size: 12px;padding: 8px;font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif;box-sizing: border-box;"><code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span style="display:flex;"><span><span style="color:#998;font-style:italic;"># 1. 安装 NFS 服务</span>
+</span></span><span style="display:flex;"><span><span style="color:#998;font-style:italic;"># yum install nfs-utils -y</span>
+</span></span><span style="display:flex;"><span><span style="color:#998;font-style:italic;"># systemctl start nfs</span>
+</span></span><span style="display:flex;"><span><span style="color:#998;font-style:italic;"># systemctl start rpcbind</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#998;font-style:italic;"># 2. 创建 NFS 目录并设置共享</span>
+</span></span><span style="display:flex;"><span><span style="color:#998;font-style:italic;"># mkdir /var/nfs</span>
+</span></span><span style="display:flex;"><span><span style="color:#998;font-style:italic;"># chmod 755 /var/nfs/</span>
+</span></span><span style="display:flex;"><span><span style="color:#998;font-style:italic;"># chown nfsnobody:nfsnobody /var/nfs/</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#998;font-style:italic;"># 3. 设置导出目录，以读写模式进行共享</span>
+</span></span><span style="display:flex;"><span><span style="color:#998;font-style:italic;"># cat /etc/exports</span>
+</span></span><span style="display:flex;"><span>/var/nfs    *<span style="color:#000;font-weight:bold;">(</span>rw,sync<span style="color:#000;font-weight:bold;">)</span>
+</span></span><span style="display:flex;"><span><span style="color:#998;font-style:italic;"># exportfs -a</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#998;font-style:italic;"># 4. 确认共享情况并挂载</span>
+</span></span><span style="display:flex;"><span><span style="color:#998;font-style:italic;"># showmount -e 172.16.18.161</span>
+</span></span><span style="display:flex;"><span>Export list <span style="color:#000;font-weight:bold;">for</span> 172.16.18.161:
+</span></span><span style="display:flex;"><span>/var/nfs *
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#998;font-style:italic;"># mkdir -p /mnt/nfs</span>
+</span></span><span style="display:flex;"><span><span style="color:#998;font-style:italic;"># mount -t nfs 172.16.18.161:/var/nfs /mnt/nfs</span>
+</span></span><span style="display:flex;"><span><span style="color:#998;font-style:italic;"># df</span>
+</span></span><span style="display:flex;"><span>Filesystem             1K-blocks    Used Available Use% Mounted on
+</span></span><span style="display:flex;"><span>172.16.18.161:/var/nfs <span style="color:#099;">103080960</span> <span style="color:#099;">5168128</span>  <span style="color:#099;">93493248</span>   6% /mnt/nfs
+</span></span></code></pre></td></tr></tbody></table>
+</div>
+</div><h4 style="color:rgb(186, 57, 37);">2.2.2 停止 NFS Server 进程并测试</h4>
+<p style="margin:0px 0px 1.1em;">在停止 <code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif">nfs</code> 服务之前，进入到 NFS 挂载的目录 <code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif">/mnt/nfs</code> 下。</p>
+<p style="margin:0px 0px 1.1em;">停止 NFS Server 进程服务：</p>
+<div style="position:relative;margin:1em 0px;"><div style="background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">
+<table style="font-size:inherit;font-weight:inherit;font-style:inherit;font-variant:inherit;margin:0;width:100%;background:transparent;border-collapse:collapse;border-spacing:0;text-align:left;padding:0;border:0;"><tbody style="border:0px;"><tr style="border:0px;background-color:white;"><td style="padding:0;font-size:1em;border:0;text-align:left;vertical-align:top;margin:0;">
+<pre style="border-radius:4px;background-color: #fbfaf8;border: 1px solid rgba(0,0,0,.14902);color: #333;font-size: 12px;padding: 8px;font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif;box-sizing: border-box;"><code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f;">1
+</span></code></pre></td>
+<td style="padding:0;font-size:1em;border:0;text-align:left;vertical-align:top;margin:0;width:100%;">
+<pre style="border-radius:4px;background-color: #fbfaf8;border: 1px solid rgba(0,0,0,.14902);color: #333;font-size: 12px;padding: 8px;font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif;box-sizing: border-box;"><code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span style="display:flex;"><span><span style="color:#998;font-style:italic;"># systemctl stop nfs</span>
+</span></span></code></pre></td></tr></tbody></table>
+</div>
+</div><p style="margin:0px 0px 1.1em;">在挂载的 <code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif">/mnt/nfs</code> 目录下执行一下脚本：</p>
+<div style="position:relative;margin:1em 0px;"><div style="background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">
+<table style="font-size:inherit;font-weight:inherit;font-style:inherit;font-variant:inherit;margin:0;width:100%;background:transparent;border-collapse:collapse;border-spacing:0;text-align:left;padding:0;border:0;"><tbody style="border:0px;"><tr style="border:0px;background-color:white;"><td style="padding:0;font-size:1em;border:0;text-align:left;vertical-align:top;margin:0;">
+<pre style="border-radius:4px;background-color: #fbfaf8;border: 1px solid rgba(0,0,0,.14902);color: #333;font-size: 12px;padding: 8px;font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif;box-sizing: border-box;"><code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f;"> 1
+</span><span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f;"> 2
+</span><span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f;"> 3
+</span><span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f;"> 4
+</span><span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f;"> 5
+</span><span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f;"> 6
+</span><span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f;"> 7
+</span><span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f;"> 8
+</span><span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f;"> 9
+</span><span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f;">10
+</span></code></pre></td>
+<td style="padding:0;font-size:1em;border:0;text-align:left;vertical-align:top;margin:0;width:100%;">
+<pre style="border-radius:4px;background-color: #fbfaf8;border: 1px solid rgba(0,0,0,.14902);color: #333;font-size: 12px;padding: 8px;font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif;box-sizing: border-box;"><code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span style="display:flex;"><span><span style="color:#998;font-style:italic;"># cat /tmp/ls_nfs.sh</span>
+</span></span><span style="display:flex;"><span><span style="color:#998;font-style:italic;">#!/bin/bash</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#000;font-weight:bold;">for</span> i in <span style="color:#000;font-weight:bold;">$(</span>seq <span style="color:#099;">1</span> 30<span style="color:#000;font-weight:bold;">)</span>
+</span></span><span style="display:flex;"><span><span style="color:#000;font-weight:bold;">do</span>
+</span></span><span style="display:flex;"><span>    ls -hl &amp;
+</span></span><span style="display:flex;"><span><span style="color:#000;font-weight:bold;">done</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#998;font-style:italic;"># 位于 nfs 的挂载目录</span>
+</span></span><span style="display:flex;"><span><span style="color:#000;font-weight:bold;">[</span>/mnt/nfs<span style="color:#000;font-weight:bold;">]</span><span style="color:#998;font-style:italic;"># /tmp/ls_nfs.sh</span>
+</span></span></code></pre></td></tr></tbody></table>
+</div>
+</div><p style="margin:0px 0px 1.1em;">验证查看：</p>
+<div style="position:relative;margin:1em 0px;"><div style="background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">
+<table style="font-size:inherit;font-weight:inherit;font-style:inherit;font-variant:inherit;margin:0;width:100%;background:transparent;border-collapse:collapse;border-spacing:0;text-align:left;padding:0;border:0;"><tbody style="border:0px;"><tr style="border:0px;background-color:white;"><td style="padding:0;font-size:1em;border:0;text-align:left;vertical-align:top;margin:0;">
+<pre style="border-radius:4px;background-color: #fbfaf8;border: 1px solid rgba(0,0,0,.14902);color: #333;font-size: 12px;padding: 8px;font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif;box-sizing: border-box;"><code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f;"> 1
+</span><span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f;"> 2
+</span><span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f;"> 3
+</span><span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f;"> 4
+</span><span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f;"> 5
+</span><span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f;"> 6
+</span><span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f;"> 7
+</span><span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f;"> 8
+</span><span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f;"> 9
+</span><span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f;">10
+</span><span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f;">11
+</span><span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f;">12
+</span><span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f;">13
+</span></code></pre></td>
+<td style="padding:0;font-size:1em;border:0;text-align:left;vertical-align:top;margin:0;width:100%;">
+<pre style="border-radius:4px;background-color: #fbfaf8;border: 1px solid rgba(0,0,0,.14902);color: #333;font-size: 12px;padding: 8px;font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif;box-sizing: border-box;"><code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span style="display:flex;"><span>$ ps -e -L h o state,cmd  | awk <span style="color:#d14;">'{if($1=="R"||$1=="D"){print $0}}'</span> | sort | uniq -c | sort -k 1nr
+</span></span><span style="display:flex;"><span><span style="color:#099;">30</span> D ls -hl
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>$ dstat -t -p --load
+</span></span><span style="display:flex;"><span>----system---- ---procs--- ---load-avg---
+</span></span><span style="display:flex;"><span>     <span style="color:#0086b3;">time</span>     |run blk new| 1m   5m  15m
+</span></span><span style="display:flex;"><span>30-11 11:55:34|  <span style="color:#099;">0</span>   <span style="color:#099;">0</span>  34|25.6 9.36 4.01
+</span></span><span style="display:flex;"><span>30-11 11:55:35|1.0   <span style="color:#099;">0</span> 2.0|25.6 9.36 4.01
+</span></span><span style="display:flex;"><span>30-11 11:55:36|1.0   <span style="color:#099;">0</span>  16|25.6 9.36 4.01
+</span></span><span style="display:flex;"><span>30-11 11:55:37|1.0   <span style="color:#099;">0</span>   0|25.6 9.36 4.01
+</span></span><span style="display:flex;"><span>30-11 11:55:38|  <span style="color:#099;">0</span>   <span style="color:#099;">0</span> 9.0|26.1 9.72 4.16
+</span></span><span style="display:flex;"><span>30-11 11:55:39|  <span style="color:#099;">0</span>   <span style="color:#099;">0</span>  77|26.1 9.72 4.16
+</span></span><span style="display:flex;"><span>30-11 11:55:40|  <span style="color:#099;">0</span>   <span style="color:#099;">0</span> 5.0|26.1 9.72 4.16
+</span></span></code></pre></td></tr></tbody></table>
+</div>
+</div><p style="margin:0px 0px 1.1em;">通过监控查看：</p>
+<p style="margin:0px 0px 1.1em;">
+        <div class="media-placeholder">[图片/附件]</div></en-media>   
+    </p>
+<p style="margin:0px 0px 1.1em;">在测试完成后恢复通过启用 NFS Server 恢复:</p>
+<div style="position:relative;margin:1em 0px;"><div style="background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">
+<table style="font-size:inherit;font-weight:inherit;font-style:inherit;font-variant:inherit;margin:0;width:100%;background:transparent;border-collapse:collapse;border-spacing:0;text-align:left;padding:0;border:0;"><tbody style="border:0px;"><tr style="border:0px;background-color:white;"><td style="padding:0;font-size:1em;border:0;text-align:left;vertical-align:top;margin:0;">
+<pre style="border-radius:4px;background-color: #fbfaf8;border: 1px solid rgba(0,0,0,.14902);color: #333;font-size: 12px;padding: 8px;font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif;box-sizing: border-box;"><code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f;">1
+</span><span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f;">2
+</span></code></pre></td>
+<td style="padding:0;font-size:1em;border:0;text-align:left;vertical-align:top;margin:0;width:100%;">
+<pre style="border-radius:4px;background-color: #fbfaf8;border: 1px solid rgba(0,0,0,.14902);color: #333;font-size: 12px;padding: 8px;font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif;box-sizing: border-box;"><code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span style="display:flex;"><span><span style="color:#998;font-style:italic;"># systemctl start nfs</span>
+</span></span><span style="display:flex;"><span><span style="color:#998;font-style:italic;"># 或者强制卸载挂载 umount -lf /mnt/nfs</span>
+</span></span></code></pre></td></tr></tbody></table>
+</div>
+</div><h3 style="color:rgb(186, 57, 37);margin:1.4em 0px 1.1em;border-bottom:1px solid rgb(238, 238, 238);overflow:hidden;">2.2.3 容器进程排查</h3>
+<p style="margin:0px 0px 1.1em;">检查可疑进程是在容器环境中，需要根据 pid 查找到容器相关的容器实例：</p>
+<div style="position:relative;margin:1em 0px;"><div style="background-color:#fff;-moz-tab-size:4;-o-tab-size:4;tab-size:4;">
+<table style="font-size:inherit;font-weight:inherit;font-style:inherit;font-variant:inherit;margin:0;width:100%;background:transparent;border-collapse:collapse;border-spacing:0;text-align:left;padding:0;border:0;"><tbody style="border:0px;"><tr style="border:0px;background-color:white;"><td style="padding:0;font-size:1em;border:0;text-align:left;vertical-align:top;margin:0;">
+<pre style="border-radius:4px;background-color: #fbfaf8;border: 1px solid rgba(0,0,0,.14902);color: #333;font-size: 12px;padding: 8px;font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif;box-sizing: border-box;"><code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f;">1
+</span><span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f;">2
+</span><span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f;">3
+</span><span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f;">4
+</span><span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f;">5
+</span><span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f;">6
+</span><span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f;">7
+</span><span style="white-space:pre;user-select:none;margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7f7f7f;">8
+</span></code></pre></td>
+<td style="padding:0;font-size:1em;border:0;text-align:left;vertical-align:top;margin:0;width:100%;">
+<pre style="border-radius:4px;background-color: #fbfaf8;border: 1px solid rgba(0,0,0,.14902);color: #333;font-size: 12px;padding: 8px;font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif;box-sizing: border-box;"><code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span style="display:flex;"><span><span style="color:#998;font-style:italic;"># 查找 docker ID</span>
+</span></span><span style="display:flex;"><span>$ docker inspect -f <span style="color:#d14;">"{{.Id}} {{.State.Pid}} {{.Name}} "</span> <span style="color:#000;font-weight:bold;">$(</span>docker ps -q<span style="color:#000;font-weight:bold;">)</span> |grep &lt;PID&gt;
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#998;font-style:italic;"># 查找k8s pod name</span>
+</span></span><span style="display:flex;"><span>$ docker inspect -f <span style="color:#d14;">"{{.Id}} {{.State.Pid}} {{.Config.Hostname}}"</span>  <span style="color:#000;font-weight:bold;">$(</span>docker ps -q<span style="color:#000;font-weight:bold;">)</span> |grep &lt;PID&gt;
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#998;font-style:italic;"># 如果是子进程</span>
+</span></span><span style="display:flex;"><span>$ <span style="color:#000;font-weight:bold;">for</span> i in  <span style="color:#d14;">`</span>docker ps |grep Up|awk <span style="color:#d14;">'{print $1}'</span><span style="color:#d14;">`</span>;<span style="color:#000;font-weight:bold;">do</span> <span style="color:#0086b3;">echo</span> <span style="color:#d14;">\ </span><span style="color:#000;font-weight:bold;">&amp;&amp;</span>docker top <span style="color:#008080;">$i</span> <span style="color:#000;font-weight:bold;">&amp;&amp;</span><span style="color:#0086b3;">echo</span> <span style="color:#008080;">ID</span><span style="color:#000;font-weight:bold;">=</span><span style="color:#008080;">$i</span>; <span style="color:#000;font-weight:bold;">done</span> |grep -A <span style="color:#099;">10</span> &lt;PID&gt;
+</span></span></code></pre></td></tr></tbody></table>
+</div>
+</div><h2 style="color:rgb(186, 57, 37);margin:1.4em 0px 1.1em;border-bottom:1px solid rgb(238, 238, 238);overflow:hidden;font-size:1.28571em;">3. 参考</h2>
+<ul style="overflow:auto;padding:0.5em 2.4em;border-radius:3px;margin:0.3em 0px;">
+<li style="text-indent:0.5em;"><a href="https://www.jianshu.com/p/6fd207b16a06?utm_campaign=maleskine" style="background-color:transparent;text-decoration:none;transition:all 0.1s ease-in 0s;border-bottom:1px solid rgb(221, 221, 221);color:rgb(7, 137, 224);">nfs问题导致df挂起</a></li>
+<li style="text-indent:0.5em;"><a href="http://www.361way.com/linux-context-switch/5131.html" style="background-color:transparent;text-decoration:none;transition:all 0.1s ease-in 0s;border-bottom:1px solid rgb(221, 221, 221);color:rgb(7, 137, 224);">进程上下文频繁切换导致load average过高</a></li>
+<li style="text-indent:0.5em;"><a href="https://www.cnblogs.com/embedded-linux/p/7043569.html" style="background-color:transparent;text-decoration:none;transition:all 0.1s ease-in 0s;border-bottom:1px solid rgb(221, 221, 221);color:rgb(7, 137, 224);">https://www.cnblogs.com/embedded-linux/p/7043569.html</a>  vfork D 状态</li>
+<li style="text-indent:0.5em;"><a href="https://blog.csdn.net/ctthuangcheng/article/details/8914613" style="background-color:transparent;text-decoration:none;transition:all 0.1s ease-in 0s;border-bottom:1px solid rgb(221, 221, 221);color:rgb(7, 137, 224);">https://blog.csdn.net/ctthuangcheng/article/details/8914613</a> vfork D 状态</li>
+</ul>
+
+        </div>
+
+        
+<div style="font-size:15px;line-height:2;padding-bottom:0.8em;">
+    <ul style="margin:2em 0px 0px;padding:0.5em 1em;border-left:3px solid rgb(255, 23, 0);background-color:rgb(249, 249, 249);list-style:none;">
+        <li><strong style="font-weight:bolder;">原文作者：</strong><a rel="author" href="https://www.ebpf.top/" style="background-color:transparent;color:rgb(110, 113, 115);text-decoration:none;transition:all 0.1s ease-in 0s;border-bottom:1px solid rgb(153, 153, 153);">DavidDi</a></li>
+        <li style="word-break:break-all;"><strong style="font-weight:bolder;">原文链接：</strong><a href="https://www.ebpf.top/post/sys_linux_load_avg2/" style="background-color:transparent;color:rgb(110, 113, 115);text-decoration:none;transition:all 0.1s ease-in 0s;border-bottom:1px solid rgb(153, 153, 153);">https://www.ebpf.top/post/sys_linux_load_avg2/</a></li>
+        <li><strong style="font-weight:bolder;">版权声明：</strong>本作品采用<a rel="license" href="https://creativecommons.org/licenses/by-nc-nd/4.0/" style="background-color:transparent;color:rgb(110, 113, 115);text-decoration:none;transition:all 0.1s ease-in 0s;border-bottom:1px solid rgb(153, 153, 153);">知识共享署名-非商业性使用-禁止演绎 4.0 国际许可协议</a>. 进行许可，非商业转载请注明出处（作者，原文链接），商业转载请联系作者获得授权。</li>
+        <li><strong style="font-weight:bolder;">最后更新时间：</strong>2022-11-05 21:36:52.166925128 +0800 CST </li> 
+   </ul>
+</div>
+<br/>
+<div align="center"> 为了及时接收到 BPF 相关技术，建议关注 "深入浅出BPF" 微信公众号。
+<br/>
+<div class="media-placeholder">[图片/附件]</div></en-media>
+</div>
+
+<div align="center">如果你觉得本文有用，欢迎给作者打赏一个咖啡☕️钱。
+<br/>
+<div class="media-placeholder">[图片/附件]</div></en-media>
+</div>
+
+
+
+        
+
+
+        <div style="padding:0px;margin:9px 0px 0px;color:rgb(153, 153, 153);text-align:left;display:inline-block;">
+            
+            没有标签
+            
+        </div>
+    </div></div></div></div></div></div></div></div></div>
+</div>
+</div>
+<a class="back-link" href="../articles.html">← 返回笔记列表</a>
+</body>
+</html>

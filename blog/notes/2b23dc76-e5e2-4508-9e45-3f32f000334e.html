@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="zh-CN" data-theme="light">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>pytorch分布式训练的checkpoint机制调研报告 — 技术笔记</title>
+<style>
+:root {
+  --bg: #ffffff;
+  --text: #1a1a1a;
+  --muted: #666;
+  --border: #e0e0e0;
+  --code-bg: #f5f5f5;
+  --link: #0066cc;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #1a1a1a;
+    --text: #e0e0e0;
+    --muted: #999;
+    --border: #333;
+    --code-bg: #2a2a2a;
+    --link: #66bbff;
+  }
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  line-height: 1.7;
+  color: var(--text);
+  background: var(--bg);
+  max-width: 860px;
+  margin: 0 auto;
+  padding: 2rem 1.5rem;
+}
+.note-header {
+  border-bottom: 2px solid var(--border);
+  padding-bottom: 1rem;
+  margin-bottom: 2rem;
+}
+.note-title {
+  font-size: 1.6rem;
+  font-weight: 700;
+  margin-bottom: 0.3rem;
+}
+.note-meta {
+  color: var(--muted);
+  font-size: 0.85rem;
+}
+.note-content {
+  font-size: 0.95rem;
+}
+.note-content h1 { font-size: 1.4rem; margin: 1.2rem 0 0.6rem; }
+.note-content h2 { font-size: 1.2rem; margin: 1rem 0 0.5rem; }
+.note-content h3 { font-size: 1.05rem; margin: 0.8rem 0 0.4rem; }
+.note-content p { margin: 0.5rem 0; }
+.note-content ul, .note-content ol { margin: 0.5rem 0 0.5rem 2rem; }
+.note-content li { margin: 0.2rem 0; }
+.note-content pre {
+  background: var(--code-bg);
+  padding: 1rem;
+  border-radius: 6px;
+  overflow-x: auto;
+  margin: 0.8rem 0;
+  font-size: 0.85rem;
+}
+.note-content code {
+  background: var(--code-bg);
+  padding: 0.1rem 0.3rem;
+  border-radius: 3px;
+  font-size: 0.88em;
+}
+.note-content pre code {
+  background: none;
+  padding: 0;
+}
+.note-content blockquote {
+  border-left: 3px solid var(--border);
+  padding-left: 1rem;
+  color: var(--muted);
+  margin: 0.8rem 0;
+}
+.note-content a { color: var(--link); }
+.note-content img {
+  max-width: 100%;
+  height: auto;
+  border-radius: 6px;
+  margin: 0.5rem 0;
+}
+.note-content table {
+  border-collapse: collapse;
+  width: 100%;
+  margin: 0.8rem 0;
+}
+.note-content th, .note-content td {
+  border: 1px solid var(--border);
+  padding: 0.5rem;
+}
+.note-content th { background: var(--code-bg); }
+.media-placeholder {
+  background: var(--code-bg);
+  padding: 1rem;
+  text-align: center;
+  color: var(--muted);
+  border-radius: 6px;
+  margin: 0.5rem 0;
+  font-size: 0.85rem;
+}
+.encrypt-placeholder {
+  background: #fff3cd;
+  padding: 0.5rem;
+  text-align: center;
+  color: #856404;
+  border-radius: 6px;
+  margin: 0.5rem 0;
+  font-size: 0.85rem;
+}
+.back-link {
+  display: inline-block;
+  margin-top: 2rem;
+  color: var(--link);
+  text-decoration: none;
+  font-size: 0.85rem;
+}
+</style>
+</head>
+<body>
+<div class="note-header">
+  <div class="note-title">pytorch分布式训练的checkpoint机制调研报告</div>
+  <div class="note-meta">笔记本：AI</div>
+</div>
+<div class="note-content">
+<div>PyTorch是一种流行的深度学习框架，具有分布式训练的能力。在分布式训练过程中，由于各个节点之间的通信开销和节点故障的可能性，需要实现快速恢复模型训练状态的机制。PyTorch提供了Checkpoint机制来实现这一目的。</div><div>Checkpoint机制的主要思想是在训练过程中定期保存模型的状态，以便在节点故障或通信错误时恢复训练状态。在PyTorch中，Checkpoint机制可以通过两种方式实现：保存模型参数和保存完整的模型状态。</div><div>保存模型参数可以通过以下代码实现：</div><div style="--en-codeblock:true;--en-codeblockLanguage:javascript;box-sizing: border-box; padding: 8px; font-family: Monaco, Menlo, Consolas, &quot;Courier New&quot;, monospace; font-size: 12px; color: rgb(51, 51, 51); border-top-left-radius: 4px; border-top-right-radius: 4px; border-bottom-right-radius: 4px; border-bottom-left-radius: 4px; background-color: rgb(251, 250, 248); border: 1px solid rgba(0, 0, 0, 0.14902); background-position: initial initial; background-repeat: initial initial; margin-top: 6px;">torch.save(model.state_dict(), PATH)</div><div>其中，model是PyTorch模型的实例，PATH是保存文件的路径。这种方式只保存了模型的参数，但不包括模型结构和优化器状态。在恢复模型状态时，需要重新创建模型并加载参数，然后重新初始化优化器。</div><div>保存完整的模型状态可以通过以下代码实现：</div><div style="--en-codeblock:true;--en-codeblockLanguage:javascript;box-sizing: border-box; padding: 8px; font-family: Monaco, Menlo, Consolas, &quot;Courier New&quot;, monospace; font-size: 12px; color: rgb(51, 51, 51); border-top-left-radius: 4px; border-top-right-radius: 4px; border-bottom-right-radius: 4px; border-bottom-left-radius: 4px; background-color: rgb(251, 250, 248); border: 1px solid rgba(0, 0, 0, 0.14902); background-position: initial initial; background-repeat: initial initial; margin-top: 6px;">torch.save({
+    'epoch': epoch,
+    'model_state_dict': model.state_dict(),
+    'optimizer_state_dict': optimizer.state_dict(),
+    'loss': loss,
+    ...
+}, PATH)</div><div>其中，除了模型参数外，还保存了优化器状态和其他训练状态。在恢复模型状态时，可以直接加载保存的状态，而无需重新创建模型和初始化优化器。</div><div>Checkpoint机制的使用可以通过以下代码实现：</div><div style="--en-codeblock:true;--en-codeblockLanguage:javascript;box-sizing: border-box; padding: 8px; font-family: Monaco, Menlo, Consolas, &quot;Courier New&quot;, monospace; font-size: 12px; color: rgb(51, 51, 51); border-top-left-radius: 4px; border-top-right-radius: 4px; border-bottom-right-radius: 4px; border-bottom-left-radius: 4px; background-color: rgb(251, 250, 248); border: 1px solid rgba(0, 0, 0, 0.14902); background-position: initial initial; background-repeat: initial initial; margin-top: 6px;">if rank == 0 and (epoch + 1) % checkpoint_frequency == 0:
+    checkpoint_path = os.path.join(checkpoint_dir, f'checkpoint_{epoch}.pth')
+    torch.save({
+        'epoch': epoch,
+        'model_state_dict': model.state_dict(),
+        ...
+    }, checkpoint_path)
+    if os.path.exists(previous_checkpoint_path):
+        os.remove(previous_checkpoint_path)
+    previous_checkpoint_path = checkpoint_path
+if os.path.exists(previous_checkpoint_path):
+    checkpoint = torch.load(previous_checkpoint_path, map_location=device)
+    model.load_state_dict(checkpoint['model_state_dict'])
+    ...</div><div>其中，rank表示节点的编号，checkpoint_frequency表示保存Checkpoint的频率，checkpoint_dir表示Checkpoint保存的文件夹。保存Checkpoint时，需要判断当前节点是否为主节点（rank=0），并根据频率和文件路径保存状态，并删除上一个Checkpoint文件。恢复Checkpoint时，直接加载保存的状态即可。</div><div>在实际使用中，Checkpoint机制可以提高分布式训练的稳定性和效率，但也会增加存储开销。因此，在选择Checkpoint机制时需要权衡存储开销和训练效率。</div><div>（内容由印象AI生成，仅供参考）</div><div><br /></div>
+</div>
+<a class="back-link" href="../articles.html">← 返回笔记列表</a>
+</body>
+</html>

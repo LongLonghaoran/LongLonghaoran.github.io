@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="zh-CN" data-theme="light">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>OLM — 技术笔记</title>
+<style>
+:root {
+  --bg: #ffffff;
+  --text: #1a1a1a;
+  --muted: #666;
+  --border: #e0e0e0;
+  --code-bg: #f5f5f5;
+  --link: #0066cc;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #1a1a1a;
+    --text: #e0e0e0;
+    --muted: #999;
+    --border: #333;
+    --code-bg: #2a2a2a;
+    --link: #66bbff;
+  }
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  line-height: 1.7;
+  color: var(--text);
+  background: var(--bg);
+  max-width: 860px;
+  margin: 0 auto;
+  padding: 2rem 1.5rem;
+}
+.note-header {
+  border-bottom: 2px solid var(--border);
+  padding-bottom: 1rem;
+  margin-bottom: 2rem;
+}
+.note-title {
+  font-size: 1.6rem;
+  font-weight: 700;
+  margin-bottom: 0.3rem;
+}
+.note-meta {
+  color: var(--muted);
+  font-size: 0.85rem;
+}
+.note-content {
+  font-size: 0.95rem;
+}
+.note-content h1 { font-size: 1.4rem; margin: 1.2rem 0 0.6rem; }
+.note-content h2 { font-size: 1.2rem; margin: 1rem 0 0.5rem; }
+.note-content h3 { font-size: 1.05rem; margin: 0.8rem 0 0.4rem; }
+.note-content p { margin: 0.5rem 0; }
+.note-content ul, .note-content ol { margin: 0.5rem 0 0.5rem 2rem; }
+.note-content li { margin: 0.2rem 0; }
+.note-content pre {
+  background: var(--code-bg);
+  padding: 1rem;
+  border-radius: 6px;
+  overflow-x: auto;
+  margin: 0.8rem 0;
+  font-size: 0.85rem;
+}
+.note-content code {
+  background: var(--code-bg);
+  padding: 0.1rem 0.3rem;
+  border-radius: 3px;
+  font-size: 0.88em;
+}
+.note-content pre code {
+  background: none;
+  padding: 0;
+}
+.note-content blockquote {
+  border-left: 3px solid var(--border);
+  padding-left: 1rem;
+  color: var(--muted);
+  margin: 0.8rem 0;
+}
+.note-content a { color: var(--link); }
+.note-content img {
+  max-width: 100%;
+  height: auto;
+  border-radius: 6px;
+  margin: 0.5rem 0;
+}
+.note-content table {
+  border-collapse: collapse;
+  width: 100%;
+  margin: 0.8rem 0;
+}
+.note-content th, .note-content td {
+  border: 1px solid var(--border);
+  padding: 0.5rem;
+}
+.note-content th { background: var(--code-bg); }
+.media-placeholder {
+  background: var(--code-bg);
+  padding: 1rem;
+  text-align: center;
+  color: var(--muted);
+  border-radius: 6px;
+  margin: 0.5rem 0;
+  font-size: 0.85rem;
+}
+.encrypt-placeholder {
+  background: #fff3cd;
+  padding: 0.5rem;
+  text-align: center;
+  color: #856404;
+  border-radius: 6px;
+  margin: 0.5rem 0;
+  font-size: 0.85rem;
+}
+.back-link {
+  display: inline-block;
+  margin-top: 2rem;
+  color: var(--link);
+  text-decoration: none;
+  font-size: 0.85rem;
+}
+</style>
+</head>
+<body>
+<div class="note-header">
+  <div class="note-title">OLM</div>
+  <div class="note-meta">笔记本：Operator</div>
+</div>
+<div class="note-content">
+<div>OLM不会替换Helm</div><div><br /></div><div>Operator通常由管理员来安装，所以Operator开发者通常不用关心创建资源的权限问题？因为在Operator中，应用的一切（包括Service Account, Cluster RoleBinding)都是Operator来创建的，所以Operator应该有最大的权限的，如果安装Operator失败，直接让用户把当前k8s上下文的用户权限提高就好了</div><div><br /></div><div>PulpOperator的架构图:</div><div><div class="media-placeholder">[图片/附件]</div><br /></div><div>PulpOperator中，通过Operator来部署pulp应用:</div><div><div class="media-placeholder">[图片/附件]</div><br /></div><div><br /></div><div>chatgpt回答：如果将一个应用更换为通过operator来安装：</div><div>理解了，你想通过 Operator 来实现应用的安装。下面是一些步骤，可以帮助你将应用安装过程包装成一个 Operator：</div><div><br /></div><div>1. **创建 Custom Resource Definition (CRD)：** 如前所述，创建一个 CRD 来定义你的应用的自定义资源。这个 CRD 应该包含安装应用所需的所有配置信息，例如镜像、环境变量、持久化存储等。</div><div><br /></div><div>2. **编写 Operator 代码：** 创建 Operator 的代码，使其能够根据你定义的 CRD 执行应用程序的安装逻辑。这可能涉及到创建 Kubernetes 资源（如 Deployment、Service、ConfigMap）以及配置应用程序所需的其他资源。</div><div><br /></div><div>3. **容器镜像构建：** 将你的 Operator 代码和应用程序的安装脚本打包成一个容器镜像。确保镜像包含了你的应用程序和任何其他依赖。</div><div><br /></div><div>4. **在 Operator 中处理安装逻辑：** 在 Operator 代码中，实现安装逻辑。这可能包括创建命名空间、配置服务、创建数据库等。</div><div><br /></div><div>5. **使用 Helm 或 Kustomize（可选）：** 你可以选择使用 Helm 或 Kustomize 来管理 Kubernetes 资源的模板化和参数化。这有助于简化配置管理和提高可维护性。</div><div><br /></div><div>6. **测试安装过程：** 在本地或测试环境中测试你的 Operator，确保它可以正确地安装你的应用程序，并且能够处理各种配置。</div><div><br /></div><div>7. **文档：** 编写文档，说明如何创建和使用你的 CRD，以及如何部署和使用你的 Operator。提供足够的文档以支持其他人使用你的 Operator。</div><div><br /></div><div>8. **部署 Operator：** 将你的 Operator 部署到 Kubernetes 集群中。确保它可以正常运行并监听你定义的 CRD。</div><div><br /></div><div>9. **创建自定义资源：** 创建你定义的 CRD 的实例，以触发 Operator 执行应用程序的安装逻辑。</div><div><br /></div><div>10. **监控和日志记录：** 添加监控和日志记录功能，以便你能够了解 Operator 的运行状况，并在有问题时进行故障排除。</div><div><br /></div><div>这样一来，用户只需创建你定义的 CRD 的实例，Operator 就会自动处理应用的安装过程。这种方法使得安装过程更加标准化和可重复，并允许你轻松地扩展和更新你的应用。</div><div><br /></div><div><br /></div>
+</div>
+<a class="back-link" href="../articles.html">← 返回笔记列表</a>
+</body>
+</html>

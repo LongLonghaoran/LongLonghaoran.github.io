@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="zh-CN" data-theme="light">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>20201121-Vue学习 — 技术笔记</title>
+<style>
+:root { --bg:#fff; --text:#1a1a1a; --muted:#666; --border:#e0e0e0; --code-bg:#f5f5f5; --link:#0066cc; }
+@media (prefers-color-scheme: dark) { :root { --bg:#1a1a1a; --text:#e0e0e0; --muted:#999; --border:#333; --code-bg:#2a2a2a; --link:#66bbff; } }
+* { box-sizing:border-box; margin:0; padding:0; }
+body { font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Arial,sans-serif; line-height:1.7; color:var(--text); background:var(--bg); max-width:860px; margin:0 auto; padding:2rem 1.5rem; }
+.note-header { border-bottom:2px solid var(--border); padding-bottom:1rem; margin-bottom:2rem; }
+.note-title { font-size:1.6rem; font-weight:700; margin-bottom:0.3rem; }
+.note-meta { color:var(--muted); font-size:0.85rem; }
+.note-content { font-size:0.95rem; }
+.note-content h1 { font-size:1.4rem; margin:1.2rem 0 0.6rem; }
+.note-content h2 { font-size:1.2rem; margin:1rem 0 0.5rem; }
+.note-content h3 { font-size:1.05rem; margin:0.8rem 0 0.4rem; }
+.note-content p { margin:0.5rem 0; }
+.note-content ul,.note-content ol { margin:0.5rem 0 0.5rem 2rem; }
+.note-content li { margin:0.2rem 0; }
+.note-content pre { background:var(--code-bg); padding:1rem; border-radius:6px; overflow-x:auto; margin:0.8rem 0; font-size:0.85rem; }
+.note-content code { background:var(--code-bg); padding:0.1rem 0.3rem; border-radius:3px; font-size:0.88em; }
+.note-content pre code { background:none; padding:0; }
+.note-content blockquote { border-left:3px solid var(--border); padding-left:1rem; color:var(--muted); margin:0.8rem 0; }
+.note-content a { color:var(--link); }
+.note-content img { max-width:100%; height:auto; border-radius:6px; margin:0.5rem 0; }
+.note-content table { border-collapse:collapse; width:100%; margin:0.8rem 0; }
+.note-content th,.note-content td { border:1px solid var(--border); padding:0.5rem; }
+.note-content th { background:var(--code-bg); }
+.media-placeholder { background:var(--code-bg); padding:1rem; text-align:center; color:var(--muted); border-radius:6px; margin:0.5rem 0; font-size:0.85rem; }
+.encrypt-placeholder { background:#fff3cd; padding:0.5rem; text-align:center; color:#856404; border-radius:6px; margin:0.5rem 0; font-size:0.85rem; }
+.back-link { display:inline-block; margin-top:2rem; color:var(--link); text-decoration:none; font-size:0.85rem; }
+</style>
+</head>
+<body>
+<div class="note-header"><div class="note-title">20201121-Vue学习</div><div class="note-meta">笔记本：前端学习</div></div>
+<div class="note-content"><div>1.MVVM数据绑定，使用defineProperty实现一个数据绑定函数, defineProperty只能监听对象类型数据，而无法监听数组</div><div>2.vue实例上渲染顺序,vue中单个&quot;事件环&quot;中知会渲染一次页面dom元素,在单次事件环结束之后去判断实例中的值是否有改动，再决定是否变更dom，实例方法 $nextTick $set $options $el $watch等</div><div>3.vue 自定义指令</div><div><span>&nbsp; &nbsp; v-once 只显示一次、v-html可以渲染html字符串</span><br/></div><div><span><span>&nbsp; &nbsp; v-for中key有什么作用?为什么要尽量保证key是唯一的？为什么尽量不要用index当作key?</span><br/></span></div><div><span><span>&nbsp;&nbsp; &nbsp;</span><span>&nbsp; &nbsp; 1.key用于标识循环的元素</span><br/></span></div><div><span><span>&nbsp;&nbsp; &nbsp;</span><span>&nbsp; &nbsp; 2.vue在双向数据绑定中更新页面元素的时候，vue内部会采用domdiff方式去检验对应的页面元素的变更，只会替换/更新发生变化的部分，比如:</span><br/></span></div><div><span>&nbsp;&nbsp; &nbsp;</span><span>&nbsp;&nbsp; &nbsp;</span><span>&nbsp;&nbsp; &nbsp;</span><br/></div><div><div style="box-sizing: border-box; padding: 8px; font-family: Monaco, Menlo, Consolas, &quot;Courier New&quot;, monospace; font-size: 12px; color: rgb(51, 51, 51); border-radius: 4px; background-color: rgb(251, 250, 248); border: 1px solid rgba(0, 0, 0, 0.15);-en-codeblock:true;"><div><span>&lt;li v-for=&apos;item,index in items&apos; :class=&apos;[&quot;li&quot;+index]&apos; v-text=&apos;item&apos;&gt;&lt;/li&gt;<span>&nbsp;&nbsp; &nbsp;</span></span></div></div><span>&nbsp;&nbsp; &nbsp;</span><span>&nbsp; &nbsp; 像上面这种情况，如果items发生了变化，那么vue将只会改变li元素中的文本内容，而不会去更新li元素/重新创建li元素，上面的每个li元素的class顺序仍旧会保持不变</span><br/></div><div><span><span>&nbsp; &nbsp;&nbsp;<span>&nbsp; &nbsp; 3.性能考虑: vue内部会采用 domdiff方式去比对数据变更前后的差异，从而去检查页面上哪些元素是需要更新的，而且会尽可能地去减少增删元素的操作以提高性能，如果只是将数组中的数据调换一下位置的话，那么在有唯一key值的情况下，vue就可以仅仅只是替换页面上对应元素的位置，而不会去重新创建新的元素，这样性能会提高很多</span></span><br/></span></div><div><span><span>&nbsp; &nbsp;&nbsp;</span><br/></span></div><div><span>4.vue实例的data中是也是可以声明方法的,但是 data中的定义的方法里面的this是window对象</span></div><div><span><span>&nbsp; &nbsp; 而像methods,computed等属性中声明的方法，在调用时，vue会将其中的this替换为vue实例,而且是无法改变的，因为vue在内部使用bind方法将methods中声明的方法this都绑定死了，即便后续再通过call方法去改变都是没用的</span><br/></span></div></div>
+<a class="back-link" href="../articles.html">← 返回笔记列表</a>
+</body></html>

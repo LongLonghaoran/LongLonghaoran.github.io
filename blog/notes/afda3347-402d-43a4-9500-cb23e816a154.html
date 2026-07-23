@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="zh-CN" data-theme="light">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>go help test — 技术笔记</title>
+<style>
+:root {
+  --bg: #ffffff;
+  --text: #1a1a1a;
+  --muted: #666;
+  --border: #e0e0e0;
+  --code-bg: #f5f5f5;
+  --link: #0066cc;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #1a1a1a;
+    --text: #e0e0e0;
+    --muted: #999;
+    --border: #333;
+    --code-bg: #2a2a2a;
+    --link: #66bbff;
+  }
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  line-height: 1.7;
+  color: var(--text);
+  background: var(--bg);
+  max-width: 860px;
+  margin: 0 auto;
+  padding: 2rem 1.5rem;
+}
+.note-header {
+  border-bottom: 2px solid var(--border);
+  padding-bottom: 1rem;
+  margin-bottom: 2rem;
+}
+.note-title {
+  font-size: 1.6rem;
+  font-weight: 700;
+  margin-bottom: 0.3rem;
+}
+.note-meta {
+  color: var(--muted);
+  font-size: 0.85rem;
+}
+.note-content {
+  font-size: 0.95rem;
+}
+.note-content h1 { font-size: 1.4rem; margin: 1.2rem 0 0.6rem; }
+.note-content h2 { font-size: 1.2rem; margin: 1rem 0 0.5rem; }
+.note-content h3 { font-size: 1.05rem; margin: 0.8rem 0 0.4rem; }
+.note-content p { margin: 0.5rem 0; }
+.note-content ul, .note-content ol { margin: 0.5rem 0 0.5rem 2rem; }
+.note-content li { margin: 0.2rem 0; }
+.note-content pre {
+  background: var(--code-bg);
+  padding: 1rem;
+  border-radius: 6px;
+  overflow-x: auto;
+  margin: 0.8rem 0;
+  font-size: 0.85rem;
+}
+.note-content code {
+  background: var(--code-bg);
+  padding: 0.1rem 0.3rem;
+  border-radius: 3px;
+  font-size: 0.88em;
+}
+.note-content pre code {
+  background: none;
+  padding: 0;
+}
+.note-content blockquote {
+  border-left: 3px solid var(--border);
+  padding-left: 1rem;
+  color: var(--muted);
+  margin: 0.8rem 0;
+}
+.note-content a { color: var(--link); }
+.note-content img {
+  max-width: 100%;
+  height: auto;
+  border-radius: 6px;
+  margin: 0.5rem 0;
+}
+.note-content table {
+  border-collapse: collapse;
+  width: 100%;
+  margin: 0.8rem 0;
+}
+.note-content th, .note-content td {
+  border: 1px solid var(--border);
+  padding: 0.5rem;
+}
+.note-content th { background: var(--code-bg); }
+.media-placeholder {
+  background: var(--code-bg);
+  padding: 1rem;
+  text-align: center;
+  color: var(--muted);
+  border-radius: 6px;
+  margin: 0.5rem 0;
+  font-size: 0.85rem;
+}
+.encrypt-placeholder {
+  background: #fff3cd;
+  padding: 0.5rem;
+  text-align: center;
+  color: #856404;
+  border-radius: 6px;
+  margin: 0.5rem 0;
+  font-size: 0.85rem;
+}
+.back-link {
+  display: inline-block;
+  margin-top: 2rem;
+  color: var(--link);
+  text-decoration: none;
+  font-size: 0.85rem;
+}
+</style>
+</head>
+<body>
+<div class="note-header">
+  <div class="note-title">go help test</div>
+  <div class="note-meta">笔记本：Go语言</div>
+</div>
+<div class="note-content">
+<div>这段文本是关于使用`go test`命令的说明文档。以下是主要要点的简要总结：</div><div><br /></div><div>1. **概述：**</div><div>   - `go test`自动化测试由导入路径命名的包。</div><div>   - 它以以下格式打印测试结果的摘要：</div><div><br /></div><div>    ```</div><div>    ok   archive/tar   0.011s</div><div>    FAIL archive/zip   0.022s</div><div>    ok   compress/gzip 0.033s</div><div>    ...</div><div>    ```</div><div><br /></div><div>   - 之后是每个失败包的详细输出。</div><div><br /></div><div>2. **测试文件：**</div><div>   - `go test`重新编译每个包以及与文件模式"*_test.go"匹配的任何文件。</div><div>   - 这些额外的文件可以包含测试函数、基准函数、模糊测试和示例函数。</div><div><br /></div><div>3. **运行模式：**</div><div>   - 有两种运行模式，分别是本地目录模式和包列表模式。</div><div><br /></div><div>   - **本地目录模式：**</div><div>     - 在没有包参数的情况下调用`go test`。</div><div>     - 编译当前目录中找到的包源代码和测试，然后运行生成的测试二进制文件。</div><div>     - 在此模式下，禁用了缓存。</div><div><br /></div><div>   - **包列表模式：**</div><div>     - 在使用显式包参数的情况下调用`go test`。</div><div>     - 编译和测试命令行上列出的每个包。</div><div>     - 如果包测试通过，`go test`仅打印最终的'ok'摘要行；如果包测试失败，`go test`将打印完整的测试输出。</div><div>     - 如果使用了`-bench`或`-v`标志，`go test`将为通过的包测试打印完整的输出，以显示请求的基准结果或详细日志。</div><div>     - 在所有列出的包的包测试完成后，并且它们的输出已打印，`go test`将在任何包测试失败时打印最终的'FAIL'状态。</div><div><br /></div><div>4. **缓存：**</div><div>   - 仅在包列表模式下，`go test`缓存成功的包测试结果，以避免不必要的重复运行测试。</div><div>   - 当测试结果可以从缓存中恢复时，`go test`将重新显示先前的输出而不运行测试二进制文件。</div><div>   - 当这种情况发生时，`go test`在摘要行的耗时位置打印'(cached)'。</div><div><br /></div><div>5. **缓存匹配规则：**</div><div>   - 缓存匹配的规则是，运行涉及相同的测试二进制文件，并且命令行上的标志完全来自一组受限的'可缓存'测试标志，这些标志包括`-benchtime`、`-cpu`、`-list`、`-parallel`、`-run`、`-short`、`-timeout`、`-failfast`和`-v`。</div><div>   - 如果`go test`的运行具有这组标志之外的任何测试或非测试标志，结果将不会被缓存。</div><div>   - 要禁用测试缓存，请使用任何测试标志或除了可缓存标志之外的任何参数。显式禁用测试缓存的惯用方法是使用`-count=1`。</div><div><br /></div><div>6. **其他标志：**</div><div>   - 除了构建标志之外，`go test`本身处理的标志包括`-args`、`-c`、`-exec`、`-json`和`-o`。</div><div>   - 有关测试执行的控制标志，测试二进制文件也接受这些标志，并且这些标志也可以通过`go test`访问。</div><div><br /></div><div>7. **环境：**</div><div>   - `go test`在测试环境中将`$GOROOT/bin`置于`$PATH`的开头，以便执行使用'go'命令的测试使用与父'go test'命令相同的'go'。</div><div><br /></div><div>8. **其他信息：**</div><div>   - 文档提供了有关测试缓存行为、处理环境变量的方式以及各种标志的详细信息。</div>
+</div>
+<a class="back-link" href="../articles.html">← 返回笔记列表</a>
+</body>
+</html>

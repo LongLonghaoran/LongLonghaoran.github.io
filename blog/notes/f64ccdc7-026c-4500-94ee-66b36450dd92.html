@@ -1,0 +1,273 @@
+<!DOCTYPE html>
+<html lang="zh-CN" data-theme="light">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>linux中块设备、文件系统和挂载_linux 块设备-CSDN博客 — 技术笔记</title>
+<style>
+:root {
+  --bg: #ffffff;
+  --text: #1a1a1a;
+  --muted: #666;
+  --border: #e0e0e0;
+  --code-bg: #f5f5f5;
+  --link: #0066cc;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #1a1a1a;
+    --text: #e0e0e0;
+    --muted: #999;
+    --border: #333;
+    --code-bg: #2a2a2a;
+    --link: #66bbff;
+  }
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  line-height: 1.7;
+  color: var(--text);
+  background: var(--bg);
+  max-width: 860px;
+  margin: 0 auto;
+  padding: 2rem 1.5rem;
+}
+.note-header {
+  border-bottom: 2px solid var(--border);
+  padding-bottom: 1rem;
+  margin-bottom: 2rem;
+}
+.note-title {
+  font-size: 1.6rem;
+  font-weight: 700;
+  margin-bottom: 0.3rem;
+}
+.note-meta {
+  color: var(--muted);
+  font-size: 0.85rem;
+}
+.note-content {
+  font-size: 0.95rem;
+}
+.note-content h1 { font-size: 1.4rem; margin: 1.2rem 0 0.6rem; }
+.note-content h2 { font-size: 1.2rem; margin: 1rem 0 0.5rem; }
+.note-content h3 { font-size: 1.05rem; margin: 0.8rem 0 0.4rem; }
+.note-content p { margin: 0.5rem 0; }
+.note-content ul, .note-content ol { margin: 0.5rem 0 0.5rem 2rem; }
+.note-content li { margin: 0.2rem 0; }
+.note-content pre {
+  background: var(--code-bg);
+  padding: 1rem;
+  border-radius: 6px;
+  overflow-x: auto;
+  margin: 0.8rem 0;
+  font-size: 0.85rem;
+}
+.note-content code {
+  background: var(--code-bg);
+  padding: 0.1rem 0.3rem;
+  border-radius: 3px;
+  font-size: 0.88em;
+}
+.note-content pre code {
+  background: none;
+  padding: 0;
+}
+.note-content blockquote {
+  border-left: 3px solid var(--border);
+  padding-left: 1rem;
+  color: var(--muted);
+  margin: 0.8rem 0;
+}
+.note-content a { color: var(--link); }
+.note-content img {
+  max-width: 100%;
+  height: auto;
+  border-radius: 6px;
+  margin: 0.5rem 0;
+}
+.note-content table {
+  border-collapse: collapse;
+  width: 100%;
+  margin: 0.8rem 0;
+}
+.note-content th, .note-content td {
+  border: 1px solid var(--border);
+  padding: 0.5rem;
+}
+.note-content th { background: var(--code-bg); }
+.media-placeholder {
+  background: var(--code-bg);
+  padding: 1rem;
+  text-align: center;
+  color: var(--muted);
+  border-radius: 6px;
+  margin: 0.5rem 0;
+  font-size: 0.85rem;
+}
+.encrypt-placeholder {
+  background: #fff3cd;
+  padding: 0.5rem;
+  text-align: center;
+  color: #856404;
+  border-radius: 6px;
+  margin: 0.5rem 0;
+  font-size: 0.85rem;
+}
+.back-link {
+  display: inline-block;
+  margin-top: 2rem;
+  color: var(--link);
+  text-decoration: none;
+  font-size: 0.85rem;
+}
+</style>
+</head>
+<body>
+<div class="note-header">
+  <div class="note-title">linux中块设备、文件系统和挂载_linux 块设备-CSDN博客</div>
+  <div class="note-meta">笔记本：Linux</div>
+</div>
+<div class="note-content">
+<div style="--en-clipped-content:article"><div style="font-size: 16px; display:block; min-width: 100%; position: relative;"> <div style="-webkit-tap-highlight-color:transparent;outline:0px;box-sizing:border-box;text-size-adjust:100%;font-family:-apple-system, &quot;SF UI Text&quot;, Arial, &quot;PingFang SC&quot;, &quot;Hiragino Sans GB&quot;, &quot;Microsoft YaHei&quot;, &quot;WenQuanYi Micro Hei&quot;, sans-serif;color:rgba(0, 0, 0, 0.75);font-variant-ligatures:common-ligatures;line-height:1.625;tab-size:4;color-scheme:light;font-synthesis:none;text-rendering:optimizelegibility;-webkit-font-smoothing:antialiased;"><div style="font-weight:normal;background:url(https://csdnimg.cn/release/blogv2/dist/pc/themesSkin/skin-ink/images/bg.jpg?v20200831) repeat;outline:0px;box-sizing:inherit;font-size:14px;background-color:rgb(245, 246, 247);font-family:-apple-system, &quot;SF UI Text&quot;, Arial, &quot;PingFang SC&quot;, &quot;Hiragino Sans GB&quot;, &quot;Microsoft YaHei&quot;, &quot;WenQuanYi Micro Hei&quot;, sans-serif;-webkit-font-smoothing:antialiased;font-variant-ligatures:common-ligatures;tab-size:4;line-height:1.625;color:rgba(0, 0, 0, 0.75);"><div style="font-weight:normal;outline:0px;box-sizing:inherit;-webkit-box-pack:center;justify-content:center;"><div style="font-weight:normal;outline:0px;box-sizing:inherit;"><span style="outline:0px;box-sizing:inherit;"><div style="font-weight:normal;outline:0px;box-sizing:inherit;background:rgb(255, 255, 255);border-radius:2px 2px 0px 0px;">
+    <div style="font-weight:normal;outline:0px;box-sizing:inherit;margin:0px;padding:0px;padding-top:8px;z-index:9;background-color:rgb(255, 255, 255);">
+        <div style="font-weight:normal;outline:0px;box-sizing:border-box;margin:0px;padding:0px;">
+            <div style="font-weight:normal;outline:0px;box-sizing:inherit;margin:0px;padding:0px;margin-bottom:8px;">
+                <h1 style="font-family:&quot;PingFang SC&quot;, &quot;Microsoft YaHei&quot;, SimHei, Arial, SimSun;outline:0px;box-sizing:inherit;padding:0px;overflow-wrap:break-word;color:rgb(34, 34, 38);word-break:break-all;font-weight:600;font-size:28px;margin:0px;">linux中块设备、文件系统和挂载</h1>
+            </div>
+            <div style="font-weight:normal;outline:0px;box-sizing:inherit;margin:0px;padding:0px;position:relative;background:rgb(248, 248, 248);border-radius:4px;">
+                    
+                <div style="font-weight:normal;outline:0px;box-sizing:inherit;margin:0px;padding:0px;color:rgb(153, 154, 170);width:88%;display:flex;">
+                    <div class="media-placeholder">[图片/附件]</div></en-media>
+                    <div style="font-weight:normal;outline:0px;box-sizing:inherit;margin:0px;padding:0px;display:flex;flex-wrap:wrap;-webkit-box-align:center;align-items:center;padding-left:12px;">
+                      <a href="https://blog.csdn.net/weixin_42734804" target="_blank" rel="noopener" title="向右看齐&gt; &gt;" style="margin:0px;padding:0px;font-weight:normal;box-sizing:inherit;outline:0px;cursor:pointer;text-decoration:none;background-color:transparent;vertical-align:top;line-height:32px;max-width:232px;overflow:hidden;white-space:nowrap;text-overflow:ellipsis;color:rgb(85, 86, 102);margin-right:20px;">向右看齐&gt; &gt;</a>
+                    <div class="media-placeholder">[图片/附件]</div></en-media>
+                          <span style="margin:0px;padding:0px;font-weight:normal;outline:0px;box-sizing:inherit;vertical-align:top;line-height:32px;margin-right:8px;position:relative;font-size:12px;">于 2023-04-05 13:53:17 发布</span>
+                   <div style="font-weight:normal;outline:0px;box-sizing:inherit;margin:0px;padding:0px;display:flex;-webkit-box-align:center;align-items:center;">
+                      <div class="media-placeholder">[图片/附件]</div></en-media>
+                      <span style="margin:0px;padding:0px;font-weight:normal;outline:0px;box-sizing:inherit;vertical-align:top;line-height:32px;margin-right:8px;">阅读量1.6k</span>
+                      <a style="margin:0px;padding:0px;font-weight:normal;box-sizing:inherit;outline:0px;cursor:pointer;text-decoration:none;background-color:transparent;font-size:14px;vertical-align:top;line-height:32px;margin-right:12px;color:rgb(153, 154, 170);display:inline-block;">
+                          <div class="media-placeholder">[图片/附件]</div></en-media>
+                          
+                          <span style="margin:0px;padding:0px;font-weight:normal;outline:0px;box-sizing:inherit;vertical-align:top;line-height:32px;margin-right:0px;">收藏</span>
+                          <span style="margin:0px;padding:0px;font-weight:normal;outline:0px;box-sizing:inherit;vertical-align:top;line-height:32px;margin-right:0px;color:rgb(153, 154, 170);">
+                              6
+                          </span>
+                      </a>
+                      <div style="font-weight:normal;outline:0px;box-sizing:inherit;margin:0px;padding:0px;display:flex;-webkit-box-align:center;align-items:center;cursor:pointer;">
+                        
+                        <div class="media-placeholder">[图片/附件]</div></en-media>
+                        <span style="margin:0px;padding:0px;font-weight:normal;outline:0px;box-sizing:inherit;vertical-align:top;line-height:32px;margin-right:8px;">点赞数
+                            3
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                <div style="font-weight:normal;outline:0px;box-sizing:inherit;margin:0px;padding:0px;padding-left:48px;display:flex;">
+                    <div style="font-weight:normal;outline:0px;box-sizing:inherit;margin:0px;padding:0px;font-size:14px;line-height:24px;margin-bottom:4px;margin-right:8px;width:100%;">
+                            <span style="margin:0px;padding:0px;font-weight:normal;outline:0px;box-sizing:inherit;display:inline-block;color:rgb(153, 154, 170);">分类专栏：</span>
+                                <a href="https://blog.csdn.net/weixin_42734804/category_12247015.html" target="_blank" rel="noopener" style="margin:0px;font-weight:normal;outline:0px;cursor:pointer;text-decoration:none;margin-right:8px;font-size:12px;border:1px solid rgb(234, 234, 239);height:24px;line-height:17px;border-radius:2px;display:inline-block;padding:3px 6px;color:rgb(80, 148, 213);background-color:rgb(255, 255, 255);box-sizing:border-box;">嵌入式学习之路</a>
+                            <span style="margin:0px;padding:0px;font-weight:normal;outline:0px;box-sizing:inherit;display:inline-block;color:rgb(153, 154, 170);">文章标签：</span>
+                                <a rel="nofollow" href="https://so.csdn.net/so/search/s.do?q=linux&amp;t=all&amp;o=vip&amp;s=&amp;l=&amp;f=&amp;viparticle=&amp;from_tracking_code=tag_word&amp;from_code=app_blog_art" target="_blank" style="margin:0px;font-weight:normal;outline:0px;cursor:pointer;text-decoration:none;margin-right:8px;font-size:12px;border:1px solid rgb(234, 234, 239);height:24px;line-height:17px;border-radius:2px;display:inline-block;padding:3px 6px;color:rgb(80, 148, 213);background-color:rgb(255, 255, 255);box-sizing:border-box;">linux</a>
+                                <a rel="nofollow" href="https://so.csdn.net/so/search/s.do?q=%E8%BF%90%E7%BB%B4&amp;t=all&amp;o=vip&amp;s=&amp;l=&amp;f=&amp;viparticle=&amp;from_tracking_code=tag_word&amp;from_code=app_blog_art" target="_blank" style="margin:0px;font-weight:normal;outline:0px;cursor:pointer;text-decoration:none;margin-right:8px;font-size:12px;border:1px solid rgb(234, 234, 239);height:24px;line-height:17px;border-radius:2px;display:inline-block;padding:3px 6px;color:rgb(80, 148, 213);background-color:rgb(255, 255, 255);box-sizing:border-box;">运维</a>
+                                <a rel="nofollow" href="https://so.csdn.net/so/search/s.do?q=%E6%9C%8D%E5%8A%A1%E5%99%A8&amp;t=all&amp;o=vip&amp;s=&amp;l=&amp;f=&amp;viparticle=&amp;from_tracking_code=tag_word&amp;from_code=app_blog_art" target="_blank" style="margin:0px;font-weight:normal;outline:0px;cursor:pointer;text-decoration:none;margin-right:8px;font-size:12px;border:1px solid rgb(234, 234, 239);height:24px;line-height:17px;border-radius:2px;display:inline-block;padding:3px 6px;color:rgb(80, 148, 213);background-color:rgb(255, 255, 255);box-sizing:border-box;">服务器</a>
+                    </div>
+                </div>
+                
+                
+                <div style="font-weight:normal;outline:0px;box-sizing:inherit;margin:0px;padding:0px;position:absolute;top:0px;right:8px;line-height:32px;">
+                    <a style="margin:0px;font-weight:normal;box-sizing:inherit;outline:0px;cursor:pointer;text-decoration:none;background-color:transparent;position:relative;color:rgb(143, 176, 201);font-size:12px;padding:0px 4px;">版权<span style="font-weight:normal;color:rgb(143, 176, 201);font-size:12px;cursor:pointer;display:none;width:1px;height:11px;background:rgb(224, 224, 224);position:absolute;top:2px;right:-2px;"></span></a>
+                </div>
+            </div>
+        </div>
+
+    </div>
+    
+        <div style="font-weight:normal;outline:0px;box-sizing:inherit;margin:0px;padding:0px;background-color:rgb(255, 255, 255);">
+            <div style="font-weight:normal;outline:0px;box-sizing:inherit;margin:0px;padding:16px 0px;">
+                <div style="font-weight:normal;outline:0px;margin:0px;display:flex;position:relative;flex-wrap:nowrap;height:56px;background:rgb(255, 255, 255);border-radius:2px;border:1px solid rgb(240, 240, 240);width:100%;transition:margin-top 0.2s ease-in-out;box-sizing:border-box;padding:9px 16px;margin-top:0px;z-index:3;box-shadow:none;">
+                    <div style="font-weight:normal;outline:0px;box-sizing:inherit;margin:0px;padding:0px;overflow:hidden;width:100%;display:flex;flex-wrap:nowrap;-webkit-box-align:center;align-items:center;">
+                        <a href="https://blog.csdn.net/weixin_42734804/category_12247015.html" target="_blank" title="嵌入式学习之路" style="margin:0px;padding:0px;font-weight:normal;box-sizing:inherit;outline:0px;cursor:pointer;text-decoration:none;background-color:transparent;color:rgb(79, 79, 79);display:flex;flex-wrap:nowrap;-webkit-box-align:center;align-items:center;">
+                            <div class="media-placeholder">[图片/附件]</div></en-media>
+                            <span style="margin:0px;padding:0px;outline:0px;box-sizing:inherit;font-size:16px;color:rgb(34, 34, 38);line-height:22px;margin-left:10px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;vertical-align:middle;display:flex;-webkit-box-orient:vertical;-webkit-box-direction:normal;flex-direction:column;font-weight:500;">
+                                <span style="margin:0px;padding:0px;font-weight:normal;outline:0px;box-sizing:inherit;display:flex;flex-wrap:nowrap;">
+                                <span style="margin:0px;padding:0px;font-weight:normal;outline:0px;box-sizing:inherit;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:162px;width:115px;">嵌入式学习之路</span>
+                                    <span style="margin:0px;padding:0px;font-weight:normal;outline:0px;box-sizing:inherit;margin-left:8px;font-size:14px;line-height:20px;color:rgb(153, 154, 170);">专栏收录该内容</span>
+                                </span>
+                            </span>
+                        </a>
+                    </div>
+                    <div style="font-weight:normal;outline:0px;box-sizing:inherit;margin:0px;padding:0px;min-width:260px;font-size:14px;color:rgb(153, 154, 170);line-height:40px;">
+                        <span style="margin:0px;padding:0px;font-weight:normal;outline:0px;box-sizing:inherit;float:right;margin-right:20px;">17 篇文章</span>
+                        <span style="margin:0px;padding:0px;font-weight:normal;outline:0px;box-sizing:inherit;float:right;margin-right:20px;">0 订阅</span>
+                    </div>
+                    <div style="font-weight:normal;outline:0px;box-sizing:inherit;margin:0px;display:flex;padding:4px 0px;">
+                            <a style="margin:0px;padding:0px;font-weight:normal;box-sizing:inherit;outline:0px;cursor:pointer;text-decoration:none;background-color:transparent;display:block;width:80px;height:28px;font-size:12px;color:rgb(85, 86, 102);background:rgb(255, 255, 255);border-radius:16px;border:1px solid rgb(204, 204, 216);text-align:center;line-height:28px;">订阅专栏</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+      <div style="font-weight:normal;outline:0px;box-sizing:inherit;margin:0px;padding:0px;min-height:142px;margin-top:24px;position:relative;">
+         <div style="font-weight:normal;outline:0px;box-sizing:inherit;margin:0px;background-image:url(https://img-home.csdnimg.cn/images/20240709092904.png);background-size:100% 100%;z-index:11;border-radius:8px;padding:8px 16px;">
+          <div style="outline:0px;box-sizing:inherit;margin:0px;padding:0px;margin-bottom:8px;overflow:hidden;text-overflow:ellipsis;display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:3;color:rgb(34, 34, 38);font-family:&quot;PingFang SC&quot;;font-size:16px;font-style:normal;line-height:32px;word-break:break-all;font-weight:400;">
+            <div class="media-placeholder">[图片/附件]</div></en-media>
+            块设备如硬盘、SSD通过块进行数据读写；文件系统如ext4、NTFS组织和存储文件；挂载是将文件系统连接到目录以访问。Linux中，文件系统需挂载到挂载点如/mnt，mount和umount命令用于操作。不同文件系统如ext4、NTFS、FAT32、XFS、Btrfs各有特性，适用于不同场景。
+          </div>
+          <span style="margin:0px;padding:0px;outline:0px;box-sizing:inherit;color:rgba(34, 34, 38, 0.6);font-family:&quot;PingFang SC&quot;;font-size:14px;font-style:normal;font-weight:400;">摘要由CSDN通过智能技术生成</span>
+        </div>
+      <p style="font-weight:normal;outline:0px;box-sizing:inherit;margin:0px;padding:0px;position:absolute;bottom:10px;right:10px;cursor:pointer;font-size:14px;color:rgba(34, 34, 38, 0.67);">展开  <div class="media-placeholder">[图片/附件]</div></en-media></p></div>
+    <div style="outline:0px;box-sizing:inherit;display:block;position:relative;padding-top:16px;">
+        <div style="font-weight:normal;outline:0px;box-sizing:inherit;margin:0px;padding:0px;font-synthesis-style:auto;overflow-wrap:break-word;">
+        
+        
+             
+                <div style="font-weight:normal;outline:0px;box-sizing:inherit;margin:0px;padding:0px;font-synthesis-style:auto;overflow-wrap:break-word;font-family:-apple-system, &quot;SF UI Text&quot;, Arial, &quot;PingFang SC&quot;, &quot;Hiragino Sans GB&quot;, &quot;Microsoft YaHei&quot;, &quot;WenQuanYi Micro Hei&quot;, sans-serif;-webkit-font-smoothing:antialiased;font-variant-ligatures:no-common-ligatures;position:relative;min-height:70px;word-break:break-word;font-size:16px;">
+                    <img style="outline:0px;font-synthesis-style:auto;overflow-wrap:break-word;box-sizing:border-box;overflow:hidden;display:none;" src="data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' style='display: none%3b' data-evernote-id='575' class='js-evernote-checked'%3e %3cpath stroke-linecap='round' d='M5%2c0 0%2c2.5 5%2c5z' id='raphael-marker-block' style='-webkit-tap-highlight-color: rgba(0%2c 0%2c 0%2c 0)%3b' data-evernote-id='576' class='js-evernote-checked'%3e%3c/path%3e %3c/svg%3e"/>
+                    <h2 style="font-family:&quot;PingFang SC&quot;, &quot;Microsoft YaHei&quot;, SimHei, Arial, SimSun;outline:0px;padding:0px;font-synthesis-style:auto;overflow-wrap:break-word;box-sizing:border-box;color:rgb(79, 79, 79);margin:24px 0px 8px;font-weight:600;line-height:30px;font-size:20px;"><a style="margin:0px;padding:0px;font-weight:normal;outline:0px;cursor:pointer;background-color:transparent;font-synthesis-style:auto;overflow-wrap:break-word;box-sizing:border-box;text-decoration:none;color:rgb(78, 161, 219);"></a><a style="margin:0px;padding:0px;font-weight:normal;outline:0px;cursor:pointer;background-color:transparent;font-synthesis-style:auto;overflow-wrap:break-word;box-sizing:border-box;text-decoration:none;color:rgb(78, 161, 219);"></a>1.啥是块设备？</h2> 
+<p style="outline:0px;padding:0px;font-synthesis-style:auto;overflow-wrap:break-word;color:rgb(77, 77, 77);line-height:26px;overflow:auto hidden;box-sizing:border-box;margin:0px 0px 16px;font-weight:400;font-size:16px;">块设备（block device）<br style="outline:0px;box-sizing:border-box;font-synthesis-style:auto;overflow-wrap:break-word;"/> 用于数据存储，按<strong style="outline:0px;font-synthesis-style:auto;overflow-wrap:break-word;box-sizing:border-box;font-weight:700;">块</strong>或<strong style="outline:0px;font-synthesis-style:auto;overflow-wrap:break-word;box-sizing:border-box;font-weight:700;">扇区</strong>（sector）的方式访问数据。<br style="outline:0px;box-sizing:border-box;font-synthesis-style:auto;overflow-wrap:break-word;"/> 以固定大小的块为单位进行读写操作，通常是512字节或更大。</p> 
+<p style="outline:0px;padding:0px;font-synthesis-style:auto;overflow-wrap:break-word;color:rgb(77, 77, 77);line-height:26px;overflow:auto hidden;box-sizing:border-box;margin:0px 0px 16px;font-weight:400;font-size:16px;">块设备的原理可以类比成图书馆的书架和<span style="margin:0px;padding:0px;font-weight:normal;outline:0px;font-synthesis-style:auto;overflow-wrap:break-word;box-sizing:border-box;cursor:pointer;color:rgb(78, 161, 219);margin-right:3px;padding-right:18px;background:url(https://csdnimg.cn/release/blogv2/dist/pc/css/../img/gitcode-key.png) right center / 14px 14px no-repeat transparent;box-shadow:none;">图书管理</span>员的工作。<br style="outline:0px;box-sizing:border-box;font-synthesis-style:auto;overflow-wrap:break-word;"/> 图书馆每本书都有一个编号，图书管理员需要将这些书按照编号放到书架上。<br style="outline:0px;box-sizing:border-box;font-synthesis-style:auto;overflow-wrap:break-word;"/> 每个书架都有一个固定的大小，例如可以容纳100本书。<br style="outline:0px;box-sizing:border-box;font-synthesis-style:auto;overflow-wrap:break-word;"/> 当书架上的书已经满了，图书管理员就会将它们放到下一个书架上，以此类推。</p> 
+<p style="outline:0px;padding:0px;font-synthesis-style:auto;overflow-wrap:break-word;color:rgb(77, 77, 77);line-height:26px;overflow:auto hidden;box-sizing:border-box;margin:0px 0px 16px;font-weight:400;font-size:16px;">计算机中，块设备就像是图书馆的书架，它们有固定的大小，例如硬盘的大小就是固定的。<br style="outline:0px;box-sizing:border-box;font-synthesis-style:auto;overflow-wrap:break-word;"/> 每个块设备都被分成了很多块，每个块都有一个固定的大小，例如512字节或4KB。<br style="outline:0px;box-sizing:border-box;font-synthesis-style:auto;overflow-wrap:break-word;"/> 每个块都有一个唯一的编号，就像图书馆中的书一样。<br style="outline:0px;box-sizing:border-box;font-synthesis-style:auto;overflow-wrap:break-word;"/> 当我们需要读取或写入块设备中的数据时，操作系统会通过块的编号来找到对应的块，并将它们读取出来或写入到块设备中。</p> 
+<p style="outline:0px;padding:0px;font-synthesis-style:auto;overflow-wrap:break-word;color:rgb(77, 77, 77);line-height:26px;overflow:auto hidden;box-sizing:border-box;margin:0px 0px 16px;font-weight:400;font-size:16px;">操作系统就像是图书管理员，它需要将数据按照块的编号读取或写入到块设备中。<br style="outline:0px;box-sizing:border-box;font-synthesis-style:auto;overflow-wrap:break-word;"/> 文件系统则类似于图书馆的分类系统，它将块设备中的数据组织成文件和目录的形式，以便用户可以方便地进行文件存储和管理。</p> 
+<p style="outline:0px;padding:0px;font-synthesis-style:auto;overflow-wrap:break-word;color:rgb(77, 77, 77);line-height:26px;overflow:auto hidden;box-sizing:border-box;margin:0px 0px 16px;font-weight:400;font-size:16px;">常见的块设备包括：硬盘驱动器、<a href="https://so.csdn.net/so/search?q=%E5%9B%BA%E6%80%81%E7%A1%AC%E7%9B%98&amp;spm=1001.2101.3001.7020" target="_blank" style="margin:0px;padding:0px;font-weight:normal;outline:0px;cursor:pointer;background-color:transparent;font-synthesis-style:auto;overflow-wrap:break-word;box-sizing:border-box;padding-left:3px;border-radius:3px;margin-right:3px;background:url(https://csdnimg.cn/release/blogv2/dist/pc/css/../img/iconHighlight.svg) right top / 12px 14px no-repeat transparent;box-shadow:none;padding-right:14px;text-decoration:none;color:rgb(252, 85, 49);">固态硬盘</a>（SSD）、USB 存储设备、RAID（磁盘阵列）驱动器等。</p> 
+<p style="outline:0px;padding:0px;font-synthesis-style:auto;overflow-wrap:break-word;color:rgb(77, 77, 77);line-height:26px;overflow:auto hidden;box-sizing:border-box;margin:0px 0px 16px;font-weight:400;font-size:16px;">通常通过块设备文件（block device file）访问，<br style="outline:0px;box-sizing:border-box;font-synthesis-style:auto;overflow-wrap:break-word;"/> 这些文件位于/dev目录下。<br style="outline:0px;box-sizing:border-box;font-synthesis-style:auto;overflow-wrap:break-word;"/> 例如，硬盘设备文件通常是/dev/sda或/dev/hda（对于旧版的IDE接口）。<br style="outline:0px;box-sizing:border-box;font-synthesis-style:auto;overflow-wrap:break-word;"/> 通过挂载这些设备文件，可以访问块设备中的数据，并对其进行读写操作。</p> 
+<h3 style="font-family:&quot;PingFang SC&quot;, &quot;Microsoft YaHei&quot;, SimHei, Arial, SimSun;outline:0px;padding:0px;font-synthesis-style:auto;overflow-wrap:break-word;box-sizing:border-box;color:rgb(79, 79, 79);margin:24px 0px 8px;font-weight:600;line-height:28px;font-size:18px;"><a style="margin:0px;padding:0px;font-weight:normal;outline:0px;cursor:pointer;background-color:transparent;font-synthesis-style:auto;overflow-wrap:break-word;box-sizing:border-box;text-decoration:none;color:rgb(78, 161, 219);"></a><a style="margin:0px;padding:0px;font-weight:normal;outline:0px;cursor:pointer;background-color:transparent;font-synthesis-style:auto;overflow-wrap:break-word;box-sizing:border-box;text-decoration:none;color:rgb(78, 161, 219);"></a>2.啥是挂载？</h3> 
+<p style="outline:0px;padding:0px;font-synthesis-style:auto;overflow-wrap:break-word;color:rgb(77, 77, 77);line-height:26px;overflow:auto hidden;box-sizing:border-box;margin:0px 0px 16px;font-weight:400;font-size:16px;">挂载是指，将一个文件系统连接到系统上的一个目录，使得该文件系统的内容能够被访问和操作。<br style="outline:0px;box-sizing:border-box;font-synthesis-style:auto;overflow-wrap:break-word;"/> 在<span style="margin:0px;padding:0px;font-weight:normal;outline:0px;font-synthesis-style:auto;overflow-wrap:break-word;box-sizing:border-box;cursor:pointer;color:rgb(78, 161, 219);margin-right:3px;padding-right:18px;background:url(https://csdnimg.cn/release/blogv2/dist/pc/css/../img/gitcode-key.png) right center / 14px 14px no-repeat transparent;box-shadow:none;">Linux</span>中，所有的文件系统都必须被挂载才能够被使用，包括硬盘分区、USB驱动器、CD-ROM等。</p> 
+<p style="outline:0px;padding:0px;font-synthesis-style:auto;overflow-wrap:break-word;color:rgb(77, 77, 77);line-height:26px;overflow:auto hidden;box-sizing:border-box;margin:0px 0px 16px;font-weight:400;font-size:16px;">就像将一辆车停放到停车位上。<br style="outline:0px;box-sizing:border-box;font-synthesis-style:auto;overflow-wrap:break-word;"/> 停车位是一个目录，车是一个文件系统，挂载是将车连接到停车位上，使得车的内容可以被访问和操作，就像文件系统中的文件和目录可以在挂载点下被访问和操作。<br style="outline:0px;box-sizing:border-box;font-synthesis-style:auto;overflow-wrap:break-word;"/> 卸载就像是将车从停车位上取走，使得车不再被连接到停车位上，就像文件系统不再被挂载到挂载点上。</p> 
+<p style="outline:0px;padding:0px;font-synthesis-style:auto;overflow-wrap:break-word;color:rgb(77, 77, 77);line-height:26px;overflow:auto hidden;box-sizing:border-box;margin:0px 0px 16px;font-weight:400;font-size:16px;">mount命令可以指定要挂载的文件系统、挂载点以及其他一些参数。<br style="outline:0px;box-sizing:border-box;font-synthesis-style:auto;overflow-wrap:break-word;"/> 例如，要将一个名为/dev/sda1的分区挂载到/mnt目录下，可以使用以下命令：</p> 
+<pre style="--en-codeblock:true;--en-meta:{&quot;title&quot;:&quot;&quot;,&quot;lang&quot;:&quot;&quot;,&quot;theme&quot;:&quot;default&quot;,&quot;showLine&quot;:true,&quot;lineWrap&quot;:true};border-radius:4px;background-color: #fbfaf8;border: 1px solid rgba(0,0,0,.14902);color: #333;font-size: 12px;padding: 8px;font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif;box-sizing: border-box;"><span style="outline:0px;font-synthesis-style:auto;min-width:94%;font-family:&quot;Source Code Pro&quot;, &quot;DejaVu Sans Mono&quot;, &quot;Ubuntu Mono&quot;, &quot;Anonymous Pro&quot;, &quot;Droid Sans Mono&quot;, Menlo, Monaco, Consolas, Inconsolata, Courier, monospace, &quot;PingFang SC&quot;, &quot;Microsoft YaHei&quot;, sans-serif;box-sizing:border-box;text-size-adjust:none;display:block;overflow-x:auto;white-space:pre;font-size:14px;line-height:22px;border-radius:2px;background-color:rgb(249, 242, 244);background:rgb(40, 44, 52);color:rgb(171, 178, 191);word-break:break-all;overflow-wrap:normal;padding:0px;position:unset;">sudo mount <span style="margin:0px;padding:0px;font-weight:normal;outline:0px;font-synthesis-style:auto;font-size:inherit;box-sizing:border-box;color:rgb(102, 153, 0);word-break:break-all;overflow-wrap:normal;font:400 14px &quot;Source Code Pro&quot;, &quot;DejaVu Sans Mono&quot;, &quot;Ubuntu Mono&quot;, &quot;Anonymous Pro&quot;, &quot;Droid Sans Mono&quot;, Menlo, Monaco, Consolas, Inconsolata, Courier, monospace, &quot;PingFang SC&quot;, &quot;Microsoft YaHei&quot;, sans-serif;">/</span>dev<span style="margin:0px;padding:0px;font-weight:normal;outline:0px;font-synthesis-style:auto;font-size:inherit;box-sizing:border-box;color:rgb(102, 153, 0);word-break:break-all;overflow-wrap:normal;font:400 14px &quot;Source Code Pro&quot;, &quot;DejaVu Sans Mono&quot;, &quot;Ubuntu Mono&quot;, &quot;Anonymous Pro&quot;, &quot;Droid Sans Mono&quot;, Menlo, Monaco, Consolas, Inconsolata, Courier, monospace, &quot;PingFang SC&quot;, &quot;Microsoft YaHei&quot;, sans-serif;">/</span>sda1 <span style="margin:0px;padding:0px;font-weight:normal;outline:0px;font-synthesis-style:auto;font-size:inherit;box-sizing:border-box;color:rgb(102, 153, 0);word-break:break-all;overflow-wrap:normal;font:400 14px &quot;Source Code Pro&quot;, &quot;DejaVu Sans Mono&quot;, &quot;Ubuntu Mono&quot;, &quot;Anonymous Pro&quot;, &quot;Droid Sans Mono&quot;, Menlo, Monaco, Consolas, Inconsolata, Courier, monospace, &quot;PingFang SC&quot;, &quot;Microsoft YaHei&quot;, sans-serif;">/</span>mnt
+</span><ul style="font-weight:normal;outline:0px;font-synthesis-style:auto;box-sizing:border-box;overflow:auto hidden;font-size:16px;list-style-type:disc;position:absolute;width:48px;top:0px;left:0px;text-align:right;list-style:none;padding:8px 0px;margin:0px;background-color:rgb(40, 44, 52);word-break:break-all;overflow-wrap:normal;"><li style="font-weight:normal;outline:0px;font-synthesis-style:auto;font-size:inherit;box-sizing:border-box;list-style-type:disc;list-style:none;padding:0px 8px;margin:0px;border-right:1px solid rgb(197, 197, 197);word-break:break-all;overflow-wrap:normal;color:rgb(153, 153, 153);">1</li></ul></pre> 
+<p style="outline:0px;padding:0px;font-synthesis-style:auto;overflow-wrap:break-word;color:rgb(77, 77, 77);line-height:26px;overflow:auto hidden;box-sizing:border-box;margin:0px 0px 16px;font-weight:400;font-size:16px;">/mnt目录成为了/dev/sda1分区的根目录，文件系统中的文件和目录都可以在/mnt下访问。<br style="outline:0px;box-sizing:border-box;font-synthesis-style:auto;overflow-wrap:break-word;"/> 当不需要使用该文件系统时，可以使用umount命令将其卸载：</p> 
+<pre style="--en-codeblock:true;--en-meta:{&quot;title&quot;:&quot;&quot;,&quot;lang&quot;:&quot;&quot;,&quot;theme&quot;:&quot;default&quot;,&quot;showLine&quot;:true,&quot;lineWrap&quot;:true};border-radius:4px;background-color: #fbfaf8;border: 1px solid rgba(0,0,0,.14902);color: #333;font-size: 12px;padding: 8px;font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif;box-sizing: border-box;"><span style="outline:0px;font-synthesis-style:auto;min-width:94%;font-family:&quot;Source Code Pro&quot;, &quot;DejaVu Sans Mono&quot;, &quot;Ubuntu Mono&quot;, &quot;Anonymous Pro&quot;, &quot;Droid Sans Mono&quot;, Menlo, Monaco, Consolas, Inconsolata, Courier, monospace, &quot;PingFang SC&quot;, &quot;Microsoft YaHei&quot;, sans-serif;box-sizing:border-box;text-size-adjust:none;display:block;overflow-x:auto;white-space:pre;font-size:14px;line-height:22px;border-radius:2px;background-color:rgb(249, 242, 244);background:rgb(40, 44, 52);color:rgb(171, 178, 191);word-break:break-all;overflow-wrap:normal;padding:0px;position:unset;">sudo umount <span style="margin:0px;padding:0px;font-weight:normal;outline:0px;font-synthesis-style:auto;font-size:inherit;box-sizing:border-box;color:rgb(102, 153, 0);word-break:break-all;overflow-wrap:normal;font:400 14px &quot;Source Code Pro&quot;, &quot;DejaVu Sans Mono&quot;, &quot;Ubuntu Mono&quot;, &quot;Anonymous Pro&quot;, &quot;Droid Sans Mono&quot;, Menlo, Monaco, Consolas, Inconsolata, Courier, monospace, &quot;PingFang SC&quot;, &quot;Microsoft YaHei&quot;, sans-serif;">/</span>mnt
+</span><ul style="font-weight:normal;outline:0px;font-synthesis-style:auto;box-sizing:border-box;overflow:auto hidden;font-size:16px;list-style-type:disc;position:absolute;width:48px;top:0px;left:0px;text-align:right;list-style:none;padding:8px 0px;margin:0px;background-color:rgb(40, 44, 52);word-break:break-all;overflow-wrap:normal;"><li style="font-weight:normal;outline:0px;font-synthesis-style:auto;font-size:inherit;box-sizing:border-box;list-style-type:disc;list-style:none;padding:0px 8px;margin:0px;border-right:1px solid rgb(197, 197, 197);word-break:break-all;overflow-wrap:normal;color:rgb(153, 153, 153);">1</li></ul></pre> 
+<p style="outline:0px;padding:0px;font-synthesis-style:auto;overflow-wrap:break-word;color:rgb(77, 77, 77);line-height:26px;overflow:auto hidden;box-sizing:border-box;margin:0px 0px 16px;font-weight:400;font-size:16px;">文件系统中的内容也不再能够被访问和操作。</p> 
+<h3 style="font-family:&quot;PingFang SC&quot;, &quot;Microsoft YaHei&quot;, SimHei, Arial, SimSun;outline:0px;padding:0px;font-synthesis-style:auto;overflow-wrap:break-word;box-sizing:border-box;color:rgb(79, 79, 79);margin:24px 0px 8px;font-weight:600;line-height:28px;font-size:18px;"><a style="margin:0px;padding:0px;font-weight:normal;outline:0px;cursor:pointer;background-color:transparent;font-synthesis-style:auto;overflow-wrap:break-word;box-sizing:border-box;text-decoration:none;color:rgb(78, 161, 219);"></a><a style="margin:0px;padding:0px;font-weight:normal;outline:0px;cursor:pointer;background-color:transparent;font-synthesis-style:auto;overflow-wrap:break-word;box-sizing:border-box;text-decoration:none;color:rgb(78, 161, 219);"></a>3.啥是文件系统？</h3> 
+<p style="outline:0px;padding:0px;font-synthesis-style:auto;overflow-wrap:break-word;color:rgb(77, 77, 77);line-height:26px;overflow:auto hidden;box-sizing:border-box;margin:0px 0px 16px;font-weight:400;font-size:16px;">操作系统用于组织和存储文件和目录的一种结构。<br style="outline:0px;box-sizing:border-box;font-synthesis-style:auto;overflow-wrap:break-word;"/> 文件系统定义了文件和目录的组织方式、访问权限、存储位置等信息，并提供了一些文件操作和管理的接口。</p> 
+<p style="outline:0px;padding:0px;font-synthesis-style:auto;overflow-wrap:break-word;color:rgb(77, 77, 77);line-height:26px;overflow:auto hidden;box-sizing:border-box;margin:0px 0px 16px;font-weight:400;font-size:16px;">在Linux中，每个文件系统都有一个唯一的标识符，称为文件系统标识符（Filesystem Identifier），简称为文件系统UUID。<br style="outline:0px;box-sizing:border-box;font-synthesis-style:auto;overflow-wrap:break-word;"/> 文件系统UUID可以用于在系统启动时自动挂载文件系统，而无需指定设备节点名称或设备路径。</p> 
+<p style="outline:0px;padding:0px;font-synthesis-style:auto;overflow-wrap:break-word;color:rgb(77, 77, 77);line-height:26px;overflow:auto hidden;box-sizing:border-box;margin:0px 0px 16px;font-weight:400;font-size:16px;">Linux中的文件系统可以被挂载到文件系统树的任何位置，使得文件系统中的文件和目录可以在该挂载点下被访问和操作。<br style="outline:0px;box-sizing:border-box;font-synthesis-style:auto;overflow-wrap:break-word;"/> 通常情况下，Linux将所有的文件系统都挂载到根目录（/）下，以便用户可以访问整个系统中的所有文件和目录。</p> 
+<p style="outline:0px;padding:0px;font-synthesis-style:auto;overflow-wrap:break-word;color:rgb(77, 77, 77);line-height:26px;overflow:auto hidden;box-sizing:border-box;margin:0px 0px 16px;font-weight:400;font-size:16px;">一本书可以被看作一个文件系统，每一页是一个文件，每个章节是一个目录。<br style="outline:0px;box-sizing:border-box;font-synthesis-style:auto;overflow-wrap:break-word;"/> 目录结构定义了书的组织方式、访问权限、存储位置等信息，并提供了一些读取和管理书中内容的接口。<br style="outline:0px;box-sizing:border-box;font-synthesis-style:auto;overflow-wrap:break-word;"/> 每本书都有一个唯一的标识符，就像每个文件系统都有一个唯一的UUID。<br style="outline:0px;box-sizing:border-box;font-synthesis-style:auto;overflow-wrap:break-word;"/> 每个章节和页码可以被引用，就像文件系统中的文件和目录可以被挂载到文件系统树的任何位置。<br style="outline:0px;box-sizing:border-box;font-synthesis-style:auto;overflow-wrap:break-word;"/> 每个读者都可以根据自己的需求访问不同的章节和页码，就像在Linux中，每个用户可以根据自己的需求访问不同的文件和目录。</p> 
+<h4 style="font-family:&quot;PingFang SC&quot;, &quot;Microsoft YaHei&quot;, SimHei, Arial, SimSun;outline:0px;padding:0px;font-synthesis-style:auto;overflow-wrap:break-word;box-sizing:border-box;color:rgb(79, 79, 79);margin:24px 0px 8px;font-weight:600;line-height:26px;font-size:16px;"><a style="margin:0px;padding:0px;font-weight:normal;outline:0px;cursor:pointer;background-color:transparent;font-synthesis-style:auto;overflow-wrap:break-word;box-sizing:border-box;text-decoration:none;color:rgb(78, 161, 219);"></a><a style="margin:0px;padding:0px;font-weight:normal;outline:0px;cursor:pointer;background-color:transparent;font-synthesis-style:auto;overflow-wrap:break-word;box-sizing:border-box;text-decoration:none;color:rgb(78, 161, 219);"></a>文件系统类型的特性、性能、兼容性等方面的区别:</h4> 
+<h5 style="font-family:&quot;PingFang SC&quot;, &quot;Microsoft YaHei&quot;, SimHei, Arial, SimSun;outline:0px;padding:0px;font-synthesis-style:auto;overflow-wrap:break-word;box-sizing:border-box;color:rgb(79, 79, 79);margin:24px 0px 8px;font-weight:600;line-height:24px;font-size:16px;"><a style="margin:0px;padding:0px;font-weight:normal;outline:0px;cursor:pointer;background-color:transparent;font-synthesis-style:auto;overflow-wrap:break-word;box-sizing:border-box;text-decoration:none;color:rgb(78, 161, 219);"></a>ext4（Fourth Extended File System）：</h5> 
+<p style="outline:0px;padding:0px;font-synthesis-style:auto;overflow-wrap:break-word;color:rgb(77, 77, 77);line-height:26px;overflow:auto hidden;box-sizing:border-box;margin:0px 0px 16px;font-weight:400;font-size:16px;">Linux最常用的文件系统类型之一，支持文件大小高达16TB，支持文件系统日志、文件系统快照、文件加密等特性。<br style="outline:0px;box-sizing:border-box;font-synthesis-style:auto;overflow-wrap:break-word;"/> ext4的性能较高，支持读写操作的并发处理，同时也支持文件系统碎片整理，具有较好的磁盘空间利用率。<br style="outline:0px;box-sizing:border-box;font-synthesis-style:auto;overflow-wrap:break-word;"/> 此外，ext4也具有较好的兼容性，可以与大多数Linux操作系统兼容。</p> 
+<h5 style="font-family:&quot;PingFang SC&quot;, &quot;Microsoft YaHei&quot;, SimHei, Arial, SimSun;outline:0px;padding:0px;font-synthesis-style:auto;overflow-wrap:break-word;box-sizing:border-box;color:rgb(79, 79, 79);margin:24px 0px 8px;font-weight:600;line-height:24px;font-size:16px;"><a style="margin:0px;padding:0px;font-weight:normal;outline:0px;cursor:pointer;background-color:transparent;font-synthesis-style:auto;overflow-wrap:break-word;box-sizing:border-box;text-decoration:none;color:rgb(78, 161, 219);"></a>NTFS（New Technology File System）：</h5> 
+<p style="outline:0px;padding:0px;font-synthesis-style:auto;overflow-wrap:break-word;color:rgb(77, 77, 77);line-height:26px;overflow:auto hidden;box-sizing:border-box;margin:0px 0px 16px;font-weight:400;font-size:16px;"><span style="margin:0px;padding:0px;font-weight:normal;outline:0px;font-synthesis-style:auto;overflow-wrap:break-word;box-sizing:border-box;cursor:pointer;color:rgb(78, 161, 219);margin-right:3px;padding-right:18px;background:url(https://csdnimg.cn/release/blogv2/dist/pc/css/../img/gitcode-key.png) right center / 14px 14px no-repeat transparent;box-shadow:none;">Windows</span>默认的文件系统类型，支持文件大小高达16EB，支持磁盘配额、文件压缩、文件加密等特性。<br style="outline:0px;box-sizing:border-box;font-synthesis-style:auto;overflow-wrap:break-word;"/> 性能较高，支持高并发的读写操作，同时也具有较好的文件系统碎片整理能力，磁盘空间利用率较高。<br style="outline:0px;box-sizing:border-box;font-synthesis-style:auto;overflow-wrap:break-word;"/> 具有较好的兼容性，可以与大多数Windows操作系统兼容。</p> 
+<h5 style="font-family:&quot;PingFang SC&quot;, &quot;Microsoft YaHei&quot;, SimHei, Arial, SimSun;outline:0px;padding:0px;font-synthesis-style:auto;overflow-wrap:break-word;box-sizing:border-box;color:rgb(79, 79, 79);margin:24px 0px 8px;font-weight:600;line-height:24px;font-size:16px;"><a style="margin:0px;padding:0px;font-weight:normal;outline:0px;cursor:pointer;background-color:transparent;font-synthesis-style:auto;overflow-wrap:break-word;box-sizing:border-box;text-decoration:none;color:rgb(78, 161, 219);"></a>FAT32（File Allocation Table）：</h5> 
+<p style="outline:0px;padding:0px;font-synthesis-style:auto;overflow-wrap:break-word;color:rgb(77, 77, 77);line-height:26px;overflow:auto hidden;box-sizing:border-box;margin:0px 0px 16px;font-weight:400;font-size:16px;">是一种老旧的文件系统类型，支持文件大小最大为4GB。<br style="outline:0px;box-sizing:border-box;font-synthesis-style:auto;overflow-wrap:break-word;"/> 由于有较好的兼容性，可以与各种操作系统和设备兼容，因此广泛用于小型移动设备和可移动媒体，如USB闪存驱动器、存储卡等。<br style="outline:0px;box-sizing:border-box;font-synthesis-style:auto;overflow-wrap:break-word;"/> 但是，磁盘空间利用率不高，不支持文件系统日志和文件系统快照等特性。</p> 
+<h5 style="font-family:&quot;PingFang SC&quot;, &quot;Microsoft YaHei&quot;, SimHei, Arial, SimSun;outline:0px;padding:0px;font-synthesis-style:auto;overflow-wrap:break-word;box-sizing:border-box;color:rgb(79, 79, 79);margin:24px 0px 8px;font-weight:600;line-height:24px;font-size:16px;"><a style="margin:0px;padding:0px;font-weight:normal;outline:0px;cursor:pointer;background-color:transparent;font-synthesis-style:auto;overflow-wrap:break-word;box-sizing:border-box;text-decoration:none;color:rgb(78, 161, 219);"></a>XFS（eXtended File System）：</h5> 
+<p style="outline:0px;padding:0px;font-synthesis-style:auto;overflow-wrap:break-word;color:rgb(77, 77, 77);line-height:26px;overflow:auto hidden;box-sizing:border-box;margin:0px 0px 16px;font-weight:400;font-size:16px;">高性能的文件系统类型，支持文件系统大小高达9EB，支持文件系统快照、延迟分配等特性。<br style="outline:0px;box-sizing:border-box;font-synthesis-style:auto;overflow-wrap:break-word;"/> 具有高并发的读写能力，同时也具有较好的文件系统碎片整理能力和磁盘空间利用率。<br style="outline:0px;box-sizing:border-box;font-synthesis-style:auto;overflow-wrap:break-word;"/> 主要用于大型数据存储和服务器环境中。</p> 
+<h5 style="font-family:&quot;PingFang SC&quot;, &quot;Microsoft YaHei&quot;, SimHei, Arial, SimSun;outline:0px;padding:0px;font-synthesis-style:auto;overflow-wrap:break-word;box-sizing:border-box;color:rgb(79, 79, 79);margin:24px 0px 8px;font-weight:600;line-height:24px;font-size:16px;"><a style="margin:0px;padding:0px;font-weight:normal;outline:0px;cursor:pointer;background-color:transparent;font-synthesis-style:auto;overflow-wrap:break-word;box-sizing:border-box;text-decoration:none;color:rgb(78, 161, 219);"></a><span style="margin:0px;padding:0px;font-weight:normal;outline:0px;font-synthesis-style:auto;overflow-wrap:break-word;box-sizing:border-box;cursor:pointer;color:rgb(78, 161, 219);margin-right:3px;padding-right:18px;background:url(https://csdnimg.cn/release/blogv2/dist/pc/css/../img/gitcode-key.png) right center / 14px 14px no-repeat transparent;box-shadow:none;">Btrfs</span>（B-tree file system）：</h5> 
+<p style="outline:0px;padding:0px;font-synthesis-style:auto;overflow-wrap:break-word;color:rgb(77, 77, 77);line-height:26px;overflow:auto hidden;box-sizing:border-box;margin:0px 0px 16px;font-weight:400;font-size:16px;">支持文件系统快照、文件系统加密、文件系统压缩等特性。</p> 
+<p style="outline:0px;padding:0px;font-synthesis-style:auto;overflow-wrap:break-word;color:rgb(77, 77, 77);line-height:26px;overflow:auto hidden;box-sizing:border-box;margin:0px 0px 16px;font-weight:400;font-size:16px;">选择合适的文件系统类型应根据应用场景和需求来决定。</p>
+                </div><div style="font-weight:normal;outline:0px;box-sizing:inherit;margin:0px;padding:0px;font-synthesis-style:auto;overflow-wrap:break-word;"><div style="font-weight:normal;outline:0px;box-sizing:inherit;margin:0px;padding:0px;font-synthesis-style:auto;overflow-wrap:break-word;"></div></div>
+                
+                
+        <span style="font-weight:normal;height:0px;visibility:hidden;display:block;clear:both;"></span></div>
+        <div style="font-weight:normal;outline:0px;box-sizing:inherit;margin:0px;padding:0px;font-synthesis-style:auto;overflow-wrap:break-word;display:block;"><div style="font-weight:normal;outline:0px;box-sizing:inherit;margin:0px;border-top:1px solid rgb(240, 240, 242);border-bottom:1px solid rgb(240, 240, 242);padding:20px 0px;font-synthesis-style:auto;overflow-wrap:break-word;"><div style="outline:0px;box-sizing:inherit;margin:0px;padding:0px;font-synthesis-style:auto;overflow-wrap:break-word;padding-left:32px;margin-bottom:12px;font-size:16px;color:rgb(34, 34, 38);line-height:24px;background-image:url(https://csdnimg.cn/release/blogv2/dist/pc/css/../../../dist/components/img/iconSkillTreeWhite.png);background-repeat:no-repeat;background-size:16px 16px;background-position:8px 4px;font-weight:600;">文章知识点与官方知识档案匹配，可进一步学习相关知识</div><div style="font-weight:normal;outline:0px;box-sizing:inherit;margin:0px;padding:0px;font-synthesis-style:auto;overflow-wrap:break-word;"><div style="font-weight:normal;outline:0px;box-sizing:inherit;margin:0px;padding:0px;font-synthesis-style:auto;overflow-wrap:break-word;margin-bottom:0px;"><span style="margin:0px;padding:0px;outline:0px;box-sizing:inherit;font-synthesis-style:auto;overflow-wrap:break-word;color:rgb(85, 86, 102);line-height:22px;font-size:14px;font-weight:400;padding-left:8px;"><a href="https://edu.csdn.net/skill/cloud_native/?utm_source=csdn_ai_skill_tree_blog" target="_blank" style="margin:0px;padding:0px;box-sizing:inherit;outline:0px;cursor:pointer;text-decoration:none;background-color:transparent;font-synthesis-style:auto;overflow-wrap:break-word;line-height:22px;font-size:14px;font-weight:400;color:rgb(85, 86, 102);">云原生入门技能树</a><i style="font-style:normal;outline:0px;box-sizing:inherit;font-synthesis-style:auto;overflow-wrap:break-word;font-weight:400;color:rgb(85, 86, 102);line-height:22px;font-size:14px;display:inline-block;margin:0px 4px;background-image:url(https://csdnimg.cn/release/blogv2/dist/pc/css/../../../dist/components/img/iconArrowLeftWhite.png);background-repeat:no-repeat;background-size:5px 10px;background-position:center 6px;height:22px;width:6px;vertical-align:-6px;"></i><a href="https://edu.csdn.net/skill/cloud_native/?utm_source=csdn_ai_skill_tree_blog" target="_blank" style="margin:0px;padding:0px;box-sizing:inherit;outline:0px;cursor:pointer;text-decoration:none;background-color:transparent;font-synthesis-style:auto;overflow-wrap:break-word;line-height:22px;font-size:14px;font-weight:400;color:rgb(85, 86, 102);">首页</a><i style="font-style:normal;outline:0px;box-sizing:inherit;font-synthesis-style:auto;overflow-wrap:break-word;font-weight:400;color:rgb(85, 86, 102);line-height:22px;font-size:14px;display:inline-block;margin:0px 4px;background-image:url(https://csdnimg.cn/release/blogv2/dist/pc/css/../../../dist/components/img/iconArrowLeftWhite.png);background-repeat:no-repeat;background-size:5px 10px;background-position:center 6px;height:22px;width:6px;vertical-align:-6px;"></i><a href="https://edu.csdn.net/skill/cloud_native/?utm_source=csdn_ai_skill_tree_blog" target="_blank" style="margin:0px;padding:0px;box-sizing:inherit;outline:0px;cursor:pointer;text-decoration:none;background-color:transparent;font-synthesis-style:auto;overflow-wrap:break-word;line-height:22px;font-size:14px;font-weight:400;color:rgb(85, 86, 102);">概览</a></span><span style="margin:0px;padding:0px;outline:0px;box-sizing:inherit;font-synthesis-style:auto;overflow-wrap:break-word;color:rgb(85, 86, 102);line-height:22px;font-size:14px;font-weight:400;"><span style="margin:0px;padding:0px;outline:0px;box-sizing:inherit;font-synthesis-style:auto;overflow-wrap:break-word;line-height:22px;font-size:14px;font-weight:400;margin-left:16px;color:rgb(34, 34, 38);">20389</span> 人正在系统学习中</span></div></div></div></div>
+    </div>
+  
+</div></span></div></div></div></div></div></div>
+</div>
+<a class="back-link" href="../articles.html">← 返回笔记列表</a>
+</body>
+</html>

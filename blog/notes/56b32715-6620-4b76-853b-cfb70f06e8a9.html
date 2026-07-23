@@ -1,0 +1,975 @@
+<!DOCTYPE html>
+<html lang="zh-CN" data-theme="light">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Using the ffi/lib objects — CFFI 1.16.0 documentation — 技术笔记</title>
+<style>
+:root { --bg:#fff; --text:#1a1a1a; --muted:#666; --border:#e0e0e0; --code-bg:#f5f5f5; --link:#0066cc; }
+@media (prefers-color-scheme: dark) { :root { --bg:#1a1a1a; --text:#e0e0e0; --muted:#999; --border:#333; --code-bg:#2a2a2a; --link:#66bbff; } }
+* { box-sizing:border-box; margin:0; padding:0; }
+body { font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Arial,sans-serif; line-height:1.7; color:var(--text); background:var(--bg); max-width:860px; margin:0 auto; padding:2rem 1.5rem; }
+.note-header { border-bottom:2px solid var(--border); padding-bottom:1rem; margin-bottom:2rem; }
+.note-title { font-size:1.6rem; font-weight:700; margin-bottom:0.3rem; }
+.note-meta { color:var(--muted); font-size:0.85rem; }
+.note-content { font-size:0.95rem; }
+.note-content h1 { font-size:1.4rem; margin:1.2rem 0 0.6rem; }
+.note-content h2 { font-size:1.2rem; margin:1rem 0 0.5rem; }
+.note-content h3 { font-size:1.05rem; margin:0.8rem 0 0.4rem; }
+.note-content p { margin:0.5rem 0; }
+.note-content ul,.note-content ol { margin:0.5rem 0 0.5rem 2rem; }
+.note-content li { margin:0.2rem 0; }
+.note-content pre { background:var(--code-bg); padding:1rem; border-radius:6px; overflow-x:auto; margin:0.8rem 0; font-size:0.85rem; }
+.note-content code { background:var(--code-bg); padding:0.1rem 0.3rem; border-radius:3px; font-size:0.88em; }
+.note-content pre code { background:none; padding:0; }
+.note-content blockquote { border-left:3px solid var(--border); padding-left:1rem; color:var(--muted); margin:0.8rem 0; }
+.note-content a { color:var(--link); }
+.note-content img { max-width:100%; height:auto; border-radius:6px; margin:0.5rem 0; }
+.note-content table { border-collapse:collapse; width:100%; margin:0.8rem 0; }
+.note-content th,.note-content td { border:1px solid var(--border); padding:0.5rem; }
+.note-content th { background:var(--code-bg); }
+.media-placeholder { background:var(--code-bg); padding:1rem; text-align:center; color:var(--muted); border-radius:6px; margin:0.5rem 0; font-size:0.85rem; }
+.encrypt-placeholder { background:#fff3cd; padding:0.5rem; text-align:center; color:#856404; border-radius:6px; margin:0.5rem 0; font-size:0.85rem; }
+.back-link { display:inline-block; margin-top:2rem; color:var(--link); text-decoration:none; font-size:0.85rem; }
+</style>
+</head>
+<body>
+<div class="note-header"><div class="note-title">Using the ffi/lib objects — CFFI 1.16.0 documentation</div><div class="note-meta">笔记本：python</div></div>
+<div class="note-content"><div style="--en-clipped-content:article">
+<div><br/></div><div style="font-size: 16px; display:block; min-width: 100%; position: relative;"> <div><div style="font-family:Georgia, serif;font-size:17px;background-color:rgb(255, 255, 255);color:rgb(0, 0, 0);"><div><div><div><div style="background-color:rgb(255, 255, 255);color:rgb(62, 67, 73);"><div>
+<h1 style="font-family:Georgia, serif;font-weight:normal;margin:30px 0px 10px;padding:0px;margin-top:0px;padding-top:0px;font-size:240%;"><a href="https://cffi.readthedocs.io/en/stable/using.html#id15" style="color:rgb(0, 75, 107);text-decoration:underline;">Using the ffi/lib objects</a><a href="https://cffi.readthedocs.io/en/stable/using.html#using-the-ffi-lib-objects" title="Link to this heading" style="padding:0px 4px;color:rgb(221, 221, 221);text-decoration:none;">¶</a></h1>
+<div>
+<p style="line-height:1.4em;">Contents</p>
+<ul style="margin:10px 0px 10px 30px;padding:0px;">
+<li style="line-height:1.4em;"><p style="line-height:1.4em;"><a href="https://cffi.readthedocs.io/en/stable/using.html#using-the-ffi-lib-objects" style="color:rgb(0, 75, 107);border-bottom:1px dotted rgb(0, 75, 107);text-decoration:none;">Using the ffi/lib objects</a></p>
+<ul style="margin:10px 0px 10px 30px;padding:0px;">
+<li style="line-height:1.4em;"><p style="line-height:1.4em;"><a href="https://cffi.readthedocs.io/en/stable/using.html#working-with-pointers-structures-and-arrays" style="color:rgb(0, 75, 107);border-bottom:1px dotted rgb(0, 75, 107);text-decoration:none;">Working with pointers, structures and arrays</a></p></li>
+<li style="line-height:1.4em;"><p style="line-height:1.4em;"><a href="https://cffi.readthedocs.io/en/stable/using.html#python-3-support" style="color:rgb(0, 75, 107);border-bottom:1px dotted rgb(0, 75, 107);text-decoration:none;">Python 3 support</a></p></li>
+<li style="line-height:1.4em;"><p style="line-height:1.4em;"><a href="https://cffi.readthedocs.io/en/stable/using.html#an-example-of-calling-a-main-like-thing" style="color:rgb(0, 75, 107);border-bottom:1px dotted rgb(0, 75, 107);text-decoration:none;">An example of calling a main-like thing</a></p></li>
+<li style="line-height:1.4em;"><p style="line-height:1.4em;"><a href="https://cffi.readthedocs.io/en/stable/using.html#function-calls" style="color:rgb(0, 75, 107);border-bottom:1px dotted rgb(0, 75, 107);text-decoration:none;">Function calls</a></p></li>
+<li style="line-height:1.4em;"><p style="line-height:1.4em;"><a href="https://cffi.readthedocs.io/en/stable/using.html#variadic-function-calls" style="color:rgb(0, 75, 107);border-bottom:1px dotted rgb(0, 75, 107);text-decoration:none;">Variadic function calls</a></p></li>
+<li style="line-height:1.4em;"><p style="line-height:1.4em;"><a href="https://cffi.readthedocs.io/en/stable/using.html#memory-pressure-pypy" style="color:rgb(0, 75, 107);border-bottom:1px dotted rgb(0, 75, 107);text-decoration:none;">Memory pressure (PyPy)</a></p></li>
+<li style="line-height:1.4em;"><p style="line-height:1.4em;"><a href="https://cffi.readthedocs.io/en/stable/using.html#extern-python-new-style-callbacks" style="color:rgb(0, 75, 107);border-bottom:1px dotted rgb(0, 75, 107);text-decoration:none;">Extern “Python” (new-style callbacks)</a></p>
+<ul style="margin:10px 0px 10px 30px;padding:0px;">
+<li style="line-height:1.4em;"><p style="line-height:1.4em;"><a href="https://cffi.readthedocs.io/en/stable/using.html#extern-python-and-void-arguments" style="color:rgb(0, 75, 107);border-bottom:1px dotted rgb(0, 75, 107);text-decoration:none;">Extern “Python” and <code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span>void</span> <span>*</span></code> arguments</a></p></li>
+<li style="line-height:1.4em;"><p style="line-height:1.4em;"><a href="https://cffi.readthedocs.io/en/stable/using.html#extern-python-accessed-from-c-directly" style="color:rgb(0, 75, 107);border-bottom:1px dotted rgb(0, 75, 107);text-decoration:none;">Extern “Python” accessed from C directly</a></p></li>
+<li style="line-height:1.4em;"><p style="line-height:1.4em;"><a href="https://cffi.readthedocs.io/en/stable/using.html#extern-python-c" style="color:rgb(0, 75, 107);border-bottom:1px dotted rgb(0, 75, 107);text-decoration:none;">Extern “Python+C”</a></p></li>
+<li style="line-height:1.4em;"><p style="line-height:1.4em;"><a href="https://cffi.readthedocs.io/en/stable/using.html#extern-python-reference" style="color:rgb(0, 75, 107);border-bottom:1px dotted rgb(0, 75, 107);text-decoration:none;">Extern “Python”: reference</a></p></li>
+</ul>
+</li>
+<li style="line-height:1.4em;"><p style="line-height:1.4em;"><a href="https://cffi.readthedocs.io/en/stable/using.html#callbacks-old-style" style="color:rgb(0, 75, 107);border-bottom:1px dotted rgb(0, 75, 107);text-decoration:none;">Callbacks (old style)</a></p></li>
+<li style="line-height:1.4em;"><p style="line-height:1.4em;"><a href="https://cffi.readthedocs.io/en/stable/using.html#windows-calling-conventions" style="color:rgb(0, 75, 107);border-bottom:1px dotted rgb(0, 75, 107);text-decoration:none;">Windows: calling conventions</a></p></li>
+<li style="line-height:1.4em;"><p style="line-height:1.4em;"><a href="https://cffi.readthedocs.io/en/stable/using.html#ffi-interface" style="color:rgb(0, 75, 107);border-bottom:1px dotted rgb(0, 75, 107);text-decoration:none;">FFI Interface</a></p></li>
+</ul>
+</li>
+</ul>
+</div>
+<p style="line-height:1.4em;">Keep this page under your pillow.</p>
+<div>
+<span></span><h2 style="font-family:Georgia, serif;font-weight:normal;margin:30px 0px 10px;padding:0px;font-size:180%;"><a href="https://cffi.readthedocs.io/en/stable/using.html#id16" style="color:rgb(0, 75, 107);text-decoration:underline;">Working with pointers, structures and arrays</a><a href="https://cffi.readthedocs.io/en/stable/using.html#working-with-pointers-structures-and-arrays" title="Link to this heading" style="padding:0px 4px;color:rgb(221, 221, 221);text-decoration:none;">¶</a></h2>
+<p style="line-height:1.4em;">The C code’s integers and floating-point values are mapped to Python’s
+regular <code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span>int</span></code>, <code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span>long</span></code> and <code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span>float</span></code>.  Moreover, the C type <code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span>char</span></code>
+corresponds to single-character strings in Python.  (If you want it to
+map to small integers, use either <code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span>signed</span> <span>char</span></code> or <code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span>unsigned</span> <span>char</span></code>.)</p>
+<p style="line-height:1.4em;">Similarly, the C type <code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span>wchar_t</span></code> corresponds to single-character
+unicode strings.  Note that in some situations (a narrow Python build
+with an underlying 4-bytes wchar_t type), a single wchar_t character
+may correspond to a pair of surrogates, which is represented as a
+unicode string of length 2.  If you need to convert such a 2-chars
+unicode string to an integer, <code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span>ord(x)</span></code> does not work; use instead
+<code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span>int(ffi.cast('wchar_t',</span> <span>x))</span></code>.</p>
+<p style="line-height:1.4em;"><em>New in version 1.11:</em> in addition to <code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span>wchar_t</span></code>, the C types
+<code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span>char16_t</span></code> and <code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span>char32_t</span></code> work the same but with a known fixed size.
+In previous versions, this could be achieved using <code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span>uint16_t</span></code> and
+<code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span>int32_t</span></code> but without automatic conversion to Python unicodes.</p>
+<p style="line-height:1.4em;">Pointers, structures and arrays are more complex: they don’t have an
+obvious Python equivalent.  Thus, they correspond to objects of type
+<code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span>cdata</span></code>, which are printed for example as
+<code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span>&lt;cdata</span> <span>'struct</span> <span>foo_s</span> <span>*'</span> <span>0xa3290d8&gt;</span></code>.</p>
+<p style="line-height:1.4em;"><code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span>ffi.new(ctype,</span> <span>[initializer])</span></code>: this function builds and returns a
+new cdata object of the given <code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span>ctype</span></code>.  The ctype is usually some
+constant string describing the C type.  It must be a pointer or array
+type.  If it is a pointer, e.g. <code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span>"int</span> <span>*"</span></code> or <code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span>struct</span> <span>foo</span> <span>*</span></code>, then
+it allocates the memory for one <code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span>int</span></code> or <code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span>struct</span> <span>foo</span></code>.  If it is
+an array, e.g. <code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span>int[10]</span></code>, then it allocates the memory for ten
+<code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span>int</span></code>.  In both cases the returned cdata is of type <code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span>ctype</span></code>.</p>
+<p style="line-height:1.4em;">The memory is initially filled with zeros.  An initializer can be given
+too, as described later.</p>
+<p style="line-height:1.4em;">Example:</p>
+<div><div style="background:rgb(250, 243, 232);"><pre style="font-family:Consolas, Menlo, &quot;DejaVu Sans Mono&quot;, &quot;Bitstream Vera Sans Mono&quot;, monospace;font-size:0.9em;background:rgb(238, 238, 238);padding:7px 30px;margin:15px 0px;line-height:1.3em;"><span></span><span style="color:rgb(198, 93, 9);font-weight:bold;">&gt;&gt;&gt; </span><span>ffi</span><span style="color:rgb(102, 102, 102);">.</span><span>new</span><span>(</span><span style="color:rgb(64, 112, 160);">"int *"</span><span>)</span>
+<span style="color:rgb(51, 51, 51);">&lt;cdata 'int *' owning 4 bytes&gt;</span>
+<span style="color:rgb(198, 93, 9);font-weight:bold;">&gt;&gt;&gt; </span><span>ffi</span><span style="color:rgb(102, 102, 102);">.</span><span>new</span><span>(</span><span style="color:rgb(64, 112, 160);">"int[10]"</span><span>)</span>
+<span style="color:rgb(51, 51, 51);">&lt;cdata 'int[10]' owning 40 bytes&gt;</span>
+
+<span style="color:rgb(198, 93, 9);font-weight:bold;">&gt;&gt;&gt; </span><span>ffi</span><span style="color:rgb(102, 102, 102);">.</span><span>new</span><span>(</span><span style="color:rgb(64, 112, 160);">"char *"</span><span>)</span>          <span style="color:rgb(64, 128, 144);font-style:italic;"># allocates only one char---not a C string!</span>
+<span style="color:rgb(51, 51, 51);">&lt;cdata 'char *' owning 1 bytes&gt;</span>
+<span style="color:rgb(198, 93, 9);font-weight:bold;">&gt;&gt;&gt; </span><span>ffi</span><span style="color:rgb(102, 102, 102);">.</span><span>new</span><span>(</span><span style="color:rgb(64, 112, 160);">"char[]"</span><span>,</span> <span style="color:rgb(64, 112, 160);">"foobar"</span><span>)</span>  <span style="color:rgb(64, 128, 144);font-style:italic;"># this allocates a C string, ending in \0</span>
+<span style="color:rgb(51, 51, 51);">&lt;cdata 'char[]' owning 7 bytes&gt;</span>
+</pre></div>
+</div>
+<p style="line-height:1.4em;">Unlike C, the returned pointer object has <em>ownership</em> on the allocated
+memory: when this exact object is garbage-collected, then the memory is
+freed.  If, at the level of C, you store a pointer to the memory
+somewhere else, then make sure you also keep the object alive for as
+long as needed.  (This also applies if you immediately cast the returned
+pointer to a pointer of a different type: only the original object has
+ownership, so you must keep it alive.  As soon as you forget it, then
+the casted pointer will point to garbage!  In other words, the ownership
+rules are attached to the <em>wrapper</em> cdata objects: they are not, and
+cannot, be attached to the underlying raw memory.)  Example:</p>
+<div><div style="background:rgb(250, 243, 232);"><pre style="font-family:Consolas, Menlo, &quot;DejaVu Sans Mono&quot;, &quot;Bitstream Vera Sans Mono&quot;, monospace;font-size:0.9em;background:rgb(238, 238, 238);padding:7px 30px;margin:15px 0px;line-height:1.3em;"><span></span><span>global_weakkeydict</span> <span style="color:rgb(102, 102, 102);">=</span> <span>weakref</span><span style="color:rgb(102, 102, 102);">.</span><span>WeakKeyDictionary</span><span>()</span>
+
+<span style="color:rgb(0, 112, 32);font-weight:bold;">def</span> <span style="color:rgb(6, 40, 126);">make_foo</span><span>():</span>
+    <span>s1</span>   <span style="color:rgb(102, 102, 102);">=</span> <span>ffi</span><span style="color:rgb(102, 102, 102);">.</span><span>new</span><span>(</span><span style="color:rgb(64, 112, 160);">"struct foo *"</span><span>)</span>
+    <span>fld1</span> <span style="color:rgb(102, 102, 102);">=</span> <span>ffi</span><span style="color:rgb(102, 102, 102);">.</span><span>new</span><span>(</span><span style="color:rgb(64, 112, 160);">"struct bar *"</span><span>)</span>
+    <span>fld2</span> <span style="color:rgb(102, 102, 102);">=</span> <span>ffi</span><span style="color:rgb(102, 102, 102);">.</span><span>new</span><span>(</span><span style="color:rgb(64, 112, 160);">"struct bar *"</span><span>)</span>
+    <span>s1</span><span style="color:rgb(102, 102, 102);">.</span><span>thefield1</span> <span style="color:rgb(102, 102, 102);">=</span> <span>fld1</span>
+    <span>s1</span><span style="color:rgb(102, 102, 102);">.</span><span>thefield2</span> <span style="color:rgb(102, 102, 102);">=</span> <span>fld2</span>
+    <span style="color:rgb(64, 128, 144);font-style:italic;"># here the 'fld1' and 'fld2' object must not go away,</span>
+    <span style="color:rgb(64, 128, 144);font-style:italic;"># otherwise 's1.thefield1/2' will point to garbage!</span>
+    <span>global_weakkeydict</span><span>[</span><span>s1</span><span>]</span> <span style="color:rgb(102, 102, 102);">=</span> <span>(</span><span>fld1</span><span>,</span> <span>fld2</span><span>)</span>
+    <span style="color:rgb(64, 128, 144);font-style:italic;"># now 's1' keeps alive 'fld1' and 'fld2'.  When 's1' goes</span>
+    <span style="color:rgb(64, 128, 144);font-style:italic;"># away, then the weak dictionary entry will be removed.</span>
+    <span style="color:rgb(0, 112, 32);font-weight:bold;">return</span> <span>s1</span>
+</pre></div>
+</div>
+<p style="line-height:1.4em;">Usually you don’t need a weak dict: for example, to call a function with
+a <code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span>char</span> <span>*</span> <span>*</span></code> argument that contains a pointer to a <code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span>char</span> <span>*</span></code> pointer,
+it is enough to do this:</p>
+<div><div style="background:rgb(250, 243, 232);"><pre style="font-family:Consolas, Menlo, &quot;DejaVu Sans Mono&quot;, &quot;Bitstream Vera Sans Mono&quot;, monospace;font-size:0.9em;background:rgb(238, 238, 238);padding:7px 30px;margin:15px 0px;line-height:1.3em;"><span></span><span>p</span> <span style="color:rgb(102, 102, 102);">=</span> <span>ffi</span><span style="color:rgb(102, 102, 102);">.</span><span>new</span><span>(</span><span style="color:rgb(64, 112, 160);">"char[]"</span><span>,</span> <span style="color:rgb(64, 112, 160);">"hello, world"</span><span>)</span>    <span style="color:rgb(64, 128, 144);font-style:italic;"># p is a 'char *'</span>
+<span>q</span> <span style="color:rgb(102, 102, 102);">=</span> <span>ffi</span><span style="color:rgb(102, 102, 102);">.</span><span>new</span><span>(</span><span style="color:rgb(64, 112, 160);">"char **"</span><span>,</span> <span>p</span><span>)</span>                <span style="color:rgb(64, 128, 144);font-style:italic;"># q is a 'char **'</span>
+<span>lib</span><span style="color:rgb(102, 102, 102);">.</span><span>myfunction</span><span>(</span><span>q</span><span>)</span>
+<span style="color:rgb(64, 128, 144);font-style:italic;"># p is alive at least until here, so that's fine</span>
+</pre></div>
+</div>
+<p style="line-height:1.4em;">However, this is always wrong (usage of freed memory):</p>
+<div><div style="background:rgb(250, 243, 232);"><pre style="font-family:Consolas, Menlo, &quot;DejaVu Sans Mono&quot;, &quot;Bitstream Vera Sans Mono&quot;, monospace;font-size:0.9em;background:rgb(238, 238, 238);padding:7px 30px;margin:15px 0px;line-height:1.3em;"><span></span><span>p</span> <span style="color:rgb(102, 102, 102);">=</span> <span>ffi</span><span style="color:rgb(102, 102, 102);">.</span><span>new</span><span>(</span><span style="color:rgb(64, 112, 160);">"char **"</span><span>,</span> <span>ffi</span><span style="color:rgb(102, 102, 102);">.</span><span>new</span><span>(</span><span style="color:rgb(64, 112, 160);">"char[]"</span><span>,</span> <span style="color:rgb(64, 112, 160);">"hello, world"</span><span>))</span>
+<span style="color:rgb(64, 128, 144);font-style:italic;"># WRONG!  as soon as p is built, the inner ffi.new() gets freed!</span>
+</pre></div>
+</div>
+<p style="line-height:1.4em;">This is wrong too, for the same reason:</p>
+<div><div style="background:rgb(250, 243, 232);"><pre style="font-family:Consolas, Menlo, &quot;DejaVu Sans Mono&quot;, &quot;Bitstream Vera Sans Mono&quot;, monospace;font-size:0.9em;background:rgb(238, 238, 238);padding:7px 30px;margin:15px 0px;line-height:1.3em;"><span></span><span>p</span> <span style="color:rgb(102, 102, 102);">=</span> <span>ffi</span><span style="color:rgb(102, 102, 102);">.</span><span>new</span><span>(</span><span style="color:rgb(64, 112, 160);">"struct my_stuff"</span><span>)</span>
+<span>p</span><span style="color:rgb(102, 102, 102);">.</span><span>foo</span> <span style="color:rgb(102, 102, 102);">=</span> <span>ffi</span><span style="color:rgb(102, 102, 102);">.</span><span>new</span><span>(</span><span style="color:rgb(64, 112, 160);">"char[]"</span><span>,</span> <span style="color:rgb(64, 112, 160);">"hello, world"</span><span>)</span>
+<span style="color:rgb(64, 128, 144);font-style:italic;"># WRONG!  as soon as p.foo is set, the ffi.new() gets freed!</span>
+</pre></div>
+</div>
+<p style="line-height:1.4em;">The cdata objects support mostly the same operations as in C: you can
+read or write from pointers, arrays and structures.  Dereferencing a
+pointer is done usually in C with the syntax <code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span>*p</span></code>, which is not valid
+Python, so instead you have to use the alternative syntax <code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span>p[0]</span></code>
+(which is also valid C).  Additionally, the <code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span>p.x</span></code> and <code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span>p-&gt;x</span></code>
+syntaxes in C both become <code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span>p.x</span></code> in Python.</p>
+<p style="line-height:1.4em;">We have <code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span>ffi.NULL</span></code> to use in the same places as the C <code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span>NULL</span></code>.
+Like the latter, it is actually defined to be <code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span>ffi.cast("void</span> <span>*",</span>
+<span>0)</span></code>.  For example, reading a NULL pointer returns a <code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span>&lt;cdata</span> <span>'type</span> <span>*'</span>
+<span>NULL&gt;</span></code>, which you can check for e.g. by comparing it with
+<code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span>ffi.NULL</span></code>.</p>
+<p style="line-height:1.4em;">There is no general equivalent to the <code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span>&amp;</span></code> operator in C (because it
+would not fit nicely in the model, and it does not seem to be needed
+here).  There is <a href="https://cffi.readthedocs.io/en/stable/ref.html#ffi-addressof" style="color:rgb(0, 75, 107);border-bottom:1px dotted rgb(0, 75, 107);text-decoration:none;">ffi.addressof()</a>, but only for some cases.  You
+cannot take the “address” of a number in Python, for example; similarly,
+you cannot take the address of a CFFI pointer.  If you have this kind
+of C code:</p>
+<div><div style="background:rgb(250, 243, 232);"><pre style="font-family:Consolas, Menlo, &quot;DejaVu Sans Mono&quot;, &quot;Bitstream Vera Sans Mono&quot;, monospace;font-size:0.9em;background:rgb(238, 238, 238);padding:7px 30px;margin:15px 0px;line-height:1.3em;"><span></span><span style="color:rgb(0, 112, 32);">int</span> <span>x</span><span>,</span> <span>y</span><span>;</span>
+<span>fetch_size</span><span>(</span><span style="color:rgb(102, 102, 102);">&amp;</span><span>x</span><span>,</span> <span style="color:rgb(102, 102, 102);">&amp;</span><span>y</span><span>);</span>
+
+<span>opaque_t</span> <span style="color:rgb(102, 102, 102);">*</span><span>handle</span><span>;</span>      <span style="color:rgb(102, 102, 102);">//</span> <span>some</span> <span>opaque</span> <span>pointer</span>
+<span>init_stuff</span><span>(</span><span style="color:rgb(102, 102, 102);">&amp;</span><span>handle</span><span>);</span>   <span style="color:rgb(102, 102, 102);">//</span> <span>initializes</span> <span>the</span> <span>variable</span> <span style="color:rgb(64, 112, 160);">'handle'</span>
+<span>more_stuff</span><span>(</span><span>handle</span><span>);</span>    <span style="color:rgb(102, 102, 102);">//</span> <span style="color:rgb(0, 112, 32);font-weight:bold;">pass</span> <span>the</span> <span>handle</span> <span>around</span> <span>to</span> <span>more</span> <span>functions</span>
+</pre></div>
+</div>
+<p style="line-height:1.4em;">then you need to rewrite it like this, replacing the variables in C
+with what is logically pointers to the variables:</p>
+<div><div style="background:rgb(250, 243, 232);"><pre style="font-family:Consolas, Menlo, &quot;DejaVu Sans Mono&quot;, &quot;Bitstream Vera Sans Mono&quot;, monospace;font-size:0.9em;background:rgb(238, 238, 238);padding:7px 30px;margin:15px 0px;line-height:1.3em;"><span></span><span>px</span> <span style="color:rgb(102, 102, 102);">=</span> <span>ffi</span><span style="color:rgb(102, 102, 102);">.</span><span>new</span><span>(</span><span style="color:rgb(64, 112, 160);">"int *"</span><span>)</span>
+<span>py</span> <span style="color:rgb(102, 102, 102);">=</span> <span>ffi</span><span style="color:rgb(102, 102, 102);">.</span><span>new</span><span>(</span><span style="color:rgb(64, 112, 160);">"int *"</span><span>)</span>              <span>arr</span> <span style="color:rgb(102, 102, 102);">=</span> <span>ffi</span><span style="color:rgb(102, 102, 102);">.</span><span>new</span><span>(</span><span style="color:rgb(64, 112, 160);">"int[2]"</span><span>)</span>
+<span>lib</span><span style="color:rgb(102, 102, 102);">.</span><span>fetch_size</span><span>(</span><span>px</span><span>,</span> <span>py</span><span>)</span>    <span style="color:rgb(102, 102, 102);">-</span><span>OR</span><span style="color:rgb(102, 102, 102);">-</span>     <span>lib</span><span style="color:rgb(102, 102, 102);">.</span><span>fetch_size</span><span>(</span><span>arr</span><span>,</span> <span>arr</span> <span style="color:rgb(102, 102, 102);">+</span> <span style="color:rgb(32, 128, 80);">1</span><span>)</span>
+<span>x</span> <span style="color:rgb(102, 102, 102);">=</span> <span>px</span><span>[</span><span style="color:rgb(32, 128, 80);">0</span><span>]</span>                          <span>x</span> <span style="color:rgb(102, 102, 102);">=</span> <span>arr</span><span>[</span><span style="color:rgb(32, 128, 80);">0</span><span>]</span>
+<span>y</span> <span style="color:rgb(102, 102, 102);">=</span> <span>py</span><span>[</span><span style="color:rgb(32, 128, 80);">0</span><span>]</span>                          <span>y</span> <span style="color:rgb(102, 102, 102);">=</span> <span>arr</span><span>[</span><span style="color:rgb(32, 128, 80);">1</span><span>]</span>
+
+<span>p_handle</span> <span style="color:rgb(102, 102, 102);">=</span> <span>ffi</span><span style="color:rgb(102, 102, 102);">.</span><span>new</span><span>(</span><span style="color:rgb(64, 112, 160);">"opaque_t **"</span><span>)</span>
+<span>lib</span><span style="color:rgb(102, 102, 102);">.</span><span>init_stuff</span><span>(</span><span>p_handle</span><span>)</span>   <span style="color:rgb(64, 128, 144);font-style:italic;"># pass the pointer to the 'handle' pointer</span>
+<span>handle</span> <span style="color:rgb(102, 102, 102);">=</span> <span>p_handle</span><span>[</span><span style="color:rgb(32, 128, 80);">0</span><span>]</span>       <span style="color:rgb(64, 128, 144);font-style:italic;"># now we can read 'handle' out of 'p_handle'</span>
+<span>lib</span><span style="color:rgb(102, 102, 102);">.</span><span>more_stuff</span><span>(</span><span>handle</span><span>)</span>
+</pre></div>
+</div>
+<p style="line-height:1.4em;">Any operation that would in C return a pointer or array or struct type
+gives you a fresh cdata object.  Unlike the “original” one, these fresh
+cdata objects don’t have ownership: they are merely references to
+existing memory.</p>
+<p style="line-height:1.4em;">As an exception to the above rule, dereferencing a pointer that owns a
+<em>struct</em> or <em>union</em> object returns a cdata struct or union object
+that “co-owns” the same memory.  Thus in this case there are two
+objects that can keep the same memory alive.  This is done for cases where
+you really want to have a struct object but don’t have any convenient
+place to keep alive the original pointer object (returned by
+<code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span>ffi.new()</span></code>).</p>
+<p style="line-height:1.4em;">Example:</p>
+<div><div style="background:rgb(250, 243, 232);"><pre style="font-family:Consolas, Menlo, &quot;DejaVu Sans Mono&quot;, &quot;Bitstream Vera Sans Mono&quot;, monospace;font-size:0.9em;background:rgb(238, 238, 238);padding:7px 30px;margin:15px 0px;line-height:1.3em;"><span></span><span style="color:rgb(64, 128, 144);font-style:italic;"># void somefunction(int *);</span>
+
+<span>x</span> <span style="color:rgb(102, 102, 102);">=</span> <span>ffi</span><span style="color:rgb(102, 102, 102);">.</span><span>new</span><span>(</span><span style="color:rgb(64, 112, 160);">"int *"</span><span>)</span>      <span style="color:rgb(64, 128, 144);font-style:italic;"># allocate one int, and return a pointer to it</span>
+<span>x</span><span>[</span><span style="color:rgb(32, 128, 80);">0</span><span>]</span> <span style="color:rgb(102, 102, 102);">=</span> <span style="color:rgb(32, 128, 80);">42</span>                 <span style="color:rgb(64, 128, 144);font-style:italic;"># fill it</span>
+<span>lib</span><span style="color:rgb(102, 102, 102);">.</span><span>somefunction</span><span>(</span><span>x</span><span>)</span>       <span style="color:rgb(64, 128, 144);font-style:italic;"># call the C function</span>
+<span style="color:rgb(0, 112, 32);">print</span> <span>x</span><span>[</span><span style="color:rgb(32, 128, 80);">0</span><span>]</span>                <span style="color:rgb(64, 128, 144);font-style:italic;"># read the possibly-changed value</span>
+</pre></div>
+</div>
+<p style="line-height:1.4em;">The equivalent of C casts are provided with <code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span>ffi.cast("type",</span> <span>value)</span></code>.
+They should work in the same cases as they do in C.  Additionally, this
+is the only way to get cdata objects of integer or floating-point type:</p>
+<div><div style="background:rgb(250, 243, 232);"><pre style="font-family:Consolas, Menlo, &quot;DejaVu Sans Mono&quot;, &quot;Bitstream Vera Sans Mono&quot;, monospace;font-size:0.9em;background:rgb(238, 238, 238);padding:7px 30px;margin:15px 0px;line-height:1.3em;"><span></span><span style="color:rgb(198, 93, 9);font-weight:bold;">&gt;&gt;&gt; </span><span>x</span> <span style="color:rgb(102, 102, 102);">=</span> <span>ffi</span><span style="color:rgb(102, 102, 102);">.</span><span>cast</span><span>(</span><span style="color:rgb(64, 112, 160);">"int"</span><span>,</span> <span style="color:rgb(32, 128, 80);">42</span><span>)</span>
+<span style="color:rgb(198, 93, 9);font-weight:bold;">&gt;&gt;&gt; </span><span>x</span>
+<span style="color:rgb(51, 51, 51);">&lt;cdata 'int' 42&gt;</span>
+<span style="color:rgb(198, 93, 9);font-weight:bold;">&gt;&gt;&gt; </span><span style="color:rgb(0, 112, 32);">int</span><span>(</span><span>x</span><span>)</span>
+<span style="color:rgb(51, 51, 51);">42</span>
+</pre></div>
+</div>
+<p style="line-height:1.4em;">To cast a pointer to an int, cast it to <code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span>intptr_t</span></code> or <code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span>uintptr_t</span></code>,
+which are defined by C to be large enough integer types (example on 32
+bits):</p>
+<div><div style="background:rgb(250, 243, 232);"><pre style="font-family:Consolas, Menlo, &quot;DejaVu Sans Mono&quot;, &quot;Bitstream Vera Sans Mono&quot;, monospace;font-size:0.9em;background:rgb(238, 238, 238);padding:7px 30px;margin:15px 0px;line-height:1.3em;"><span></span><span style="color:rgb(198, 93, 9);font-weight:bold;">&gt;&gt;&gt; </span><span style="color:rgb(0, 112, 32);">int</span><span>(</span><span>ffi</span><span style="color:rgb(102, 102, 102);">.</span><span>cast</span><span>(</span><span style="color:rgb(64, 112, 160);">"intptr_t"</span><span>,</span> <span>pointer_cdata</span><span>))</span>    <span style="color:rgb(64, 128, 144);font-style:italic;"># signed</span>
+<span style="color:rgb(51, 51, 51);">-1340782304</span>
+<span style="color:rgb(198, 93, 9);font-weight:bold;">&gt;&gt;&gt; </span><span style="color:rgb(0, 112, 32);">int</span><span>(</span><span>ffi</span><span style="color:rgb(102, 102, 102);">.</span><span>cast</span><span>(</span><span style="color:rgb(64, 112, 160);">"uintptr_t"</span><span>,</span> <span>pointer_cdata</span><span>))</span>   <span style="color:rgb(64, 128, 144);font-style:italic;"># unsigned</span>
+<span style="color:rgb(51, 51, 51);">2954184992L</span>
+</pre></div>
+</div>
+<p style="line-height:1.4em;">The initializer given as the optional second argument to <code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span>ffi.new()</span></code>
+can be mostly anything that you would use as an initializer for C code,
+with lists or tuples instead of using the C syntax <code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span>{</span> <span>..,</span> <span>..,</span> <span>..</span> <span>}</span></code>.
+Example:</p>
+<div><div style="background:rgb(250, 243, 232);"><pre style="font-family:Consolas, Menlo, &quot;DejaVu Sans Mono&quot;, &quot;Bitstream Vera Sans Mono&quot;, monospace;font-size:0.9em;background:rgb(238, 238, 238);padding:7px 30px;margin:15px 0px;line-height:1.3em;"><span></span><span>typedef</span> <span>struct</span> <span>{</span> <span style="color:rgb(0, 112, 32);">int</span> <span>x</span><span>,</span> <span>y</span><span>;</span> <span>}</span> <span>foo_t</span><span>;</span>
+
+<span>foo_t</span> <span>v</span> <span style="color:rgb(102, 102, 102);">=</span> <span>{</span> <span style="color:rgb(32, 128, 80);">1</span><span>,</span> <span style="color:rgb(32, 128, 80);">2</span> <span>};</span>            <span style="color:rgb(102, 102, 102);">//</span> <span>C</span> <span>syntax</span>
+<span>v</span> <span style="color:rgb(102, 102, 102);">=</span> <span>ffi</span><span style="color:rgb(102, 102, 102);">.</span><span>new</span><span>(</span><span style="color:rgb(64, 112, 160);">"foo_t *"</span><span>,</span> <span>[</span><span style="color:rgb(32, 128, 80);">1</span><span>,</span> <span style="color:rgb(32, 128, 80);">2</span><span>])</span> <span style="color:rgb(64, 128, 144);font-style:italic;"># CFFI equivalent</span>
+
+<span>foo_t</span> <span>v</span> <span style="color:rgb(102, 102, 102);">=</span> <span>{</span> <span style="color:rgb(102, 102, 102);">.</span><span>y</span><span style="color:rgb(102, 102, 102);">=</span><span style="color:rgb(32, 128, 80);">1</span><span>,</span> <span style="color:rgb(102, 102, 102);">.</span><span>x</span><span style="color:rgb(102, 102, 102);">=</span><span style="color:rgb(32, 128, 80);">2</span> <span>};</span>                <span style="color:rgb(102, 102, 102);">//</span> <span>C99</span> <span>syntax</span>
+<span>v</span> <span style="color:rgb(102, 102, 102);">=</span> <span>ffi</span><span style="color:rgb(102, 102, 102);">.</span><span>new</span><span>(</span><span style="color:rgb(64, 112, 160);">"foo_t *"</span><span>,</span> <span>{</span><span style="color:rgb(64, 112, 160);">'y'</span><span>:</span> <span style="color:rgb(32, 128, 80);">1</span><span>,</span> <span style="color:rgb(64, 112, 160);">'x'</span><span>:</span> <span style="color:rgb(32, 128, 80);">2</span><span>})</span> <span style="color:rgb(64, 128, 144);font-style:italic;"># CFFI equivalent</span>
+</pre></div>
+</div>
+<p style="line-height:1.4em;">Like C, arrays of chars can also be initialized from a string, in
+which case a terminating null character is appended implicitly:</p>
+<div><div style="background:rgb(250, 243, 232);"><pre style="font-family:Consolas, Menlo, &quot;DejaVu Sans Mono&quot;, &quot;Bitstream Vera Sans Mono&quot;, monospace;font-size:0.9em;background:rgb(238, 238, 238);padding:7px 30px;margin:15px 0px;line-height:1.3em;"><span></span><span style="color:rgb(198, 93, 9);font-weight:bold;">&gt;&gt;&gt; </span><span>x</span> <span style="color:rgb(102, 102, 102);">=</span> <span>ffi</span><span style="color:rgb(102, 102, 102);">.</span><span>new</span><span>(</span><span style="color:rgb(64, 112, 160);">"char[]"</span><span>,</span> <span style="color:rgb(64, 112, 160);">"hello"</span><span>)</span>
+<span style="color:rgb(198, 93, 9);font-weight:bold;">&gt;&gt;&gt; </span><span>x</span>
+<span style="color:rgb(51, 51, 51);">&lt;cdata 'char[]' owning 6 bytes&gt;</span>
+<span style="color:rgb(198, 93, 9);font-weight:bold;">&gt;&gt;&gt; </span><span style="color:rgb(0, 112, 32);">len</span><span>(</span><span>x</span><span>)</span>        <span style="color:rgb(64, 128, 144);font-style:italic;"># the actual size of the array</span>
+<span style="color:rgb(51, 51, 51);">6</span>
+<span style="color:rgb(198, 93, 9);font-weight:bold;">&gt;&gt;&gt; </span><span>x</span><span>[</span><span style="color:rgb(32, 128, 80);">5</span><span>]</span>          <span style="color:rgb(64, 128, 144);font-style:italic;"># the last item in the array</span>
+<span style="color:rgb(51, 51, 51);">'\x00'</span>
+<span style="color:rgb(198, 93, 9);font-weight:bold;">&gt;&gt;&gt; </span><span>x</span><span>[</span><span style="color:rgb(32, 128, 80);">0</span><span>]</span> <span style="color:rgb(102, 102, 102);">=</span> <span style="color:rgb(64, 112, 160);">'H'</span>    <span style="color:rgb(64, 128, 144);font-style:italic;"># change the first item</span>
+<span style="color:rgb(198, 93, 9);font-weight:bold;">&gt;&gt;&gt; </span><span>ffi</span><span style="color:rgb(102, 102, 102);">.</span><span>string</span><span>(</span><span>x</span><span>)</span> <span style="color:rgb(64, 128, 144);font-style:italic;"># interpret 'x' as a regular null-terminated string</span>
+<span style="color:rgb(51, 51, 51);">'Hello'</span>
+</pre></div>
+</div>
+<p style="line-height:1.4em;">Similarly, arrays of wchar_t or char16_t or char32_t can be initialized
+from a unicode string,
+and calling <code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span>ffi.string()</span></code> on the cdata object returns the current unicode
+string stored in the source array (adding surrogates if necessary).
+See the <a href="https://cffi.readthedocs.io/en/stable/ref.html#unichar" style="color:rgb(0, 75, 107);border-bottom:1px dotted rgb(0, 75, 107);text-decoration:none;">Unicode character types</a> section for more details.</p>
+<p style="line-height:1.4em;">Note that unlike Python lists or tuples, but like C, you <em>cannot</em> index in
+a C array from the end using negative numbers.</p>
+<p style="line-height:1.4em;">More generally, the C array types can have their length unspecified in C
+types, as long as their length can be derived from the initializer, like
+in C:</p>
+<div><div style="background:rgb(250, 243, 232);"><pre style="font-family:Consolas, Menlo, &quot;DejaVu Sans Mono&quot;, &quot;Bitstream Vera Sans Mono&quot;, monospace;font-size:0.9em;background:rgb(238, 238, 238);padding:7px 30px;margin:15px 0px;line-height:1.3em;"><span></span><span style="color:rgb(0, 112, 32);">int</span> <span>array</span><span>[]</span> <span style="color:rgb(102, 102, 102);">=</span> <span>{</span> <span style="color:rgb(32, 128, 80);">1</span><span>,</span> <span style="color:rgb(32, 128, 80);">2</span><span>,</span> <span style="color:rgb(32, 128, 80);">3</span><span>,</span> <span style="color:rgb(32, 128, 80);">4</span> <span>};</span>           <span style="color:rgb(102, 102, 102);">//</span> <span>C</span> <span>syntax</span>
+<span>array</span> <span style="color:rgb(102, 102, 102);">=</span> <span>ffi</span><span style="color:rgb(102, 102, 102);">.</span><span>new</span><span>(</span><span style="color:rgb(64, 112, 160);">"int[]"</span><span>,</span> <span>[</span><span style="color:rgb(32, 128, 80);">1</span><span>,</span> <span style="color:rgb(32, 128, 80);">2</span><span>,</span> <span style="color:rgb(32, 128, 80);">3</span><span>,</span> <span style="color:rgb(32, 128, 80);">4</span><span>])</span>  <span style="color:rgb(64, 128, 144);font-style:italic;"># CFFI equivalent</span>
+</pre></div>
+</div>
+<p style="line-height:1.4em;">As an extension, the initializer can also be just a number, giving
+the length (in case you just want zero-initialization):</p>
+<div><div style="background:rgb(250, 243, 232);"><pre style="font-family:Consolas, Menlo, &quot;DejaVu Sans Mono&quot;, &quot;Bitstream Vera Sans Mono&quot;, monospace;font-size:0.9em;background:rgb(238, 238, 238);padding:7px 30px;margin:15px 0px;line-height:1.3em;"><span></span><span style="color:rgb(0, 112, 32);">int</span> <span>array</span><span>[</span><span style="color:rgb(32, 128, 80);">1000</span><span>];</span>                  <span style="color:rgb(102, 102, 102);">//</span> <span>C</span> <span>syntax</span>
+<span>array</span> <span style="color:rgb(102, 102, 102);">=</span> <span>ffi</span><span style="color:rgb(102, 102, 102);">.</span><span>new</span><span>(</span><span style="color:rgb(64, 112, 160);">"int[1000]"</span><span>)</span>      <span style="color:rgb(64, 128, 144);font-style:italic;"># CFFI 1st equivalent</span>
+<span>array</span> <span style="color:rgb(102, 102, 102);">=</span> <span>ffi</span><span style="color:rgb(102, 102, 102);">.</span><span>new</span><span>(</span><span style="color:rgb(64, 112, 160);">"int[]"</span><span>,</span> <span style="color:rgb(32, 128, 80);">1000</span><span>)</span>    <span style="color:rgb(64, 128, 144);font-style:italic;"># CFFI 2nd equivalent</span>
+</pre></div>
+</div>
+<p style="line-height:1.4em;">This is useful if the length is not actually a constant, to avoid things
+like <code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span>ffi.new("int[%d]"</span> <span>%</span> <span>x)</span></code>.  Indeed, this is not recommended:
+<code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span>ffi</span></code> normally caches the string <code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span>"int[]"</span></code> to not need to re-parse
+it all the time.</p>
+<p style="line-height:1.4em;">The C99 variable-sized structures are supported too, as long as the
+initializer says how long the array should be:</p>
+<div><div style="background:rgb(250, 243, 232);"><pre style="font-family:Consolas, Menlo, &quot;DejaVu Sans Mono&quot;, &quot;Bitstream Vera Sans Mono&quot;, monospace;font-size:0.9em;background:rgb(238, 238, 238);padding:7px 30px;margin:15px 0px;line-height:1.3em;"><span></span><span style="color:rgb(64, 128, 144);font-style:italic;"># typedef struct { int x; int y[]; } foo_t;</span>
+
+<span>p</span> <span style="color:rgb(102, 102, 102);">=</span> <span>ffi</span><span style="color:rgb(102, 102, 102);">.</span><span>new</span><span>(</span><span style="color:rgb(64, 112, 160);">"foo_t *"</span><span>,</span> <span>[</span><span style="color:rgb(32, 128, 80);">5</span><span>,</span> <span>[</span><span style="color:rgb(32, 128, 80);">6</span><span>,</span> <span style="color:rgb(32, 128, 80);">7</span><span>,</span> <span style="color:rgb(32, 128, 80);">8</span><span>]])</span> <span style="color:rgb(64, 128, 144);font-style:italic;"># length 3</span>
+<span>p</span> <span style="color:rgb(102, 102, 102);">=</span> <span>ffi</span><span style="color:rgb(102, 102, 102);">.</span><span>new</span><span>(</span><span style="color:rgb(64, 112, 160);">"foo_t *"</span><span>,</span> <span>[</span><span style="color:rgb(32, 128, 80);">5</span><span>,</span> <span style="color:rgb(32, 128, 80);">3</span><span>])</span>         <span style="color:rgb(64, 128, 144);font-style:italic;"># length 3 with 0 in the array</span>
+<span>p</span> <span style="color:rgb(102, 102, 102);">=</span> <span>ffi</span><span style="color:rgb(102, 102, 102);">.</span><span>new</span><span>(</span><span style="color:rgb(64, 112, 160);">"foo_t *"</span><span>,</span> <span>{</span><span style="color:rgb(64, 112, 160);">'y'</span><span>:</span> <span style="color:rgb(32, 128, 80);">3</span><span>})</span>       <span style="color:rgb(64, 128, 144);font-style:italic;"># length 3 with 0 everywhere</span>
+</pre></div>
+</div>
+<p style="line-height:1.4em;">Finally, note that any Python object used as initializer can also be
+used directly without <code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span>ffi.new()</span></code> in assignments to array items or
+struct fields.  In fact, <code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span>p</span> <span>=</span> <span>ffi.new("T*",</span> <span>initializer)</span></code> is
+equivalent to <code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span>p</span> <span>=</span> <span>ffi.new("T*");</span> <span>p[0]</span> <span>=</span> <span>initializer</span></code>.  Examples:</p>
+<div><div style="background:rgb(250, 243, 232);"><pre style="font-family:Consolas, Menlo, &quot;DejaVu Sans Mono&quot;, &quot;Bitstream Vera Sans Mono&quot;, monospace;font-size:0.9em;background:rgb(238, 238, 238);padding:7px 30px;margin:15px 0px;line-height:1.3em;"><span></span><span style="color:rgb(64, 128, 144);font-style:italic;"># if 'p' is a &lt;cdata 'int[5][5]'&gt;</span>
+<span>p</span><span>[</span><span style="color:rgb(32, 128, 80);">2</span><span>]</span> <span style="color:rgb(102, 102, 102);">=</span> <span>[</span><span style="color:rgb(32, 128, 80);">10</span><span>,</span> <span style="color:rgb(32, 128, 80);">20</span><span>]</span>             <span style="color:rgb(64, 128, 144);font-style:italic;"># writes to p[2][0] and p[2][1]</span>
+
+<span style="color:rgb(64, 128, 144);font-style:italic;"># if 'p' is a &lt;cdata 'foo_t *'&gt;, and foo_t has fields x, y and z</span>
+<span>p</span><span>[</span><span style="color:rgb(32, 128, 80);">0</span><span>]</span> <span style="color:rgb(102, 102, 102);">=</span> <span>{</span><span style="color:rgb(64, 112, 160);">'x'</span><span>:</span> <span style="color:rgb(32, 128, 80);">10</span><span>,</span> <span style="color:rgb(64, 112, 160);">'z'</span><span>:</span> <span style="color:rgb(32, 128, 80);">20</span><span>}</span>   <span style="color:rgb(64, 128, 144);font-style:italic;"># writes to p.x and p.z; p.y unmodified</span>
+
+<span style="color:rgb(64, 128, 144);font-style:italic;"># if, on the other hand, foo_t has a field 'char a[5]':</span>
+<span>p</span><span style="color:rgb(102, 102, 102);">.</span><span>a</span> <span style="color:rgb(102, 102, 102);">=</span> <span style="color:rgb(64, 112, 160);">"abc"</span>                 <span style="color:rgb(64, 128, 144);font-style:italic;"># writes 'a', 'b', 'c' and '\0'; p.a[4] unmodified</span>
+</pre></div>
+</div>
+<p style="line-height:1.4em;">In function calls, when passing arguments, these rules can be used too;
+see <a href="https://cffi.readthedocs.io/en/stable/using.html#function-calls" style="color:rgb(0, 75, 107);border-bottom:1px dotted rgb(0, 75, 107);text-decoration:none;">Function calls</a>.</p>
+</div>
+<div>
+<h2 style="font-family:Georgia, serif;font-weight:normal;margin:30px 0px 10px;padding:0px;font-size:180%;"><a href="https://cffi.readthedocs.io/en/stable/using.html#id17" style="color:rgb(0, 75, 107);text-decoration:underline;">Python 3 support</a><a href="https://cffi.readthedocs.io/en/stable/using.html#python-3-support" title="Link to this heading" style="padding:0px 4px;color:rgb(221, 221, 221);text-decoration:none;">¶</a></h2>
+<p style="line-height:1.4em;">Python 3 is supported, but the main point to note is that the <code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span>char</span></code> C
+type corresponds to the <code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span>bytes</span></code> Python type, and not <code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span>str</span></code>.  It is
+your responsibility to encode/decode all Python strings to bytes when
+passing them to or receiving them from CFFI.</p>
+<p style="line-height:1.4em;">This only concerns the <code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span>char</span></code> type and derivative types; other parts
+of the API that accept strings in Python 2 continue to accept strings in
+Python 3.</p>
+</div>
+<div>
+<h2 style="font-family:Georgia, serif;font-weight:normal;margin:30px 0px 10px;padding:0px;font-size:180%;"><a href="https://cffi.readthedocs.io/en/stable/using.html#id18" style="color:rgb(0, 75, 107);text-decoration:underline;">An example of calling a main-like thing</a><a href="https://cffi.readthedocs.io/en/stable/using.html#an-example-of-calling-a-main-like-thing" title="Link to this heading" style="padding:0px 4px;color:rgb(221, 221, 221);text-decoration:none;">¶</a></h2>
+<p style="line-height:1.4em;">Imagine we have something like this:</p>
+<div><div style="background:rgb(250, 243, 232);"><pre style="font-family:Consolas, Menlo, &quot;DejaVu Sans Mono&quot;, &quot;Bitstream Vera Sans Mono&quot;, monospace;font-size:0.9em;background:rgb(238, 238, 238);padding:7px 30px;margin:15px 0px;line-height:1.3em;"><span></span><span style="color:rgb(0, 112, 32);font-weight:bold;">from</span> <span style="color:rgb(14, 132, 181);font-weight:bold;">cffi</span> <span style="color:rgb(0, 112, 32);font-weight:bold;">import</span> <span>FFI</span>
+<span>ffi</span> <span style="color:rgb(102, 102, 102);">=</span> <span>FFI</span><span>()</span>
+<span>ffi</span><span style="color:rgb(102, 102, 102);">.</span><span>cdef</span><span>(</span><span style="color:rgb(64, 112, 160);">"""</span>
+<span style="color:rgb(64, 112, 160);">   int main_like(int argv, char *argv[]);</span>
+<span style="color:rgb(64, 112, 160);">"""</span><span>)</span>
+<span>lib</span> <span style="color:rgb(102, 102, 102);">=</span> <span>ffi</span><span style="color:rgb(102, 102, 102);">.</span><span>dlopen</span><span>(</span><span style="color:rgb(64, 112, 160);">"some_library.so"</span><span>)</span>
+</pre></div>
+</div>
+<p style="line-height:1.4em;">Now, everything is simple, except, how do we create the <code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span>char**</span></code> argument
+here?
+The first idea:</p>
+<div><div style="background:rgb(250, 243, 232);"><pre style="font-family:Consolas, Menlo, &quot;DejaVu Sans Mono&quot;, &quot;Bitstream Vera Sans Mono&quot;, monospace;font-size:0.9em;background:rgb(238, 238, 238);padding:7px 30px;margin:15px 0px;line-height:1.3em;"><span></span><span>lib</span><span style="color:rgb(102, 102, 102);">.</span><span>main_like</span><span>(</span><span style="color:rgb(32, 128, 80);">2</span><span>,</span> <span>[</span><span style="color:rgb(64, 112, 160);">"arg0"</span><span>,</span> <span style="color:rgb(64, 112, 160);">"arg1"</span><span>])</span>
+</pre></div>
+</div>
+<p style="line-height:1.4em;">does not work, because the initializer receives two Python <code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span>str</span></code> objects
+where it was expecting <code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span>&lt;cdata</span> <span>'char</span> <span>*'&gt;</span></code> objects.  You need to use
+<code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span>ffi.new()</span></code> explicitly to make these objects:</p>
+<div><div style="background:rgb(250, 243, 232);"><pre style="font-family:Consolas, Menlo, &quot;DejaVu Sans Mono&quot;, &quot;Bitstream Vera Sans Mono&quot;, monospace;font-size:0.9em;background:rgb(238, 238, 238);padding:7px 30px;margin:15px 0px;line-height:1.3em;"><span></span><span>lib</span><span style="color:rgb(102, 102, 102);">.</span><span>main_like</span><span>(</span><span style="color:rgb(32, 128, 80);">2</span><span>,</span> <span>[</span><span>ffi</span><span style="color:rgb(102, 102, 102);">.</span><span>new</span><span>(</span><span style="color:rgb(64, 112, 160);">"char[]"</span><span>,</span> <span style="color:rgb(64, 112, 160);">"arg0"</span><span>),</span>
+                  <span>ffi</span><span style="color:rgb(102, 102, 102);">.</span><span>new</span><span>(</span><span style="color:rgb(64, 112, 160);">"char[]"</span><span>,</span> <span style="color:rgb(64, 112, 160);">"arg1"</span><span>)])</span>
+</pre></div>
+</div>
+<p style="line-height:1.4em;">Note that the two <code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span>&lt;cdata</span> <span>'char[]'&gt;</span></code> objects are kept alive for the
+duration of the call: they are only freed when the list itself is freed,
+and the list is only freed when the call returns.</p>
+<p style="line-height:1.4em;">If you want instead to build an “argv” variable that you want to reuse,
+then more care is needed:</p>
+<div><div style="background:rgb(250, 243, 232);"><pre style="font-family:Consolas, Menlo, &quot;DejaVu Sans Mono&quot;, &quot;Bitstream Vera Sans Mono&quot;, monospace;font-size:0.9em;background:rgb(238, 238, 238);padding:7px 30px;margin:15px 0px;line-height:1.3em;"><span></span><span style="color:rgb(64, 128, 144);font-style:italic;"># DOES NOT WORK!</span>
+<span>argv</span> <span style="color:rgb(102, 102, 102);">=</span> <span>ffi</span><span style="color:rgb(102, 102, 102);">.</span><span>new</span><span>(</span><span style="color:rgb(64, 112, 160);">"char *[]"</span><span>,</span> <span>[</span><span>ffi</span><span style="color:rgb(102, 102, 102);">.</span><span>new</span><span>(</span><span style="color:rgb(64, 112, 160);">"char[]"</span><span>,</span> <span style="color:rgb(64, 112, 160);">"arg0"</span><span>),</span>
+                            <span>ffi</span><span style="color:rgb(102, 102, 102);">.</span><span>new</span><span>(</span><span style="color:rgb(64, 112, 160);">"char[]"</span><span>,</span> <span style="color:rgb(64, 112, 160);">"arg1"</span><span>)])</span>
+</pre></div>
+</div>
+<p style="line-height:1.4em;">In the above example, the inner “arg0” string is deallocated as soon
+as “argv” is built.  You have to make sure that you keep a reference
+to the inner “char[]” objects, either directly or by keeping the list
+alive like this:</p>
+<div><div style="background:rgb(250, 243, 232);"><pre style="font-family:Consolas, Menlo, &quot;DejaVu Sans Mono&quot;, &quot;Bitstream Vera Sans Mono&quot;, monospace;font-size:0.9em;background:rgb(238, 238, 238);padding:7px 30px;margin:15px 0px;line-height:1.3em;"><span></span><span>argv_keepalive</span> <span style="color:rgb(102, 102, 102);">=</span> <span>[</span><span>ffi</span><span style="color:rgb(102, 102, 102);">.</span><span>new</span><span>(</span><span style="color:rgb(64, 112, 160);">"char[]"</span><span>,</span> <span style="color:rgb(64, 112, 160);">"arg0"</span><span>),</span>
+                  <span>ffi</span><span style="color:rgb(102, 102, 102);">.</span><span>new</span><span>(</span><span style="color:rgb(64, 112, 160);">"char[]"</span><span>,</span> <span style="color:rgb(64, 112, 160);">"arg1"</span><span>)]</span>
+<span>argv</span> <span style="color:rgb(102, 102, 102);">=</span> <span>ffi</span><span style="color:rgb(102, 102, 102);">.</span><span>new</span><span>(</span><span style="color:rgb(64, 112, 160);">"char *[]"</span><span>,</span> <span>argv_keepalive</span><span>)</span>
+</pre></div>
+</div>
+</div>
+<div>
+<h2 style="font-family:Georgia, serif;font-weight:normal;margin:30px 0px 10px;padding:0px;font-size:180%;"><a href="https://cffi.readthedocs.io/en/stable/using.html#id19" style="color:rgb(0, 75, 107);text-decoration:underline;">Function calls</a><a href="https://cffi.readthedocs.io/en/stable/using.html#function-calls" title="Link to this heading" style="padding:0px 4px;color:rgb(221, 221, 221);text-decoration:none;">¶</a></h2>
+<p style="line-height:1.4em;">When calling C functions, passing arguments follows mostly the same
+rules as assigning to structure fields, and the return value follows the
+same rules as reading a structure field.  For example:</p>
+<div><div style="background:rgb(250, 243, 232);"><pre style="font-family:Consolas, Menlo, &quot;DejaVu Sans Mono&quot;, &quot;Bitstream Vera Sans Mono&quot;, monospace;font-size:0.9em;background:rgb(238, 238, 238);padding:7px 30px;margin:15px 0px;line-height:1.3em;"><span></span><span style="color:rgb(64, 128, 144);font-style:italic;"># int foo(short a, int b);</span>
+
+<span>n</span> <span style="color:rgb(102, 102, 102);">=</span> <span>lib</span><span style="color:rgb(102, 102, 102);">.</span><span>foo</span><span>(</span><span style="color:rgb(32, 128, 80);">2</span><span>,</span> <span style="color:rgb(32, 128, 80);">3</span><span>)</span>     <span style="color:rgb(64, 128, 144);font-style:italic;"># returns a normal integer</span>
+<span>lib</span><span style="color:rgb(102, 102, 102);">.</span><span>foo</span><span>(</span><span style="color:rgb(32, 128, 80);">40000</span><span>,</span> <span style="color:rgb(32, 128, 80);">3</span><span>)</span>     <span style="color:rgb(64, 128, 144);font-style:italic;"># raises OverflowError</span>
+</pre></div>
+</div>
+<p style="line-height:1.4em;">You can pass to <code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span>char</span> <span>*</span></code> arguments a normal Python string (but don’t
+pass a normal Python string to functions that take a <code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span>char</span> <span>*</span></code>
+argument and may mutate it!):</p>
+<div><div style="background:rgb(250, 243, 232);"><pre style="font-family:Consolas, Menlo, &quot;DejaVu Sans Mono&quot;, &quot;Bitstream Vera Sans Mono&quot;, monospace;font-size:0.9em;background:rgb(238, 238, 238);padding:7px 30px;margin:15px 0px;line-height:1.3em;"><span></span><span style="color:rgb(64, 128, 144);font-style:italic;"># size_t strlen(const char *);</span>
+
+<span style="color:rgb(0, 112, 32);font-weight:bold;">assert</span> <span>lib</span><span style="color:rgb(102, 102, 102);">.</span><span>strlen</span><span>(</span><span style="color:rgb(64, 112, 160);">"hello"</span><span>)</span> <span style="color:rgb(102, 102, 102);">==</span> <span style="color:rgb(32, 128, 80);">5</span>
+</pre></div>
+</div>
+<p style="line-height:1.4em;">(Note that there is no guarantee that the <code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span>char</span> <span>*</span></code> passed to the
+function remains valid after the call is done.  Similarly, if you write
+<code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span>lib.f(x);</span> <span>lib.f(x)</span></code> where <code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span>x</span></code> is a variable containing a byte string,
+the two calls to <code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span>f()</span></code> could sometimes receive different <code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span>char</span> <span>*</span></code>
+pointers, with each of them only valid during the corresponding call.  This is
+important notably for PyPy which uses many optimizations tweaking the data
+underlying a byte string object.  CFFI will not make and free a copy of
+the whole string at <em>every</em> call—it usually won’t—but you <em>cannot</em>
+write code that relies on it: there are cases were that would break.
+If you need a pointer to remain valid, you need to make one explicitly,
+for example with <code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span>ptr</span> <span>=</span> <span>ffi.new("char[]",</span> <span>x)</span></code>.)</p>
+<p style="line-height:1.4em;">You can also pass unicode strings as <code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span>wchar_t</span> <span>*</span></code> or <code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span>char16_t</span> <span>*</span></code> or
+<code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span>char32_t</span> <span>*</span></code> arguments.  Note that
+the C language makes no difference between argument declarations that
+use <code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span>type</span> <span>*</span></code> or <code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span>type[]</span></code>.  For example, <code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span>int</span> <span>*</span></code> is fully
+equivalent to <code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span>int[]</span></code> (or even <code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span>int[5]</span></code>; the 5 is ignored).  For CFFI,
+this means that you can always pass arguments that can be converted to
+either <code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span>int</span> <span>*</span></code> or <code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span>int[]</span></code>.  For example:</p>
+<div><div style="background:rgb(250, 243, 232);"><pre style="font-family:Consolas, Menlo, &quot;DejaVu Sans Mono&quot;, &quot;Bitstream Vera Sans Mono&quot;, monospace;font-size:0.9em;background:rgb(238, 238, 238);padding:7px 30px;margin:15px 0px;line-height:1.3em;"><span></span><span style="color:rgb(64, 128, 144);font-style:italic;"># void do_something_with_array(int *array);</span>
+
+<span>lib</span><span style="color:rgb(102, 102, 102);">.</span><span>do_something_with_array</span><span>([</span><span style="color:rgb(32, 128, 80);">1</span><span>,</span> <span style="color:rgb(32, 128, 80);">2</span><span>,</span> <span style="color:rgb(32, 128, 80);">3</span><span>,</span> <span style="color:rgb(32, 128, 80);">4</span><span>,</span> <span style="color:rgb(32, 128, 80);">5</span><span>])</span>    <span style="color:rgb(64, 128, 144);font-style:italic;"># works for int[]</span>
+</pre></div>
+</div>
+<p style="line-height:1.4em;">See <a href="https://cffi.readthedocs.io/en/stable/ref.html#conversions" style="color:rgb(0, 75, 107);border-bottom:1px dotted rgb(0, 75, 107);text-decoration:none;">Reference: conversions</a> for a similar way to pass <code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span>struct</span> <span>foo_s</span>
+<span>*</span></code> arguments—but in general, it is clearer in this case to pass
+<code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span>ffi.new('struct</span> <span>foo_s</span> <span>*',</span> <span>initializer)</span></code>.</p>
+<p style="line-height:1.4em;">CFFI supports passing and returning structs and unions to functions and
+callbacks.  Example:</p>
+<div><div style="background:rgb(250, 243, 232);"><pre style="font-family:Consolas, Menlo, &quot;DejaVu Sans Mono&quot;, &quot;Bitstream Vera Sans Mono&quot;, monospace;font-size:0.9em;background:rgb(238, 238, 238);padding:7px 30px;margin:15px 0px;line-height:1.3em;"><span></span><span style="color:rgb(64, 128, 144);font-style:italic;"># struct foo_s { int a, b; };</span>
+<span style="color:rgb(64, 128, 144);font-style:italic;"># struct foo_s function_returning_a_struct(void);</span>
+
+<span>myfoo</span> <span style="color:rgb(102, 102, 102);">=</span> <span>lib</span><span style="color:rgb(102, 102, 102);">.</span><span>function_returning_a_struct</span><span>()</span>
+<span style="color:rgb(64, 128, 144);font-style:italic;"># `myfoo`: &lt;cdata 'struct foo_s' owning 8 bytes&gt;</span>
+</pre></div>
+</div>
+<p style="line-height:1.4em;">For performance, non-variadic API-level functions that you get by
+writing <code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span>lib.some_function</span></code> are not <code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span>&lt;cdata&gt;</span></code>
+objects, but an object of a different type (on CPython, <code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span>&lt;built-in</span>
+<span>function&gt;</span></code>).  This means you cannot pass them directly to some other C
+function expecting a function pointer argument.  Only <code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span>ffi.typeof()</span></code>
+works on them.  To get a cdata containing a regular function pointer,
+use <code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span>ffi.addressof(lib,</span> <span>"name")</span></code>.</p>
+<p style="line-height:1.4em;">There are a few (obscure) limitations to the supported argument and
+return types.  These limitations come from libffi and apply only to
+calling <code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span>&lt;cdata&gt;</span></code> function pointers; in other words, they don’t
+apply to non-variadic <code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span>cdef()</span></code>-declared functions if you are using
+the API mode.  The limitations are that you cannot pass directly as
+argument or return type:</p>
+<ul style="margin:10px 0px 10px 30px;padding:0px;">
+<li style="line-height:1.4em;"><p style="line-height:1.4em;">a union (but a <em>pointer</em> to a union is fine);</p></li>
+<li style="line-height:1.4em;"><p style="line-height:1.4em;">a struct which uses bitfields (but a <em>pointer</em> to such a struct is
+fine);</p></li>
+<li style="line-height:1.4em;"><p style="line-height:1.4em;">a struct that was declared with “<code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span>...</span></code>” in the <code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span>cdef()</span></code>.</p></li>
+</ul>
+<p style="line-height:1.4em;">In API mode, you can work around these limitations: for example, if you
+need to call such a function pointer from Python, you can instead write
+a custom C function that accepts the function pointer and the real
+arguments and that does the call from C.  Then declare that custom C
+function in the <code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span>cdef()</span></code> and use it from Python.</p>
+</div>
+<div>
+<h2 style="font-family:Georgia, serif;font-weight:normal;margin:30px 0px 10px;padding:0px;font-size:180%;"><a href="https://cffi.readthedocs.io/en/stable/using.html#id20" style="color:rgb(0, 75, 107);text-decoration:underline;">Variadic function calls</a><a href="https://cffi.readthedocs.io/en/stable/using.html#variadic-function-calls" title="Link to this heading" style="padding:0px 4px;color:rgb(221, 221, 221);text-decoration:none;">¶</a></h2>
+<p style="line-height:1.4em;">Variadic functions in C (which end with “<code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span>...</span></code>” as their last
+argument) can be declared and called normally, with the exception that
+all the arguments passed in the variable part <em>must</em> be cdata objects.
+This is because it would not be possible to guess, if you wrote this:</p>
+<div><div style="background:rgb(250, 243, 232);"><pre style="font-family:Consolas, Menlo, &quot;DejaVu Sans Mono&quot;, &quot;Bitstream Vera Sans Mono&quot;, monospace;font-size:0.9em;background:rgb(238, 238, 238);padding:7px 30px;margin:15px 0px;line-height:1.3em;"><span></span><span>lib</span><span style="color:rgb(102, 102, 102);">.</span><span>printf</span><span>(</span><span style="color:rgb(64, 112, 160);">"hello, </span><span style="color:rgb(112, 160, 208);font-style:italic;">%d</span><span style="color:rgb(64, 112, 160);font-weight:bold;">\n</span><span style="color:rgb(64, 112, 160);">"</span><span>,</span> <span style="color:rgb(32, 128, 80);">42</span><span>)</span>   <span style="color:rgb(64, 128, 144);font-style:italic;"># doesn't work!</span>
+</pre></div>
+</div>
+<p style="line-height:1.4em;">that you really meant the 42 to be passed as a C <code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span>int</span></code>, and not a
+<code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span>long</span></code> or <code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span>long</span> <span>long</span></code>.  The same issue occurs with <code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span>float</span></code> versus
+<code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span>double</span></code>.  So you have to force cdata objects of the C type you want,
+if necessary with <code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span>ffi.cast()</span></code>:</p>
+<div><div style="background:rgb(250, 243, 232);"><pre style="font-family:Consolas, Menlo, &quot;DejaVu Sans Mono&quot;, &quot;Bitstream Vera Sans Mono&quot;, monospace;font-size:0.9em;background:rgb(238, 238, 238);padding:7px 30px;margin:15px 0px;line-height:1.3em;"><span></span><span>lib</span><span style="color:rgb(102, 102, 102);">.</span><span>printf</span><span>(</span><span style="color:rgb(64, 112, 160);">"hello, </span><span style="color:rgb(112, 160, 208);font-style:italic;">%d</span><span style="color:rgb(64, 112, 160);font-weight:bold;">\n</span><span style="color:rgb(64, 112, 160);">"</span><span>,</span> <span>ffi</span><span style="color:rgb(102, 102, 102);">.</span><span>cast</span><span>(</span><span style="color:rgb(64, 112, 160);">"int"</span><span>,</span> <span style="color:rgb(32, 128, 80);">42</span><span>))</span>
+<span>lib</span><span style="color:rgb(102, 102, 102);">.</span><span>printf</span><span>(</span><span style="color:rgb(64, 112, 160);">"hello, </span><span style="color:rgb(112, 160, 208);font-style:italic;">%ld</span><span style="color:rgb(64, 112, 160);font-weight:bold;">\n</span><span style="color:rgb(64, 112, 160);">"</span><span>,</span> <span>ffi</span><span style="color:rgb(102, 102, 102);">.</span><span>cast</span><span>(</span><span style="color:rgb(64, 112, 160);">"long"</span><span>,</span> <span style="color:rgb(32, 128, 80);">42</span><span>))</span>
+<span>lib</span><span style="color:rgb(102, 102, 102);">.</span><span>printf</span><span>(</span><span style="color:rgb(64, 112, 160);">"hello, </span><span style="color:rgb(112, 160, 208);font-style:italic;">%f</span><span style="color:rgb(64, 112, 160);font-weight:bold;">\n</span><span style="color:rgb(64, 112, 160);">"</span><span>,</span> <span>ffi</span><span style="color:rgb(102, 102, 102);">.</span><span>cast</span><span>(</span><span style="color:rgb(64, 112, 160);">"double"</span><span>,</span> <span style="color:rgb(32, 128, 80);">42</span><span>))</span>
+</pre></div>
+</div>
+<p style="line-height:1.4em;">But of course:</p>
+<div><div style="background:rgb(250, 243, 232);"><pre style="font-family:Consolas, Menlo, &quot;DejaVu Sans Mono&quot;, &quot;Bitstream Vera Sans Mono&quot;, monospace;font-size:0.9em;background:rgb(238, 238, 238);padding:7px 30px;margin:15px 0px;line-height:1.3em;"><span></span><span>lib</span><span style="color:rgb(102, 102, 102);">.</span><span>printf</span><span>(</span><span style="color:rgb(64, 112, 160);">"hello, </span><span style="color:rgb(112, 160, 208);font-style:italic;">%s</span><span style="color:rgb(64, 112, 160);font-weight:bold;">\n</span><span style="color:rgb(64, 112, 160);">"</span><span>,</span> <span>ffi</span><span style="color:rgb(102, 102, 102);">.</span><span>new</span><span>(</span><span style="color:rgb(64, 112, 160);">"char[]"</span><span>,</span> <span style="color:rgb(64, 112, 160);">"world"</span><span>))</span>
+</pre></div>
+</div>
+<p style="line-height:1.4em;">Note that if you are using <code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span>dlopen()</span></code>, the function declaration in the
+<code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span>cdef()</span></code> must match the original one in C exactly, as usual — in
+particular, if this function is variadic in C, then its <code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span>cdef()</span></code>
+declaration must also be variadic.  You cannot declare it in the
+<code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span>cdef()</span></code> with fixed arguments instead, even if you plan to only call
+it with these argument types.  The reason is that some architectures
+have a different calling convention depending on whether the function
+signature is fixed or not.  (On x86-64, the difference can sometimes be
+seen in PyPy’s JIT-generated code if some arguments are <code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span>double</span></code>.)</p>
+<p style="line-height:1.4em;">Note that the function signature <code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span>int</span> <span>foo();</span></code> is interpreted by CFFI
+as equivalent to <code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span>int</span> <span>foo(void);</span></code>.  This differs from the C standard,
+in which <code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span>int</span> <span>foo();</span></code> is really like <code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span>int</span> <span>foo(...);</span></code> and can be
+called with any arguments.  (This feature of C is a pre-C89 relic: the
+arguments cannot be accessed at all in the body of <code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span>foo()</span></code> without
+relying on compiler-specific extensions.  Nowadays virtually all code
+with <code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span>int</span> <span>foo();</span></code> really means <code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span>int</span> <span>foo(void);</span></code>.)</p>
+</div>
+<div>
+<h2 style="font-family:Georgia, serif;font-weight:normal;margin:30px 0px 10px;padding:0px;font-size:180%;"><a href="https://cffi.readthedocs.io/en/stable/using.html#id21" style="color:rgb(0, 75, 107);text-decoration:underline;">Memory pressure (PyPy)</a><a href="https://cffi.readthedocs.io/en/stable/using.html#memory-pressure-pypy" title="Link to this heading" style="padding:0px 4px;color:rgb(221, 221, 221);text-decoration:none;">¶</a></h2>
+<p style="line-height:1.4em;">This paragraph applies only to PyPy, because its garbage collector (GC)
+is different from CPython’s.  It is very common in C code to have pairs
+of functions, one which performs memory allocations or acquires other
+resources, and the other which frees them again.  Depending on how you
+structure your Python code, the freeing function is only called when the
+GC decides a particular (Python) object can be freed.  This occurs
+notably in these cases:</p>
+<ul style="margin:10px 0px 10px 30px;padding:0px;">
+<li style="line-height:1.4em;"><p style="line-height:1.4em;">If you use a <code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span>__del__()</span></code> method to call the freeing function.</p></li>
+<li style="line-height:1.4em;"><p style="line-height:1.4em;">If you use <code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span>ffi.gc()</span></code> without also using <code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span>ffi.release()</span></code>.</p></li>
+<li style="line-height:1.4em;"><p style="line-height:1.4em;">This does not occur if you call the freeing function at a
+deterministic time, like in a regular <code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span>try:</span> <span>finally:</span></code> block.  It
+does however occur <em>inside a generator—</em> if the generator is not
+explicitly exhausted but forgotten at a <code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span>yield</span></code> point, then the code
+in the enclosing <code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span>finally</span></code> block is only invoked at the next GC.</p></li>
+</ul>
+<p style="line-height:1.4em;">In these cases, you may have to use the built-in function
+<code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span>__pypy__.add_memory_pressure(n)</span></code>.  Its argument <code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span>n</span></code> is an estimate
+of how much memory pressure to add.  For example, if the pair of C
+functions that we are talking about is <code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span>malloc(n)</span></code> and <code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span>free()</span></code> or
+similar, you would call <code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span>__pypy__.add_memory_pressure(n)</span></code> after
+<code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span>malloc(n)</span></code>.  Doing so is not always a complete answer to the problem,
+but it makes the next GC occur earlier, which is often enough.</p>
+<p style="line-height:1.4em;">The same applies if the memory allocations are indirect, e.g. the C
+function allocates some internal data structures.  In that case, call
+<code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span>__pypy__.add_memory_pressure(n)</span></code> with an argument <code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span>n</span></code> that is an
+rough estimation.  Knowing the exact size is not important, and memory
+pressure doesn’t have to be manually brought down again after calling
+the freeing function.  If you are writing wrappers for the allocating /
+freeing pair of functions, you should probably call
+<code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span>__pypy__.add_memory_pressure()</span></code> in the former even if the user may
+invoke the latter at a known point with a <code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span>finally:</span></code> block.</p>
+<p style="line-height:1.4em;">In case this solution is not sufficient, or if the acquired resource is
+not memory but something else more limited (like file descriptors), then
+there is no better way than restructuring your code to make sure the
+freeing function is called at a known point and not indirectly by the
+GC.</p>
+<p style="line-height:1.4em;">Note that in PyPy &lt;= 5.6 the discussion above also applies to
+<code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span>ffi.new()</span></code>.  In more recent versions of PyPy, both <code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span>ffi.new()</span></code> and
+<code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span>ffi.new_allocator()()</span></code> automatically account for the memory pressure
+they create.  (In case you need to support both older and newer PyPy’s,
+try calling <code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span>__pypy__.add_memory_pressure()</span></code> anyway; it is better to
+overestimate than not account for the memory pressure.)</p>
+</div>
+<div>
+<span></span><span></span><h2 style="font-family:Georgia, serif;font-weight:normal;margin:30px 0px 10px;padding:0px;font-size:180%;"><a href="https://cffi.readthedocs.io/en/stable/using.html#id22" style="color:rgb(0, 75, 107);text-decoration:underline;">Extern “Python” (new-style callbacks)</a><a href="https://cffi.readthedocs.io/en/stable/using.html#extern-python-new-style-callbacks" title="Link to this heading" style="padding:0px 4px;color:rgb(221, 221, 221);text-decoration:none;">¶</a></h2>
+<p style="line-height:1.4em;">When the C code needs a pointer to a function which invokes back a
+Python function of your choice, here is how you do it in the
+out-of-line API mode.  The next section about <a href="https://cffi.readthedocs.io/en/stable/using.html#callbacks" style="color:rgb(0, 75, 107);border-bottom:1px dotted rgb(0, 75, 107);text-decoration:none;">Callbacks</a> describes the
+ABI-mode solution.</p>
+<p style="line-height:1.4em;">This is <em>new in version 1.4.</em>  Use old-style <a href="https://cffi.readthedocs.io/en/stable/using.html#callbacks" style="color:rgb(0, 75, 107);border-bottom:1px dotted rgb(0, 75, 107);text-decoration:none;">Callbacks</a> if backward
+compatibility is an issue.  (The original callbacks are slower to
+invoke and have the same issue as libffi’s callbacks; notably, see the
+<a href="https://cffi.readthedocs.io/en/stable/using.html#callbacks" style="color:rgb(0, 75, 107);border-bottom:1px dotted rgb(0, 75, 107);text-decoration:none;">warning</a>.  The new style described in the present section does not
+use libffi’s callbacks at all.)</p>
+<p style="line-height:1.4em;">In the builder script, declare in the cdef a function prefixed with
+<code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span>extern</span> <span>"Python"</span></code>:</p>
+<div><div style="background:rgb(250, 243, 232);"><pre style="font-family:Consolas, Menlo, &quot;DejaVu Sans Mono&quot;, &quot;Bitstream Vera Sans Mono&quot;, monospace;font-size:0.9em;background:rgb(238, 238, 238);padding:7px 30px;margin:15px 0px;line-height:1.3em;"><span></span><span>ffibuilder</span><span style="color:rgb(102, 102, 102);">.</span><span>cdef</span><span>(</span><span style="color:rgb(64, 112, 160);">"""</span>
+<span style="color:rgb(64, 112, 160);">    extern "Python" int my_callback(int, int);</span>
+
+<span style="color:rgb(64, 112, 160);">    void library_function(int(*callback)(int, int));</span>
+<span style="color:rgb(64, 112, 160);">"""</span><span>)</span>
+<span>ffibuilder</span><span style="color:rgb(102, 102, 102);">.</span><span>set_source</span><span>(</span><span style="color:rgb(64, 112, 160);">"_my_example"</span><span>,</span> <span style="color:rgb(64, 112, 160);">r</span><span style="color:rgb(64, 112, 160);">"""</span>
+<span style="color:rgb(64, 112, 160);">    #include &lt;some_library.h&gt;</span>
+<span style="color:rgb(64, 112, 160);">"""</span><span>)</span>
+</pre></div>
+</div>
+<p style="line-height:1.4em;">The function <code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span>my_callback()</span></code> is then implemented in Python inside
+your application’s code:</p>
+<div><div style="background:rgb(250, 243, 232);"><pre style="font-family:Consolas, Menlo, &quot;DejaVu Sans Mono&quot;, &quot;Bitstream Vera Sans Mono&quot;, monospace;font-size:0.9em;background:rgb(238, 238, 238);padding:7px 30px;margin:15px 0px;line-height:1.3em;"><span></span><span style="color:rgb(0, 112, 32);font-weight:bold;">from</span> <span style="color:rgb(14, 132, 181);font-weight:bold;">_my_example</span> <span style="color:rgb(0, 112, 32);font-weight:bold;">import</span> <span>ffi</span><span>,</span> <span>lib</span>
+
+<span style="color:rgb(85, 85, 85);font-weight:bold;">@ffi</span><span style="color:rgb(102, 102, 102);">.</span><span>def_extern</span><span>()</span>
+<span style="color:rgb(0, 112, 32);font-weight:bold;">def</span> <span style="color:rgb(6, 40, 126);">my_callback</span><span>(</span><span>x</span><span>,</span> <span>y</span><span>):</span>
+    <span style="color:rgb(0, 112, 32);font-weight:bold;">return</span> <span style="color:rgb(32, 128, 80);">42</span>
+</pre></div>
+</div>
+<p style="line-height:1.4em;">You obtain a <code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span>&lt;cdata&gt;</span></code> pointer-to-function object by getting
+<code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span>lib.my_callback</span></code>.  This <code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span>&lt;cdata&gt;</span></code> can be passed to C code and
+then works like a callback: when the C code calls this function
+pointer, the Python function <code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span>my_callback</span></code> is called.  (You need
+to pass <code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span>lib.my_callback</span></code> to C code, and not <code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span>my_callback</span></code>: the
+latter is just the Python function above, which cannot be passed to C.)</p>
+<p style="line-height:1.4em;">CFFI implements this by defining <code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span>my_callback</span></code> as a static C
+function, written after the <code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span>set_source()</span></code> code.  The <code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span>&lt;cdata&gt;</span></code>
+then points to this function.  What this function does is invoke the
+Python function object that is, at runtime, attached with
+<code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span>@ffi.def_extern()</span></code>.</p>
+<p style="line-height:1.4em;">The <code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span>@ffi.def_extern()</span></code> decorator should be applied to <strong>global
+functions,</strong> one for each <code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span>extern</span> <span>"Python"</span></code> function of the same
+name.</p>
+<p style="line-height:1.4em;">To support some corner cases, it is possible to redefine the attached
+Python function by calling <code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span>@ffi.def_extern()</span></code> again for the same
+name—but this is not recommended!  Better attach a single global
+Python function for this name, and write it more flexibly in the first
+place.  This is because each <code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span>extern</span> <span>"Python"</span></code> function turns into
+only one C function.  Calling <code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span>@ffi.def_extern()</span></code> again changes this
+function’s C logic to call the new Python function; the old Python
+function is not callable any more.  The C function pointer you get
+from <code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span>lib.my_function</span></code> is always this C function’s address, i.e. it
+remains the same.</p>
+<div>
+<h3 style="font-family:Georgia, serif;font-weight:normal;margin:30px 0px 10px;padding:0px;font-size:150%;"><a href="https://cffi.readthedocs.io/en/stable/using.html#id23" style="color:rgb(0, 75, 107);text-decoration:underline;">Extern “Python” and <code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span>void</span> <span>*</span></code> arguments</a><a href="https://cffi.readthedocs.io/en/stable/using.html#extern-python-and-void-arguments" title="Link to this heading" style="padding:0px 4px;color:rgb(221, 221, 221);text-decoration:none;">¶</a></h3>
+<p style="line-height:1.4em;">As described just before, you cannot use <code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span>extern</span> <span>"Python"</span></code> to make a
+variable number of C function pointers.  However, achieving that
+result is not possible in pure C code either.  For this reason, it is
+usual for C to define callbacks with a <code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span>void</span> <span>*data</span></code> argument.  You
+can use <code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span>ffi.new_handle()</span></code> and <code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span>ffi.from_handle()</span></code> to pass a
+Python object through this <code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span>void</span> <span>*</span></code> argument.  For example, if the C
+type of the callbacks is:</p>
+<div><div style="background:rgb(250, 243, 232);"><pre style="font-family:Consolas, Menlo, &quot;DejaVu Sans Mono&quot;, &quot;Bitstream Vera Sans Mono&quot;, monospace;font-size:0.9em;background:rgb(238, 238, 238);padding:7px 30px;margin:15px 0px;line-height:1.3em;"><span></span><span>typedef</span> <span>void</span> <span>(</span><span style="color:rgb(102, 102, 102);">*</span><span>event_cb_t</span><span>)(</span><span>event_t</span> <span style="color:rgb(102, 102, 102);">*</span><span>evt</span><span>,</span> <span>void</span> <span style="color:rgb(102, 102, 102);">*</span><span>userdata</span><span>);</span>
+</pre></div>
+</div>
+<p style="line-height:1.4em;">and you register events by calling this function:</p>
+<div><div style="background:rgb(250, 243, 232);"><pre style="font-family:Consolas, Menlo, &quot;DejaVu Sans Mono&quot;, &quot;Bitstream Vera Sans Mono&quot;, monospace;font-size:0.9em;background:rgb(238, 238, 238);padding:7px 30px;margin:15px 0px;line-height:1.3em;"><span></span><span>void</span> <span>event_cb_register</span><span>(</span><span>event_cb_t</span> <span>cb</span><span>,</span> <span>void</span> <span style="color:rgb(102, 102, 102);">*</span><span>userdata</span><span>);</span>
+</pre></div>
+</div>
+<p style="line-height:1.4em;">Then you would write this in the build script:</p>
+<div><div style="background:rgb(250, 243, 232);"><pre style="font-family:Consolas, Menlo, &quot;DejaVu Sans Mono&quot;, &quot;Bitstream Vera Sans Mono&quot;, monospace;font-size:0.9em;background:rgb(238, 238, 238);padding:7px 30px;margin:15px 0px;line-height:1.3em;"><span></span><span>ffibuilder</span><span style="color:rgb(102, 102, 102);">.</span><span>cdef</span><span>(</span><span style="color:rgb(64, 112, 160);">"""</span>
+<span style="color:rgb(64, 112, 160);">    typedef ... event_t;</span>
+<span style="color:rgb(64, 112, 160);">    typedef void (*event_cb_t)(event_t *evt, void *userdata);</span>
+<span style="color:rgb(64, 112, 160);">    void event_cb_register(event_cb_t cb, void *userdata);</span>
+
+<span style="color:rgb(64, 112, 160);">    extern "Python" void my_event_callback(event_t *, void *);</span>
+<span style="color:rgb(64, 112, 160);">"""</span><span>)</span>
+<span>ffibuilder</span><span style="color:rgb(102, 102, 102);">.</span><span>set_source</span><span>(</span><span style="color:rgb(64, 112, 160);">"_demo_cffi"</span><span>,</span> <span style="color:rgb(64, 112, 160);">r</span><span style="color:rgb(64, 112, 160);">"""</span>
+<span style="color:rgb(64, 112, 160);">    #include &lt;the_event_library.h&gt;</span>
+<span style="color:rgb(64, 112, 160);">"""</span><span>)</span>
+</pre></div>
+</div>
+<p style="line-height:1.4em;">and in your main application you register events like this:</p>
+<div><div style="background:rgb(250, 243, 232);"><pre style="font-family:Consolas, Menlo, &quot;DejaVu Sans Mono&quot;, &quot;Bitstream Vera Sans Mono&quot;, monospace;font-size:0.9em;background:rgb(238, 238, 238);padding:7px 30px;margin:15px 0px;line-height:1.3em;"><span></span><span style="color:rgb(0, 112, 32);font-weight:bold;">from</span> <span style="color:rgb(14, 132, 181);font-weight:bold;">_demo_cffi</span> <span style="color:rgb(0, 112, 32);font-weight:bold;">import</span> <span>ffi</span><span>,</span> <span>lib</span>
+
+<span style="color:rgb(0, 112, 32);font-weight:bold;">class</span> <span style="color:rgb(14, 132, 181);font-weight:bold;">Widget</span><span>(</span><span style="color:rgb(0, 112, 32);">object</span><span>):</span>
+    <span style="color:rgb(0, 112, 32);font-weight:bold;">def</span> <span style="color:rgb(6, 40, 126);">__init__</span><span>(</span><span style="color:rgb(0, 112, 32);">self</span><span>):</span>
+        <span>userdata</span> <span style="color:rgb(102, 102, 102);">=</span> <span>ffi</span><span style="color:rgb(102, 102, 102);">.</span><span>new_handle</span><span>(</span><span style="color:rgb(0, 112, 32);">self</span><span>)</span>
+        <span style="color:rgb(0, 112, 32);">self</span><span style="color:rgb(102, 102, 102);">.</span><span>_userdata</span> <span style="color:rgb(102, 102, 102);">=</span> <span>userdata</span>     <span style="color:rgb(64, 128, 144);font-style:italic;"># must keep this alive!</span>
+        <span>lib</span><span style="color:rgb(102, 102, 102);">.</span><span>event_cb_register</span><span>(</span><span>lib</span><span style="color:rgb(102, 102, 102);">.</span><span>my_event_callback</span><span>,</span> <span>userdata</span><span>)</span>
+
+    <span style="color:rgb(0, 112, 32);font-weight:bold;">def</span> <span style="color:rgb(6, 40, 126);">process_event</span><span>(</span><span style="color:rgb(0, 112, 32);">self</span><span>,</span> <span>evt</span><span>):</span>
+        <span style="color:rgb(0, 112, 32);">print</span> <span style="color:rgb(64, 112, 160);">"got event!"</span>
+
+<span style="color:rgb(85, 85, 85);font-weight:bold;">@ffi</span><span style="color:rgb(102, 102, 102);">.</span><span>def_extern</span><span>()</span>
+<span style="color:rgb(0, 112, 32);font-weight:bold;">def</span> <span style="color:rgb(6, 40, 126);">my_event_callback</span><span>(</span><span>evt</span><span>,</span> <span>userdata</span><span>):</span>
+    <span>widget</span> <span style="color:rgb(102, 102, 102);">=</span> <span>ffi</span><span style="color:rgb(102, 102, 102);">.</span><span>from_handle</span><span>(</span><span>userdata</span><span>)</span>
+    <span>widget</span><span style="color:rgb(102, 102, 102);">.</span><span>process_event</span><span>(</span><span>evt</span><span>)</span>
+</pre></div>
+</div>
+<p style="line-height:1.4em;">Some other libraries don’t have an explicit <code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span>void</span> <span>*</span></code> argument, but
+let you attach the <code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span>void</span> <span>*</span></code> to an existing structure.  For example,
+the library might say that <code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span>widget-&gt;userdata</span></code> is a generic field
+reserved for the application.  If the event’s signature is now this:</p>
+<div><div style="background:rgb(250, 243, 232);"><pre style="font-family:Consolas, Menlo, &quot;DejaVu Sans Mono&quot;, &quot;Bitstream Vera Sans Mono&quot;, monospace;font-size:0.9em;background:rgb(238, 238, 238);padding:7px 30px;margin:15px 0px;line-height:1.3em;"><span></span><span>typedef</span> <span>void</span> <span>(</span><span style="color:rgb(102, 102, 102);">*</span><span>event_cb_t</span><span>)(</span><span>widget_t</span> <span style="color:rgb(102, 102, 102);">*</span><span>w</span><span>,</span> <span>event_t</span> <span style="color:rgb(102, 102, 102);">*</span><span>evt</span><span>);</span>
+</pre></div>
+</div>
+<p style="line-height:1.4em;">Then you can use the <code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span>void</span> <span>*</span></code> field in the low-level
+<code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span>widget_t</span> <span>*</span></code> like this:</p>
+<div><div style="background:rgb(250, 243, 232);"><pre style="font-family:Consolas, Menlo, &quot;DejaVu Sans Mono&quot;, &quot;Bitstream Vera Sans Mono&quot;, monospace;font-size:0.9em;background:rgb(238, 238, 238);padding:7px 30px;margin:15px 0px;line-height:1.3em;"><span></span><span style="color:rgb(0, 112, 32);font-weight:bold;">from</span> <span style="color:rgb(14, 132, 181);font-weight:bold;">_demo_cffi</span> <span style="color:rgb(0, 112, 32);font-weight:bold;">import</span> <span>ffi</span><span>,</span> <span>lib</span>
+
+<span style="color:rgb(0, 112, 32);font-weight:bold;">class</span> <span style="color:rgb(14, 132, 181);font-weight:bold;">Widget</span><span>(</span><span style="color:rgb(0, 112, 32);">object</span><span>):</span>
+    <span style="color:rgb(0, 112, 32);font-weight:bold;">def</span> <span style="color:rgb(6, 40, 126);">__init__</span><span>(</span><span style="color:rgb(0, 112, 32);">self</span><span>):</span>
+        <span>ll_widget</span> <span style="color:rgb(102, 102, 102);">=</span> <span>lib</span><span style="color:rgb(102, 102, 102);">.</span><span>new_widget</span><span>(</span><span style="color:rgb(32, 128, 80);">500</span><span>,</span> <span style="color:rgb(32, 128, 80);">500</span><span>)</span>
+        <span style="color:rgb(0, 112, 32);">self</span><span style="color:rgb(102, 102, 102);">.</span><span>ll_widget</span> <span style="color:rgb(102, 102, 102);">=</span> <span>ll_widget</span>       <span style="color:rgb(64, 128, 144);font-style:italic;"># &lt;cdata 'struct widget *'&gt;</span>
+        <span>userdata</span> <span style="color:rgb(102, 102, 102);">=</span> <span>ffi</span><span style="color:rgb(102, 102, 102);">.</span><span>new_handle</span><span>(</span><span style="color:rgb(0, 112, 32);">self</span><span>)</span>
+        <span style="color:rgb(0, 112, 32);">self</span><span style="color:rgb(102, 102, 102);">.</span><span>_userdata</span> <span style="color:rgb(102, 102, 102);">=</span> <span>userdata</span>        <span style="color:rgb(64, 128, 144);font-style:italic;"># must still keep this alive!</span>
+        <span>ll_widget</span><span style="color:rgb(102, 102, 102);">.</span><span>userdata</span> <span style="color:rgb(102, 102, 102);">=</span> <span>userdata</span>    <span style="color:rgb(64, 128, 144);font-style:italic;"># this makes a copy of the "void *"</span>
+        <span>lib</span><span style="color:rgb(102, 102, 102);">.</span><span>event_cb_register</span><span>(</span><span>ll_widget</span><span>,</span> <span>lib</span><span style="color:rgb(102, 102, 102);">.</span><span>my_event_callback</span><span>)</span>
+
+    <span style="color:rgb(0, 112, 32);font-weight:bold;">def</span> <span style="color:rgb(6, 40, 126);">process_event</span><span>(</span><span style="color:rgb(0, 112, 32);">self</span><span>,</span> <span>evt</span><span>):</span>
+        <span style="color:rgb(0, 112, 32);">print</span> <span style="color:rgb(64, 112, 160);">"got event!"</span>
+
+<span style="color:rgb(85, 85, 85);font-weight:bold;">@ffi</span><span style="color:rgb(102, 102, 102);">.</span><span>def_extern</span><span>()</span>
+<span style="color:rgb(0, 112, 32);font-weight:bold;">def</span> <span style="color:rgb(6, 40, 126);">my_event_callback</span><span>(</span><span>ll_widget</span><span>,</span> <span>evt</span><span>):</span>
+    <span>widget</span> <span style="color:rgb(102, 102, 102);">=</span> <span>ffi</span><span style="color:rgb(102, 102, 102);">.</span><span>from_handle</span><span>(</span><span>ll_widget</span><span style="color:rgb(102, 102, 102);">.</span><span>userdata</span><span>)</span>
+    <span>widget</span><span style="color:rgb(102, 102, 102);">.</span><span>process_event</span><span>(</span><span>evt</span><span>)</span>
+</pre></div>
+</div>
+</div>
+<div>
+<h3 style="font-family:Georgia, serif;font-weight:normal;margin:30px 0px 10px;padding:0px;font-size:150%;"><a href="https://cffi.readthedocs.io/en/stable/using.html#id24" style="color:rgb(0, 75, 107);text-decoration:underline;">Extern “Python” accessed from C directly</a><a href="https://cffi.readthedocs.io/en/stable/using.html#extern-python-accessed-from-c-directly" title="Link to this heading" style="padding:0px 4px;color:rgb(221, 221, 221);text-decoration:none;">¶</a></h3>
+<p style="line-height:1.4em;">In case you want to access some <code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span>extern</span> <span>"Python"</span></code> function directly
+from the C code written in <code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span>set_source()</span></code>, you need to write a
+forward declaration.  (By default it needs to be static, but see
+<a href="https://cffi.readthedocs.io/en/stable/using.html#extern-python-c" style="color:rgb(0, 75, 107);border-bottom:1px dotted rgb(0, 75, 107);text-decoration:none;">next paragraph</a>.)  The real implementation of this function
+is added by CFFI <em>after</em> the C code—this is needed because the
+declaration might use types defined by <code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span>set_source()</span></code>
+(e.g. <code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span>event_t</span></code> above, from the <code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span>#include</span></code>), so it cannot be
+generated before.</p>
+<div><div style="background:rgb(250, 243, 232);"><pre style="font-family:Consolas, Menlo, &quot;DejaVu Sans Mono&quot;, &quot;Bitstream Vera Sans Mono&quot;, monospace;font-size:0.9em;background:rgb(238, 238, 238);padding:7px 30px;margin:15px 0px;line-height:1.3em;"><span></span><span>ffibuilder</span><span style="color:rgb(102, 102, 102);">.</span><span>set_source</span><span>(</span><span style="color:rgb(64, 112, 160);">"_demo_cffi"</span><span>,</span> <span style="color:rgb(64, 112, 160);">r</span><span style="color:rgb(64, 112, 160);">"""</span>
+<span style="color:rgb(64, 112, 160);">    #include &lt;the_event_library.h&gt;</span>
+
+<span style="color:rgb(64, 112, 160);">    static void my_event_callback(widget_t *, event_t *);</span>
+
+<span style="color:rgb(64, 112, 160);">    /* here you can write C code which uses '&amp;my_event_callback' */</span>
+<span style="color:rgb(64, 112, 160);">"""</span><span>)</span>
+</pre></div>
+</div>
+<p style="line-height:1.4em;">This can also be used to write custom C code which calls Python
+directly.  Here is an example (inefficient in this case, but might be
+useful if the logic in <code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span>my_algo()</span></code> is much more complex):</p>
+<div><div style="background:rgb(250, 243, 232);"><pre style="font-family:Consolas, Menlo, &quot;DejaVu Sans Mono&quot;, &quot;Bitstream Vera Sans Mono&quot;, monospace;font-size:0.9em;background:rgb(238, 238, 238);padding:7px 30px;margin:15px 0px;line-height:1.3em;"><span></span><span>ffibuilder</span><span style="color:rgb(102, 102, 102);">.</span><span>cdef</span><span>(</span><span style="color:rgb(64, 112, 160);">"""</span>
+<span style="color:rgb(64, 112, 160);">    extern "Python" int f(int);</span>
+<span style="color:rgb(64, 112, 160);">    int my_algo(int);</span>
+<span style="color:rgb(64, 112, 160);">"""</span><span>)</span>
+<span>ffibuilder</span><span style="color:rgb(102, 102, 102);">.</span><span>set_source</span><span>(</span><span style="color:rgb(64, 112, 160);">"_example_cffi"</span><span>,</span> <span style="color:rgb(64, 112, 160);">r</span><span style="color:rgb(64, 112, 160);">"""</span>
+<span style="color:rgb(64, 112, 160);">    static int f(int);   /* the forward declaration */</span>
+
+<span style="color:rgb(64, 112, 160);">    static int my_algo(int n) {</span>
+<span style="color:rgb(64, 112, 160);">        int i, sum = 0;</span>
+<span style="color:rgb(64, 112, 160);">        for (i = 0; i &lt; n; i++)</span>
+<span style="color:rgb(64, 112, 160);">            sum += f(i);     /* call f() here */</span>
+<span style="color:rgb(64, 112, 160);">        return sum;</span>
+<span style="color:rgb(64, 112, 160);">    }</span>
+<span style="color:rgb(64, 112, 160);">"""</span><span>)</span>
+</pre></div>
+</div>
+</div>
+<div>
+<span></span><h3 style="font-family:Georgia, serif;font-weight:normal;margin:30px 0px 10px;padding:0px;font-size:150%;"><a href="https://cffi.readthedocs.io/en/stable/using.html#id25" style="color:rgb(0, 75, 107);text-decoration:underline;">Extern “Python+C”</a><a href="https://cffi.readthedocs.io/en/stable/using.html#extern-python-c" title="Link to this heading" style="padding:0px 4px;color:rgb(221, 221, 221);text-decoration:none;">¶</a></h3>
+<p style="line-height:1.4em;">Functions declared with <code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span>extern</span> <span>"Python"</span></code> are generated as
+<code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span>static</span></code> functions in the C source.  However, in some cases it is
+convenient to make them non-static, typically when you want to make
+them directly callable from other C source files.  To do that, you can
+say <code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span>extern</span> <span>"Python+C"</span></code> instead of just <code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span>extern</span> <span>"Python"</span></code>.  <em>New
+in version 1.6.</em></p>
+<div><table style="font-size:inherit;font-weight:inherit;font-style:inherit;font-variant:inherit;border:1px solid rgb(136, 136, 136);box-shadow:rgb(238, 238, 238) 2px 2px 4px;">
+<tbody>
+<tr><td style="border:1px solid rgb(136, 136, 136);padding:0.25em 0.7em;"><p style="line-height:1.4em;">if the cdef contains</p></td>
+<td style="border:1px solid rgb(136, 136, 136);padding:0.25em 0.7em;"><p style="line-height:1.4em;">then CFFI generates</p></td>
+</tr>
+<tr><td style="border:1px solid rgb(136, 136, 136);padding:0.25em 0.7em;"><p style="line-height:1.4em;"><code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span>extern</span> <span>"Python"</span> <span>int</span> <span>f(int);</span></code></p></td>
+<td style="border:1px solid rgb(136, 136, 136);padding:0.25em 0.7em;"><p style="line-height:1.4em;"><code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span>static</span> <span>int</span> <span>f(int)</span> <span>{</span> <span>/*</span> <span>code</span> <span>*/</span> <span>}</span></code></p></td>
+</tr>
+<tr><td style="border:1px solid rgb(136, 136, 136);padding:0.25em 0.7em;"><p style="line-height:1.4em;"><code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span>extern</span> <span>"Python+C"</span> <span>int</span> <span>f(int);</span></code></p></td>
+<td style="border:1px solid rgb(136, 136, 136);padding:0.25em 0.7em;"><p style="line-height:1.4em;"><code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span>int</span> <span>f(int)</span> <span>{</span> <span>/*</span> <span>code</span> <span>*/</span> <span>}</span></code></p></td>
+</tr>
+</tbody>
+</table></div>
+<p style="line-height:1.4em;">The name <code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span>extern</span> <span>"Python+C"</span></code> comes from the fact that we want an
+extern function in both senses: as an <code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span>extern</span> <span>"Python"</span></code>, and as a
+C function that is not static.</p>
+<p style="line-height:1.4em;">You cannot make CFFI generate additional macros or other
+compiler-specific stuff like the GCC <code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span>__attribute__</span></code>.  You can only
+control whether the function should be <code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span>static</span></code> or not.  But often,
+these attributes must be written alongside the function <em>header</em>, and
+it is fine if the function <em>implementation</em> does not repeat them:</p>
+<div><div style="background:rgb(250, 243, 232);"><pre style="font-family:Consolas, Menlo, &quot;DejaVu Sans Mono&quot;, &quot;Bitstream Vera Sans Mono&quot;, monospace;font-size:0.9em;background:rgb(238, 238, 238);padding:7px 30px;margin:15px 0px;line-height:1.3em;"><span></span><span>ffibuilder</span><span style="color:rgb(102, 102, 102);">.</span><span>cdef</span><span>(</span><span style="color:rgb(64, 112, 160);">"""</span>
+<span style="color:rgb(64, 112, 160);">    extern "Python+C" int f(int);      /* not static */</span>
+<span style="color:rgb(64, 112, 160);">"""</span><span>)</span>
+<span>ffibuilder</span><span style="color:rgb(102, 102, 102);">.</span><span>set_source</span><span>(</span><span style="color:rgb(64, 112, 160);">"_example_cffi"</span><span>,</span> <span style="color:rgb(64, 112, 160);">r</span><span style="color:rgb(64, 112, 160);">"""</span>
+<span style="color:rgb(64, 112, 160);">    /* the forward declaration, setting a gcc attribute</span>
+<span style="color:rgb(64, 112, 160);">       (this line could also be in some .h file, to be included</span>
+<span style="color:rgb(64, 112, 160);">       both here and in the other C files of the project) */</span>
+<span style="color:rgb(64, 112, 160);">    int f(int) __attribute__((visibility("hidden")));</span>
+<span style="color:rgb(64, 112, 160);">"""</span><span>)</span>
+</pre></div>
+</div>
+</div>
+<div>
+<h3 style="font-family:Georgia, serif;font-weight:normal;margin:30px 0px 10px;padding:0px;font-size:150%;"><a href="https://cffi.readthedocs.io/en/stable/using.html#id26" style="color:rgb(0, 75, 107);text-decoration:underline;">Extern “Python”: reference</a><a href="https://cffi.readthedocs.io/en/stable/using.html#extern-python-reference" title="Link to this heading" style="padding:0px 4px;color:rgb(221, 221, 221);text-decoration:none;">¶</a></h3>
+<p style="line-height:1.4em;"><code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span>extern</span> <span>"Python"</span></code> must appear in the cdef().  Like the C++ <code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span>extern</span>
+<span>"C"</span></code> syntax, it can also be used with braces around a group of
+functions:</p>
+<div><div style="background:rgb(250, 243, 232);"><pre style="font-family:Consolas, Menlo, &quot;DejaVu Sans Mono&quot;, &quot;Bitstream Vera Sans Mono&quot;, monospace;font-size:0.9em;background:rgb(238, 238, 238);padding:7px 30px;margin:15px 0px;line-height:1.3em;"><span></span><span>extern</span> <span style="color:rgb(64, 112, 160);">"Python"</span> <span>{</span>
+    <span style="color:rgb(0, 112, 32);">int</span> <span>foo</span><span>(</span><span style="color:rgb(0, 112, 32);">int</span><span>);</span>
+    <span style="color:rgb(0, 112, 32);">int</span> <span>bar</span><span>(</span><span style="color:rgb(0, 112, 32);">int</span><span>);</span>
+<span>}</span>
+</pre></div>
+</div>
+<p style="line-height:1.4em;">The <code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span>extern</span> <span>"Python"</span></code> functions cannot be variadic for now.  This
+may be implemented in the future.  (<a href="https://github.com/python-cffi/cffi/blob/main/demo/extern_python_varargs.py" style="color:rgb(0, 75, 107);border-bottom:1px dotted rgb(0, 75, 107);text-decoration:none;">This demo</a> shows how to do it
+anyway, but it is a bit lengthy.)</p>
+<p style="line-height:1.4em;">Each corresponding Python callback function is defined with the
+<code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span>@ffi.def_extern()</span></code> decorator.  Be careful when writing this
+function: if it raises an exception, or tries to return an object of
+the wrong type, then the exception cannot be propagated.  Instead, the
+exception is printed to stderr and the C-level callback is made to
+return a default value.  This can be controlled with <code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span>error</span></code> and
+<code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span>onerror</span></code>, described below.</p>
+<p style="line-height:1.4em;">The <code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span>@ffi.def_extern()</span></code> decorator takes these optional arguments:</p>
+<ul style="margin:10px 0px 10px 30px;padding:0px;">
+<li style="line-height:1.4em;"><p style="line-height:1.4em;"><code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span>name</span></code>: the name of the function as written in the cdef.  By default
+it is taken from the name of the Python function you decorate.</p></li>
+</ul>
+<ul style="margin:10px 0px 10px 30px;padding:0px;">
+<li style="line-height:1.4em;"><p style="line-height:1.4em;"><code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span>error</span></code>: the returned value in case the Python function raises an
+exception.  It is 0 or null by default.  The exception is still
+printed to stderr, so this should be used only as a last-resort
+solution.</p></li>
+<li style="line-height:1.4em;"><p style="line-height:1.4em;"><code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span>onerror</span></code>: if you want to be sure to catch all exceptions, use
+<code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span>@ffi.def_extern(onerror=my_handler)</span></code>.  If an exception occurs and
+<code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span>onerror</span></code> is specified, then <code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span>onerror(exception,</span> <span>exc_value,</span>
+<span>traceback)</span></code> is called.  This is useful in some situations where you
+cannot simply write <code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span>try:</span> <span>except:</span></code> in the main callback function,
+because it might not catch exceptions raised by signal handlers: if
+a signal occurs while in C, the Python signal handler is called as
+soon as possible, which is after entering the callback function but
+<em>before</em> executing even the <code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span>try:</span></code>.  If the signal handler raises,
+we are not in the <code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span>try:</span> <span>except:</span></code> yet.</p>
+<p style="line-height:1.4em;">If <code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span>onerror</span></code> is called and returns normally, then it is assumed
+that it handled the exception on its own and nothing is printed to
+stderr.  If <code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span>onerror</span></code> raises, then both tracebacks are printed.
+Finally, <code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span>onerror</span></code> can itself provide the result value of the
+callback in C, but doesn’t have to: if it simply returns None—or
+if <code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span>onerror</span></code> itself fails—then the value of <code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span>error</span></code> will be
+used, if any.</p>
+<p style="line-height:1.4em;">Note the following hack: in <code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span>onerror</span></code>, you can access the original
+callback arguments as follows.  First check if <code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span>traceback</span></code> is not
+None (it is None e.g. if the whole function ran successfully but
+there was an error converting the value returned: this occurs after
+the call).  If <code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span>traceback</span></code> is not None, then
+<code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span>traceback.tb_frame</span></code> is the frame of the outermost function,
+i.e. directly the frame of the function decorated with
+<code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span>@ffi.def_extern()</span></code>.  So you can get the value of <code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span>argname</span></code> in
+that frame by reading <code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span>traceback.tb_frame.f_locals['argname']</span></code>.</p>
+</li>
+</ul>
+</div>
+</div>
+<div>
+<span></span><h2 style="font-family:Georgia, serif;font-weight:normal;margin:30px 0px 10px;padding:0px;font-size:180%;"><a href="https://cffi.readthedocs.io/en/stable/using.html#id27" style="color:rgb(0, 75, 107);text-decoration:underline;">Callbacks (old style)</a><a href="https://cffi.readthedocs.io/en/stable/using.html#callbacks-old-style" title="Link to this heading" style="padding:0px 4px;color:rgb(221, 221, 221);text-decoration:none;">¶</a></h2>
+<p style="line-height:1.4em;">Here is how to make a new <code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span>&lt;cdata&gt;</span></code> object that contains a pointer
+to a function, where that function invokes back a Python function of
+your choice:</p>
+<div><div style="background:rgb(250, 243, 232);"><pre style="font-family:Consolas, Menlo, &quot;DejaVu Sans Mono&quot;, &quot;Bitstream Vera Sans Mono&quot;, monospace;font-size:0.9em;background:rgb(238, 238, 238);padding:7px 30px;margin:15px 0px;line-height:1.3em;"><span></span><span style="color:rgb(198, 93, 9);font-weight:bold;">&gt;&gt;&gt; </span><span style="color:rgb(85, 85, 85);font-weight:bold;">@ffi</span><span style="color:rgb(102, 102, 102);">.</span><span>callback</span><span>(</span><span style="color:rgb(64, 112, 160);">"int(int, int)"</span><span>)</span>
+<span style="color:rgb(198, 93, 9);font-weight:bold;">&gt;&gt;&gt; </span><span style="color:rgb(0, 112, 32);font-weight:bold;">def</span> <span style="color:rgb(6, 40, 126);">myfunc</span><span>(</span><span>x</span><span>,</span> <span>y</span><span>):</span>
+<span style="color:rgb(198, 93, 9);font-weight:bold;">... </span>   <span style="color:rgb(0, 112, 32);font-weight:bold;">return</span> <span>x</span> <span style="color:rgb(102, 102, 102);">+</span> <span>y</span>
+<span style="color:rgb(198, 93, 9);font-weight:bold;">...</span>
+<span style="color:rgb(198, 93, 9);font-weight:bold;">&gt;&gt;&gt; </span><span>myfunc</span>
+<span style="color:rgb(51, 51, 51);">&lt;cdata 'int(*)(int, int)' calling &lt;function myfunc at 0xf757bbc4&gt;&gt;</span>
+</pre></div>
+</div>
+<p style="line-height:1.4em;">Note that <code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span>"int(*)(int,</span> <span>int)"</span></code> is a C <em>function pointer</em> type, whereas
+<code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span>"int(int,</span> <span>int)"</span></code> is a C <em>function</em> type.  Either can be specified to
+ffi.callback() and the result is the same.</p>
+<div style="margin:20px 0px;padding:10px 30px;background-color:rgb(255, 204, 204);border:1px solid rgb(255, 170, 170);">
+<p style="display:inline;font-family:Georgia, serif;font-weight:normal;font-size:24px;margin:0px 0px 10px;padding:0px;line-height:1;">Warning<span style="line-height:1;font-family:Georgia, serif;font-weight:normal;font-size:24px;">:</span></p>
+<p style="line-height:1.4em;">Callbacks are provided for the ABI mode or for backward
+compatibility.  If you are using the out-of-line API mode, it is
+recommended to use the <a href="https://cffi.readthedocs.io/en/stable/using.html#id4" style="color:rgb(0, 75, 107);border-bottom:1px dotted rgb(0, 75, 107);text-decoration:none;">extern “Python”</a> mechanism instead of
+callbacks: it gives faster and cleaner code.  It also avoids several
+issues with old-style callbacks:</p>
+<ul style="margin:10px 0px 10px 30px;padding:0px;">
+<li style="line-height:1.4em;"><p style="line-height:1.4em;">On less common architecture, libffi is more likely to crash on
+callbacks (<a href="https://github.com/pyca/pyopenssl/issues/596" style="color:rgb(0, 75, 107);border-bottom:1px dotted rgb(0, 75, 107);text-decoration:none;">e.g. on NetBSD</a>);</p></li>
+<li style="line-height:1.4em;"><p style="line-height:1.4em;">On hardened systems like PAX and SELinux, the extra memory
+protections can interfere (for example, on SELinux you need to
+run with <code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span>deny_execmem</span></code> set to <code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span>off</span></code>).</p></li>
+<li style="line-height:1.4em;"><p style="line-height:1.4em;"><a href="https://foss.heptapod.net/pypy/cffi/-/issues/391" style="color:rgb(0, 75, 107);border-bottom:1px dotted rgb(0, 75, 107);text-decoration:none;">On Mac OS X,</a> you need to give your application the entitlement
+<code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span>com.apple.security.cs.allow-unsigned-executable-memory</span></code>.</p></li>
+</ul>
+<p style="line-height:1.4em;">Note also that a cffi fix for this issue was attempted—see
+the <code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span>ffi_closure_alloc</span></code> branch—but was not merged because it
+creates potential <a href="https://bugzilla.redhat.com/show_bug.cgi?id=1249685" style="color:rgb(0, 75, 107);border-bottom:1px dotted rgb(0, 75, 107);text-decoration:none;">memory corruption</a> with <code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span>fork()</span></code>.</p>
+<p style="line-height:1.4em;">In other words: yes, it is dangerous to allow write+execute memory in your
+program; that’s why the various “hardening” options above exist.  But at
+the same time, these options open wide the door to another attack: if the
+program forks and then attempts to call any of the <code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span>ffi.callback()</span></code>, then
+this immediately results in a crash—or, with a minimal amount of work
+from an attacker, arbitrary code execution.  To me it sounds even more
+dangerous than the original problem, and that’s why cffi is not playing
+along.</p>
+<p style="line-height:1.4em;">To fix the issue once and for all on the affected platforms, you need
+to refactor the involved code so that it no longer uses <code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span>ffi.callback()</span></code>.</p>
+</div>
+<p style="line-height:1.4em;">Warning: like ffi.new(), ffi.callback() returns a cdata that has
+ownership of its C data.  (In this case, the necessary C data contains
+the libffi data structures to do a callback.)  This means that the
+callback can only be invoked as long as this cdata object is alive.
+If you store the function pointer into C code, then make sure you also
+keep this object alive for as long as the callback may be invoked.
+The easiest way to do that is to always use <code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span>@ffi.callback()</span></code> at
+module-level only, and to pass “context” information around with
+<a href="https://cffi.readthedocs.io/en/stable/ref.html#new-handle" style="color:rgb(0, 75, 107);border-bottom:1px dotted rgb(0, 75, 107);text-decoration:none;">ffi.new_handle()</a>, if possible.  Example:</p>
+<div><div style="background:rgb(250, 243, 232);"><pre style="font-family:Consolas, Menlo, &quot;DejaVu Sans Mono&quot;, &quot;Bitstream Vera Sans Mono&quot;, monospace;font-size:0.9em;background:rgb(238, 238, 238);padding:7px 30px;margin:15px 0px;line-height:1.3em;"><span></span><span style="color:rgb(64, 128, 144);font-style:italic;"># a good way to use this decorator is once at global level</span>
+<span style="color:rgb(85, 85, 85);font-weight:bold;">@ffi</span><span style="color:rgb(102, 102, 102);">.</span><span>callback</span><span>(</span><span style="color:rgb(64, 112, 160);">"int(int, void *)"</span><span>)</span>
+<span style="color:rgb(0, 112, 32);font-weight:bold;">def</span> <span style="color:rgb(6, 40, 126);">my_global_callback</span><span>(</span><span>x</span><span>,</span> <span>handle</span><span>):</span>
+    <span style="color:rgb(0, 112, 32);font-weight:bold;">return</span> <span>ffi</span><span style="color:rgb(102, 102, 102);">.</span><span>from_handle</span><span>(</span><span>handle</span><span>)</span><span style="color:rgb(102, 102, 102);">.</span><span>some_method</span><span>(</span><span>x</span><span>)</span>
+
+
+<span style="color:rgb(0, 112, 32);font-weight:bold;">class</span> <span style="color:rgb(14, 132, 181);font-weight:bold;">Foo</span><span>(</span><span style="color:rgb(0, 112, 32);">object</span><span>):</span>
+
+    <span style="color:rgb(0, 112, 32);font-weight:bold;">def</span> <span style="color:rgb(6, 40, 126);">__init__</span><span>(</span><span style="color:rgb(0, 112, 32);">self</span><span>):</span>
+        <span>handle</span> <span style="color:rgb(102, 102, 102);">=</span> <span>ffi</span><span style="color:rgb(102, 102, 102);">.</span><span>new_handle</span><span>(</span><span style="color:rgb(0, 112, 32);">self</span><span>)</span>
+        <span style="color:rgb(0, 112, 32);">self</span><span style="color:rgb(102, 102, 102);">.</span><span>_handle</span> <span style="color:rgb(102, 102, 102);">=</span> <span>handle</span>   <span style="color:rgb(64, 128, 144);font-style:italic;"># must be kept alive</span>
+        <span>lib</span><span style="color:rgb(102, 102, 102);">.</span><span>register_stuff_with_callback_and_voidp_arg</span><span>(</span><span>my_global_callback</span><span>,</span> <span>handle</span><span>)</span>
+
+    <span style="color:rgb(0, 112, 32);font-weight:bold;">def</span> <span style="color:rgb(6, 40, 126);">some_method</span><span>(</span><span style="color:rgb(0, 112, 32);">self</span><span>,</span> <span>x</span><span>):</span>
+        <span style="color:rgb(0, 112, 32);">print</span> <span style="color:rgb(64, 112, 160);">"method called!"</span>
+</pre></div>
+</div>
+<p style="line-height:1.4em;">(See also the section about <a href="https://cffi.readthedocs.io/en/stable/using.html#id4" style="color:rgb(0, 75, 107);border-bottom:1px dotted rgb(0, 75, 107);text-decoration:none;">extern “Python”</a> above, where the same
+general style is used.)</p>
+<p style="line-height:1.4em;">Note that callbacks of a variadic function type are not supported.  A
+workaround is to add custom C code.  In the following example, a
+callback gets a first argument that counts how many extra <code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span>int</span></code>
+arguments are passed:</p>
+<div><div style="background:rgb(250, 243, 232);"><pre style="font-family:Consolas, Menlo, &quot;DejaVu Sans Mono&quot;, &quot;Bitstream Vera Sans Mono&quot;, monospace;font-size:0.9em;background:rgb(238, 238, 238);padding:7px 30px;margin:15px 0px;line-height:1.3em;"><span></span><span style="color:rgb(64, 128, 144);font-style:italic;"># file "example_build.py"</span>
+
+<span style="color:rgb(0, 112, 32);font-weight:bold;">import</span> <span style="color:rgb(14, 132, 181);font-weight:bold;">cffi</span>
+
+<span>ffibuilder</span> <span style="color:rgb(102, 102, 102);">=</span> <span>cffi</span><span style="color:rgb(102, 102, 102);">.</span><span>FFI</span><span>()</span>
+<span>ffibuilder</span><span style="color:rgb(102, 102, 102);">.</span><span>cdef</span><span>(</span><span style="color:rgb(64, 112, 160);">"""</span>
+<span style="color:rgb(64, 112, 160);">    int (*python_callback)(int how_many, int *values);</span>
+<span style="color:rgb(64, 112, 160);">    void *const c_callback;   /* pass this const ptr to C routines */</span>
+<span style="color:rgb(64, 112, 160);">"""</span><span>)</span>
+<span>ffibuilder</span><span style="color:rgb(102, 102, 102);">.</span><span>set_source</span><span>(</span><span style="color:rgb(64, 112, 160);">"_example"</span><span>,</span> <span style="color:rgb(64, 112, 160);">r</span><span style="color:rgb(64, 112, 160);">"""</span>
+<span style="color:rgb(64, 112, 160);">    #include &lt;stdarg.h&gt;</span>
+<span style="color:rgb(64, 112, 160);">    #include &lt;alloca.h&gt;</span>
+<span style="color:rgb(64, 112, 160);">    static int (*python_callback)(int how_many, int *values);</span>
+<span style="color:rgb(64, 112, 160);">    static int c_callback(int how_many, ...) {</span>
+<span style="color:rgb(64, 112, 160);">        va_list ap;</span>
+<span style="color:rgb(64, 112, 160);">        /* collect the "..." arguments into the values[] array */</span>
+<span style="color:rgb(64, 112, 160);">        int i, *values = alloca(how_many * sizeof(int));</span>
+<span style="color:rgb(64, 112, 160);">        va_start(ap, how_many);</span>
+<span style="color:rgb(64, 112, 160);">        for (i=0; i&lt;how_many; i++)</span>
+<span style="color:rgb(64, 112, 160);">            values[i] = va_arg(ap, int);</span>
+<span style="color:rgb(64, 112, 160);">        va_end(ap);</span>
+<span style="color:rgb(64, 112, 160);">        return python_callback(how_many, values);</span>
+<span style="color:rgb(64, 112, 160);">    }</span>
+<span style="color:rgb(64, 112, 160);">"""</span><span>)</span>
+<span>ffibuilder</span><span style="color:rgb(102, 102, 102);">.</span><span>compile</span><span>(</span><span>verbose</span><span style="color:rgb(102, 102, 102);">=</span><span style="color:rgb(0, 112, 32);font-weight:bold;">True</span><span>)</span>
+</pre></div>
+</div>
+<div><div style="background:rgb(250, 243, 232);"><pre style="font-family:Consolas, Menlo, &quot;DejaVu Sans Mono&quot;, &quot;Bitstream Vera Sans Mono&quot;, monospace;font-size:0.9em;background:rgb(238, 238, 238);padding:7px 30px;margin:15px 0px;line-height:1.3em;"><span></span><span style="color:rgb(64, 128, 144);font-style:italic;"># file "example.py"</span>
+
+<span style="color:rgb(0, 112, 32);font-weight:bold;">from</span> <span style="color:rgb(14, 132, 181);font-weight:bold;">_example</span> <span style="color:rgb(0, 112, 32);font-weight:bold;">import</span> <span>ffi</span><span>,</span> <span>lib</span>
+
+<span style="color:rgb(85, 85, 85);font-weight:bold;">@ffi</span><span style="color:rgb(102, 102, 102);">.</span><span>callback</span><span>(</span><span style="color:rgb(64, 112, 160);">"int(int, int *)"</span><span>)</span>
+<span style="color:rgb(0, 112, 32);font-weight:bold;">def</span> <span style="color:rgb(6, 40, 126);">python_callback</span><span>(</span><span>how_many</span><span>,</span> <span>values</span><span>):</span>
+    <span style="color:rgb(0, 112, 32);">print</span> <span>ffi</span><span style="color:rgb(102, 102, 102);">.</span><span>unpack</span><span>(</span><span>values</span><span>,</span> <span>how_many</span><span>)</span>
+    <span style="color:rgb(0, 112, 32);font-weight:bold;">return</span> <span style="color:rgb(32, 128, 80);">0</span>
+<span>lib</span><span style="color:rgb(102, 102, 102);">.</span><span>python_callback</span> <span style="color:rgb(102, 102, 102);">=</span> <span>python_callback</span>
+</pre></div>
+</div>
+<p style="line-height:1.4em;">Deprecated: you can also use <code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span>ffi.callback()</span></code> not as a decorator but
+directly as <code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span>ffi.callback("int(int,</span> <span>int)",</span> <span>myfunc)</span></code>.  This is
+discouraged: using this a style, we are more likely to forget the
+callback object too early, when it is still in use.</p>
+<p style="line-height:1.4em;">The <code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span>ffi.callback()</span></code> decorator also accepts the optional argument
+<code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span>error</span></code>, and from CFFI version 1.2 the optional argument <code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span>onerror</span></code>.
+These two work in the same way as <a href="https://cffi.readthedocs.io/en/stable/using.html#error-onerror" style="color:rgb(0, 75, 107);border-bottom:1px dotted rgb(0, 75, 107);text-decoration:none;">described above for extern “Python”.</a></p>
+</div>
+<div>
+<h2 style="font-family:Georgia, serif;font-weight:normal;margin:30px 0px 10px;padding:0px;font-size:180%;"><a href="https://cffi.readthedocs.io/en/stable/using.html#id28" style="color:rgb(0, 75, 107);text-decoration:underline;">Windows: calling conventions</a><a href="https://cffi.readthedocs.io/en/stable/using.html#windows-calling-conventions" title="Link to this heading" style="padding:0px 4px;color:rgb(221, 221, 221);text-decoration:none;">¶</a></h2>
+<p style="line-height:1.4em;">On Win32, functions can have two main calling conventions: either
+“cdecl” (the default), or “stdcall” (also known as “WINAPI”).  There
+are also other rare calling conventions, but these are not supported.
+<em>New in version 1.3.</em></p>
+<p style="line-height:1.4em;">When you issue calls from Python to C, the implementation is such that
+it works with any of these two main calling conventions; you don’t
+have to specify it.  However, if you manipulate variables of type
+“function pointer” or declare callbacks, then the calling convention
+must be correct.  This is done by writing <code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span>__cdecl</span></code> or <code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span>__stdcall</span></code>
+in the type, like in C:</p>
+<div><div style="background:rgb(250, 243, 232);"><pre style="font-family:Consolas, Menlo, &quot;DejaVu Sans Mono&quot;, &quot;Bitstream Vera Sans Mono&quot;, monospace;font-size:0.9em;background:rgb(238, 238, 238);padding:7px 30px;margin:15px 0px;line-height:1.3em;"><span></span><span style="color:rgb(85, 85, 85);font-weight:bold;">@ffi</span><span style="color:rgb(102, 102, 102);">.</span><span>callback</span><span>(</span><span style="color:rgb(64, 112, 160);">"int __stdcall(int, int)"</span><span>)</span>
+<span style="color:rgb(0, 112, 32);font-weight:bold;">def</span> <span style="color:rgb(6, 40, 126);">AddNumbers</span><span>(</span><span>x</span><span>,</span> <span>y</span><span>):</span>
+    <span style="color:rgb(0, 112, 32);font-weight:bold;">return</span> <span>x</span> <span style="color:rgb(102, 102, 102);">+</span> <span>y</span>
+</pre></div>
+</div>
+<p style="line-height:1.4em;">or:</p>
+<div><div style="background:rgb(250, 243, 232);"><pre style="font-family:Consolas, Menlo, &quot;DejaVu Sans Mono&quot;, &quot;Bitstream Vera Sans Mono&quot;, monospace;font-size:0.9em;background:rgb(238, 238, 238);padding:7px 30px;margin:15px 0px;line-height:1.3em;"><span></span><span>ffibuilder</span><span style="color:rgb(102, 102, 102);">.</span><span>cdef</span><span>(</span><span style="color:rgb(64, 112, 160);">"""</span>
+<span style="color:rgb(64, 112, 160);">    struct foo_s {</span>
+<span style="color:rgb(64, 112, 160);">        int (__stdcall *MyFuncPtr)(int, int);</span>
+<span style="color:rgb(64, 112, 160);">    };</span>
+<span style="color:rgb(64, 112, 160);">"""</span><span>)</span>
+</pre></div>
+</div>
+<p style="line-height:1.4em;"><code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span>__cdecl</span></code> is supported but is always the default so it can be left
+out.  In the <code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span>cdef()</span></code>, you can also use <code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span>WINAPI</span></code> as equivalent to
+<code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span>__stdcall</span></code>.  As mentioned above, it is mostly not needed (but doesn’t
+hurt) to say <code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span>WINAPI</span></code> or <code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span>__stdcall</span></code> when declaring a plain
+function in the <code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span>cdef()</span></code>.  (The difference can still be seen if you
+take explicitly a pointer to this function with <code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span>ffi.addressof()</span></code>,
+or if the function is <code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span>extern</span> <span>"Python"</span></code>.)</p>
+<p style="line-height:1.4em;">These calling convention specifiers are accepted but ignored on any
+platform other than 32-bit Windows.</p>
+<p style="line-height:1.4em;">In CFFI versions before 1.3, the calling convention specifiers are not
+recognized.  In API mode, you could work around it by using an
+indirection, like in the example in the section about <a href="https://cffi.readthedocs.io/en/stable/using.html#callbacks" style="color:rgb(0, 75, 107);border-bottom:1px dotted rgb(0, 75, 107);text-decoration:none;">Callbacks</a>
+(<code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span>"example_build.py"</span></code>).  There was no way to use stdcall callbacks
+in ABI mode.</p>
+</div>
+<div>
+<h2 style="font-family:Georgia, serif;font-weight:normal;margin:30px 0px 10px;padding:0px;font-size:180%;"><a href="https://cffi.readthedocs.io/en/stable/using.html#id29" style="color:rgb(0, 75, 107);text-decoration:underline;">FFI Interface</a><a href="https://cffi.readthedocs.io/en/stable/using.html#ffi-interface" title="Link to this heading" style="padding:0px 4px;color:rgb(221, 221, 221);text-decoration:none;">¶</a></h2>
+<p style="line-height:1.4em;">(The reference for the FFI interface has been moved to the <a href="https://cffi.readthedocs.io/en/stable/ref.html" style="color:rgb(0, 75, 107);border-bottom:1px dotted rgb(0, 75, 107);text-decoration:none;">next page</a>.)</p>
+</div>
+</div></div></div></div></div></div></div></div>
+</div></div>
+<a class="back-link" href="../articles.html">← 返回笔记列表</a>
+</body></html>

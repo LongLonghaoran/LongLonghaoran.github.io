@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="zh-CN" data-theme="light">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>手动实现一个Promise — 技术笔记</title>
+<style>
+:root { --bg:#fff; --text:#1a1a1a; --muted:#666; --border:#e0e0e0; --code-bg:#f5f5f5; --link:#0066cc; }
+@media (prefers-color-scheme: dark) { :root { --bg:#1a1a1a; --text:#e0e0e0; --muted:#999; --border:#333; --code-bg:#2a2a2a; --link:#66bbff; } }
+* { box-sizing:border-box; margin:0; padding:0; }
+body { font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Arial,sans-serif; line-height:1.7; color:var(--text); background:var(--bg); max-width:860px; margin:0 auto; padding:2rem 1.5rem; }
+.note-header { border-bottom:2px solid var(--border); padding-bottom:1rem; margin-bottom:2rem; }
+.note-title { font-size:1.6rem; font-weight:700; margin-bottom:0.3rem; }
+.note-meta { color:var(--muted); font-size:0.85rem; }
+.note-content { font-size:0.95rem; }
+.note-content h1 { font-size:1.4rem; margin:1.2rem 0 0.6rem; }
+.note-content h2 { font-size:1.2rem; margin:1rem 0 0.5rem; }
+.note-content h3 { font-size:1.05rem; margin:0.8rem 0 0.4rem; }
+.note-content p { margin:0.5rem 0; }
+.note-content ul,.note-content ol { margin:0.5rem 0 0.5rem 2rem; }
+.note-content li { margin:0.2rem 0; }
+.note-content pre { background:var(--code-bg); padding:1rem; border-radius:6px; overflow-x:auto; margin:0.8rem 0; font-size:0.85rem; }
+.note-content code { background:var(--code-bg); padding:0.1rem 0.3rem; border-radius:3px; font-size:0.88em; }
+.note-content pre code { background:none; padding:0; }
+.note-content blockquote { border-left:3px solid var(--border); padding-left:1rem; color:var(--muted); margin:0.8rem 0; }
+.note-content a { color:var(--link); }
+.note-content img { max-width:100%; height:auto; border-radius:6px; margin:0.5rem 0; }
+.note-content table { border-collapse:collapse; width:100%; margin:0.8rem 0; }
+.note-content th,.note-content td { border:1px solid var(--border); padding:0.5rem; }
+.note-content th { background:var(--code-bg); }
+.media-placeholder { background:var(--code-bg); padding:1rem; text-align:center; color:var(--muted); border-radius:6px; margin:0.5rem 0; font-size:0.85rem; }
+.encrypt-placeholder { background:#fff3cd; padding:0.5rem; text-align:center; color:#856404; border-radius:6px; margin:0.5rem 0; font-size:0.85rem; }
+.back-link { display:inline-block; margin-top:2rem; color:var(--link); text-decoration:none; font-size:0.85rem; }
+</style>
+</head>
+<body>
+<div class="note-header"><div class="note-title">手动实现一个Promise</div><div class="note-meta">笔记本：再学前端</div></div>
+<div class="note-content"><div style="font-size: 14px; margin: 0; padding: 0; width: 100%;"><pre style="line-height: 160%; box-sizing: content-box; border: 0; border-radius: 0; margin: 2px 0 8px; background-color: #f5f7f8;"><code style="display: block; overflow-x: auto; background: #1e1e1e; line-height: 160%; box-sizing: content-box; border: 0; border-radius: 0; letter-spacing: -.3px; padding: 18px; color: #f4f4f4; white-space: pre-wrap;">
+<span style="color: #b8d7a3; line-height: 160%; box-sizing: content-box;"><span style="color: #569cd6; line-height: 160%; box-sizing: content-box;">class</span> <span style="color: #dcdcdc; line-height: 160%; box-sizing: content-box;">MyPromise</span> </span>{
+  <span style="color: #569cd6; line-height: 160%; box-sizing: content-box;">constructor</span>(executor){
+    <span style="color: #569cd6; line-height: 160%; box-sizing: content-box;">this</span>.status = <span style="color: #d69d85; line-height: 160%; box-sizing: content-box;">'pending'</span>;
+    <span style="color: #569cd6; line-height: 160%; box-sizing: content-box;">this</span>.value = <span style="color: #569cd6; line-height: 160%; box-sizing: content-box;">undefined</span>;
+    <span style="color: #569cd6; line-height: 160%; box-sizing: content-box;">this</span>.fulfieldCallbacks = [];
+    <span style="color: #569cd6; line-height: 160%; box-sizing: content-box;">let</span> resolve = <span style="color: #dcdcdc; line-height: 160%; box-sizing: content-box;">(<span style="color: #dcdcdc; line-height: 160%; box-sizing: content-box;">v</span>)=&gt;</span>{
+      <span style="color: #569cd6; line-height: 160%; box-sizing: content-box;">this</span>.status = <span style="color: #d69d85; line-height: 160%; box-sizing: content-box;">'success'</span>;
+      <span style="color: #569cd6; line-height: 160%; box-sizing: content-box;">this</span>.value = v;
+      <span style="color: #569cd6; line-height: 160%; box-sizing: content-box;">this</span>.fulfieldCallbacks.forEach(<span style="color: #dcdcdc; line-height: 160%; box-sizing: content-box;">(<span style="color: #dcdcdc; line-height: 160%; box-sizing: content-box;">c</span>)=&gt;</span>c());
+    }
+    executor(resolve);
+  }
+
+  then(onFuilfield){
+    <span style="color: #569cd6; line-height: 160%; box-sizing: content-box;">let</span> promise2 = <span style="color: #569cd6; line-height: 160%; box-sizing: content-box;">new</span> MyPromise(<span style="color: #dcdcdc; line-height: 160%; box-sizing: content-box;">(<span style="color: #dcdcdc; line-height: 160%; box-sizing: content-box;">resolve</span>)=&gt;</span>{
+      <span style="color: #569cd6; line-height: 160%; box-sizing: content-box;">if</span>(<span style="color: #569cd6; line-height: 160%; box-sizing: content-box;">this</span>.status === <span style="color: #d69d85; line-height: 160%; box-sizing: content-box;">'success'</span>){
+        resolvePromise(onFuilfield(<span style="color: #569cd6; line-height: 160%; box-sizing: content-box;">this</span>.value), promise2, resolve);
+      }<span style="color: #569cd6; line-height: 160%; box-sizing: content-box;">else</span> <span style="color: #569cd6; line-height: 160%; box-sizing: content-box;">if</span> (<span style="color: #569cd6; line-height: 160%; box-sizing: content-box;">this</span>.status === <span style="color: #d69d85; line-height: 160%; box-sizing: content-box;">'pending'</span>){
+        <span style="color: #569cd6; line-height: 160%; box-sizing: content-box;">this</span>.fulfieldCallbacks.push(
+          <span style="color: #dcdcdc; line-height: 160%; box-sizing: content-box;"><span style="color: #dcdcdc; line-height: 160%; box-sizing: content-box;">()</span>=&gt;</span>{
+            <span style="color: #57a64a; font-style: italic; line-height: 160%; box-sizing: content-box;">// console.log('promise2------',promise2)</span>
+            <span style="color: #569cd6; line-height: 160%; box-sizing: content-box;">let</span> x = onFuilfield(<span style="color: #569cd6; line-height: 160%; box-sizing: content-box;">this</span>.value);
+            resolvePromise(x, promise2, resolve);
+          }
+        )
+      }
+    })
+    <span style="color: #569cd6; line-height: 160%; box-sizing: content-box;">return</span> promise2;
+  }
+}
+
+<span style="color: #57a64a; font-style: italic; line-height: 160%; box-sizing: content-box;">// 用于下一个then方法调用resolve时能够拿到当前返回的x</span>
+<span style="color: #dcdcdc; line-height: 160%; box-sizing: content-box;"><span style="color: #569cd6; line-height: 160%; box-sizing: content-box;">function</span> <span style="color: #dcdcdc; line-height: 160%; box-sizing: content-box;">resolvePromise</span>(<span style="color: #dcdcdc; line-height: 160%; box-sizing: content-box;">x, promise2, resolve</span>)</span>{
+  <span style="color: #569cd6; line-height: 160%; box-sizing: content-box;">if</span>(x===promise2){
+    <span style="color: #569cd6; line-height: 160%; box-sizing: content-box;">throw</span> <span style="color: #d69d85; line-height: 160%; box-sizing: content-box;">'不能回调自己'</span>
+  }
+  <span style="color: #569cd6; line-height: 160%; box-sizing: content-box;">if</span>(x <span style="color: #569cd6; line-height: 160%; box-sizing: content-box;">instanceof</span> MyPromise){
+    <span style="color: #57a64a; font-style: italic; line-height: 160%; box-sizing: content-box;">// 如果then方法的success函数的返回结果仍然是一个promise</span>
+    <span style="color: #57a64a; font-style: italic; line-height: 160%; box-sizing: content-box;">// 那么我们就需要获取到这个promise的成功回调的resolve值</span>
+    <span style="color: #57a64a; font-style: italic; line-height: 160%; box-sizing: content-box;">// 并且需要保证该当前then方法返回的promise在调用then方法时，resolve函数</span>
+    <span style="color: #57a64a; font-style: italic; line-height: 160%; box-sizing: content-box;">// 接收的值就是该promise resolve的值</span>
+    x.then(<span style="color: #dcdcdc; line-height: 160%; box-sizing: content-box;">(<span style="color: #dcdcdc; line-height: 160%; box-sizing: content-box;">resolvedValue2</span>)=&gt;</span>{
+      resolvePromise(resolvedValue2, promise2, resolve);
+    })
+
+    <span style="color: #57a64a; font-style: italic; line-height: 160%; box-sizing: content-box;">// let then = x.then;</span>
+    <span style="color: #57a64a; font-style: italic; line-height: 160%; box-sizing: content-box;">// then.call(x, y =&gt; {</span>
+    <span style="color: #57a64a; font-style: italic; line-height: 160%; box-sizing: content-box;">//   // resolve的结果依旧是promise 那就继续解析</span>
+    <span style="color: #57a64a; font-style: italic; line-height: 160%; box-sizing: content-box;">//   resolvePromise(promise2, y, resolve);</span>
+    <span style="color: #57a64a; font-style: italic; line-height: 160%; box-sizing: content-box;">// })</span>
+  }<span style="color: #569cd6; line-height: 160%; box-sizing: content-box;">else</span>{
+    resolve(x)
+  }
+}
+
+<span style="color: #569cd6; line-height: 160%; box-sizing: content-box;">new</span> MyPromise(
+  <span style="color: #dcdcdc; line-height: 160%; box-sizing: content-box;">(<span style="color: #dcdcdc; line-height: 160%; box-sizing: content-box;">resolve, reject</span>)=&gt;</span>{
+    setTimeout(
+      <span style="color: #dcdcdc; line-height: 160%; box-sizing: content-box;"><span style="color: #dcdcdc; line-height: 160%; box-sizing: content-box;">()</span>=&gt;</span>{
+        <span style="color: #4ec9b0; line-height: 160%; box-sizing: content-box;">console</span>.log(<span style="color: #d69d85; line-height: 160%; box-sizing: content-box;">'2秒过去了'</span>);
+        resolve(<span style="color: #b8d7a3; line-height: 160%; box-sizing: content-box;">2</span>);
+      }, <span style="color: #b8d7a3; line-height: 160%; box-sizing: content-box;">2000</span>
+    )
+  }
+).then(
+  <span style="color: #dcdcdc; line-height: 160%; box-sizing: content-box;">(<span style="color: #dcdcdc; line-height: 160%; box-sizing: content-box;">fulfieldValue</span>)=&gt;</span>{
+    <span style="color: #4ec9b0; line-height: 160%; box-sizing: content-box;">console</span>.log(<span style="color: #d69d85; line-height: 160%; box-sizing: content-box;">'上一步执行结果是'</span>, fulfieldValue);
+    <span style="color: #569cd6; line-height: 160%; box-sizing: content-box;">return</span> <span style="color: #569cd6; line-height: 160%; box-sizing: content-box;">new</span> MyPromise(
+      <span style="color: #dcdcdc; line-height: 160%; box-sizing: content-box;">(<span style="color: #dcdcdc; line-height: 160%; box-sizing: content-box;">resolve</span>)=&gt;</span>{
+        setTimeout(
+          <span style="color: #dcdcdc; line-height: 160%; box-sizing: content-box;"><span style="color: #dcdcdc; line-height: 160%; box-sizing: content-box;">()</span>=&gt;</span>{
+            <span style="color: #4ec9b0; line-height: 160%; box-sizing: content-box;">console</span>.log(<span style="color: #d69d85; line-height: 160%; box-sizing: content-box;">'又是2秒过去了..'</span>);
+            resolve(<span style="color: #b8d7a3; line-height: 160%; box-sizing: content-box;">22</span>);
+          }, <span style="color: #b8d7a3; line-height: 160%; box-sizing: content-box;">2000</span>
+        )
+      }
+    );
+  }
+).then(
+  <span style="color: #dcdcdc; line-height: 160%; box-sizing: content-box;">(<span style="color: #dcdcdc; line-height: 160%; box-sizing: content-box;">fulfieldValue</span>)=&gt;</span>{
+    <span style="color: #4ec9b0; line-height: 160%; box-sizing: content-box;">console</span>.log(<span style="color: #d69d85; line-height: 160%; box-sizing: content-box;">'这是最后一步了,上一步执行结果是'</span>, fulfieldValue);
+    <span style="color: #569cd6; line-height: 160%; box-sizing: content-box;">return</span> <span style="color: #569cd6; line-height: 160%; box-sizing: content-box;">new</span> MyPromise(
+      <span style="color: #dcdcdc; line-height: 160%; box-sizing: content-box;">(<span style="color: #dcdcdc; line-height: 160%; box-sizing: content-box;">resolve</span>)=&gt;</span>{
+        setTimeout(
+          <span style="color: #dcdcdc; line-height: 160%; box-sizing: content-box;"><span style="color: #dcdcdc; line-height: 160%; box-sizing: content-box;">()</span>=&gt;</span>{
+            <span style="color: #4ec9b0; line-height: 160%; box-sizing: content-box;">console</span>.log(<span style="color: #d69d85; line-height: 160%; box-sizing: content-box;">'又是2秒过去了..'</span>);
+            resolve(<span style="color: #b8d7a3; line-height: 160%; box-sizing: content-box;">33</span>);
+          }, <span style="color: #b8d7a3; line-height: 160%; box-sizing: content-box;">2000</span>
+        )
+      }
+    )
+  }
+).then(
+  <span style="color: #dcdcdc; line-height: 160%; box-sizing: content-box;">(<span style="color: #dcdcdc; line-height: 160%; box-sizing: content-box;">fulfieldValue</span>)=&gt;</span>{
+    <span style="color: #4ec9b0; line-height: 160%; box-sizing: content-box;">console</span>.log(<span style="color: #d69d85; line-height: 160%; box-sizing: content-box;">'再加一步,上一步执行结果是'</span>, fulfieldValue);
+  }
+)
+</code></pre>
+</div><center style='display:none !important;visibility:collapse !important;height:0 !important;white-space:nowrap;width:100%;overflow:hidden'>%60%60%60js%0A%0Aclass%20MyPromise%20%7B%0A%20%20constructor(executor)%7B%0A%20%20%20%20this.status%20%3D%20'pending'%3B%0A%20%20%20%20this.value%20%3D%20undefined%3B%0A%20%20%20%20this.fulfieldCallbacks%20%3D%20%5B%5D%3B%0A%20%20%20%20let%20resolve%20%3D%20(v)%3D%3E%7B%0A%20%20%20%20%20%20this.status%20%3D%20'success'%3B%0A%20%20%20%20%20%20this.value%20%3D%20v%3B%0A%20%20%20%20%20%20this.fulfieldCallbacks.forEach((c)%3D%3Ec())%3B%0A%20%20%20%20%7D%0A%20%20%20%20executor(resolve)%3B%0A%20%20%7D%0A%0A%20%20then(onFuilfield)%7B%0A%20%20%20%20let%20promise2%20%3D%20new%20MyPromise((resolve)%3D%3E%7B%0A%20%20%20%20%20%20if(this.status%20%3D%3D%3D%20'success')%7B%0A%20%20%20%20%20%20%20%20resolvePromise(onFuilfield(this.value)%2C%20promise2%2C%20resolve)%3B%0A%20%20%20%20%20%20%7Delse%20if%20(this.status%20%3D%3D%3D%20'pending')%7B%0A%20%20%20%20%20%20%20%20this.fulfieldCallbacks.push(%0A%20%20%20%20%20%20%20%20%20%20()%3D%3E%7B%0A%20%20%20%20%20%20%20%20%20%20%20%20%2F%2F%20console.log('promise2------'%2Cpromise2)%0A%20%20%20%20%20%20%20%20%20%20%20%20let%20x%20%3D%20onFuilfield(this.value)%3B%0A%20%20%20%20%20%20%20%20%20%20%20%20resolvePromise(x%2C%20promise2%2C%20resolve)%3B%0A%20%20%20%20%20%20%20%20%20%20%7D%0A%20%20%20%20%20%20%20%20)%0A%20%20%20%20%20%20%7D%0A%20%20%20%20%7D)%0A%20%20%20%20return%20promise2%3B%0A%20%20%7D%0A%7D%0A%0A%2F%2F%20%E7%94%A8%E4%BA%8E%E4%B8%8B%E4%B8%80%E4%B8%AAthen%E6%96%B9%E6%B3%95%E8%B0%83%E7%94%A8resolve%E6%97%B6%E8%83%BD%E5%A4%9F%E6%8B%BF%E5%88%B0%E5%BD%93%E5%89%8D%E8%BF%94%E5%9B%9E%E7%9A%84x%0Afunction%20resolvePromise(x%2C%20promise2%2C%20resolve)%7B%0A%20%20if(x%3D%3D%3Dpromise2)%7B%0A%20%20%20%20throw%20'%E4%B8%8D%E8%83%BD%E5%9B%9E%E8%B0%83%E8%87%AA%E5%B7%B1'%0A%20%20%7D%0A%20%20if(x%20instanceof%20MyPromise)%7B%0A%20%20%20%20%2F%2F%20%E5%A6%82%E6%9E%9Cthen%E6%96%B9%E6%B3%95%E7%9A%84success%E5%87%BD%E6%95%B0%E7%9A%84%E8%BF%94%E5%9B%9E%E7%BB%93%E6%9E%9C%E4%BB%8D%E7%84%B6%E6%98%AF%E4%B8%80%E4%B8%AApromise%0A%20%20%20%20%2F%2F%20%E9%82%A3%E4%B9%88%E6%88%91%E4%BB%AC%E5%B0%B1%E9%9C%80%E8%A6%81%E8%8E%B7%E5%8F%96%E5%88%B0%E8%BF%99%E4%B8%AApromise%E7%9A%84%E6%88%90%E5%8A%9F%E5%9B%9E%E8%B0%83%E7%9A%84resolve%E5%80%BC%0A%20%20%20%20%2F%2F%20%E5%B9%B6%E4%B8%94%E9%9C%80%E8%A6%81%E4%BF%9D%E8%AF%81%E8%AF%A5%E5%BD%93%E5%89%8Dthen%E6%96%B9%E6%B3%95%E8%BF%94%E5%9B%9E%E7%9A%84promise%E5%9C%A8%E8%B0%83%E7%94%A8then%E6%96%B9%E6%B3%95%E6%97%B6%EF%BC%8Cresolve%E5%87%BD%E6%95%B0%0A%20%20%20%20%2F%2F%20%E6%8E%A5%E6%94%B6%E7%9A%84%E5%80%BC%E5%B0%B1%E6%98%AF%E8%AF%A5promise%20resolve%E7%9A%84%E5%80%BC%0A%20%20%20%20x.then((resolvedValue2)%3D%3E%7B%0A%20%20%20%20%20%20resolvePromise(resolvedValue2%2C%20promise2%2C%20resolve)%3B%0A%20%20%20%20%7D)%0A%0A%20%20%20%20%2F%2F%20let%20then%20%3D%20x.then%3B%0A%20%20%20%20%2F%2F%20then.call(x%2C%20y%20%3D%3E%20%7B%0A%20%20%20%20%2F%2F%20%20%20%2F%2F%20resolve%E7%9A%84%E7%BB%93%E6%9E%9C%E4%BE%9D%E6%97%A7%E6%98%AFpromise%20%E9%82%A3%E5%B0%B1%E7%BB%A7%E7%BB%AD%E8%A7%A3%E6%9E%90%0A%20%20%20%20%2F%2F%20%20%20resolvePromise(promise2%2C%20y%2C%20resolve)%3B%0A%20%20%20%20%2F%2F%20%7D)%0A%20%20%7Delse%7B%0A%20%20%20%20resolve(x)%0A%20%20%7D%0A%7D%0A%0Anew%20MyPromise(%0A%20%20(resolve%2C%20reject)%3D%3E%7B%0A%20%20%20%20setTimeout(%0A%20%20%20%20%20%20()%3D%3E%7B%0A%20%20%20%20%20%20%20%20console.log('2%E7%A7%92%E8%BF%87%E5%8E%BB%E4%BA%86')%3B%0A%20%20%20%20%20%20%20%20resolve(2)%3B%0A%20%20%20%20%20%20%7D%2C%202000%0A%20%20%20%20)%0A%20%20%7D%0A).then(%0A%20%20(fulfieldValue)%3D%3E%7B%0A%20%20%20%20console.log('%E4%B8%8A%E4%B8%80%E6%AD%A5%E6%89%A7%E8%A1%8C%E7%BB%93%E6%9E%9C%E6%98%AF'%2C%20fulfieldValue)%3B%0A%20%20%20%20return%20new%20MyPromise(%0A%20%20%20%20%20%20(resolve)%3D%3E%7B%0A%20%20%20%20%20%20%20%20setTimeout(%0A%20%20%20%20%20%20%20%20%20%20()%3D%3E%7B%0A%20%20%20%20%20%20%20%20%20%20%20%20console.log('%E5%8F%88%E6%98%AF2%E7%A7%92%E8%BF%87%E5%8E%BB%E4%BA%86..')%3B%0A%20%20%20%20%20%20%20%20%20%20%20%20resolve(22)%3B%0A%20%20%20%20%20%20%20%20%20%20%7D%2C%202000%0A%20%20%20%20%20%20%20%20)%0A%20%20%20%20%20%20%7D%0A%20%20%20%20)%3B%0A%20%20%7D%0A).then(%0A%20%20(fulfieldValue)%3D%3E%7B%0A%20%20%20%20console.log('%E8%BF%99%E6%98%AF%E6%9C%80%E5%90%8E%E4%B8%80%E6%AD%A5%E4%BA%86%2C%E4%B8%8A%E4%B8%80%E6%AD%A5%E6%89%A7%E8%A1%8C%E7%BB%93%E6%9E%9C%E6%98%AF'%2C%20fulfieldValue)%3B%0A%20%20%20%20return%20new%20MyPromise(%0A%20%20%20%20%20%20(resolve)%3D%3E%7B%0A%20%20%20%20%20%20%20%20setTimeout(%0A%20%20%20%20%20%20%20%20%20%20()%3D%3E%7B%0A%20%20%20%20%20%20%20%20%20%20%20%20console.log('%E5%8F%88%E6%98%AF2%E7%A7%92%E8%BF%87%E5%8E%BB%E4%BA%86..')%3B%0A%20%20%20%20%20%20%20%20%20%20%20%20resolve(33)%3B%0A%20%20%20%20%20%20%20%20%20%20%7D%2C%202000%0A%20%20%20%20%20%20%20%20)%0A%20%20%20%20%20%20%7D%0A%20%20%20%20)%0A%20%20%7D%0A).then(%0A%20%20(fulfieldValue)%3D%3E%7B%0A%20%20%20%20console.log('%E5%86%8D%E5%8A%A0%E4%B8%80%E6%AD%A5%2C%E4%B8%8A%E4%B8%80%E6%AD%A5%E6%89%A7%E8%A1%8C%E7%BB%93%E6%9E%9C%E6%98%AF'%2C%20fulfieldValue)%3B%0A%20%20%7D%0A)%0A%60%60%60</center></div>
+<a class="back-link" href="../articles.html">← 返回笔记列表</a>
+</body></html>

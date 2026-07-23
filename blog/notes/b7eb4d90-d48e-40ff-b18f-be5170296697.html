@@ -1,0 +1,268 @@
+<!DOCTYPE html>
+<html lang="zh-CN" data-theme="light">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Ruby线程安全与GIL — 技术笔记</title>
+<style>
+:root {
+  --bg: #ffffff;
+  --text: #1a1a1a;
+  --muted: #666;
+  --border: #e0e0e0;
+  --code-bg: #f5f5f5;
+  --link: #0066cc;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #1a1a1a;
+    --text: #e0e0e0;
+    --muted: #999;
+    --border: #333;
+    --code-bg: #2a2a2a;
+    --link: #66bbff;
+  }
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  line-height: 1.7;
+  color: var(--text);
+  background: var(--bg);
+  max-width: 860px;
+  margin: 0 auto;
+  padding: 2rem 1.5rem;
+}
+.note-header {
+  border-bottom: 2px solid var(--border);
+  padding-bottom: 1rem;
+  margin-bottom: 2rem;
+}
+.note-title {
+  font-size: 1.6rem;
+  font-weight: 700;
+  margin-bottom: 0.3rem;
+}
+.note-meta {
+  color: var(--muted);
+  font-size: 0.85rem;
+}
+.note-content {
+  font-size: 0.95rem;
+}
+.note-content h1 { font-size: 1.4rem; margin: 1.2rem 0 0.6rem; }
+.note-content h2 { font-size: 1.2rem; margin: 1rem 0 0.5rem; }
+.note-content h3 { font-size: 1.05rem; margin: 0.8rem 0 0.4rem; }
+.note-content p { margin: 0.5rem 0; }
+.note-content ul, .note-content ol { margin: 0.5rem 0 0.5rem 2rem; }
+.note-content li { margin: 0.2rem 0; }
+.note-content pre {
+  background: var(--code-bg);
+  padding: 1rem;
+  border-radius: 6px;
+  overflow-x: auto;
+  margin: 0.8rem 0;
+  font-size: 0.85rem;
+}
+.note-content code {
+  background: var(--code-bg);
+  padding: 0.1rem 0.3rem;
+  border-radius: 3px;
+  font-size: 0.88em;
+}
+.note-content pre code {
+  background: none;
+  padding: 0;
+}
+.note-content blockquote {
+  border-left: 3px solid var(--border);
+  padding-left: 1rem;
+  color: var(--muted);
+  margin: 0.8rem 0;
+}
+.note-content a { color: var(--link); }
+.note-content img {
+  max-width: 100%;
+  height: auto;
+  border-radius: 6px;
+  margin: 0.5rem 0;
+}
+.note-content table {
+  border-collapse: collapse;
+  width: 100%;
+  margin: 0.8rem 0;
+}
+.note-content th, .note-content td {
+  border: 1px solid var(--border);
+  padding: 0.5rem;
+}
+.note-content th { background: var(--code-bg); }
+.media-placeholder {
+  background: var(--code-bg);
+  padding: 1rem;
+  text-align: center;
+  color: var(--muted);
+  border-radius: 6px;
+  margin: 0.5rem 0;
+  font-size: 0.85rem;
+}
+.encrypt-placeholder {
+  background: #fff3cd;
+  padding: 0.5rem;
+  text-align: center;
+  color: #856404;
+  border-radius: 6px;
+  margin: 0.5rem 0;
+  font-size: 0.85rem;
+}
+.back-link {
+  display: inline-block;
+  margin-top: 2rem;
+  color: var(--link);
+  text-decoration: none;
+  font-size: 0.85rem;
+}
+</style>
+</head>
+<body>
+<div class="note-header">
+  <div class="note-title">Ruby线程安全与GIL</div>
+  <div class="note-meta">笔记本：Ruby</div>
+</div>
+<div class="note-content">
+<div style="--en-clipped-content:article; --en-clipped-source-url:https://icbd.github.io/wiki/ruby/thread-safe/2018/11/01/thread-safe-intro.html; --en-clipped-source-title:Ruby线程安全与GIL;">
+<div><br/></div><div style="min-height: 2829px; font-size: 16px; display:block; min-width: 100%; position: relative;"> <div><div style="font:400 16px / 1.5 &quot;Helvetica Neue&quot;, Helvetica, Arial, sans-serif;color:rgb(17, 17, 17);background-color:rgb(253, 253, 253);text-size-adjust:100%;font-feature-settings:&quot;kern&quot;;font-kerning:normal;"><div><div><div>
+
+  <div style="margin-bottom:30px;">
+    <h1 style="margin:0px;padding:0px;margin-bottom:15px;font-weight:400;font-size:42px;letter-spacing:-1px;line-height:1;">Ruby线程安全与GIL</h1>
+    <p style="margin:0px;padding:0px;margin-bottom:15px;font-size:14px;color:rgb(130, 130, 130);"><span>Nov 1, 2018</span></p>
+  </div>
+
+  <div style="margin-bottom:30px;">
+    <h2 style="margin:0px;padding:0px;margin-bottom:15px;font-weight:400;margin-top:25px;font-size:32px;">什么是线程安全?</h2>
+
+<p style="margin:0px;padding:0px;margin-bottom:15px;">很难讲清楚什么是线程安全. 那么线程不安全会怎么样呢?</p>
+
+<p style="margin:0px;padding:0px;margin-bottom:15px;">如果线程不安全, 那么在多线程条件下, 你的数据将很可能遭到错误.</p>
+
+<p style="margin:0px;padding:0px;margin-bottom:15px;">这里的数据并非数据库的数据, 而是在你脚本中的数据结构(保存在内存中).</p>
+
+<h2 style="margin:0px;padding:0px;margin-bottom:15px;font-weight:400;margin-top:25px;font-size:32px;">例子</h2>
+
+<blockquote style="margin:0px;padding:0px;margin-bottom:15px;color:rgb(130, 130, 130);border-left:4px solid rgb(232, 232, 232);padding-left:15px;font-size:18px;letter-spacing:-1px;font-style:italic;">
+  <p style="margin:0px;padding:0px;margin-bottom:0px;">demo code 1</p>
+</blockquote>
+
+<div><div style="margin-bottom:15px;background:rgb(238, 238, 255);"><pre style="margin:0px;font-size:15px;border:1px solid rgb(232, 232, 232);border-radius:3px;overflow-x:auto;padding:8px 12px;margin-bottom:15px;background:rgb(238, 238, 255);"><code style="font-size:15px;border-radius:3px;background-color:rgb(238, 238, 255);padding:1px 5px;padding-right:0px;padding-left:0px;border:0px;"><span>counter</span> <span style="font-weight:bold;">=</span> <span style="color:rgb(0, 153, 153);">0</span>
+<span style="color:rgb(0, 153, 153);">10</span><span>.</span><span style="color:rgb(153, 0, 0);font-weight:bold;">times</span><span>.</span><span style="color:rgb(153, 0, 0);font-weight:bold;">map</span> <span style="font-weight:bold;">do</span>
+  <span style="color:teal;">Thread</span><span>.</span><span style="color:rgb(153, 0, 0);font-weight:bold;">new</span> <span style="font-weight:bold;">do</span>
+    <span>tmp</span> <span style="font-weight:bold;">=</span> <span>counter</span> <span style="font-weight:bold;">+</span> <span style="color:rgb(0, 153, 153);">1</span>
+    <span>counter</span> <span style="font-weight:bold;">=</span> <span>tmp</span>
+  <span style="font-weight:bold;">end</span>
+<span style="font-weight:bold;">end</span><span>.</span><span style="color:rgb(153, 0, 0);font-weight:bold;">each</span><span>(</span><span style="font-weight:bold;">&amp;</span><span style="color:rgb(153, 0, 115);">:join</span><span>)</span>
+<span style="color:rgb(0, 134, 179);">puts</span> <span style="color:rgb(221, 17, 68);">"</span><span style="color:rgb(221, 17, 68);">\n</span><span style="color:rgb(221, 17, 68);">counter:</span><span style="color:rgb(221, 17, 68);">#{</span><span>counter</span><span style="color:rgb(221, 17, 68);">}</span><span style="color:rgb(221, 17, 68);">"</span>
+<span style="color:rgb(153, 153, 136);font-style:italic;">=begin
+
+counter:10
+=end</span>
+</code></pre></div></div>
+
+<p style="margin:0px;padding:0px;margin-bottom:15px;">counter 是个计数器, 现在开10个线程, 分别在每个线程中对counter做加一计算.</p>
+
+<p style="margin:0px;padding:0px;margin-bottom:15px;">看起来结果很正常, 并没有什么异常.</p>
+
+<p style="margin:0px;padding:0px;margin-bottom:15px;">如果我们修改一下代码, 在 <code style="font-size:15px;border:1px solid rgb(232, 232, 232);border-radius:3px;background-color:rgb(238, 238, 255);padding:1px 5px;">counter = tmp</code> 之前打印一个 <code style="font-size:15px;border:1px solid rgb(232, 232, 232);border-radius:3px;background-color:rgb(238, 238, 255);padding:1px 5px;">*</code> :</p>
+
+<blockquote style="margin:0px;padding:0px;margin-bottom:15px;color:rgb(130, 130, 130);border-left:4px solid rgb(232, 232, 232);padding-left:15px;font-size:18px;letter-spacing:-1px;font-style:italic;">
+  <p style="margin:0px;padding:0px;margin-bottom:0px;">demo code 2</p>
+</blockquote>
+
+<div><div style="margin-bottom:15px;background:rgb(238, 238, 255);"><pre style="margin:0px;font-size:15px;border:1px solid rgb(232, 232, 232);border-radius:3px;overflow-x:auto;padding:8px 12px;margin-bottom:15px;background:rgb(238, 238, 255);"><code style="font-size:15px;border-radius:3px;background-color:rgb(238, 238, 255);padding:1px 5px;padding-right:0px;padding-left:0px;border:0px;">
+<span>counter</span> <span style="font-weight:bold;">=</span> <span style="color:rgb(0, 153, 153);">0</span>
+<span style="color:rgb(0, 153, 153);">10</span><span>.</span><span style="color:rgb(153, 0, 0);font-weight:bold;">times</span><span>.</span><span style="color:rgb(153, 0, 0);font-weight:bold;">map</span> <span style="font-weight:bold;">do</span>
+  <span style="color:teal;">Thread</span><span>.</span><span style="color:rgb(153, 0, 0);font-weight:bold;">new</span> <span style="font-weight:bold;">do</span>
+    <span>tmp</span> <span style="font-weight:bold;">=</span> <span>counter</span> <span style="font-weight:bold;">+</span> <span style="color:rgb(0, 153, 153);">1</span>
+    <span style="color:rgb(0, 134, 179);">print</span> <span style="color:rgb(221, 17, 68);">"*"</span>
+    <span>counter</span> <span style="font-weight:bold;">=</span> <span>tmp</span>
+  <span style="font-weight:bold;">end</span>
+<span style="font-weight:bold;">end</span><span>.</span><span style="color:rgb(153, 0, 0);font-weight:bold;">each</span><span>(</span><span style="font-weight:bold;">&amp;</span><span style="color:rgb(153, 0, 115);">:join</span><span>)</span>
+<span style="color:rgb(0, 134, 179);">puts</span> <span style="color:rgb(221, 17, 68);">"</span><span style="color:rgb(221, 17, 68);">\n</span><span style="color:rgb(221, 17, 68);">counter:</span><span style="color:rgb(221, 17, 68);">#{</span><span>counter</span><span style="color:rgb(221, 17, 68);">}</span><span style="color:rgb(221, 17, 68);">"</span>
+<span style="color:rgb(153, 153, 136);font-style:italic;">=begin
+**********
+counter:6
+=end</span>
+
+</code></pre></div></div>
+
+<p style="margin:0px;padding:0px;margin-bottom:15px;">结果显示, 打印了十个 <code style="font-size:15px;border:1px solid rgb(232, 232, 232);border-radius:3px;background-color:rgb(238, 238, 255);padding:1px 5px;">*</code> 但是计数器只加到了6, 数据错了.</p>
+
+<p style="margin:0px;padding:0px;margin-bottom:15px;">这是为什么呢?</p>
+
+<h2 style="margin:0px;padding:0px;margin-bottom:15px;font-weight:400;margin-top:25px;font-size:32px;">先解释为什么counter会出错</h2>
+
+<p style="margin:0px;padding:0px;margin-bottom:15px;">我们启动了10个线程之后, 各个线程就各自工作了, 我们并不能参与他们, 线程的管理都由调度器完成.</p>
+
+<p style="margin:0px;padding:0px;margin-bottom:15px;">调度器具体怎么安排每个线程的执行顺序和执行时间, 我们并不能影响也无从知道其中的细节.</p>
+
+<p style="margin:0px;padding:0px;margin-bottom:15px;">比如说此时counter为3, 那么就有可能发生在线程A刚打印完 <code style="font-size:15px;border:1px solid rgb(232, 232, 232);border-radius:3px;background-color:rgb(238, 238, 255);padding:1px 5px;">*</code> 的时候被暂停下来(此时tmp为4), CPU交给线程B继续使用.</p>
+
+<p style="margin:0px;padding:0px;margin-bottom:15px;">此时counter还是3, 线程B将counter加一之后, counter变成4. 线程B完成了自己的任务后就退出了. 这时调度器将CPU又交给线程A使用, 在 <code style="font-size:15px;border:1px solid rgb(232, 232, 232);border-radius:3px;background-color:rgb(238, 238, 255);padding:1px 5px;">counter = tmp</code> 处恢复, tmp 之前的值为4, counter 被赋值为4. 如此一来, 经过了两个线程的计算, counter 只累加了1, 很明显是出错了.</p>
+
+<p style="margin:0px;padding:0px;margin-bottom:15px;">这就是典型的多线程竞争同一个资源(counter)时, 线程不安全出错的例子.</p>
+
+<h2 style="margin:0px;padding:0px;margin-bottom:15px;font-weight:400;margin-top:25px;font-size:32px;">再解释为什么一开始没有错</h2>
+
+<p style="margin:0px;padding:0px;margin-bottom:15px;"><code style="font-size:15px;border:1px solid rgb(232, 232, 232);border-radius:3px;background-color:rgb(238, 238, 255);padding:1px 5px;">demo code 2</code> 比 <code style="font-size:15px;border:1px solid rgb(232, 232, 232);border-radius:3px;background-color:rgb(238, 238, 255);padding:1px 5px;">demo code 1</code> 多了一句 <code style="font-size:15px;border:1px solid rgb(232, 232, 232);border-radius:3px;background-color:rgb(238, 238, 255);padding:1px 5px;">print "*"</code>, 为什么加了这句话就让错误暴露了呢?</p>
+
+<p style="margin:0px;padding:0px;margin-bottom:15px;">这里的原因就要涉及到大名鼎鼎的GIL.</p>
+
+<p style="margin:0px;padding:0px;margin-bottom:15px;">GIL 全称 Global Interpreter Lock, 是MRI的一个 “feature” .</p>
+
+<p style="margin:0px;padding:0px;margin-bottom:15px;">GIL 阻止Ruby代码并行运行, 同一个Ruby进程中, 有且只有一个GIL锁, Ruby代码只有获得这把锁之后才能运行, 也就是说同一个时刻, 只有一个Ruby线程在运行.</p>
+
+<p style="margin:0px;padding:0px;margin-bottom:15px;">需要特别解释的是 GIL 阻止代码并行运行, 而不是并发运行, 单核CPU单进程也可以并发运行多线程的程序(时分复用).</p>
+
+<p style="margin:0px;padding:0px;margin-bottom:15px;">还有一点需要说明” IO阻塞的时候不运行Ruby代码, 也就是说GIL不会阻塞IO. 典型的IO包括网络IO, 磁盘IO, sleep, 各种打印.</p>
+
+<p style="margin:0px;padding:0px;margin-bottom:15px;"><code style="font-size:15px;border:1px solid rgb(232, 232, 232);border-radius:3px;background-color:rgb(238, 238, 255);padding:1px 5px;">print</code> 就是一种IO Block.</p>
+
+<p style="margin:0px;padding:0px;margin-bottom:15px;">GIL 会趁着一个线程IO阻塞的时候赶忙切换另一个线程来使用CPU, 以提高CPU的使用效率; 
+调度器也会在计算密集的时候有意减少线程切换, 以减少线程调度带来的不必要开销.</p>
+
+<p style="margin:0px;padding:0px;margin-bottom:15px;">这就解释了为什么 <code style="font-size:15px;border:1px solid rgb(232, 232, 232);border-radius:3px;background-color:rgb(238, 238, 255);padding:1px 5px;">demo code 1</code> 很少出错, <code style="font-size:15px;border:1px solid rgb(232, 232, 232);border-radius:3px;background-color:rgb(238, 238, 255);padding:1px 5px;">demo code 2</code> 几乎总是出错的原因了:)</p>
+
+<p style="margin:0px;padding:0px;margin-bottom:15px;">小结, 对于 IO-Bound 的程序, 可以多开几个线程来减少IO堵塞的时间浪费, 对于 CPU-Bound 的程序, 多线程只会让调度器白下力做无用功, 因为GIL阻止了并行执行 ~~</p>
+
+<h2 style="margin:0px;padding:0px;margin-bottom:15px;font-weight:400;margin-top:25px;font-size:32px;">解决竞争条件</h2>
+
+<p style="margin:0px;padding:0px;margin-bottom:15px;">对于上面线程不安全的demo, 由资源竞争而起, 那么只要解决了counter的竞争就可以写出线程安全的代码了:</p>
+
+<div><div style="margin-bottom:15px;background:rgb(238, 238, 255);"><pre style="margin:0px;font-size:15px;border:1px solid rgb(232, 232, 232);border-radius:3px;overflow-x:auto;padding:8px 12px;margin-bottom:15px;background:rgb(238, 238, 255);"><code style="font-size:15px;border-radius:3px;background-color:rgb(238, 238, 255);padding:1px 5px;padding-right:0px;padding-left:0px;border:0px;">
+<span>semapore</span> <span style="font-weight:bold;">=</span> <span style="color:teal;">Mutex</span><span>.</span><span style="color:rgb(153, 0, 0);font-weight:bold;">new</span>
+
+<span>counter</span> <span style="font-weight:bold;">=</span> <span style="color:rgb(0, 153, 153);">0</span>
+<span style="color:rgb(0, 153, 153);">10</span><span>.</span><span style="color:rgb(153, 0, 0);font-weight:bold;">times</span><span>.</span><span style="color:rgb(153, 0, 0);font-weight:bold;">map</span> <span style="font-weight:bold;">do</span>
+  <span style="color:teal;">Thread</span><span>.</span><span style="color:rgb(153, 0, 0);font-weight:bold;">new</span> <span style="font-weight:bold;">do</span>
+    <span>semapore</span><span>.</span><span style="color:rgb(153, 0, 0);font-weight:bold;">synchronize</span> <span style="font-weight:bold;">do</span>
+      <span>tmp</span> <span style="font-weight:bold;">=</span> <span>counter</span> <span style="font-weight:bold;">+</span> <span style="color:rgb(0, 153, 153);">1</span>
+      <span style="color:rgb(0, 134, 179);">print</span> <span style="color:rgb(221, 17, 68);">"*"</span>
+      <span>counter</span> <span style="font-weight:bold;">=</span> <span>tmp</span>
+    <span style="font-weight:bold;">end</span>
+  <span style="font-weight:bold;">end</span>
+<span style="font-weight:bold;">end</span><span>.</span><span style="color:rgb(153, 0, 0);font-weight:bold;">each</span><span>(</span><span style="font-weight:bold;">&amp;</span><span style="color:rgb(153, 0, 115);">:join</span><span>)</span>
+<span style="color:rgb(0, 134, 179);">puts</span> <span style="color:rgb(221, 17, 68);">"</span><span style="color:rgb(221, 17, 68);">\n</span><span style="color:rgb(221, 17, 68);">counter:</span><span style="color:rgb(221, 17, 68);">#{</span><span>counter</span><span style="color:rgb(221, 17, 68);">}</span><span style="color:rgb(221, 17, 68);">"</span>
+<span style="color:rgb(153, 153, 136);font-style:italic;">=begin
+**********
+counter:10
+=end</span>
+
+</code></pre></div></div>
+
+  </div>
+
+</div></div></div></div></div></div>
+</div>
+</div>
+<a class="back-link" href="../articles.html">← 返回笔记列表</a>
+</body>
+</html>

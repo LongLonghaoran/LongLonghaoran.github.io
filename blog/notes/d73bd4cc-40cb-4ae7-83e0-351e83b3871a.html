@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="zh-CN" data-theme="light">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>通过iptables实现代理转发 — 技术笔记</title>
+<style>
+:root { --bg:#fff; --text:#1a1a1a; --muted:#666; --border:#e0e0e0; --code-bg:#f5f5f5; --link:#0066cc; }
+@media (prefers-color-scheme: dark) { :root { --bg:#1a1a1a; --text:#e0e0e0; --muted:#999; --border:#333; --code-bg:#2a2a2a; --link:#66bbff; } }
+* { box-sizing:border-box; margin:0; padding:0; }
+body { font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Arial,sans-serif; line-height:1.7; color:var(--text); background:var(--bg); max-width:860px; margin:0 auto; padding:2rem 1.5rem; }
+.note-header { border-bottom:2px solid var(--border); padding-bottom:1rem; margin-bottom:2rem; }
+.note-title { font-size:1.6rem; font-weight:700; margin-bottom:0.3rem; }
+.note-meta { color:var(--muted); font-size:0.85rem; }
+.note-content { font-size:0.95rem; }
+.note-content h1 { font-size:1.4rem; margin:1.2rem 0 0.6rem; }
+.note-content h2 { font-size:1.2rem; margin:1rem 0 0.5rem; }
+.note-content h3 { font-size:1.05rem; margin:0.8rem 0 0.4rem; }
+.note-content p { margin:0.5rem 0; }
+.note-content ul,.note-content ol { margin:0.5rem 0 0.5rem 2rem; }
+.note-content li { margin:0.2rem 0; }
+.note-content pre { background:var(--code-bg); padding:1rem; border-radius:6px; overflow-x:auto; margin:0.8rem 0; font-size:0.85rem; }
+.note-content code { background:var(--code-bg); padding:0.1rem 0.3rem; border-radius:3px; font-size:0.88em; }
+.note-content pre code { background:none; padding:0; }
+.note-content blockquote { border-left:3px solid var(--border); padding-left:1rem; color:var(--muted); margin:0.8rem 0; }
+.note-content a { color:var(--link); }
+.note-content img { max-width:100%; height:auto; border-radius:6px; margin:0.5rem 0; }
+.note-content table { border-collapse:collapse; width:100%; margin:0.8rem 0; }
+.note-content th,.note-content td { border:1px solid var(--border); padding:0.5rem; }
+.note-content th { background:var(--code-bg); }
+.media-placeholder { background:var(--code-bg); padding:1rem; text-align:center; color:var(--muted); border-radius:6px; margin:0.5rem 0; font-size:0.85rem; }
+.encrypt-placeholder { background:#fff3cd; padding:0.5rem; text-align:center; color:#856404; border-radius:6px; margin:0.5rem 0; font-size:0.85rem; }
+.back-link { display:inline-block; margin-top:2rem; color:var(--link); text-decoration:none; font-size:0.85rem; }
+</style>
+</head>
+<body>
+<div class="note-header"><div class="note-title">通过iptables实现代理转发</div><div class="note-meta">笔记本：计算机网络</div></div>
+<div class="note-content"><div>示例：有两台服务器, A和B，服务都运行在B上，A上不运行任何服务，A只通过iptables配置转发，之后只需要访问A的ip地址就可以访问B的服务:</div><div>是的，可以使用iptables来配置代理效果，实现你所描述的情况。这种代理通常被称为透明代理（Transparent Proxy）。</div><div><br /></div><div>透明代理允许一个服务器（服务器A）在不需要客户端（你的计算机）进行任何配置的情况下，将所有客户端的请求转发给另一台服务器（服务器B），并将响应返回给客户端，使客户端对此感知不到。</div><div><br /></div><div>在Linux上配置透明代理，你需要使用iptables和`REDIRECT`目标。以下是实现透明代理的步骤：</div><div><br /></div><div>1. 启用IP转发（如果服务器A是一个路由器）：</div><div>   在`/etc/sysctl.conf`文件中添加以下行并重新加载sysctl配置：`net.ipv4.ip_forward=1`。</div><div><br /></div><div>2. 配置iptables规则：</div><div>   ```bash</div><div>   # 将所有经过服务器A的请求重定向到服务器B的特定端口（例如8080）</div><div>   iptables -t nat -A PREROUTING -p tcp -i eth0 --dport 80 -j DNAT --to-destination serverB_IP:8080</div><div><br /></div><div>   # 在服务器A上为重定向的数据包修改源地址为服务器A的IP地址，以确保响应能正确返回给客户端</div><div>   iptables -t nat -A POSTROUTING -p tcp -o eth0 --dport 8080 -d serverB_IP -j SNAT --to-source serverA_IP</div><div>   ```</div><div>   其中，`serverA_IP`是服务器A的IP地址，`serverB_IP`是服务器B的IP地址。</div><div><br /></div><div>3. 允许服务器A上的IP转发：</div><div>   ```bash</div><div>   iptables -A FORWARD -i eth0 -o eth0 -p tcp --dport 8080 -d serverB_IP -j ACCEPT</div><div>   ```</div><div><br /></div><div>请注意，这只是基本的示例，具体的配置可能会因你的网络架构和需求而有所不同。在配置透明代理之前，请确保你对iptables的工作原理有基本的了解，并对你的规则进行仔细测试和验证。在生产环境中配置透明代理时，最好在一个安全的环境中进行测试和验证，以确保不会造成意外的影响。</div></div>
+<a class="back-link" href="../articles.html">← 返回笔记列表</a>
+</body></html>

@@ -1,0 +1,302 @@
+<!DOCTYPE html>
+<html lang="zh-CN" data-theme="light">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Prometheus-Operator使用ServiceMonitor监控配置时遇坑与解决总结 - YOYOFx - 博客园 — 技术笔记</title>
+<style>
+:root { --bg:#fff; --text:#1a1a1a; --muted:#666; --border:#e0e0e0; --code-bg:#f5f5f5; --link:#0066cc; }
+@media (prefers-color-scheme: dark) { :root { --bg:#1a1a1a; --text:#e0e0e0; --muted:#999; --border:#333; --code-bg:#2a2a2a; --link:#66bbff; } }
+* { box-sizing:border-box; margin:0; padding:0; }
+body { font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Arial,sans-serif; line-height:1.7; color:var(--text); background:var(--bg); max-width:860px; margin:0 auto; padding:2rem 1.5rem; }
+.note-header { border-bottom:2px solid var(--border); padding-bottom:1rem; margin-bottom:2rem; }
+.note-title { font-size:1.6rem; font-weight:700; margin-bottom:0.3rem; }
+.note-meta { color:var(--muted); font-size:0.85rem; }
+.note-content { font-size:0.95rem; }
+.note-content h1 { font-size:1.4rem; margin:1.2rem 0 0.6rem; }
+.note-content h2 { font-size:1.2rem; margin:1rem 0 0.5rem; }
+.note-content h3 { font-size:1.05rem; margin:0.8rem 0 0.4rem; }
+.note-content p { margin:0.5rem 0; }
+.note-content ul,.note-content ol { margin:0.5rem 0 0.5rem 2rem; }
+.note-content li { margin:0.2rem 0; }
+.note-content pre { background:var(--code-bg); padding:1rem; border-radius:6px; overflow-x:auto; margin:0.8rem 0; font-size:0.85rem; }
+.note-content code { background:var(--code-bg); padding:0.1rem 0.3rem; border-radius:3px; font-size:0.88em; }
+.note-content pre code { background:none; padding:0; }
+.note-content blockquote { border-left:3px solid var(--border); padding-left:1rem; color:var(--muted); margin:0.8rem 0; }
+.note-content a { color:var(--link); }
+.note-content img { max-width:100%; height:auto; border-radius:6px; margin:0.5rem 0; }
+.note-content table { border-collapse:collapse; width:100%; margin:0.8rem 0; }
+.note-content th,.note-content td { border:1px solid var(--border); padding:0.5rem; }
+.note-content th { background:var(--code-bg); }
+.media-placeholder { background:var(--code-bg); padding:1rem; text-align:center; color:var(--muted); border-radius:6px; margin:0.5rem 0; font-size:0.85rem; }
+.encrypt-placeholder { background:#fff3cd; padding:0.5rem; text-align:center; color:#856404; border-radius:6px; margin:0.5rem 0; font-size:0.85rem; }
+.back-link { display:inline-block; margin-top:2rem; color:var(--link); text-decoration:none; font-size:0.85rem; }
+</style>
+</head>
+<body>
+<div class="note-header"><div class="note-title">Prometheus-Operator使用ServiceMonitor监控配置时遇坑与解决总结 - YOYOFx - 博客园</div><div class="note-meta">笔记本：prometheus</div></div>
+<div class="note-content"><div style="--en-clipped-content:article">
+<div><br/></div><div style="font-size: 16px; display:block; min-width: 100%; position: relative;"> <div style="--olcb-folder-code-block-max-height:80vh;--cnb-code-bg:rgb(245, 245, 245);--cnb-code-font-size:12px;--cnb-code-color:rgb(68, 68, 68);"><div style="tab-size:4;background:rgb(44, 42, 42);text-size-adjust:none;font-family:Lato, &quot;PingFang SC&quot;, &quot;Microsoft YaHei&quot;, sans-serif;color:rgb(188, 188, 188);font-size:14px;"><div style="min-width:initial;"><div style="text-align:left;animation-name:fadeIn;animation-duration:1s;animation-iteration-count:1;min-width:initial;"><div style="text-overflow:ellipsis;overflow:hidden;word-break:break-all;background-color:transparent;"><div><div><div style="text-overflow:ellipsis;overflow:hidden;word-break:break-all;"><div>
+            <h1 style="margin:0px;padding:0px;clear:both;float:left;line-height:1.5em;width:100%;font-size:20px;font-weight:300;border-bottom:none;padding-left:0px;">
+                
+<a href="https://www.cnblogs.com/maxzhang1985/p/17374615.html" style="margin:0px;padding:0px;text-decoration:none;color:rgb(188, 188, 188);transition:all 0.3s ease 0s;">
+    <span style="margin:0px;padding:0px;vertical-align:middle;">Prometheus-Operator使用ServiceMonitor监控配置时遇坑与解决总结</span>
+    
+
+</a>
+
+            </h1>
+            <div style="margin:0px;padding:0px;clear:both;"></div>
+            <div style="margin:0px;font-weight:300;font-size:16px;line-height:1.75;color:rgb(188, 188, 188);border-bottom:1px solid rgb(51, 62, 54);padding:10px 0px;">
+                <div style="margin:0px;padding:0px;margin-bottom:20px;word-break:break-word;">
+<h2 style="padding:0px;line-height:1.5;font-weight:bold;margin:10px 0px;color:rgb(188, 188, 188);font-size:20px;">摘要<a href="https://www.cnblogs.com/maxzhang1985/p/17374615.html#3353485204" style="margin:0px;padding:0px;opacity:0;margin-left:8px;text-decoration:underline;transition:all 0.3s ease 0s;color:inherit;">#</a></h2>
+<p style="padding:0px;text-indent:0px;margin:13px auto;">本文范围: Prometheus-Operator &amp; kube-prometheus 安装；以及在解决使用ServiceMonitor时遇到的坑。</p>
+<h2 style="padding:0px;line-height:1.5;font-weight:bold;margin:10px 0px;color:rgb(188, 188, 188);font-size:20px;">Prometheus Operator 简介<a href="https://www.cnblogs.com/maxzhang1985/p/17374615.html#706445457" style="margin:0px;padding:0px;opacity:0;margin-left:8px;text-decoration:underline;transition:all 0.3s ease 0s;color:inherit;">#</a></h2>
+<p style="padding:0px;text-indent:0px;margin:13px auto;">随着云原生概念盛行，对于容器、服务、节点以及集群的监控变得越来越重要。Prometheus 作为 Kubernetes 监控的事实标准，有着强大的功能和良好的生态。但是它不支持分布式，不支持数据导入、导出，不支持通过 API 修改监控目标和报警规则，所以在使用它时，通常需要写脚本和代码来简化操作。Prometheus Operator 为监控 Kubernetes service、deployment 和 Prometheus 实例的管理提供了简单的定义，简化在 Kubernetes 上部署、管理和运行 Prometheus 和 Alertmanager 集群。</p>
+<p style="padding:0px;text-indent:0px;margin:13px auto;">Prometheus Operator 功能如下：</p>
+<ul style="margin:0px;padding:0px;word-break:break-all;padding-left:0px;list-style-type:disc;margin-left:30px;">
+<li style="padding:0px;list-style-type:disc;list-style:inherit;font-size:16px;color:rgb(188, 188, 188);margin:3px 0px;">创建/销毁：在 Kubernetes namespace 中更加容易地启动一个 Prometheues 实例，一个特定应用程序或者团队可以更容易使用 Operator。</li>
+<li style="padding:0px;list-style-type:disc;list-style:inherit;font-size:16px;color:rgb(188, 188, 188);margin:3px 0px;">便捷配置：通过 Kubernetes CRD资源配置 Prometheus 的基本信息，比如版本、(分布式)存储、副本集、高可用等。</li>
+<li style="padding:0px;list-style-type:disc;list-style:inherit;font-size:16px;color:rgb(188, 188, 188);margin:3px 0px;">通过标签标记目标服务： 基于常见的 Kubernetes label 查询自动生成监控目标配置；不需要学习 Prometheus 特定的配置语言。</li>
+</ul>
+<p style="padding:0px;text-indent:0px;margin:13px auto;">它使用如下的 Kubernetes CRD 资源对 Prometheus进行配置:</p>
+<ul style="margin:0px;padding:0px;word-break:break-all;padding-left:0px;list-style-type:disc;margin-left:30px;">
+<li style="padding:0px;list-style-type:disc;list-style:inherit;font-size:16px;color:rgb(188, 188, 188);margin:3px 0px;">Prometheus</li>
+<li style="padding:0px;list-style-type:disc;list-style:inherit;font-size:16px;color:rgb(188, 188, 188);margin:3px 0px;">Alertmanager</li>
+<li style="padding:0px;list-style-type:disc;list-style:inherit;font-size:16px;color:rgb(188, 188, 188);margin:3px 0px;">ThanosRuler</li>
+<li style="padding:0px;list-style-type:disc;list-style:inherit;font-size:16px;color:rgb(188, 188, 188);margin:3px 0px;">ServiceMonitor</li>
+<li style="padding:0px;list-style-type:disc;list-style:inherit;font-size:16px;color:rgb(188, 188, 188);margin:3px 0px;">PodMonitor</li>
+<li style="padding:0px;list-style-type:disc;list-style:inherit;font-size:16px;color:rgb(188, 188, 188);margin:3px 0px;">Probe</li>
+<li style="padding:0px;list-style-type:disc;list-style:inherit;font-size:16px;color:rgb(188, 188, 188);margin:3px 0px;">PrometheusRule</li>
+<li style="padding:0px;list-style-type:disc;list-style:inherit;font-size:16px;color:rgb(188, 188, 188);margin:3px 0px;">AlertmanagerConfig</li>
+</ul>
+<h3 style="padding:0px;line-height:1.5;font-weight:bold;margin:10px 0px;color:rgb(188, 188, 188);font-size:19px;">参考文档:<a href="https://www.cnblogs.com/maxzhang1985/p/17374615.html#2212537933" style="margin:0px;padding:0px;opacity:0;margin-left:8px;text-decoration:underline;transition:all 0.3s ease 0s;color:inherit;">#</a></h3>
+<ul style="margin:0px;padding:0px;word-break:break-all;padding-left:0px;list-style-type:disc;margin-left:30px;">
+<li style="padding:0px;list-style-type:disc;list-style:inherit;font-size:16px;color:rgb(188, 188, 188);margin:3px 0px;"><a href="https://github.com/prometheus-operator/kube-prometheus" target="_blank" rel="noopener" style="margin:0px;padding:0px;color:rgb(26, 188, 156);text-decoration:none;transition:all 0.3s ease 0s;">https://github.com/prometheus-operator/kube-prometheus</a></li>
+<li style="padding:0px;list-style-type:disc;list-style:inherit;font-size:16px;color:rgb(188, 188, 188);margin:3px 0px;"><a href="https://prometheus-operator.dev/docs/operator/design/" target="_blank" rel="noopener" style="margin:0px;padding:0px;color:rgb(26, 188, 156);text-decoration:none;transition:all 0.3s ease 0s;">https://prometheus-operator.dev/docs/operator/design/</a></li>
+</ul>
+<h3 style="padding:0px;line-height:1.5;font-weight:bold;margin:10px 0px;color:rgb(188, 188, 188);font-size:19px;">kube-prometheus 包含的软件包:<a href="https://www.cnblogs.com/maxzhang1985/p/17374615.html#226216217" style="margin:0px;padding:0px;opacity:0;margin-left:8px;text-decoration:underline;transition:all 0.3s ease 0s;color:inherit;">#</a></h3>
+<ul style="margin:0px;padding:0px;word-break:break-all;padding-left:0px;list-style-type:disc;margin-left:30px;">
+<li style="padding:0px;list-style-type:disc;list-style:inherit;font-size:16px;color:rgb(188, 188, 188);margin:3px 0px;">The Prometheus Operator</li>
+<li style="padding:0px;list-style-type:disc;list-style:inherit;font-size:16px;color:rgb(188, 188, 188);margin:3px 0px;">Highly available Prometheus</li>
+<li style="padding:0px;list-style-type:disc;list-style:inherit;font-size:16px;color:rgb(188, 188, 188);margin:3px 0px;">Highly available Alertmanager</li>
+<li style="padding:0px;list-style-type:disc;list-style:inherit;font-size:16px;color:rgb(188, 188, 188);margin:3px 0px;">Prometheus node-exporter</li>
+<li style="padding:0px;list-style-type:disc;list-style:inherit;font-size:16px;color:rgb(188, 188, 188);margin:3px 0px;">Prometheus Adapter for Kubernetes Metrics APIs</li>
+<li style="padding:0px;list-style-type:disc;list-style:inherit;font-size:16px;color:rgb(188, 188, 188);margin:3px 0px;">kube-state-metrics</li>
+<li style="padding:0px;list-style-type:disc;list-style:inherit;font-size:16px;color:rgb(188, 188, 188);margin:3px 0px;">Grafana</li>
+</ul>
+<h3 style="padding:0px;line-height:1.5;font-weight:bold;margin:10px 0px;color:rgb(188, 188, 188);font-size:19px;">Prometheus Operator 兼容性<a href="https://www.cnblogs.com/maxzhang1985/p/17374615.html#3842760903" style="margin:0px;padding:0px;opacity:0;margin-left:8px;text-decoration:underline;transition:all 0.3s ease 0s;color:inherit;">#</a></h3>
+<ul style="margin:0px;padding:0px;word-break:break-all;padding-left:0px;list-style-type:disc;margin-left:30px;">
+<li style="padding:0px;list-style-type:disc;list-style:inherit;font-size:16px;color:rgb(188, 188, 188);margin:3px 0px;">Kubernetes 1.16+ ,如需更低版本的 Kubernetes 兼容性，请参考官方文档对应的版本分支。</li>
+</ul>
+<p style="padding:0px;text-indent:0px;margin:13px auto;">以下代码分支对应的 Kubernetes 版本如下：</p>
+<ul style="margin:0px;padding:0px;word-break:break-all;padding-left:0px;list-style-type:disc;margin-left:30px;">
+<li style="padding:0px;list-style-type:disc;list-style:inherit;font-size:16px;color:rgb(188, 188, 188);margin:3px 0px;">release-0.9	1.21，1.22</li>
+<li style="padding:0px;list-style-type:disc;list-style:inherit;font-size:16px;color:rgb(188, 188, 188);margin:3px 0px;">release-0.10  1.22，1.23</li>
+<li style="padding:0px;list-style-type:disc;list-style:inherit;font-size:16px;color:rgb(188, 188, 188);margin:3px 0px;">release-0.11  1.23，1.24</li>
+<li style="padding:0px;list-style-type:disc;list-style:inherit;font-size:16px;color:rgb(188, 188, 188);margin:3px 0px;">release-0.12  1.24，1.25</li>
+</ul>
+<h3 style="padding:0px;line-height:1.5;font-weight:bold;margin:10px 0px;color:rgb(188, 188, 188);font-size:19px;">文章中已验证的版本(PaaS 安装版本)<a href="https://www.cnblogs.com/maxzhang1985/p/17374615.html#2258398279" style="margin:0px;padding:0px;margin-left:8px;text-decoration:underline;transition:all 0.3s ease 0s;color:inherit;opacity:0;">#</a></h3>
+<ul style="margin:0px;padding:0px;word-break:break-all;padding-left:0px;list-style-type:disc;margin-left:30px;">
+<li style="padding:0px;list-style-type:disc;list-style:inherit;font-size:16px;color:rgb(188, 188, 188);margin:3px 0px;">本地集群(kind 1.25) release-0.12</li>
+<li style="padding:0px;list-style-type:disc;list-style:inherit;font-size:16px;color:rgb(188, 188, 188);margin:3px 0px;">腾讯云集群(TKE 1.20) release-0.9</li>
+</ul>
+<h3 style="padding:0px;line-height:1.5;font-weight:bold;margin:10px 0px;color:rgb(188, 188, 188);font-size:19px;">kube-prometheus 安装卸载<a href="https://www.cnblogs.com/maxzhang1985/p/17374615.html#2136345253" style="margin:0px;padding:0px;opacity:0;margin-left:8px;text-decoration:underline;transition:all 0.3s ease 0s;color:inherit;">#</a></h3>
+<h4 style="padding:0px;font-weight:bold;margin:10px 0px;color:rgb(188, 188, 188);font-size:18px;">安装<a href="https://www.cnblogs.com/maxzhang1985/p/17374615.html#820312930" style="margin:0px;padding:0px;opacity:0;margin-left:8px;text-decoration:underline;transition:all 0.3s ease 0s;color:inherit;">#</a></h4>
+<pre style="border-radius:4px;background-color: #fbfaf8;border: 1px solid rgba(0,0,0,.14902);color: #333;font-size: 12px;padding: 8px;font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif;box-sizing: border-box;"><div style="margin:0px;font-size:12px;cursor:pointer;position:absolute;right:13px;top:10px;box-shadow:rgba(0, 0, 0, 0.1) 0px 0px 15px 0px;color:rgb(188, 188, 188);border-radius:5px;padding:0px 6px;overflow:hidden;"><span style="font-size:12px;cursor:pointer;color:rgb(255, 255, 255);position:absolute;transition:all 0.3s ease 0s;transform:translate3d(-50%, 0px, 0px);opacity:0;left:50%;z-index:10;border-radius:6px;background-color:rgba(100, 100, 100, 0.8);height:24px;line-height:24px;padding:0px 6px;white-space:nowrap;top:-24px;">复制代码</span>Copy<span style="font-size:12px;cursor:pointer;color:rgb(188, 188, 188);position:absolute;transition:all 0.3s ease 0s;transform:translate3d(-50%, 0px, 0px);opacity:0;left:50%;z-index:10;border-width:5px;border-style:solid;border-image:initial;border-color:rgba(100, 100, 100, 0.8) transparent transparent;top:0px;"></span></div><code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif">git <span style="margin:0px;padding:0px;color:rgb(230, 192, 123);">clone</span> https://github.com/prometheus-operator/kube-prometheus.git
+git checkout release-0.12
+
+<span style="margin:0px;padding:0px;color:rgb(230, 192, 123);">cd</span> kube-prometheus
+
+kubectl apply --server-side -f manifests/setup
+
+kubectl <span style="margin:0px;padding:0px;color:rgb(230, 192, 123);">wait</span> \
+	--<span style="margin:0px;padding:0px;color:rgb(198, 120, 221);">for</span> condition=Established \
+	--all CustomResourceDefinition \
+	--namespace=monitoring
+	
+kubectl apply -f manifests/
+
+</code></pre>
+<h4 style="padding:0px;font-weight:bold;margin:10px 0px;color:rgb(188, 188, 188);font-size:18px;">卸载<a href="https://www.cnblogs.com/maxzhang1985/p/17374615.html#1187594977" style="margin:0px;padding:0px;opacity:0;margin-left:8px;text-decoration:underline;transition:all 0.3s ease 0s;color:inherit;">#</a></h4>
+<pre style="border-radius:4px;background-color: #fbfaf8;border: 1px solid rgba(0,0,0,.14902);color: #333;font-size: 12px;padding: 8px;font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif;box-sizing: border-box;"><div style="margin:0px;font-size:12px;cursor:pointer;position:absolute;right:13px;top:10px;box-shadow:rgba(0, 0, 0, 0.1) 0px 0px 15px 0px;color:rgb(188, 188, 188);border-radius:5px;padding:0px 6px;overflow:hidden;"><span style="font-size:12px;cursor:pointer;color:rgb(255, 255, 255);position:absolute;transition:all 0.3s ease 0s;transform:translate3d(-50%, 0px, 0px);opacity:0;left:50%;z-index:10;border-radius:6px;background-color:rgba(100, 100, 100, 0.8);height:24px;line-height:24px;padding:0px 6px;white-space:nowrap;top:-24px;">复制代码</span>Copy<span style="font-size:12px;cursor:pointer;color:rgb(188, 188, 188);position:absolute;transition:all 0.3s ease 0s;transform:translate3d(-50%, 0px, 0px);opacity:0;left:50%;z-index:10;border-width:5px;border-style:solid;border-image:initial;border-color:rgba(100, 100, 100, 0.8) transparent transparent;top:0px;"></span></div><code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif">kubectl delete --ignore-not-found=<span style="margin:0px;padding:0px;color:rgb(86, 182, 194);">true</span> -f manifests/ -f manifests/setup
+</code></pre>
+<h4 style="padding:0px;font-weight:bold;margin:10px 0px;color:rgb(188, 188, 188);font-size:18px;">helm安装<a href="https://www.cnblogs.com/maxzhang1985/p/17374615.html#2888568463" style="margin:0px;padding:0px;opacity:0;margin-left:8px;text-decoration:underline;transition:all 0.3s ease 0s;color:inherit;">#</a></h4>
+<pre style="border-radius:4px;background-color: #fbfaf8;border: 1px solid rgba(0,0,0,.14902);color: #333;font-size: 12px;padding: 8px;font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif;box-sizing: border-box;"><div style="margin:0px;font-size:12px;cursor:pointer;position:absolute;right:13px;top:10px;box-shadow:rgba(0, 0, 0, 0.1) 0px 0px 15px 0px;color:rgb(188, 188, 188);border-radius:5px;padding:0px 6px;overflow:hidden;"><span style="font-size:12px;cursor:pointer;color:rgb(255, 255, 255);position:absolute;transition:all 0.3s ease 0s;transform:translate3d(-50%, 0px, 0px);opacity:0;left:50%;z-index:10;border-radius:6px;background-color:rgba(100, 100, 100, 0.8);height:24px;line-height:24px;padding:0px 6px;white-space:nowrap;top:-24px;">复制代码</span>Copy<span style="font-size:12px;cursor:pointer;color:rgb(188, 188, 188);position:absolute;transition:all 0.3s ease 0s;transform:translate3d(-50%, 0px, 0px);opacity:0;left:50%;z-index:10;border-width:5px;border-style:solid;border-image:initial;border-color:rgba(100, 100, 100, 0.8) transparent transparent;top:0px;"></span></div><code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif">helm repo add prometheus-community https://prometheus-community.github.io/helm-charts
+helm repo update
+helm install prometheus-community/kube-prometheus-stack --namespace monitoring --generate-name
+</code></pre>
+<p style="padding:0px;text-indent:0px;margin:13px auto;">无论哪种安装方式，遇到镜像拉取失败的情况，可以使用如下命令手动拉取镜像并推送到自己的仓库，本文中推送到自己的docker hub仓库中，替换yaml中的image地址，然后再次执行安装命令。</p>
+<h2 style="padding:0px;line-height:1.5;font-weight:bold;margin:10px 0px;color:rgb(188, 188, 188);font-size:20px;">ServiceMonitor<a href="https://www.cnblogs.com/maxzhang1985/p/17374615.html#2132640906" style="margin:0px;padding:0px;opacity:0;margin-left:8px;text-decoration:underline;transition:all 0.3s ease 0s;color:inherit;">#</a></h2>
+<p style="padding:0px;text-indent:0px;margin:13px auto;">ServiceMonitor 自定义资源(CRD)能够声明如何监控一组动态服务的定义。它使用标签选择定义一组需要被监控的服务。这样就允许组织引入如何暴露 metrics 的规定，只要符合这些规定新服务就会被发现列入监控，而不需要重新配置系统。<br style="margin:0px;padding:0px;"/>
+一个 Service 可以公开一个或多个服务端口，通常情况下，这些端口由指向一个 Pod 的多个 Endpoints 支持。这也反映在各自的 Endpoints 对象中。<br style="margin:0px;padding:0px;"/>
+ServiceMonitorSpec 的 endpoints 部分用于配置需要收集 metrics 的 Endpoints 的端口和其他参数。在一些用例中会直接监控不在服务 endpoints 中的 pods 的端口。</p>
+<h3 style="padding:0px;line-height:1.5;font-weight:bold;margin:10px 0px;color:rgb(188, 188, 188);font-size:19px;">例子<a href="https://www.cnblogs.com/maxzhang1985/p/17374615.html#1301096060" style="margin:0px;padding:0px;opacity:0;margin-left:8px;text-decoration:underline;transition:all 0.3s ease 0s;color:inherit;">#</a></h3>
+<p style="padding:0px;text-indent:0px;margin:13px auto;">之前写过一篇 <a href="https://www.cnblogs.com/maxzhang1985/p/13474441.html" target="_blank" rel="noopener" style="margin:0px;padding:0px;color:rgb(26, 188, 156);text-decoration:none;transition:all 0.3s ease 0s;">《YoyoGo微服务框架入门系列-使用Prometheus监控Golang服务》</a> 文章中的暴露的指标服务与本例中为同一个。<br style="margin:0px;padding:0px;"/>
+有如下 Service 指向 labels: k8s-app=dev-yoyogodemo-kind-kind 的 部署(Deployment)：</p>
+<pre style="border-radius:4px;background-color: #fbfaf8;border: 1px solid rgba(0,0,0,.14902);color: #333;font-size: 12px;padding: 8px;font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif;box-sizing: border-box;"><div style="margin:0px;font-size:12px;cursor:pointer;position:absolute;right:13px;top:10px;box-shadow:rgba(0, 0, 0, 0.1) 0px 0px 15px 0px;color:rgb(188, 188, 188);border-radius:5px;padding:0px 6px;overflow:hidden;"><span style="font-size:12px;cursor:pointer;color:rgb(255, 255, 255);position:absolute;transition:all 0.3s ease 0s;transform:translate3d(-50%, 0px, 0px);opacity:0;left:50%;z-index:10;border-radius:6px;background-color:rgba(100, 100, 100, 0.8);height:24px;line-height:24px;padding:0px 6px;white-space:nowrap;top:-24px;">复制代码</span>Copy<span style="font-size:12px;cursor:pointer;color:rgb(188, 188, 188);position:absolute;transition:all 0.3s ease 0s;transform:translate3d(-50%, 0px, 0px);opacity:0;left:50%;z-index:10;border-width:5px;border-style:solid;border-image:initial;border-color:rgba(100, 100, 100, 0.8) transparent transparent;top:0px;"></span></div><code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span style="margin:0px;padding:0px;color:rgb(209, 154, 102);">apiVersion:</span> <span style="margin:0px;padding:0px;color:rgb(152, 195, 121);">v1</span>
+<span style="margin:0px;padding:0px;color:rgb(209, 154, 102);">kind:</span> <span style="margin:0px;padding:0px;color:rgb(152, 195, 121);">Service</span>
+<span style="margin:0px;padding:0px;color:rgb(209, 154, 102);">metadata:</span>
+  <span style="margin:0px;padding:0px;color:rgb(209, 154, 102);">name:</span> <span style="margin:0px;padding:0px;color:rgb(152, 195, 121);">dev-yoyogodemo-kind-kind-svc-cluster-sgr</span>
+  <span style="margin:0px;padding:0px;color:rgb(209, 154, 102);">namespace:</span> <span style="margin:0px;padding:0px;color:rgb(152, 195, 121);">klns-administration</span>
+  <span style="margin:0px;padding:0px;color:rgb(209, 154, 102);">labels:</span>
+    <span style="margin:0px;padding:0px;color:rgb(209, 154, 102);">k8s-app:</span> <span style="margin:0px;padding:0px;color:rgb(152, 195, 121);">dev-yoyogodemo-kind-kind</span>
+<span style="margin:0px;padding:0px;color:rgb(209, 154, 102);">spec:</span>
+  <span style="margin:0px;padding:0px;color:rgb(209, 154, 102);">ports:</span>
+    <span style="margin:0px;padding:0px;color:rgb(97, 174, 238);">-</span> <span style="margin:0px;padding:0px;color:rgb(209, 154, 102);">name:</span> <span style="margin:0px;padding:0px;color:rgb(152, 195, 121);">default-tcp</span>
+      <span style="margin:0px;padding:0px;color:rgb(209, 154, 102);">protocol:</span> <span style="margin:0px;padding:0px;color:rgb(152, 195, 121);">TCP</span>
+      <span style="margin:0px;padding:0px;color:rgb(209, 154, 102);">port:</span> <span style="margin:0px;padding:0px;color:rgb(209, 154, 102);">8080</span>
+      <span style="margin:0px;padding:0px;color:rgb(209, 154, 102);">targetPort:</span> <span style="margin:0px;padding:0px;color:rgb(209, 154, 102);">8080</span>
+  <span style="margin:0px;padding:0px;color:rgb(209, 154, 102);">selector:</span>
+    <span style="margin:0px;padding:0px;color:rgb(209, 154, 102);">k8s-app:</span> <span style="margin:0px;padding:0px;color:rgb(152, 195, 121);">dev-yoyogodemo-kind-kind</span>
+
+  <span style="margin:0px;padding:0px;color:rgb(209, 154, 102);">type:</span> <span style="margin:0px;padding:0px;color:rgb(152, 195, 121);">ClusterIP</span>
+  <span style="margin:0px;padding:0px;color:rgb(209, 154, 102);">sessionAffinity:</span> <span style="margin:0px;padding:0px;color:rgb(152, 195, 121);">None</span>
+</code></pre>
+<p style="padding:0px;text-indent:0px;margin:13px auto;">为其创建 ServiceMonitor 资源定义如下：</p>
+<pre style="border-radius:4px;background-color: #fbfaf8;border: 1px solid rgba(0,0,0,.14902);color: #333;font-size: 12px;padding: 8px;font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif;box-sizing: border-box;"><div style="margin:0px;font-size:12px;cursor:pointer;position:absolute;right:13px;top:10px;box-shadow:rgba(0, 0, 0, 0.1) 0px 0px 15px 0px;color:rgb(188, 188, 188);border-radius:5px;padding:0px 6px;overflow:hidden;"><span style="font-size:12px;cursor:pointer;color:rgb(255, 255, 255);position:absolute;transition:all 0.3s ease 0s;transform:translate3d(-50%, 0px, 0px);opacity:0;left:50%;z-index:10;border-radius:6px;background-color:rgba(100, 100, 100, 0.8);height:24px;line-height:24px;padding:0px 6px;white-space:nowrap;top:-24px;">复制代码</span>Copy<span style="font-size:12px;cursor:pointer;color:rgb(188, 188, 188);position:absolute;transition:all 0.3s ease 0s;transform:translate3d(-50%, 0px, 0px);opacity:0;left:50%;z-index:10;border-width:5px;border-style:solid;border-image:initial;border-color:rgba(100, 100, 100, 0.8) transparent transparent;top:0px;"></span></div><code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span style="margin:0px;padding:0px;color:rgb(209, 154, 102);">apiVersion:</span> <span style="margin:0px;padding:0px;color:rgb(152, 195, 121);">monitoring.coreos.com/v1</span>
+<span style="margin:0px;padding:0px;color:rgb(209, 154, 102);">kind:</span> <span style="margin:0px;padding:0px;color:rgb(152, 195, 121);">ServiceMonitor</span>
+<span style="margin:0px;padding:0px;color:rgb(209, 154, 102);">metadata:</span>
+  <span style="margin:0px;padding:0px;color:rgb(209, 154, 102);">name:</span> <span style="margin:0px;padding:0px;color:rgb(152, 195, 121);">dev-yoyogodemo-kind-kind-servicemontor</span>
+  <span style="margin:0px;padding:0px;color:rgb(209, 154, 102);">namespace:</span> <span style="margin:0px;padding:0px;color:rgb(152, 195, 121);">klns-administration</span>
+  <span style="margin:0px;padding:0px;color:rgb(209, 154, 102);">labels:</span>
+    <span style="margin:0px;padding:0px;color:rgb(209, 154, 102);">k8s-app:</span> <span style="margin:0px;padding:0px;color:rgb(152, 195, 121);">dev-yoyogodemo-kind-kind</span>
+<span style="margin:0px;padding:0px;color:rgb(209, 154, 102);">spec:</span>
+  <span style="margin:0px;padding:0px;color:rgb(209, 154, 102);">endpoints:</span>
+    <span style="margin:0px;padding:0px;color:rgb(97, 174, 238);">-</span> <span style="margin:0px;padding:0px;color:rgb(209, 154, 102);">interval:</span> <span style="margin:0px;padding:0px;color:rgb(152, 195, 121);">15s</span>
+      <span style="margin:0px;padding:0px;color:rgb(209, 154, 102);">path:</span> <span style="margin:0px;padding:0px;color:rgb(152, 195, 121);">/app/actuator/metrics</span>
+      <span style="margin:0px;padding:0px;color:rgb(209, 154, 102);">port:</span> <span style="margin:0px;padding:0px;color:rgb(152, 195, 121);">default-tcp</span>
+  <span style="margin:0px;padding:0px;color:rgb(209, 154, 102);">namespaceSelector:</span>
+    <span style="margin:0px;padding:0px;color:rgb(209, 154, 102);">matchNames:</span>
+    <span style="margin:0px;padding:0px;color:rgb(97, 174, 238);">-</span> <span style="margin:0px;padding:0px;color:rgb(152, 195, 121);">klns-administration</span>
+  <span style="margin:0px;padding:0px;color:rgb(209, 154, 102);">selector:</span>
+    <span style="margin:0px;padding:0px;color:rgb(209, 154, 102);">matchLabels:</span>
+      <span style="margin:0px;padding:0px;color:rgb(209, 154, 102);">k8s-app:</span> <span style="margin:0px;padding:0px;color:rgb(152, 195, 121);">dev-yoyogodemo-kind-kind</span>
+</code></pre>
+<h3 style="padding:0px;line-height:1.5;font-weight:bold;margin:10px 0px;color:rgb(188, 188, 188);font-size:19px;">采坑<a href="https://www.cnblogs.com/maxzhang1985/p/17374615.html#1524526825" style="margin:0px;padding:0px;margin-left:8px;text-decoration:underline;transition:all 0.3s ease 0s;color:inherit;opacity:0;">#</a></h3>
+<p style="padding:0px;text-indent:0px;margin:13px auto;">在默认配置中，此 ServiceMonitor 会因为 Kubenertes RBAC 集群权限问题，导致 ServiceMonitor不生效，表现为在Prometheus 的 targets 中看不到该 ServiceMonitor 的 targets。<br style="margin:0px;padding:0px;"/>
+查看StatefulSet工作负载 prometheus-k8s 的状态，查看日志，看到如下报错:</p>
+<pre style="border-radius:4px;background-color: #fbfaf8;border: 1px solid rgba(0,0,0,.14902);color: #333;font-size: 12px;padding: 8px;font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif;box-sizing: border-box;"><div style="margin:0px;font-size:12px;cursor:pointer;position:absolute;right:13px;top:10px;box-shadow:rgba(0, 0, 0, 0.1) 0px 0px 15px 0px;color:rgb(188, 188, 188);border-radius:5px;padding:0px 6px;overflow:hidden;"><span style="font-size:12px;cursor:pointer;color:rgb(255, 255, 255);position:absolute;transition:all 0.3s ease 0s;transform:translate3d(-50%, 0px, 0px);opacity:0;left:50%;z-index:10;border-radius:6px;background-color:rgba(100, 100, 100, 0.8);height:24px;line-height:24px;padding:0px 6px;white-space:nowrap;top:-24px;">复制代码</span>Copy<span style="font-size:12px;cursor:pointer;color:rgb(188, 188, 188);position:absolute;transition:all 0.3s ease 0s;transform:translate3d(-50%, 0px, 0px);opacity:0;left:50%;z-index:10;border-width:5px;border-style:solid;border-image:initial;border-color:rgba(100, 100, 100, 0.8) transparent transparent;top:0px;"></span></div><code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif">services is forbidden: User <span style="margin:0px;padding:0px;color:rgb(152, 195, 121);">"system:serviceaccount:monitoring:prometheus-k8s"</span> cannot list services <span style="margin:0px;padding:0px;color:rgb(198, 120, 221);">in</span> the namespace monitoring
+</code></pre>
+<p style="padding:0px;text-indent:0px;margin:13px auto;">这是因为默认只配置了get权限 。解决办法是修改如下的 ClusterRole,编辑 <strong style="padding:0px;font-weight:500;margin:0px 3px;">prometheus-k8s</strong> 角色，<strong style="padding:0px;font-weight:500;margin:0px 3px;">kubectl apply</strong> 如下内容:</p>
+<pre style="border-radius:4px;background-color: #fbfaf8;border: 1px solid rgba(0,0,0,.14902);color: #333;font-size: 12px;padding: 8px;font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif;box-sizing: border-box;"><div style="margin:0px;font-size:12px;cursor:pointer;position:absolute;right:13px;top:10px;box-shadow:rgba(0, 0, 0, 0.1) 0px 0px 15px 0px;color:rgb(188, 188, 188);border-radius:5px;padding:0px 6px;overflow:hidden;"><span style="font-size:12px;cursor:pointer;color:rgb(255, 255, 255);position:absolute;transition:all 0.3s ease 0s;transform:translate3d(-50%, 0px, 0px);opacity:0;left:50%;z-index:10;border-radius:6px;background-color:rgba(100, 100, 100, 0.8);height:24px;line-height:24px;padding:0px 6px;white-space:nowrap;top:-24px;">复制代码</span>Copy<span style="font-size:12px;cursor:pointer;color:rgb(188, 188, 188);position:absolute;transition:all 0.3s ease 0s;transform:translate3d(-50%, 0px, 0px);opacity:0;left:50%;z-index:10;border-width:5px;border-style:solid;border-image:initial;border-color:rgba(100, 100, 100, 0.8) transparent transparent;top:0px;"></span></div><code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span style="margin:0px;padding:0px;color:rgb(209, 154, 102);">apiVersion:</span> <span style="margin:0px;padding:0px;color:rgb(152, 195, 121);">rbac.authorization.k8s.io/v1</span>
+<span style="margin:0px;padding:0px;color:rgb(209, 154, 102);">kind:</span> <span style="margin:0px;padding:0px;color:rgb(152, 195, 121);">ClusterRole</span>
+<span style="margin:0px;padding:0px;color:rgb(209, 154, 102);">metadata:</span>
+  <span style="margin:0px;padding:0px;color:rgb(209, 154, 102);">labels:</span>
+    <span style="margin:0px;padding:0px;color:rgb(209, 154, 102);">app.kubernetes.io/component:</span> <span style="margin:0px;padding:0px;color:rgb(152, 195, 121);">prometheus</span>
+    <span style="margin:0px;padding:0px;color:rgb(209, 154, 102);">app.kubernetes.io/name:</span> <span style="margin:0px;padding:0px;color:rgb(152, 195, 121);">prometheus</span>
+    <span style="margin:0px;padding:0px;color:rgb(209, 154, 102);">app.kubernetes.io/part-of:</span> <span style="margin:0px;padding:0px;color:rgb(152, 195, 121);">kube-prometheus</span>
+    <span style="margin:0px;padding:0px;color:rgb(209, 154, 102);">app.kubernetes.io/version:</span> <span style="margin:0px;padding:0px;color:rgb(209, 154, 102);">2.29</span><span style="margin:0px;padding:0px;color:rgb(209, 154, 102);">.1</span>
+  <span style="margin:0px;padding:0px;color:rgb(209, 154, 102);">name:</span> <span style="margin:0px;padding:0px;color:rgb(152, 195, 121);">prometheus-k8s</span>
+<span style="margin:0px;padding:0px;color:rgb(209, 154, 102);">rules:</span>
+<span style="margin:0px;padding:0px;color:rgb(97, 174, 238);">-</span> <span style="margin:0px;padding:0px;color:rgb(209, 154, 102);">apiGroups:</span>
+  <span style="margin:0px;padding:0px;color:rgb(97, 174, 238);">-</span> <span style="margin:0px;padding:0px;color:rgb(152, 195, 121);">""</span>
+  <span style="margin:0px;padding:0px;color:rgb(209, 154, 102);">resources:</span>
+  <span style="margin:0px;padding:0px;color:rgb(97, 174, 238);">-</span> <span style="margin:0px;padding:0px;color:rgb(152, 195, 121);">nodes/metrics</span>
+  <span style="margin:0px;padding:0px;color:rgb(97, 174, 238);">-</span> <span style="margin:0px;padding:0px;color:rgb(152, 195, 121);">services</span>
+  <span style="margin:0px;padding:0px;color:rgb(97, 174, 238);">-</span> <span style="margin:0px;padding:0px;color:rgb(152, 195, 121);">endpoints</span>
+  <span style="margin:0px;padding:0px;color:rgb(97, 174, 238);">-</span> <span style="margin:0px;padding:0px;color:rgb(152, 195, 121);">pods</span>
+  <span style="margin:0px;padding:0px;color:rgb(209, 154, 102);">verbs:</span>
+  <span style="margin:0px;padding:0px;color:rgb(97, 174, 238);">-</span> <span style="margin:0px;padding:0px;color:rgb(152, 195, 121);">get</span>
+  <span style="margin:0px;padding:0px;color:rgb(97, 174, 238);">-</span> <span style="margin:0px;padding:0px;color:rgb(152, 195, 121);">list</span>
+  <span style="margin:0px;padding:0px;color:rgb(97, 174, 238);">-</span> <span style="margin:0px;padding:0px;color:rgb(152, 195, 121);">watch</span>
+<span style="margin:0px;padding:0px;color:rgb(97, 174, 238);">-</span> <span style="margin:0px;padding:0px;color:rgb(209, 154, 102);">nonResourceURLs:</span>
+  <span style="margin:0px;padding:0px;color:rgb(97, 174, 238);">-</span> <span style="margin:0px;padding:0px;color:rgb(152, 195, 121);">/metrics</span>
+  <span style="margin:0px;padding:0px;color:rgb(209, 154, 102);">verbs:</span>
+  <span style="margin:0px;padding:0px;color:rgb(97, 174, 238);">-</span> <span style="margin:0px;padding:0px;color:rgb(152, 195, 121);">get</span>
+
+</code></pre>
+<p style="padding:0px;text-indent:0px;margin:13px auto;">修改后重启 StatefulSet: <strong style="padding:0px;font-weight:500;margin:0px 3px;">prometheus-k8s</strong>; ServiceMonitor就会找到对应 Service 资源的 labels 选择器的Endpoint资源, 并且会被 Prometheus Operator 自动配置为 Prometheus 的 targets。<br style="margin:0px;padding:0px;"/>
+<a href="https://img2023.cnblogs.com/blog/176287/202305/176287-20230505162855993-213549645.png" style="margin:0px;padding:0px;color:rgb(26, 188, 156);text-decoration:none;transition:all 0.3s ease 0s;"><img src="https://img2023.cnblogs.com/blog/176287/202305/176287-20230505162855993-213549645.png" width="960" height="354" style="padding:0px;border:0px;cursor:zoom-in;height:auto;display:block;border-radius:3px;box-shadow:rgba(27, 31, 35, 0.15) 0px 1px 15px, rgba(106, 115, 125, 0.35) 0px 0px 1px;margin:15px 0px 30px;transition:transform 300ms cubic-bezier(0.2, 0, 0.2, 1) 0s;max-width:960px;"/></a></p>
+<p style="padding:0px;text-indent:0px;margin:13px auto;">当然ServiceMonitor不生效的原因还有很多，比如ServiceMonitor的namespaceSelector和selector不匹配，或者ServiceMonitor的namespaceSelector和Service的namespace不匹配等等。</p>
+<h3 style="padding:0px;line-height:1.5;font-weight:bold;margin:10px 0px;color:rgb(188, 188, 188);font-size:19px;">为什么配置的ServiceMonitor或PodMonitor未生效？<a href="https://www.cnblogs.com/maxzhang1985/p/17374615.html#3432025874" style="margin:0px;padding:0px;margin-left:8px;text-decoration:underline;transition:all 0.3s ease 0s;color:inherit;opacity:0;">#</a></h3>
+<h4 style="padding:0px;font-weight:bold;margin:10px 0px;color:rgb(188, 188, 188);font-size:18px;">排查步骤:<a href="https://www.cnblogs.com/maxzhang1985/p/17374615.html#3046527909" style="margin:0px;padding:0px;margin-left:8px;text-decoration:underline;transition:all 0.3s ease 0s;color:inherit;opacity:0;">#</a></h4>
+<ul style="margin:0px;padding:0px;word-break:break-all;padding-left:0px;list-style-type:disc;margin-left:30px;">
+<li style="padding:0px;list-style-type:disc;list-style:inherit;font-size:16px;color:rgb(188, 188, 188);margin:3px 0px;">确认Target是否已经被发现,找到目标Prometheus实例，然后在左侧导航栏单击服务发现，然后单击Targets页签，检查相应的Target是否已经被发现。</li>
+<li style="padding:0px;list-style-type:disc;list-style:inherit;font-size:16px;color:rgb(188, 188, 188);margin:3px 0px;">查看集群CRD中是否存在相应的ServiceMonitor资源。</li>
+<li style="padding:0px;list-style-type:disc;list-style:inherit;font-size:16px;color:rgb(188, 188, 188);margin:3px 0px;">确认Label Selector是否能选择到期望的Pod或者Service<pre style="border-radius:4px;background-color: #fbfaf8;border: 1px solid rgba(0,0,0,.14902);color: #333;font-size: 12px;padding: 8px;font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif;box-sizing: border-box;"><div style="margin:0px;font-size:12px;cursor:pointer;position:absolute;right:13px;top:10px;box-shadow:rgba(0, 0, 0, 0.1) 0px 0px 15px 0px;color:rgb(188, 188, 188);border-radius:5px;padding:0px 6px;overflow:hidden;"><span style="font-size:12px;cursor:pointer;color:rgb(255, 255, 255);position:absolute;transition:all 0.3s ease 0s;transform:translate3d(-50%, 0px, 0px);opacity:0;left:50%;z-index:10;border-radius:6px;background-color:rgba(100, 100, 100, 0.8);height:24px;line-height:24px;padding:0px 6px;white-space:nowrap;top:-24px;">复制代码</span>Copy<span style="font-size:12px;cursor:pointer;color:rgb(188, 188, 188);position:absolute;transition:all 0.3s ease 0s;transform:translate3d(-50%, 0px, 0px);opacity:0;left:50%;z-index:10;border-width:5px;border-style:solid;border-image:initial;border-color:rgba(100, 100, 100, 0.8) transparent transparent;top:0px;"></span></div><code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span style="margin:0px;padding:0px;font-style:italic;color:rgb(92, 99, 112);"># 以上面那个例子为例。执行以下命令，观察返回结果，若无返回结果，则需要调整Label Selector或Namespace Selector，即可筛选出期望的Pod或者Service。</span>
+
+kubectl get service -l k8s-app=dev-yoyogodemo-kind-kind -n klns-administration
+</code></pre>
+</li>
+<li style="padding:0px;list-style-type:disc;list-style:inherit;font-size:16px;color:rgb(188, 188, 188);margin:3px 0px;">检查端口设置,端口port字段，需要指定为pod定义中spec.containers[i].ports[i].name，或services定义中spec.ports[i].name字段的值。</li>
+</ul>
+<h2 style="padding:0px;line-height:1.5;font-weight:bold;margin:10px 0px;color:rgb(188, 188, 188);font-size:20px;">配置Grafana<a href="https://www.cnblogs.com/maxzhang1985/p/17374615.html#1296362051" style="margin:0px;padding:0px;margin-left:8px;text-decoration:underline;transition:all 0.3s ease 0s;color:inherit;opacity:0;">#</a></h2>
+<p style="padding:0px;text-indent:0px;margin:13px auto;">导入grafana_go_metrics.json 到Grafana面板。 修改数据源为Prometheus，修改Prometheus数据源地址为：prometheus-k8s.monitoring.svc:9090 或映射出的地址。<br style="margin:0px;padding:0px;"/>
+<a href="https://img2023.cnblogs.com/blog/176287/202305/176287-20230506154428534-1794504352.png" style="margin:0px;padding:0px;color:rgb(26, 188, 156);text-decoration:none;transition:all 0.3s ease 0s;"><img src="https://img2023.cnblogs.com/blog/176287/202305/176287-20230506154428534-1794504352.png" width="960" height="506" style="padding:0px;border:0px;cursor:zoom-in;height:auto;display:block;border-radius:3px;box-shadow:rgba(27, 31, 35, 0.15) 0px 1px 15px, rgba(106, 115, 125, 0.35) 0px 0px 1px;margin:15px 0px 30px;transition:transform 300ms cubic-bezier(0.2, 0, 0.2, 1) 0s;max-width:960px;"/></a></p>
+<h2 style="padding:0px;line-height:1.5;font-weight:bold;margin:10px 0px;color:rgb(188, 188, 188);font-size:20px;">二次开发<a href="https://www.cnblogs.com/maxzhang1985/p/17374615.html#3995851778" style="margin:0px;padding:0px;opacity:0;margin-left:8px;text-decoration:underline;transition:all 0.3s ease 0s;color:inherit;">#</a></h2>
+<p style="padding:0px;text-indent:0px;margin:13px auto;">如上图，第一个GC图表，可以通过如下 PromQL 查询语句获取数据：</p>
+<pre style="border-radius:4px;background-color: #fbfaf8;border: 1px solid rgba(0,0,0,.14902);color: #333;font-size: 12px;padding: 8px;font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif;box-sizing: border-box;"><div style="margin:0px;font-size:12px;cursor:pointer;position:absolute;right:13px;top:10px;box-shadow:rgba(0, 0, 0, 0.1) 0px 0px 15px 0px;color:rgb(188, 188, 188);border-radius:5px;padding:0px 6px;overflow:hidden;"><span style="font-size:12px;cursor:pointer;color:rgb(255, 255, 255);position:absolute;transition:all 0.3s ease 0s;transform:translate3d(-50%, 0px, 0px);opacity:0;left:50%;z-index:10;border-radius:6px;background-color:rgba(100, 100, 100, 0.8);height:24px;line-height:24px;padding:0px 6px;white-space:nowrap;top:-24px;">复制代码</span>Copy<span style="font-size:12px;cursor:pointer;color:rgb(188, 188, 188);position:absolute;transition:all 0.3s ease 0s;transform:translate3d(-50%, 0px, 0px);opacity:0;left:50%;z-index:10;border-width:5px;border-style:solid;border-image:initial;border-color:rgba(100, 100, 100, 0.8) transparent transparent;top:0px;"></span></div><code style="font-size: 9pt; color: rgb(51, 51, 51); font-family: Monaco,Menlo,Consolas,Courier New,monospace,sans-serif"><span style="margin:0px;padding:0px;color:rgb(230, 192, 123);">sum</span>(go_gc_duration_seconds{namespace<span style="margin:0px;padding:0px;color:rgb(171, 86, 86);">=</span>"klns-administration", service<span style="margin:0px;padding:0px;color:rgb(171, 86, 86);">=</span>"dev-yoyogodemo-kind-kind-svc-cluster-sgr"}) <span style="margin:0px;padding:0px;color:rgb(198, 120, 221);">by</span> (instance)
+</code></pre>
+<p style="padding:0px;text-indent:0px;margin:13px auto;">实际应用中将namespace和service替换为变量，即可实现多个服务的GC图表。</p>
+<p style="padding:0px;text-indent:0px;margin:13px auto;">来一张PaaS中实现对上述查询的展示:<br style="margin:0px;padding:0px;"/>
+<a href="https://img2023.cnblogs.com/blog/176287/202305/176287-20230506155157929-2054854633.png" style="margin:0px;padding:0px;color:rgb(26, 188, 156);text-decoration:none;transition:all 0.3s ease 0s;"><img src="https://img2023.cnblogs.com/blog/176287/202305/176287-20230506155157929-2054854633.png" width="960" height="498" style="padding:0px;border:0px;cursor:zoom-in;height:auto;display:block;border-radius:3px;box-shadow:rgba(27, 31, 35, 0.15) 0px 1px 15px, rgba(106, 115, 125, 0.35) 0px 0px 1px;margin:15px 0px 30px;transition:transform 300ms cubic-bezier(0.2, 0, 0.2, 1) 0s;max-width:960px;"/></a></p>
+<h2 style="padding:0px;line-height:1.5;font-weight:bold;margin:10px 0px;color:rgb(188, 188, 188);font-size:20px;">推广<a href="https://www.cnblogs.com/maxzhang1985/p/17374615.html#1860087859" style="margin:0px;padding:0px;opacity:0;margin-left:8px;text-decoration:underline;transition:all 0.3s ease 0s;color:inherit;">#</a></h2>
+<p style="padding:0px;text-indent:0px;margin:13px auto;">目前正在将Prometheus Operator集成到PaaS项目中，后续会将集成过程中遇到的问题和解决方案分享出来。</p>
+<p style="padding:0px;text-indent:0px;margin:13px auto;">kubelilin 多云 PaaS 开源项目: <a href="https://github.com/KubeLilin/kubelilin" target="_blank" rel="noopener" style="margin:0px;padding:0px;color:rgb(26, 188, 156);text-decoration:none;transition:all 0.3s ease 0s;">https://github.com/KubeLilin/kubelilin</a></p>
+<p style="padding:0px;text-indent:0px;margin:13px auto;"><a href="https://mnur-prod-public.oss-cn-beijing.aliyuncs.com/0/tech/functional_architecture.png" style="margin:0px;padding:0px;color:rgb(26, 188, 156);text-decoration:none;transition:all 0.3s ease 0s;"><img src="https://mnur-prod-public.oss-cn-beijing.aliyuncs.com/0/tech/functional_architecture.png" width="960" height="681" style="padding:0px;border:0px;cursor:zoom-in;height:auto;display:block;border-radius:3px;box-shadow:rgba(27, 31, 35, 0.15) 0px 1px 15px, rgba(106, 115, 125, 0.35) 0px 0px 1px;margin:15px 0px 30px;transition:transform 300ms cubic-bezier(0.2, 0, 0.2, 1) 0s;max-width:960px;"/></a></p>
+
+</div>
+<div style="margin:0px;padding:0px;">
+    <div style="margin:0px;margin-top:15px;margin-left:5px;border-left:4px solid rgb(26, 188, 156);font-size:15px;line-height:2;background-color:rgb(51, 49, 49);position:relative;border-bottom-right-radius:2px;border-top-right-radius:2px;z-index:1;padding:12px 24px 12px 30px;"><span style="font-size:14px;line-height:20px;background-color:rgb(26, 188, 156);position:absolute;top:25px;left:-12px;color:rgb(255, 255, 255);width:20px;height:20px;border-radius:100%;text-align:center;font-weight:700;">!</span> 
+                        <p style="padding:0px;margin:0px;">作者：
+            YOYOFx
+        </p> 
+                        <p style="padding:0px;margin:0px;">出处：<a href="https://www.cnblogs.com/maxzhang1985/p/12673160.html" style="margin:0px;padding:0px;text-decoration:none;transition:all 0.3s ease 0s;color:rgb(188, 188, 188);">https://www.cnblogs.com/maxzhang1985/p/12673160.html</a></p> 
+                        <p style="padding:0px;margin:0px;">版权：本文采用「<a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" target="_blank" style="margin:0px;padding:0px;text-decoration:none;transition:all 0.3s ease 0s;color:rgb(188, 188, 188);">署名-非商业性使用-相同方式共享 4.0 国际</a>」知识共享许可协议进行许可。</p> 
+                        <p style="padding:0px;margin:0px;"></p> 
+                    </div>
+<b style="margin:0px;padding:0px;">欢迎大家关注微信号。扫下面的二维码或者收藏下面的二维码关注吧（长按下面的二维码图片、并选择识别图中的二维码）</b>
+<div class="media-placeholder">[图片/附件]</div></en-media>
+</div>
+<div style="margin:0px;padding:0px;clear:both;"></div>
+<div style="margin:0px;padding:0px;margin-top:20px;">
+
+
+
+<div style="margin:0px;padding:0px;font-size:14px;color:rgb(188, 188, 188);margin-top:0px;">
+    标签: 
+            <a href="https://www.cnblogs.com/maxzhang1985/tag/k8s/" style="margin:0px;padding:0px;margin-left:5px;text-decoration:none;color:rgb(26, 188, 156);transition:all 0.3s ease 0s;">k8s</a>
+,             <a href="https://www.cnblogs.com/maxzhang1985/tag/Kubernetes/" style="margin:0px;padding:0px;margin-left:5px;text-decoration:none;color:rgb(26, 188, 156);transition:all 0.3s ease 0s;">Kubernetes</a>
+,             <a href="https://www.cnblogs.com/maxzhang1985/tag/Prometheus/" style="margin:0px;padding:0px;margin-left:5px;text-decoration:none;color:rgb(26, 188, 156);transition:all 0.3s ease 0s;">Prometheus</a>
+</div>
+    <div style="margin:0px;padding:0px;">
+
+
+<div style="padding:0px;font-size:12px;text-align:center;position:static;z-index:-1;float:none;width:200px;margin:35px auto 85px;">
+    <div style="float:left;text-align:center;display:inline-block;border-width:0px;color:rgb(255, 255, 255);user-select:none;border-radius:5px;transition:color 0.2s linear 0s, background-color 0.2s linear 0s, border 0.2s linear 0s, box-shadow 0.2s linear 0s;width:auto;height:32px;background:rgb(255, 255, 255);cursor:pointer;margin:0px;padding:0px 10px;background-color:rgb(24, 181, 102);border-color:rgb(24, 181, 102);">
+        <span style="margin:0px;padding:0px;font-family:Verdana;display:inline-block;position:relative;top:5px;width:65px;font-size:15px;color:snow;line-height:1.5em;"><span style="font-size:15px;color:snow;font-family:Verdana;line-height:1.5em;margin-right:5px;">推荐</span>2</span>
+    </div>
+    <div style="float:right;text-align:center;display:inline-block;border-width:0px;color:rgb(255, 255, 255);user-select:none;border-radius:5px;transition:color 0.2s linear 0s, background-color 0.2s linear 0s, border 0.2s linear 0s, box-shadow 0.2s linear 0s;width:auto;height:32px;background:rgb(255, 255, 255);cursor:pointer;margin:0px;padding:0px 10px;background-color:rgb(237, 64, 20);border-color:rgb(237, 64, 20);">
+        <span style="margin:0px;padding:0px;font-family:Verdana;display:inline-block;position:relative;top:5px;width:65px;font-size:15px;color:snow;line-height:1.5em;"><span style="font-size:15px;color:snow;font-family:Verdana;line-height:1.5em;margin-right:5px;">反对</span>0</span>
+    </div>
+    <div style="margin:0px;padding:0px;clear:both;"></div>
+    <div style="margin:0px;padding:0px;margin-top:5px;margin-left:0px;font-size:12px;color:rgb(128, 128, 128);">
+    </div>
+</div>
+
+
+</div>
+    <div style="margin:0px;padding:0px;clear:both;"></div>
+    <div style="margin:0px;padding:0px;line-height:1.8;font-size:13px;">
+
+    <a href="https://www.cnblogs.com/maxzhang1985/p/16905039.html" style="margin:0px;padding:0px;text-decoration:none;color:rgb(26, 188, 156);transition:all 0.3s ease 0s;">« </a> 上一篇：    <a href="https://www.cnblogs.com/maxzhang1985/p/16905039.html" title="发布于 2022-11-18 22:12" style="margin:0px;padding:0px;color:rgb(26, 188, 156);text-decoration:none;transition:all 0.3s ease 0s;">Kubernetes集群配置APIServer公网访问</a>
+    <br style="margin:0px;padding:0px;"/>
+    <a href="https://www.cnblogs.com/maxzhang1985/p/17382921.html" style="margin:0px;padding:0px;text-decoration:none;color:rgb(26, 188, 156);transition:all 0.3s ease 0s;">» </a> 下一篇：    <a href="https://www.cnblogs.com/maxzhang1985/p/17382921.html" title="发布于 2023-05-09 10:36" style="margin:0px;padding:0px;color:rgb(26, 188, 156);text-decoration:none;transition:all 0.3s ease 0s;">想打印k8s资源YAML结果搞懂了Client-Side &amp; Server-Side Apply</a>
+
+</div>
+</div>
+            </div>
+            <div style="margin:0px;padding:0px;clear:both;font-size:13px;font-weight:300;float:right;width:100%;text-align:right;margin-top:5px;padding-right:0px;color:rgb(188, 188, 188);">posted @ 
+<span style="margin:0px;padding:0px;">2023-05-05 16:53</span> 
+<a href="https://www.cnblogs.com/maxzhang1985" style="margin:0px;padding:0px;text-decoration:none;color:rgb(188, 188, 188);transition:all 0.3s ease 0s;">YOYOFx</a> 
+阅读(<span style="margin:0px;padding:0px;">2681</span>) 
+评论(<span style="margin:0px;padding:0px;">0</span>) 
+<a href="https://i.cnblogs.com/EditPosts.aspx?postid=17374615" rel="nofollow" style="margin:0px;padding:0px;text-decoration:none;color:rgb(188, 188, 188);transition:all 0.3s ease 0s;">编辑</a> 
+<a href="#" style="margin:0px;padding:0px;text-decoration:none;color:rgb(188, 188, 188);transition:all 0.3s ease 0s;">收藏</a> 
+<a href="#" style="margin:0px;padding:0px;text-decoration:none;color:rgb(188, 188, 188);transition:all 0.3s ease 0s;">举报</a>
+</div>
+        </div></div></div></div></div></div></div></div></div></div>
+</div></div>
+<a class="back-link" href="../articles.html">← 返回笔记列表</a>
+</body></html>

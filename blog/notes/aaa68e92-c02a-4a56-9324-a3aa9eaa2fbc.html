@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="zh-CN" data-theme="light">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Makefile中.PHONY的作用 - veli - 博客园 — 技术笔记</title>
+<style>
+:root {
+  --bg: #ffffff;
+  --text: #1a1a1a;
+  --muted: #666;
+  --border: #e0e0e0;
+  --code-bg: #f5f5f5;
+  --link: #0066cc;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #1a1a1a;
+    --text: #e0e0e0;
+    --muted: #999;
+    --border: #333;
+    --code-bg: #2a2a2a;
+    --link: #66bbff;
+  }
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  line-height: 1.7;
+  color: var(--text);
+  background: var(--bg);
+  max-width: 860px;
+  margin: 0 auto;
+  padding: 2rem 1.5rem;
+}
+.note-header {
+  border-bottom: 2px solid var(--border);
+  padding-bottom: 1rem;
+  margin-bottom: 2rem;
+}
+.note-title {
+  font-size: 1.6rem;
+  font-weight: 700;
+  margin-bottom: 0.3rem;
+}
+.note-meta {
+  color: var(--muted);
+  font-size: 0.85rem;
+}
+.note-content {
+  font-size: 0.95rem;
+}
+.note-content h1 { font-size: 1.4rem; margin: 1.2rem 0 0.6rem; }
+.note-content h2 { font-size: 1.2rem; margin: 1rem 0 0.5rem; }
+.note-content h3 { font-size: 1.05rem; margin: 0.8rem 0 0.4rem; }
+.note-content p { margin: 0.5rem 0; }
+.note-content ul, .note-content ol { margin: 0.5rem 0 0.5rem 2rem; }
+.note-content li { margin: 0.2rem 0; }
+.note-content pre {
+  background: var(--code-bg);
+  padding: 1rem;
+  border-radius: 6px;
+  overflow-x: auto;
+  margin: 0.8rem 0;
+  font-size: 0.85rem;
+}
+.note-content code {
+  background: var(--code-bg);
+  padding: 0.1rem 0.3rem;
+  border-radius: 3px;
+  font-size: 0.88em;
+}
+.note-content pre code {
+  background: none;
+  padding: 0;
+}
+.note-content blockquote {
+  border-left: 3px solid var(--border);
+  padding-left: 1rem;
+  color: var(--muted);
+  margin: 0.8rem 0;
+}
+.note-content a { color: var(--link); }
+.note-content img {
+  max-width: 100%;
+  height: auto;
+  border-radius: 6px;
+  margin: 0.5rem 0;
+}
+.note-content table {
+  border-collapse: collapse;
+  width: 100%;
+  margin: 0.8rem 0;
+}
+.note-content th, .note-content td {
+  border: 1px solid var(--border);
+  padding: 0.5rem;
+}
+.note-content th { background: var(--code-bg); }
+.media-placeholder {
+  background: var(--code-bg);
+  padding: 1rem;
+  text-align: center;
+  color: var(--muted);
+  border-radius: 6px;
+  margin: 0.5rem 0;
+  font-size: 0.85rem;
+}
+.encrypt-placeholder {
+  background: #fff3cd;
+  padding: 0.5rem;
+  text-align: center;
+  color: #856404;
+  border-radius: 6px;
+  margin: 0.5rem 0;
+  font-size: 0.85rem;
+}
+.back-link {
+  display: inline-block;
+  margin-top: 2rem;
+  color: var(--link);
+  text-decoration: none;
+  font-size: 0.85rem;
+}
+</style>
+</head>
+<body>
+<div class="note-header">
+  <div class="note-title">Makefile中.PHONY的作用 - veli - 博客园</div>
+  <div class="note-meta">笔记本：Linux</div>
+</div>
+<div class="note-content">
+<div><br/></div><div><h1>
+                
+<a style="font-weight: normal; text-decoration: none;" href="https://www.cnblogs.com/idorax/p/9306528.html">
+    </a><a style="font-weight: normal; text-decoration: none;" href="https://www.cnblogs.com/idorax/p/9306528.html">Makefile中.PHONY的作用</a>
+    
+
+
+            </h1><div style="margin:0px;padding:0px;background-color:transparent;clear:both;"/><div><div><span style="font-weight: bold; text-decoration: none;">单词phony (即</span><span style="font-weight: bold; text-decoration: none;">phoney</span><span style="font-weight: bold; text-decoration: none;">)的意思是：伪造的，假的。</span><span style="font-weight: normal; text-decoration: none;">来自collins的解释是：</span></div><div><span style="font-weight: normal; text-decoration: none;">If you describe something as </span><span style="font-weight: bold; text-decoration: none;">phoney</span><span style="font-weight: normal; text-decoration: none;">, you disapprove of it because it is </span><span style="font-weight: bold; text-decoration: none;">false</span><span style="font-weight: normal; text-decoration: none;"> </span></div><div><span style="font-weight: normal; text-decoration: none;">rather than genuine. </span></div><div><span style="font-weight: normal; text-decoration: none;">那么，</span><span style="font-weight: bold; text-decoration: none;">在Makefile中，.PHONY后面的target表示的也是一个伪造的target, 而不是真实存在的文件target，注意Makefile的target默认是文件。</span></div><div><span style="font-weight: normal; text-decoration: none;">举个例子：</span></div><div><a style="font-weight: normal; text-decoration: underline;" href="file:///private/var/containers/Bundle/Application/A0B15E5C-49F6-4901-9303-6D7E389EC96F/Evernote.app/CommonEditorEngine/uno-ios-quirks.html#" title="复制代码"><div class="media-placeholder">[图片/附件]</div></a></div><div><span style="font-weight: normal; text-decoration: none;">$ </span><span style="font-weight: normal; text-decoration: none;">cat</span><span style="font-weight: normal; text-decoration: none;"> -</span><span style="font-weight: normal; text-decoration: none;">n Makefile1</span></div><div><span style="font-weight: normal; text-decoration: none;">     </span><span style="font-weight: normal; text-decoration: none;">1</span><span style="font-weight: normal; text-decoration: none;">    clean:</span></div><div><span style="font-weight: normal; text-decoration: none;">     </span><span style="font-weight: normal; text-decoration: none;">2</span><span style="font-weight: normal; text-decoration: none;">        </span><span style="font-weight: normal; text-decoration: none;">rm</span><span style="font-weight: normal; text-decoration: none;"> -</span><span style="font-weight: normal; text-decoration: none;">f foo</span></div><div><span style="font-weight: normal; text-decoration: none;">$ </span><span style="font-weight: normal; text-decoration: none;">cat</span><span style="font-weight: normal; text-decoration: none;"> -</span><span style="font-weight: normal; text-decoration: none;">n Makefile2</span></div><div><span style="font-weight: normal; text-decoration: none;">     </span><span style="font-weight: normal; text-decoration: none;">1</span><span style="font-weight: normal; text-decoration: none;">    .PHONY: clean</span></div><div><span style="font-weight: normal; text-decoration: none;">     </span><span style="font-weight: normal; text-decoration: none;">2</span><span style="font-weight: normal; text-decoration: none;">    clean:</span></div><div><span style="font-weight: normal; text-decoration: none;">     </span><span style="font-weight: normal; text-decoration: none;">3</span><span style="font-weight: normal; text-decoration: none;">        </span><span style="font-weight: normal; text-decoration: none;">rm</span><span style="font-weight: normal; text-decoration: none;"> -f foo</span></div><div><a style="font-weight: normal; text-decoration: underline;" href="file:///private/var/containers/Bundle/Application/A0B15E5C-49F6-4901-9303-6D7E389EC96F/Evernote.app/CommonEditorEngine/uno-ios-quirks.html#" title="复制代码"><div class="media-placeholder">[图片/附件]</div></a></div><div><span style="font-weight: normal; text-decoration: none;">Makefile1和Makefile2的差别就是在Makefile2中定义了：</span></div><div><span style="font-weight: normal; text-decoration: none;">1</span><span style="font-weight: normal; text-decoration: none;"> .PHONY: clean</span></div><ul><li><div><span style="font-weight: normal; text-decoration: none;">直接Make看看</span></div></li></ul><div><a style="font-weight: normal; text-decoration: underline;" href="file:///private/var/containers/Bundle/Application/A0B15E5C-49F6-4901-9303-6D7E389EC96F/Evernote.app/CommonEditorEngine/uno-ios-quirks.html#" title="复制代码"><div class="media-placeholder">[图片/附件]</div></a></div><div><span style="font-weight: normal; text-decoration: none;">$ </span><span style="font-weight: normal; text-decoration: none;">ls</span><span style="font-weight: normal; text-decoration: none;"> -</span><span style="font-weight: normal; text-decoration: none;">l</span></div><div><span style="font-weight: normal; text-decoration: none;">total </span><span style="font-weight: normal; text-decoration: none;">8</span></div><div><span style="font-weight: normal; text-decoration: none;">-rw-r--r-- </span><span style="font-weight: normal; text-decoration: none;">1</span><span style="font-weight: normal; text-decoration: none;"> huanli huanli </span><span style="font-weight: normal; text-decoration: none;">18</span><span style="font-weight: normal; text-decoration: none;"> Jul </span><span style="font-weight: normal; text-decoration: none;">13</span><span style="font-weight: normal; text-decoration: none;"> </span><span style="font-weight: normal; text-decoration: none;">17</span><span style="font-weight: normal; text-decoration: none;">:</span><span style="font-weight: normal; text-decoration: none;">51</span><span style="font-weight: normal; text-decoration: none;"> Makefile1</span></div><div><span style="font-weight: normal; text-decoration: none;">-rw-r--r-- </span><span style="font-weight: normal; text-decoration: none;">1</span><span style="font-weight: normal; text-decoration: none;"> huanli huanli </span><span style="font-weight: normal; text-decoration: none;">32</span><span style="font-weight: normal; text-decoration: none;"> Jul </span><span style="font-weight: normal; text-decoration: none;">13</span><span style="font-weight: normal; text-decoration: none;"> </span><span style="font-weight: normal; text-decoration: none;">17</span><span style="font-weight: normal; text-decoration: none;">:</span><span style="font-weight: normal; text-decoration: none;">51</span><span style="font-weight: normal; text-decoration: none;"> Makefile2</span></div><div><span style="font-weight: normal; text-decoration: none;">$ </span><span style="font-weight: normal; text-decoration: none;">make</span><span style="font-weight: normal; text-decoration: none;"> -</span><span style="font-weight: normal; text-decoration: none;">f Makefile1 clean</span></div><div><span style="font-weight: normal; text-decoration: none;">rm</span><span style="font-weight: normal; text-decoration: none;"> -</span><span style="font-weight: normal; text-decoration: none;">f foo</span></div><div><span style="font-weight: normal; text-decoration: none;">$ </span><span style="font-weight: normal; text-decoration: none;">make</span><span style="font-weight: normal; text-decoration: none;"> -</span><span style="font-weight: normal; text-decoration: none;">f Makefile2 clean</span></div><div><span style="font-weight: normal; text-decoration: none;">rm</span><span style="font-weight: normal; text-decoration: none;"> -f foo</span></div><div><a style="font-weight: normal; text-decoration: underline;" href="file:///private/var/containers/Bundle/Application/A0B15E5C-49F6-4901-9303-6D7E389EC96F/Evernote.app/CommonEditorEngine/uno-ios-quirks.html#" title="复制代码"><div class="media-placeholder">[图片/附件]</div></a></div><div><span style="font-weight: normal; text-decoration: none;">Makefile1和Makefile2的行为没有啥子区别嘛，呵呵</span></div><ul><li><div><span style="font-weight: normal; text-decoration: none;">创建一个文件clean, 再make看看</span></div></li></ul><div><a style="font-weight: normal; text-decoration: underline;" href="file:///private/var/containers/Bundle/Application/A0B15E5C-49F6-4901-9303-6D7E389EC96F/Evernote.app/CommonEditorEngine/uno-ios-quirks.html#" title="复制代码"><div class="media-placeholder">[图片/附件]</div></a></div><div><span style="font-weight: normal; text-decoration: none;">$ </span><span style="font-weight: normal; text-decoration: none;">touch</span><span style="font-weight: normal; text-decoration: none;"> clean</span></div><div><span style="font-weight: normal; text-decoration: none;">$ </span><span style="font-weight: normal; text-decoration: none;">ls</span><span style="font-weight: normal; text-decoration: none;"> -</span><span style="font-weight: normal; text-decoration: none;">l</span></div><div><span style="font-weight: normal; text-decoration: none;">total </span><span style="font-weight: normal; text-decoration: none;">8</span></div><div><span style="font-weight: normal; text-decoration: none;">-rw-r--r-- </span><span style="font-weight: normal; text-decoration: none;">1</span><span style="font-weight: normal; text-decoration: none;"> huanli huanli  </span><span style="font-weight: normal; text-decoration: none;">0</span><span style="font-weight: normal; text-decoration: none;"> Jul </span><span style="font-weight: normal; text-decoration: none;">13</span><span style="font-weight: normal; text-decoration: none;"> </span><span style="font-weight: normal; text-decoration: none;">18</span><span style="font-weight: normal; text-decoration: none;">:</span><span style="font-weight: normal; text-decoration: none;">06</span><span style="font-weight: normal; text-decoration: none;"> clean</span></div><div><span style="font-weight: normal; text-decoration: none;">-rw-r--r-- </span><span style="font-weight: normal; text-decoration: none;">1</span><span style="font-weight: normal; text-decoration: none;"> huanli huanli </span><span style="font-weight: normal; text-decoration: none;">18</span><span style="font-weight: normal; text-decoration: none;"> Jul </span><span style="font-weight: normal; text-decoration: none;">13</span><span style="font-weight: normal; text-decoration: none;"> </span><span style="font-weight: normal; text-decoration: none;">17</span><span style="font-weight: normal; text-decoration: none;">:</span><span style="font-weight: normal; text-decoration: none;">51</span><span style="font-weight: normal; text-decoration: none;"> Makefile1</span></div><div><span style="font-weight: normal; text-decoration: none;">-rw-r--r-- </span><span style="font-weight: normal; text-decoration: none;">1</span><span style="font-weight: normal; text-decoration: none;"> huanli huanli </span><span style="font-weight: normal; text-decoration: none;">32</span><span style="font-weight: normal; text-decoration: none;"> Jul </span><span style="font-weight: normal; text-decoration: none;">13</span><span style="font-weight: normal; text-decoration: none;"> </span><span style="font-weight: normal; text-decoration: none;">17</span><span style="font-weight: normal; text-decoration: none;">:</span><span style="font-weight: normal; text-decoration: none;">51</span><span style="font-weight: normal; text-decoration: none;"> Makefile2</span></div><div><span style="font-weight: normal; text-decoration: none;">$ </span><span style="font-weight: normal; text-decoration: none;">make</span><span style="font-weight: normal; text-decoration: none;"> -</span><span style="font-weight: normal; text-decoration: none;">f Makefile1 clean</span></div><div><span style="font-weight: normal; text-decoration: none;">make</span><span style="font-weight: normal; text-decoration: none;">: </span><span style="font-weight: normal; text-decoration: none;">'</span><span style="font-weight: normal; text-decoration: none;">clean</span><span style="font-weight: normal; text-decoration: none;">'</span><span style="font-weight: normal; text-decoration: none;"> is up to </span><span style="font-weight: normal; text-decoration: none;">date</span><span style="font-weight: normal; text-decoration: none;">.</span></div><div><span style="font-weight: normal; text-decoration: none;">$ </span><span style="font-weight: normal; text-decoration: none;">make</span><span style="font-weight: normal; text-decoration: none;"> -</span><span style="font-weight: normal; text-decoration: none;">f Makefile2 clean</span></div><div><span style="font-weight: normal; text-decoration: none;">rm</span><span style="font-weight: normal; text-decoration: none;"> -f foo</span></div><div><a style="font-weight: normal; text-decoration: underline;" href="file:///private/var/containers/Bundle/Application/A0B15E5C-49F6-4901-9303-6D7E389EC96F/Evernote.app/CommonEditorEngine/uno-ios-quirks.html#" title="复制代码"><div class="media-placeholder">[图片/附件]</div></a></div><div><span style="font-weight: normal; text-decoration: none;">区别来了，Makefile1拒绝了执行clean, 因为文件clean存在。而Makefile2却不理会文件clean的存在，总是执行clean后面的规则。<span style="font-weight: normal; text-decoration: none;">由此可见，.PHONY clean发挥了作用。</span></span></div><div><span style="font-weight: bold; text-decoration: none;">小结：</span></div><div><span style="font-weight: normal; text-decoration: none;">.PHONY: clean</span></div><div><span style="font-weight: normal; text-decoration: none;">    o means the word </span><span style="font-weight: normal; text-decoration: none;">&quot;</span><span style="font-weight: normal; text-decoration: none;">clean</span><span style="font-weight: normal; text-decoration: none;">&quot;</span><span style="font-weight: normal; text-decoration: none;"> doesn</span><span style="font-weight: normal; text-decoration: none;">'</span><span style="font-weight: normal; text-decoration: none;">t represent a file name in this Makefile;</span></div><div><span style="font-weight: normal; text-decoration: none;">    o means the Makefile has nothing to </span><span style="font-weight: normal; text-decoration: none;">do</span><span style="font-weight: normal; text-decoration: none;"> with a </span><span style="font-weight: normal; text-decoration: none;">file</span><span style="font-weight: normal; text-decoration: none;"> called </span><span style="font-weight: normal; text-decoration: none;">&quot;</span><span style="font-weight: normal; text-decoration: none;">clean</span><span style="font-weight: normal; text-decoration: none;">&quot;</span><span style="font-weight: normal; text-decoration: none;"> </span></div><div><span style="font-weight: normal; text-decoration: none;">      </span><span style="font-weight: normal; text-decoration: none;">in</span><span style="font-weight: normal; text-decoration: none;"> the same directory.</span></div><div><span style="font-weight: bold; text-decoration: none;">参考资料：</span></div><ul><li><div><a style="font-weight: normal; text-decoration: underline;" rel="noopener" target="_blank" href="https://www.gnu.org/software/make/manual/html_node/Phony-Targets.html">Phony Targets</a><span style="font-weight: normal; text-decoration: none;"> of GNU Make</span></div></li></ul></div><div style="margin:0px;padding:0px;background-color:transparent;clear:both;"/><div/><div><b><br/></b></div><div/></div><div><br/></div>
+</div>
+<a class="back-link" href="../articles.html">← 返回笔记列表</a>
+</body>
+</html>

@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html lang="zh-CN" data-theme="light">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>What is non-uniform memory access (NUMA)? — 技术笔记</title>
+<style>
+:root {
+  --bg: #ffffff;
+  --text: #1a1a1a;
+  --muted: #666;
+  --border: #e0e0e0;
+  --code-bg: #f5f5f5;
+  --link: #0066cc;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #1a1a1a;
+    --text: #e0e0e0;
+    --muted: #999;
+    --border: #333;
+    --code-bg: #2a2a2a;
+    --link: #66bbff;
+  }
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  line-height: 1.7;
+  color: var(--text);
+  background: var(--bg);
+  max-width: 860px;
+  margin: 0 auto;
+  padding: 2rem 1.5rem;
+}
+.note-header {
+  border-bottom: 2px solid var(--border);
+  padding-bottom: 1rem;
+  margin-bottom: 2rem;
+}
+.note-title {
+  font-size: 1.6rem;
+  font-weight: 700;
+  margin-bottom: 0.3rem;
+}
+.note-meta {
+  color: var(--muted);
+  font-size: 0.85rem;
+}
+.note-content {
+  font-size: 0.95rem;
+}
+.note-content h1 { font-size: 1.4rem; margin: 1.2rem 0 0.6rem; }
+.note-content h2 { font-size: 1.2rem; margin: 1rem 0 0.5rem; }
+.note-content h3 { font-size: 1.05rem; margin: 0.8rem 0 0.4rem; }
+.note-content p { margin: 0.5rem 0; }
+.note-content ul, .note-content ol { margin: 0.5rem 0 0.5rem 2rem; }
+.note-content li { margin: 0.2rem 0; }
+.note-content pre {
+  background: var(--code-bg);
+  padding: 1rem;
+  border-radius: 6px;
+  overflow-x: auto;
+  margin: 0.8rem 0;
+  font-size: 0.85rem;
+}
+.note-content code {
+  background: var(--code-bg);
+  padding: 0.1rem 0.3rem;
+  border-radius: 3px;
+  font-size: 0.88em;
+}
+.note-content pre code {
+  background: none;
+  padding: 0;
+}
+.note-content blockquote {
+  border-left: 3px solid var(--border);
+  padding-left: 1rem;
+  color: var(--muted);
+  margin: 0.8rem 0;
+}
+.note-content a { color: var(--link); }
+.note-content img {
+  max-width: 100%;
+  height: auto;
+  border-radius: 6px;
+  margin: 0.5rem 0;
+}
+.note-content table {
+  border-collapse: collapse;
+  width: 100%;
+  margin: 0.8rem 0;
+}
+.note-content th, .note-content td {
+  border: 1px solid var(--border);
+  padding: 0.5rem;
+}
+.note-content th { background: var(--code-bg); }
+.media-placeholder {
+  background: var(--code-bg);
+  padding: 1rem;
+  text-align: center;
+  color: var(--muted);
+  border-radius: 6px;
+  margin: 0.5rem 0;
+  font-size: 0.85rem;
+}
+.encrypt-placeholder {
+  background: #fff3cd;
+  padding: 0.5rem;
+  text-align: center;
+  color: #856404;
+  border-radius: 6px;
+  margin: 0.5rem 0;
+  font-size: 0.85rem;
+}
+.back-link {
+  display: inline-block;
+  margin-top: 2rem;
+  color: var(--link);
+  text-decoration: none;
+  font-size: 0.85rem;
+}
+</style>
+</head>
+<body>
+<div class="note-header">
+  <div class="note-title">What is non-uniform memory access (NUMA)?</div>
+  <div class="note-meta">笔记本：Kubevirt</div>
+</div>
+<div class="note-content">
+<div style="--en-clipped-content:simplified; --en-clipped-source-url:https://www.techtarget.com/whatis/definition/NUMA-non-uniform-memory-access; --en-clipped-source-title:What is non-uniform memory access (NUMA)?;">
+<div><br/></div><div style="min-height: 3311px; font-size: 16px; display: block; min-width: 100%; position: relative;"> <div style="background-color:transparent;font:inherit;vertical-align:baseline;"><div style="background-color:transparent;font:inherit;vertical-align:baseline;font-family:&quot;PT Serif&quot;;font-size:16px;line-height:1.5em;color:rgb(31, 9, 9);text-align:left;"><div style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;"><div style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;width:36em;z-index:200;padding-left:2em;padding-right:2em;margin-left:auto;margin-right:auto;position:relative;"><div style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;position:relative;margin-left:-25px;margin-right:25px;"><div style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;padding-top:0px;padding-bottom:9em;position:relative;"><div style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;margin-bottom:1.5em;"><div style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;position:relative;margin-bottom:0px;"><div style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;margin-bottom:0px;"><div style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;margin-bottom:0px;"><h1 style="font-family:&quot;PT Serif&quot;;text-align:left;border:0px;font:inherit;vertical-align:baseline;font-size:35px;font-weight:normal;line-height:35px;margin-bottom:20px;padding:0px;margin:0px;">What is non-uniform memory access (NUMA)?</h1><div style="padding:0px;border:0px;font:inherit;vertical-align:baseline;position:relative;height:1em;line-height:1;text-align:center;margin:0px;padding-top:1.5em;padding-bottom:1.5em;margin-bottom:0px;"><div style="padding:0px;border:0px;font:inherit;vertical-align:baseline;background:-webkit-linear-gradient(0deg, rgb(243, 242, 238) 1%, rgb(31, 9, 9) 50%, rgb(243, 242, 238) 99%);position:absolute;left:-4em;top:50%;z-index:10;width:100%;padding-left:4em;padding-right:4em;height:0.1em;opacity:0.5;margin:0px;margin-bottom:0px;"></div></div></div><div style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;display:block;position:relative;margin-top:0px;padding-top:0px;">
+ <p style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;margin-bottom:1.5em;">Non-uniform memory access, or NUMA, is a method of configuring a cluster of <a href="https://www.techtarget.com/whatis/definition/microprocessor-logic-chip" style="color:rgb(6, 85, 136);margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;text-decoration:none;">microprocessors</a> in a <a href="https://www.techtarget.com/searchdatacenter/definition/multiprocessing" style="color:rgb(6, 85, 136);margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;text-decoration:none;">multiprocessing</a> system so they can share <a href="https://www.techtarget.com/whatis/definition/memory" style="color:rgb(6, 85, 136);margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;text-decoration:none;">memory</a> locally. The idea is to improve the system's performance and allow it to expand as processing needs evolve.</p>
+ <p style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;margin-bottom:1.5em;">In a NUMA setup, the individual processors in a <a href="https://www.techtarget.com/searchwindowsserver/definition/system" style="color:rgb(6, 85, 136);margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;text-decoration:none;">computing system</a> share local memory and can work together. Data can flow smoothly and quickly since it goes through intermediate memory instead of a main bus.</p>
+ <p style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;margin-bottom:1.5em;">NUMA can be thought of as a microprocessor <a href="https://www.techtarget.com/whatis/definition/cluster" style="color:rgb(6, 85, 136);margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;text-decoration:none;"><em style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;font-style:italic;">cluster</em></a><em style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;font-style:italic;"> in a box</em>. The cluster typically consists of four microprocessors interconnected on a local bus to a shared memory on a single <a href="https://www.techtarget.com/whatis/definition/motherboard" style="color:rgb(6, 85, 136);margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;text-decoration:none;">motherboard</a>. The bus may be a peripheral component interconnect bus, the shared memory is called an L3 <a href="https://www.techtarget.com/searchstorage/definition/cache-memory" style="color:rgb(6, 85, 136);margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;text-decoration:none;">cache</a> and the motherboard is often referred to as a <a href="https://www.techtarget.com/whatis/definition/card-or-expansion-card-board-or-adapter" style="color:rgb(6, 85, 136);margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;text-decoration:none;">card</a>.</p>
+ <p style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;margin-bottom:0px;">This unit can be added to similar units to form a symmetric multiprocessing system (<a href="https://www.techtarget.com/searchdatacenter/definition/SMP" style="color:rgb(6, 85, 136);margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;text-decoration:none;">SMP</a>) that can contain 16 00 256 microprocessors with a common SMP bus interconnecting the clusters. In an SMP system, all the individual processor memories look like a single memory to an <a href="https://www.techtarget.com/searchsoftwarequality/definition/application" style="color:rgb(6, 85, 136);margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;text-decoration:none;">application</a> program.</p>
+ 
+</div>      
+<div style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;display:block;position:relative;margin-top:1.5em;padding-top:1.5em;">
+ <h3 style="font-family:&quot;PT Serif&quot;;text-align:left;margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;font-size:30px;line-height:35px;margin-top:35px;font-weight:normal;margin-bottom:15px;">How non-uniform memory access works</h3>
+ <p style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;margin-bottom:1.5em;">When a processor looks for data at a certain memory address, it first looks in the L1 cache on the microprocessor. Then it moves to the larger <a href="https://www.techtarget.com/whatis/definition/L1-and-L2" style="color:rgb(6, 85, 136);margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;text-decoration:none;">L2</a> cache chip and finally to a third level of cache (L3). The NUMA <a href="https://www.techtarget.com/whatis/definition/configuration" style="color:rgb(6, 85, 136);margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;text-decoration:none;">configuration</a> provides this third level. If the processor still cannot find the data, it will look in the remote memory located near the other microprocessors.</p>
+ <p style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;margin-bottom:0px;">Each of these clusters is viewed by NUMA as a node in the interconnection network. NUMA maintains a <a href="https://www.techtarget.com/whatis/definition/hierarchy" style="color:rgb(6, 85, 136);margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;text-decoration:none;">hierarchical view</a> of the data on all <a href="https://www.techtarget.com/searchstorage/definition/storage-node" style="color:rgb(6, 85, 136);margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;text-decoration:none;">nodes</a>. Data is moved on the bus between the clusters using a scalable coherent interface. <a href="https://www.slac.stanford.edu/pubs/slacpubs/5000/slac-pub-5184.pdf" style="color:rgb(6, 85, 136);margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;text-decoration:none;">SCI</a> coordinates cache coherence (consistency) across the nodes of the multiple clusters in the NUMA architecture.</p>
+</div>   
+<div style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;display:block;position:relative;margin-top:1.5em;padding-top:1.5em;">
+ <h3 style="font-family:&quot;PT Serif&quot;;text-align:left;margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;font-size:30px;line-height:35px;margin-top:35px;font-weight:normal;margin-bottom:15px;">NUMA and symmetric multiprocessing</h3>
+ <p style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;margin-bottom:1.5em;">NUMA is commonly used in a symmetric multiprocessing system. An SMP system is a tightly coupled, share-everything system in which multiple processors work under a single <a href="https://www.techtarget.com/whatis/definition/operating-system-OS" style="color:rgb(6, 85, 136);margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;text-decoration:none;">operating system</a> and access each other's memory over a common <a href="https://www.techtarget.com/searchstorage/definition/bus" style="color:rgb(6, 85, 136);margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;text-decoration:none;">bus</a> or interconnect path. These microprocessors work on a single motherboard connected by a bus.</p>
+ <p style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;margin-bottom:1.5em;">One limitation of SMP is that as microprocessors are added, it overloads the shared bus or data path, creating a <a href="https://www.techtarget.com/whatis/definition/performance" style="color:rgb(6, 85, 136);margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;text-decoration:none;">performance</a> <a href="https://www.techtarget.com/searchnetworking/definition/bottleneck" style="color:rgb(6, 85, 136);margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;text-decoration:none;">bottleneck</a>. NUMA adds an intermediate level of memory that is shared among a few microprocessors so that all accessed data doesn't travel on the main bus. This helps address performance bottleneck issues.</p>
+ <p style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;margin-bottom:0px;">SMP and NUMA systems are typically used in <a href="https://www.techtarget.com/searchbusinessanalytics/definition/data-mining" style="color:rgb(6, 85, 136);margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;text-decoration:none;">data mining</a> applications and <a href="https://www.techtarget.com/searchcio/definition/decision-support-system" style="color:rgb(6, 85, 136);margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;text-decoration:none;">decision support systems</a>. In these types of applications, processing can be parceled out to multiple processors that collectively work on a common <a href="https://www.techtarget.com/searchdatamanagement/definition/database" style="color:rgb(6, 85, 136);margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;text-decoration:none;">database</a>.</p>
+</div>    
+<div style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;display:block;position:relative;margin-top:1.5em;padding-top:1.5em;">
+ <h3 style="font-family:&quot;PT Serif&quot;;text-align:left;margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;font-size:30px;line-height:35px;margin-top:35px;font-weight:normal;margin-bottom:15px;">NUMA node architecture</h3>
+ <p style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;margin-bottom:1.5em;">The NUMA architecture is common in multiprocessing systems. These systems include multiple hardware resources including memory, <a href="https://www.techtarget.com/whatis/definition/input-output-I-O" style="color:rgb(6, 85, 136);margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;text-decoration:none;">input/output</a> devices, chipset, <a href="https://www.techtarget.com/searchnetworking/tip/An-introduction-to-8-types-of-network-devices" style="color:rgb(6, 85, 136);margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;text-decoration:none;">networking devices</a> and storage devices (in addition to processors). Each collection of resources is a node. Multiple nodes are linked via a <a href="https://www.techtarget.com/searchstorage/feature/NVMe-SSD-speeds-explained" style="color:rgb(6, 85, 136);margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;text-decoration:none;">high-speed interconnect</a> or bus.</p>
+ <p style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;margin-bottom:1.5em;">Every NUMA system contains a coherent global memory and I/O address space that can be accessed by all processors in the system. The other components can vary, although at least one node must have memory, one must have I/O resources, and one must have processors.</p>
+ <p style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;margin-bottom:0px;">In this type of memory architecture, a processor is assigned a specific local memory for its own use, and this memory is placed close to the processor. The signal paths are shorter, which is why these processors can access local memory faster than non-local memory. Also, since there is no sharing of non-local memory, there is an appreciable drop in delays (<a href="https://www.techtarget.com/whatis/definition/latency" style="color:rgb(6, 85, 136);margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;text-decoration:none;">latency</a>) when multiple access requests come in for the same memory location.</p>
+</div>    
+<div style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;display:block;position:relative;margin-top:1.5em;padding-top:1.5em;">
+ <h3 style="font-family:&quot;PT Serif&quot;;text-align:left;margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;font-size:30px;line-height:35px;margin-top:35px;font-weight:normal;margin-bottom:15px;">Advantages and disadvantages of NUMA</h3>
+ <p style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;margin-bottom:1.5em;">One of the biggest advantages of NUMA is the fast movement of data and lower latency in the multiprocessing system. Additionally, NUMA reduces <a href="https://www.techtarget.com/whatis/definition/enterprise-data-replication-EDR" style="color:rgb(6, 85, 136);margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;text-decoration:none;">data replication</a> and simplifies programming. And the <a href="https://www.techtarget.com/searchdatacenter/definition/parallel-processing" style="color:rgb(6, 85, 136);margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;text-decoration:none;">parallel computers</a> in a NUMA architecture are highly <a href="https://www.techtarget.com/searchdatacenter/definition/scalability" style="color:rgb(6, 85, 136);margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;text-decoration:none;">scalable</a> and responsive to data allocation in local memories.</p>
+ <p style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;margin-bottom:0px;">One disadvantage of NUMA is that it can be expensive. And the lack of programming standards for larger configurations can make implementation challenging.</p>
+</div>   
+<div style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;display:block;position:relative;margin-top:1.5em;padding-top:1.5em;">
+ <h3 style="font-family:&quot;PT Serif&quot;;text-align:left;margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;font-size:30px;line-height:35px;margin-top:35px;font-weight:normal;margin-bottom:15px;">Difference between NUMA and UMA</h3>
+ <p style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;margin-bottom:1.5em;">There are three shared-memory models in multiprocessor systems.</p>
+ <ol style="padding:0px;border:0px;font:inherit;vertical-align:baseline;margin:0px 0px 1.5em 1.5em;list-style:none;margin-top:-1em;list-style-type:decimal;"> 
+  <li style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;list-style-type:inherit;list-style-position:outside;">Uniform memory access (UMA)</li> 
+  <li style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;list-style-type:inherit;list-style-position:outside;">Non-uniform memory access (NUMA)</li> 
+  <li style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;list-style-type:inherit;list-style-position:outside;">Cache-only memory access/architecture (<a href="https://ieeexplore.ieee.org/document/769448" style="color:rgb(6, 85, 136);margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;text-decoration:none;">COMA</a>)</li> 
+ </ol>
+ <p style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;margin-bottom:1.5em;">Figure 1 shows the differences between UMA and NUMA.</p>
+ <div style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;display:block;margin-bottom:1em;margin-top:1em;">
+  <div style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;display:block;text-align:center;margin-bottom:1em;margin-top:1em;"><div class="media-placeholder">[图片/附件]</div></en-media></div>
+  <div style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;display:block;">
+   Figure 1
+  </div>
+  
+ </div>
+ <p style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;margin-bottom:1.5em;">Like UMA and NUMA, COMA is also a shared-memory model used in multiprocessors. In a COMA machine, multiple processing nodes are connected by an interconnection network. Each node includes a processor and cache and is allocated as part of the global shared memory. The local memory (typically <a href="https://www.techtarget.com/searchstorage/definition/DRAM" style="color:rgb(6, 85, 136);margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;text-decoration:none;">DRAM</a>) at each node is used as the cache. This feature differentiates COMA from NUMA in which the local memory is used as the main memory.</p>
+ <p style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;margin-bottom:1.5em;">COMA generally enables more efficient use of memory resources. The drawback is that it also makes it harder to find a particular piece of data since there is no <em style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;font-style:italic;">home node</em> in COMA (unlike NUMA). Moreover, it can be challenging to address memory <a href="https://www.techtarget.com/searchstorage/feature/How-to-plan-for-a-potential-data-storage-shortage" style="color:rgb(6, 85, 136);margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;text-decoration:none;">shortage problems</a> once the local memory fills up.</p>
+ 
+ <p style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;margin-bottom:0px;"><em style="margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;font-style:italic;">See also: <a href="https://www.techtarget.com/searchvmware/definition/vNUMA-virtual-NUMA" style="color:rgb(6, 85, 136);margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;text-decoration:none;">vNUMA (virtual NUMA)</a>, <a href="https://media.techtarget.com/facebook/downloads/TechTarget-IT-Acronyms.pdf" style="color:rgb(6, 85, 136);margin:0px;padding:0px;border:0px;font:inherit;vertical-align:baseline;text-decoration:none;">IT Acronyms at your fingertips</a></em></p>
+</div></div></div></div></div></div></div></div></div></div></div>
+</div>
+</div>
+<a class="back-link" href="../articles.html">← 返回笔记列表</a>
+</body>
+</html>

@@ -1,0 +1,378 @@
+<!DOCTYPE html>
+<html lang="zh-CN" data-theme="light">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>理解inode - 阮一峰的网络日志 — 技术笔记</title>
+<style>
+:root {
+  --bg: #ffffff;
+  --text: #1a1a1a;
+  --muted: #666;
+  --border: #e0e0e0;
+  --code-bg: #f5f5f5;
+  --link: #0066cc;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #1a1a1a;
+    --text: #e0e0e0;
+    --muted: #999;
+    --border: #333;
+    --code-bg: #2a2a2a;
+    --link: #66bbff;
+  }
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  line-height: 1.7;
+  color: var(--text);
+  background: var(--bg);
+  max-width: 860px;
+  margin: 0 auto;
+  padding: 2rem 1.5rem;
+}
+.note-header {
+  border-bottom: 2px solid var(--border);
+  padding-bottom: 1rem;
+  margin-bottom: 2rem;
+}
+.note-title {
+  font-size: 1.6rem;
+  font-weight: 700;
+  margin-bottom: 0.3rem;
+}
+.note-meta {
+  color: var(--muted);
+  font-size: 0.85rem;
+}
+.note-content {
+  font-size: 0.95rem;
+}
+.note-content h1 { font-size: 1.4rem; margin: 1.2rem 0 0.6rem; }
+.note-content h2 { font-size: 1.2rem; margin: 1rem 0 0.5rem; }
+.note-content h3 { font-size: 1.05rem; margin: 0.8rem 0 0.4rem; }
+.note-content p { margin: 0.5rem 0; }
+.note-content ul, .note-content ol { margin: 0.5rem 0 0.5rem 2rem; }
+.note-content li { margin: 0.2rem 0; }
+.note-content pre {
+  background: var(--code-bg);
+  padding: 1rem;
+  border-radius: 6px;
+  overflow-x: auto;
+  margin: 0.8rem 0;
+  font-size: 0.85rem;
+}
+.note-content code {
+  background: var(--code-bg);
+  padding: 0.1rem 0.3rem;
+  border-radius: 3px;
+  font-size: 0.88em;
+}
+.note-content pre code {
+  background: none;
+  padding: 0;
+}
+.note-content blockquote {
+  border-left: 3px solid var(--border);
+  padding-left: 1rem;
+  color: var(--muted);
+  margin: 0.8rem 0;
+}
+.note-content a { color: var(--link); }
+.note-content img {
+  max-width: 100%;
+  height: auto;
+  border-radius: 6px;
+  margin: 0.5rem 0;
+}
+.note-content table {
+  border-collapse: collapse;
+  width: 100%;
+  margin: 0.8rem 0;
+}
+.note-content th, .note-content td {
+  border: 1px solid var(--border);
+  padding: 0.5rem;
+}
+.note-content th { background: var(--code-bg); }
+.media-placeholder {
+  background: var(--code-bg);
+  padding: 1rem;
+  text-align: center;
+  color: var(--muted);
+  border-radius: 6px;
+  margin: 0.5rem 0;
+  font-size: 0.85rem;
+}
+.encrypt-placeholder {
+  background: #fff3cd;
+  padding: 0.5rem;
+  text-align: center;
+  color: #856404;
+  border-radius: 6px;
+  margin: 0.5rem 0;
+  font-size: 0.85rem;
+}
+.back-link {
+  display: inline-block;
+  margin-top: 2rem;
+  color: var(--link);
+  text-decoration: none;
+  font-size: 0.85rem;
+}
+</style>
+</head>
+<body>
+<div class="note-header">
+  <div class="note-title">理解inode - 阮一峰的网络日志</div>
+  <div class="note-meta">笔记本：Linux</div>
+</div>
+<div class="note-content">
+<div style="--en-clipped-content:article"><div style="font-size: 16px; display:block; min-width: 100%; position: relative;"> <div style="list-style-type:none;text-align:left;text-decoration:none;font-weight:normal;font-style:normal;color:rgb(17, 17, 17);"><div style="list-style-type:none;text-align:left;text-decoration:none;font-weight:normal;font-style:normal;font-family:Georgia, serif;letter-spacing:-0.01em;word-spacing:0.2em;line-height:1.8em;font-size:62.5%;background-color:rgb(245, 245, 213);color:rgb(17, 17, 17);"><div style="list-style-type:none;text-align:left;text-decoration:none;font-weight:normal;font-style:normal;color:rgb(17, 17, 17);background-color:rgb(245, 245, 213);min-width:640px;"><div style="list-style-type:none;text-align:left;text-decoration:none;font-weight:normal;font-style:normal;color:rgb(17, 17, 17);"><div style="list-style-type:none;text-align:left;text-decoration:none;font-weight:normal;font-style:normal;color:rgb(17, 17, 17);"><div style="list-style-type:none;text-align:left;text-decoration:none;font-weight:normal;font-style:normal;color:rgb(17, 17, 17);"><div style="list-style-type:none;text-align:left;text-decoration:none;font-weight:normal;font-style:normal;color:rgb(17, 17, 17);"><div style="list-style-type:none;text-align:left;text-decoration:none;font-weight:normal;font-style:normal;color:rgb(17, 17, 17);"><div style="list-style-type:none;text-align:left;text-decoration:none;font-weight:normal;font-style:normal;color:rgb(17, 17, 17);"><div>
+                                    <h1 style="list-style-type:none;text-align:left;text-decoration:none;font-style:normal;border:none;font-size:2.88em;letter-spacing:-0.03em;border-bottom:1px solid rgb(211, 211, 211);margin:0.4em 0px 0.2em;padding:0px 0px 0.2em;font-weight:500;color:rgb(0, 0, 0);line-height:250%;font-family:&quot;Trebuchet MS&quot;, Arial, &quot;Lucida Grande&quot;, Verdana, Lucida, Helvetica, sans-serif;">理解inode</h1>
+
+
+
+<div style="padding:0px;list-style-type:none;text-align:left;text-decoration:none;font-weight:normal;font-style:normal;border:none;color:rgb(17, 17, 17);line-height:0.8;margin:1.5em auto 2em;">
+                                        
+
+                                            <p style="margin:0px;padding:0px;list-style-type:none;text-align:left;text-decoration:none;font-weight:normal;font-style:normal;border:none;font-size:1.6em;margin-top:1em;margin-left:0.8em;line-height:180%;color:rgb(85, 102, 119);">作者： <a href="https://www.ruanyifeng.com/" style="margin:0px;padding:0px;list-style-type:none;text-align:left;text-decoration:none;font-weight:normal;font-style:normal;border:none;color:rgb(85, 102, 119);">阮一峰</a></p>
+                                    <p style="margin:0px;padding:0px;list-style-type:none;text-align:left;text-decoration:none;font-weight:normal;font-style:normal;border:none;font-size:1.6em;margin-top:1em;margin-left:0.8em;line-height:180%;color:rgb(85, 102, 119);">日期： <a href="https://www.ruanyifeng.com/blog/2011/12/" style="margin:0px;padding:0px;list-style-type:none;text-align:left;text-decoration:none;font-weight:normal;font-style:normal;border:none;color:rgb(85, 102, 119);"><abbr title="2011-12-04T13:30:12+08:00" style="margin:0px;padding:0px;list-style-type:none;text-align:left;text-decoration:none;font-weight:normal;font-style:normal;border:none;color:rgb(85, 102, 119);">2011年12月 4日</abbr></a></p>
+
+
+</div>
+
+
+
+
+
+
+
+
+
+
+                                
+                                <div style="margin:0px;padding:0px;list-style-type:none;text-align:left;text-decoration:none;font-weight:normal;font-style:normal;border:none;color:rgb(17, 17, 17);">
+
+                                    
+                                        <p style="margin:0px;padding:0px;list-style-type:none;text-align:left;text-decoration:none;font-weight:normal;font-style:normal;border:none;color:rgb(17, 17, 17);font-size:1.6em;margin-top:1em;margin-left:0.8em;line-height:180%;"><a href="https://en.wikipedia.org/wiki/Inode" target="_blank" style="margin:0px;padding:0px;list-style-type:none;text-align:left;font-weight:normal;font-style:normal;border:none;text-decoration:underline;color:rgb(34, 52, 114);">inode</a>是一个重要概念，是理解Unix/Linux文件系统和硬盘储存的基础。</p>
+                                    
+
+
+                                    
+                                        <p style="margin:0px;padding:0px;list-style-type:none;text-align:left;text-decoration:none;font-weight:normal;font-style:normal;border:none;color:rgb(17, 17, 17);font-size:1.6em;margin-top:1em;margin-left:0.8em;line-height:180%;">我觉得，理解inode，不仅有助于提高系统操作水平，还有助于体会Unix设计哲学，即如何把底层的复杂性抽象成一个简单概念，从而大大简化用户接口。</p>
+
+<p style="margin:0px;padding:0px;list-style-type:none;text-align:left;text-decoration:none;font-weight:normal;font-style:normal;border:none;color:rgb(17, 17, 17);font-size:1.6em;margin-top:1em;margin-left:0.8em;line-height:180%;">下面就是我的inode学习笔记，尽量保持简单。</p>
+
+<p style="margin:0px;padding:0px;list-style-type:none;text-align:left;text-decoration:none;font-weight:normal;font-style:normal;border:none;color:rgb(17, 17, 17);font-size:1.6em;margin-top:1em;margin-left:0.8em;line-height:180%;">===================================</p>
+
+<p style="margin:0px;padding:0px;list-style-type:none;text-align:left;text-decoration:none;font-weight:normal;font-style:normal;border:none;color:rgb(17, 17, 17);font-size:1.6em;margin-top:1em;margin-left:0.8em;line-height:180%;"><strong style="font-weight:800;">理解inode</strong></p>
+
+<p style="margin:0px;padding:0px;list-style-type:none;text-align:left;text-decoration:none;font-weight:normal;font-style:normal;border:none;color:rgb(17, 17, 17);font-size:1.6em;margin-top:1em;margin-left:0.8em;line-height:180%;">作者：阮一峰</p>
+
+<p style="margin:0px;padding:0px;list-style-type:none;text-align:left;text-decoration:none;font-weight:normal;font-style:normal;border:none;color:rgb(17, 17, 17);font-size:1.6em;margin-top:1em;margin-left:0.8em;line-height:180%;"><div class="media-placeholder">[图片/附件]</div></en-media></p>
+
+<p style="margin:0px;padding:0px;list-style-type:none;text-align:left;text-decoration:none;font-weight:normal;font-style:normal;border:none;color:rgb(17, 17, 17);font-size:1.6em;margin-top:1em;margin-left:0.8em;line-height:180%;"><strong style="font-weight:800;">一、inode是什么？</strong></p>
+
+<p style="margin:0px;padding:0px;list-style-type:none;text-align:left;text-decoration:none;font-weight:normal;font-style:normal;border:none;color:rgb(17, 17, 17);font-size:1.6em;margin-top:1em;margin-left:0.8em;line-height:180%;">理解inode，要从文件储存说起。</p>
+
+<p style="margin:0px;padding:0px;list-style-type:none;text-align:left;text-decoration:none;font-weight:normal;font-style:normal;border:none;color:rgb(17, 17, 17);font-size:1.6em;margin-top:1em;margin-left:0.8em;line-height:180%;">文件储存在硬盘上，硬盘的最小存储单位叫做"扇区"（Sector）。每个扇区储存512字节（相当于0.5KB）。</p>
+
+<p style="margin:0px;padding:0px;list-style-type:none;text-align:left;text-decoration:none;font-weight:normal;font-style:normal;border:none;color:rgb(17, 17, 17);font-size:1.6em;margin-top:1em;margin-left:0.8em;line-height:180%;">操作系统读取硬盘的时候，不会一个个扇区地读取，这样效率太低，而是一次性连续读取多个扇区，即一次性读取一个"块"（block）。这种由多个扇区组成的"块"，是文件存取的最小单位。"块"的大小，最常见的是4KB，即连续八个 sector组成一个 block。</p>
+
+<p style="margin:0px;padding:0px;list-style-type:none;text-align:left;text-decoration:none;font-weight:normal;font-style:normal;border:none;color:rgb(17, 17, 17);font-size:1.6em;margin-top:1em;margin-left:0.8em;line-height:180%;">文件数据都储存在"块"中，那么很显然，我们还必须找到一个地方储存文件的元信息，比如文件的创建者、文件的创建日期、文件的大小等等。这种储存文件元信息的区域就叫做inode，中文译名为"索引节点"。</p>
+
+<p style="margin:0px;padding:0px;list-style-type:none;text-align:left;text-decoration:none;font-weight:normal;font-style:normal;border:none;color:rgb(17, 17, 17);font-size:1.6em;margin-top:1em;margin-left:0.8em;line-height:180%;">每一个文件都有对应的inode，里面包含了与该文件有关的一些信息。</p>
+
+<p style="margin:0px;padding:0px;list-style-type:none;text-align:left;text-decoration:none;font-weight:normal;font-style:normal;border:none;color:rgb(17, 17, 17);font-size:1.6em;margin-top:1em;margin-left:0.8em;line-height:180%;"><strong style="font-weight:800;">二、inode的内容</strong></p>
+
+<p style="margin:0px;padding:0px;list-style-type:none;text-align:left;text-decoration:none;font-weight:normal;font-style:normal;border:none;color:rgb(17, 17, 17);font-size:1.6em;margin-top:1em;margin-left:0.8em;line-height:180%;">inode包含文件的元信息，具体来说有以下内容：</p>
+
+<div style="--en-blockquote:true;">
+
+<p style="margin:0px;padding:0px;list-style-type:none;text-align:left;text-decoration:none;font-weight:normal;font-style:normal;border:none;color:rgb(17, 17, 17);font-size:1.6em;margin-top:1em;margin-left:0.8em;line-height:180%;">　　* 文件的字节数</p>
+
+<p style="margin:0px;padding:0px;list-style-type:none;text-align:left;text-decoration:none;font-weight:normal;font-style:normal;border:none;color:rgb(17, 17, 17);font-size:1.6em;margin-top:1em;margin-left:0.8em;line-height:180%;">　　* 文件拥有者的User ID</p>
+
+<p style="margin:0px;padding:0px;list-style-type:none;text-align:left;text-decoration:none;font-weight:normal;font-style:normal;border:none;color:rgb(17, 17, 17);font-size:1.6em;margin-top:1em;margin-left:0.8em;line-height:180%;">　　* 文件的Group ID</p>
+
+<p style="margin:0px;padding:0px;list-style-type:none;text-align:left;text-decoration:none;font-weight:normal;font-style:normal;border:none;color:rgb(17, 17, 17);font-size:1.6em;margin-top:1em;margin-left:0.8em;line-height:180%;">　　* 文件的读、写、执行权限</p>
+
+<p style="margin:0px;padding:0px;list-style-type:none;text-align:left;text-decoration:none;font-weight:normal;font-style:normal;border:none;color:rgb(17, 17, 17);font-size:1.6em;margin-top:1em;margin-left:0.8em;line-height:180%;">　　* 文件的时间戳，共有三个：ctime指inode上一次变动的时间，mtime指文件内容上一次变动的时间，atime指文件上一次打开的时间。</p>
+
+<p style="margin:0px;padding:0px;list-style-type:none;text-align:left;text-decoration:none;font-weight:normal;font-style:normal;border:none;color:rgb(17, 17, 17);font-size:1.6em;margin-top:1em;margin-left:0.8em;line-height:180%;">　　* 链接数，即有多少文件名指向这个inode</p>
+
+<p style="margin:0px;padding:0px;list-style-type:none;text-align:left;text-decoration:none;font-weight:normal;font-style:normal;border:none;color:rgb(17, 17, 17);font-size:1.6em;margin-top:1em;margin-left:0.8em;line-height:180%;">　　* 文件数据block的位置</p>
+
+</div>
+
+<p style="margin:0px;padding:0px;list-style-type:none;text-align:left;text-decoration:none;font-weight:normal;font-style:normal;border:none;color:rgb(17, 17, 17);font-size:1.6em;margin-top:1em;margin-left:0.8em;line-height:180%;">可以用stat命令，查看某个文件的inode信息：</p>
+
+<div style="--en-blockquote:true;">
+
+<p style="margin:0px;padding:0px;list-style-type:none;text-align:left;text-decoration:none;font-weight:normal;font-style:normal;border:none;color:rgb(17, 17, 17);font-size:1.6em;margin-top:1em;margin-left:0.8em;line-height:180%;">　　stat example.txt</p>
+
+</div>
+
+<p style="margin:0px;padding:0px;list-style-type:none;text-align:left;text-decoration:none;font-weight:normal;font-style:normal;border:none;color:rgb(17, 17, 17);font-size:1.6em;margin-top:1em;margin-left:0.8em;line-height:180%;"><div class="media-placeholder">[图片/附件]</div></en-media></p>
+
+<p style="margin:0px;padding:0px;list-style-type:none;text-align:left;text-decoration:none;font-weight:normal;font-style:normal;border:none;color:rgb(17, 17, 17);font-size:1.6em;margin-top:1em;margin-left:0.8em;line-height:180%;">总之，除了文件名以外的所有文件信息，都存在inode之中。至于为什么没有文件名，下文会有详细解释。</p>
+
+<p style="margin:0px;padding:0px;list-style-type:none;text-align:left;text-decoration:none;font-weight:normal;font-style:normal;border:none;color:rgb(17, 17, 17);font-size:1.6em;margin-top:1em;margin-left:0.8em;line-height:180%;"><strong style="font-weight:800;">三、inode的大小</strong></p>
+
+<p style="margin:0px;padding:0px;list-style-type:none;text-align:left;text-decoration:none;font-weight:normal;font-style:normal;border:none;color:rgb(17, 17, 17);font-size:1.6em;margin-top:1em;margin-left:0.8em;line-height:180%;">inode也会消耗硬盘空间，所以硬盘格式化的时候，操作系统自动将硬盘分成两个区域。一个是数据区，存放文件数据；另一个是inode区（inode table），存放inode所包含的信息。</p>
+
+<p style="margin:0px;padding:0px;list-style-type:none;text-align:left;text-decoration:none;font-weight:normal;font-style:normal;border:none;color:rgb(17, 17, 17);font-size:1.6em;margin-top:1em;margin-left:0.8em;line-height:180%;">每个inode节点的大小，一般是128字节或256字节。inode节点的总数，在格式化时就给定，一般是每1KB或每2KB就设置一个inode。假定在一块1GB的硬盘中，每个inode节点的大小为128字节，每1KB就设置一个inode，那么inode table的大小就会达到128MB，占整块硬盘的12.8%。</p>
+
+<p style="margin:0px;padding:0px;list-style-type:none;text-align:left;text-decoration:none;font-weight:normal;font-style:normal;border:none;color:rgb(17, 17, 17);font-size:1.6em;margin-top:1em;margin-left:0.8em;line-height:180%;">查看每个硬盘分区的inode总数和已经使用的数量，可以使用df命令。</p>
+
+<div style="--en-blockquote:true;">
+
+<p style="margin:0px;padding:0px;list-style-type:none;text-align:left;text-decoration:none;font-weight:normal;font-style:normal;border:none;color:rgb(17, 17, 17);font-size:1.6em;margin-top:1em;margin-left:0.8em;line-height:180%;">　　df -i</p>
+
+</div>
+
+<p style="margin:0px;padding:0px;list-style-type:none;text-align:left;text-decoration:none;font-weight:normal;font-style:normal;border:none;color:rgb(17, 17, 17);font-size:1.6em;margin-top:1em;margin-left:0.8em;line-height:180%;"><div class="media-placeholder">[图片/附件]</div></en-media></p>
+
+<p style="margin:0px;padding:0px;list-style-type:none;text-align:left;text-decoration:none;font-weight:normal;font-style:normal;border:none;color:rgb(17, 17, 17);font-size:1.6em;margin-top:1em;margin-left:0.8em;line-height:180%;">查看每个inode节点的大小，可以用如下命令：</p>
+
+<div style="--en-blockquote:true;">
+
+<p style="margin:0px;padding:0px;list-style-type:none;text-align:left;text-decoration:none;font-weight:normal;font-style:normal;border:none;color:rgb(17, 17, 17);font-size:1.6em;margin-top:1em;margin-left:0.8em;line-height:180%;">　　sudo dumpe2fs -h /dev/hda | grep "Inode size"</p>
+
+</div>
+
+<p style="margin:0px;padding:0px;list-style-type:none;text-align:left;text-decoration:none;font-weight:normal;font-style:normal;border:none;color:rgb(17, 17, 17);font-size:1.6em;margin-top:1em;margin-left:0.8em;line-height:180%;"><div class="media-placeholder">[图片/附件]</div></en-media></p>
+
+<p style="margin:0px;padding:0px;list-style-type:none;text-align:left;text-decoration:none;font-weight:normal;font-style:normal;border:none;color:rgb(17, 17, 17);font-size:1.6em;margin-top:1em;margin-left:0.8em;line-height:180%;">由于每个文件都必须有一个inode，因此有可能发生inode已经用光，但是硬盘还未存满的情况。这时，就无法在硬盘上创建新文件。</p>
+
+<p style="margin:0px;padding:0px;list-style-type:none;text-align:left;text-decoration:none;font-weight:normal;font-style:normal;border:none;color:rgb(17, 17, 17);font-size:1.6em;margin-top:1em;margin-left:0.8em;line-height:180%;"><strong style="font-weight:800;">四、inode号码</strong></p>
+
+<p style="margin:0px;padding:0px;list-style-type:none;text-align:left;text-decoration:none;font-weight:normal;font-style:normal;border:none;color:rgb(17, 17, 17);font-size:1.6em;margin-top:1em;margin-left:0.8em;line-height:180%;">每个inode都有一个号码，操作系统用inode号码来识别不同的文件。</p>
+
+<p style="margin:0px;padding:0px;list-style-type:none;text-align:left;text-decoration:none;font-weight:normal;font-style:normal;border:none;color:rgb(17, 17, 17);font-size:1.6em;margin-top:1em;margin-left:0.8em;line-height:180%;">这里值得重复一遍，Unix/Linux系统内部不使用文件名，而使用inode号码来识别文件。对于系统来说，文件名只是inode号码便于识别的别称或者绰号。</p>
+
+<p style="margin:0px;padding:0px;list-style-type:none;text-align:left;text-decoration:none;font-weight:normal;font-style:normal;border:none;color:rgb(17, 17, 17);font-size:1.6em;margin-top:1em;margin-left:0.8em;line-height:180%;">表面上，用户通过文件名，打开文件。实际上，系统内部这个过程分成三步：首先，系统找到这个文件名对应的inode号码；其次，通过inode号码，获取inode信息；最后，根据inode信息，找到文件数据所在的block，读出数据。</p>
+
+<p style="margin:0px;padding:0px;list-style-type:none;text-align:left;text-decoration:none;font-weight:normal;font-style:normal;border:none;color:rgb(17, 17, 17);font-size:1.6em;margin-top:1em;margin-left:0.8em;line-height:180%;">使用ls -i命令，可以看到文件名对应的inode号码：</p>
+
+<div style="--en-blockquote:true;">
+
+<p style="margin:0px;padding:0px;list-style-type:none;text-align:left;text-decoration:none;font-weight:normal;font-style:normal;border:none;color:rgb(17, 17, 17);font-size:1.6em;margin-top:1em;margin-left:0.8em;line-height:180%;">　　ls -i example.txt</p>
+
+</div>
+
+<p style="margin:0px;padding:0px;list-style-type:none;text-align:left;text-decoration:none;font-weight:normal;font-style:normal;border:none;color:rgb(17, 17, 17);font-size:1.6em;margin-top:1em;margin-left:0.8em;line-height:180%;"><div class="media-placeholder">[图片/附件]</div></en-media></p>
+
+<p style="margin:0px;padding:0px;list-style-type:none;text-align:left;text-decoration:none;font-weight:normal;font-style:normal;border:none;color:rgb(17, 17, 17);font-size:1.6em;margin-top:1em;margin-left:0.8em;line-height:180%;"><strong style="font-weight:800;">五、目录文件</strong></p>
+
+<p style="margin:0px;padding:0px;list-style-type:none;text-align:left;text-decoration:none;font-weight:normal;font-style:normal;border:none;color:rgb(17, 17, 17);font-size:1.6em;margin-top:1em;margin-left:0.8em;line-height:180%;">Unix/Linux系统中，目录（directory）也是一种文件。打开目录，实际上就是打开目录文件。</p>
+
+<p style="margin:0px;padding:0px;list-style-type:none;text-align:left;text-decoration:none;font-weight:normal;font-style:normal;border:none;color:rgb(17, 17, 17);font-size:1.6em;margin-top:1em;margin-left:0.8em;line-height:180%;">目录文件的结构非常简单，就是一系列目录项（dirent）的列表。每个目录项，由两部分组成：所包含文件的文件名，以及该文件名对应的inode号码。</p>
+
+<p style="margin:0px;padding:0px;list-style-type:none;text-align:left;text-decoration:none;font-weight:normal;font-style:normal;border:none;color:rgb(17, 17, 17);font-size:1.6em;margin-top:1em;margin-left:0.8em;line-height:180%;">ls命令只列出目录文件中的所有文件名：</p>
+
+<div style="--en-blockquote:true;">
+
+<p style="margin:0px;padding:0px;list-style-type:none;text-align:left;text-decoration:none;font-weight:normal;font-style:normal;border:none;color:rgb(17, 17, 17);font-size:1.6em;margin-top:1em;margin-left:0.8em;line-height:180%;">　　ls /etc</p>
+
+</div>
+
+<p style="margin:0px;padding:0px;list-style-type:none;text-align:left;text-decoration:none;font-weight:normal;font-style:normal;border:none;color:rgb(17, 17, 17);font-size:1.6em;margin-top:1em;margin-left:0.8em;line-height:180%;"><div class="media-placeholder">[图片/附件]</div></en-media></p>
+
+<p style="margin:0px;padding:0px;list-style-type:none;text-align:left;text-decoration:none;font-weight:normal;font-style:normal;border:none;color:rgb(17, 17, 17);font-size:1.6em;margin-top:1em;margin-left:0.8em;line-height:180%;">ls -i命令列出整个目录文件，即文件名和inode号码：</p>
+
+<div style="--en-blockquote:true;">
+
+<p style="margin:0px;padding:0px;list-style-type:none;text-align:left;text-decoration:none;font-weight:normal;font-style:normal;border:none;color:rgb(17, 17, 17);font-size:1.6em;margin-top:1em;margin-left:0.8em;line-height:180%;">　　ls -i /etc</p>
+
+</div>
+
+<p style="margin:0px;padding:0px;list-style-type:none;text-align:left;text-decoration:none;font-weight:normal;font-style:normal;border:none;color:rgb(17, 17, 17);font-size:1.6em;margin-top:1em;margin-left:0.8em;line-height:180%;"><div class="media-placeholder">[图片/附件]</div></en-media></p>
+
+<p style="margin:0px;padding:0px;list-style-type:none;text-align:left;text-decoration:none;font-weight:normal;font-style:normal;border:none;color:rgb(17, 17, 17);font-size:1.6em;margin-top:1em;margin-left:0.8em;line-height:180%;">如果要查看文件的详细信息，就必须根据inode号码，访问inode节点，读取信息。ls -l命令列出文件的详细信息。</p>
+
+<div style="--en-blockquote:true;">
+
+<p style="margin:0px;padding:0px;list-style-type:none;text-align:left;text-decoration:none;font-weight:normal;font-style:normal;border:none;color:rgb(17, 17, 17);font-size:1.6em;margin-top:1em;margin-left:0.8em;line-height:180%;">　　ls -l /etc</p>
+
+</div>
+
+<p style="margin:0px;padding:0px;list-style-type:none;text-align:left;text-decoration:none;font-weight:normal;font-style:normal;border:none;color:rgb(17, 17, 17);font-size:1.6em;margin-top:1em;margin-left:0.8em;line-height:180%;"><div class="media-placeholder">[图片/附件]</div></en-media></p>
+
+<p style="margin:0px;padding:0px;list-style-type:none;text-align:left;text-decoration:none;font-weight:normal;font-style:normal;border:none;color:rgb(17, 17, 17);font-size:1.6em;margin-top:1em;margin-left:0.8em;line-height:180%;">理解了上面这些知识，就能理解目录的权限。目录文件的读权限（r）和写权限（w），都是针对目录文件本身。由于目录文件内只有文件名和inode号码，所以如果只有读权限，只能获取文件名，无法获取其他信息，因为其他信息都储存在inode节点中，而读取inode节点内的信息需要目录文件的执行权限（x）。</p>
+
+<p style="margin:0px;padding:0px;list-style-type:none;text-align:left;text-decoration:none;font-weight:normal;font-style:normal;border:none;color:rgb(17, 17, 17);font-size:1.6em;margin-top:1em;margin-left:0.8em;line-height:180%;"><strong style="font-weight:800;">六、硬链接</strong></p>
+
+<p style="margin:0px;padding:0px;list-style-type:none;text-align:left;text-decoration:none;font-weight:normal;font-style:normal;border:none;color:rgb(17, 17, 17);font-size:1.6em;margin-top:1em;margin-left:0.8em;line-height:180%;">一般情况下，文件名和inode号码是"一一对应"关系，每个inode号码对应一个文件名。但是，Unix/Linux系统允许，多个文件名指向同一个inode号码。</p>
+
+<p style="margin:0px;padding:0px;list-style-type:none;text-align:left;text-decoration:none;font-weight:normal;font-style:normal;border:none;color:rgb(17, 17, 17);font-size:1.6em;margin-top:1em;margin-left:0.8em;line-height:180%;">这意味着，可以用不同的文件名访问同样的内容；对文件内容进行修改，会影响到所有文件名；但是，删除一个文件名，不影响另一个文件名的访问。这种情况就被称为"硬链接"（hard link）。</p>
+
+<p style="margin:0px;padding:0px;list-style-type:none;text-align:left;text-decoration:none;font-weight:normal;font-style:normal;border:none;color:rgb(17, 17, 17);font-size:1.6em;margin-top:1em;margin-left:0.8em;line-height:180%;">ln命令可以创建硬链接：</p>
+
+<div style="--en-blockquote:true;">
+
+<p style="margin:0px;padding:0px;list-style-type:none;text-align:left;text-decoration:none;font-weight:normal;font-style:normal;border:none;color:rgb(17, 17, 17);font-size:1.6em;margin-top:1em;margin-left:0.8em;line-height:180%;">　　ln 源文件 目标文件</p>
+
+</div>
+
+<p style="margin:0px;padding:0px;list-style-type:none;text-align:left;text-decoration:none;font-weight:normal;font-style:normal;border:none;color:rgb(17, 17, 17);font-size:1.6em;margin-top:1em;margin-left:0.8em;line-height:180%;"><div class="media-placeholder">[图片/附件]</div></en-media></p>
+
+<p style="margin:0px;padding:0px;list-style-type:none;text-align:left;text-decoration:none;font-weight:normal;font-style:normal;border:none;color:rgb(17, 17, 17);font-size:1.6em;margin-top:1em;margin-left:0.8em;line-height:180%;">运行上面这条命令以后，源文件与目标文件的inode号码相同，都指向同一个inode。inode信息中有一项叫做"链接数"，记录指向该inode的文件名总数，这时就会增加1。</p>
+
+<p style="margin:0px;padding:0px;list-style-type:none;text-align:left;text-decoration:none;font-weight:normal;font-style:normal;border:none;color:rgb(17, 17, 17);font-size:1.6em;margin-top:1em;margin-left:0.8em;line-height:180%;">反过来，删除一个文件名，就会使得inode节点中的"链接数"减1。当这个值减到0，表明没有文件名指向这个inode，系统就会回收这个inode号码，以及其所对应block区域。</p>
+
+<p style="margin:0px;padding:0px;list-style-type:none;text-align:left;text-decoration:none;font-weight:normal;font-style:normal;border:none;color:rgb(17, 17, 17);font-size:1.6em;margin-top:1em;margin-left:0.8em;line-height:180%;">这里顺便说一下目录文件的"链接数"。创建目录时，默认会生成两个目录项："."和".."。前者的inode号码就是当前目录的inode号码，等同于当前目录的"硬链接"；后者的inode号码就是当前目录的父目录的inode号码，等同于父目录的"硬链接"。所以，任何一个目录的"硬链接"总数，总是等于2加上它的子目录总数（含隐藏目录）。</p>
+
+<p style="margin:0px;padding:0px;list-style-type:none;text-align:left;text-decoration:none;font-weight:normal;font-style:normal;border:none;color:rgb(17, 17, 17);font-size:1.6em;margin-top:1em;margin-left:0.8em;line-height:180%;"><strong style="font-weight:800;">七、软链接</strong></p>
+
+<p style="margin:0px;padding:0px;list-style-type:none;text-align:left;text-decoration:none;font-weight:normal;font-style:normal;border:none;color:rgb(17, 17, 17);font-size:1.6em;margin-top:1em;margin-left:0.8em;line-height:180%;">除了硬链接以外，还有一种特殊情况。</p>
+
+<p style="margin:0px;padding:0px;list-style-type:none;text-align:left;text-decoration:none;font-weight:normal;font-style:normal;border:none;color:rgb(17, 17, 17);font-size:1.6em;margin-top:1em;margin-left:0.8em;line-height:180%;">文件A和文件B的inode号码虽然不一样，但是文件A的内容是文件B的路径。读取文件A时，系统会自动将访问者导向文件B。因此，无论打开哪一个文件，最终读取的都是文件B。这时，文件A就称为文件B的"软链接"（soft link）或者"符号链接（symbolic link）。</p>
+
+<p style="margin:0px;padding:0px;list-style-type:none;text-align:left;text-decoration:none;font-weight:normal;font-style:normal;border:none;color:rgb(17, 17, 17);font-size:1.6em;margin-top:1em;margin-left:0.8em;line-height:180%;">这意味着，文件A依赖于文件B而存在，如果删除了文件B，打开文件A就会报错："No such file or directory"。这是软链接与硬链接最大的不同：文件A指向文件B的文件名，而不是文件B的inode号码，文件B的inode"链接数"不会因此发生变化。</p>
+
+<p style="margin:0px;padding:0px;list-style-type:none;text-align:left;text-decoration:none;font-weight:normal;font-style:normal;border:none;color:rgb(17, 17, 17);font-size:1.6em;margin-top:1em;margin-left:0.8em;line-height:180%;">ln -s命令可以创建软链接。</p>
+
+<div style="--en-blockquote:true;">
+
+<p style="margin:0px;padding:0px;list-style-type:none;text-align:left;text-decoration:none;font-weight:normal;font-style:normal;border:none;color:rgb(17, 17, 17);font-size:1.6em;margin-top:1em;margin-left:0.8em;line-height:180%;">　　ln -s 源文文件或目录 目标文件或目录</p>
+
+</div>
+
+<p style="margin:0px;padding:0px;list-style-type:none;text-align:left;text-decoration:none;font-weight:normal;font-style:normal;border:none;color:rgb(17, 17, 17);font-size:1.6em;margin-top:1em;margin-left:0.8em;line-height:180%;"><div class="media-placeholder">[图片/附件]</div></en-media></p>
+
+<p style="margin:0px;padding:0px;list-style-type:none;text-align:left;text-decoration:none;font-weight:normal;font-style:normal;border:none;color:rgb(17, 17, 17);font-size:1.6em;margin-top:1em;margin-left:0.8em;line-height:180%;"><strong style="font-weight:800;">八、inode的特殊作用</strong></p>
+
+<p style="margin:0px;padding:0px;list-style-type:none;text-align:left;text-decoration:none;font-weight:normal;font-style:normal;border:none;color:rgb(17, 17, 17);font-size:1.6em;margin-top:1em;margin-left:0.8em;line-height:180%;">由于inode号码与文件名分离，这种机制导致了一些Unix/Linux系统特有的现象。</p>
+
+<p style="margin:0px;padding:0px;list-style-type:none;text-align:left;text-decoration:none;font-weight:normal;font-style:normal;border:none;color:rgb(17, 17, 17);font-size:1.6em;margin-top:1em;margin-left:0.8em;line-height:180%;">　　1.  有时，文件名包含特殊字符，无法正常删除。这时，直接删除inode节点，就能起到删除文件的作用。</p>
+
+<p style="margin:0px;padding:0px;list-style-type:none;text-align:left;text-decoration:none;font-weight:normal;font-style:normal;border:none;color:rgb(17, 17, 17);font-size:1.6em;margin-top:1em;margin-left:0.8em;line-height:180%;">　　2.  移动文件或重命名文件，只是改变文件名，不影响inode号码。</p>
+
+<p style="margin:0px;padding:0px;list-style-type:none;text-align:left;text-decoration:none;font-weight:normal;font-style:normal;border:none;color:rgb(17, 17, 17);font-size:1.6em;margin-top:1em;margin-left:0.8em;line-height:180%;">　　3.  打开一个文件以后，系统就以inode号码来识别这个文件，不再考虑文件名。因此，通常来说，系统无法从inode号码得知文件名。</p>
+
+<p style="margin:0px;padding:0px;list-style-type:none;text-align:left;text-decoration:none;font-weight:normal;font-style:normal;border:none;color:rgb(17, 17, 17);font-size:1.6em;margin-top:1em;margin-left:0.8em;line-height:180%;">第3点使得软件更新变得简单，可以在不关闭软件的情况下进行更新，不需要重启。因为系统通过inode号码，识别运行中的文件，不通过文件名。更新的时候，新版文件以同样的文件名，生成一个新的inode，不会影响到运行中的文件。等到下一次运行这个软件的时候，文件名就自动指向新版文件，旧版文件的inode则被回收。</p>
+
+<p style="margin:0px;padding:0px;list-style-type:none;text-align:left;text-decoration:none;font-weight:normal;font-style:normal;border:none;color:rgb(17, 17, 17);font-size:1.6em;margin-top:1em;margin-left:0.8em;line-height:180%;">（完）<br/>
+</p>
+                                    
+
+                                </div>
+    
+                                <div style="list-style-type:none;text-align:left;text-decoration:none;font-style:normal;border-radius:1em;box-shadow:rgb(238, 238, 238) 0px 1px 0px 0px inset;background:-webkit-gradient(linear, 0% 0%, 0% 100%, color-stop(0.05, rgb(170, 210, 240)), to(rgb(139, 193, 237))) rgb(170, 210, 240);text-shadow:rgb(238, 238, 238) 1px 1px 0px;margin:0px 0px 1em;font-weight:bold;color:rgb(252, 178, 151);margin-top:2em;background-color:rgb(222, 235, 247);padding:1.5em;border:1px solid rgb(211, 211, 211);">
+
+<h3 style="list-style-type:none;text-align:left;text-decoration:none;font-style:normal;border:none;letter-spacing:-0.03em;margin:0.4em 0px 0.2em;padding:0px 0px 0.2em;font-weight:bold;color:rgb(85, 102, 119);font-size:1.92em;border-bottom:1px solid gray;">文档信息</h3>
+<ul style="margin:0px;padding:0px;list-style-type:none;text-align:left;text-decoration:none;font-weight:normal;font-style:normal;border:none;color:rgb(17, 17, 17);padding-left:2em;padding-right:2em;">
+<li style="margin:0px;padding:0px;text-align:left;text-decoration:none;font-weight:normal;font-style:normal;border:none;font-size:1.6em;line-height:220%;list-style-type:square;color:rgb(85, 102, 119);">版权声明：自由转载-非商用-非衍生-保持署名（<a href="http://creativecommons.org/licenses/by-nc-nd/3.0/deed.zh" style="margin:0px;padding:0px;list-style-type:none;text-align:left;text-decoration:none;font-weight:normal;font-style:normal;border:none;color:rgb(85, 102, 119);">创意共享3.0许可证</a>）</li>
+<li style="margin:0px;padding:0px;text-align:left;text-decoration:none;font-weight:normal;font-style:normal;border:none;font-size:1.6em;line-height:220%;list-style-type:square;color:rgb(85, 102, 119);">发表日期： <abbr title="2011-12-04T13:30:12+08:00" style="margin:0px;padding:0px;list-style-type:none;text-align:left;text-decoration:none;font-weight:normal;font-style:normal;border:none;color:rgb(61, 61, 61);">2011年12月 4日</abbr></li>
+
+</ul>
+                                </div>
+</div></div></div></div></div></div></div></div></div></div></div></div>
+</div>
+<a class="back-link" href="../articles.html">← 返回笔记列表</a>
+</body>
+</html>

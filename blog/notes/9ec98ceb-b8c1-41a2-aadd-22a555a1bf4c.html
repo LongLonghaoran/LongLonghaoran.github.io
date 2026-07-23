@@ -1,0 +1,3025 @@
+<!DOCTYPE html>
+<html lang="zh-CN" data-theme="light">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>雅可比矩阵 - 维基百科，自由的百科全书 — 技术笔记</title>
+<style>
+:root { --bg:#fff; --text:#1a1a1a; --muted:#666; --border:#e0e0e0; --code-bg:#f5f5f5; --link:#0066cc; }
+@media (prefers-color-scheme: dark) { :root { --bg:#1a1a1a; --text:#e0e0e0; --muted:#999; --border:#333; --code-bg:#2a2a2a; --link:#66bbff; } }
+* { box-sizing:border-box; margin:0; padding:0; }
+body { font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Arial,sans-serif; line-height:1.7; color:var(--text); background:var(--bg); max-width:860px; margin:0 auto; padding:2rem 1.5rem; }
+.note-header { border-bottom:2px solid var(--border); padding-bottom:1rem; margin-bottom:2rem; }
+.note-title { font-size:1.6rem; font-weight:700; margin-bottom:0.3rem; }
+.note-meta { color:var(--muted); font-size:0.85rem; }
+.note-content { font-size:0.95rem; }
+.note-content h1 { font-size:1.4rem; margin:1.2rem 0 0.6rem; }
+.note-content h2 { font-size:1.2rem; margin:1rem 0 0.5rem; }
+.note-content h3 { font-size:1.05rem; margin:0.8rem 0 0.4rem; }
+.note-content p { margin:0.5rem 0; }
+.note-content ul,.note-content ol { margin:0.5rem 0 0.5rem 2rem; }
+.note-content li { margin:0.2rem 0; }
+.note-content pre { background:var(--code-bg); padding:1rem; border-radius:6px; overflow-x:auto; margin:0.8rem 0; font-size:0.85rem; }
+.note-content code { background:var(--code-bg); padding:0.1rem 0.3rem; border-radius:3px; font-size:0.88em; }
+.note-content pre code { background:none; padding:0; }
+.note-content blockquote { border-left:3px solid var(--border); padding-left:1rem; color:var(--muted); margin:0.8rem 0; }
+.note-content a { color:var(--link); }
+.note-content img { max-width:100%; height:auto; border-radius:6px; margin:0.5rem 0; }
+.note-content table { border-collapse:collapse; width:100%; margin:0.8rem 0; }
+.note-content th,.note-content td { border:1px solid var(--border); padding:0.5rem; }
+.note-content th { background:var(--code-bg); }
+.media-placeholder { background:var(--code-bg); padding:1rem; text-align:center; color:var(--muted); border-radius:6px; margin:0.5rem 0; font-size:0.85rem; }
+.encrypt-placeholder { background:#fff3cd; padding:0.5rem; text-align:center; color:#856404; border-radius:6px; margin:0.5rem 0; font-size:0.85rem; }
+.back-link { display:inline-block; margin-top:2rem; color:var(--link); text-decoration:none; font-size:0.85rem; }
+</style>
+</head>
+<body>
+<div class="note-header"><div class="note-title">雅可比矩阵 - 维基百科，自由的百科全书</div><div class="note-meta">笔记本：关于加密、解密、签名</div></div>
+<div class="note-content"><div style="--en-clipped-content:article">
+<div><br/></div><div style="font-size: 16px; display:block; min-width: 100%; position: relative;"> <div style="scroll-padding-top:75px;touch-action:manipulation;font-size:100%;font-family:sans-serif;"><div style="background-color:rgb(248, 249, 250);color:rgb(32, 33, 34);font-family:sans-serif;"><div style="min-width:31.25em;box-sizing:border-box;background-color:var(--background-color-base);"><div style="column-gap:24px;"><div><span style="direction:ltr;grid-template:&quot;titlebar-cx .&quot; min-content &quot;titlebar columnEnd&quot; min-content &quot;toolbar columnEnd&quot; min-content &quot;content columnEnd&quot; 1fr / minmax(0px, 59.25rem) min-content;display:grid;">
+				<div style="box-shadow:none;position:relative;display:flex;flex-wrap:nowrap;justify-content:flex-end;align-items:center;grid-area:titlebar;">
+					
+					<h1 lang="zh-Hans-CN" dir="ltr" style="color:rgb(0, 0, 0);margin:0px;overflow:hidden;border-bottom:1px solid rgb(162, 169, 177);font-weight:normal;font-family:&quot;Linux Libertine&quot;, Georgia, Times, &quot;Source Serif Pro&quot;, serif;line-height:1.375;font-size:1.8em;overflow-wrap:break-word;margin-bottom:0px;flex-grow:1;padding:0px;border:0px;border-bottom-color:rgb(162, 169, 177);"><span>雅可比矩阵</span><span style="user-select:none;font-size:small;font-weight:normal;margin-left:1em;vertical-align:baseline;line-height:0;font-family:sans-serif;unicode-bidi:isolate;"><span style="font-size:small;font-weight:normal;line-height:0;font-family:sans-serif;">​</span><span style="margin-right:0.25em;color:rgb(85, 85, 85);">[</span><a href="https://zh.wikipedia.org/w/index.php?title=%E9%9B%85%E5%8F%AF%E6%AF%94%E7%9F%A9%E9%98%B5&amp;action=edit&amp;section=0&amp;summary=/*%20top%20*/%20" title="编辑首段" style="text-decoration:none;color:rgb(51, 102, 204);background:none;white-space:nowrap;"><span>编辑</span></a><span style="margin-left:0.25em;color:rgb(85, 85, 85);">]</span></span></h1>
+							
+<div lang="zh-Hans-CN" dir="ltr" style="position:relative;float:right;box-sizing:border-box;flex-shrink:0;margin-right:-12px;">
+	
+	<span style="gap:4px;box-sizing:border-box;min-width:32px;min-height:32px;max-width:32em;margin:0px;border-width:1px;border-style:solid;border-radius:2px;padding-right:11px;padding-left:11px;font-family:inherit;font-size:inherit;font-weight:700;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;text-transform:none;transition-property:background-color, color, border-color, box-shadow;transition-duration:0.1s;text-decoration:none;justify-content:center;background-color:rgba(255, 255, 255, 0);border-color:transparent;user-select:none;opacity:1;color:rgb(51, 102, 204);display:inline-flex;align-items:center;"><span style="min-width:20px;min-height:20px;width:1.25em;height:1.25em;display:inline-block;vertical-align:text-bottom;font-size:14px;background-position:center center;background-repeat:no-repeat;background-size:max(1.25em, 20px);mask-size:max(1.25em, 20px);mask-repeat:no-repeat;mask-position:center center;background-image:url(https://zh.wikipedia.org/w/load.php?modules=skins.vector.icons&amp;amp;image=language&amp;amp;variant=progressive&amp;amp;format=original&amp;amp;lang=zh-cn&amp;amp;skin=vector-2022&amp;amp;version=1pjpi);margin-right:6px;"></span>
+
+<span style="font-size:0.875em;">31种语言</span>
+	<span style="font-family:inherit;font-size:inherit;font-weight:700;white-space:nowrap;text-transform:none;color:rgb(51, 102, 204);background:url(https://zh.wikipedia.org/w/skins/Vector/resources/skins.vector.styles/images/arrow-down.svg?f88ee) 100% 50% no-repeat;width:0.75rem;height:0.75rem;margin-left:7px;background-image:url(https://zh.wikipedia.org/w/skins/Vector/resources/skins.vector.styles/images/arrow-down-progressive.svg?5cd6d);opacity:1;"></span></span>
+	
+</div>
+<span style="clear:both;display:block;position:absolute;bottom:0px;left:0px;right:0px;height:1px;background-color:rgb(162, 169, 177);"></span></div>
+				<div style="grid-area:toolbar;">
+					<div style="display:flex;font-size:14px;box-shadow:rgb(200, 204, 209) 0px 1px;margin-bottom:1px;">
+						<div style="display:flex;margin-left:-8px;flex-grow:1;">
+							<div>
+								
+<div lang="zh-Hans-CN" dir="ltr" style="float:left;">
+	<div>
+		
+		<ul style="padding:0px;list-style-image:url(https://zh.wikipedia.org/w/skins/Vector/resources/skins.vector.styles/images/bullet-icon.svg?d4515);list-style:none;margin:0px;">
+			
+			<li style="white-space:nowrap;float:left;margin-bottom:0px;margin:0px 8px;"><a href="https://zh.wikipedia.org/wiki/%E9%9B%85%E5%8F%AF%E6%AF%94%E7%9F%A9%E9%98%B5" title="浏览条目正文[ctrl-option-c]" style="text-decoration:none;background:none;display:inline-flex;position:relative;cursor:pointer;font-weight:normal;border-bottom:2px solid;color:rgb(32, 33, 34);padding:12px 0px 7px;margin-bottom:-1px;"><span>条目</span></a></li><li style="white-space:nowrap;float:left;margin-bottom:0px;margin:0px 8px;"><a href="https://zh.wikipedia.org/wiki/Talk:%E9%9B%85%E5%8F%AF%E6%AF%94%E7%9F%A9%E9%98%B5" rel="discussion" title="关于此页面的讨论[ctrl-option-t]" style="text-decoration:none;background:none;color:rgb(51, 102, 204);display:inline-flex;position:relative;cursor:pointer;font-weight:normal;padding:12px 0px 7px;margin-bottom:-1px;"><span>讨论</span></a></li>
+		</ul>
+		
+	</div>
+</div>
+
+								
+<div lang="zh-Hans-CN" dir="ltr" style="position:relative;margin:0px 8px;float:left;margin-bottom:0px;">
+	
+	<span style="gap:4px;box-sizing:border-box;min-width:32px;min-height:32px;max-width:32em;margin:0px;border-radius:2px;font-family:inherit;overflow:hidden;text-overflow:ellipsis;text-transform:none;transition-property:background-color, color, border-color, box-shadow;transition-duration:0.1s;text-decoration:none;justify-content:center;color:rgb(32, 33, 34);white-space:nowrap;background-color:rgba(255, 255, 255, 0);position:relative;cursor:pointer;font-weight:normal;border:0px;font-size:inherit;padding:12px 0px 7px;margin-bottom:-1px;align-items:center;display:inline-flex;"><span>大陆简体</span>
+	<span style="font-family:inherit;font-size:inherit;font-weight:normal;white-space:nowrap;text-transform:none;color:rgb(32, 33, 34);cursor:pointer;background:url(https://zh.wikipedia.org/w/skins/Vector/resources/skins.vector.styles/images/arrow-down.svg?f88ee) 100% 50% no-repeat;width:0.75rem;height:0.75rem;margin-left:7px;"></span></span>
+	<div style="position:absolute;top:100%;left:-1px;opacity:0;height:0px;visibility:hidden;overflow:hidden auto;z-index:50;background-color:rgb(255, 255, 255);padding:16px;font-size:14px;box-shadow:rgba(0, 0, 0, 0.2) 0px 2px 6px -1px;transition-property:opacity;transition-duration:100ms;width:max-content;max-width:200px;max-height:75vh;">
+
+
+					
+<div lang="zh-Hans-CN" dir="ltr">
+	<div>
+		
+		<ul style="padding:0px;list-style-image:url(https://zh.wikipedia.org/w/skins/Vector/resources/skins.vector.styles/images/bullet-icon.svg?d4515);list-style:none;margin:0px;">
+			
+			<li style="margin-bottom:0.1em;padding:0px;"><a href="https://zh.wikipedia.org/zh-cn/%E9%9B%85%E5%8F%AF%E6%AF%94%E7%9F%A9%E9%98%B5" lang="zh-Hans-CN" hreflang="zh-Hans-CN" style="text-decoration:none;background:none;display:flex;align-items:center;padding:6px 0px;color:rgb(51, 102, 204);"><span>大陆简体</span></a></li><li style="margin-bottom:0.1em;padding:0px;"><a href="https://zh.wikipedia.org/zh-hk/%E9%9B%85%E5%8F%AF%E6%AF%94%E7%9F%A9%E9%98%B5" lang="zh-Hant-HK" hreflang="zh-Hant-HK" style="text-decoration:none;background:none;display:flex;align-items:center;padding:6px 0px;color:rgb(51, 102, 204);"><span>香港繁體</span></a></li><li style="margin-bottom:0.1em;padding:0px;"><a href="https://zh.wikipedia.org/zh-mo/%E9%9B%85%E5%8F%AF%E6%AF%94%E7%9F%A9%E9%98%B5" lang="zh-Hant-MO" hreflang="zh-Hant-MO" style="text-decoration:none;background:none;display:flex;align-items:center;padding:6px 0px;color:rgb(51, 102, 204);"><span>澳門繁體</span></a></li><li style="margin-bottom:0.1em;padding:0px;"><a href="https://zh.wikipedia.org/zh-my/%E9%9B%85%E5%8F%AF%E6%AF%94%E7%9F%A9%E9%98%B5" lang="zh-Hans-MY" hreflang="zh-Hans-MY" style="text-decoration:none;background:none;display:flex;align-items:center;padding:6px 0px;color:rgb(51, 102, 204);"><span>大马简体</span></a></li><li style="margin-bottom:0.1em;padding:0px;"><a href="https://zh.wikipedia.org/zh-sg/%E9%9B%85%E5%8F%AF%E6%AF%94%E7%9F%A9%E9%98%B5" lang="zh-Hans-SG" hreflang="zh-Hans-SG" style="text-decoration:none;background:none;display:flex;align-items:center;padding:6px 0px;color:rgb(51, 102, 204);"><span>新加坡简体</span></a></li><li style="margin-bottom:0.1em;padding:0px;"><a href="https://zh.wikipedia.org/zh-tw/%E9%9B%85%E5%8F%AF%E6%AF%94%E7%9F%A9%E9%98%B5" lang="zh-Hant-TW" hreflang="zh-Hant-TW" style="text-decoration:none;background:none;display:flex;align-items:center;padding:6px 0px;color:rgb(51, 102, 204);"><span>臺灣正體</span></a></li>
+		</ul>
+		
+	</div>
+</div>
+
+				
+	</div>
+</div>
+
+							</div>
+						</div>
+						<div style="display:flex;margin-right:-8px;">
+							<div>
+								
+<div lang="zh-Hans-CN" dir="ltr" style="float:left;display:block;">
+	<div>
+		
+		<ul style="padding:0px;list-style-image:url(https://zh.wikipedia.org/w/skins/Vector/resources/skins.vector.styles/images/bullet-icon.svg?d4515);list-style:none;margin:0px;">
+			
+			<li style="white-space:nowrap;float:left;margin-bottom:0px;margin:0px 8px;"><a href="https://zh.wikipedia.org/wiki/%E9%9B%85%E5%8F%AF%E6%AF%94%E7%9F%A9%E9%98%B5" style="text-decoration:none;background:none;display:inline-flex;position:relative;cursor:pointer;font-weight:normal;border-bottom:2px solid;color:rgb(32, 33, 34);padding:12px 0px 7px;margin-bottom:-1px;"><span>阅读</span></a></li><li style="white-space:nowrap;float:left;margin-bottom:0px;margin:0px 8px;"><a href="https://zh.wikipedia.org/w/index.php?title=%E9%9B%85%E5%8F%AF%E6%AF%94%E7%9F%A9%E9%98%B5&amp;action=edit" title="编辑本页[ctrl-option-e]" style="text-decoration:none;background:none;color:rgb(51, 102, 204);display:inline-flex;position:relative;cursor:pointer;font-weight:normal;padding:12px 0px 7px;margin-bottom:-1px;"><span>编辑</span></a></li><li style="white-space:nowrap;float:left;margin-bottom:0px;margin:0px 8px;"><a href="https://zh.wikipedia.org/w/index.php?title=%E9%9B%85%E5%8F%AF%E6%AF%94%E7%9F%A9%E9%98%B5&amp;action=history" title="本页面的早前版本。[ctrl-option-h]" style="text-decoration:none;background:none;color:rgb(51, 102, 204);display:inline-flex;position:relative;cursor:pointer;font-weight:normal;padding:12px 0px 7px;margin-bottom:-1px;"><span>查看历史</span></a></li>
+		</ul>
+		
+	</div>
+</div>
+
+							</div>
+				
+							<div>
+								
+<div lang="zh-Hans-CN" dir="ltr" style="position:relative;margin:0px 8px;float:left;margin-bottom:0px;">
+	
+	<span style="gap:4px;box-sizing:border-box;min-width:32px;min-height:32px;max-width:32em;margin:0px;border-radius:2px;font-family:inherit;overflow:hidden;text-overflow:ellipsis;text-transform:none;transition-property:background-color, color, border-color, box-shadow;transition-duration:0.1s;text-decoration:none;justify-content:center;color:rgb(32, 33, 34);white-space:nowrap;background-color:rgba(255, 255, 255, 0);position:relative;cursor:pointer;font-weight:normal;border:0px;font-size:inherit;padding:12px 0px 7px;margin-bottom:-1px;align-items:center;display:inline-flex;"><span>工具</span>
+	<span style="font-family:inherit;font-size:inherit;font-weight:normal;white-space:nowrap;text-transform:none;color:rgb(32, 33, 34);cursor:pointer;background:url(https://zh.wikipedia.org/w/skins/Vector/resources/skins.vector.styles/images/arrow-down.svg?f88ee) 100% 50% no-repeat;width:0.75rem;height:0.75rem;margin-left:7px;"></span></span>
+	<div style="position:absolute;top:100%;opacity:0;height:0px;visibility:hidden;overflow:hidden auto;z-index:50;background-color:rgb(255, 255, 255);padding:16px;font-size:14px;box-shadow:rgba(0, 0, 0, 0.2) 0px 2px 6px -1px;transition-property:opacity;transition-duration:100ms;width:max-content;max-width:200px;max-height:75vh;right:0px;left:auto;">
+
+
+									<div>
+						
+<div style="font-size:14px;">
+	<div style="padding-bottom:6px;margin-bottom:6px;border-bottom:1px solid rgb(234, 236, 240);line-height:1.6;">
+	<div style="display:inline-block;vertical-align:middle;font-size:14px;padding:0px;border:0px;font-weight:bold;margin:0px 0.5em 0px 0px;">工具</div>
+	
+	
+</div>
+
+	
+
+
+<div lang="zh-Hans-CN" dir="ltr">
+	<div style="color:rgb(84, 89, 93);font-weight:normal;cursor:default;padding:6px 0px;margin:6px 0px;border-bottom:1px solid rgb(234, 236, 240);">
+		常规
+	</div>
+	<div>
+		
+		<ul style="padding:0px;list-style-image:url(https://zh.wikipedia.org/w/skins/Vector/resources/skins.vector.styles/images/bullet-icon.svg?d4515);list-style:none;margin:0px;">
+			
+			<li style="margin-bottom:0.1em;padding:0px;"><a href="https://zh.wikipedia.org/wiki/Special:%E9%93%BE%E5%85%A5%E9%A1%B5%E9%9D%A2/%E9%9B%85%E5%8F%AF%E6%AF%94%E7%9F%A9%E9%98%B5" title="列出所有与本页相链的页面[ctrl-option-j]" style="text-decoration:none;background:none;display:flex;align-items:center;padding:6px 0px;color:rgb(51, 102, 204);"><span>链入页面</span></a></li><li style="margin-bottom:0.1em;padding:0px;"><a href="https://zh.wikipedia.org/wiki/Special:%E9%93%BE%E5%87%BA%E6%9B%B4%E6%94%B9/%E9%9B%85%E5%8F%AF%E6%AF%94%E7%9F%A9%E9%98%B5" rel="nofollow" title="页面链出所有页面的更改[ctrl-option-k]" style="text-decoration:none;background:none;display:flex;align-items:center;padding:6px 0px;color:rgb(51, 102, 204);"><span>相关更改</span></a></li><li style="margin-bottom:0.1em;padding:0px;"><a href="https://zh.wikipedia.org/wiki/Project:%E4%B8%8A%E4%BC%A0" title="上传图像或多媒体文件[ctrl-option-u]" style="text-decoration:none;background:none;display:flex;align-items:center;padding:6px 0px;color:rgb(51, 102, 204);"><span>上传文件</span></a></li><li style="margin-bottom:0.1em;padding:0px;"><a href="https://zh.wikipedia.org/wiki/Special:%E7%89%B9%E6%AE%8A%E9%A1%B5%E9%9D%A2" title="全部特殊页面的列表[ctrl-option-q]" style="text-decoration:none;background:none;display:flex;align-items:center;padding:6px 0px;color:rgb(51, 102, 204);"><span>特殊页面</span></a></li><li style="margin-bottom:0.1em;padding:0px;"><a href="https://zh.wikipedia.org/w/index.php?title=%E9%9B%85%E5%8F%AF%E6%AF%94%E7%9F%A9%E9%98%B5&amp;oldid=77862649" title="此页面该修订版本的固定链接" style="text-decoration:none;background:none;display:flex;align-items:center;padding:6px 0px;color:rgb(51, 102, 204);"><span>固定链接</span></a></li><li style="margin-bottom:0.1em;padding:0px;"><a href="https://zh.wikipedia.org/w/index.php?title=%E9%9B%85%E5%8F%AF%E6%AF%94%E7%9F%A9%E9%98%B5&amp;action=info" title="关于此页面的更多信息" style="text-decoration:none;background:none;display:flex;align-items:center;padding:6px 0px;color:rgb(51, 102, 204);"><span>页面信息</span></a></li><li style="margin-bottom:0.1em;padding:0px;"><a href="https://zh.wikipedia.org/w/index.php?title=Special:%E5%BC%95%E7%94%A8%E6%AD%A4%E9%A1%B5%E9%9D%A2&amp;page=%E9%9B%85%E5%8F%AF%E6%AF%94%E7%9F%A9%E9%98%B5&amp;id=77862649&amp;wpFormIdentifier=titleform" title="关于如何引用本页的信息" style="text-decoration:none;background:none;display:flex;align-items:center;padding:6px 0px;color:rgb(51, 102, 204);"><span>引用本页</span></a></li><li style="margin-bottom:0.1em;padding:0px;"><a href="https://zh.wikipedia.org/w/index.php?title=Special:URL%E7%BC%A9%E7%9F%AD%E7%A8%8B%E5%BA%8F&amp;url=https%3A%2F%2Fzh.wikipedia.org%2Fzh-cn%2F%25E9%259B%2585%25E5%258F%25AF%25E6%25AF%2594%25E7%259F%25A9%25E9%2598%25B5" style="text-decoration:none;background:none;display:flex;align-items:center;padding:6px 0px;color:rgb(51, 102, 204);"><span>获取短URL</span></a></li><li style="margin-bottom:0.1em;padding:0px;"><a href="https://zh.wikipedia.org/w/index.php?title=Special:QrCode&amp;url=https%3A%2F%2Fzh.wikipedia.org%2Fzh-cn%2F%25E9%259B%2585%25E5%258F%25AF%25E6%25AF%2594%25E7%259F%25A9%25E9%2598%25B5" style="text-decoration:none;background:none;display:flex;align-items:center;padding:6px 0px;color:rgb(51, 102, 204);"><span>下载二维码</span></a></li><li style="margin-bottom:0.1em;padding:0px;"><a href="https://www.wikidata.org/wiki/Special:EntityPage/Q506041" title="链接到连接的数据仓库项目[ctrl-option-g]" style="text-decoration:none;background:none;display:flex;align-items:center;padding:6px 0px;color:rgb(51, 102, 204);"><span>维基数据项目</span></a></li>
+		<li style="margin-bottom:0.1em;padding:0px;"><a href="https://zh.wikipedia.org/zh-cn/%E9%9B%85%E5%8F%AF%E6%AF%94%E7%9F%A9%E9%98%B5#" title="展开当前页面上的所有可折叠元素" style="text-decoration:none;background:none;display:flex;align-items:center;padding:6px 0px;color:rgb(51, 102, 204);"><span>全部展开</span></a></li><li style="margin-bottom:0.1em;padding:0px;"><a href="https://www.wikidata.org/wiki/Special:EntityPage/Q506041#sitelinks-wikipedia" title="编辑跨语言链接" style="text-decoration:none;background:none;display:flex;align-items:center;padding:6px 0px;color:rgb(51, 102, 204);"><span>编辑跨语言链接</span></a></li></ul>
+		
+	</div>
+</div>
+
+<div lang="zh-Hans-CN" dir="ltr">
+	<div style="color:rgb(84, 89, 93);font-weight:normal;cursor:default;padding:6px 0px;margin:6px 0px;border-bottom:1px solid rgb(234, 236, 240);">
+		打印/导出
+	</div>
+	<div>
+		
+		<ul style="padding:0px;list-style-image:url(https://zh.wikipedia.org/w/skins/Vector/resources/skins.vector.styles/images/bullet-icon.svg?d4515);list-style:none;margin:0px;">
+			
+			<li style="margin-bottom:0.1em;padding:0px;"><a href="https://zh.wikipedia.org/w/index.php?title=Special:DownloadAsPdf&amp;page=%E9%9B%85%E5%8F%AF%E6%AF%94%E7%9F%A9%E9%98%B5&amp;action=show-download-screen" style="text-decoration:none;background:none;display:flex;align-items:center;padding:6px 0px;color:rgb(51, 102, 204);"><span>下载为PDF</span></a></li><li style="margin-bottom:0.1em;padding:0px;"><a href="#" rel="alternate" title="本页面的可打印版本[ctrl-option-p]" style="text-decoration:none;background:none;display:flex;align-items:center;padding:6px 0px;color:rgb(51, 102, 204);"><span>可打印版</span></a></li>
+		</ul>
+		
+	</div>
+</div>
+
+</div>
+
+									</div>
+				
+	</div>
+</div>
+
+							</div>
+						</div>
+					</div>
+				</div>
+				<div style="margin-top:44.8px;border-top:1px solid transparent;grid-area:columnEnd;overflow-anchor:none;">
+					<div style="overflow:hidden auto;position:sticky;top:24px;contain:paint;box-sizing:border-box;max-height:calc(-48px + 100vh);">
+						
+						
+					<span style="display:block;position:sticky;bottom:0px;left:0px;right:0px;height:16px;background-repeat:no-repeat;pointer-events:none;"></span></div>
+				</div>
+				<div style="position:relative;z-index:0;font-size:var(--font-size-medium);line-height:var(--line-height-medium);grid-area:content;">
+					<div style="overflow:hidden;">
+							<div style="z-index:1;font-size:0.875em;line-height:1.6;position:relative;float:right;display:flex;column-gap:8px;flex-wrap:wrap;margin-top:8px;">
+		</div>
+
+						<div style="margin-top:8px;font-size:14px;display:block;">维基百科，自由的百科全书</div>
+					</div>
+					<div lang="zh-Hans-CN" dir="ltr" style="font-size:14px;color:rgb(84, 89, 93);width:auto;margin:8px 0px 0px;"><div lang="zh-Hans-CN" dir="ltr"></div></div>
+					
+					
+					<div style="font-size:15.008px;margin-top:16px;"><div lang="zh-Hans-CN" dir="ltr"><table style="font-weight:inherit;font-style:inherit;font-variant:inherit;width:22em;float:right;clear:right;margin:0.5em 0px 1em 1em;background:rgb(248, 249, 250);border:1px solid rgb(170, 170, 170);padding:0.2em;text-align:center;line-height:1.4em;border-collapse:collapse;display:table;font-size:88%;"><tbody><tr><td style="padding:0.4em 0.4em 0px;line-height:1.2em;">系列条目</td></tr><tr><th style="font-size:145%;line-height:1.2em;padding:0.1em 0.4em;padding-bottom:0.25em;"><a href="https://zh.wikipedia.org/wiki/%E5%BE%AE%E7%A7%AF%E5%88%86%E5%AD%A6" title="微积分学" style="text-decoration:none;color:rgb(51, 102, 204);background:none;overflow-wrap:break-word;white-space:nowrap;"><span style="color:rgb(51, 102, 204);white-space:normal;font-size:0px;"> </span>微积分学</a></th></tr><tr><td style="padding:0.2em 0.4em 0.4em;"><span><a href="https://zh.wikipedia.org/wiki/File:Fundamental_Theorem_of_Calculus.svg" style="text-decoration:none;color:rgb(51, 102, 204);background:none;overflow-wrap:break-word;white-space:nowrap;"><span style="color:rgb(51, 102, 204);white-space:normal;font-size:0px;"> </span><div class="media-placeholder">[图片/附件]</div></en-media></a></span></td></tr><tr><td style="padding:0.15em 0.25em 0.3em;font-weight:normal;border-top:1px solid rgb(170, 170, 170);border-bottom:1px solid rgb(170, 170, 170);">
+<div>
+<ul style="list-style-image:url(https://zh.wikipedia.org/w/skins/Vector/resources/skins.vector.styles/images/bullet-icon.svg?d4515);margin:0px;padding:0px;line-height:inherit;list-style:none;"><li style="display:inline;margin:0px;margin-bottom:0px;"><a href="https://zh.wikipedia.org/wiki/%E5%87%BD%E6%95%B0" title="函数" style="text-decoration:none;color:rgb(51, 102, 204);background:none;overflow-wrap:break-word;white-space:nowrap;"><span style="color:rgb(51, 102, 204);white-space:normal;font-size:0px;"> </span>函数</a><span style="font-weight:bold;white-space:normal;"> · </span></li>
+<li style="display:inline;margin:0px;margin-bottom:0px;"><a href="https://zh.wikipedia.org/wiki/%E6%9E%81%E9%99%90_(%E6%95%B0%E5%AD%A6)" title="极限 (数学)" style="text-decoration:none;color:rgb(51, 102, 204);background:none;overflow-wrap:break-word;white-space:nowrap;"><span style="color:rgb(51, 102, 204);white-space:normal;font-size:0px;"> </span>极限论</a><span style="font-weight:bold;white-space:normal;"> · </span></li>
+<li style="display:inline;margin:0px;margin-bottom:0px;"><a href="https://zh.wikipedia.org/wiki/%E5%BE%AE%E5%88%86%E5%AD%A6" title="微分学" style="text-decoration:none;color:rgb(51, 102, 204);background:none;overflow-wrap:break-word;white-space:nowrap;"><span style="color:rgb(51, 102, 204);white-space:normal;font-size:0px;"> </span>微分学</a><span style="font-weight:bold;white-space:normal;"> · </span></li>
+<li style="display:inline;margin:0px;margin-bottom:0px;"><a href="https://zh.wikipedia.org/wiki/%E7%A7%AF%E5%88%86" title="积分" style="text-decoration:none;color:rgb(51, 102, 204);background:none;overflow-wrap:break-word;white-space:nowrap;"><span style="color:rgb(51, 102, 204);white-space:normal;font-size:0px;"> </span>积分</a><span style="font-weight:bold;white-space:normal;"></span></li></ul>
+</div><div>
+<ul style="list-style-image:url(https://zh.wikipedia.org/w/skins/Vector/resources/skins.vector.styles/images/bullet-icon.svg?d4515);margin:0px;padding:0px;line-height:inherit;list-style:none;"><li style="display:inline;margin:0px;margin-bottom:0px;"><a href="https://zh.wikipedia.org/wiki/%E5%BE%AE%E7%A7%AF%E5%88%86%E5%9F%BA%E6%9C%AC%E5%AE%9A%E7%90%86" title="微积分基本定理" style="text-decoration:none;color:rgb(51, 102, 204);background:none;overflow-wrap:break-word;white-space:nowrap;"><span style="color:rgb(51, 102, 204);white-space:normal;font-size:0px;"> </span>微积分基本定理</a><span style="font-weight:bold;white-space:normal;"> · </span></li>
+<li style="display:inline;margin:0px;margin-bottom:0px;"><span><span><a href="https://zh.wikipedia.org/w/index.php?title=%E8%8E%B1%E5%B8%83%E5%B0%BC%E5%85%B9-%E7%89%9B%E9%A1%BF%E5%BE%AE%E7%A7%AF%E5%88%86%E4%B9%8B%E4%BA%89&amp;action=edit&amp;redlink=1" style="text-decoration:none;background:none;overflow-wrap:break-word;white-space:nowrap;color:rgb(0, 122, 94);"><span style="color:rgb(0, 122, 94);white-space:normal;font-size:0px;"> </span>微积分发现权之争</a></span></span><span style="font-weight:bold;white-space:normal;"></span></li></ul>
+</div></td></tr><tr><td style="padding:0px 0.5em 0.4em;">
+<div><div style="padding:0px 0.4em;text-align:center;font-weight:bold;line-height:1.6em;font-size:105%;display:block;margin-top:0.65em;"><span style="font-size:110%;">基础概念（含极限论和级数论）</span></div></div></td>
+</tr><tr><td style="padding:0px 0.5em 0.4em;">
+<div><div style="padding:0px 0.4em;text-align:center;font-weight:bold;line-height:1.6em;font-size:105%;"><span style="font-size:110%;">一元微分</span></div></div></td>
+</tr><tr><td style="padding:0px 0.5em 0.4em;">
+<div><div style="padding:0px 0.4em;text-align:center;font-weight:bold;line-height:1.6em;font-size:105%;"><span style="font-size:110%;">一元积分</span></div></div></td>
+</tr><tr><td style="padding:0px 0.5em 0.4em;">
+<div><div style="padding:0px 0.4em;text-align:center;font-weight:bold;line-height:1.6em;font-size:105%;"><span style="font-size:110%;">多元微积分</span></div></div></td>
+</tr><tr><td style="padding:0px 0.5em 0.4em;">
+<div><div style="padding:0px 0.4em;text-align:center;font-weight:bold;line-height:1.6em;font-size:105%;"><span style="font-size:110%;">微分方程</span></div></div></td>
+</tr><tr><td style="padding:0px 0.5em 0.4em;">
+<div><div style="padding:0px 0.4em;text-align:center;font-weight:bold;line-height:1.6em;font-size:105%;"><span style="font-size:110%;">相关数学家</span></div></div></td>
+</tr><tr><td style="padding:0px 0.5em 0.4em;">
+<div><div style="padding:0px 0.4em;text-align:center;font-weight:bold;line-height:1.6em;font-size:105%;"><span style="font-size:110%;">历史名作</span></div></div></td>
+</tr><tr><td style="padding:0px 0.5em 0.4em;">
+<div><div style="padding:0px 0.4em;text-align:center;font-weight:bold;line-height:1.6em;font-size:105%;"><span style="font-size:110%;">分支学科</span></div></div></td>
+</tr><tr><td style="text-align:right;font-size:100%;padding:0px 0.4em 0.4em;line-height:1.6;"><div style="display:inline;font-weight:normal;"><ul style="list-style-image:url(https://zh.wikipedia.org/w/skins/Vector/resources/skins.vector.styles/images/bullet-icon.svg?d4515);margin:0px;padding:0px;list-style:none;line-height:inherit;display:inline-block;white-space:nowrap;"><li style="display:inline;margin:0px;word-spacing:-0.125em;margin-bottom:0px;"><a href="https://zh.wikipedia.org/wiki/Template:%E5%BE%AE%E7%A7%AF%E5%88%86%E5%AD%A6" title="Template:微积分学" style="text-decoration:none;color:rgb(51, 102, 204);background:none;overflow-wrap:break-word;white-space:nowrap;"><span style="color:rgb(51, 102, 204);white-space:normal;font-size:0px;"> </span><abbr title="查看该模板" style="font-variant:small-caps;border-bottom:none;cursor:inherit;text-decoration:inherit;">查</abbr></a><span style="word-spacing:-0.125em;font-weight:bold;white-space:normal;"> · </span></li><li style="display:inline;margin:0px;word-spacing:-0.125em;margin-bottom:0px;"><a href="https://zh.wikipedia.org/wiki/Template_talk:%E5%BE%AE%E7%A7%AF%E5%88%86%E5%AD%A6" title="Template talk:微积分学" style="text-decoration:none;color:rgb(51, 102, 204);background:none;overflow-wrap:break-word;white-space:nowrap;"><span style="color:rgb(51, 102, 204);white-space:normal;font-size:0px;"> </span><abbr title="讨论该模板" style="font-variant:small-caps;border-bottom:none;cursor:inherit;text-decoration:inherit;">论</abbr></a><span style="word-spacing:-0.125em;font-weight:bold;white-space:normal;"> · </span></li><li style="display:inline;margin:0px;word-spacing:-0.125em;margin-bottom:0px;"><a href="https://zh.wikipedia.org/w/index.php?title=Template:%E5%BE%AE%E7%A7%AF%E5%88%86%E5%AD%A6&amp;action=edit" style="text-decoration:none;overflow-wrap:break-word;white-space:nowrap;color:rgb(51, 102, 204);background-image:url(https://zh.wikipedia.org/w/skins/Vector/resources/skins.vector.styles/images/link-external-small-ltr-progressive.svg?fb64d);background-position:right center;background-repeat:no-repeat;background-size:0.857em;padding-right:1em;padding:0px;background:none;"><span style="color:rgb(51, 102, 204);white-space:normal;font-size:0px;"> </span><abbr title="编辑该模板" style="font-variant:small-caps;border-bottom:none;cursor:inherit;text-decoration:inherit;">编</abbr></a><span style="word-spacing:-0.125em;font-weight:bold;white-space:normal;"></span></li></ul></div></td></tr></tbody></table>
+<p style="padding-bottom:0.5em;margin:0.5em 0px 0px;">在<a href="https://zh.wikipedia.org/wiki/%E5%90%91%E9%87%8F%E5%88%86%E6%9E%90" title="向量分析" style="text-decoration:none;color:rgb(51, 102, 204);background:none;overflow-wrap:break-word;">向量分析</a>中，<b>雅可比矩阵</b>（也称作<b>Jacobi矩阵</b>，英语：<span lang="en"><b>Jacobian matrix</b></span>）是<a href="https://zh.wikipedia.org/wiki/%E5%87%BD%E6%95%B8" title="函数" style="text-decoration:none;color:rgb(51, 102, 204);background:none;overflow-wrap:break-word;">函数</a>的一阶<a href="https://zh.wikipedia.org/wiki/%E5%81%8F%E5%AF%BC%E6%95%B0" title="偏导数" style="text-decoration:none;color:rgb(51, 102, 204);background:none;overflow-wrap:break-word;">偏导数</a>以一定方式排列成的<a href="https://zh.wikipedia.org/wiki/%E7%9F%A9%E9%98%B5" title="矩阵" style="text-decoration:none;color:rgb(51, 102, 204);background:none;overflow-wrap:break-word;">矩阵</a>。
+</p><p style="padding-bottom:0.5em;margin:0.5em 0px 0px;">当其为方形矩阵时，其<a href="https://zh.wikipedia.org/wiki/%E8%A1%8C%E5%88%97%E5%BC%8F" title="行列式" style="text-decoration:none;color:rgb(51, 102, 204);background:none;overflow-wrap:break-word;">行列式</a>称为<b>雅可比行列式</b>（Jacobi determinant）。要注意的是，在英文中雅可比矩阵跟雅可比行列式都可称作<b>Jacobian</b>。<sup style="line-height:1;unicode-bidi:isolate;white-space:nowrap;font-weight:normal;font-style:normal;"><a href="https://zh.wikipedia.org/zh-cn/%E9%9B%85%E5%8F%AF%E6%AF%94%E7%9F%A9%E9%98%B5#cite_note-1" style="text-decoration:none;color:rgb(51, 102, 204);background:none;overflow-wrap:break-word;white-space:nowrap;">[1]</a></sup>
+</p><p style="padding-bottom:0.5em;margin:0.5em 0px 0px;">其重要性在于，如果函数  <span style="font-family:Times, serif;"><span style="white-space:nowrap;"><b>f</b> : ℝ<sup style="line-height:1;"><i>n</i></sup> → ℝ<sup style="line-height:1;"><i>m</i></sup></span></span> 在点 <span style="font-family:Times, serif;"><span style="white-space:nowrap;"><b>x</b></span></span> 可微的话，在点 <span style="font-family:Times, serif;"><span style="white-space:nowrap;"><b>x</b></span></span> 的雅可比矩阵即为该函数在该点的最佳线性逼近，也代表雅可比矩阵是单变数实数函数的微分在向量值多变数函数的推广，在这种情况下，雅可比矩阵也被称作函数 <span style="font-family:Times, serif;"><span style="white-space:nowrap;"><b>f</b></span></span> 在点 <span style="font-family:Times, serif;"><span style="white-space:nowrap;"><b>x</b></span></span> 的<u>微分</u>或者<u>导数</u>。
+</p><p style="padding-bottom:0.5em;margin:0.5em 0px 0px;">在<a href="https://zh.wikipedia.org/wiki/%E4%BB%A3%E6%95%B0%E5%87%A0%E4%BD%95" title="代数几何" style="text-decoration:none;color:rgb(51, 102, 204);background:none;overflow-wrap:break-word;">代数几何</a>中，<a href="https://zh.wikipedia.org/wiki/%E4%BB%A3%E6%95%B0%E6%9B%B2%E7%BA%BF" title="代数曲线" style="text-decoration:none;color:rgb(51, 102, 204);background:none;overflow-wrap:break-word;">代数曲线</a>的<i>雅可比行列式'</i>表示<span><span><a href="https://zh.wikipedia.org/w/index.php?title=%E9%9B%85%E5%8F%AF%E6%AF%94%E7%B0%87&amp;action=edit&amp;redlink=1" style="text-decoration:none;background:none;overflow-wrap:break-word;color:rgb(0, 122, 94);">雅可比簇</a></span></span>：伴随该曲线的一个<a href="https://zh.wikipedia.org/wiki/%E4%BB%A3%E6%95%B8%E7%BE%A4" title="代数群" style="text-decoration:none;color:rgb(51, 102, 204);background:none;overflow-wrap:break-word;">代数群</a>，曲线可以嵌入其中。
+</p><p style="padding-bottom:0.5em;margin:0.5em 0px 0px;">它们全部都以<a href="https://zh.wikipedia.org/wiki/%E6%99%AE%E9%AD%AF%E5%A3%AB" title="普鲁士" style="text-decoration:none;color:rgb(51, 102, 204);background:none;overflow-wrap:break-word;">普鲁士</a><a href="https://zh.wikipedia.org/wiki/%E6%95%B0%E5%AD%A6%E5%AE%B6" title="数学家" style="text-decoration:none;color:rgb(51, 102, 204);background:none;overflow-wrap:break-word;">数学家</a><a href="https://zh.wikipedia.org/wiki/%E5%8D%A1%E7%88%BE%C2%B7%E9%9B%85%E5%8F%AF%E6%AF%94" title="卡尔·雅可比" style="text-decoration:none;color:rgb(51, 102, 204);background:none;overflow-wrap:break-word;">卡尔·雅可比</a>命名。
+</p>
+
+<h2 style="color:rgb(0, 0, 0);padding-top:0.5em;padding-bottom:0.17em;overflow:hidden;border-bottom:1px solid rgb(162, 169, 177);font-weight:normal;font-family:&quot;Linux Libertine&quot;, Georgia, Times, &quot;Source Serif Pro&quot;, serif;line-height:1.375;font-size:1.5em;margin:0.25em 0px;"><span></span><span>雅可比矩阵</span><span style="user-select:none;font-size:small;font-weight:normal;vertical-align:baseline;line-height:0;font-family:sans-serif;unicode-bidi:isolate;margin-right:0px;margin-left:1em;"><span style="font-size:small;font-weight:normal;line-height:0;font-family:sans-serif;">​</span><span style="margin-right:0.25em;color:rgb(84, 89, 93);">[</span><a href="https://zh.wikipedia.org/w/index.php?title=%E9%9B%85%E5%8F%AF%E6%AF%94%E7%9F%A9%E9%98%B5&amp;action=edit&amp;section=1" title="编辑章节：雅可比矩阵" style="text-decoration:none;color:rgb(51, 102, 204);background:none;overflow-wrap:break-word;white-space:nowrap;"><span>编辑</span></a><span style="margin-left:0.25em;color:rgb(84, 89, 93);">]</span></span></h2>
+<p style="padding-bottom:0.5em;margin:0.5em 0px 0px;">假设某函数从 <span style="font-family:Times, serif;"><span style="white-space:nowrap;"><b>f</b> : ℝ<sup style="line-height:1;"><i>n</i></sup> → ℝ<sup style="line-height:1;"><i>m</i></sup></span></span>， 从 <span style="font-family:Times, serif;"><span style="white-space:nowrap;"><b>x</b> ∈ ℝ<sup style="line-height:1;"><i>n</i></sup></span></span> 映射到 向量 <span style="font-family:Times, serif;"><span style="white-space:nowrap;"><b>f</b>(<b>x</b>) ∈ ℝ<sup style="line-height:1;"><i>m</i></sup></span></span>， 其雅可比矩阵是一 <span style="font-family:Times, serif;"><span style="white-space:nowrap;"><i>m</i>×<i>n</i></span></span> 的矩阵，换句话讲也就是从 <span style="font-family:Times, serif;"><span style="white-space:nowrap;">ℝ<sup style="line-height:1;"><i>n</i></sup></span></span> 到 <span style="font-family:Times, serif;"><span style="white-space:nowrap;">ℝ<sup style="line-height:1;"><i>m</i></sup></span></span> 的线性映射，其重要意义在于它表现了一个多变数向量函数的最佳线性逼近。因此，雅可比矩阵类似于单变数函数的导数。
+</p><p style="padding-bottom:0.5em;margin:0.5em 0px 0px;">此函数 <span style="font-family:Times, serif;"><span style="white-space:nowrap;"><b>f</b></span></span> 的雅可比矩阵 <span style="font-family:Times, serif;"><span style="white-space:nowrap;"><b>J</b></span></span>  为 <span style="font-family:Times, serif;"><span style="white-space:nowrap;"><i>m</i>×<i>n</i></span></span> 的矩阵，一般由以下方式定义：
+</p>
+<dl style="margin-top:0.2em;margin-bottom:0.5em;"><dd style="margin-bottom:0.1em;margin-right:0px;margin-left:1.6em;"><span><span style="display:none;clip:rect(1px, 1px, 1px, 1px);overflow:hidden;position:absolute;width:1px;height:1px;opacity:0;"><span>
+  <span>
+    <span>
+      <span>
+        <span>
+          <span>J</span>
+        </span>
+        <span>=</span>
+        <span>
+          <span>
+            <span>[</span>
+            <span>
+              <span>
+                <span>
+                  <span>
+                    <span>
+                      <span>
+                        <span>
+                          <span>∂</span>
+                          <span>
+                            <span>f</span>
+                          </span>
+                        </span>
+                        <span>
+                          <span>∂</span>
+                          <span>
+                            <span>x</span>
+                            <span>
+                              <span>1</span>
+                            </span>
+                          </span>
+                        </span>
+                      </span>
+                    </span>
+                  </span>
+                </span>
+                <span>
+                  <span>⋯</span>
+                </span>
+                <span>
+                  <span>
+                    <span>
+                      <span>
+                        <span>
+                          <span>∂</span>
+                          <span>
+                            <span>f</span>
+                          </span>
+                        </span>
+                        <span>
+                          <span>∂</span>
+                          <span>
+                            <span>x</span>
+                            <span>
+                              <span>n</span>
+                            </span>
+                          </span>
+                        </span>
+                      </span>
+                    </span>
+                  </span>
+                </span>
+              </span>
+            </span>
+            <span>]</span>
+          </span>
+        </span>
+        <span>=</span>
+        <span>
+          <span>
+            <span>[</span>
+            <span>
+              <span>
+                <span>
+                  <span>
+                    <span>
+                      <span>
+                        <span>
+                          <span>∂</span>
+                          <span>
+                            <span>f</span>
+                            <span>
+                              <span>1</span>
+                            </span>
+                          </span>
+                        </span>
+                        <span>
+                          <span>∂</span>
+                          <span>
+                            <span>x</span>
+                            <span>
+                              <span>1</span>
+                            </span>
+                          </span>
+                        </span>
+                      </span>
+                    </span>
+                  </span>
+                </span>
+                <span>
+                  <span>⋯</span>
+                </span>
+                <span>
+                  <span>
+                    <span>
+                      <span>
+                        <span>
+                          <span>∂</span>
+                          <span>
+                            <span>f</span>
+                            <span>
+                              <span>1</span>
+                            </span>
+                          </span>
+                        </span>
+                        <span>
+                          <span>∂</span>
+                          <span>
+                            <span>x</span>
+                            <span>
+                              <span>n</span>
+                            </span>
+                          </span>
+                        </span>
+                      </span>
+                    </span>
+                  </span>
+                </span>
+              </span>
+              <span>
+                <span>
+                  <span>⋮</span>
+                </span>
+                <span>
+                  <span>⋱</span>
+                </span>
+                <span>
+                  <span>⋮</span>
+                </span>
+              </span>
+              <span>
+                <span>
+                  <span>
+                    <span>
+                      <span>
+                        <span>
+                          <span>∂</span>
+                          <span>
+                            <span>f</span>
+                            <span>
+                              <span>m</span>
+                            </span>
+                          </span>
+                        </span>
+                        <span>
+                          <span>∂</span>
+                          <span>
+                            <span>x</span>
+                            <span>
+                              <span>1</span>
+                            </span>
+                          </span>
+                        </span>
+                      </span>
+                    </span>
+                  </span>
+                </span>
+                <span>
+                  <span>⋯</span>
+                </span>
+                <span>
+                  <span>
+                    <span>
+                      <span>
+                        <span>
+                          <span>∂</span>
+                          <span>
+                            <span>f</span>
+                            <span>
+                              <span>m</span>
+                            </span>
+                          </span>
+                        </span>
+                        <span>
+                          <span>∂</span>
+                          <span>
+                            <span>x</span>
+                            <span>
+                              <span>n</span>
+                            </span>
+                          </span>
+                        </span>
+                      </span>
+                    </span>
+                  </span>
+                </span>
+              </span>
+            </span>
+            <span>]</span>
+          </span>
+        </span>
+      </span>
+    </span>
+    
+  </span>
+</span></span><div class="media-placeholder">[图片/附件]</div></en-media></span></dd></dl>
+<p style="padding-bottom:0.5em;margin:0.5em 0px 0px;">矩阵的分量可表示成：
+</p>
+<dl style="margin-top:0.2em;margin-bottom:0.5em;"><dd style="margin-bottom:0.1em;margin-right:0px;margin-left:1.6em;"><span><span style="display:none;clip:rect(1px, 1px, 1px, 1px);overflow:hidden;position:absolute;width:1px;height:1px;opacity:0;"><span>
+  <span>
+    <span>
+      <span>
+        <span>
+          <span>
+            <span>J</span>
+          </span>
+          <span>
+            <span>i</span>
+            <span>j</span>
+          </span>
+        </span>
+        <span>=</span>
+        <span>
+          <span>
+            <span>
+              <span>∂</span>
+              <span>
+                <span>f</span>
+                <span>
+                  <span>i</span>
+                </span>
+              </span>
+            </span>
+            <span>
+              <span>∂</span>
+              <span>
+                <span>x</span>
+                <span>
+                  <span>j</span>
+                </span>
+              </span>
+            </span>
+          </span>
+        </span>
+      </span>
+    </span>
+    
+  </span>
+</span></span><div class="media-placeholder">[图片/附件]</div></en-media></span></dd></dl>
+<p style="padding-bottom:0.5em;margin:0.5em 0px 0px;">雅可比矩阵的其他常用符号还有：
+</p>
+<dl style="margin-top:0.2em;margin-bottom:0.5em;"><dd style="margin-bottom:0.1em;margin-right:0px;margin-left:1.6em;"><span><span style="display:none;clip:rect(1px, 1px, 1px, 1px);overflow:hidden;position:absolute;width:1px;height:1px;opacity:0;"><span>
+  <span>
+    <span>
+      <span>
+        <span>D</span>
+        <span>f</span>
+      </span>
+    </span>
+    
+  </span>
+</span></span><div class="media-placeholder">[图片/附件]</div></en-media></span>、 <span><span style="display:none;clip:rect(1px, 1px, 1px, 1px);overflow:hidden;position:absolute;width:1px;height:1px;opacity:0;"><span>
+  <span>
+    <span>
+      <span>
+        <span>
+          <span>D</span>
+        </span>
+        <span>
+          <span>f</span>
+        </span>
+      </span>
+    </span>
+    
+  </span>
+</span></span><div class="media-placeholder">[图片/附件]</div></en-media></span>、<span><span style="display:none;clip:rect(1px, 1px, 1px, 1px);overflow:hidden;position:absolute;width:1px;height:1px;opacity:0;"><span>
+  <span>
+    <span>
+      <span>
+        <span>
+          <span>
+            <span>J</span>
+          </span>
+          <span>
+            <span>
+              <span>f</span>
+            </span>
+          </span>
+        </span>
+        <span>(</span>
+        <span>
+          <span>x</span>
+          <span>
+            <span>1</span>
+          </span>
+        </span>
+        <span>,</span>
+        <span>…</span>
+        <span>,</span>
+        <span>
+          <span>x</span>
+          <span>
+            <span>n</span>
+          </span>
+        </span>
+        <span>)</span>
+      </span>
+    </span>
+    
+  </span>
+</span></span><div class="media-placeholder">[图片/附件]</div></en-media></span> 或者 <span><span style="display:none;clip:rect(1px, 1px, 1px, 1px);overflow:hidden;position:absolute;width:1px;height:1px;opacity:0;"><span>
+  <span>
+    <span>
+      <span>
+        <span>
+          <span>
+            <span>
+              <span>∂</span>
+              <span>(</span>
+              <span>
+                <span>f</span>
+                <span>
+                  <span>1</span>
+                </span>
+              </span>
+              <span>,</span>
+              <span>…</span>
+              <span>,</span>
+              <span>
+                <span>f</span>
+                <span>
+                  <span>m</span>
+                </span>
+              </span>
+              <span>)</span>
+            </span>
+            <span>
+              <span>∂</span>
+              <span>(</span>
+              <span>
+                <span>x</span>
+                <span>
+                  <span>1</span>
+                </span>
+              </span>
+              <span>,</span>
+              <span>…</span>
+              <span>,</span>
+              <span>
+                <span>x</span>
+                <span>
+                  <span>n</span>
+                </span>
+              </span>
+              <span>)</span>
+            </span>
+          </span>
+        </span>
+      </span>
+    </span>
+    
+  </span>
+</span></span><div class="media-placeholder">[图片/附件]</div></en-media></span></dd></dl>
+<p style="padding-bottom:0.5em;margin:0.5em 0px 0px;">此矩阵的第 <span><span style="display:none;clip:rect(1px, 1px, 1px, 1px);overflow:hidden;position:absolute;width:1px;height:1px;opacity:0;"><span>
+  <span>
+    <span>
+      <span>
+        <span>i</span>
+      </span>
+    </span>
+    
+  </span>
+</span></span><div class="media-placeholder">[图片/附件]</div></en-media></span>行是由函数 <span><span style="display:none;clip:rect(1px, 1px, 1px, 1px);overflow:hidden;position:absolute;width:1px;height:1px;opacity:0;"><span>
+  <span>
+    <span>
+      <span>
+        <span>
+          <span>f</span>
+          <span>
+            <span>i</span>
+          </span>
+        </span>
+      </span>
+    </span>
+    
+  </span>
+</span></span><div class="media-placeholder">[图片/附件]</div></en-media></span> 的梯度函数所表示的，<span><span style="display:none;clip:rect(1px, 1px, 1px, 1px);overflow:hidden;position:absolute;width:1px;height:1px;opacity:0;"><span>
+  <span>
+    <span>
+      <span>
+        <span>1</span>
+        <span>≤</span>
+        <span>i</span>
+        <span>≤</span>
+        <span>m</span>
+      </span>
+    </span>
+    
+  </span>
+</span></span><div class="media-placeholder">[图片/附件]</div></en-media></span> 。 
+</p><p style="padding-bottom:0.5em;margin:0.5em 0px 0px;">如果 <span><span style="display:none;clip:rect(1px, 1px, 1px, 1px);overflow:hidden;position:absolute;width:1px;height:1px;opacity:0;"><span>
+  <span>
+    <span>
+      <span>
+        <span>p</span>
+      </span>
+    </span>
+    
+  </span>
+</span></span><div class="media-placeholder">[图片/附件]</div></en-media></span>是<span><span style="display:none;clip:rect(1px, 1px, 1px, 1px);overflow:hidden;position:absolute;width:1px;height:1px;opacity:0;"><span>
+  <span>
+    <span>
+      <span>
+        <span>
+          <span>
+            <span>R</span>
+          </span>
+          <span>
+            <span>n</span>
+          </span>
+        </span>
+      </span>
+    </span>
+    
+  </span>
+</span></span><div class="media-placeholder">[图片/附件]</div></en-media></span> 中的一点，<span><span style="display:none;clip:rect(1px, 1px, 1px, 1px);overflow:hidden;position:absolute;width:1px;height:1px;opacity:0;"><span>
+  <span>
+    <span>
+      <span>
+        <span>f</span>
+      </span>
+    </span>
+    
+  </span>
+</span></span><div class="media-placeholder">[图片/附件]</div></en-media></span>在 <span><span style="display:none;clip:rect(1px, 1px, 1px, 1px);overflow:hidden;position:absolute;width:1px;height:1px;opacity:0;"><span>
+  <span>
+    <span>
+      <span>
+        <span>p</span>
+      </span>
+    </span>
+    
+  </span>
+</span></span><div class="media-placeholder">[图片/附件]</div></en-media></span>点可微分，根据<a href="https://zh.wikipedia.org/wiki/%E6%95%B8%E5%AD%B8%E5%88%86%E6%9E%90" title="数学分析" style="text-decoration:none;color:rgb(51, 102, 204);background:none;overflow-wrap:break-word;">数学分析</a>， <span><span style="display:none;clip:rect(1px, 1px, 1px, 1px);overflow:hidden;position:absolute;width:1px;height:1px;opacity:0;"><span>
+  <span>
+    <span>
+      <span>
+        <span>
+          <span>
+            <span>J</span>
+          </span>
+          <span>
+            <span>
+              <span>f</span>
+            </span>
+          </span>
+        </span>
+        <span>(</span>
+        <span>p</span>
+        <span>)</span>
+      </span>
+    </span>
+    
+  </span>
+</span></span><div class="media-placeholder">[图片/附件]</div></en-media></span>是在这点的<a href="https://zh.wikipedia.org/wiki/%E5%AF%BC%E6%95%B0" title="导数" style="text-decoration:none;color:rgb(51, 102, 204);background:none;overflow-wrap:break-word;">导数</a>。在此情况下，<span><span style="display:none;clip:rect(1px, 1px, 1px, 1px);overflow:hidden;position:absolute;width:1px;height:1px;opacity:0;"><span>
+  <span>
+    <span>
+      <span>
+        <span>
+          <span>
+            <span>J</span>
+          </span>
+          <span>
+            <span>
+              <span>f</span>
+            </span>
+          </span>
+        </span>
+        <span>(</span>
+        <span>p</span>
+        <span>)</span>
+      </span>
+    </span>
+    
+  </span>
+</span></span><div class="media-placeholder">[图片/附件]</div></en-media></span>这个线性映射即 <span><span style="display:none;clip:rect(1px, 1px, 1px, 1px);overflow:hidden;position:absolute;width:1px;height:1px;opacity:0;"><span>
+  <span>
+    <span>
+      <span>
+        <span>f</span>
+      </span>
+    </span>
+    
+  </span>
+</span></span><div class="media-placeholder">[图片/附件]</div></en-media></span> 在点  <span><span style="display:none;clip:rect(1px, 1px, 1px, 1px);overflow:hidden;position:absolute;width:1px;height:1px;opacity:0;"><span>
+  <span>
+    <span>
+      <span>
+        <span>p</span>
+      </span>
+    </span>
+    
+  </span>
+</span></span><div class="media-placeholder">[图片/附件]</div></en-media></span>附近的最优线性逼近，也就是说当 <span><span style="display:none;clip:rect(1px, 1px, 1px, 1px);overflow:hidden;position:absolute;width:1px;height:1px;opacity:0;"><span>
+  <span>
+    <span>
+      <span>
+        <span>x</span>
+      </span>
+    </span>
+    
+  </span>
+</span></span><div class="media-placeholder">[图片/附件]</div></en-media></span>足够靠近点  <span><span style="display:none;clip:rect(1px, 1px, 1px, 1px);overflow:hidden;position:absolute;width:1px;height:1px;opacity:0;"><span>
+  <span>
+    <span>
+      <span>
+        <span>p</span>
+      </span>
+    </span>
+    
+  </span>
+</span></span><div class="media-placeholder">[图片/附件]</div></en-media></span>时，我们有
+</p>
+<dl style="margin-top:0.2em;margin-bottom:0.5em;"><dd style="margin-bottom:0.1em;margin-right:0px;margin-left:1.6em;"><span><span style="display:none;clip:rect(1px, 1px, 1px, 1px);overflow:hidden;position:absolute;width:1px;height:1px;opacity:0;"><span>
+  <span>
+    <span>
+      <span>
+        <span>f</span>
+        <span>(</span>
+        <span>x</span>
+        <span>)</span>
+        <span>≈</span>
+        <span>f</span>
+        <span>(</span>
+        <span>p</span>
+        <span>)</span>
+        <span>+</span>
+        <span>
+          <span>
+            <span>J</span>
+          </span>
+          <span>
+            <span>
+              <span>f</span>
+            </span>
+          </span>
+        </span>
+        <span>(</span>
+        <span>p</span>
+        <span>)</span>
+        <span>⋅</span>
+        <span>(</span>
+        <span>x</span>
+        <span>−</span>
+        <span>p</span>
+        <span>)</span>
+      </span>
+    </span>
+    
+  </span>
+</span></span><div class="media-placeholder">[图片/附件]</div></en-media></span></dd></dl>
+<p style="padding-bottom:0.5em;margin:0.5em 0px 0px;">讲更详细点也就是：
+</p>
+<dl style="margin-top:0.2em;margin-bottom:0.5em;"><dd style="margin-bottom:0.1em;margin-right:0px;margin-left:1.6em;"><span><span style="display:none;clip:rect(1px, 1px, 1px, 1px);overflow:hidden;position:absolute;width:1px;height:1px;opacity:0;"><span>
+  <span>
+    <span>
+      <span>
+        <span>
+          <span>f</span>
+        </span>
+        <span>(</span>
+        <span>
+          <span>x</span>
+        </span>
+        <span>)</span>
+        <span>=</span>
+        <span>
+          <span>f</span>
+        </span>
+        <span>(</span>
+        <span>
+          <span>p</span>
+        </span>
+        <span>)</span>
+        <span>+</span>
+        <span>
+          <span>
+            <span>J</span>
+          </span>
+          <span>
+            <span>
+              <span>f</span>
+            </span>
+          </span>
+        </span>
+        <span>(</span>
+        <span>
+          <span>p</span>
+        </span>
+        <span>)</span>
+        <span>(</span>
+        <span>
+          <span>x</span>
+        </span>
+        <span>−</span>
+        <span>
+          <span>p</span>
+        </span>
+        <span>)</span>
+        <span>+</span>
+        <span>o</span>
+        <span>(</span>
+        <span>‖</span>
+        <span>
+          <span>x</span>
+        </span>
+        <span>−</span>
+        <span>
+          <span>p</span>
+        </span>
+        <span>‖</span>
+        <span>)</span>
+      </span>
+    </span>
+    
+  </span>
+</span></span><div class="media-placeholder">[图片/附件]</div></en-media></span></dd></dl>
+<p style="padding-bottom:0.5em;margin:0.5em 0px 0px;">其中，<span style="font-family:Times, serif;"><span style="white-space:nowrap;"><i>o</i></span></span> 代表<a href="https://zh.wikipedia.org/wiki/%E5%A4%A7O%E7%AC%A6%E5%8F%B7" title="大O符号" style="text-decoration:none;color:rgb(51, 102, 204);background:none;overflow-wrap:break-word;">小o符号</a>，<span style="font-family:Times, serif;"><span style="white-space:nowrap;">‖<b>x</b> − <b>p</b>‖</span></span> 为 <span style="font-family:Times, serif;"><span style="white-space:nowrap;"><b>x</b></span></span> 与 <span style="font-family:Times, serif;"><span style="white-space:nowrap;"><b>p</b></span></span> 之间的距离。
+</p>
+<h2 style="color:rgb(0, 0, 0);padding-top:0.5em;padding-bottom:0.17em;overflow:hidden;border-bottom:1px solid rgb(162, 169, 177);font-weight:normal;font-family:&quot;Linux Libertine&quot;, Georgia, Times, &quot;Source Serif Pro&quot;, serif;line-height:1.375;font-size:1.5em;margin:0.25em 0px;"><span></span><span>例子</span><span style="user-select:none;font-size:small;font-weight:normal;vertical-align:baseline;line-height:0;font-family:sans-serif;unicode-bidi:isolate;margin-right:0px;margin-left:1em;"><span style="font-size:small;font-weight:normal;line-height:0;font-family:sans-serif;">​</span><span style="margin-right:0.25em;color:rgb(84, 89, 93);">[</span><a href="https://zh.wikipedia.org/w/index.php?title=%E9%9B%85%E5%8F%AF%E6%AF%94%E7%9F%A9%E9%98%B5&amp;action=edit&amp;section=2" title="编辑章节：例子" style="text-decoration:none;color:rgb(51, 102, 204);background:none;overflow-wrap:break-word;white-space:nowrap;"><span>编辑</span></a><span style="margin-left:0.25em;color:rgb(84, 89, 93);">]</span></span></h2>
+<h3 style="color:rgb(0, 0, 0);padding-top:0.5em;overflow:hidden;line-height:1.6;padding-bottom:0px;margin:0.25em 0px;font-size:1.2em;font-weight:bold;"><span></span><span>例一</span><span style="user-select:none;font-size:small;font-weight:normal;vertical-align:baseline;line-height:0;font-family:sans-serif;unicode-bidi:isolate;margin-right:0px;margin-left:1em;"><span style="font-size:small;font-weight:normal;line-height:0;font-family:sans-serif;">​</span><span style="margin-right:0.25em;color:rgb(84, 89, 93);">[</span><a href="https://zh.wikipedia.org/w/index.php?title=%E9%9B%85%E5%8F%AF%E6%AF%94%E7%9F%A9%E9%98%B5&amp;action=edit&amp;section=3" title="编辑章节：例一" style="text-decoration:none;color:rgb(51, 102, 204);background:none;overflow-wrap:break-word;white-space:nowrap;"><span>编辑</span></a><span style="margin-left:0.25em;color:rgb(84, 89, 93);">]</span></span></h3>
+<p style="padding-bottom:0.5em;margin:0.5em 0px 0px;">由<a href="https://zh.wikipedia.org/wiki/%E7%90%83%E5%9D%90%E6%A0%87%E7%B3%BB" title="球坐标系" style="text-decoration:none;color:rgb(51, 102, 204);background:none;overflow-wrap:break-word;">球坐标系</a>到直角坐标系的转化由 <span style="font-family:Times, serif;"><span style="white-space:nowrap;"><b>F</b>: ℝ<sup style="line-height:1;">+</sup> × [0, <i>π</i>) × [0, 2<i>π</i>) → ℝ<sup style="line-height:1;">3</sup></span></span> 函数给出，其分量为：
+</p>
+<dl style="margin-top:0.2em;margin-bottom:0.5em;"><dd style="margin-bottom:0.1em;margin-right:0px;margin-left:1.6em;"><span><span style="display:none;clip:rect(1px, 1px, 1px, 1px);overflow:hidden;position:absolute;width:1px;height:1px;opacity:0;"><span>
+  <span>
+    <span>
+      <span>
+        <span>
+          <span>
+            <span>
+              <span>
+                <span>x</span>
+              </span>
+              <span>
+                <span></span>
+                <span>=</span>
+                <span>r</span>
+                <span>sin</span>
+                <span>⁡</span>
+                <span>θ</span>
+                <span>cos</span>
+                <span>⁡</span>
+                <span>φ</span>
+                <span>;</span>
+              </span>
+            </span>
+            <span>
+              <span>
+                <span>y</span>
+              </span>
+              <span>
+                <span></span>
+                <span>=</span>
+                <span>r</span>
+                <span>sin</span>
+                <span>⁡</span>
+                <span>θ</span>
+                <span>sin</span>
+                <span>⁡</span>
+                <span>φ</span>
+                <span>;</span>
+              </span>
+            </span>
+            <span>
+              <span>
+                <span>z</span>
+              </span>
+              <span>
+                <span></span>
+                <span>=</span>
+                <span>r</span>
+                <span>cos</span>
+                <span>⁡</span>
+                <span>θ</span>
+              </span>
+            </span>
+          </span>
+        </span>
+      </span>
+    </span>
+    
+  </span>
+</span></span><div class="media-placeholder">[图片/附件]</div></en-media></span></dd></dl>
+<p style="padding-bottom:0.5em;margin:0.5em 0px 0px;">此坐标变换的雅可比矩阵是
+</p>
+<dl style="margin-top:0.2em;margin-bottom:0.5em;"><dd style="margin-bottom:0.1em;margin-right:0px;margin-left:1.6em;"><span><span style="display:none;clip:rect(1px, 1px, 1px, 1px);overflow:hidden;position:absolute;width:1px;height:1px;opacity:0;"><span>
+  <span>
+    <span>
+      <span>
+        <span>
+          <span>
+            <span>J</span>
+          </span>
+          <span>
+            <span>
+              <span>F</span>
+            </span>
+          </span>
+        </span>
+        <span>(</span>
+        <span>r</span>
+        <span>,</span>
+        <span>θ</span>
+        <span>,</span>
+        <span>φ</span>
+        <span>)</span>
+        <span>=</span>
+        <span>
+          <span>
+            <span>[</span>
+            <span>
+              <span>
+                <span>
+                  <span>
+                    <span>
+                      <span>
+                        <span>
+                          <span>∂</span>
+                          <span>x</span>
+                        </span>
+                        <span>
+                          <span>∂</span>
+                          <span>r</span>
+                        </span>
+                      </span>
+                    </span>
+                  </span>
+                </span>
+                <span>
+                  <span>
+                    <span>
+                      <span>
+                        <span>
+                          <span>∂</span>
+                          <span>x</span>
+                        </span>
+                        <span>
+                          <span>∂</span>
+                          <span>θ</span>
+                        </span>
+                      </span>
+                    </span>
+                  </span>
+                </span>
+                <span>
+                  <span>
+                    <span>
+                      <span>
+                        <span>
+                          <span>∂</span>
+                          <span>x</span>
+                        </span>
+                        <span>
+                          <span>∂</span>
+                          <span>φ</span>
+                        </span>
+                      </span>
+                    </span>
+                  </span>
+                </span>
+              </span>
+              <span>
+                <span>
+                  <span>
+                    <span>
+                      <span>
+                        <span>
+                          <span>∂</span>
+                          <span>y</span>
+                        </span>
+                        <span>
+                          <span>∂</span>
+                          <span>r</span>
+                        </span>
+                      </span>
+                    </span>
+                  </span>
+                </span>
+                <span>
+                  <span>
+                    <span>
+                      <span>
+                        <span>
+                          <span>∂</span>
+                          <span>y</span>
+                        </span>
+                        <span>
+                          <span>∂</span>
+                          <span>θ</span>
+                        </span>
+                      </span>
+                    </span>
+                  </span>
+                </span>
+                <span>
+                  <span>
+                    <span>
+                      <span>
+                        <span>
+                          <span>∂</span>
+                          <span>y</span>
+                        </span>
+                        <span>
+                          <span>∂</span>
+                          <span>φ</span>
+                        </span>
+                      </span>
+                    </span>
+                  </span>
+                </span>
+              </span>
+              <span>
+                <span>
+                  <span>
+                    <span>
+                      <span>
+                        <span>
+                          <span>∂</span>
+                          <span>z</span>
+                        </span>
+                        <span>
+                          <span>∂</span>
+                          <span>r</span>
+                        </span>
+                      </span>
+                    </span>
+                  </span>
+                </span>
+                <span>
+                  <span>
+                    <span>
+                      <span>
+                        <span>
+                          <span>∂</span>
+                          <span>z</span>
+                        </span>
+                        <span>
+                          <span>∂</span>
+                          <span>θ</span>
+                        </span>
+                      </span>
+                    </span>
+                  </span>
+                </span>
+                <span>
+                  <span>
+                    <span>
+                      <span>
+                        <span>
+                          <span>∂</span>
+                          <span>z</span>
+                        </span>
+                        <span>
+                          <span>∂</span>
+                          <span>φ</span>
+                        </span>
+                      </span>
+                    </span>
+                  </span>
+                </span>
+              </span>
+            </span>
+            <span>]</span>
+          </span>
+        </span>
+        <span>=</span>
+        <span>
+          <span>
+            <span>[</span>
+            <span>
+              <span>
+                <span>
+                  <span>sin</span>
+                  <span>⁡</span>
+                  <span>θ</span>
+                  <span>cos</span>
+                  <span>⁡</span>
+                  <span>φ</span>
+                </span>
+                <span>
+                  <span>r</span>
+                  <span>cos</span>
+                  <span>⁡</span>
+                  <span>θ</span>
+                  <span>cos</span>
+                  <span>⁡</span>
+                  <span>φ</span>
+                </span>
+                <span>
+                  <span>−</span>
+                  <span>r</span>
+                  <span>sin</span>
+                  <span>⁡</span>
+                  <span>θ</span>
+                  <span>sin</span>
+                  <span>⁡</span>
+                  <span>φ</span>
+                </span>
+              </span>
+              <span>
+                <span>
+                  <span>sin</span>
+                  <span>⁡</span>
+                  <span>θ</span>
+                  <span>sin</span>
+                  <span>⁡</span>
+                  <span>φ</span>
+                </span>
+                <span>
+                  <span>r</span>
+                  <span>cos</span>
+                  <span>⁡</span>
+                  <span>θ</span>
+                  <span>sin</span>
+                  <span>⁡</span>
+                  <span>φ</span>
+                </span>
+                <span>
+                  <span>r</span>
+                  <span>sin</span>
+                  <span>⁡</span>
+                  <span>θ</span>
+                  <span>cos</span>
+                  <span>⁡</span>
+                  <span>φ</span>
+                </span>
+              </span>
+              <span>
+                <span>
+                  <span>cos</span>
+                  <span>⁡</span>
+                  <span>θ</span>
+                </span>
+                <span>
+                  <span>−</span>
+                  <span>r</span>
+                  <span>sin</span>
+                  <span>⁡</span>
+                  <span>θ</span>
+                </span>
+                <span>
+                  <span>0</span>
+                </span>
+              </span>
+            </span>
+            <span>]</span>
+          </span>
+        </span>
+      </span>
+    </span>
+    
+  </span>
+</span></span><div class="media-placeholder">[图片/附件]</div></en-media></span></dd></dl>
+<p style="padding-bottom:0.5em;margin:0.5em 0px 0px;">其雅可比行列式为 <span style="font-family:Times, serif;"><span style="white-space:nowrap;"><i>r</i><sup style="line-height:1;">2</sup> sin <i>θ</i></span></span>。以体积元变换为例，由于 <span style="font-family:Times, serif;"><span style="white-space:nowrap;">d<i>V</i> = d<i>x</i> d<i>y</i> d<i>z</i></span></span>，如果做变数变换，则其体积元（Volume element，<span style="font-family:Times, serif;"><span style="white-space:nowrap;">d<i>V</i></span></span>），会变成：<span style="font-family:Times, serif;"><span style="white-space:nowrap;">d<i>V</i> = <i>r</i><sup style="line-height:1;">2</sup> sin <i>θ</i> d<i>r</i> d<i>θ</i> d<i>φ</i></span></span>。
+</p>
+<h3 style="color:rgb(0, 0, 0);padding-top:0.5em;overflow:hidden;line-height:1.6;padding-bottom:0px;margin:0.25em 0px;font-size:1.2em;font-weight:bold;"><span></span><span>例二</span><span style="user-select:none;font-size:small;font-weight:normal;vertical-align:baseline;line-height:0;font-family:sans-serif;unicode-bidi:isolate;margin-right:0px;margin-left:1em;"><span style="font-size:small;font-weight:normal;line-height:0;font-family:sans-serif;">​</span><span style="margin-right:0.25em;color:rgb(84, 89, 93);">[</span><a href="https://zh.wikipedia.org/w/index.php?title=%E9%9B%85%E5%8F%AF%E6%AF%94%E7%9F%A9%E9%98%B5&amp;action=edit&amp;section=4" title="编辑章节：例二" style="text-decoration:none;color:rgb(51, 102, 204);background:none;overflow-wrap:break-word;white-space:nowrap;"><span>编辑</span></a><span style="margin-left:0.25em;color:rgb(84, 89, 93);">]</span></span></h3>
+<p style="padding-bottom:0.5em;margin:0.5em 0px 0px;"><span style="font-family:Times, serif;"><span style="white-space:nowrap;"><b>F</b> : ℝ<sup style="line-height:1;">3</sup> → ℝ<sup style="line-height:1;">4</sup></span></span>，其各分量为
+</p>
+<dl style="margin-top:0.2em;margin-bottom:0.5em;"><dd style="margin-bottom:0.1em;margin-right:0px;margin-left:1.6em;"><span><span style="display:none;clip:rect(1px, 1px, 1px, 1px);overflow:hidden;position:absolute;width:1px;height:1px;opacity:0;"><span>
+  <span>
+    <span>
+      <span>
+        <span>
+          <span>y</span>
+          <span>
+            <span>1</span>
+          </span>
+        </span>
+        <span>=</span>
+        <span>
+          <span>x</span>
+          <span>
+            <span>1</span>
+          </span>
+        </span>
+        <span></span>
+      </span>
+    </span>
+    
+  </span>
+</span></span><div class="media-placeholder">[图片/附件]</div></en-media></span></dd><dd style="margin-bottom:0.1em;margin-right:0px;margin-left:1.6em;"><span><span style="display:none;clip:rect(1px, 1px, 1px, 1px);overflow:hidden;position:absolute;width:1px;height:1px;opacity:0;"><span>
+  <span>
+    <span>
+      <span>
+        <span>
+          <span>y</span>
+          <span>
+            <span>2</span>
+          </span>
+        </span>
+        <span>=</span>
+        <span>5</span>
+        <span>
+          <span>x</span>
+          <span>
+            <span>3</span>
+          </span>
+        </span>
+        <span></span>
+      </span>
+    </span>
+    
+  </span>
+</span></span><div class="media-placeholder">[图片/附件]</div></en-media></span></dd><dd style="margin-bottom:0.1em;margin-right:0px;margin-left:1.6em;"><span><span style="display:none;clip:rect(1px, 1px, 1px, 1px);overflow:hidden;position:absolute;width:1px;height:1px;opacity:0;"><span>
+  <span>
+    <span>
+      <span>
+        <span>
+          <span>y</span>
+          <span>
+            <span>3</span>
+          </span>
+        </span>
+        <span>=</span>
+        <span>4</span>
+        <span>
+          <span>x</span>
+          <span>
+            <span>2</span>
+          </span>
+          <span>
+            <span>2</span>
+          </span>
+        </span>
+        <span>−</span>
+        <span>2</span>
+        <span>
+          <span>x</span>
+          <span>
+            <span>3</span>
+          </span>
+        </span>
+        <span></span>
+      </span>
+    </span>
+    
+  </span>
+</span></span><div class="media-placeholder">[图片/附件]</div></en-media></span></dd><dd style="margin-bottom:0.1em;margin-right:0px;margin-left:1.6em;"><span><span style="display:none;clip:rect(1px, 1px, 1px, 1px);overflow:hidden;position:absolute;width:1px;height:1px;opacity:0;"><span>
+  <span>
+    <span>
+      <span>
+        <span>
+          <span>y</span>
+          <span>
+            <span>4</span>
+          </span>
+        </span>
+        <span>=</span>
+        <span>
+          <span>x</span>
+          <span>
+            <span>3</span>
+          </span>
+        </span>
+        <span>sin</span>
+        <span>⁡</span>
+        <span>
+          <span>x</span>
+          <span>
+            <span>1</span>
+          </span>
+        </span>
+        <span></span>
+      </span>
+    </span>
+    
+  </span>
+</span></span><div class="media-placeholder">[图片/附件]</div></en-media></span></dd></dl>
+<p style="padding-bottom:0.5em;margin:0.5em 0px 0px;">其雅可比矩阵为:
+</p>
+<dl style="margin-top:0.2em;margin-bottom:0.5em;"><dd style="margin-bottom:0.1em;margin-right:0px;margin-left:1.6em;"><span><span style="display:none;clip:rect(1px, 1px, 1px, 1px);overflow:hidden;position:absolute;width:1px;height:1px;opacity:0;"><span>
+  <span>
+    <span>
+      <span>
+        <span>
+          <span>J</span>
+          <span>
+            <span>F</span>
+          </span>
+        </span>
+        <span>(</span>
+        <span>
+          <span>x</span>
+          <span>
+            <span>1</span>
+          </span>
+        </span>
+        <span>,</span>
+        <span>
+          <span>x</span>
+          <span>
+            <span>2</span>
+          </span>
+        </span>
+        <span>,</span>
+        <span>
+          <span>x</span>
+          <span>
+            <span>3</span>
+          </span>
+        </span>
+        <span>)</span>
+        <span>=</span>
+        <span>
+          <span>
+            <span>[</span>
+            <span>
+              <span>
+                <span>
+                  <span>
+                    <span>
+                      <span>
+                        <span>∂</span>
+                        <span>
+                          <span>y</span>
+                          <span>
+                            <span>1</span>
+                          </span>
+                        </span>
+                      </span>
+                      <span>
+                        <span>∂</span>
+                        <span>
+                          <span>x</span>
+                          <span>
+                            <span>1</span>
+                          </span>
+                        </span>
+                      </span>
+                    </span>
+                  </span>
+                </span>
+                <span>
+                  <span>
+                    <span>
+                      <span>
+                        <span>∂</span>
+                        <span>
+                          <span>y</span>
+                          <span>
+                            <span>1</span>
+                          </span>
+                        </span>
+                      </span>
+                      <span>
+                        <span>∂</span>
+                        <span>
+                          <span>x</span>
+                          <span>
+                            <span>2</span>
+                          </span>
+                        </span>
+                      </span>
+                    </span>
+                  </span>
+                </span>
+                <span>
+                  <span>
+                    <span>
+                      <span>
+                        <span>∂</span>
+                        <span>
+                          <span>y</span>
+                          <span>
+                            <span>1</span>
+                          </span>
+                        </span>
+                      </span>
+                      <span>
+                        <span>∂</span>
+                        <span>
+                          <span>x</span>
+                          <span>
+                            <span>3</span>
+                          </span>
+                        </span>
+                      </span>
+                    </span>
+                  </span>
+                </span>
+              </span>
+              <span>
+                <span>
+                  <span>
+                    <span>
+                      <span>
+                        <span>∂</span>
+                        <span>
+                          <span>y</span>
+                          <span>
+                            <span>2</span>
+                          </span>
+                        </span>
+                      </span>
+                      <span>
+                        <span>∂</span>
+                        <span>
+                          <span>x</span>
+                          <span>
+                            <span>1</span>
+                          </span>
+                        </span>
+                      </span>
+                    </span>
+                  </span>
+                </span>
+                <span>
+                  <span>
+                    <span>
+                      <span>
+                        <span>∂</span>
+                        <span>
+                          <span>y</span>
+                          <span>
+                            <span>2</span>
+                          </span>
+                        </span>
+                      </span>
+                      <span>
+                        <span>∂</span>
+                        <span>
+                          <span>x</span>
+                          <span>
+                            <span>2</span>
+                          </span>
+                        </span>
+                      </span>
+                    </span>
+                  </span>
+                </span>
+                <span>
+                  <span>
+                    <span>
+                      <span>
+                        <span>∂</span>
+                        <span>
+                          <span>y</span>
+                          <span>
+                            <span>2</span>
+                          </span>
+                        </span>
+                      </span>
+                      <span>
+                        <span>∂</span>
+                        <span>
+                          <span>x</span>
+                          <span>
+                            <span>3</span>
+                          </span>
+                        </span>
+                      </span>
+                    </span>
+                  </span>
+                </span>
+              </span>
+              <span>
+                <span>
+                  <span>
+                    <span>
+                      <span>
+                        <span>∂</span>
+                        <span>
+                          <span>y</span>
+                          <span>
+                            <span>3</span>
+                          </span>
+                        </span>
+                      </span>
+                      <span>
+                        <span>∂</span>
+                        <span>
+                          <span>x</span>
+                          <span>
+                            <span>1</span>
+                          </span>
+                        </span>
+                      </span>
+                    </span>
+                  </span>
+                </span>
+                <span>
+                  <span>
+                    <span>
+                      <span>
+                        <span>∂</span>
+                        <span>
+                          <span>y</span>
+                          <span>
+                            <span>3</span>
+                          </span>
+                        </span>
+                      </span>
+                      <span>
+                        <span>∂</span>
+                        <span>
+                          <span>x</span>
+                          <span>
+                            <span>2</span>
+                          </span>
+                        </span>
+                      </span>
+                    </span>
+                  </span>
+                </span>
+                <span>
+                  <span>
+                    <span>
+                      <span>
+                        <span>∂</span>
+                        <span>
+                          <span>y</span>
+                          <span>
+                            <span>3</span>
+                          </span>
+                        </span>
+                      </span>
+                      <span>
+                        <span>∂</span>
+                        <span>
+                          <span>x</span>
+                          <span>
+                            <span>3</span>
+                          </span>
+                        </span>
+                      </span>
+                    </span>
+                  </span>
+                </span>
+              </span>
+              <span>
+                <span>
+                  <span>
+                    <span>
+                      <span>
+                        <span>∂</span>
+                        <span>
+                          <span>y</span>
+                          <span>
+                            <span>4</span>
+                          </span>
+                        </span>
+                      </span>
+                      <span>
+                        <span>∂</span>
+                        <span>
+                          <span>x</span>
+                          <span>
+                            <span>1</span>
+                          </span>
+                        </span>
+                      </span>
+                    </span>
+                  </span>
+                </span>
+                <span>
+                  <span>
+                    <span>
+                      <span>
+                        <span>∂</span>
+                        <span>
+                          <span>y</span>
+                          <span>
+                            <span>4</span>
+                          </span>
+                        </span>
+                      </span>
+                      <span>
+                        <span>∂</span>
+                        <span>
+                          <span>x</span>
+                          <span>
+                            <span>2</span>
+                          </span>
+                        </span>
+                      </span>
+                    </span>
+                  </span>
+                </span>
+                <span>
+                  <span>
+                    <span>
+                      <span>
+                        <span>∂</span>
+                        <span>
+                          <span>y</span>
+                          <span>
+                            <span>4</span>
+                          </span>
+                        </span>
+                      </span>
+                      <span>
+                        <span>∂</span>
+                        <span>
+                          <span>x</span>
+                          <span>
+                            <span>3</span>
+                          </span>
+                        </span>
+                      </span>
+                    </span>
+                  </span>
+                </span>
+              </span>
+            </span>
+            <span>]</span>
+          </span>
+        </span>
+        <span>=</span>
+        <span>
+          <span>
+            <span>[</span>
+            <span>
+              <span>
+                <span>
+                  <span>1</span>
+                </span>
+                <span>
+                  <span>0</span>
+                </span>
+                <span>
+                  <span>0</span>
+                </span>
+              </span>
+              <span>
+                <span>
+                  <span>0</span>
+                </span>
+                <span>
+                  <span>0</span>
+                </span>
+                <span>
+                  <span>5</span>
+                </span>
+              </span>
+              <span>
+                <span>
+                  <span>0</span>
+                </span>
+                <span>
+                  <span>8</span>
+                  <span>
+                    <span>x</span>
+                    <span>
+                      <span>2</span>
+                    </span>
+                  </span>
+                </span>
+                <span>
+                  <span>−</span>
+                  <span>2</span>
+                </span>
+              </span>
+              <span>
+                <span>
+                  <span>
+                    <span>x</span>
+                    <span>
+                      <span>3</span>
+                    </span>
+                  </span>
+                  <span>cos</span>
+                  <span>⁡</span>
+                  <span>
+                    <span>x</span>
+                    <span>
+                      <span>1</span>
+                    </span>
+                  </span>
+                </span>
+                <span>
+                  <span>0</span>
+                </span>
+                <span>
+                  <span>sin</span>
+                  <span>⁡</span>
+                  <span>
+                    <span>x</span>
+                    <span>
+                      <span>1</span>
+                    </span>
+                  </span>
+                </span>
+              </span>
+            </span>
+            <span>]</span>
+          </span>
+        </span>
+      </span>
+    </span>
+    
+  </span>
+</span></span><div class="media-placeholder">[图片/附件]</div></en-media></span></dd></dl>
+<p style="padding-bottom:0.5em;margin:0.5em 0px 0px;">此例子说明雅可比矩阵不一定为方阵。
+</p>
+<h2 style="color:rgb(0, 0, 0);padding-top:0.5em;padding-bottom:0.17em;overflow:hidden;border-bottom:1px solid rgb(162, 169, 177);font-weight:normal;font-family:&quot;Linux Libertine&quot;, Georgia, Times, &quot;Source Serif Pro&quot;, serif;line-height:1.375;font-size:1.5em;margin:0.25em 0px;"><span></span><span>在动力系统中</span><span style="user-select:none;font-size:small;font-weight:normal;vertical-align:baseline;line-height:0;font-family:sans-serif;unicode-bidi:isolate;margin-right:0px;margin-left:1em;"><span style="font-size:small;font-weight:normal;line-height:0;font-family:sans-serif;">​</span><span style="margin-right:0.25em;color:rgb(84, 89, 93);">[</span><a href="https://zh.wikipedia.org/w/index.php?title=%E9%9B%85%E5%8F%AF%E6%AF%94%E7%9F%A9%E9%98%B5&amp;action=edit&amp;section=5" title="编辑章节：在动力系统中" style="text-decoration:none;color:rgb(51, 102, 204);background:none;overflow-wrap:break-word;white-space:nowrap;"><span>编辑</span></a><span style="margin-left:0.25em;color:rgb(84, 89, 93);">]</span></span></h2>
+<p style="padding-bottom:0.5em;margin:0.5em 0px 0px;">考虑形为 <span><span style="display:none;clip:rect(1px, 1px, 1px, 1px);overflow:hidden;position:absolute;width:1px;height:1px;opacity:0;"><span>
+  <span>
+    <span>
+      <span>
+        <span>
+          <span>x</span>
+          <span>
+            <span>′</span>
+          </span>
+        </span>
+        <span>=</span>
+        <span>F</span>
+        <span>(</span>
+        <span>x</span>
+        <span>)</span>
+      </span>
+    </span>
+    
+  </span>
+</span></span><div class="media-placeholder">[图片/附件]</div></en-media></span>的<a href="https://zh.wikipedia.org/wiki/%E5%8A%A8%E5%8A%9B%E7%B3%BB%E7%BB%9F" title="动力系统" style="text-decoration:none;color:rgb(51, 102, 204);background:none;overflow-wrap:break-word;">动力系统</a>，<span><span style="display:none;clip:rect(1px, 1px, 1px, 1px);overflow:hidden;position:absolute;width:1px;height:1px;opacity:0;"><span>
+  <span>
+    <span>
+      <span>
+        <span>F</span>
+        <span>:</span>
+        <span>
+          <span>
+            <span>R</span>
+          </span>
+          <span>
+            <span>n</span>
+          </span>
+        </span>
+        <span>→</span>
+        <span>
+          <span>
+            <span>R</span>
+          </span>
+          <span>
+            <span>n</span>
+          </span>
+        </span>
+      </span>
+    </span>
+    
+  </span>
+</span></span><div class="media-placeholder">[图片/附件]</div></en-media></span>。如果 <span><span style="display:none;clip:rect(1px, 1px, 1px, 1px);overflow:hidden;position:absolute;width:1px;height:1px;opacity:0;"><span>
+  <span>
+    <span>
+      <span>
+        <span>F</span>
+        <span>(</span>
+        <span>
+          <span>x</span>
+          <span>
+            <span>0</span>
+          </span>
+        </span>
+        <span>)</span>
+        <span>=</span>
+        <span>0</span>
+      </span>
+    </span>
+    
+  </span>
+</span></span><div class="media-placeholder">[图片/附件]</div></en-media></span>，那么 <span><span style="display:none;clip:rect(1px, 1px, 1px, 1px);overflow:hidden;position:absolute;width:1px;height:1px;opacity:0;"><span>
+  <span>
+    <span>
+      <span>
+        <span>
+          <span>x</span>
+          <span>
+            <span>0</span>
+          </span>
+        </span>
+      </span>
+    </span>
+    
+  </span>
+</span></span><div class="media-placeholder">[图片/附件]</div></en-media></span>是一个临界点。系统接近临界点时的行为跟 <span><span style="display:none;clip:rect(1px, 1px, 1px, 1px);overflow:hidden;position:absolute;width:1px;height:1px;opacity:0;"><span>
+  <span>
+    <span>
+      <span>
+        <span>
+          <span>J</span>
+          <span>
+            <span>F</span>
+          </span>
+        </span>
+        <span>(</span>
+        <span>
+          <span>x</span>
+          <span>
+            <span>0</span>
+          </span>
+        </span>
+        <span>)</span>
+      </span>
+    </span>
+    
+  </span>
+</span></span><div class="media-placeholder">[图片/附件]</div></en-media></span>的<a href="https://zh.wikipedia.org/wiki/%E7%89%B9%E5%BE%81%E5%80%BC" title="特征值" style="text-decoration:none;color:rgb(51, 102, 204);background:none;overflow-wrap:break-word;">特征值</a>相关。
+</p>
+<h2 style="color:rgb(0, 0, 0);padding-top:0.5em;padding-bottom:0.17em;overflow:hidden;border-bottom:1px solid rgb(162, 169, 177);font-weight:normal;font-family:&quot;Linux Libertine&quot;, Georgia, Times, &quot;Source Serif Pro&quot;, serif;line-height:1.375;font-size:1.5em;margin:0.25em 0px;"><span></span><span>雅可比行列式</span><span style="user-select:none;font-size:small;font-weight:normal;vertical-align:baseline;line-height:0;font-family:sans-serif;unicode-bidi:isolate;margin-right:0px;margin-left:1em;"><span style="font-size:small;font-weight:normal;line-height:0;font-family:sans-serif;">​</span><span style="margin-right:0.25em;color:rgb(84, 89, 93);">[</span><a href="https://zh.wikipedia.org/w/index.php?title=%E9%9B%85%E5%8F%AF%E6%AF%94%E7%9F%A9%E9%98%B5&amp;action=edit&amp;section=6" title="编辑章节：雅可比行列式" style="text-decoration:none;color:rgb(51, 102, 204);background:none;overflow-wrap:break-word;white-space:nowrap;"><span>编辑</span></a><span style="margin-left:0.25em;color:rgb(84, 89, 93);">]</span></span></h2>
+<p style="padding-bottom:0.5em;margin:0.5em 0px 0px;">如果 <span style="font-family:Times, serif;"><span style="white-space:nowrap;"><i>m</i> = <i>n</i></span></span>，那么 <span style="font-family:Times, serif;"><span style="white-space:nowrap;"><i>F</i></span></span> 是从 <span style="font-family:Times, serif;"><span style="white-space:nowrap;">ℝ<sup style="line-height:1;"><i>n</i></sup></span></span> 映射到 <span style="font-family:Times, serif;"><span style="white-space:nowrap;">ℝ<sup style="line-height:1;"><i>n</i></sup></span></span> 的函数，且它的雅可比矩阵是一个<a href="https://zh.wikipedia.org/wiki/%E6%96%B9%E5%9D%97%E7%9F%A9%E9%98%B5" title="方块矩阵" style="text-decoration:none;color:rgb(51, 102, 204);background:none;overflow-wrap:break-word;">方阵</a>。于是我们可以取它的行列式，称为<b>雅可比行列式</b>。
+</p><p style="padding-bottom:0.5em;margin:0.5em 0px 0px;">在某个给定点的雅可比行列式提供了 <span style="font-family:Times, serif;"><span style="white-space:nowrap;"><i>F</i></span></span> 在接近该点时的表现的重要资讯。例如，如果连续可微函数 <span style="font-family:Times, serif;"><span style="white-space:nowrap;"><i>F</i></span></span> 在 <span style="font-family:Times, serif;"><span style="white-space:nowrap;"><i>p</i></span></span> 点的Jacobi行列式不等于零，那么它在该点附近有 <span style="font-family:Times, serif;"><span style="white-space:nowrap;"><i>F</i></span></span> 的<a href="https://zh.wikipedia.org/wiki/%E5%8F%8D%E5%87%BD%E6%95%B8" title="反函数" style="text-decoration:none;color:rgb(51, 102, 204);background:none;overflow-wrap:break-word;">反函数</a>。这称为<a href="https://zh.wikipedia.org/wiki/%E5%8F%8D%E5%87%BD%E6%95%B0%E5%AE%9A%E7%90%86" title="反函数定理" style="text-decoration:none;color:rgb(51, 102, 204);background:none;overflow-wrap:break-word;">反函数定理</a>。更进一步，如果  <span style="font-family:Times, serif;"><span style="white-space:nowrap;"><i>p</i></span></span> 点的Jacobi行列式是<a href="https://zh.wikipedia.org/wiki/%E6%AD%A3%E6%95%B0" title="正数" style="text-decoration:none;color:rgb(51, 102, 204);background:none;overflow-wrap:break-word;">正数</a>，则 <span style="font-family:Times, serif;"><span style="white-space:nowrap;"><i>F</i></span></span> 在 <span style="font-family:Times, serif;"><span style="white-space:nowrap;"><i>p</i></span></span> 点保持定向（preserves orientation）；如果是负数，则 <span style="font-family:Times, serif;"><span style="white-space:nowrap;"><i>F</i></span></span> 逆转定向（reverses orientation）。而从Jacobi行列式的<a href="https://zh.wikipedia.org/wiki/%E7%BB%9D%E5%AF%B9%E5%80%BC" title="绝对值" style="text-decoration:none;color:rgb(51, 102, 204);background:none;overflow-wrap:break-word;">绝对值</a>，就可以知道函数 <span style="font-family:Times, serif;"><span style="white-space:nowrap;"><i>F</i></span></span> 在 <span style="font-family:Times, serif;"><span style="white-space:nowrap;"><i>p</i></span></span> 点附近是放大或缩小体积；这就是它出现在<a href="https://zh.wikipedia.org/wiki/%E6%8D%A2%E5%85%83%E7%A7%AF%E5%88%86%E6%B3%95" title="换元积分法" style="text-decoration:none;color:rgb(51, 102, 204);background:none;overflow-wrap:break-word;">换元积分法</a>中的原因。
+</p>
+<h3 style="color:rgb(0, 0, 0);padding-top:0.5em;overflow:hidden;line-height:1.6;padding-bottom:0px;margin:0.25em 0px;font-size:1.2em;font-weight:bold;"><span></span><span>例子一</span><span style="user-select:none;font-size:small;font-weight:normal;vertical-align:baseline;line-height:0;font-family:sans-serif;unicode-bidi:isolate;margin-right:0px;margin-left:1em;"><span style="font-size:small;font-weight:normal;line-height:0;font-family:sans-serif;">​</span><span style="margin-right:0.25em;color:rgb(84, 89, 93);">[</span><a href="https://zh.wikipedia.org/w/index.php?title=%E9%9B%85%E5%8F%AF%E6%AF%94%E7%9F%A9%E9%98%B5&amp;action=edit&amp;section=7" title="编辑章节：例子一" style="text-decoration:none;color:rgb(51, 102, 204);background:none;overflow-wrap:break-word;white-space:nowrap;"><span>编辑</span></a><span style="margin-left:0.25em;color:rgb(84, 89, 93);">]</span></span></h3>
+<p style="padding-bottom:0.5em;margin:0.5em 0px 0px;">设有函数 <span style="font-family:Times, serif;"><span style="white-space:nowrap;"><i>F</i> : ℝ<sup style="line-height:1;">3</sup> → ℝ<sup style="line-height:1;">3</sup></span></span>，其分量为：
+</p>
+<dl style="margin-top:0.2em;margin-bottom:0.5em;"><dd style="margin-bottom:0.1em;margin-right:0px;margin-left:1.6em;"><span><span style="display:none;clip:rect(1px, 1px, 1px, 1px);overflow:hidden;position:absolute;width:1px;height:1px;opacity:0;"><span>
+  <span>
+    <span>
+      <span>
+        <span>
+          <span>y</span>
+          <span>
+            <span>1</span>
+          </span>
+        </span>
+        <span>=</span>
+        <span>5</span>
+        <span>
+          <span>x</span>
+          <span>
+            <span>2</span>
+          </span>
+        </span>
+        <span></span>
+      </span>
+    </span>
+    
+  </span>
+</span></span><div class="media-placeholder">[图片/附件]</div></en-media></span></dd><dd style="margin-bottom:0.1em;margin-right:0px;margin-left:1.6em;"><span><span style="display:none;clip:rect(1px, 1px, 1px, 1px);overflow:hidden;position:absolute;width:1px;height:1px;opacity:0;"><span>
+  <span>
+    <span>
+      <span>
+        <span>
+          <span>y</span>
+          <span>
+            <span>2</span>
+          </span>
+        </span>
+        <span>=</span>
+        <span>4</span>
+        <span>
+          <span>x</span>
+          <span>
+            <span>1</span>
+          </span>
+          <span>
+            <span>2</span>
+          </span>
+        </span>
+        <span>−</span>
+        <span>2</span>
+        <span>sin</span>
+        <span>⁡</span>
+        <span>(</span>
+        <span>
+          <span>x</span>
+          <span>
+            <span>2</span>
+          </span>
+        </span>
+        <span>
+          <span>x</span>
+          <span>
+            <span>3</span>
+          </span>
+        </span>
+        <span>)</span>
+        <span></span>
+      </span>
+    </span>
+    
+  </span>
+</span></span><div class="media-placeholder">[图片/附件]</div></en-media></span></dd><dd style="margin-bottom:0.1em;margin-right:0px;margin-left:1.6em;"><span><span style="display:none;clip:rect(1px, 1px, 1px, 1px);overflow:hidden;position:absolute;width:1px;height:1px;opacity:0;"><span>
+  <span>
+    <span>
+      <span>
+        <span>
+          <span>y</span>
+          <span>
+            <span>3</span>
+          </span>
+        </span>
+        <span>=</span>
+        <span>
+          <span>x</span>
+          <span>
+            <span>2</span>
+          </span>
+        </span>
+        <span>
+          <span>x</span>
+          <span>
+            <span>3</span>
+          </span>
+        </span>
+        <span></span>
+      </span>
+    </span>
+    
+  </span>
+</span></span><div class="media-placeholder">[图片/附件]</div></en-media></span></dd></dl>
+<p style="padding-bottom:0.5em;margin:0.5em 0px 0px;">则它的Jacobi行列式为：
+</p>
+<dl style="margin-top:0.2em;margin-bottom:0.5em;"><dd style="margin-bottom:0.1em;margin-right:0px;margin-left:1.6em;"><span><span style="display:none;clip:rect(1px, 1px, 1px, 1px);overflow:hidden;position:absolute;width:1px;height:1px;opacity:0;"><span>
+  <span>
+    <span>
+      <span>
+        <span>
+          <span>
+            <span>|</span>
+            <span>
+              <span>
+                <span>
+                  <span>0</span>
+                </span>
+                <span>
+                  <span>5</span>
+                </span>
+                <span>
+                  <span>0</span>
+                </span>
+              </span>
+              <span>
+                <span>
+                  <span>8</span>
+                  <span>
+                    <span>x</span>
+                    <span>
+                      <span>1</span>
+                    </span>
+                  </span>
+                </span>
+                <span>
+                  <span>−</span>
+                  <span>2</span>
+                  <span>
+                    <span>x</span>
+                    <span>
+                      <span>3</span>
+                    </span>
+                  </span>
+                  <span>cos</span>
+                  <span>⁡</span>
+                  <span>(</span>
+                  <span>
+                    <span>x</span>
+                    <span>
+                      <span>2</span>
+                    </span>
+                  </span>
+                  <span>
+                    <span>x</span>
+                    <span>
+                      <span>3</span>
+                    </span>
+                  </span>
+                  <span>)</span>
+                </span>
+                <span>
+                  <span>−</span>
+                  <span>2</span>
+                  <span>
+                    <span>x</span>
+                    <span>
+                      <span>2</span>
+                    </span>
+                  </span>
+                  <span>cos</span>
+                  <span>⁡</span>
+                  <span>(</span>
+                  <span>
+                    <span>x</span>
+                    <span>
+                      <span>2</span>
+                    </span>
+                  </span>
+                  <span>
+                    <span>x</span>
+                    <span>
+                      <span>3</span>
+                    </span>
+                  </span>
+                  <span>)</span>
+                </span>
+              </span>
+              <span>
+                <span>
+                  <span>0</span>
+                </span>
+                <span>
+                  <span>
+                    <span>x</span>
+                    <span>
+                      <span>3</span>
+                    </span>
+                  </span>
+                </span>
+                <span>
+                  <span>
+                    <span>x</span>
+                    <span>
+                      <span>2</span>
+                    </span>
+                  </span>
+                </span>
+              </span>
+            </span>
+            <span>|</span>
+          </span>
+        </span>
+        <span>=</span>
+        <span>−</span>
+        <span>8</span>
+        <span>
+          <span>x</span>
+          <span>
+            <span>1</span>
+          </span>
+        </span>
+        <span>⋅</span>
+        <span>
+          <span>
+            <span>|</span>
+            <span>
+              <span>
+                <span>
+                  <span>5</span>
+                </span>
+                <span>
+                  <span>0</span>
+                </span>
+              </span>
+              <span>
+                <span>
+                  <span>
+                    <span>x</span>
+                    <span>
+                      <span>3</span>
+                    </span>
+                  </span>
+                </span>
+                <span>
+                  <span>
+                    <span>x</span>
+                    <span>
+                      <span>2</span>
+                    </span>
+                  </span>
+                </span>
+              </span>
+            </span>
+            <span>|</span>
+          </span>
+        </span>
+        <span>=</span>
+        <span>−</span>
+        <span>40</span>
+        <span>
+          <span>x</span>
+          <span>
+            <span>1</span>
+          </span>
+        </span>
+        <span>
+          <span>x</span>
+          <span>
+            <span>2</span>
+          </span>
+        </span>
+      </span>
+    </span>
+    
+  </span>
+</span></span><div class="media-placeholder">[图片/附件]</div></en-media></span></dd></dl>
+<p style="padding-bottom:0.5em;margin:0.5em 0px 0px;">从中我们可以看到，当 <span style="font-family:Times, serif;"><span style="white-space:nowrap;"><i>x</i><sub style="line-height:1;">1</sub></span></span> 和 <span style="font-family:Times, serif;"><span style="white-space:nowrap;"><i>x</i><sub style="line-height:1;">2</sub></span></span> 同号时，<span style="font-family:Times, serif;"><span style="white-space:nowrap;"><i>F</i></span></span> 逆转定向；该函数处处具有反函数，除了在 <span style="font-family:Times, serif;"><span style="white-space:nowrap;"><i>x</i><sub style="line-height:1;">1</sub> = 0</span></span> 或 <span style="font-family:Times, serif;"><span style="white-space:nowrap;"><i>x</i><sub style="line-height:1;">2</sub> = 0</span></span>  的点。
+</p>
+<h3 style="color:rgb(0, 0, 0);padding-top:0.5em;overflow:hidden;line-height:1.6;padding-bottom:0px;margin:0.25em 0px;font-size:1.2em;font-weight:bold;"><span></span><span>例子二</span><span style="user-select:none;font-size:small;font-weight:normal;vertical-align:baseline;line-height:0;font-family:sans-serif;unicode-bidi:isolate;margin-right:0px;margin-left:1em;"><span style="font-size:small;font-weight:normal;line-height:0;font-family:sans-serif;">​</span><span style="margin-right:0.25em;color:rgb(84, 89, 93);">[</span><a href="https://zh.wikipedia.org/w/index.php?title=%E9%9B%85%E5%8F%AF%E6%AF%94%E7%9F%A9%E9%98%B5&amp;action=edit&amp;section=8" title="编辑章节：例子二" style="text-decoration:none;color:rgb(51, 102, 204);background:none;overflow-wrap:break-word;white-space:nowrap;"><span>编辑</span></a><span style="margin-left:0.25em;color:rgb(84, 89, 93);">]</span></span></h3>
+<p style="padding-bottom:0.5em;margin:0.5em 0px 0px;">这是一个与<a href="https://zh.wikipedia.org/wiki/%E5%B7%B4%E5%A1%9E%E5%B0%94%E9%97%AE%E9%A2%98" title="巴塞尔问题" style="text-decoration:none;color:rgb(51, 102, 204);background:none;overflow-wrap:break-word;">巴塞尔问题</a><span><span style="display:none;clip:rect(1px, 1px, 1px, 1px);overflow:hidden;position:absolute;width:1px;height:1px;opacity:0;"><span>
+  <span>
+    <span>
+      <span>
+        <span>
+          <span>∑</span>
+          <span>
+            <span>n</span>
+            <span>=</span>
+            <span>1</span>
+          </span>
+          <span>
+            <span>∞</span>
+          </span>
+        </span>
+        <span>
+          <span>
+            <span>1</span>
+            <span>
+              <span>n</span>
+              <span>
+                <span>2</span>
+              </span>
+            </span>
+          </span>
+        </span>
+        <span>=</span>
+        <span>
+          <span>
+            <span>
+              <span>π</span>
+              <span>
+                <span>2</span>
+              </span>
+            </span>
+            <span>6</span>
+          </span>
+        </span>
+      </span>
+    </span>
+    
+  </span>
+</span></span><div class="media-placeholder">[图片/附件]</div></en-media></span>较为相似的<a href="https://zh.wikipedia.org/wiki/%E7%BA%A7%E6%95%B0" title="级数" style="text-decoration:none;color:rgb(51, 102, 204);background:none;overflow-wrap:break-word;">级数</a><span><span style="display:none;clip:rect(1px, 1px, 1px, 1px);overflow:hidden;position:absolute;width:1px;height:1px;opacity:0;"><span>
+  <span>
+    <span>
+      <span>
+        <span>
+          <span>∑</span>
+          <span>
+            <span>n</span>
+            <span>=</span>
+            <span>0</span>
+          </span>
+          <span>
+            <span>∞</span>
+          </span>
+        </span>
+        <span>
+          <span>
+            <span>1</span>
+            <span>
+              <span>(</span>
+              <span>2</span>
+              <span>n</span>
+              <span>+</span>
+              <span>1</span>
+              <span>
+                <span>)</span>
+                <span>
+                  <span>2</span>
+                </span>
+              </span>
+            </span>
+          </span>
+        </span>
+        <span>=</span>
+        <span>
+          <span>
+            <span>
+              <span>π</span>
+              <span>
+                <span>2</span>
+              </span>
+            </span>
+            <span>8</span>
+          </span>
+        </span>
+      </span>
+    </span>
+    
+  </span>
+</span></span><div class="media-placeholder">[图片/附件]</div></en-media></span>的求解方法，首先可以转化为<a href="https://zh.wikipedia.org/wiki/%E4%BA%8C%E9%87%8D%E7%A7%AF%E5%88%86" title="二重积分" style="text-decoration:none;color:rgb(51, 102, 204);background:none;overflow-wrap:break-word;">二重积分</a>（在这里 <i>D</i><sub style="line-height:1;">1</sub> 指 <i>x</i> 与 <i>y</i> 皆为从 0 到 1 的正方形区域）：
+</p>
+<dl style="margin-top:0.2em;margin-bottom:0.5em;"><dd style="margin-bottom:0.1em;margin-right:0px;margin-left:1.6em;"><span><span style="display:none;clip:rect(1px, 1px, 1px, 1px);overflow:hidden;position:absolute;width:1px;height:1px;opacity:0;"><span>
+  <span>
+    <span>
+      <span>
+        <span>
+          <span>∑</span>
+          <span>
+            <span>n</span>
+            <span>=</span>
+            <span>0</span>
+          </span>
+          <span>
+            <span>∞</span>
+          </span>
+        </span>
+        <span>
+          <span>
+            <span>1</span>
+            <span>
+              <span>(</span>
+              <span>2</span>
+              <span>n</span>
+              <span>+</span>
+              <span>1</span>
+              <span>
+                <span>)</span>
+                <span>
+                  <span>2</span>
+                </span>
+              </span>
+            </span>
+          </span>
+        </span>
+        <span>=</span>
+        <span>
+          <span>∬</span>
+          <span>
+            <span>
+              <span>D</span>
+              <span>
+                <span>1</span>
+              </span>
+            </span>
+          </span>
+        </span>
+        <span>
+          <span>∑</span>
+          <span>
+            <span>n</span>
+            <span>=</span>
+            <span>1</span>
+          </span>
+          <span>
+            <span>∞</span>
+          </span>
+        </span>
+        <span>(</span>
+        <span>x</span>
+        <span>y</span>
+        <span>
+          <span>)</span>
+          <span>
+            <span>2</span>
+            <span>n</span>
+          </span>
+        </span>
+        <span>
+          <span>d</span>
+        </span>
+        <span>x</span>
+        <span>
+          <span>d</span>
+        </span>
+        <span>y</span>
+        <span>=</span>
+        <span>
+          <span>∬</span>
+          <span>
+            <span>
+              <span>D</span>
+              <span>
+                <span>1</span>
+              </span>
+            </span>
+          </span>
+        </span>
+        <span>
+          <span>
+            <span>
+              <span>
+                <span>d</span>
+              </span>
+              <span>x</span>
+              <span>
+                <span>d</span>
+              </span>
+              <span>y</span>
+            </span>
+            <span>
+              <span>1</span>
+              <span>−</span>
+              <span>
+                <span>x</span>
+                <span>
+                  <span>2</span>
+                </span>
+              </span>
+              <span>
+                <span>y</span>
+                <span>
+                  <span>2</span>
+                </span>
+              </span>
+            </span>
+          </span>
+        </span>
+      </span>
+    </span>
+    
+  </span>
+</span></span><div class="media-placeholder">[图片/附件]</div></en-media></span></dd></dl>
+<p style="padding-bottom:0.5em;margin:0.5em 0px 0px;">此时定义映射 <span style="font-family:Times, serif;"><span style="white-space:nowrap;"><i>F</i> : ℝ<sup style="line-height:1;">2</sup> → ℝ<sup style="line-height:1;">2</sup></span></span>，满足：
+</p>
+<dl style="margin-top:0.2em;margin-bottom:0.5em;"><dd style="margin-bottom:0.1em;margin-right:0px;margin-left:1.6em;"><span><span style="display:none;clip:rect(1px, 1px, 1px, 1px);overflow:hidden;position:absolute;width:1px;height:1px;opacity:0;"><span>
+  <span>
+    <span>
+      <span>
+        <span>
+          <span>
+            <span>{</span>
+            <span>
+              <span>
+                <span>
+                  <span>u</span>
+                  <span>=</span>
+                  <span>arctan</span>
+                  <span>⁡</span>
+                  <span>
+                    <span>(</span>
+                    <span>
+                      <span>x</span>
+                      <span>
+                        <span>
+                          <span>
+                            <span>
+                              <span>
+                                <span>1</span>
+                                <span>−</span>
+                                <span>
+                                  <span>y</span>
+                                  <span>
+                                    <span>2</span>
+                                  </span>
+                                </span>
+                              </span>
+                              <span>
+                                <span>1</span>
+                                <span>−</span>
+                                <span>
+                                  <span>x</span>
+                                  <span>
+                                    <span>2</span>
+                                  </span>
+                                </span>
+                              </span>
+                            </span>
+                          </span>
+                        </span>
+                      </span>
+                    </span>
+                    <span>)</span>
+                  </span>
+                </span>
+              </span>
+              <span>
+                <span>
+                  <span>v</span>
+                  <span>=</span>
+                  <span>arctan</span>
+                  <span>⁡</span>
+                  <span>
+                    <span>(</span>
+                    <span>
+                      <span>y</span>
+                      <span>
+                        <span>
+                          <span>
+                            <span>
+                              <span>
+                                <span>1</span>
+                                <span>−</span>
+                                <span>
+                                  <span>x</span>
+                                  <span>
+                                    <span>2</span>
+                                  </span>
+                                </span>
+                              </span>
+                              <span>
+                                <span>1</span>
+                                <span>−</span>
+                                <span>
+                                  <span>y</span>
+                                  <span>
+                                    <span>2</span>
+                                  </span>
+                                </span>
+                              </span>
+                            </span>
+                          </span>
+                        </span>
+                      </span>
+                    </span>
+                    <span>)</span>
+                  </span>
+                </span>
+              </span>
+            </span>
+            <span></span>
+          </span>
+        </span>
+        <span></span>
+        <span>⟺</span>
+        <span></span>
+        <span>
+          <span>
+            <span>{</span>
+            <span>
+              <span>
+                <span>
+                  <span>x</span>
+                  <span>=</span>
+                  <span>
+                    <span>
+                      <span>
+                        <span>
+                          <span>sin</span>
+                          <span>⁡</span>
+                          <span>u</span>
+                        </span>
+                        <span>
+                          <span>cos</span>
+                          <span>⁡</span>
+                          <span>v</span>
+                        </span>
+                      </span>
+                    </span>
+                  </span>
+                </span>
+              </span>
+              <span>
+                <span>
+                  <span>y</span>
+                  <span>=</span>
+                  <span>
+                    <span>
+                      <span>
+                        <span>
+                          <span>sin</span>
+                          <span>⁡</span>
+                          <span>v</span>
+                        </span>
+                        <span>
+                          <span>cos</span>
+                          <span>⁡</span>
+                          <span>u</span>
+                        </span>
+                      </span>
+                    </span>
+                  </span>
+                </span>
+              </span>
+            </span>
+            <span></span>
+          </span>
+        </span>
+      </span>
+    </span>
+    
+  </span>
+</span></span><div class="media-placeholder">[图片/附件]</div></en-media></span></dd></dl>
+<p style="padding-bottom:0.5em;margin:0.5em 0px 0px;">于是有相应的雅可比行列式：
+</p>
+<dl style="margin-top:0.2em;margin-bottom:0.5em;"><dd style="margin-bottom:0.1em;margin-right:0px;margin-left:1.6em;"><span><span style="display:none;clip:rect(1px, 1px, 1px, 1px);overflow:hidden;position:absolute;width:1px;height:1px;opacity:0;"><span>
+  <span>
+    <span>
+      <span>
+        <span>
+          <span>
+            <span>|</span>
+            <span>
+              <span>
+                <span>
+                  <span>
+                    <span>
+                      <span>
+                        <span>
+                          <span>∂</span>
+                          <span>x</span>
+                        </span>
+                        <span>
+                          <span>∂</span>
+                          <span>u</span>
+                        </span>
+                      </span>
+                    </span>
+                  </span>
+                </span>
+                <span>
+                  <span>
+                    <span>
+                      <span>
+                        <span>
+                          <span>∂</span>
+                          <span>x</span>
+                        </span>
+                        <span>
+                          <span>∂</span>
+                          <span>v</span>
+                        </span>
+                      </span>
+                    </span>
+                  </span>
+                </span>
+              </span>
+              <span>
+                <span>
+                  <span>
+                    <span>
+                      <span>
+                        <span>
+                          <span>∂</span>
+                          <span>y</span>
+                        </span>
+                        <span>
+                          <span>∂</span>
+                          <span>u</span>
+                        </span>
+                      </span>
+                    </span>
+                  </span>
+                </span>
+                <span>
+                  <span>
+                    <span>
+                      <span>
+                        <span>
+                          <span>∂</span>
+                          <span>y</span>
+                        </span>
+                        <span>
+                          <span>∂</span>
+                          <span>v</span>
+                        </span>
+                      </span>
+                    </span>
+                  </span>
+                </span>
+              </span>
+            </span>
+            <span>|</span>
+          </span>
+        </span>
+        <span>=</span>
+        <span>
+          <span>
+            <span>|</span>
+            <span>
+              <span>
+                <span>
+                  <span>
+                    <span>
+                      <span>
+                        <span>
+                          <span>cos</span>
+                          <span>⁡</span>
+                          <span>u</span>
+                        </span>
+                        <span>
+                          <span>cos</span>
+                          <span>⁡</span>
+                          <span>v</span>
+                        </span>
+                      </span>
+                    </span>
+                  </span>
+                </span>
+                <span>
+                  <span>
+                    <span>
+                      <span>
+                        <span>
+                          <span>sin</span>
+                          <span>⁡</span>
+                          <span>u</span>
+                          <span>sin</span>
+                          <span>⁡</span>
+                          <span>v</span>
+                        </span>
+                        <span>
+                          <span>
+                            <span>cos</span>
+                            <span>
+                              <span>2</span>
+                            </span>
+                          </span>
+                          <span>⁡</span>
+                          <span>v</span>
+                        </span>
+                      </span>
+                    </span>
+                  </span>
+                </span>
+              </span>
+              <span>
+                <span>
+                  <span>
+                    <span>
+                      <span>
+                        <span>
+                          <span>sin</span>
+                          <span>⁡</span>
+                          <span>u</span>
+                          <span>sin</span>
+                          <span>⁡</span>
+                          <span>v</span>
+                        </span>
+                        <span>
+                          <span>
+                            <span>cos</span>
+                            <span>
+                              <span>2</span>
+                            </span>
+                          </span>
+                          <span>⁡</span>
+                          <span>u</span>
+                        </span>
+                      </span>
+                    </span>
+                  </span>
+                </span>
+                <span>
+                  <span>
+                    <span>
+                      <span>
+                        <span>
+                          <span>cos</span>
+                          <span>⁡</span>
+                          <span>v</span>
+                        </span>
+                        <span>
+                          <span>cos</span>
+                          <span>⁡</span>
+                          <span>u</span>
+                        </span>
+                      </span>
+                    </span>
+                  </span>
+                </span>
+              </span>
+            </span>
+            <span>|</span>
+          </span>
+        </span>
+        <span>=</span>
+        <span>1</span>
+        <span>−</span>
+        <span>
+          <span>
+            <span>
+              <span>
+                <span>sin</span>
+                <span>
+                  <span>2</span>
+                </span>
+              </span>
+              <span>⁡</span>
+              <span>u</span>
+              <span>
+                <span>sin</span>
+                <span>
+                  <span>2</span>
+                </span>
+              </span>
+              <span>⁡</span>
+              <span>v</span>
+            </span>
+            <span>
+              <span>
+                <span>cos</span>
+                <span>
+                  <span>2</span>
+                </span>
+              </span>
+              <span>⁡</span>
+              <span>u</span>
+              <span>
+                <span>cos</span>
+                <span>
+                  <span>2</span>
+                </span>
+              </span>
+              <span>⁡</span>
+              <span>v</span>
+            </span>
+          </span>
+        </span>
+        <span>=</span>
+        <span>1</span>
+        <span>−</span>
+        <span>
+          <span>x</span>
+          <span>
+            <span>2</span>
+          </span>
+        </span>
+        <span>
+          <span>y</span>
+          <span>
+            <span>2</span>
+          </span>
+        </span>
+      </span>
+    </span>
+    
+  </span>
+</span></span><div class="media-placeholder">[图片/附件]</div></en-media></span></dd></dl>
+<p style="padding-bottom:0.5em;margin:0.5em 0px 0px;">因此<span><span style="display:none;clip:rect(1px, 1px, 1px, 1px);overflow:hidden;position:absolute;width:1px;height:1px;opacity:0;"><span>
+  <span>
+    <span>
+      <span>
+        <span>
+          <span>d</span>
+        </span>
+        <span>x</span>
+        <span>
+          <span>d</span>
+        </span>
+        <span>y</span>
+        <span>=</span>
+        <span>(</span>
+        <span>1</span>
+        <span>−</span>
+        <span>
+          <span>x</span>
+          <span>
+            <span>2</span>
+          </span>
+        </span>
+        <span>
+          <span>y</span>
+          <span>
+            <span>2</span>
+          </span>
+        </span>
+        <span>)</span>
+        <span>
+          <span>d</span>
+        </span>
+        <span>u</span>
+        <span>
+          <span>d</span>
+        </span>
+        <span>v</span>
+      </span>
+    </span>
+    
+  </span>
+</span></span><div class="media-placeholder">[图片/附件]</div></en-media></span>，并且将正方形 <i>D</i><sub style="line-height:1;">1</sub> 映射成 <i>u</i>&gt;0、<i>v</i>&gt;0、<i>u</i>+<i>v</i>&lt;π/2 的等腰直角三角形，记为 <i>D</i><sub style="line-height:1;">2</sub>，得到：
+</p>
+<dl style="margin-top:0.2em;margin-bottom:0.5em;"><dd style="margin-bottom:0.1em;margin-right:0px;margin-left:1.6em;"><span><span style="display:none;clip:rect(1px, 1px, 1px, 1px);overflow:hidden;position:absolute;width:1px;height:1px;opacity:0;"><span>
+  <span>
+    <span>
+      <span>
+        <span>
+          <span>∬</span>
+          <span>
+            <span>
+              <span>D</span>
+              <span>
+                <span>1</span>
+              </span>
+            </span>
+          </span>
+        </span>
+        <span>
+          <span>
+            <span>
+              <span>
+                <span>d</span>
+              </span>
+              <span>x</span>
+              <span>
+                <span>d</span>
+              </span>
+              <span>y</span>
+            </span>
+            <span>
+              <span>1</span>
+              <span>−</span>
+              <span>
+                <span>x</span>
+                <span>
+                  <span>2</span>
+                </span>
+              </span>
+              <span>
+                <span>y</span>
+                <span>
+                  <span>2</span>
+                </span>
+              </span>
+            </span>
+          </span>
+        </span>
+        <span>=</span>
+        <span>
+          <span>∬</span>
+          <span>
+            <span>
+              <span>D</span>
+              <span>
+                <span>2</span>
+              </span>
+            </span>
+          </span>
+        </span>
+        <span>
+          <span>d</span>
+        </span>
+        <span>u</span>
+        <span>
+          <span>d</span>
+        </span>
+        <span>v</span>
+        <span>=</span>
+        <span>
+          <span>∫</span>
+          <span>
+            <span>0</span>
+          </span>
+          <span>
+            <span>
+              <span>π</span>
+              <span>2</span>
+            </span>
+          </span>
+        </span>
+        <span>
+          <span>(</span>
+          <span>
+            <span>
+              <span>∫</span>
+              <span>
+                <span>0</span>
+              </span>
+              <span>
+                <span>
+                  <span>
+                    <span>π</span>
+                    <span>2</span>
+                  </span>
+                </span>
+                <span>−</span>
+                <span>v</span>
+              </span>
+            </span>
+            <span>
+              <span>d</span>
+            </span>
+            <span>u</span>
+          </span>
+          <span>)</span>
+        </span>
+        <span>
+          <span>d</span>
+        </span>
+        <span>v</span>
+        <span>=</span>
+        <span>
+          <span>
+            <span>
+              <span>π</span>
+              <span>
+                <span>2</span>
+              </span>
+            </span>
+            <span>8</span>
+          </span>
+        </span>
+      </span>
+    </span>
+    
+  </span>
+</span></span><div class="media-placeholder">[图片/附件]</div></en-media></span></dd></dl>
+<h2 style="color:rgb(0, 0, 0);padding-top:0.5em;padding-bottom:0.17em;overflow:hidden;border-bottom:1px solid rgb(162, 169, 177);font-weight:normal;font-family:&quot;Linux Libertine&quot;, Georgia, Times, &quot;Source Serif Pro&quot;, serif;line-height:1.375;font-size:1.5em;margin:0.25em 0px;"><span></span><span>逆矩阵</span><span style="user-select:none;font-size:small;font-weight:normal;vertical-align:baseline;line-height:0;font-family:sans-serif;unicode-bidi:isolate;margin-right:0px;margin-left:1em;"><span style="font-size:small;font-weight:normal;line-height:0;font-family:sans-serif;">​</span><span style="margin-right:0.25em;color:rgb(84, 89, 93);">[</span><a href="https://zh.wikipedia.org/w/index.php?title=%E9%9B%85%E5%8F%AF%E6%AF%94%E7%9F%A9%E9%98%B5&amp;action=edit&amp;section=9" title="编辑章节：逆矩阵" style="text-decoration:none;color:rgb(51, 102, 204);background:none;overflow-wrap:break-word;white-space:nowrap;"><span>编辑</span></a><span style="margin-left:0.25em;color:rgb(84, 89, 93);">]</span></span></h2>
+<p style="padding-bottom:0.5em;margin:0.5em 0px 0px;">根据<a href="https://zh.wikipedia.org/wiki/%E5%8F%8D%E5%87%BD%E6%95%B0%E5%AE%9A%E7%90%86" title="反函数定理" style="text-decoration:none;color:rgb(51, 102, 204);background:none;overflow-wrap:break-word;">反函数定理</a>，一个<i>可逆函数</i>（存在<a href="https://zh.wikipedia.org/wiki/%E5%8F%8D%E5%87%BD%E6%95%B8" title="反函数" style="text-decoration:none;color:rgb(51, 102, 204);background:none;overflow-wrap:break-word;">反函数</a>的函数）的<a href="https://zh.wikipedia.org/wiki/%E9%9B%85%E5%8F%AF%E6%AF%94%E7%9F%A9%E9%99%A3" title="雅可比矩阵" style="text-decoration:none;color:rgb(51, 102, 204);background:none;overflow-wrap:break-word;">雅可比矩阵</a>的<a href="https://zh.wikipedia.org/wiki/%E9%80%86%E7%9F%A9%E9%99%A3" title="逆矩阵" style="text-decoration:none;color:rgb(51, 102, 204);background:none;overflow-wrap:break-word;">逆矩阵</a>即为该函数的<i><a href="https://zh.wikipedia.org/wiki/%E5%8F%8D%E5%87%BD%E6%95%B8" title="反函数" style="text-decoration:none;color:rgb(51, 102, 204);background:none;overflow-wrap:break-word;">反函数</a></i>的<a href="https://zh.wikipedia.org/wiki/%E9%9B%85%E5%8F%AF%E6%AF%94%E7%9F%A9%E9%99%A3" title="雅可比矩阵" style="text-decoration:none;color:rgb(51, 102, 204);background:none;overflow-wrap:break-word;">雅可比矩阵</a>。即，若函数 <span><span style="display:none;clip:rect(1px, 1px, 1px, 1px);overflow:hidden;position:absolute;width:1px;height:1px;opacity:0;"><span>
+  <span>
+    <span>
+      <span>
+        <span>F</span>
+        <span>:</span>
+        <span>
+          <span>
+            <span>R</span>
+          </span>
+          <span>
+            <span>n</span>
+          </span>
+        </span>
+        <span>→</span>
+        <span>
+          <span>
+            <span>R</span>
+          </span>
+          <span>
+            <span>n</span>
+          </span>
+        </span>
+      </span>
+    </span>
+    
+  </span>
+</span></span><div class="media-placeholder">[图片/附件]</div></en-media></span>在点  <span><span style="display:none;clip:rect(1px, 1px, 1px, 1px);overflow:hidden;position:absolute;width:1px;height:1px;opacity:0;"><span>
+  <span>
+    <span>
+      <span>
+        <span>p</span>
+        <span>∈</span>
+        <span>
+          <span>
+            <span>R</span>
+          </span>
+          <span>
+            <span>n</span>
+          </span>
+        </span>
+      </span>
+    </span>
+    
+  </span>
+</span></span><div class="media-placeholder">[图片/附件]</div></en-media></span>的雅可比矩阵是连续且可逆的，则 <span><span style="display:none;clip:rect(1px, 1px, 1px, 1px);overflow:hidden;position:absolute;width:1px;height:1px;opacity:0;"><span>
+  <span>
+    <span>
+      <span>
+        <span>F</span>
+      </span>
+    </span>
+    
+  </span>
+</span></span><div class="media-placeholder">[图片/附件]</div></en-media></span>在点 <span><span style="display:none;clip:rect(1px, 1px, 1px, 1px);overflow:hidden;position:absolute;width:1px;height:1px;opacity:0;"><span>
+  <span>
+    <span>
+      <span>
+        <span>p</span>
+      </span>
+    </span>
+    
+  </span>
+</span></span><div class="media-placeholder">[图片/附件]</div></en-media></span>的某一<a href="https://zh.wikipedia.org/wiki/%E9%84%B0%E5%9F%9F" title="邻域" style="text-decoration:none;color:rgb(51, 102, 204);background:none;overflow-wrap:break-word;">邻域</a>内也是可逆的，且有
+</p>
+<dl style="margin-top:0.2em;margin-bottom:0.5em;"><dd style="margin-bottom:0.1em;margin-right:0px;margin-left:1.6em;"><span><span style="display:none;clip:rect(1px, 1px, 1px, 1px);overflow:hidden;position:absolute;width:1px;height:1px;opacity:0;"><span>
+  <span>
+    <span>
+      <span>
+        <span>
+          <span>J</span>
+          <span>
+            <span>
+              <span>F</span>
+              <span>
+                <span>−</span>
+                <span>1</span>
+              </span>
+            </span>
+          </span>
+        </span>
+        <span>∘</span>
+        <span>f</span>
+        <span>=</span>
+        <span>
+          <span>J</span>
+          <span>
+            <span>F</span>
+          </span>
+          <span>
+            <span>−</span>
+            <span>1</span>
+          </span>
+        </span>
+      </span>
+    </span>
+    
+  </span>
+</span></span><div class="media-placeholder">[图片/附件]</div></en-media></span></dd></dl>
+<p style="padding-bottom:0.5em;margin:0.5em 0px 0px;">成立。相反，倘若雅可比行列式在某一个点<b>不为</b>零，那么该函数在这个点的某一邻域内<i>可逆</i>（存在<a href="https://zh.wikipedia.org/wiki/%E5%8F%8D%E5%87%BD%E6%95%B8" title="反函数" style="text-decoration:none;color:rgb(51, 102, 204);background:none;overflow-wrap:break-word;">反函数</a>）。
+</p><p style="padding-bottom:0.5em;margin:0.5em 0px 0px;">一个<a href="https://zh.wikipedia.org/wiki/%E5%A4%9A%E9%A1%B9%E5%BC%8F%E5%87%BD%E6%95%B0" title="多项式函数" style="text-decoration:none;color:rgb(51, 102, 204);background:none;overflow-wrap:break-word;">多项式函数</a>的可逆性与未经证明的<a href="https://zh.wikipedia.org/wiki/%E9%9B%85%E5%8F%AF%E6%AF%94%E7%8C%9C%E6%83%B3" title="雅可比猜想" style="text-decoration:none;color:rgb(51, 102, 204);background:none;overflow-wrap:break-word;">雅可比猜想</a>有关。其断言，如果函数的雅可比行列式为一个非零实数（相当于其不存在<b><a href="https://zh.wikipedia.org/wiki/%E9%9B%B6%E9%BB%9E" title="零点" style="text-decoration:none;color:rgb(51, 102, 204);background:none;overflow-wrap:break-word;">复零点</a></b>），则该函数可逆且其反函数也为一个多项式。
+</p>
+<h2 style="color:rgb(0, 0, 0);padding-top:0.5em;padding-bottom:0.17em;overflow:hidden;border-bottom:1px solid rgb(162, 169, 177);font-weight:normal;font-family:&quot;Linux Libertine&quot;, Georgia, Times, &quot;Source Serif Pro&quot;, serif;line-height:1.375;font-size:1.5em;margin:0.25em 0px;"><span></span><span>参看</span><span style="user-select:none;font-size:small;font-weight:normal;vertical-align:baseline;line-height:0;font-family:sans-serif;unicode-bidi:isolate;margin-right:0px;margin-left:1em;"><span style="font-size:small;font-weight:normal;line-height:0;font-family:sans-serif;">​</span><span style="margin-right:0.25em;color:rgb(84, 89, 93);">[</span><a href="https://zh.wikipedia.org/w/index.php?title=%E9%9B%85%E5%8F%AF%E6%AF%94%E7%9F%A9%E9%98%B5&amp;action=edit&amp;section=10" title="编辑章节：参看" style="text-decoration:none;color:rgb(51, 102, 204);background:none;overflow-wrap:break-word;white-space:nowrap;"><span>编辑</span></a><span style="margin-left:0.25em;color:rgb(84, 89, 93);">]</span></span></h2>
+<ul style="list-style-image:url(https://zh.wikipedia.org/w/skins/Vector/resources/skins.vector.styles/images/bullet-icon.svg?d4515);margin:0.3em 0px 0px 1.6em;padding:0px;margin-top:0px;"><li style="margin-bottom:0.1em;"><a href="https://zh.wikipedia.org/wiki/%E5%89%8D%E6%8E%A8_(%E5%BE%AE%E5%88%86)" title="前推 (微分)" style="text-decoration:none;color:rgb(51, 102, 204);background:none;overflow-wrap:break-word;">前推</a></li>
+<li style="margin-bottom:0.1em;"><a href="https://zh.wikipedia.org/wiki/%E9%BB%91%E5%A1%9E%E7%9F%A9%E9%98%B5" title="黑塞矩阵" style="text-decoration:none;color:rgb(51, 102, 204);background:none;overflow-wrap:break-word;">黑塞矩阵</a></li></ul>
+<h2 style="color:rgb(0, 0, 0);padding-top:0.5em;padding-bottom:0.17em;overflow:hidden;border-bottom:1px solid rgb(162, 169, 177);font-weight:normal;font-family:&quot;Linux Libertine&quot;, Georgia, Times, &quot;Source Serif Pro&quot;, serif;line-height:1.375;font-size:1.5em;margin:0.25em 0px;"><span></span><span>参考资料</span><span style="user-select:none;font-size:small;font-weight:normal;vertical-align:baseline;line-height:0;font-family:sans-serif;unicode-bidi:isolate;margin-right:0px;margin-left:1em;"><span style="font-size:small;font-weight:normal;line-height:0;font-family:sans-serif;">​</span><span style="margin-right:0.25em;color:rgb(84, 89, 93);">[</span><a href="https://zh.wikipedia.org/w/index.php?title=%E9%9B%85%E5%8F%AF%E6%AF%94%E7%9F%A9%E9%98%B5&amp;action=edit&amp;section=11" title="编辑章节：参考资料" style="text-decoration:none;color:rgb(51, 102, 204);background:none;overflow-wrap:break-word;white-space:nowrap;"><span>编辑</span></a><span style="margin-left:0.25em;color:rgb(84, 89, 93);">]</span></span></h2>
+<div style="font-size:90%;margin-bottom:0.5em;list-style-type:decimal;">
+<ol style="list-style-image:none;margin:0.3em 0px 0px 3.2em;padding:0px;margin-top:0px;margin-bottom:0.5em;font-size:100%;list-style-type:inherit;">
+<li style="margin-bottom:0.1em;"><span style="user-select:none;"><b><a href="https://zh.wikipedia.org/zh-cn/%E9%9B%85%E5%8F%AF%E6%AF%94%E7%9F%A9%E9%98%B5#cite_ref-1" title="跳转" style="text-decoration:none;color:rgb(51, 102, 204);background:none;overflow-wrap:break-word;">^</a></b></span> <span><cite style="font-style:normal;">W., Weisstein, Eric. <a rel="nofollow" href="http://mathworld.wolfram.com/Jacobian.html" style="text-decoration:none;background:none;overflow-wrap:break-word;color:rgb(51, 102, 204);background-image:url(https://zh.wikipedia.org/w/skins/Vector/resources/skins.vector.styles/images/link-external-small-ltr-progressive.svg?fb64d);background-position:right center;background-repeat:no-repeat;background-size:0.857em;padding-right:1em;">Jacobian</a>. mathworld.wolfram.com.  <span> [<span style="white-space:nowrap;">2 May</span> 2018]</span>. （原始内容<a rel="nofollow" href="https://web.archive.org/web/20171103144419/http://mathworld.wolfram.com/Jacobian.html" style="text-decoration:none;background:none;overflow-wrap:break-word;color:rgb(51, 102, 204);background-image:url(https://zh.wikipedia.org/w/skins/Vector/resources/skins.vector.styles/images/link-external-small-ltr-progressive.svg?fb64d);background-position:right center;background-repeat:no-repeat;background-size:0.857em;padding-right:1em;">存档</a>于3 November 2017）.</cite><span title="ctx_ver=Z39.88-2004&amp;rfr_id=info%3Asid%2Fzh.wikipedia.org%3A%E9%9B%85%E5%8F%AF%E6%AF%94%E7%9F%A9%E9%98%B5&amp;rft.atitle=Jacobian&amp;rft.aufirst=Weisstein%2C+Eric&amp;rft.aulast=W.&amp;rft.genre=unknown&amp;rft.jtitle=mathworld.wolfram.com&amp;rft_id=http%3A%2F%2Fmathworld.wolfram.com%2FJacobian.html&amp;rft_val_fmt=info%3Aofi%2Ffmt%3Akev%3Amtx%3Ajournal"></span></span>
+</li>
+</ol></div>
+<h2 style="color:rgb(0, 0, 0);padding-top:0.5em;padding-bottom:0.17em;overflow:hidden;border-bottom:1px solid rgb(162, 169, 177);font-weight:normal;font-family:&quot;Linux Libertine&quot;, Georgia, Times, &quot;Source Serif Pro&quot;, serif;line-height:1.375;font-size:1.5em;margin:0.25em 0px;"><span></span><span>外部链接</span><span style="user-select:none;font-size:small;font-weight:normal;vertical-align:baseline;line-height:0;font-family:sans-serif;unicode-bidi:isolate;margin-right:0px;margin-left:1em;"><span style="font-size:small;font-weight:normal;line-height:0;font-family:sans-serif;">​</span><span style="margin-right:0.25em;color:rgb(84, 89, 93);">[</span><a href="https://zh.wikipedia.org/w/index.php?title=%E9%9B%85%E5%8F%AF%E6%AF%94%E7%9F%A9%E9%98%B5&amp;action=edit&amp;section=12" title="编辑章节：外部链接" style="text-decoration:none;color:rgb(51, 102, 204);background:none;overflow-wrap:break-word;white-space:nowrap;"><span>编辑</span></a><span style="margin-left:0.25em;color:rgb(84, 89, 93);">]</span></span></h2>
+<ul style="list-style-image:url(https://zh.wikipedia.org/w/skins/Vector/resources/skins.vector.styles/images/bullet-icon.svg?d4515);margin:0.3em 0px 0px 1.6em;padding:0px;margin-top:0px;"><li style="margin-bottom:0.1em;"><a rel="nofollow" href="https://web.archive.org/web/20060421002832/http://www.maths.abdn.ac.uk/~igc/tch/ma2001/notes/node77.html" style="text-decoration:none;background:none;overflow-wrap:break-word;color:rgb(51, 102, 204);background-image:url(https://zh.wikipedia.org/w/skins/Vector/resources/skins.vector.styles/images/link-external-small-ltr-progressive.svg?fb64d);background-position:right center;background-repeat:no-repeat;background-size:0.857em;padding-right:1em;">Ian Craw的本科教学网页</a> 雅可比行列式的通俗解释</li>
+<li style="margin-bottom:0.1em;"><a rel="nofollow" href="http://mathworld.wolfram.com/Jacobian.html" style="text-decoration:none;background:none;overflow-wrap:break-word;color:rgb(51, 102, 204);background-image:url(https://zh.wikipedia.org/w/skins/Vector/resources/skins.vector.styles/images/link-external-small-ltr-progressive.svg?fb64d);background-position:right center;background-repeat:no-repeat;background-size:0.857em;padding-right:1em;">Mathworld</a> （<a rel="nofollow" href="https://web.archive.org/web/20171103144419/http://mathworld.wolfram.com/Jacobian.html" style="text-decoration:none;background:none;overflow-wrap:break-word;color:rgb(51, 102, 204);background-image:url(https://zh.wikipedia.org/w/skins/Vector/resources/skins.vector.styles/images/link-external-small-ltr-progressive.svg?fb64d);background-position:right center;background-repeat:no-repeat;background-size:0.857em;padding-right:1em;">页面存档备份</a>，存于<a href="https://zh.wikipedia.org/wiki/%E4%BA%92%E8%81%94%E7%BD%91%E6%A1%A3%E6%A1%88%E9%A6%86" title="互联网档案馆" style="text-decoration:none;color:rgb(51, 102, 204);background:none;overflow-wrap:break-word;">互联网档案馆</a>） 更技术型的雅可比行列式的解释</li></ul>
+
+
+
+
+</div>
+<span style="font-size:15.008px;clear:both;display:block;"></span></div>
+					<div style="background-color:rgb(248, 249, 250);margin-top:1em;border:1px solid rgb(162, 169, 177);padding:5px;clear:both;text-align:left;"><div><a href="https://zh.wikipedia.org/wiki/Special:%E9%A1%B5%E9%9D%A2%E5%88%86%E7%B1%BB" title="Special:页面分类" style="text-decoration:none;color:rgb(51, 102, 204);background:none;">分类</a>：​<ul style="list-style-image:url(https://zh.wikipedia.org/w/skins/Vector/resources/skins.vector.styles/images/bullet-icon.svg?d4515);display:inline;list-style:none;margin:0px;padding:0px;margin-top:0px;"><li style="margin-bottom:0.1em;display:inline-block;line-height:1.25em;margin:0.125em 0px;padding:0px 0.5em;padding-left:0.25em;border-left:0px;"><a href="https://zh.wikipedia.org/wiki/Category:%E5%A4%9A%E5%8F%98%E9%87%8F%E5%BE%AE%E7%A7%AF%E5%88%86" title="Category:多变量微积分" style="text-decoration:none;color:rgb(51, 102, 204);background:none;">多变量微积分</a></li><li style="margin-bottom:0.1em;display:inline-block;line-height:1.25em;margin:0.125em 0px;border-left:1px solid rgb(162, 169, 177);padding:0px 0.5em;"><a href="https://zh.wikipedia.org/wiki/Category:%E8%A1%8C%E5%88%97%E5%BC%8F" title="Category:行列式" style="text-decoration:none;color:rgb(51, 102, 204);background:none;">行列式</a></li><li style="margin-bottom:0.1em;display:inline-block;line-height:1.25em;margin:0.125em 0px;border-left:1px solid rgb(162, 169, 177);padding:0px 0.5em;"><a href="https://zh.wikipedia.org/wiki/Category:%E7%9F%A9%E9%99%A3" title="Category:矩陣" style="text-decoration:none;color:rgb(51, 102, 204);background:none;">矩阵</a></li><li style="margin-bottom:0.1em;display:inline-block;line-height:1.25em;margin:0.125em 0px;border-left:1px solid rgb(162, 169, 177);padding:0px 0.5em;"><a href="https://zh.wikipedia.org/wiki/Category:%E5%AF%BC%E6%95%B0%E7%9A%84%E6%8E%A8%E5%B9%BF" title="Category:导数的推广" style="text-decoration:none;color:rgb(51, 102, 204);background:none;">导数的推广</a></li></ul></div></div>
+				</div>
+			</span></div></div></div></div></div></div>
+</div></div>
+<a class="back-link" href="../articles.html">← 返回笔记列表</a>
+</body></html>
